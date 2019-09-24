@@ -1,6 +1,8 @@
+
+
 function xls2d(uri) {
 
-	const cleaned_uri = uri.replace(/^(.*:.*)?\?/mg, "").replace(/\?/img, "&")
+	const cleaned_uri = uri.replace(/^(.*:.*)?\?/mg, "").replace(/\?/img, "&").replace(/^.*?:\/\//, '').replace(/^ripple:/img, "")
 
 	function clean() {
 		return cleaned_uri
@@ -45,3 +47,31 @@ function xls2d(uri) {
 		invoiceid: invoiceid()
 	}
 }
+
+var examples = [
+	"rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY?dt=123",
+	"rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY:123",
+	"https://ripple.com//send?to=rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY&amount=30&dt=123",
+	"https://sub.domain.site.edu.au//send?to=rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY&amount=30&dt=123",
+	"https://someapp.com/sendXrp?to=rRippleBlah&dt=4&invoiceid=abcdef",
+	"deposit-xrp?to=blah",
+	"?rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY:123",
+	"rAhDr1qUEG4gHXt6m6zyRE4oogDDWmYvcgotCqyyEpArk8",
+	"to=rAhDr1qUEG4gHXt6m6zyRE4oogDDWmXFdzQdZdH9SJzcNJ",
+	"to=rAhDr1qUEG4gHXt6m6zyRE4oogDDWmXFdzQdZdH9SJzcNJ&currency=rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B:USD",
+	"to=rAhDr1qUEG4gHXt6m6zyRE4oogDDWmXFdzQdZdH9SJzcNJ&currency=USD",
+	"to=rAhDr1qUEG4gHXt6m6zyRE4oogDDWmXFdzQdZdH9SJzcNJ&currency=rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B:USD&invid=DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
+	"scheme://uri/folders?rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY:123",
+	"scheme://uri/folders?rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY&amount=4:123", // this one a bit iffy
+    "XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC",
+    "to=XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC",
+    "ripple:XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u",
+    "ripple:XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u:58321",
+    "ripple:XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u:58321&currency=rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B:USD",
+    "ripple:XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u:58321&currency=XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u:ABC",
+    "xrpl://XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u",
+    "xrp://XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u",
+    "f3w54ygsdfgfserga"
+]
+
+for (var i in examples) console.log(xls2d(examples[i]));
