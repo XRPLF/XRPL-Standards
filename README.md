@@ -7,6 +7,10 @@ This repository will be used to discuss, draft and set standards regarding imple
 
   - The **formatting of information** (like [signed transactions](https://github.com/xrp-community/standards-drafts/issues/4))
   - The **URI formats to deep link** to apps (like [destination accounts + tags, payments](https://github.com/xrp-community/standards-drafts/issues/3), etc.)
+  
+# Contributing / Workflow
+
+All drafts start as **ISSUES**. Drafts (issues) are considered work in progress, and are up for discussion (please discuss, ask, suggest, add, ...). Once settled on the standard, it'll be added to the **CODE** (commit) and the issue can be resolved.
 
 # Numbering
 
