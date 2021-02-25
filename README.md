@@ -10,7 +10,7 @@ This repository will be used to discuss, draft and set standards regarding imple
   
 # Contributing / Workflow
 
-All drafts start as **ISSUES**. Drafts (issues) are considered work in progress, and are up for discussion (please discuss, ask, suggest, add, ...). Once settled on the standard, it'll be added to the **CODE** (commit) and the issue can be resolved.
+All drafts start as **DISCUSSIONS**. Drafts (issues) are considered work in progress, and are up for discussion (please discuss, ask, suggest, add, ...). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
 
 # Numbering
 
