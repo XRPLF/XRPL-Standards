@@ -2,15 +2,12 @@
 
 To ensure interoperability between XRP (Ledger) applications, tools, platforms, pursuing a great user experience, it would be best if the
 community (developers, users) agree on certain implementations.
-
-This repository will be used to discuss, draft and set standards regarding implementations like:
-
-  - The **formatting of information** (like [signed transactions](https://github.com/xrp-community/standards-drafts/issues/4))
-  - The **URI formats to deep link** to apps (like [destination accounts + tags, payments](https://github.com/xrp-community/standards-drafts/issues/3), etc.)
   
 # Contributing / Workflow
 
-All drafts start as [**DISCUSSIONS**](https://github.com/xrp-community/standards-drafts/discussions). Drafts (issues) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
+### All drafts start as [**DISCUSSIONS**](https://github.com/xrp-community/standards-drafts/discussions).
+
+Drafts (discussions) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
 
 # Numbering
 
