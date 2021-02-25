@@ -1,0 +1,28 @@
+[[STANDARD]]
+name = "XLS-1d"
+title = "Contract Standard"
+draft = true
+
+[[STANDARD]]
+name = "XLS-2d"
+title = "XRPL Destination format parser"
+draft = true
+
+[[STANDARD]]
+name = "XLS-5"
+title = "Tagged Addresses"
+draft = false
+documentation = "https://xrpaddress.info"
+implementation = "https://www.npmjs.com/package/xrpl-tagged-address-codec"
+
+[[STANDARD]]
+name = "XLS-7"
+title = "Deletable Accounts on the XRP Ledger"
+draft = false
+documentation = "https://xrpl.org/accountdelete.html"
+
+[[STANDARD]]
+name = "XLS-12"
+title = "Secret Numbers"
+draft = false
+implementation = "https://www.npmjs.com/package/xrpl-secret-numbers"

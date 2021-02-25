@@ -1,5 +1,5 @@
 <pre>
-  XRP Ledger Proposed Standard #5
+  XLS-5 - XRP Ledger Proposed Standard #5
 
   Title:        Tagged Addresses
   Author:       Nikolaos D. Bougalis <nikb@bougalis.net>

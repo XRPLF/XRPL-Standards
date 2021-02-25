@@ -1,6 +1,6 @@
-# XRP ledger Standards / Drafts
+# XRP Ledger Standards / Drafts
 
-To ensure interoperability between XRP (ledger) applications, tools, platforms, pursuing a great user experience, it would be best if the
+To ensure interoperability between XRP (Ledger) applications, tools, platforms, pursuing a great user experience, it would be best if the
 community (developers, users) agree on certain implementations.
 
 This repository will be used to discuss, draft and set standards regarding implementations like:
@@ -30,7 +30,7 @@ XLS-1 through XLS-100 inclusive are reserved for core protocol and communication
 
 # Remaining Standard Numbers
 
-XLS-101 and beyond are 'user-space' standards and may represent any optional or non-core functionality desired.
+XLS-200 and beyond are 'user-space' standards and may represent any optional or non-core functionality desired.
 
 # Minimum Implementation
 

@@ -1,5 +1,5 @@
 <pre>
-  XRP Ledger Proposed Standard #5
+  XLS-7 - XRP Ledger Proposed Standard #7
 
   Title:        Deletable Accounts on the XRP Ledger
   Author:       Scott Schurr &lt;scott@ripple.com&gt;

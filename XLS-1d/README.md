@@ -1,5 +1,4 @@
-
-XLS1d Contract Standard
+XLS-1d Contract Standard
 =======================
 
 ## 1.0 Introduction

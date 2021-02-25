@@ -1,6 +1,6 @@
 |       | Info |
 |-------|---------|
-| Draft | XLS-12d |
+| Draft | XLS-12 |
 | Title | Secret Numbers |
 | Author(s) | Wietse Wind <w@xrpl-labs.com>, based on an idea by [Nik Bougalis](https://github.com/nbougalis) |
 | Created | 2019-07-12 ([TS Lib.](https://github.com/WietseWind/xrpl-secret-numbers)) / 2020-05-13 (Draft) |

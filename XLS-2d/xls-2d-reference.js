@@ -1,5 +1,3 @@
-
-
 function xls2d(uri) {
 
 	const cleaned_uri = uri.replace(/^(.*:.*)?\?/mg, "").replace(/\?/img, "&").replace(/^.*?:\/\//, '').replace(/^ripple:/img, "")
