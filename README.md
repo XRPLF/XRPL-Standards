@@ -9,6 +9,10 @@ community (developers, users) agree on certain implementations.
 
 Drafts (discussions) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
 
+# Directory
+When a standard moves to a folder + file(s) in the Code section of this repository, it will be added to the `standards.toml` file:
+https://github.com/XRPLF/XRPL-Standards/blob/master/standards.toml
+
 # Numbering
 
 Standards must be numbered and referenced in the following format: XLS-# where # is a natural number (without left padded zeros), called the __Standard Number__.
