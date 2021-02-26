@@ -1,9 +1,4 @@
 [[STANDARD]]
-name = "XLS-1d"
-title = "Contract Standard"
-draft = true
-
-[[STANDARD]]
 name = "XLS-2d"
 title = "XRPL Destination format parser"
 draft = true
