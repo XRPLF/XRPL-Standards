@@ -7,7 +7,7 @@
 
 ---
 
-# XLS-12d: Secret Numbers
+# XLS-12: Secret Numbers
 ### Derive XRPL account keypairs based on 8x 6 digits
 
 ##### Abstract
