@@ -21,3 +21,9 @@ name = "XLS-12"
 title = "Secret Numbers"
 draft = false
 implementation = "https://www.npmjs.com/package/xrpl-secret-numbers"
+
+[[STANDARD]]
+name = "XLS-24d"
+title = "NFT Schema"
+draft = true
+
