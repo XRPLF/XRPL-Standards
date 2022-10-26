@@ -32,17 +32,6 @@
             "type": "string"
         },
         "nftType": {
-            "type": "string",
-            "enum": [
-                "image",
-                "animation",
-                "video",
-                "audio",
-                "document",
-                "other"
-            ]
-        },
-        "nftTypeVersion": {
             "type": "string"
         },
         "name": {
