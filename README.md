@@ -7,7 +7,11 @@ community (developers, users) agree on certain implementations.
 
 ### All drafts start as [**DISCUSSIONS**](https://github.com/xrp-community/standards-drafts/discussions).
 
-Drafts (discussions) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
+Drafts (discussions) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be locked and converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved. 
+
+In case a XLS draft results in an amendment to [rippled](https://github.com/XRPLF/rippled), it is considered adopted when the amendment is merged into the codebase. Hereafter it is the responsibility of the XLS author to update the draft to match the final implementation prior to creating an **ISSUE**.
+
+It is not necessary to copy the entire draft to the **ISSUE**, but only to refer to the discussion.
 
 # Directory
 When a standard moves to a folder + file(s) in the Code section of this repository, it will be added to the `standards.toml` file:
