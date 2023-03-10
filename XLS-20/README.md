@@ -78,13 +78,13 @@ A set of flags indicating properties or other options associated with this **`NF
 >|:---------------------:|:-----------:|:------------|
 >| `lsfBurnable`         | `0x0001`| If set, indicates that the issuer (or an entity authorized by the issuer) can destroy the object. The object's owner can _always_ do so. |
 >| `lsfOnlyXRP`          | `0x0002`| If set, indicates that the tokens can only be offered or sold for XRP. |
->| `lsfTrustLine`        | `0x0004`| If set, indicates that the issuer wants a trustline to be automatically created. |
+>| `lsfTrustLine`        | `0x0004`| (**DEPRECATED**) If set, indicates that the issuer wants a trustline to be automatically created. |
 >| `lsfTransferable`     | `0x0008`| If set, indicates that this NFT can be transferred. This flag has no effect if the token is being transferred _from_ the issuer or _to_ the issuer. |
 >| `lsfReservedFlag`     | `0x8000`| This proposal reserves this flag for future use. Attempts to set this flag should fail. |
 
 These flags are **immutable**: they can only be set during the **`NFTokenMint`** transaction and cannot be changed later.
 
-:memo: The `lsfTrustLine` field is useful when the token can be offered for sale for assets other than **XRP** and the issuer charges a `TransferFee`. If this flag is set, then a trust line will be automatically created, when needed, to allow the issuer to receive the appropriate transfer fee. If this flag is not set then an attempt to transfer for token for an asset that the issuer does not have a trustline for will fail.
+:memo: (**DEPRECATED**) The `lsfTrustLine` field is useful when the token can be offered for sale for assets other than **XRP** and the issuer charges a `TransferFee`. If this flag is set, then a trust line will be automatically created, when needed, to allow the issuer to receive the appropriate transfer fee. If this flag is not set then an attempt to transfer for token for an asset that the issuer does not have a trustline for will fail.
 
 ###### 1.2.1.1.1.2 `TransferFee`
 
@@ -347,7 +347,7 @@ Specifies the flags for this transaction. In addition to the universal transacti
 >|:---------------------------:|:-----------:|:------------|
 >| `tfBurnable`                | `0x00000001`| If set, indicates that the `lsfBurnable` flag should be set. |
 >| `tfOnlyXRP`                 | `0x00000002`| If set, indicates that the `lsfOnlyXRP` flag should be set. |
->| `tfTrustLine`               | `0x00000004`| If set, indicates that the `lsfTrustLine` flag should be set. |
+>| `tfTrustLine`               | `0x00000004`| (**DEPRECATED**) If set, indicates that the `lsfTrustLine` flag should be set. |
 >| `tfTransferable`            | `0x00000008`| If set, indicates that the `lsfTransferable` flag should be set. |
 
 ---
@@ -406,7 +406,7 @@ In executing, this transaction will examine the `MintedNFTokens` field in the ac
 
 The **`NFTokenBurn`** transaction is used to remove an **`NFToken`** object from the **`NFTokenPage`** in which it is being held, effectively removing the token from the ledger ("burning" it).
 
-If this operation succeeds, the corresponding **`NFToken`** is removed. If this operation empties the **`NFTokenPage`** holding the **`NFToken`** or results in the consolidation, thus removing an **`NFTokenPage`**, the owner’s reserve requirement is reduced by one.
+If this operation succeeds, the corresponding **`NFToken`** is removed. If this operation empties the **`NFTokenPage`** holding the **`NFToken`** or results in the consolidation, thus removing an **`NFTokenPage`**, the owner’s reserve requirement is reduced by one. This operation would also delete up to a maximum of 500 `buy`/`sell` **`NFTokenOffer`** objects for the burnt **`NFToken`**, leaving any remaining **`NFTokenOffer`** untouched on the ledger.
 
 #### Transaction-specific Fields
 
@@ -593,14 +593,17 @@ Unlike regular offers on XRPL, which are stored sorted by quality in an order bo
 
 A buyer must _explicitly_ choose to accept an **`NFTokenOffer`** that offers to buy an **`NFToken`**. Similarly, a seller must _explicitly_ choose to accept a specific **`NFTokenOffer`** that offers to buy an **`NFToken`** object that they own.
 
+> Note: An **`NFTokenOffer`** for an **`NFToken`** _may_ be implicitly deleted during an **`NFTokenBurn`** transaction of the **`NFToken`**.
+
 ### 1.5.1. Locating **`NFTokenOffer`** objects
 
 Each token has two directories, one containing offers to buy the token and the other containing offers to sell the token. This makes it easy to find **`NFTokenOffer`** for a particular token. It is expected that off-ledger systems will be used to retrieve, present, communicate and effectuate the creation, enumeration, acceptance or cancellation of offers. For example, a marketplace may offer intuitive web- or app-based interfaces for users.
 
 ### 1.5.2. **`NFTokenOffer`** Reserve
 
-Each **`NFTokenOffer`** object costs the account placing the offer one incremental reserve. As of this writing the incremental reserve is 2 XRP. The reserve can be recovered by cancelling the offer.  The reserve is also recovered if the offer is accepted, which removes the offer from the XRP Ledger.
+Each **`NFTokenOffer`** object costs the account placing the offer one incremental reserve. As of this writing the incremental reserve is 2 XRP. The reserve can be recovered by cancelling the offer.  The reserve is also recovered if the offer is accepted, which removes the offer from the XRP Ledger. 
 
+It is important for an account to cancel all of their outstanding offers for a burnt **`NFToken`** to reclaim the reserves. Otherwise, these offers will be left dangling on the ledger.
 ### 1.5.3. **`NFTokenOffer`** Transactions
 
 There are three defined transactions:
@@ -768,7 +771,7 @@ In `direct` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 
 If the transaction is executed successfully then:
 
-1. The relevant **`NFTtoken`** will change ownership, meaning that the token will be removed from the **`NFTokenPage`** of the existing `owner` and be added to the **`NFTokenPage`** of the new `owner`.
+1. The relevant **`NFToken`** will change ownership, meaning that the token will be removed from the **`NFTokenPage`** of the existing `owner` and be added to the **`NFTokenPage`** of the new `owner`.
 2. Funds will be transferred from the buyer to the seller, as specified in the **`NFTokenOffer`**. If the corresponding **`NFToken`** offer specifies a `TransferRate`, then the `issuer` receives the specified percentage, with the balance going to the seller of the **`NFToken`**.
 
 ##### 1.5.6.2.2. Brokered Mode
@@ -779,6 +782,8 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 2. The `sell` **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is owned by the account executing the transaction.
 3. The account which placed the offer to sell the **`NFToken`** is not, at the time of execution the current owner of the corresponding **`NFToken`**.
 4. Either offer (`buy` or `sell`) specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction would be included has already passed.
+5. The `owner` of the `sell` **`NFTokenOffer`** is the same account as the `owner` of the `buy` **`NFTokenOffer`**. In other words, the **`NFToken`** cannot be sold to the account that currently owns it.
+6. The account, that submitted the **`NFTokenOfferAccept`**  transaction, has a different address from what is specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
 
 #### 1.5.6.3. Fields
 
