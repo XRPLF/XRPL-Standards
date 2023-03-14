@@ -5,6 +5,7 @@
 <hr>  Author:       <a href="mailto:david@ripple.com">David J. Schwartz</a>
                 <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
                 <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
+  Editor:       <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
   Affiliation:  <a href="https://ripple.com">Ripple</a>
 </pre>
 
@@ -56,7 +57,7 @@ The **`NFToken`** object represents a single NFT and holds data associated with 
 
 ##### 1.2.1.1.1. Fields
 
-An **`NFToken`** object can have the following required and optional fields. Notice that, unlike other objects no field is needed to identify the object type or current owner of the object, because NFTs are grouped into pages that implicitly define the object type and identify the owner.
+An **`NFToken`** object can have the following required and optional fields. Notice that, unlike other objects, no field is needed to identify the object type or current owner of the object, because NFTs are grouped into pages that implicitly define the object type and identify the owner.
 
 ---
 
@@ -64,15 +65,20 @@ An **`NFToken`** object can have the following required and optional fields. Not
 |-------------------|:----------------:|:---------------:|:-----------------:|
 | `NFTokenID`        |:heavy_check_mark:|`string`         | `UINT256`         |
 
-This composite field uniquely identifiers a token; it contains a set of 16 bits that identify flags or settings specific to the NFT, 16 bits that encode the transfer fee associated with this token, if
-any, the 160-bit account identifier of the issuer, a 32-bit issuer-specified [taxon](https://www.merriam-webster.com/dictionary/taxon), and an
-(automatically generated) monotonically increasing 32-bit sequence number.
+This composite field uniquely identifiers a token; it contains:
+* a set of 16 bits that identify flags or settings specific to the NFT
+* 16 bits that encode the transfer fee associated with this token
+*if
+any
+* the 160-bit account identifier of the issuer
+* a 32-bit issuer-specified [taxon](https://www.merriam-webster.com/dictionary/taxon)
+* an automatically generated monotonically increasing 32-bit sequence number.
 
-The 16-bit flags and transfer fee fields, and the 32-bit taxon and sequence number fields are stored in big-endian format.
+The 16-bit flags and transfer fee fields, and the 32-bit taxon and sequence number fields, are stored in big-endian format.
 
 ###### 1.2.1.1.1.1 `Flags`
 
-A set of flags indicating properties or other options associated with this **`NFToken`** object. The type specific flags proposed at this are:
+A set of flags indicating properties or other options associated with this **`NFToken`** object. The type-specific flags proposed at this are:
 
 > | Flag Name            | Flag Value  | Description |
 >|:---------------------:|:-----------:|:------------|
@@ -84,17 +90,17 @@ A set of flags indicating properties or other options associated with this **`NF
 
 These flags are **immutable**: they can only be set during the **`NFTokenMint`** transaction and cannot be changed later.
 
-:memo: (**DEPRECATED**) The `lsfTrustLine` field is useful when the token can be offered for sale for assets other than **XRP** and the issuer charges a `TransferFee`. If this flag is set, then a trust line will be automatically created, when needed, to allow the issuer to receive the appropriate transfer fee. If this flag is not set then an attempt to transfer for token for an asset that the issuer does not have a trustline for will fail.
+:memo: (**DEPRECATED**) The `lsfTrustLine` field is useful when the token can be offered for sale for assets other than **XRP** and the issuer charges a `TransferFee`. If this flag is set, then a trust line will be automatically created, when needed, to allow the issuer to receive the appropriate transfer fee. If this flag is not set, then an attempt to transfer for token for an asset that the issuer does not have a trustline for will fail.
 
 ###### 1.2.1.1.1.2 `TransferFee`
 
-The value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive and a value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%.
+The value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%.
 
 ###### 1.2.1.1.1.3 Taxon Scrambling
 
-An issuer may issue several NFTs with the same taxon; to ensure that NFTs are spread across multiple pages we lightly mix the taxon up by using the sequence (which is not under the issuer's direct control) as the seed for a simple linear congruential generator.
+An issuer may issue several NFTs with the same taxon. To ensure that NFTs are spread across multiple pages, we lightly mix the taxon up by using the sequence (which is not under the issuer's direct control) as the seed for a simple linear congruential generator.
 
-From the [Hull-Dobell theorem](https://en.wikipedia.org/wiki/Linear_congruential_generator) we know that **`f(x)=(m*x+c) mod n`** will yield a permutation of **`[0, n)`** when **`n`** is a power of 2 if **`m`** is congruent to **`1 mod 4`** and **`c`** is odd.
+From the [Hull-Dobell theorem](https://en.wikipedia.org/wiki/Linear_congruential_generator) we know that **`f(x)=(m*x+c) mod n`** yields a permutation of **`[0, n)`** when **`n`** is a power of 2 if **`m`** is congruent to **`1 mod 4`** and **`c`** is odd.
 
 This proposal fixes **`m = 384160001`** and **`c = 2459`**.  **Changing these numbers after this proposal is implemented and deployed would be a breaking change requiring, at a minimum, an amendment and a way to distinguish token IDs that were generated with the old code.**
 
@@ -140,20 +146,20 @@ A URI that points to the data and/or metadata associated with the NFT. This fiel
 
 ##### Retrieving NFToken Data and Metadata
 
-In the interest of (a) minimizing the footprint of an NFT but without sacrificing utility or functionality; and (b) imposing as few restrictions as possible, this specification does not allow an NFT to hold arbitrary data fields. Instead, such data, whether structured or unstructured, is maintained separately and referenced by the NFT. This proposal recommends using one of the following two approaches to provide external references to obtain **`NFToken`** data and/or metadata.
+In the interest of (a) minimizing the footprint of an NFT but without sacrificing utility or functionality, and (b) imposing as few restrictions as possible, this specification does not allow an NFT to hold arbitrary data fields. Instead, such data, whether structured or unstructured, is maintained separately and referenced by the NFT. This proposal recommends using one of the following two approaches to provide external references to obtain **`NFToken`** data and/or metadata.
 
 - `URI` field: We propose an optional `URI` field in the **`NFToken`** object. Implementations MAY choose to use this field to provide an external reference to:
     - The immutable content for `Hash`.
     - Mutable metadata, if any, for the **`NFToken`** object.
 
-The `URI` field is especially useful for referring to non-traditional Peer-to-Peer (P2P) URLs. For example, a `NFTokenMinter` wishing to store **`NFToken`** data and/or metadata using the Inter Planetary File System (IPFS) MAY use `URI` field to refer to data on IPFS in different ways, each of which is suited to different use-cases. For more context on types of IPFS links that can be used to store NFT data, see [here](https://docs.ipfs.io/how-to/best-practices-for-nft-data/#types-of-ipfs-links-and-when-to-use-them).
+The `URI` field is especially useful for referring to non-traditional Peer-to-Peer (P2P) URLs. For example, a `NFTokenMinter` wishing to store **`NFToken`** data and/or metadata using the Inter Planetary File System (IPFS) MAY use `URI` field to refer to data on IPFS in different ways, each of which is suited to different use-cases. For more context on types of IPFS links that can be used to store NFT data, see [Best Practices for NFT Data](https://docs.ipfs.io/how-to/best-practices-for-nft-data/#types-of-ipfs-links-and-when-to-use-them).
 
-- `Domain` field: Alternative to the above approach, issuers of **`NFToken`** objects may set the `Domain` field of their issuing account to the correct domain and offer an API for clients that want to lookup the data and/or metadata associated with a particular NFT. This proposal recommends the use of DNS `TXT` records as a customization point, allowing the issuer to specify the URL to be used by providing a properly-formatted TXT record.
+- `Domain` field: Alternative to the above approach, issuers of **`NFToken`** objects can set the `Domain` field of their issuing account to the correct domain and offer an API for clients that want to lookup the data and/or metadata associated with a particular NFT. This proposal recommends the use of DNS `TXT` records as a customization point, allowing the issuer to specify the URL to be used by providing a properly formatted TXT record.
 
 Note that using this mechanism _requires_ the `NFTokenMinter` to acquire a domain name and set the domain name for their minting account, but does **not** require the `NFTokenMinter` to necessarily operate a server
 or other service to provide the ability to query this data; instead, a `NFTokenMinter` can easily "redirect" queries to a data provider (e.g., to a marketplace, registry or other service).
 
-Implementations should attempt to check for the presence of `URI` field first to retrieve the associated data and/or metadata. In case `URI` field does not exist, implementations should check for the presence of `Domain` field. Nothing happens, if neither of the fields exist. Implementations should be prepared to handle HTTP redirections (e.g., using HTTP responses 301, 302, 307 and 308) from the URI.
+Implementations should attempt check for the presence of `URI` field first to retrieve the associated data and/or metadata. If the `URI` field does not exist, implementations should check for the presence of `Domain` field. Nothing happens, if neither of the fields exist. Implementations should be prepared to handle HTTP redirections (e.g., using HTTP responses 301, 302, 307 and 308) from the URI.
 
 ###### TXT Record Format:
 
@@ -161,17 +167,17 @@ Implementations should attempt to check for the presence of `URI` field first to
 xrpl-nft-data-token-info-v1 IN TXT "https://host.example.com/api/token-info/{:NFTokenID:}"
 ```
 
-The string `{:NFTokenID:}` should be replaced with the requested tokens' **`NFTokenID`**, as a 64 byte hex string when attempting to query information.
+Replace the string `{:NFTokenID:}` with the requested tokens' **`NFTokenID`**, as a 64 byte hex string when attempting to query information.
 
-Implementations should check for the presence of `TXT` records and use those query strings if present. If no string is present, implementations should attempt to use a default URL. Assuming the domain was **example.com**, the default URL this proposal recommends would be:
+Implementations should check for the presence of `TXT` records and use those query strings, if present. If no string is present, attempt to use the default URL. Assuming the domain was **example.com**, the default URL this proposal recommends would be:
 
 ```https://example.com/.well-known/xrpl-nft/{:nft_id:}```
 
 #### The **`NFTokenPage`** ledger entry
 
-This object represents a collection of **`NFToken`** objects owned by the same account. It is important to note that the **`NFToken`** objects themselves reside within this page, instead of in a dedicated object entry in the `SHAMap`. An account can have multiple **`NFTokenPage`** ledger objects, which form a doubly-linked list (DLL).
+This object represents a collection of **`NFToken`** objects owned by the same account. It is important to note that the **`NFToken`** objects themselves reside within this page, instead of in a dedicated object entry in the `SHAMap`. An account can have multiple **`NFTokenPage`** ledger objects, which form a doubly linked list (DLL).
 
-In the interest of minimizing the size of a page and optimizing storage, the `Owner` field is not present since it is encoded as part of the object's ledger identifier (more details in the **`NFTokenPageID`** discussion).
+In the interest of minimizing the size of a page and optimizing storage, the `Owner` field is not present, since it is encoded as part of the object's ledger identifier (more details in the **`NFTokenPageID`** discussion).
 
 ##### Fields
 
@@ -221,7 +227,7 @@ The sequence of the ledger that contains the transaction that most recently modi
 |---------------------|:----------------:|:-----------:|:---------------:|
 | `NFTokens` |:heavy_check_mark:|`object`     | `TOKEN`         |
 
-The collection of **`NFToken`** objects contained in this **`NFTokenPage`** object. This specification places an upper bound of 32 **`NFToken`** objects per page. Objects should be stored in sorted order, from low to high with the low order 96 bits of the `NFTokenID` used as the sorting parameter.
+The collection of **`NFToken`** objects contained in this **`NFTokenPage`** object. This specification places an upper bound of 32 **`NFToken`** objects per page. Objects should be stored in sorted order, from low to high with the low order 96-bit of the `NFTokenID` used as the sorting parameter.
 
 ---
 
@@ -235,7 +241,7 @@ More specifically, and assuming that the function `low96(x)` returns the low 96 
 
 For example, applying the `low96` function to the NFT described before, which had an ID of `000B013A95F14B0044F78A264E41713C64B5F89242540EE208C3098E00000D65` the function `low96` would return `42540EE208C3098E00000D65`.
 
-This curious construct exploits the structure of the SHAMap to allow for efficient lookups of individual **`NFToken`** objects without requiring iteration of the doubly-linked list of **`NFTokenPages`**.
+This curious construct exploits the structure of the SHAMap to allow for efficient lookups of individual **`NFToken`** objects without requiring iteration of the doubly linked list of **`NFTokenPages`**.
 
 ### Example TokenPage JSON
 
@@ -259,7 +265,7 @@ This curious construct exploits the structure of the SHAMap to allow for efficie
 
 ### How do **`NFTokenPage`** objects work?
 
-The page within which an **`NFToken`** entry is stored will be formed as described above. This is needed to find the correct starting point in the doubly-linked list of **`NFTokenPage`** objects if that list is large. This is because it is inefficient to have to traverse the list from the beginning if an account holds thousands of **`NFToken`** objects in hundreds of **`NFTokenPage`** objects.
+The page within which an **`NFToken`** entry is stored is formed as described above. This is needed to find the correct starting point in the doubly linked list of **`NFTokenPage`** objects if that list is large. This is because it is inefficient to have to traverse the list from the beginning if an account holds thousands of **`NFToken`** objects in hundreds of **`NFTokenPage`** objects.
 
 ### Searching an **`NFToken`** object
 
@@ -269,7 +275,7 @@ Compute the **`NFTokenPageID`** using the account of the owner and the **`NFToke
 
 ### Adding an **`NFToken`** object
 
-An **`NFToken`** object can be added by using the same approach to find the **`NFTokenPage`** it should be in and adding it to that page. If after addition the page overflows, find the `next` and `previous` pages (if any) and balance those three pages, inserting a new page as/if needed.
+An **`NFToken`** object can be added by using the same approach to find the **`NFTokenPage`** it should be in and adding it to that page. If after addition the page overflows, find the `next` and `previous` pages (if any) and balance those three pages, inserting a new page as needed.
 
 ### Removing an **`NFToken`** object
 
@@ -292,7 +298,7 @@ The value of the incremental reserve is, as of this writing, 2 XRP. The table be
 ## Transactions
 
 This proposal introduces several new transactions to allow for the minting, burning and trading of NFTs. All transactions introduced by this proposal incorporate the [common transaction fields](https://xrpl.org/transaction-common-fields.html)
-that are shared by all transactions. Common fields are not document in this proposal unless needed because this proposal introduces new possible values for such fields.
+that are shared by all transactions. Common fields are not documented in this proposal unless needed, because this proposal introduces new possible values for such fields.
 
 ## Transactions for minting and burning NFTs on XRPL
 
@@ -454,7 +460,7 @@ This proposal introduces 3 additional fields in an `AccountRoot`:
 
 #### 1.3.1 `NFTokenMinter`
 
-It is likely that issuers may want to issue NFTs from their well-known account while, at the same time wanting to delegate the issuance of such NFTs to a mint or other third party. To enable this use case, this specification introduces a new, optional, field in the `AccountRoot` object.
+It is likely that issuers may want to issue NFTs from their well known account, while, at the same time, wanting to delegate the issuance of such NFTs to a mint or other third party. To enable this use case, this specification introduces a new, optional field in the `AccountRoot` object.
 
 | Field Name    | Required?        |  JSON Type  | Internal Type  |
 |---------------|:----------------:|:-----------:|:--------------:|
@@ -468,11 +474,11 @@ The **`AccountSet`** transaction should be augmented to allow the field to be se
 
 #### 1.3.2 `MintedNFTokens`
 
-To ensure the uniqueness of **`NFToken`** objects, this proposal introduces the `MintedNFTokens` field. This field is used during the **`NFTokenMint`** transaction and used to form the `NFTokenID` of the new object. If this field is not present the value 0 is assumed.
+To ensure the uniqueness of **`NFToken`** objects, this proposal introduces the `MintedNFTokens` field. This field is used during the **`NFTokenMint`** transaction and used to form the `NFTokenID` of the new object. If this field is not present, the value 0 is assumed.
 
 ### 1.3.3 `BurnedNFTokens`
 
-To provide a convenient way to determine how many **`NFToken`** objects issued by an account are still active (i.e., not burned), this proposal introduces the `BurnedNFTokens` field. If this field is not present the value 0 is assumed. The field is incremented whenever a token issued by this account is burned.  So this field will be present and non-zero for any account that has issued at least one token and one or more of those tokens have been burned.
+To provide a convenient way to determine how many **`NFToken`** objects issued by an account are still active (i.e., not burned), this proposal introduces the `BurnedNFTokens` field. If this field is not present, the value 0 is assumed. The field is incremented whenever a token issued by this account is burned.  So this field will be present and non-zero for any account that has issued at least one token and one or more of those tokens have been burned.
 
 :memo: An account for which the difference between the number of minted and burned tokens, as stored in the `MintedNFTokens` and `BurnedNFTokens` fields respectively, is non-zero cannot be deleted.
 
@@ -486,7 +492,7 @@ The **`NFTokenOffer`** ledger entry represents an offer to buy, sell or transfer
 
 #### 1.4.1.1. **`NFTokenOfferID`** Format
 
-The unique ID, a.k.a **`NFTokenOfferID`** of the **`NFTokenOffer`** object is the result of **`SHA512-Half`** of the following values concatenated in order:
+The unique ID, a.k.a **`NFTokenOfferID`**, of the **`NFTokenOffer`** object is the result of **`SHA512-Half`** of the following values concatenated in order:
 
 - The **`NFTokenOffer`** space key; this proposal recommends using the value `0x0074`;
 - The `AccountID` of the account placing the offer; and
@@ -591,9 +597,8 @@ Internal bookkeeping, indicating the page inside the token buy or sell offer dir
 
 Unlike regular offers on XRPL, which are stored sorted by quality in an order book and are automatically matched by an on-ledger mechanism, an **`NFTokenOffer`** is not stored in an order book and will never be automatically matched or executed.
 
-A buyer must _explicitly_ choose to accept an **`NFTokenOffer`** that offers to buy an **`NFToken`**. Similarly, a seller must _explicitly_ choose to accept a specific **`NFTokenOffer`** that offers to buy an **`NFToken`** object that they own.
-
-> Note: An **`NFTokenOffer`** for an **`NFToken`** _may_ be implicitly deleted during an **`NFTokenBurn`** transaction of the **`NFToken`**.
+A buyer must _explicitly_ choose to accept an **`NFTokenOffer`** that offers to sell an **`NFToken`**. Similarly, a seller must _explicitly_ choose to accept a specific **`NFTokenOffer`** that offers to buy an **`NFToken`** object that they own.
+> **Note**: An **`NFTokenOffer`** for an **`NFToken`** _may_ be implicitly deleted during an **`NFTokenBurn`** transaction of the **`NFToken`**.
 
 ### 1.5.1. Locating **`NFTokenOffer`** objects
 
@@ -616,7 +621,7 @@ All three transactions have the generic set of transaction fields, some of which
 
 ### 1.5.4. **`NFTokenCreateOffer`** transaction
 
-The **`NFTokenCreateOffer`** transaction creates either a new `Sell` offer for an **`NFToken`** owned by the account executing the transaction or a new `Buy` offer for **`NFToken`** owned by another account.
+The **`NFTokenCreateOffer`** transaction creates either a new `Sell` offer for an **`NFToken`** owned by the account executing the transaction, or a new `Buy` offer for **`NFToken`** owned by another account.
 
 Each offer costs one incremental reserve.
 
@@ -659,7 +664,7 @@ A set of flags that specifies options or controls the behavior of the transactio
 >|:--------------:|:-----------:|:-------------------------------------------------------------------------------|
 >| `tfSellToken`  | `0x00000001`| If set, indicates that the offer is a sell offer. Otherwise, it is a buy offer. ||
 
-Note that the `Flags` field includes both transaction-specific and generic flags. This proposal only specifies the transaction-specific flags; all currently valid generics flags (e.g., `tfFullyCanonicalSig`) are applicable, but not listed here.
+Note that the `Flags` field includes both transaction-specific and generic flags. This proposal only specifies the transaction-specific flags; all currently valid generic flags (e.g., `tfFullyCanonicalSig`) are applicable, but not listed here.
 
 The transactor **SHOULD NOT** allow unknown flags to be set.
 
@@ -697,7 +702,7 @@ Indicates the time after which the offer will no longer be valid. The value is t
 
 Only valid if the `tfSellToken` flag is set.  If present, indicates that this offer may only be accepted by the specified account (either a broker or a buyer). Attempts by other accounts to accept this offer **MUST** fail.
 
-If succesful, **`NFTokenCreateOffer`** transaction results in the creation of **`NFTokenOffer`** object.
+If successful, **`NFTokenCreateOffer`** transaction results in the creation of **`NFTokenOffer`** object.
 
 ### 1.5.5. **`NFTokenCancelOffer`** transaction
 
@@ -725,7 +730,7 @@ Indicates the new transaction type **`NFTokenCancelOffer`**. The integer identif
 |----------------|:----------------:|:-----------:|:---------------:|
 | `NFTokenOffers`     |:heavy_check_mark:| `array`     | `VECTOR256`     |
 
-An array of ledger entry IDs, each identifying an **`NFTokenOffer`** object, which should be cancelled by this transaction.
+An array of ledger entry IDs, each identifying an **`NFTokenOffer`** object that should be cancelled by this transaction.
 
 It is an error if an entry in this list points to an object that is not an **`NFTokenOffer`** object. It is not an error if an entry in this list points to an object that does not exist.
 
@@ -750,20 +755,20 @@ The mode in which the transaction operates depends on the presence of the `NFTok
 
 If neither of those fields is specified, the transaction is malformed and shall produce a `tem` class error.
 
-The semantics of `brokered` mode are slightly different than one in `direct` mode: The account executing the transaction functions as a broker, bringing the two offers together and causing them to be matched but does not acquire ownership of the involved NFT, which will, if the transaction is successful, be transferred directly from the seller to the buyer.
+The semantics of `brokered` mode are slightly different than one in `direct` mode: the account executing the transaction functions as a broker, bringing the two offers together and causing them to be matched, but does not acquire ownership of the involved NFT, which will, if the transaction is successful, be transferred directly from the seller to the buyer.
 
 #### 1.5.6.2. Execution Details
 
 ##### 1.5.6.2.1. Direct Mode
 
-In `direct` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
+In `direct` mode, an **`NFTokenOfferAccept`** transaction **MUST** fail if:
 
 1. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `buy`
    the **`NFToken`** and the account executing the **`NFTokenOfferAccept`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
 2. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `sell`
    the **`NFToken`** and was placed by an account which is not, at the time of execution, the current owner of the **`NFToken`**.
 3. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `sell`
-   the **`NFToken`** and was placed by an account which is not, at the time of execution, the `Account` in the recipient field of the **`NFTokenOffer`**, if there exist one.
+   the **`NFToken`** and was placed by an account which is not, at the time of execution, the `Account` in the recipient field of the **`NFTokenOffer`**, if one exists.
 4. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction
    would be included has already passed.
 5. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed to buy or sell the **`NFToken`**
@@ -780,7 +785,7 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 
 1. The `buy` **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is owned by the account executing the transaction.
 2. The `sell` **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is owned by the account executing the transaction.
-3. The account which placed the offer to sell the **`NFToken`** is not, at the time of execution the current owner of the corresponding **`NFToken`**.
+3. The account which placed the offer to sell the **`NFToken`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
 4. Either offer (`buy` or `sell`) specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction would be included has already passed.
 5. The `owner` of the `sell` **`NFTokenOffer`** is the same account as the `owner` of the `buy` **`NFTokenOffer`**. In other words, the **`NFToken`** cannot be sold to the account that currently owns it.
 6. The account, that submitted the **`NFTokenOfferAccept`**  transaction, has a different address from what is specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
@@ -791,7 +796,7 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 |--------------------|:----------------:|:-----------:|:---------------:|
 | `TransactionType`  |:heavy_check_mark:|  `string`   |  `UINT16`       |
 
-Indicates the new transaction type **`NFTokenOfferAccept`**. The sequence number of a previous **`NFTokenCreateOffer`** transaction. The integer identifier is `29`.
+Indicates the transaction type **`NFTokenOfferAccept`**. The sequence number of a previous **`NFTokenCreateOffer`** transaction. The integer identifier is `29`.
 
 | Field Name   | Required?        |  JSON Type  | Internal Type   |
 |--------------|:----------------:|:-----------:|:---------------:|
@@ -813,9 +818,9 @@ Identifies the **`NFTokenOffer`** that offers to buy the **`NFToken`**.
 |:------------:|:----------------:|:----------------------:|:---------------:|
 | `NFTokenBrokerFee`     |                  | `object` or `string`   |  `AMOUNT`       |
 
-This field is only valid in brokered mode and specifies the amount that the broker will keep as part of their fee for bringing the two offers together; the remaining amount will be sent to the seller of the **`NFToken`** being bought. If specified, the fee must be such that, prior to accounting for the transfer fee charged by the issuer, the amount that the seller would receive is at least as much as the amount indicated in the sell offer.
+This field is only valid in brokered mode. It specifies the amount that the broker will keep as part of their fee for bringing the two offers together; the remaining amount will be sent to the seller of the **`NFToken`** being bought. If specified, the fee must be such that, prior to accounting for the transfer fee charged by the issuer, the amount that the seller would receive is at least as much as the amount indicated in the sell offer.
 
-This functionality is intended to allow the `owner` of an **`NFToken`** to offer their token for sale to a third party broker, who may then attempt to sell the **`NFToken`** on for a larger amount, without the broker having to own the **`NFToken`** or custody funds.
+This functionality is intended to allow the `owner` of an **`NFToken`** to offer their token for sale to a third party broker, who may then attempt to sell the **`NFToken`** for a larger amount, without the broker having to own the **`NFToken`** or custody funds.
 
 :memo: If both offers are for the same asset, it is possible that the order in which funds are transferred might cause a transaction that would succeed to fail due to an apparent lack of funds. To ensure deterministic transaction execution and maximimize the chances of successful execution, this proposal requires that the account attempting to buy the **`NFToken`** is debited first and that funds due to the broker are credited _before_ crediting the seller or issuer.
 
