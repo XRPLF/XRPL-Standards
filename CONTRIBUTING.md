@@ -17,7 +17,7 @@ Patent – a commitment to license on a royalty-free basis their essential paten
 
 The work of the XRP Ledger community is being done under the framework of a W3C Community Group and is therefore guided by the [processes](https://www.w3.org/community/about/agreements/) laid out by the W3C for these groups.
 
-Also influencing this process is the well-established and popular IETF RFC process.
+Also influencing this process is the well-established and popular [IETF RFC process](https://www.ietf.org/standards/process/informal/).
 
 ## Process
 

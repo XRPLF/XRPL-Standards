@@ -1,7 +1,6 @@
 # XRP Ledger Standards / Drafts
 
-To ensure interoperability between XRP (Ledger) applications, tools, platforms, pursuing a great user experience, it would be best if the
-community (developers, users) agree on certain implementations.
+To ensure interoperability between XRP (Ledger) applications, tools, platforms, pursuing a great user experience, the community (developers, users, etc.) _should_ agree on certain specifications.
   
 # [Contributing](./CONTRIBUTING.md)
 
