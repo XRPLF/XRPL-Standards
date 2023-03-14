@@ -3,14 +3,13 @@
 To ensure interoperability between XRP (Ledger) applications, tools, platforms, pursuing a great user experience, it would be best if the
 community (developers, users) agree on certain implementations.
   
-# Contributing / Workflow
+# [Contributing](./CONTRIBUTING.md)
 
-### All drafts start as [**DISCUSSIONS**](https://github.com/xrp-community/standards-drafts/discussions).
-
-Drafts (discussions) are considered work in progress, and are up for [discussion (please discuss, ask, suggest, add, ...)](https://github.com/xrp-community/standards-drafts/discussions). Once settled on the standard, the discussion will be converted to an **ISSUE**, to be referred to in a **PULL REQUEST** adding the standard to the **CODE** (commit). Now the issue can be resolved.
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 # Directory
-When a standard moves to a folder + file(s) in the Code section of this repository, it will be added to the `standards.toml` file:
+
+When a standard moves to a folder + file(s) in the Code section of this repository, it should be added to the `standards.toml` file:
 https://github.com/XRPLF/XRPL-Standards/blob/master/standards.toml
 
 # Numbering
@@ -19,9 +18,8 @@ Standards must be numbered and referenced in the following format: XLS-# where #
 
 # Revisions
 
-If a standard requires revision a separator '.' may be added. E.g. XLS-1.1
+If a standard requires a substantive revision and using the same number would result in confusion, a separator '.' may be added, e.g. `XLS-1.1`.
 
 # Drafts
 
-A standard which has not yet been adopted may 'hold' a Standard Number but must be referred to with a __d__ suffix until it becomes a full standard. For example XLS-10d or XLS-1.2d
-
+A standard which has not yet been adopted may 'hold' a Standard Number but must be referred to with a __d__ suffix until it becomes a full standard, e.g. `XLS-10d` or `XLS-1.2d`.
