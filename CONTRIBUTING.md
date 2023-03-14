@@ -51,17 +51,7 @@ Notice that a Draft is not a [rubber-stamp](https://idioms.thefreedictionary.com
 
 To publish a new Draft, submit a Pull Request to this repo with a new folder and a new Markdown file. The folder MUST follow the naming convention `XLS-0000d-{title}`, `0000` is the unique number referencing the XLS, `d` indicates that the document is a Draft, and `title` is a lower case title with spaces replaced by hyphens (`-`). The submission should have front-matter (similar to GitHub pages rendered from Markdown) specifying at least a `title`, `type`, and `revision` (an integer, starting at 1 and incrementing with each revision of the RFC). The `type` MUST have the value `draft`.
 
-Example:
-```markdown
-\---
-title: Encoding for XRPL Destination Information
-type: draft
-revision: 1
-\---
-# Encoding for XRPL Destination Information
-
-Lorem ipsum dolor sit amet
-```
+Use the following template when creating the Markdown file: [xls-template.md](./xls-template.md)
 
 Assuming there is consensus to publish, one of the project maintainers will review the submission and confirm the document's RFC number, often making a follow-up commit to the PR which renames the file as appropriate.
 
