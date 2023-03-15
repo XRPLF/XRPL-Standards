@@ -25,17 +25,15 @@ The XRPL-Standards process attempts to be easy to use, but also rigorous enough 
 
 ### Gathering Feedback Before Submitting
 
-Please gather community input before opening a PR. Collecting such feedback may be helpful to refine your concept.
+Please gather community input before opening a PR. Collecting such feedback helps to refine your concept. This step is required.
 
 Start a [Discussion](https://github.com/XRPLF/XRPL-Standards/discussions) under this repo.
-
-You can also have a conversation with other community members in the [XRP Ledger Developers Discord server](https://xrpldevs.org/).
 
 Discussions are suitable for early work-in-progress: ask, suggest, add, and make sweeping changes.
 
 Once settled, the discussion should be converted to a **PULL REQUEST** adding the standard to the repo with one or more commits. At this time, the discussion should be archived and closed from further comments, with any further comments being posted on the PR for fine-tuning and alignment with implementation (as appropriate).
 
-When opening a PR, there are two document types: *Drafts* and *Candidate Specifications*. The type and status of any particular document has no bearing on the priority of that document, although typically the further along in the process, the more likely it is that any particular XLS will be implemented.
+When opening a PR, there are two document types: *Drafts* and *Candidate Specifications*. The type and status of any particular document has no bearing on the priority of that document. Typically, the further along in the process, the more likely it is that any particular XLS will be implemented or adopted.
 
 ### Drafts
 
