@@ -108,6 +108,3 @@ No backward compatibility issues found.
 
 Needs discussion.
 
-## Copyright
-
-Copyright and related rights waived via [CC0](../LICENSE.md).
