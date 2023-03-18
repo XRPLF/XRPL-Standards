@@ -1,14 +1,20 @@
 ---
 title: <The title is a few words, not a complete sentence>
 type: draft
-revision: 1
 description: <Description is one full (short) sentence>
-author: <a comma separated list of the author's or authors' name + GitHub username (in parenthesis), or name and email (in angle brackets).  Example, FirstName LastName (@GitHubUsername), FirstName LastName <foo@bar.com>, FirstName (@GitHubUsername) and GitHubUsername (@GitHubUsername)>
+author: <a comma separated list of the author(s)>
+# The format of each author should be one of the following:
+# - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
+# - Author's name, author's affiliation + email (in angle brackets)
+#
+# Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
 requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
 ---
 
 <!--
   This is the suggested template for new XLS specifications. After you have filled in the requisite fields, please delete these comments.
+  
+  The requirements to sections depend on the type of proposal. For example, amendments require some information that may not be relevant for other kinds of proposals. Please adapt the template as appropriate.
 
   The title should be 44 characters or less.
 
@@ -46,6 +52,34 @@ requires: <XLS number(s)> # Only required when you reference an XLS in the `Spec
 -->
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
+
+<!--
+The following is an example of how you can document new object types and fields:
+
+#### The **`<object name>`** object
+
+<High level overview, explaining the object>
+
+##### Fields
+
+<Any explanatory text about the fields overall>
+
+---
+
+| Field Name        | Required?        |  JSON Type      | Internal Type     |
+|-------------------|:----------------:|:---------------:|:-----------------:|
+| `<field name>` | :heavy_check_mark: | `<string, number, object, array, boolean>` | `<UINT128, UINT160, UINT256, ...>` |
+
+<Any explanatory text about specific fields>
+
+###### Flags
+
+> | Flag Name            | Flag Value  | Description |
+>|:---------------------:|:-----------:|:------------|
+>| `lsf<flag name>` | `0x0001`| <flag description> |
+
+<Any explanatory text about specific flags>
+-->
 
 ## Rationale
 
