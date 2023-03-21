@@ -1,17 +1,17 @@
 # CONTRIBUTING
 
-Contributions to the XRPL-Standards repo are free, open source, and follow the following document publishing process.
+Contributions to this repo are free, open-source, and follow the process outlined below:
 
-Any XRPL-Standards document can be referred to interchangeably as an "XLS" (XRPL Standard) or "document".
+Any XRPL-Standards document can be referred to interchangeably as an "XLS", "XRPL Standard", or "document".
 
 ## Summary
 
-Copyright on all content is subject to the terms of the [MIT License](LICENSE).
+Copyright on all content is subject to the terms of the [license](LICENSE).
 
 All contributors grant everyone:
 
-Copyright – a royalty-free license to use the copyrights for their contributions.
-Patent – a commitment to license on a royalty-free basis their essential patent claims reading on their contributions.
+Copyright: a royalty-free license to use the copyrights for their contributions.
+Patent: a commitment to license on a royalty-free basis their essential patent claims reading on their contributions.
 
 ## Background
 
@@ -29,6 +29,10 @@ Please gather community input before opening a PR. Collecting such feedback help
 Start a [Discussion](https://github.com/XRPLF/XRPL-Standards/discussions) under this repo.
 
 The title should follow the naming convention `XLS-0000d {Title}`, where `0000` is a unique number for the XLS, `d` indicates that the document is a Draft (in progress), and `{Title}` is a descriptive title for the proposed document.
+
+Use the next number that has not yet been used. If a conflict occurs, it will be fixed by a maintainer or editor. Maintainers or editors also reserve the right to remove or re-number proposals as necessary.
+
+The number is important, as it will be used to reference features and ideas throughout the community.
 
 Discussions are suitable for early work-in-progress: ask, suggest, add, and make sweeping changes.
 
