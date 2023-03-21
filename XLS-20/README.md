@@ -67,9 +67,8 @@ An **`NFToken`** object can have the following required and optional fields. Not
 
 This composite field uniquely identifiers a token; it contains:
 * a set of 16 bits that identify flags or settings specific to the NFT
-* 16 bits that encode the transfer fee associated with this token
-*if
-any
+* 16 bits that encode the transfer fee associated with this token,
+if any
 * the 160-bit account identifier of the issuer
 * a 32-bit issuer-specified [taxon](https://www.merriam-webster.com/dictionary/taxon)
 * an automatically generated monotonically increasing 32-bit sequence number.
@@ -159,7 +158,7 @@ The `URI` field is especially useful for referring to non-traditional Peer-to-Pe
 Note that using this mechanism _requires_ the `NFTokenMinter` to acquire a domain name and set the domain name for their minting account, but does **not** require the `NFTokenMinter` to necessarily operate a server
 or other service to provide the ability to query this data; instead, a `NFTokenMinter` can easily "redirect" queries to a data provider (e.g., to a marketplace, registry or other service).
 
-Implementations should attempt check for the presence of `URI` field first to retrieve the associated data and/or metadata. If the `URI` field does not exist, implementations should check for the presence of `Domain` field. Nothing happens, if neither of the fields exist. Implementations should be prepared to handle HTTP redirections (e.g., using HTTP responses 301, 302, 307 and 308) from the URI.
+Implementations should check for the presence of `URI` field first to retrieve the associated data and/or metadata. If the `URI` field does not exist, implementations should check for the presence of `Domain` field. Nothing happens, if neither of the fields exist. Implementations should be prepared to handle HTTP redirections (e.g., using HTTP responses 301, 302, 307 and 308) from the URI.
 
 ###### TXT Record Format:
 
@@ -702,7 +701,7 @@ Indicates the time after which the offer will no longer be valid. The value is t
 
 Only valid if the `tfSellToken` flag is set.  If present, indicates that this offer may only be accepted by the specified account (either a broker or a buyer). Attempts by other accounts to accept this offer **MUST** fail.
 
-If successful, **`NFTokenCreateOffer`** transaction results in the creation of **`NFTokenOffer`** object.
+If successful, the **`NFTokenCreateOffer`** transaction results in the creation of an **`NFTokenOffer`** object.
 
 ### 1.5.5. **`NFTokenCancelOffer`** transaction
 
@@ -788,7 +787,7 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 3. The account which placed the offer to sell the **`NFToken`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
 4. Either offer (`buy` or `sell`) specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction would be included has already passed.
 5. The `owner` of the `sell` **`NFTokenOffer`** is the same account as the `owner` of the `buy` **`NFTokenOffer`**. In other words, the **`NFToken`** cannot be sold to the account that currently owns it.
-6. The account, that submitted the **`NFTokenOfferAccept`**  transaction, has a different address from what is specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
+6. The account that submitted the **`NFTokenOfferAccept`** transaction has a different address from the address specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
 
 #### 1.5.6.3. Fields
 
