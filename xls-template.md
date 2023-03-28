@@ -9,6 +9,7 @@ author: <a comma separated list of the author(s)>
 #
 # Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
 requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
+core_protocol_changes_required: <true/false> # Indicates whether the proposal requires any changes to the core protocol.
 ---
 
 <!--

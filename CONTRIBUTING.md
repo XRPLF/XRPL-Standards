@@ -36,7 +36,11 @@ The number is important, as it will be used to reference features and ideas thro
 
 Discussions are suitable for early work-in-progress: ask, suggest, add, and make sweeping changes.
 
-Next, the discussion should be converted to a **PULL REQUEST** which adds the standard, as a Markdown file, to the repo with one or more commits.
+When a discussion has produced a well-refined standard, authors should post a comment to the discussion warning that it will be closed in a few days. This allows time (those engaged with the discussion) to submit final commentary. Then, the standard's author may close the discussion from further comment.
+
+When the time has elapsed, the author should move from discussion to a PULL REQUEST.
+
+In the pull request, the standard should be added as a Markdown file into the repository.
 
 The content of the discussion should be edited into a summary, with a link to the PR.
 
@@ -50,6 +54,7 @@ When opening a PR, there are two document types: *Drafts* and *Candidate Specifi
 
 A _Draft_ is a document that proposes some new feature, protocol or idea related to the XRP Ledger. The criteria for getting the document merged is minimal: project maintainers will review the document to ensure style conformance and applicability, but will otherwise not require editorial fixes before allowing it to be published.
 
+A document does not need to have an implementation in order to become a Draft. A Draft may or may not have implementation(s) available; no code is required prior to the Draft being published.
 A Draft is often stable enough for people to experiment with, but has not necessarily been endorsed by the entire community. When there are competing Drafts that address the same problem in different ways, all such Drafts can continue to be refined, promoted, and used independently, without any blocking. Implementors can create software to implement this type of standard into their codebase to explore how it works in a real world setting.
 
 Any, or all, competing Drafts may graduate into a Candidate Specification.
@@ -76,9 +81,11 @@ Assuming there is consensus to publish, a maintainer will remove the `d` from th
 
 Once published as a Candidate Specification, no further substantive changes are allowed under the same XLS number.
 
+For Specifications that require changes or implementation in the XRP Ledger server software and protocol, the Candidate Specification cannot be published until the relevant change has been merged into [the software's `master` branch](https://github.com/XRPLF/rippled/tree/master).
+
 #### Errata
 
-The community may discover errors in a Candidate Specification. In these circumstances, it is possible to update the document to fix typos or clarify the original meaning of the document. In these circumstances, the `revision` number should be incremented.
+The community may discover errors in a Candidate Specification. In these circumstances, it is possible to update the document to fix typos or clarify the original meaning of the document.
 
 ### Deprecated or Rejected XLSs
 
