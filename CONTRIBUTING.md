@@ -38,7 +38,7 @@ Discussions are suitable for early work-in-progress: ask, suggest, add, and make
 
 When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that it will be closed in a few days. This allows time (for those engaged with the discussion) to submit any final commentary. 
 
-When the time has elapsed, the author should move from discussion to a PULL REQUEST.
+When the time has elapsed, the standard's author must summarize the discussion in a comment and may close the discussion to further comments. Then, the author should move from discussion to a PULL REQUEST.
 
 In the pull request, the standard should be added as a Markdown file into the repository.
 
