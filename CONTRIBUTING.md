@@ -36,7 +36,7 @@ The number is important, as it will be used to reference features and ideas thro
 
 Discussions are suitable for early work-in-progress: ask, suggest, add, and make sweeping changes.
 
-When a discussion has produced a well-refined standard, authors should post a comment to the discussion warning that it will be closed in a few days. This allows time (those engaged with the discussion) to submit final commentary. Then, the standard's author may close the discussion from further comment.
+When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that it will be closed in a few days. This allows time (for those engaged with the discussion) to submit any final commentary. 
 
 When the time has elapsed, the author should move from discussion to a PULL REQUEST.
 
