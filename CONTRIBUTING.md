@@ -38,11 +38,10 @@ Discussions are suitable for early work-in-progress: ask, suggest, add, and make
 
 When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that it will be closed in a few days. This allows time (for those engaged with the discussion) to submit any final commentary. 
 
-When the time has elapsed, the standard's author must summarize the discussion in a comment and may close the discussion to further comments. Then, the author should move from discussion to a PULL REQUEST.
+When the fair notice time has elapsed, the author should move from discussion to Draft by opening a PULL REQUEST.
 
-In the pull request, the standard should be added as a Markdown file into the repository.
 
-The content of the discussion should be edited into a summary, with a link to the PR.
+The standard's author must edit and replace the post with a summary and a link to the PR.
 
 The last comment on the discussion should also be a link to the PR.
 
@@ -75,9 +74,8 @@ A _Candidate Specification_ is a document that was previously a Draft that is co
 
 #### Publishing a Candidate Specification
 
-When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification.
+When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification by making a PR to remove the `d` from the document folder name and update the `type` to `candidate-specification`.
 
-Assuming there is consensus to publish, a maintainer will remove the `d` from the document name, and update the `type` to `candidate-specification`.
 
 Once published as a Candidate Specification, no further substantive changes are allowed under the same XLS number.
 
