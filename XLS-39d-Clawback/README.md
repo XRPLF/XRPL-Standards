@@ -24,8 +24,8 @@ Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens
 - Issuers that are restricted from issuing on ledger because of regulatory requirements requiring the ability to clawback funds will be able to issue tokens.
 - By being able to "clawback" issuers can ensure that the "on-chain" view is representative of the balance.
 - Compared to other on-ledger features (e.g. freeze), clawback is minimal and trivial to implement.
-- Clawback is implemented as an extension of the existing freeze feature, meaning that clawback can be toggled on/off from an `TrustLine` level. It also makes sense to bundle these two features to serve specific regulatory needs.
-- By relying on the freeze flag, Clawback ensures that issuers who have enabled `lsfNoFreeze` will continue to be unable to access holder's funds, even after the introduction of the clawback feature. This reinforces trust among token holders, as they can be confident that their funds will remain secure and untouched.
+- `Clawback` is implemented as an extension of the existing freeze feature, meaning that clawback can be toggled on/off from an `TrustLine` level. It also makes sense to bundle these two features to serve specific regulatory needs.
+- By relying on the freeze flag, `Clawback` ensures that issuers who have enabled `lsfNoFreeze` will continue to be unable to access holder's funds, even after the introduction of the clawback feature. This reinforces trust among token holders, as they can be confident that their funds will remain secure and untouched.
 
 
 **Disadvantages**
@@ -123,7 +123,7 @@ Usually, when you want to clawback funds from a trustline, you have to freeze th
 
 #### Execution
 
-In execution, this transaction would freeze the trustline by setting the `Flag` to 1, and claw back at most **314.159 FOO** issued by `rp6abvbTbjoce8ZDJkT6snvxTZSYMBCC9S` and held by `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW`. If `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW` did not have a trustline set up or that trustline was set to `0` then the error `tecNO_LINE` would be returned and a fee would be consumed.
+In execution, this transaction would freeze the trustline by setting the `Flag` to `1`, and claw back at most **314.159 FOO** issued by `rp6abvbTbjoce8ZDJkT6snvxTZSYMBCC9S` and held by `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW`. If `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW` did not have a trustline set up or that trustline was set to `0` then the error `tecNO_LINE` would be returned and a fee would be consumed.
 
 ### 1.3. Account Root modifications
 
