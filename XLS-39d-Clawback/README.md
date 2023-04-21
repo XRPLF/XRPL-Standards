@@ -159,7 +159,8 @@ No backward compatbility issues found
 ## 5. Test Cases
 Test cases need to ensure the following:
 
-- Verify the `Clawback` request fields to ensure the issuer is clawing back from themself
+- The account that signs and submits `Clawback` transaction must be the token issuer 
+- Token issuer cannot clawback from themselves
 - Clawback can only be successful on the trustlines that have been already frozen, or, the `Clawback` has set the `tfSetFreeze` flag 
 - The `tfSetFreeze` and `tfClearFreeze` flags of the `Clawback` transaction perform the intended freeze behavior on the trustline
 - `Clawback` adheres to account flags `lsfGlobalFreeze` and `lsfNoFreeze`
