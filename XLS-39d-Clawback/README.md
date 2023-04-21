@@ -38,6 +38,9 @@ Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens
 Jurisdictions may require issuers of digital assets to have a way to recover funds in certain circumstances. The `Clawback` feature can provide a way to comply with these regulations.
 
 The `Clawback` feature is designed to serve as an extension of the freeze flag, as freezing a trustline is typically a precursor to a clawback action. By making `Clawback` dependent on freeze, issuers of digital assets are provided with an additional layer of control and security over their assets. The purpose of `Clawback` is to provide issuers with a mechanism to recover funds that have been issued in error, to protect against fraudulent activities, to comply with regulatory requirements, and to maintain stability. 
+
+`Clawback` is incorporated into freeze because, from the perspective of the token holder, the impact of `Clawback` is comparable to that of freeze. In particular, token holders who have already frozen trustlines would not be concerned by the introduction of the `Clawback` feature, as their funds are already inaccessible. Therefore, from the perspective of the holder, the presence or absence(after claw back) of funds in their frozen trustline is unsignficant. By tying `Clawback` to freeze, issuers can minimize the potential impact on token holders and avoid creating unnecessary concern. This approach provides issuers with greater flexibility and control over their assets, while also preserving the trust and confidence of token holders in the ecosystem.
+
 ## 3. Specification
 
 ### 3.1. On-Ledger Data Structures
@@ -149,12 +152,11 @@ With the addition of this field, the `Amount` field is now *optional*. But, eith
 
 ---
 
-## 4. Rationale
-`Clawback` is incorporated into freeze because, from the perspective of the token holder, the impact of `Clawback` is comparable to that of freeze. In particular, token holders who have already frozen trustlines would not be concerned by the introduction of the `Clawback` feature, as their funds are already inaccessible. Therefore, from the perspective of the holder, the presence or absence(after claw back) of funds in their frozen trustline is unsignficant. By tying `Clawback` to freeze, issuers can minimize the potential impact on token holders and avoid creating unnecessary concern. This approach provides issuers with greater flexibility and control over their assets, while also preserving the trust and confidence of token holders in the ecosystem.
-## 5. Backwards Compatibility
+
+## 4. Backwards Compatibility
 No backward compatbility issues found
 
-## 6. Test Cases
+## 5. Test Cases
 Test cases need to ensure the following:
 
 - Verify the `Clawback` request fields to ensure the issuer is clawing back from themself
