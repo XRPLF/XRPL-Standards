@@ -1,14 +1,14 @@
 <pre>
   Title:        <b>Clawback Support</b>
+  Description:  Extending clawback functionality into freeze
   Revision:     <b>2</b> (2023-4-19)
-
 <hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
                 <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
+<hr>  Requires:     XLS 39
+<hr>  core_protocol_changes_required:     true
 </pre>
 
-# 1. Clawback Support
-
-## 1.1. Abstract
+## Abstract
 
 Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets. 
 
@@ -17,7 +17,7 @@ Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens
            support _cannot_ be used to claw back XRP.**                                        
 ----------------------- -------------------------------------------------------
 
-### 1.1.1. Advantages and Disadvantages
+### Advantages and Disadvantages
 
 **Advantages**
 
@@ -34,25 +34,30 @@ Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens
 - Issuers now get additional power, which may be concerning to token holders.
 - Requires additional documentation, including highlighting the fact that clawback cannot be applied to XRP.
 
-## 1.2. Creating and Transferring Tokens on XRPL
+## Motivation
+Jurisdictions may require issuers of digital assets to have a way to recover funds in certain circumstances. The `Clawback` feature can provide a way to comply with these regulations.
 
-### 1.2.1. On-Ledger Data Structures
+The `Clawback` feature is designed to serve as an extension of the freeze flag, as freezing a trustline is typically a precursor to a clawback action. By making `Clawback` dependent on freeze, issuers of digital assets are provided with an additional layer of control and security over their assets. The purpose of `Clawback` is to provide issuers with a mechanism to recover funds that have been issued in error, to protect against fraudulent activities, to comply with regulatory requirements, and to maintain stability. 
+
+`Clawback` is incorporated into freeze because, from the perspective of the token holder, the impact of `Clawback` is comparable to that of freeze. In particular, token holders who have already frozen trustlines would not be concerned by the introduction of the `Clawback` feature, as their funds are already inaccessible. Therefore, from the perspective of the holder, the presence or absence(after claw back) of funds in their frozen trustline is unsignficant. By tying `Clawback` to freeze, issuers can minimize the potential impact on token holders and avoid creating unnecessary concern. This approach provides issuers with greater flexibility and control over their assets, while also preserving the trust and confidence of token holders in the ecosystem.
+## Specification
+
+### On-Ledger Data Structures
 
 This proposal introduces no new on ledger structures.
 
-## Transactions
 
-This proposal introduces one new transaction: `Clawback`:
+### Transactions
+This proposal introduces one new transaction: `Clawback`
 
-### The **`Clawback`** transaction
-
+#### `Clawback` transaction
 The **`Clawback`** transaction modifies a trustline object, by adjusting the balance accordingly and, if instructed to, by changing relevant flags. If possible (i.e. if the `Clawback` transaction would leave the trustline is in the "default" state), the transaction will also remove the trustline.
 
 **An counterparty can be clawed back if and only if the trustline has been frozen.** There are two ways to enable freeze on a trustline, either through a `TrustSet` or `Clawback` where the `Flags` field is set accordingly. If a clawback transaction is attempted on a trustline that has not been frozen, the transaction will not be allowed and will return with an error code `tecNO_PERMISSION`.
 
 The transaction supports all the existing "common" fields for a transaction.
 
-#### Transaction-specific Fields
+##### Transaction-specific Fields
 
 | Field Name          | Required?        |  JSON Type    | Internal Type     |
 |---------------------|:----------------:|:-------------:|:-----------------:|
@@ -97,7 +102,7 @@ Usually, when you want to clawback funds from a trustline, you have to freeze th
 
 ---
 
-## Example **`Clawback`** transaction
+#### Example **`Clawback`** transaction
 
 ```
 {
@@ -121,19 +126,17 @@ Usually, when you want to clawback funds from a trustline, you have to freeze th
 }
 ```
 
-#### Execution
-
 In execution, this transaction would freeze the trustline by setting the `Flag` to `1`, and claw back at most **314.159 FOO** issued by `rp6abvbTbjoce8ZDJkT6snvxTZSYMBCC9S` and held by `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW`. If `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW` did not have a trustline set up or that trustline was set to `0` then the error `tecNO_LINE` would be returned and a fee would be consumed.
 
-### 1.3. Account Root modifications
+### Account Root modifications
 
 This proposal does not introduce any new flags for the clawback functionality. But, if the issuer has already set the `lsfNoFreeze` flag, then it means that they will not be able to clawback either.
 
-### 1.4 Amendment
+### Amendment
 
 This transaction will require an amendment. The proposed name is `XLS-39-Clawback`.
 
-### 1.5 Compatibility with Compact Fungible Token (XLS-33d)
+### Compatibility with Compact Fungible Token (XLS-33d)
 The Compact Fungible Token(CFT) proposes another token type. The clawback functionality can be extended to CFT because it supports the freeze feature, just like trustline. With CFT, the issuer can choose to freeze individual token holder's balance. If clawback is updated in order to accomodate for this new token, the `Clawback` transaction introduces a new field named `CFTokenAmount`:
 
 ---
@@ -147,3 +150,16 @@ The `CFTokenAmount` encompasses `CFTokenIssuanceID` and `Value` to indicate the 
 With the addition of this field, the `Amount` field is now *optional*. But, either one of `CFTokenAmount` or `Amount` must be specified in the `Clawback` transaction, otherwise `temMALFORMED` is returned from the transaction.
 
 ---
+
+## Backwards Compatibility
+No backward compatbility issues found
+
+## Test Cases
+Test cases need to ensure the following:
+
+- Verify the `Clawback` request fields to ensure the issuer is clawing back from themself
+- Clawback can only be successful on the trustlines that have been already frozen, or, the `Clawback` has set the `tfSetFreeze` flag 
+- The `tfSetFreeze` and `tfClearFreeze` flags of the `Clawback` transaction perform the intended freeze behavior on the trustline
+- `Clawback` adheres to account flags `lsfGlobalFreeze` and `lsfNoFreeze`
+- The issuer is only able to claw back the specific amount of funds that specified in the transaction, but can't exceed the maximum amount of funds the holder has
+- Test that the `Clawback` feature does not interfere with any other features of the token, such as Offers
