@@ -1,7 +1,7 @@
 <pre>
   Title:        <b>Clawback Support</b>
   Description:  Extending clawback functionality into freeze
-  Revision:     <b>3</b> (2023-4-25)
+  Revision:     <b>4</b> (2023-4-26)
 <hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
                 <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
 <hr>  Requires:     XLS 39
@@ -24,9 +24,9 @@ Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens
 - Issuers that are restricted from issuing on ledger because of regulatory requirements requiring the ability to clawback funds will be able to issue tokens.
 - By being able to "clawback" issuers can ensure that the "on-chain" view is representative of the balance.
 - Compared to other on-ledger features (e.g. freeze), clawback is minimal and trivial to implement.
-- `Clawback` serves as an extension of the existing freeze feature, meaning that clawback can be toggled on/off from an `TrustLine` level. It also makes sense to bundle these two features to serve specific regulatory needs. 
+- `Clawback` is disabled by default, this gives token holders more confidence that they won't be clawed back randomly. 
+- Once enabled, `Clawback` serves as an extension of the existing freeze feature, meaning that clawback can be toggled on/off from an `TrustLine` level. It also makes sense to bundle these two features to serve specific regulatory needs. 
 - By relying on the freeze flag, `Clawback` ensures that issuers who have enabled `lsfNoFreeze` will continue to be unable to access holder's funds, even after the introduction of the clawback feature. This reinforces trust among token holders, as they can be confident that their funds will remain secure and untouched.
-- The issuer has the option to opt-out Clawback through an account level setting
 
 
 **Disadvantages**
@@ -60,9 +60,11 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 
 | Flag Name       |  Flag Value  |
 |:---------------:|:------------:|
-| `lsfNoClawback` | `0x02000000` | 
+| `lsfAllowClawback` | `0x02000000` | 
 
-Clawback is enabled by default. If the issuer wants to disable it, they must set this flag through an `AccountSet` transaction. Once set, the setting cannot be reverted and the issuer loses the ability to clawback permanently. 
+Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecHAS_OBLIGATIONS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on frozen trustlines.
+
+If the account attempts to set `lsfAllowClawback` while `lsfNoFreeze` is set, the transaction will return `tecNO_PERMISSION` because clawback cannot be enabled on an account that has already disclaimed the ability to freeze trustlines.
 
 
 ### 3.3. Transactions
@@ -71,7 +73,7 @@ This proposal introduces one new transaction: `Clawback`
 #### 3.3.1. `Clawback` transaction
 The **`Clawback`** transaction modifies a trustline object, by adjusting the balance accordingly and, if instructed to, by changing relevant flags. If possible (i.e. if the `Clawback` transaction would leave the trustline is in the "default" state), the transaction will also remove the trustline.
 
-**An counterparty can be clawed back if and only if the trustline has been frozen and `lsfNoClawback` is not set.** There are two ways to enable freeze on a trustline, either through a `TrustSet` or `Clawback` where the `Flags` field is set accordingly. If a clawback transaction is attempted on a trustline that has not been frozen, the transaction will not be allowed and will return with an error code `tecNO_PERMISSION`.
+**An counterparty can be clawed back if and only if the trustline has been frozen and `lsfAllowClawback` is set.** There are two ways to enable freeze on a trustline, either through a `TrustSet` or `Clawback` where the `Flags` field is set accordingly. If a clawback transaction is attempted on a trustline that has not been frozen, the transaction will not be allowed and will return with an error code `tecNO_PERMISSION`.
 
 The transaction supports all the existing "common" fields for a transaction.
 
@@ -154,9 +156,7 @@ This transaction will require an amendment. The proposed name is `XLS-39-Clawbac
 
 ## 4. Rationale
 
-By default, `Clawback` is activated and an issuer would need to manually set `lsfNoClawback` to opt-out of this feature. If `Clawback` was not enabled by default, the issuer would need to follow extra steps to ensure their owner directory is empty before enabling `Clawback`, which could create confusion and alignment issues with the current implementation of freeze. To avoid such complications, it is best to keep `Clawback` enabled by default, especially as we expand it into Compact Fungible Tokens (CFT). This would ensure that both features share a similar default setting and minimize potential confusion or issues down the line.
-
-While it may seem desirable to have these features disabled by default for the benefit of the token holder, it is important to prioritize design and usability considerations. The current practice of having freeze enabled by default has already been established and implemented, thus, clawback should follow this practice as well. Furthermore, there are already sufficient precautions in place, such as requiring the trustline to be frozen before `Clawback` can be done. These measures are designed to mitigate potential negative impact on the token holder while also ensuring the efficiency of the `Clawback` feature.
+Clawback is disabled by default and requires the issuer to have an empty owner directory(no existing trustlines, offers, etc) before they are allowed to enable the feature. This is meant to be a conservative design, where the issuer needs to go through the major effort in order to enable this feature.
 
 ---
 
