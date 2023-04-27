@@ -175,3 +175,8 @@ Test cases need to ensure the following:
 - `Clawback` adheres to account flags `lsfGlobalFreeze` and `lsfNoFreeze`
 - The issuer is only able to claw back the specific amount of funds that specified in the transaction, but can't exceed the maximum amount of funds the holder has
 - Test that the `Clawback` feature does not interfere with any other features of the token, such as Offers
+
+## 7. Compatibility with Automated Marker Maker (XLS-30)
+The Automated Marker Maker (AMM) gives an account the ability to deposit issued tokens into AMM instance pool, in the form of `LPToken`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into the AMM pool cannot be clawed back.
+
+If clawing back from AMM instance pool is something needed, this change will need a separate specification to address its feasibility, after AMM goes live on mainnet. 
