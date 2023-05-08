@@ -10,7 +10,7 @@
 
 ## 1. Abstract
 
-Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets. 
+Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **An counterparty can be clawed back if and only if the trustline has been frozen and `lsfAllowClawback` is set.**
 
 ----------------------- -------------------------------------------------------
 :bangbang: This proposal deals only with issued assets. **The proposed clawback
