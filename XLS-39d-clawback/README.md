@@ -10,7 +10,7 @@
 
 ## 1. Abstract
 
-Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **An counterparty can be clawed back if and only if the trustline has been frozen and `lsfAllowClawback` is set.**
+Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **An counterparty can be clawed back if and only if the trustline has been frozen (or global freeze is enabled) and `lsfAllowClawback` is set.**
 
 ----------------------- -------------------------------------------------------
 :bangbang: This proposal deals only with issued assets. **The proposed clawback
@@ -73,7 +73,7 @@ This proposal introduces one new transaction: `Clawback`
 #### 3.3.1. `Clawback` transaction
 The **`Clawback`** transaction modifies a trustline object, by adjusting the balance accordingly and, if instructed to, by changing relevant flags. If possible (i.e. if the `Clawback` transaction would leave the trustline is in the "default" state), the transaction will also remove the trustline.
 
-**An counterparty can be clawed back if and only if the trustline has been frozen and `lsfAllowClawback` is set.** There are two ways to enable freeze on a trustline, either through a `TrustSet` or `Clawback` where the `Flags` field is set accordingly. If a clawback transaction is attempted on a trustline that has not been frozen, the transaction will not be allowed and will return with an error code `tecNO_PERMISSION`.
+**An counterparty can be clawed back if and only if the trustline has been frozen (or global freeze is enabled) and `lsfAllowClawback` is set.** There are two ways to enable freeze on a trustline, either through a `TrustSet` or `Clawback` where the `Flags` field is set accordingly. If a clawback transaction is attempted on a trustline that has not been frozen, the transaction will not be allowed and will return with an error code `tecNO_PERMISSION`.
 
 The transaction supports all the existing "common" fields for a transaction.
 
