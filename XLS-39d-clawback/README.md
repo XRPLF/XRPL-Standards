@@ -10,7 +10,7 @@
 
 ## 1. Abstract
 
-Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **An counterparty can be clawed back if and only if `lsfAllowClawback` is set.**
+Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowClawback` is set.**
 
 ----------------------- -------------------------------------------------------
 :bangbang: This proposal deals only with issued assets. **The proposed clawback
@@ -69,7 +69,7 @@ This proposal introduces one new transaction: `Clawback`
 #### 3.3.1. `Clawback` transaction
 The **`Clawback`** transaction modifies a trustline object, by adjusting the balance accordingly and, if instructed to, by changing relevant flags. If possible (i.e. if the `Clawback` transaction would leave the trustline is in the "default" state), the transaction will also remove the trustline.
 
-**An counterparty can be clawed back if and only if `lsfAllowClawback` is set.** If this transaction is attempted while `lsfAllowClawback` is unset, it will return with an error code `tecNO_PERMISSION`.
+**Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowClawback` is set.** If this transaction is attempted while `lsfAllowClawback` is unset, it will return with an error code `tecNO_PERMISSION`.
 
 The transaction supports all the existing "common" fields for a transaction.
 
@@ -114,7 +114,7 @@ Specifies the flags for this transaction. The universal transaction flags that a
 >| `tfSetFreeze`    |        `0x00000001`        | If set, either the `lsfHighFreeze` or `lsfLowFreeze` flag (as appropriate) will be set in the trust line. It is not an error to request to set a flag that has already been set.|
 >| `tfClearFreeze`      |        `0x00000002`        | If set, either the `lsHighFreeze` or `lsfLowFreeze` flag (as appropriate) will be removed from the trust line. It is not an error to request to clear a flag that isn't set. |
 
-The `tfSetFreeze` and `tfClearFreeze` flags are options that can be set in a `Clawback` transaction. They make the process more inconvinient in case the issuer wants to clawback and freeze at the same time.
+The `tfSetFreeze` and `tfClearFreeze` flags are options that can be set in a `Clawback` transaction. They make the process more convenient in case the issuer wants to clawback and freeze at the same time.
 
 
 ---
@@ -153,7 +153,7 @@ This transaction will require an amendment. The proposed name is `XLS-39-Clawbac
 
 ## 4. Rationale
 
-Clawback is disabled by default and requires the issuer to have an empty owner directory(no existing trustlines, offers, etc) before they are allowed to enable the feature. This is meant to be a conservative design, where the issuer needs to go through the major effort in order to enable this feature. This process is a huge safety measure to ensure the holders are aware of this feature if the the issuer wants to enable it. 
+Clawback is disabled by default and requires the issuer to have an empty owner directory (i.e., no existing trustlines, offers, etc) before the issuer is allowed to enable this feature. This design prefers a cautious approach where the issuer needs to take overt action to enable clawback capabilities. This helps ensure that token holders are aware of the possibility of clawback before they choose to hold any particular token.
 
 ---
 
