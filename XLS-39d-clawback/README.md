@@ -56,7 +56,7 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 
 | Flag Name       |  Flag Value  |
 |:---------------:|:------------:|
-| `lsfAllowClawback` | `0x02000000` | 
+| `lsfAllowClawback` | `0x80000000` | 
 
 Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecHAS_OBLIGATIONS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on frozen trustlines.
 
