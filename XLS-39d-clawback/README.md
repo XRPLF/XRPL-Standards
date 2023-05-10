@@ -1,9 +1,8 @@
 <pre>
   Title:        <b>Clawback Support</b>
-  Description:  Extending clawback functionality into freeze
-  Revision:     <b>5</b> (2023-5-08)
+  Description:  Enabling clawback for IOUs
 <hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
-                <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
+                <a href="mailto:shawnxie@ripple.com">Shawn Xie (Ripple)</a>
 <hr>  Requires:     XLS 39
 <hr>  core_protocol_changes_required:     true
 </pre>
