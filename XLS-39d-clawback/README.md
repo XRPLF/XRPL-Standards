@@ -88,6 +88,14 @@ Indicates the account which is executing this transaction. The account **MUST** 
 
 ---
 
+| Field Name     | Required?        |  JSON Type  | Internal Type     |
+|----------------|:----------------:|:-----------:|:-----------------:|
+| `Flags`        ||`number`     | `UINT32`          |
+
+The universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`) are valid. This proposal introduces no new transaction-specific flags.
+
+---
+
 | Field Name | Required?        | JSON Type | Internal Type |
 |------------|:----------------:|:---------:|:-------------:|
 | `Amount`   |:heavy_check_mark:| `object`  |   `AMOUNT`    |
