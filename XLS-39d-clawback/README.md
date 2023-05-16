@@ -100,21 +100,6 @@ If there doesn't exist a trustline with the counterparty or that trustline's bal
 
 :bangbang: The sub-field `issuer` within `Amount` represents the token holder's address instead of the issuer's.
 
----
-
-| Field Name     | Required?        |  JSON Type  | Internal Type     |
-|----------------|:----------------:|:-----------:|:-----------------:|
-| `Flags`        |:heavy_check_mark:|`number`     | `UINT32`          |
-
-Specifies the flags for this transaction. The universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`) are valid. This proposal introduces the following new, transaction-specific flags:
-
->| Flag Name     |         Flag Value         |                                                         Description                                                         |
->|---------------|:---------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
->| `tfSetFreeze`    |        `0x00000001`        | If set, either the `lsfHighFreeze` or `lsfLowFreeze` flag (as appropriate) will be set in the trust line. It is not an error to request to set a flag that has already been set.|
->| `tfClearFreeze`      |        `0x00000002`        | If set, either the `lsHighFreeze` or `lsfLowFreeze` flag (as appropriate) will be removed from the trust line. It is not an error to request to clear a flag that isn't set. |
-
-The `tfSetFreeze` and `tfClearFreeze` flags are options that can be set in a `Clawback` transaction. They make the process more convenient in case the issuer wants to clawback and freeze at the same time.
-
 
 ---
 
@@ -142,7 +127,7 @@ The `tfSetFreeze` and `tfClearFreeze` flags are options that can be set in a `Cl
 }
 ```
 
-In execution, this transaction would freeze the trustline by setting the `Flag` to `1`, and claw back at most **314.159 FOO** issued by `rp6abvbTbjoce8ZDJkT6snvxTZSYMBCC9S` and held by `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW`. If `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW` did not have a trustline set up or that trustline's balance is `0` then the error `tecNO_LINE` would be returned and a fee would be consumed.
+In execution, this transaction would claw back at most **314.159 FOO** issued by `rp6abvbTbjoce8ZDJkT6snvxTZSYMBCC9S` and held by `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW`. If `rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW` did not have a trustline set up or that trustline's balance is `0` then the error `tecNO_LINE` would be returned and a fee would be consumed.
 
 ### 3.4. Amendment
 
@@ -166,7 +151,6 @@ Test cases need to ensure the following:
 
 - The account that signs and submits `Clawback` transaction must be the token issuer 
 - Token issuer cannot clawback from themselves
-- The `tfSetFreeze` and `tfClearFreeze` flags of the `Clawback` transaction perform the intended freeze behavior on the trustline
 - `Clawback` adheres to account flags `lsfAllowClawback`, `lsfGlobalFreeze` and `lsfNoFreeze`
 - The issuer is only able to claw back the specific amount of funds that specified in the transaction, but can't exceed the maximum amount of funds the holder has
 - Test that the `Clawback` feature does not interfere with any other features of the token, such as Offers
