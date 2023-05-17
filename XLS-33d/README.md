@@ -49,6 +49,10 @@ This proposal makes a variety of assumptions, based upon observations of existin
 4. **No TrustSet Transactions**. CFTs may be held by any account, and therefore do not require any sort of [TrustSet](https://xrpl.org/trustset.html#trustset) transaction in order to enable holding a CFT. However, in order to disallow an arbitrary CFT sender from consuming recipient account reserves, payment _senders_ have to commit 1 incremental reserve (i.e., currently 2 XRP) when sending a token to any recipient who doesn't currently hold any CFTs (or to any recipient where sending the token would incur a new CFTokenPage). 
 5. **No Rippling**. Unlike some existing capabilities of the ledger, CFTs are not eligible for [rippling](https://xrpl.org/rippling.html#rippling), and thus do not have any configurability settings related to that functionality.
 
+### 1.1.3 Release Timeline and Scope
+
+XLS-33 will only cover the addition of the new data structures for CFTs, integration with the **`Payment`** transaction such that users can make CFT to CFT payments (IE no cross currency payments), and several other incidental additions like new requirements for account deletion (discussed below). Later amendments will integrate CFTs with other features of the XRPL such as the DEX.
+
 ## 1.2. Creating Compact Fungible Tokens
 
 ### 1.2.1. On-Ledger Data Structures
@@ -581,9 +585,6 @@ MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 ```
 
 TODO: Validate these numbers as they may be slightly low for truslintes. For example, in addition to the above data, trustlines require two directory entries for low/high nodes that get created for each trustline (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trustlines would require ~8,600 bytes!
-
-# Potential Future Directions
-This specification does not currently enable nor address how CFTs would interact with the DEX, or be addded to any other ledger objects like escrows, payment channels, checks, or any forthcoming AMM specification. However, support for CFTs with these objects should be considered (e.g., perhaps by adapting [this proposal](https://github.com/XRPLF/XRPL-Standards/discussions/72) to CFTs).
  
 # Implementation Notes
 1. At present, there is no `CFTRedeem` transaction because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" CFT and removing it from circulation. Note that in order for this to work, issuer accounts may not hold CFT.
