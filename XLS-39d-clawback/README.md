@@ -100,7 +100,7 @@ The universal transaction flags that are applicable to all transactions (e.g., `
 |------------|:----------------:|:---------:|:-------------:|
 | `Amount`   |:heavy_check_mark:| `object`  |   `AMOUNT`    |
 
-Indicates the amount being clawed back, as well as the counterparty from which the amount is being clawed back from. It is not an error if the amount exceeds the holder's balance; in that case, the maximum available balance is clawed back. It is not an error if the amount is zero; in this case, the transaction does not claw back any funds but may adjust flags, as indicated by the `Flags` field.
+Indicates the amount being clawed back, as well as the counterparty from which the amount is being clawed back from. It is not an error if the amount exceeds the holder's balance; in that case, the maximum available balance is clawed back. It returns `temBAD_AMOUNT` is the amount is zero.
 
 It is an error if the counterparty listed in `Amount` is the same as the `Account` issuing this transaction; the transaction should fail execution with `temBAD_AMOUNT`.
 
