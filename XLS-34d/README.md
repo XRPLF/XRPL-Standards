@@ -1,7 +1,7 @@
 ---
 title: Token-Enabled Escrows and Payment Channels
 type: draft
-description: The proposed amendment to the XRPL protocol, `PaychanAndEscrowForTokens`, would introduce changes to the ledger objects, transactions, and rpc methods to enable `Escrows` and `PayChannels` to use Trustline balances.
+description: Allow `Escrows` and `PayChannels` to use Trustline balances.
 author: Richard Holland, Denis Angell
 # The format of each author should be one of the following:
 # - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
@@ -11,17 +11,6 @@ author: Richard Holland, Denis Angell
 requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
 core_protocol_changes_required: <true/false> # Indicates whether the proposal requires any changes to the core protocol.
 ---
-
-<pre class="notranslate">
-Title:       <b>Token-Enabled Escrows and Payment Channels</b>
-Revision:    <b>1</b> (2023-01-23)
-Author:  
-             <a href="mailto:support@xrpl.labs">Richard Holland</a>
-             <a href="mailto:dangell@transia.co">Denis Angell</a>
-Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPL-Labs, XRPLF</a>
-</pre>
-
-> This proposal, XLS34d, replaces [XLS27d](https://github.com/XRPLF/XRPL-Standards/discussions/72)
 
 # Token-Enabled Escrows and Payment Channels
 
