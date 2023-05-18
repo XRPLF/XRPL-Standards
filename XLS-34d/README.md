@@ -3,7 +3,7 @@ Title:       <b>Token-Enabled Escrows and Payment Channels</b>
 Core Change: <b>True</b>
 <!-- Revision:    <b>1</b> (2023-01-23) -->
 Author:      Richard Holland, XRPL-Labs <a href="https://github.com/RichardAH/">(RichardAH)</a>
-             Denis Angell, Transia <a href="https://github.com/RichardAH/">(dangell7)</a>
+             Denis Angell, Transia <a href="https://github.com/dangell7/">(dangell7)</a>
 Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPLF</a>
 </pre>
 
