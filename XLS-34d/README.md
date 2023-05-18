@@ -2,14 +2,15 @@
 title: Token-Enabled Escrows and Payment Channels
 type: draft
 description: Allow `Escrows` and `PayChannels` to use Trustline balances.
-author: Richard Holland, Denis Angell
+author: Richard Holland, XRPL Labs (RichardAH)
+author: Denis Angell, Transia (dangell7)
 # The format of each author should be one of the following:
 # - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
 # - Author's name, author's affiliation + email (in angle brackets)
 #
 # Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
 requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
-core_protocol_changes_required: <true/false> # Indicates whether the proposal requires any changes to the core protocol.
+core_protocol_changes_required: True # Indicates whether the proposal requires any changes to the core protocol.
 ---
 
 # Token-Enabled Escrows and Payment Channels
