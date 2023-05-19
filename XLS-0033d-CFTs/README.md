@@ -38,7 +38,7 @@ Perhaps as important, however, CFTs require significantly less space than trustl
 
 * CFTs would introduce a third asset type on the ledger after XRP and IOUs, which complicates the Payment Engine implementation.
 * New transaction and data types require new implementation code from client libraries and wallets to read, display, and transact.
-* CFTs will represent a smaller overall balance amount as compared to trustlines (Trustlines can represent and enormous range, roughly between 10^-96 to 10^80). 
+* CFTs will represent a smaller overall balance amount as compared to trustlines (Trustlines can represent an enormous range, roughly between 10^-96 to 10^80). 
 
 ### 1.1.2. Assumptions
 This proposal makes a variety of assumptions, based upon observations of existing trustline usage in order to produce the most compact representations of data. These assumptions include:
@@ -89,7 +89,7 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | ️(default)          | `string`  | `UINT64`      |
 | `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
-| `Metadata`          |                    | `string`  | `BLOB`        |
+| `CFTMetadata`          |                    | `string`  | `BLOB`        |
 | `OwnerNode`         | (default)          | `number`  | `UINT64`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
@@ -153,7 +153,7 @@ Identifies the page in the owner's directory where this item is referenced.
      "MaximumAmount", "100000000",
      "OutstandingAmount", "5",
      "TransferFee": 50000,     
-     "Metadata" : "",
+     "CFTMetadata" : "",
      "OwnerNode": "74"
  }
  ```
@@ -392,7 +392,7 @@ The maximum asset amount of this token that should ever be issued.
 
 | Field Name | Required?          | JSON Type | Internal Type |
 | ---------- | ------------------ | --------- | ------------- |
-| `Metadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
+| `CFTMetadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
 
 Arbitrary metadata about this issuance, in hex format.
 
@@ -406,7 +406,7 @@ Arbitrary metadata about this issuance, in hex format.
   "TransferFee": 314,
   "MaxAmount": "50000000",
   "Flags": 83659,
-  "Metadata": "FOO",
+  "CFTMetadata": "FOO",
   "Fee": 10,
 }
 ```
@@ -613,7 +613,7 @@ Specify a limit to the number of CFTs returned.
              "OutstandingAmount": ....,
              "LockedAmount": .....,
              "TransferFee": .....,
-             "Metadata": ....,
+             "CFTMetadata": ....,
              "ledger_index": 11231
            }
         ],
