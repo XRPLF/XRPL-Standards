@@ -547,6 +547,8 @@ We propose several new APIs for this feature. All new APIs will be available onl
 #### 1.5.0.1 `cfts_by_issuer`
 For a given account and ledger, it will show all `CFTokenIssuances` created by this account, including any deleted `CFTokenIssuances`. Deleted CFTokenIssuance may have the same ID as new CFTokenIssuances.
 
+##### 1.5.0.1.1 Request fields
+
 ```json
 {
   "command": "cfts_by_isssuer",
@@ -555,6 +557,246 @@ For a given account and ledger, it will show all `CFTokenIssuances` created by t
   "include_deleted": true
 }
 ```
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `issuer`          |:heavy_check_mark:     | `string`  |
+
+Indicates the CFT issuer whose CFTs we wish to query.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_index`    |                       | `string` or `number` (positive integer) |
+
+The ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_hash`    |                       | `string`   |
+
+A 20-byte hex string for the  max ledger version to use. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `include_deleted` |                       | `boolean` |
+
+Default `false`. If `true`, will included deleted CFTs as well.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `marker`          |                       | `string`  |
+
+Used to continue querying where we left off when paginating.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `limit`           |                       | `number` (positive integer) |
+
+Specify a limit to the number of CFTs returned.
+
+##### 1.5.0.1.2 Response fields
+
+```json
+{
+    "id": 5,
+    "status": "success",
+    "type": "response",
+    "result": {
+        "cft_issuances": [
+           {
+             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "Flags": 83659,
+             "Issuer": ......,
+             "AssetCode": .....,
+             "AssetScale": .....,
+             "MaximumAmount": .....,
+             "OutstandingAmount": ....,
+             "LockedAmount": .....,
+             "TransferFee": .....,
+             "Metadata": ....,
+             "ledger_index": 11231
+           }
+        ],
+        "validated": true
+    }
+}
+```
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `cft_issuances`   | `array`   |
+
+An array of CFTokenIssuance objects created by the specified account. Includes all fields in the underlying object, `ledger_index` for the index at which this CFT was created and `deleted_ledger_index` for the index at which this CFT was deleted (if applicable).
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `marker`          | `string`  |
+
+Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
+
+#### 1.5.0.2 `account_cfts`
+For a given account and ledger, `account_cfts` will return all CFT balances held by this account.
+
+##### 1.5.0.2.1 Request fields
+
+```json
+{
+  "command": "account_cfts",
+  "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+  "ledger_index": "validated"
+}
+```
+
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `account`         |:heavy_check_mark:     | `string`  |
+
+Indicates the account whose CFT balances we wish to query.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_index`    |                       | `string` or `number` (positive integer) |
+
+The ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_hash`    |                       | `string`   |
+
+A 20-byte hex string for the  max ledger version to use. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `marker`          |                       | `string`  |
+
+Used to continue querying where we left off when paginating.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `limit`           |                       | `number` (positive integer) |
+
+Specify a limit to the number of CFT balances returned.
+
+
+##### 1.5.0.2.2 Response fields
+
+```json
+{
+    "id": 5,
+    "status": "success",
+    "type": "response",
+    "result": {
+        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "cfts": [
+           {
+             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "Flags": 83659,
+             "Amount": "1000",
+             "LockedAmount": "0"
+           }
+        ],
+        "validated": true
+    }
+}
+```
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `cfts`   | `array`   |
+
+An array of CFToken objects owned by the specified account. Includes all fields in the underlying object.
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `marker`          | `string`  |
+
+Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
+
+#### 1.5.0.3 `cft_holders`
+For a given CFTokenIssuance ID and ledger sequence, `cft_holders` will return all holders of that CFT and their balance. This API is likely return very large data sets, so users should expect to implement paging via the `marker` field.
+
+##### 1.5.0.3.1 Request fields
+
+```json
+{
+  "command": "cft_holders",
+  "cft_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+  "ledger_index": "validated"
+}
+```
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `cft_id`          |:heavy_check_mark:     | `string`  |
+
+Indicates the CFTokenIssuance we wish to query.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_index`    |                       | `string` or `number` (positive integer) |
+
+The ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `ledger_hash`    |                       | `string`   |
+
+A 20-byte hex string for the  max ledger version to use. Either `ledger_index` or `ledger_hash` must be specified.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `marker`          |                       | `string`  |
+
+Used to continue querying where we left off when paginating.
+
+| Field Name        | Required?             | JSON Type |
+|-------------------|:---------------------:|:---------:|
+| `limit`           |                       | `number` (positive integer) |
+
+Specify a limit to the number of CFTs returned.
+
+##### 1.5.0.3.2 Response fields
+
+```json
+{
+    "id": 5,
+    "status": "success",
+    "type": "response",
+    "result": {
+        "cft_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+        "cft_holders": {
+          "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn": {
+             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "Flags": 83659,
+             "Amount": "1000",
+             "LockedAmount": "0"
+          }
+        },
+        "validated": true
+    }
+}
+```
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `cft_id`          | `string`  |
+
+Indicates the CFTokenIssuance we queried.
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `cft_holders`   | `object`   |
+
+A JSON object representing a dictionary of accounts to CFToken objects. Includes all fields in the underlying CFToken object.
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `marker`          | `string`  |
+
+Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
+
+
  
 # Appendix 1: Current Trustline Storage Requirements
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
