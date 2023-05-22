@@ -1,10 +1,10 @@
 <pre>
 Title:       <b>Compact Fungible Tokens (CFTs)</b>
-Revision:    <b>1</b> (2022-08-05)
+Revision:    <b>1</b> (2023-05-22)
 
 Author:  
              <a href="mailto:fuelling@ripple.com">David Fuelling</a>
-             <a href="mailto:nikb@bougalis.net">Nikolaos Bougalis </a>
+             <a href="mailto:nikb@bougalis.net">Nikolaos Bougalis</a>
              <a href="mailto:gweisbrod@ripple.com">Greg Weisbrod</a>
 Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
@@ -13,13 +13,13 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## 1.1. Abstract
 
-[Trustlines](https://xrpl.org/trust-lines-and-issuing.html#trust-lines-and-issuing) are a fundamental building block for a variety of XRP Ledger tokenization features, including [CBDCs](https://en.wikipedia.org/wiki/Central_bank_digital_currency) and [fiat-collateralized stablecoins](https://www.investopedia.com/terms/s/stablecoin.asp). However, as more and more token issuers embrace the XRP Ledger, the current size of each trustline will become an impediment to ledger stability and accessibility.
+[Trust lines](https://xrpl.org/trust-lines-and-issuing.html#trust-lines-and-issuing) are a fundamental building block for many XRP Ledger tokenization features, including [CBDCs](https://en.wikipedia.org/wiki/Central_bank_digital_currency) and [fiat-collateralized stablecoins](https://www.investopedia.com/terms/s/stablecoin.asp). However, as more and more token issuers embrace the XRP Ledger, the current size of each trust line will become an impediment to ledger stability and scalability.
 
 This proposal introduces extensions to the XRP Ledger to support a more compact fungible token (i.e., CFT) type, along with operations to enumerate, purchase, sell and hold such tokens. 
 
-Unlike Trustlines, CFTs do not represent bidirectional debt relationships. Instead, CFTs function more like a unidirectional trustline with only one balance, making it simpler to support common tokenization requirements, including even non-monetery use-cases such as tracking reputation points in an online game. 
+Unlike trust lines, CFTs do not represent bidirectional debt relationships. Instead, CFTs function more like a unidirectional trust line with only one balance, making it simpler to support common tokenization requirements, including even non-monetery use cases such as tracking reputation points in an online game. 
 
-Perhaps as important, however, CFTs require significantly less space than trustlines: ~52 bytes for each CFT held by a token holder, as compared to _at least_ 234 bytes for every new trustline (see Appendix 1 for a more detailed comparison).
+Perhaps as important, however, CFTs require significantly less space than trust lines: ~52 bytes for each CFT held by a token holder, as compared to _at least_ 234 bytes for every new trust line (see Appendix 1 for a more detailed comparison).
 
 ### 1.1.1. Advantages and Disadvantages
 
@@ -27,10 +27,10 @@ Perhaps as important, however, CFTs require significantly less space than trustl
 
 * Uses a fixed-point balance representation instead of a floating-point representation, yielding the following benefits:
   * CFT balance amounts can easily be added to other ledger objects like escrows, checks, payment channels, and AMMs.
-  * The implemenatation can more reliably and easily enforce invariant checks and explicitly track fees.
+  * Enables reliable and easy enforcement of invariant checks and straightforward tracking of fees.
   * Eliminates edge case floating-point math involving very small amounts violating expected equality conditions (e.g., CFTs will never have to deal with cases where `A+B=A` for non-zero `B` or `(A+B)+C != A+(B+C)`). 
-* Simpler conceptual model (truslines and rippling make it harder for developers to reason about the system, which increases the risk of errors or value loss).
-* Reduces trustline storage requirements which allows more accounts to hold more tokens, for less cost.
+* Simpler conceptual model (trust lines and rippling make it harder for developers to reason about the system, which increases the risk of errors or value loss).
+* Reduces trust line storage requirements which allows more accounts to hold more tokens, for less cost.
 * Reduces long-term infrastructure and storage burdens on node operators, increasing network resiliency.
 * Improves node performance when processing large volumes of CFT transactions.
 
@@ -38,12 +38,12 @@ Perhaps as important, however, CFTs require significantly less space than trustl
 
 * CFTs would introduce a third asset type on the ledger after XRP and IOUs, which complicates the Payment Engine implementation.
 * New transaction and data types require new implementation code from client libraries and wallets to read, display, and transact.
-* CFTs will represent a smaller overall balance amount as compared to trustlines (Trustlines can represent an enormous range, roughly between 10^-96 to 10^80). 
+* CFTs will represent a smaller overall balance amount as compared to trust lines (Trustlines can represent an enormous range, roughly between 10^-96 to 10^80). 
 
 ### 1.1.2. Assumptions
-This proposal makes a variety of assumptions, based upon observations of existing trustline usage in order to produce the most compact representations of data. These assumptions include:
+This proposal makes a variety of assumptions, based upon observations of existing trust line usage in order to produce the most compact representations of data. These assumptions include:
 
-1. **Only Unidirectional**. This proposal does not support bidirectional trustline constructions, on the assumption that _most_ token issuers leave their trustline limit set to the default value of 0 (i.e., issuers don't allow debt relationships with token holders, by default). Thus, CFTs do not have the same "balance netting" functionality found in trustlines because CFTs have only a single balance as opposed to the two balances used by trustlines.
+1. **Only Unidirectional**. This proposal does not support bidirectional trust line constructions, on the assumption that _most_ token issuers leave their trust line limit set to the default value of 0 (i.e., issuers don't allow debt relationships with token holders, by default). Thus, CFTs do not have the same "balance netting" functionality found in trust lines because CFTs have only a single balance as opposed to the two balances used by trust lines.
 2. **Few Issuances per Issuer**. The most common examples of fungible token issuance involve regulatory overhead, which makes it less common for issuers to issue _many_ fungible tokens, in the general case. In addition, existing [guidance on xrpl.org](https://xrpl.org/freezes.html#global-freeze) advises token issuers to use different addresses for each token issuance in order to better accomodate [global freeze](https://xrpl.org/enact-global-freeze.html) activities. Because of this, we assume that any individual issuer will not issue many different fungible tokens using the same address. In particular, this specification limits the number of unique CFT issuances to 32 per issuing account. If an issuer wishes to support more than this number of CFTs, additional addresses can still be used.
 3. **No Trust Limits**. Unlike current Trustline functionality where trust amount limits can be set by either party, this proposal eliminates this feature under the assumption that token holders will not acquire a CFT without first making an off-ledger trust decision. For example, a common use-case for a CFT is a fiat-backed stablecoin, where a token holder wouldn't purchase more stablecoin than they would feel comfortable holding.
 4. **No TrustSet Transactions**. CFTs may be held by any account, and therefore do not require any sort of [TrustSet](https://xrpl.org/trustset.html#trustset) transaction in order to enable holding a CFT. However, in order to disallow an arbitrary CFT sender from consuming recipient account reserves, payment _senders_ have to commit 1 incremental reserve (i.e., currently 2 XRP) when sending a token to any recipient who doesn't currently hold any CFTs (or to any recipient where sending the token would incur a new CFTokenPage). 
@@ -89,7 +89,7 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | ️(default)          | `string`  | `UINT64`      |
 | `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
-| `CFTMetadata`          |                    | `string`  | `BLOB`        |
+| `CFTMetadata`       |                    | `string`  | `BLOB`        |
 | `OwnerNode`         | (default)          | `number`  | `UINT64`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
@@ -119,7 +119,7 @@ The address of the account that controls both the issuance amounts and character
 
 A 160-bit blob of data. We recommend using only upper-case ASCII letters, ASCII digits 0 through 9, the dot (`.`) character, and the dash (`-`) character. Dots and dashes should never be the first character of an asset code, and should not be repeated sequentially.
 
-While it's possible to store any arbitrary data in this field, implementations that detect the above recommended character conformance can and should display them as ASCII for human readability, allowing issuers to support well-known ISO-4207 currency codes in addition to custom codes. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
+While it is possible to store any arbitrary data in this field, implementations that detect the above recommended character conformance can and should display them as human-readable text, allowing issuers to support well-known ISO-4207 currency codes in addition to custom codes. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
 
 ###### 1.2.1.1.2.5. `AssetScale`
 
@@ -241,7 +241,7 @@ A **`CFTokenPage`** object may have the following required and optional fields:
 | `NextPageMin`       | ️          | `string`  | `UINT256`     |
 | `PreviousTxnID`     | ️          | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | ️          | `number`  | `UINT32`      |
-| `CFTokens`          | ️ ✔        | `object`  | `TOKEN`        |
+| `CFTokens`          | ️✔         | `object`   | `TOKEN`      |
 
 ###### 1.2.1.3.1.1. `**LedgerEntryType**` 
 
@@ -390,11 +390,11 @@ The field MUST NOT be present if the `tfTransferable` flag is not set. If it is,
 
 The maximum asset amount of this token that should ever be issued.
 
-| Field Name | Required?          | JSON Type | Internal Type |
-| ---------- | ------------------ | --------- | ------------- |
+| Field Name    | Required?          | JSON Type | Internal Type |
+| ------------- | ------------------ | --------- | ------------- |
 | `CFTMetadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
 
-Arbitrary metadata about this issuance, in hex format.
+Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
 ##### 1.3.1.1.2 Example **`CFTokenIssuanceCreate`** transaction
 
@@ -798,7 +798,7 @@ Used to continue querying where we left off when paginating. Omitted if there ar
 
 
  
-# Appendix 1: Current Trustline Storage Requirements
+# Appendix 1: Current Trust line Storage Requirements
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
 
 ```
@@ -826,11 +826,11 @@ HighQualityOut                32
 MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 ```
 
-TODO: Validate these numbers as they may be slightly low for truslintes. For example, in addition to the above data, trustlines require two directory entries for low/high nodes that get created for each trustline (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trustlines would require ~8,600 bytes!
+TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
  
 # Implementation Notes
 1. At present, there is no `CFTRedeem` transaction because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" CFT and removing it from circulation. Note that in order for this to work, issuer accounts may not hold CFT.
 
-1. For CFTokenIssuances that have the `lsfRequiresAuthorization` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trustlines and pre-authorized CFTs. Alternatively, we might consider deposit_preauth objects might apply to both, under the assumption that a single issuer restricting trustlines will want to make the same restrictions around CFTs emanating from the same issuer account.
+1. For CFTokenIssuances that have the `lsfRequiresAuthorization` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider deposit_preauth objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
 
 _Originally posted by @sappenin in https://github.com/XRPLF/XRPL-Standards/discussions/82_
