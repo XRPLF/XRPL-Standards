@@ -3,7 +3,6 @@
   Description:  Enabling clawback for IOUs
 <hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
                 <a href="mailto:shawnxie@ripple.com">Shawn Xie (Ripple)</a>
-<hr>  Requires:     XLS 39
 <hr>  core_protocol_changes_required:     true
 </pre>
 
@@ -57,7 +56,7 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 |:---------------:|:------------:|
 | `lsfAllowClawback` | `0x80000000` | 
 
-Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecOWNERS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on frozen trustlines.
+Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecOWNERS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on trustlines.
 
 If the account attempts to set `lsfAllowClawback` while `lsfNoFreeze` is set, the transaction will return `tecNO_PERMISSION` because clawback cannot be enabled on an account that has already disclaimed the ability to freeze trustlines. Reversely, if an account attempts to set `lsfNoFreeze` while `lsfAllowClawback` is set, the transaction will also return `tecNO_PERMISSION`.
 
@@ -139,7 +138,7 @@ In execution, this transaction would claw back at most **314.159 FOO** issued by
 
 ### 3.4. Amendment
 
-This transaction will require an amendment. The proposed name is `XLS-39-Clawback`.
+This transaction will require an amendment. The proposed name is `Clawback`.
 
 ---
 
@@ -166,4 +165,4 @@ Test cases need to ensure the following:
 ## 7. Compatibility with Automated Market Maker (XLS-30)
 The Automated Market Maker (AMM) gives an account the ability to deposit issued tokens into AMM instance pool, in the form of `LPToken`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into the AMM pool cannot be clawed back.
 
-If clawing back from AMM instance pool is something needed, this change will need a separate specification to address its feasibility, after AMM goes live on mainnet. 
+If clawing back from an AMM instance pool is required, such change will need a separate specification.
