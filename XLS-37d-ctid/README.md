@@ -1,7 +1,7 @@
 ```
-Title:       Improved Concise Transaction Identifier (CTID)
-Revision:    1 (2023-02-11)
-Authors:     Richard Holland (XRPL-Labs, XRPLF)
+Title:       Concise Transaction Identifier (CTID)
+Type:        Draft
+Authors:     Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
              Ryan Molley
 ```
 
