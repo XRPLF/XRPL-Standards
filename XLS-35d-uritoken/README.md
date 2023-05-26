@@ -1,11 +1,11 @@
-# XLS-35d URIToken — Lightweight first-class NFTs for XRPL Protocol Chains
+# XLS-35d URITokens — Lightweight first-class NFTs for XRPL Protocol Chains
 ```
-Title: URIToken Amendment
-Revision: 3 (2023-02-09)
+Title: URITokens
+Type: Draft
 Author:
-	Richard Holland
-	Wietse Wind
-Affiliation: XRPL-Labs, XRPLF
+	Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
+	Wietse Wind, Xaman <a href="https://github.com/WietseWind/">(WietseWind)</a>
+Affiliation: XRPLF
 ```
 
 # Problem Statement
