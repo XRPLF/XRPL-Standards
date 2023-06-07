@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Compact Fungible Tokens (CFTs)</b>
-Revision:    <b>1</b> (2023-05-22)
+Type:        <b>draft</b>
 
 Author:  
              <a href="mailto:fuelling@ripple.com">David Fuelling</a>
@@ -89,7 +89,7 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | ️(default)          | `string`  | `UINT64`      |
 | `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
-| `CFTMetadata`       |                    | `string`  | `BLOB`        |
+| `CFTokenMetadata`   |                    | `string`  | `BLOB`        |
 | `OwnerNode`         | (default)          | `number`  | `UINT64`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
@@ -146,14 +146,14 @@ Identifies the page in the owner's directory where this item is referenced.
  ```json
  {
      "LedgerEntryType": "CFTokenIssuance",
-     "Flags" : 131072,
-     "Issuer" : "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-     "AssetCode": "5553440000000000000000000000000000000000",
+     "Flags": 131072,
+     "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+     "AssetCode": "0000000000000000000000005553440000000000",
      "AssetScale": "2",
-     "MaximumAmount", "100000000",
-     "OutstandingAmount", "5",
+     "MaximumAmount": "100000000",
+     "OutstandingAmount": "5",
      "TransferFee": 50000,     
-     "CFTMetadata" : "",
+     "CFTokenMetadata": "",
      "OwnerNode": "74"
  }
  ```
@@ -186,12 +186,12 @@ A **`CFToken`** object can have the following required and optional fields. Noti
 
 | Field Name            | Required?          | JSON Type | Internal Type |
 | --------------------- |--------------------|-----------|---------------|
-| `CFTIssuanceID`       | :heavy_check_mark: |  `string` | `UINT256`     |
+| `CFTokenIssuanceID`   | :heavy_check_mark: |  `string` | `UINT256`     |
 | `Amount`              | :heavy_check_mark: |  `string` | `UINT64`      |
 | `LockedAmount`        | default            |  `string` | `UINT64`      |
 | `Flags`               | default            |  `number` | `UINT32`      |
 
-###### 1.2.1.2.1.1. `CFTIssuanceID`
+###### 1.2.1.2.1.1. `CFTokenIssuanceID`
 
 The `CFTokenIssuance` identifier.
 
@@ -218,9 +218,9 @@ A set of flags indicating properties or other options associated with this **`CF
  ```json
  {
      "TokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-     "Flags" : 0,
-     "Amount" : "100000000",
-     "LockedAmount : "0"
+     "Flags": 0,
+     "Amount": "100000000",
+     "LockedAmount": "0"
  }
  ```
 
@@ -316,7 +316,7 @@ The page within which a **`CFToken`** entry is stored will be formed as describe
 
 To search for a specific **`CFToken`**, the first step is to locate the **`CFTokenPage`**, if any, that should contain that **`CFToken`**. For that do the following:
 
-Compute the **`CFTokenPageID`** using the account of the owner and the **`CFTIssuanceID`** of the token, as described above. Then search for the ledger entry whose identifier is less than or equal to that value. If that entry does not exist or is not a **`CFTokenPage`**, the **`CFToken`** is not held by the given account.
+Compute the **`CFTokenPageID`** using the account of the owner and the **`CFTokenIssuanceID`** of the token, as described above. Then search for the ledger entry whose identifier is less than or equal to that value. If that entry does not exist or is not a **`CFTokenPage`**, the **`CFToken`** is not held by the given account.
 
 ###### 1.2.1.3.4.2. Adding a **`CFToken`** object
 
@@ -390,24 +390,25 @@ The field MUST NOT be present if the `tfTransferable` flag is not set. If it is,
 
 The maximum asset amount of this token that should ever be issued.
 
-| Field Name    | Required?          | JSON Type | Internal Type |
-| ------------- | ------------------ | --------- | ------------- |
-| `CFTMetadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
+| Field Name        | Required?          | JSON Type | Internal Type |
+| ------------------| ------------------ | --------- | ------------- |
+| `CFTokenMetadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
 ##### 1.3.1.1.2 Example **`CFTokenIssuanceCreate`** transaction
 
-```
+```json
 {
   "TransactionType": "CFTokenIssuanceCreate",
-  "AssetCode": "5553440000000000000000000000000000000000",
+  "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
+  "AssetCode": "1234567",
   "AssetScale": "2",
   "TransferFee": 314,
   "MaxAmount": "50000000",
   "Flags": 83659,
-  "CFTMetadata": "FOO",
-  "Fee": 10,
+  "CFTokenMetadata": "FOO",
+  "Fee": 10
 }
 ```
 
@@ -417,7 +418,7 @@ This transaction assumes that the issuer of the token is the signer of the trans
 
 The **`CFTokenIssuanceDestroy`** transaction is used to remove an **`CFTokenIssuance`** object from the directory node in which it is being held, effectively removing the token from the ledger ("destroying" it).
 
-If this operation succeeds, the corresponding **`CFTokenIssuance`** is removed and the owner’s reserve requirement is reduced by one.
+If this operation succeeds, the corresponding **`CFTokenIssuance`** is removed and the owner’s reserve requirement is reduced by one. This operation must fail if there are any holders of the CFT in question.
 
 #### 1.3.2.1 Transaction-specific Fields
 
@@ -429,7 +430,7 @@ Indicates the new transaction type **`CFTokenIssuanceDestroy`**. The integer val
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `CFTokenIssuance` |  ✔️        | `string`  | `UINT256`     | 
+| `CFTokenIssuanceID` |  ✔️        | `string`  | `UINT256`     | 
 
 Identifies the **`CFTokenIssuance`** object to be removed by the transaction.
 
@@ -439,7 +440,7 @@ Identifies the **`CFTokenIssuance`** object to be removed by the transaction.
  {
        "TransactionType": "CFTokenIssuanceDestroy",
        "Fee": 10,
-       "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000"
+       "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000"
  }
  ```
  
@@ -454,7 +455,7 @@ Indicates the new transaction type **`CFTokenIssuanceSet`**. The integer value i
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `CFTokenIssuance` |  ✔️  | `string`  | `UINT256`     | 
+| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
 
 The `CFTokenIssuance` identifier.
 
@@ -474,7 +475,7 @@ An optional XRPL Address of an individual token holder balance to freeze/unfreez
  {
        "TransactionType": "CFTokenIssuanceSet",
        "Fee": 10,
-       "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+       "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
        "Flags": 1
  }
  ```
@@ -485,7 +486,7 @@ Transactions of the `CFTokenFreeze` type support additional values in the Flags 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
 | `tfSetFreeze`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be frozen. |
-| `tfSetUnFreeze`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unfrozen. |
+| `tfClearFreeze`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unfrozen. |
 
 ### 1.3.4 The **`Payment`** Transaction
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate CFT amounts.
@@ -529,7 +530,7 @@ To freeze an individual balance of an individual CFT an issuer will submit the `
 * The CFT has the `lsfCannotFreezeBalances` flag set or,
 * The CFT issuer has the `asfNoFreeze` flag set on their account
 
-Issuers can unfreeze the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfSetUnFreeze` flag set.
+Issuers can unfreeze the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfClearFreeze` flag set.
 
 #### 1.4.0.2 Freezing entire CFTs
 This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when freezing or unfreezing. This operation will fail if::
@@ -604,7 +605,7 @@ Specify a limit to the number of CFTs returned.
     "result": {
         "cft_issuances": [
            {
-             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
              "Issuer": ......,
              "AssetCode": .....,
@@ -613,7 +614,7 @@ Specify a limit to the number of CFTs returned.
              "OutstandingAmount": ....,
              "LockedAmount": .....,
              "TransferFee": .....,
-             "CFTMetadata": ....,
+             "CFTokenMetadata": ....,
              "ledger_index": 11231
            }
         ],
@@ -690,7 +691,7 @@ Specify a limit to the number of CFT balances returned.
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "cfts": [
            {
-             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
              "Amount": "1000",
              "LockedAmount": "0"
@@ -714,7 +715,7 @@ An array of CFToken objects owned by the specified account. Includes all fields 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
 #### 1.5.0.3 `cft_holders`
-For a given CFTokenIssuance ID and ledger sequence, `cft_holders` will return all holders of that CFT and their balance. This API is likely return very large data sets, so users should expect to implement paging via the `marker` field.
+For a given CFTokenIssuanceID and ledger sequence, `cft_holders` will return all holders of that CFT and their balance. This API is likely return very large data sets, so users should expect to implement paging via the `marker` field.
 
 ##### 1.5.0.3.1 Request fields
 
@@ -767,7 +768,7 @@ Specify a limit to the number of CFTs returned.
         "cft_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
         "cft_holders": {
           "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn": {
-             "CFTokenIssuance": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+             "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
              "Amount": "1000",
              "LockedAmount": "0"
