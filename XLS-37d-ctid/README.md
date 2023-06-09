@@ -3,7 +3,7 @@ Title:       <b>Concise Transaction Identifier (CTID)</b>
 Type:        Draft
 PR:          <a href="https://github.com/XRPLF/rippled/pull/4418">4118</a>
 Author:      Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
-             Ryan Molley
+             Ryan Molley, Crossmark <a href="https://github.com/interc0der/">(interc0der)</a>
 Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPLF</a>
 </pre>
 
