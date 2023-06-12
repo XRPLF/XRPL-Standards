@@ -84,7 +84,11 @@ Example:
 
 ### 1.3 Motivation
 
-The XRP Ledger is poised to become (or depending on the time of reading: has already become) an ecosystem of cooperatively interconnected XRPL Protocol Chains. It is imperative that users of these chains can efficiently locate a specific transaction on a specific chain. Therefore a network-aware transaction identifier is necessary.
+The XRP Ledger can support an ecosystem of cooperatively interconnected XRPL Protocol Chains. Users of these chains need to efficiently locate specific transactions on specific chains.
+
+The CTID is a network-aware transaction identifier which improves the user experience for sidechains. It provides a way to efficiently locate a specific transaction without relying on transaction hashes, which can be difficult to find in a multi-chain environment.
+
+CTIDs allow users to quickly and easily identify their transactions on a particular chain using the ledger sequence number, transaction index, and network ID. Users can thus identify their transactions and confirm their successful completion. Additionally, CTIDs require less storage space than transaction hashes, which can be beneficial for databases containing millions of transactions.
 
 # 2. Considerations
 
