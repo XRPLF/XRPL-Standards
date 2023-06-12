@@ -1,6 +1,7 @@
 <pre class="notranslate">
 Title:       <b>Token-Enabled Escrows and Payment Channels</b>
 Type:        Draft
+PR:          <a href="https://github.com/XRPLF/rippled/pull/4396">4396</a>
 Author:      Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
              Denis Angell, Transia <a href="https://github.com/dangell7/">(dangell7)</a>
 Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPLF</a>
