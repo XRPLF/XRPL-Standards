@@ -405,7 +405,7 @@ This transaction assumes that the issuer, `rNCFjv8Ek5oDrNiMJ3pw6eLLFtMjZLJnf2`, 
 
 #### Execution
 
-This transaction will examine the `FirstNFTokenSequence` and `MintedNFTokens` fields in the account root of the `Issuer` and use them to construct the `NFTokenID` for the token being minted. If `FirstNFTokenSequence` does not exist, this field will be assumed to have the same value as the `Sequence` field of the `Issuer`. If `MintedNFTokens` does not exist, this field will be assumed to have the value 0; the value of the field will then be incremented by exactly 1.
+This transaction examines the `FirstNFTokenSequence` and `MintedNFTokens` fields in the account root of the `Issuer`, and uses them to construct the `NFTokenID` for the token being minted. If `FirstNFTokenSequence` does not exist, this field is assumed to have the same value as the `Sequence` field of the `Issuer`. If `MintedNFTokens` does not exist, this field is assumed to have the value 0; the value of the field is incremented by exactly 1.
 
 ### The **`NFTokenBurn`** transaction
 
@@ -484,7 +484,7 @@ To provide a convenient way to determine how many **`NFToken`** objects issued b
 
 ### 1.3.4 `FirstNFTokenSequence`
 
-To ensure the `NFTokenID` cannot be reproduced by the issuer in anyway, this proposal introduces the `FirstNFTokenSequence` field. When the issuer mints their first `NFToken`, this field is set to the current `Sequence` of the issuer's account and will never change. This field is used during the `Sequence` number construct of a `NFTokenID`.
+To ensure the `NFTokenID` cannot be reproduced by the issuer in any way, this proposal introduces the `FirstNFTokenSequence` field. When the issuer mints their first `NFToken`, this field is set to the current `Sequence` of the issuer's account and never changes. This field is used during the `Sequence` number construct of a `NFTokenID`.
 
 ## 1.4. Transferability of Tokens (NFTs)
 
@@ -833,16 +833,16 @@ This functionality is intended to allow the `owner` of an **`NFToken`** to offer
 ## 1.6. Uniqueness property of the `NFTokenID`
 The `NFTokenID` is ensured to be unique by using its `Sequence` number structure, and by imposing a restriction on deleting accounts.
 ### 1.6.1. NFT `Sequence` Construct
-The `Sequence` of a NFT is the lowest 32-bit of its `NFTokenID`. It is computed by adding the `FirstNFTokenSequence` with `MintedNFTokens` to produce a monotonically increasing number. 
+The `Sequence` of an NFT is the lowest 32-bit of its `NFTokenID`. It is computed by adding the `FirstNFTokenSequence` with `MintedNFTokens` to produce a monotonically increasing number. 
 
-By adding the `FirstNFTokenSequence` offset, we can prevent the NFT `Sequence` from starting at 0 whenever the issuer recreates their account. This helps to ensure that the `NFTokenID` remains unique. 
+Adding the `FirstNFTokenSequence` offset prevents the NFT `Sequence` from starting at 0 whenever the issuer recreates their account. This helps to ensure that the `NFTokenID` remains unique. 
 
 ### 1.6.2. Account Deletion Restriction
 An account can only be deleted if `FirstNFTSequence + MintedNFTokens + 256` is less than the current ledger sequence (256 was chosen as a heuristic restriction for account deletion and already exists in the account deletion constraint).
 
 The proposal adds a restriction because simply having the `NFTokenID` is not enough to prevent the issuer from making a duplicate `NFTokenID`. There are rare cases where the authorized minting feature could still allow a duplicate to be made.
 
-Without this restriction, the following example demonstrates how duplicate NFTokenID can be reproduced through authorized minting:
+Without this restriction, the following example demonstrates how a duplicate NFTokenID can be reproduced through authorized minting:
 
 1. Alice's account sequence is at 1.
 2. Bob is Alice's authorized minter.
@@ -853,7 +853,7 @@ Without this restriction, the following example demonstrates how duplicate NFTok
 5. Alice re-creates her account at ledger 258.
 6. Alice mints an NFT. `FirstNFTokenSequence` initializes to her account
    sequence (258), and `MintedNFTokens` initializes as 0. This
-   newly-minted NFT would have a sequence number of 258, which is a
+   newly minted NFT would have a sequence number of 258, which is a
    duplicate of what she issued through authorized minting before she
    deleted her account.
 
