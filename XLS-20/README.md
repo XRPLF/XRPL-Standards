@@ -405,7 +405,7 @@ This transaction assumes that the issuer, `rNCFjv8Ek5oDrNiMJ3pw6eLLFtMjZLJnf2`, 
 
 #### Execution
 
-In executing, this transaction will examine the `FirstNFTokenSequence` and `MintedNFTokens` fields in the account root of the `Issuer` and use them to construct the `NFTokenID` for the token being minted. If `FirstNFTokenSequence` does not exist, this field will be assumed to have the same value as the `Sequence` field of the `Issuer`. If `MintedNFTokens` does not exist, this field will be assumed to have the value 0; the value of the field will then be incremented by exactly 1.
+This transaction will examine the `FirstNFTokenSequence` and `MintedNFTokens` fields in the account root of the `Issuer` and use them to construct the `NFTokenID` for the token being minted. If `FirstNFTokenSequence` does not exist, this field will be assumed to have the same value as the `Sequence` field of the `Issuer`. If `MintedNFTokens` does not exist, this field will be assumed to have the value 0; the value of the field will then be incremented by exactly 1.
 
 ### The **`NFTokenBurn`** transaction
 
