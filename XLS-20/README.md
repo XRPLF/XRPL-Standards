@@ -856,3 +856,7 @@ Without this restriction, the following example demonstrates how duplicate NFTok
    newly-minted NFT would have a sequence number of 258, which is a
    duplicate of what she issued through authorized minting before she
    deleted her account.
+
+## History
+
+This spec, at revision 10, describes XLS-20 with [the `fixNFTokenRemint` amendment](https://xrpl.org/known-amendments.html#fixnftokenremint)https://xrpl.org/known-amendments.html#fixnftokenremint active. For earlier versions of this spec, please see [the commit history](https://github.com/XRPLF/XRPL-Standards/commits/master/XLS-20).
