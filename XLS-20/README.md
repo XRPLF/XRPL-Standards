@@ -1,6 +1,6 @@
 <pre>
   Title:        <b>Non-Fungible Token Support</b>
-  Revision:     <b>9</b> (2022-03-23)
+  Revision:     <b>10</b> (2023-03-27)
 
 <hr>  Author:       <a href="mailto:david@ripple.com">David J. Schwartz</a>
                 <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
