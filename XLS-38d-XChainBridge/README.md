@@ -920,27 +920,3 @@ If a cross-chain account create fails, the recovery of funds must happen outside
 #### 5.3.3. Error Handling for Signature Reward Delivery
 
 If the signature reward cannot be delivered to the specified account, that portion of the signature reward is kept by the account that owns the `XChainOwnedClaimID`.
-
-# Appendix
-
-## Appendix A: Alternate Account Create Design: Undeletable Accounts
-
-In a normal cross-chain transfer, the claim ID is used to prevent transaction replay. However, the account create design does not use claim IDs. Instead, it requires that accounts be created in the same order as the "commit" transactions.
-
-There is another way to prevent transaction replay - check if the account to be created already exists. If it does, reject the transaction. The only problem with this is that accounts on the XRP ledger are deletable, and an easy attack would be to delete the account and replay the transaction.
-
-To prevent this, a design was considered where accounts created through cross-chain "account create" transactions would be undeletable. This has the nice property that the attestations no longer need to be added in order. However, it also introduces a new property on `AccountRoot`s that interacts with existing functionality.
-
-In the end, this proposal chose to pursue the "execution ordering" strategy. However, the undeletable account strategy is a viable solution with a different set of tradeoffs.
-
-## Appendix B: Alternate Designs
-
-One alternate design that was implemented involved a set of servers similar to the witness servers called "federators". These servers communicated among themselves, collected signatures needed to submit transactions on behalf of the door accounts directly, and submitted those transactions.
-
-This design is attractive from a usability point of view. There is no "cross-chain sequence number" that needs to be obtained on the destination chain, and creating accounts using cross-chain transfers is straightforward.
-
-The main disadvantage of this design is the complexity in the federators. In order to submit a transaction, the federators need to agree on a transaction's sequence number and fees. This requires the federators to stay in "sync" with each other and requires that these federators be much more complex than the "witness" servers proposed in this design.
-
-In addition, handling fee escalation, failed transactions, and servers falling behind was much more complex.
-
-Finally, because all the transactions were submitted from the same account (the door account), this presented a challenge for transaction throughput as the XRP ledger limits the number of transactions an account can submit in a single ledger.
