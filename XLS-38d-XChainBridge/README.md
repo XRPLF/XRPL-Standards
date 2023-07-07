@@ -3,8 +3,8 @@ Title:        <b>Cross-Chain Bridge</b>
 Description:  Enabling transfer of value between sidechains
 Type:         Draft
 
-Author:       <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-              <a href="mailto:scott.determan@ripple.com">Scott Determan</a>
+Author:       <a href="mailto:mvadari@ripple.com">Mayukha Vadari (Ripple)</a>
+              <a href="mailto:scott.determan@ripple.com">Scott Determan (Ripple)</a>
 
 <hr>  core_protocol_changes_required:     true
 </pre>
