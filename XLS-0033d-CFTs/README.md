@@ -108,6 +108,7 @@ A set of flags indicating properties or other options associated with this **`CF
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
 | `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
+| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
 With the exception of the `lsfFrozen` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
@@ -375,6 +376,7 @@ Specifies the flags for this transaction. In addition to the universal transacti
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
 | `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
+| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
@@ -542,13 +544,16 @@ Freezing an entire CFT without freezing other assets issued by an issuer is a ne
 #### 1.4.0.3 Freezing all CFTs and Trust Lines (Global Freeze)
 When accounts enact a global freeze, which is currently used to freeze all trust lines, it will also freeze all CFTs issued by the account.
 
-### 1.5.0 APIs
+### 1.5.0 Details on Clawing-Back CFTs
+To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfAllowClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
+
+### 1.6.0 APIs
 We propose several new APIs for this feature. All new APIs will be available only in `clio`.
 
-#### 1.5.0.1 `cfts_by_issuer`
+#### 1.6.0.1 `cfts_by_issuer`
 For a given account and ledger, it will show all `CFTokenIssuances` created by this account, including any deleted `CFTokenIssuances`. Deleted CFTokenIssuance may have the same ID as new CFTokenIssuances.
 
-##### 1.5.0.1.1 Request fields
+##### 1.6.0.1.1 Request fields
 
 ```json
 {
@@ -595,7 +600,7 @@ Used to continue querying where we left off when paginating.
 
 Specify a limit to the number of CFTs returned.
 
-##### 1.5.0.1.2 Response fields
+##### 1.6.0.1.2 Response fields
 
 ```json
 {
@@ -635,10 +640,10 @@ An array of CFTokenIssuance objects created by the specified account. Includes a
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
-#### 1.5.0.2 `account_cfts`
+#### 1.6.0.2 `account_cfts`
 For a given account and ledger, `account_cfts` will return all CFT balances held by this account.
 
-##### 1.5.0.2.1 Request fields
+##### 1.6.0.2.1 Request fields
 
 ```json
 {
@@ -680,7 +685,7 @@ Used to continue querying where we left off when paginating.
 Specify a limit to the number of CFT balances returned.
 
 
-##### 1.5.0.2.2 Response fields
+##### 1.6.0.2.2 Response fields
 
 ```json
 {
@@ -714,10 +719,10 @@ An array of CFToken objects owned by the specified account. Includes all fields 
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
-#### 1.5.0.3 `cft_holders`
+#### 1.6.0.3 `cft_holders`
 For a given CFTokenIssuanceID and ledger sequence, `cft_holders` will return all holders of that CFT and their balance. This API is likely return very large data sets, so users should expect to implement paging via the `marker` field.
 
-##### 1.5.0.3.1 Request fields
+##### 1.6.0.3.1 Request fields
 
 ```json
 {
@@ -757,7 +762,7 @@ Used to continue querying where we left off when paginating.
 
 Specify a limit to the number of CFTs returned.
 
-##### 1.5.0.3.2 Response fields
+##### 1.6.0.3.2 Response fields
 
 ```json
 {
