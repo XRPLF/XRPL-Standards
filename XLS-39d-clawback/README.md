@@ -8,7 +8,7 @@
 
 ## 1. Abstract
 
-Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowClawback` is set.**
+Although the XRP Ledger offers rich support for [tokens](https://xrpl.org/tokens.html) (a.k.a. IOUs or issued assets), including offering issuers the ability to [freeze](https://xrpl.org/freezes.html) issuances, in order to meet regulatory requirements, some issuers need to be able to go further, by having the ability to "[clawback](https://en.wikipedia.org/wiki/Clawback)" their issued assets.  **Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowTrustLineClawback` is set.**
 
 ----------------------- -------------------------------------------------------
 :bangbang: This proposal deals only with issued assets. **The proposed clawback
@@ -54,11 +54,11 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 
 | Flag Name       |  Flag Value  |
 |:---------------:|:------------:|
-| `lsfAllowClawback` | `0x80000000` | 
+| `lsfAllowTrustLineClawback` | `0x80000000` | 
 
 Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecOWNERS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on trustlines.
 
-If the account attempts to set `lsfAllowClawback` while `lsfNoFreeze` is set, the transaction will return `tecNO_PERMISSION` because clawback cannot be enabled on an account that has already disclaimed the ability to freeze trustlines. Reversely, if an account attempts to set `lsfNoFreeze` while `lsfAllowClawback` is set, the transaction will also return `tecNO_PERMISSION`.
+If the account attempts to set `lsfAllowTrustLineClawback` while `lsfNoFreeze` is set, the transaction will return `tecNO_PERMISSION` because clawback cannot be enabled on an account that has already disclaimed the ability to freeze trustlines. Reversely, if an account attempts to set `lsfNoFreeze` while `lsfAllowTrustLineClawback` is set, the transaction will also return `tecNO_PERMISSION`.
 
 
 ### 3.3. Transactions
@@ -67,7 +67,7 @@ This proposal introduces one new transaction: `Clawback`
 #### 3.3.1. `Clawback` transaction
 The **`Clawback`** transaction modifies a trustline object, by adjusting the balance accordingly and, if instructed to, by changing relevant flags. If possible (i.e. if the `Clawback` transaction would leave the trustline is in the "default" state), the transaction will also remove the trustline.
 
-**Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowClawback` is set.** If this transaction is attempted while `lsfAllowClawback` is unset, it will return with an error code `tecNO_PERMISSION`.
+**Issued tokens can be clawed back by an issuer if, and only if, `lsfAllowTrustLineClawback` is set.** If this transaction is attempted while `lsfAllowTrustLineClawback` is unset, it will return with an error code `tecNO_PERMISSION`.
 
 The transaction supports all the existing "common" fields for a transaction.
 
@@ -158,7 +158,7 @@ Test cases need to ensure the following:
 
 - The account that signs and submits `Clawback` transaction must be the token issuer 
 - Token issuer cannot clawback from themselves
-- `Clawback` adheres to account flags `lsfAllowClawback`, `lsfGlobalFreeze` and `lsfNoFreeze`
+- `Clawback` adheres to account flags `lsfAllowTrustLineClawback`, `lsfGlobalFreeze` and `lsfNoFreeze`
 - The issuer is only able to claw back the specific amount of funds that specified in the transaction, but can't exceed the maximum amount of funds the holder has
 - Test that the `Clawback` feature does not interfere with any other features of the token, such as Offers
 
