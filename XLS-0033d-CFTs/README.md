@@ -102,15 +102,15 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfFrozen`                | ️`0x0001`  | If set, indicates that all balances should be frozen. |
-| `lsfCannotFreezeBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be frozen. This has no effect on the issuers ability to globally freeze, yet provides token holders with more assurance that individual token holders will not be frozen on an ad-hoc basis, but instead all tokens will only ever be frozen or unfrozen together. |
+| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
+| `lsfCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuer's ability to lock a CFT entirely, yet provides token holders with more assurance that individual token holders will not be locked on an ad-hoc basis. If set, CFTs may only be locked for all users, or for no users. |
 | `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
 | `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
 | `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
-With the exception of the `lsfFrozen` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
+With the exception of the `lsfLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transaction, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
 ###### 1.2.1.1.2.3. `Issuer`
 
@@ -202,7 +202,7 @@ This value specifies a positive amount of tokens currently held by the owner. Va
 
 ###### 1.2.1.2.1.3. `LockedAmount`
 
-This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder for some other reason, such as an account freeze. 
+This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder for some other reason, such as an account lock. 
 
 This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty CFT holding.
 
@@ -212,7 +212,7 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
-| `lsfFrozen`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently frozen and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `Amount` value. |
+| `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `Amount` value. |
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
@@ -370,8 +370,8 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfFrozen`                | ️`0x0001`  | If set, indicates that all balances should be frozen. |
-| `lsfCannotFreezeBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be frozen. This has no effect on the issuers ability to globally freeze. |
+| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
+| `lsfCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuers ability to globally lock. |
 | `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
@@ -465,7 +465,7 @@ The `CFTokenIssuance` identifier.
 | --------------- | ------------------ | --------- | ------------- |
 | `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
 
-An optional XRPL Address of an individual token holder balance to freeze/unfreeze. If omitted, this transaction will apply to all any accounts holding CFTs.
+An optional XRPL Address of an individual token holder balance to lock/unlock. If omitted, this transaction will apply to all any accounts holding CFTs.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -482,13 +482,13 @@ An optional XRPL Address of an individual token holder balance to freeze/unfreez
  }
  ```
  
-#### 1.3.3.1.1 CFTokenSet Flags
-Transactions of the `CFTokenFreeze` type support additional values in the Flags field, as follows:
+#### 1.3.3.1.1 CFTokenIssuanceSet Flags
+Transactions of the `CFTokenIssuanceSet` type support additional values in the Flags field, as follows:
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `tfSetFreeze`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be frozen. |
-| `tfClearFreeze`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unfrozen. |
+| `tfSetLock`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be locked. |
+| `tfClearLock`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unlocked. |
 
 ### 1.3.4 The **`Payment`** Transaction
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate CFT amounts.
@@ -525,24 +525,20 @@ The idea behind this format is that it adds only one new subfield to the `amount
 ### 1.3.5 The **`AccountDelete`** Transaction
 We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `CFTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `CFTokenIssuances` using `CFTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render CFT balances useless/unstable for any holders.
 
-### 1.4.0 Details on Freezing CFTs
-#### 1.4.0.1 Freezing individual balances
-To freeze an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to freeze, and set the `tfSetFreeze` flag. This operation will fail if::
+### 1.4.0 Details on Halting CFT Trading
+The trading of Issued Currencies can be stopped currently using the various "freeze" flags. To freeze an individual `TrustLine`, issuers can set the `tfSetFreeze` flag on the `TrustSet` transaction. To freeze an entire currency's trading however, issuers must enact a "global freeze" at the account level. If an issuer has more than one Issued Currencies via the same account, there is no way to freeze one Issued Currency but not the other. Due to the complexity of the current settings for Issued Currency and because some of these settings are enacted at the account level, we feel that using the term "freeze" for CFTs would be confusing, unless CFTs were to also respect the existing account-level flags. However, there is no need to be able to freeze all CFTs at the account level if it is possible to freeze individual CFTs independently. In fact, having three-tiers of configuration (IE, the ability to freeze a holder of a CFT, the ability to freeze the CFT entirely, and the ability to freeze all of an issuer's CFTs) creates confusion for developers and for users who wish to simply determine the current state of a CFT. The reason that Issued Currencies work this way today is that there is no object on the ledger that represents the Issued Currency itself; there are only `TrustLines` that represent the relationship of an issuer to a holder.
 
-* The CFT has the `lsfCannotFreezeBalances` flag set or,
-* The CFT issuer has the `asfNoFreeze` flag set on their account
+Instead, it will be possible to halt the balance of a single CFT holder, or to halt trading for the CFT entirely. This gives issuers the flexibility they need without the complexity of the existing set-up. However, in order to avoid confusion we will call this feature "locking" instead of "freezing" (name to-be-confirmed, but that's our working title).
 
-Issuers can unfreeze the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfClearFreeze` flag set.
+#### 1.4.0.1 Locking individual balances
+To lock an individual balance of an individual CFT, an issuer will submit the `CFTokenIssuanceSet` transaction. In it, they will indicate the CFT, (optionally) the holder account that they wish to lock, and set the `tfSetLock` flag. This operation will fail if::
 
-#### 1.4.0.2 Freezing entire CFTs
-This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when freezing or unfreezing. This operation will fail if::
+* The CFT has the `lsfCannotLockBalances` flag set
 
-* The CFT issuer has the `asfNoFreeze` flag set on their account
+Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfClearLock` flag set.
 
-Freezing an entire CFT without freezing other assets issued by an issuer is a new feature of CFTs.
-
-#### 1.4.0.3 Freezing all CFTs and Trust Lines (Global Freeze)
-When accounts enact a global freeze, which is currently used to freeze all trust lines, it will also freeze all CFTs issued by the account.
+#### 1.4.0.2 Locking entire CFTs
+This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when locking or unlocking.
 
 ### 1.5.0 Details on Clawing-Back CFTs
 To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfAllowClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
