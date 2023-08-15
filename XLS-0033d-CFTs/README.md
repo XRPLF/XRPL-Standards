@@ -11,7 +11,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 # 1. Compact Fungible Tokens (CFTs)
 
-## 1.1. Abstract
+## 1.1. Abstract  
 
 [Trust lines](https://xrpl.org/trust-lines-and-issuing.html#trust-lines-and-issuing) are a fundamental building block for many XRP Ledger tokenization features, including [CBDCs](https://en.wikipedia.org/wiki/Central_bank_digital_currency) and [fiat-collateralized stablecoins](https://www.investopedia.com/terms/s/stablecoin.asp). However, as more and more token issuers embrace the XRP Ledger, the current size of each trust line will become an impediment to ledger stability and scalability.
 
@@ -87,8 +87,8 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `AssetScale`        | (default)          | `number`  | `UINT8`       |
 | `MaximumAmount`     | :heavy_check_mark: | `string`  | `UINT64`      |
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
-| `LockedAmount`      | ️(default)          | `string`  | `UINT64`      |
-| `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
+| `LockedAmount`      | ️(default)         | `string`  | `UINT64`      |
+| `TransferFee`       | ️(default)         | `number`  | `UINT16`      |
 | `CFTokenMetadata`   |                    | `string`  | `BLOB`        |
 | `OwnerNode`         | (default)          | `number`  | `UINT64`      |
 
@@ -354,13 +354,13 @@ Indicates the new transaction type **`CFTokenIssuanceCreate`**. The integer valu
 | ------------------ | --------- | --------- |---------------|
 | `AssetCode`        | ️ ✔        | `string`  | `BLOB`        |
 
-A 160-bit blob of data. It is reccommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above reccommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
+A 160-bit blob of data. It is recommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above recommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
 
-| Field Name         | Required?    | JSON Type | Internal Type |
-| ------------------ | ------------ | --------- |---------------|
-| `AssetScale`       | ️ ✔           | `number`  | `UINT8`       |
+| Field Name         | Required? | JSON Type | Internal Type |
+| ------------------ |-----------| --------- |---------------|
+| `AssetScale`       | ️         | `number`  | `UINT8`       |
 
-An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
+An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.  Note that this value is optional, and will default to `0` if not supplied.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- |---------------|
