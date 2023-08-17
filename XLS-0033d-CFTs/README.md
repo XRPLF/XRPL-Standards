@@ -354,13 +354,13 @@ Indicates the new transaction type **`CFTokenIssuanceCreate`**. The integer valu
 | ------------------ | --------- | --------- |---------------|
 | `AssetCode`        | ️ ✔        | `string`  | `BLOB`        |
 
-A 160-bit blob of data. It is reccommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above reccommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
+A 160-bit blob of data. It is recommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above recommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
 
 | Field Name         | Required?    | JSON Type | Internal Type |
 | ------------------ | ------------ | --------- |---------------|
-| `AssetScale`       | ️ ✔           | `number`  | `UINT8`       |
+| `AssetScale`       | ️             | `number`  | `UINT8`       |
 
-An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
+An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional; if it is not set the default value of 0 will be used.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- |---------------|
