@@ -101,13 +101,13 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
-| `lsfCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuer's ability to lock a CFT entirely, yet provides token holders with more assurance that individual token holders will not be locked on an ad-hoc basis. If set, CFTs may only be locked for all users, or for no users. |
-| `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
-| `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
-| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| `lsfCFTLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
+| `lsfCFTCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuer's ability to lock a CFT entirely, yet provides token holders with more assurance that individual token holders will not be locked on an ad-hoc basis. If set, CFTs may only be locked for all users, or for no users. |
+| `lsfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
+| `lsfCFTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
+| `lsfCFTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
+| `lsfCFTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
+| `lsfCFTCanClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
 With the exception of the `lsfLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transaction, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
@@ -369,13 +369,12 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
-| `lsfCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuers ability to globally lock. |
-| `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
-| `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
-| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| `tfCFTCannotLockBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be locked. This has no effect on the issuers ability to globally lock. |
+| `tfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
+| `tfCFTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
+| `tfCFTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
+| `tfCFTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
+| `tfCFTCanClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
@@ -540,7 +539,7 @@ Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transa
 This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when locking or unlocking.
 
 ### 1.5.0 Details on Clawing-Back CFTs
-To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfAllowClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
+To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfCFTCanClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
 
 ### 1.6.0 APIs
 We propose several new APIs for this feature. All new APIs will be available only in `clio`.
