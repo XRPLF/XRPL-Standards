@@ -44,10 +44,9 @@ Perhaps as important, however, CFTs require significantly less space than trust 
 This proposal makes a variety of assumptions, based upon observations of existing trust line usage in order to produce the most compact representations of data. These assumptions include:
 
 1. **Only Unidirectional**. This proposal does not support bidirectional trust line constructions, on the assumption that _most_ token issuers leave their trust line limit set to the default value of 0 (i.e., issuers don't allow debt relationships with token holders, by default). Thus, CFTs do not have the same "balance netting" functionality found in trust lines because CFTs have only a single balance as opposed to the two balances used by trust lines.
-2. **Few Issuances per Issuer**. The most common examples of fungible token issuance involve regulatory overhead, which makes it less common for issuers to issue _many_ fungible tokens, in the general case. In addition, existing [guidance on xrpl.org](https://xrpl.org/freezes.html#global-freeze) advises token issuers to use different addresses for each token issuance in order to better accomodate [global freeze](https://xrpl.org/enact-global-freeze.html) activities. Because of this, we assume that any individual issuer will not issue many different fungible tokens using the same address. In particular, this specification limits the number of unique CFT issuances to 32 per issuing account. If an issuer wishes to support more than this number of CFTs, additional addresses can still be used.
-3. **No Trust Limits**. Unlike current Trustline functionality where trust amount limits can be set by either party, this proposal eliminates this feature under the assumption that token holders will not acquire a CFT without first making an off-ledger trust decision. For example, a common use-case for a CFT is a fiat-backed stablecoin, where a token holder wouldn't purchase more stablecoin than they would feel comfortable holding.
-4. **No TrustSet Transactions**. CFTs may be held by any account, and therefore do not require any sort of [TrustSet](https://xrpl.org/trustset.html#trustset) transaction in order to enable holding a CFT. However, in order to disallow an arbitrary CFT sender from consuming recipient account reserves, payment _senders_ have to commit 1 incremental reserve (i.e., currently 2 XRP) when sending a token to any recipient who doesn't currently hold any CFTs (or to any recipient where sending the token would incur a new CFTokenPage). 
-5. **No Rippling**. Unlike some existing capabilities of the ledger, CFTs are not eligible for [rippling](https://xrpl.org/rippling.html#rippling), and thus do not have any configurability settings related to that functionality.
+2. **No Trust Limits**. Unlike current Trustline functionality where trust amount limits can be set by either party, this proposal eliminates this feature under the assumption that token holders will not acquire a CFT without first making an off-ledger trust decision. For example, a common use-case for a CFT is a fiat-backed stablecoin, where a token holder wouldn't purchase more stablecoin than they would feel comfortable holding.
+3. **No TrustSet Transactions**. CFTs may be held by any account, and therefore do not require any sort of [TrustSet](https://xrpl.org/trustset.html#trustset) transaction in order to enable holding a CFT. However, in order to disallow an arbitrary CFT sender from consuming recipient account reserves, payment _senders_ have to commit 1 incremental reserve (i.e., currently 2 XRP) when sending a token to any recipient who doesn't currently hold any CFTs (or to any recipient where sending the token would incur a new CFTokenPage). 
+4. **No Rippling**. Unlike some existing capabilities of the ledger, CFTs are not eligible for [rippling](https://xrpl.org/rippling.html#rippling), and thus do not have any configurability settings related to that functionality.
 
 ### 1.1.3 Release Timeline and Scope
 
@@ -161,7 +160,7 @@ Identifies the page in the owner's directory where this item is referenced.
  
 ##### 1.2.1.1.3. How do **`CFTokenIssuance`** objects work?
 
-Any account may issue up to 32 Compact Fungible Tokens, but each issuance must have a different **`AssetCode`**.
+Any account may issue any number of Compact Fungible Tokens, but each issuance must have a different **`AssetCode`**.
 
 ###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
 
@@ -169,7 +168,7 @@ CFT Issuances are uniquely identified by a combination of a type-specific prefix
 
 ###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
 
-A **`CFTokenIssuance`** object can be added by using the same approach to find the **`CFTokenIssuance`**, and adding it to that directory. If, after addition, the number of CFTs in the directory would exceed 32, then the operation must fail.
+A **`CFTokenIssuance`** object can be added by using the same approach to find the **`CFTokenIssuance`**, and adding it to that directory. However, if the provided AssetCode is already in-use by this issuer then the operation must fail with `tecDUPLICATE`.
 
 ###### 1.2.1.1.3.3. Removing a **`CFTokenIssuance`** object
 
@@ -177,7 +176,7 @@ A **`CFTokenIssuance`** can be removed using the same approach, but only if the 
 
 ###### 1.2.1.1.3.4. Reserve for **`CFTokenIssuance`** object
 
-Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFTokenIssuance`** entries per account.
+Each **`CFTokenIssuance`** costs an incremental reserve to the owner account.
 
 #### 1.2.1.2. The **`CFToken`** object
 The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions.
