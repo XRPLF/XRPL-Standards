@@ -619,8 +619,7 @@ Specify a limit to the number of CFTs returned.
              "OutstandingAmount": ....,
              "LockedAmount": .....,
              "TransferFee": .....,
-             "CFTokenMetadata": ....,
-             "ledger_index": 11231
+             "CFTokenMetadata": ....
            }
         ],
         "validated": true
