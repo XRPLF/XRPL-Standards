@@ -920,3 +920,9 @@ If a cross-chain account create fails, the recovery of funds must happen outside
 #### 5.3.3. Error Handling for Signature Reward Delivery
 
 If the signature reward cannot be delivered to the specified account, that portion of the signature reward is kept by the account that owns the `XChainOwnedClaimID`.
+
+## 6. Proposed Implementation
+
+A proposed implementation is available here: https://github.com/XRPLF/rippled/pull/4292
+
+An in-development version of a witness server is available here: https://github.com/seelabs/xbridge_witness
