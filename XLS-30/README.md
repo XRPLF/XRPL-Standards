@@ -441,7 +441,6 @@ $$\Delta_{LPTokens} = \Gamma_{LPTokens} * \left[\frac{\frac{\Delta_{B}}{\Gamma_{
         {1 + {\left(F_2^{\frac{1}{W_B}} + \frac{\Delta_{B}}{(\Gamma_{B}*F_1)}\right)}^{W_{B}} - F_2}\right] \tag{3}$$
 
 
-Similarly,
 Similarly, we can derive $\Delta{B}$ from the above equation. We call this equation 4.
 
 Following is the updated pool composition of the AMM instance after successful trade:
