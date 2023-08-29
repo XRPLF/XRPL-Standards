@@ -9,7 +9,7 @@
 # Automated Market Maker on XRP Ledger
 
 ### Abstract
-The XRPL decentralized exchange (DeX) currently provides liquidity exclusively by manual market making and order books. This proposal adds non-custodial automated market maker (AMM) as a native feature to the XRPL DeX in a way that provides increased returns to those who provide liquidity for the AMM and minimizes the risk of losses due to volatility.
+The XRPL decentralized exchange (DEX) currently provides liquidity exclusively by manual market making and order books. This proposal adds non-custodial automated market maker (AMM) as a native feature to the XRPL DEX in a way that provides increased returns to those who provide liquidity for the AMM and minimizes the risk of losses due to volatility.
 
 We propose a unique mechanism where the AMM instance continuously auctions off trading advantages to arbitrageurs, charging them and giving these earnings to its liquidity providers. This allows liquidity providers to take a large share of the profits that would normally be taken by arbitrageurs.
 
