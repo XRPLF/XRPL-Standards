@@ -62,7 +62,7 @@ $$SP_{A}^{B}  = \frac{\frac{\Gamma_B}{W_B}}{\frac{\Gamma_A}{W_A}} * \frac{1}{\le
 
 $$EP_{A}^{B} = \frac{\Delta_B}{\Delta_A} \tag{III}$$
 
-<Note to self: This is the price of one unit of token A in terms of token B When we say the effwctive price of trade it always means the price of per out token in terms of in token>
+<Note to self: This is the price of one unit of token A in terms of token B When we say the effective price of trade it always means the price of per out token in terms of in token>
 
 6. **Slippage**: Slippage is defined as the percentage change in the effective price of a trade relative to the pre-swap spot-price.
 
@@ -108,7 +108,7 @@ As slot holder will have significant advantages for arbitrage, it’s expected t
 
 ### 2.1. On-Ledger Objects
 
-We propose the existing **`AccountRoot`** object together with a new ledger object **`AMM`** to represent an AMM instance. Currently, the **`AccountRoot`** object type describes a single account, its settings, and XRP balance on the XRP ledger. The **`AccountRoot`** and the **`AMM`** objects that represent an AMM instance can be created using the new **`AMMCreate`** transaction. XRP balance of the AMM instance pools is always tracked via the existing `Balance` field of the **`AccountRoot`** object. The issued asset balances of the AMM instance pools and **`LPTokens`** are automatically tracked via trustlines. The AMM can be traded against using the new **`AMMDeposit`** and **`AMMWithdraw`** and the existing **`Payment`** transactions. Additionally, the AMM instance in "empty" state can be deleted using the `AMMDelete` transaction.
+We propose the existing **`AccountRoot`** object together with a new ledger object **`AMM`** to represent an AMM instance. Currently, the **`AccountRoot`** object type describes a single account, its settings, and XRP balance on the XRP ledger. The **`AccountRoot`** and the **`AMM`** objects that represent an AMM instance can be created using the new **`AMMCreate`** transaction. XRP balance of the AMM instance pools is always tracked via the existing `Balance` field of the **`AccountRoot`** object. The issued asset balances of the AMM instance pools and **`LPTokens`** are automatically tracked via trust lines. The AMM can be traded against using the new **`AMMDeposit`** and **`AMMWithdraw`** and the existing **`Payment`** transactions. Additionally, the AMM instance in "empty" state can be deleted using the `AMMDelete` transaction.
 
 Note that in this version, only equal-weighted two asset pools are supported. However, differing weighted pools could be supported in future versions.
 
@@ -150,7 +150,7 @@ The order of the fields to compute the hash is decided canonically. The **`AMMID
 The **`AMM`** ledger entry contains the following fields for the **`AccountRoot`** object that represents the AMM instance.
 
 1. **`AccountID`** specifies the ID of the `AccountRoot` object associated with this `AMM` ledger entry.
-2. **`TradingFee`** specifies the fee, in basis point, to be charged to the traders for the trades executed against this AMM instance. Valid values for this field are between 0 and 1000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing trading fee between 0% and 1%. Trading fee is a percentage of the trade size. It is charged on the asset being deposited for the `AMMDeposit` (if applicable) and `Payment` transactions and on the asset being withdrawan for the `AMMWithdraw` (if applicable) transaction. This fee is added to the AMM instance's pools and is distributed to the LPs in proportion to the `LPTokens` upon liquidity removal.
+2. **`TradingFee`** specifies the fee, in basis point, to be charged to the traders for the trades executed against this AMM instance. Valid values for this field are between 0 and 1000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing trading fee between 0% and 1%. Trading fee is a percentage of the trade size. It is charged on the asset being deposited for the `AMMDeposit` (if applicable) and `Payment` transactions and on the asset being withdrawn for the `AMMWithdraw` (if applicable) transaction. This fee is added to the AMM instance's pools and is distributed to the LPs in proportion to the `LPTokens` upon liquidity removal.
 
 3. **`VoteSlots`** represents an array of `Vote` objects.
 4. **`AuctionSlot`** represents the `Auction` object.
@@ -218,7 +218,7 @@ The `AMMCreate` transaction MUST fail if the account issuing this transaction:
 
 i. does not have sufficient balances, OR
 
-ii. is NOT the `issuer` of either token AND the `RequireAuth` flag for the corresponding token is set AND the account inititaing the transaction is not authorized.
+ii. is NOT the `issuer` of either token AND the `RequireAuth` flag for the corresponding token is set AND the account initiating the transaction is not authorized.
 
 If the transaction is successful, 
 
@@ -226,10 +226,10 @@ i. Two new ledger entries **`AccountRoot`** and `AMM` are created.
 
 ii. The regular key for the **`AccountRoot`** ledger entry is set to account zero, and the master key is disabled, effectively disabling all possible ways to sign transactions from this account.
 
-iii. New trustlines are created.  
+iii. New trust lines are created.  
  
 #### 2.2.2. Trustlines
-A successful `AMMCreate` transaction will automatically create the following trustlines:
+A successful `AMMCreate` transaction will automatically create the following trust lines:
 
 - Trustlines that track the balance(s) of the issued asset(s) of the AMM instance's pool(s) between the AMM instance account and the issuer.
 - Trustlines that track the balance of `LPTokens` between the AMM instance and the account that initiated the transaction. `LPTokens` are uniquely identified by the following:
@@ -260,7 +260,7 @@ Initially by default, $W_{A}$ = $W_{B}$ = 0.5
 Unlike other objects in the XRPL, there is no reserve for the `AccountRoot` and `AMM` ledger entries created by an `AMMCreate` transaction. Instead there is a higher `Fee` (~ 1 reserve) for `AMMCreate` transaction in XRP which is burned as a special transaction cost.
 
 ### 2.3. `Deleting the AMM instance `AccountRoot` and `AMM` ledger entries`
- On final withdraw (i.e. when `LPTokens` balance is 0) the AMM instance automatically deletes upto 512 trustlines. If there are fewer then 512 trustlines then `AMM` object and `AccountRoot` objects are deleted.  
+ On final withdraw (i.e. when `LPTokens` balance is 0) the AMM instance automatically deletes up to 512 trust lines. If there are fewer then 512 trustlines then `AMM` object and `AccountRoot` objects are deleted.  
  
  However, if there are more than 512 trustlines then AMM instance is in empty state (`LPTokens` balance is 0) and we introduce a new transaction type `AMMDelete` to delete the remaining trustlines. .  Any one can call `AMMDelete` transaction. `AMMDelete` also has a limit of 512 trustlines and deletes the `AMM` object and `AccountRoot` objects only if there are fewer than 512 trustlines. If there are more trustlines to delete then `AMMDelete` returns `tecINCOMPLETE` code and user should submit `AMMDelete` again.
 
@@ -457,7 +457,7 @@ We introduce the following flags to the `AMMDeposit` transaction to identify val
 | ---------- | :----------------: | :-------:|
 | `tfLPToken`      | 0x00010000  |   If set, it indicates `LPTokenOut` parameter and may optionally include `Amount` and `Amount2` combination|
 | `tfSingleAsset`      | 0x00080000  |   If set, it indicates `Amount` parameter and may optionally include `LPTokenOut` parameter|
-| `tfTwoAsset`      | 0x00100000  |   If set, it indicates `Amount` and `Amount2` parameter combination and may optionally include `LPTokenOut` paramater|
+| `tfTwoAsset`      | 0x00100000  |   If set, it indicates `Amount` and `Amount2` parameter combination and may optionally include `LPTokenOut` parameter|
  | `tfOneAssetLPToken`      | 0x00200000 |   If set, it indicates `Amount` and `LPTokenOut` parameter combination|
  | `tfLimitLPToken`      | 0x00400000  |   If set, it indicates `Amount` and `EPrice` parameter combination|
  | `tfWithdrawAll`      | 0x00020000  |   If set, it indicates proportional withdrawal of all `LPTokens`|
@@ -510,7 +510,7 @@ b. The effective-price of the `LPTokenOut` traded out does not exceed the specif
 Following updates after a successful `AMMDeposit` transaction:
 
 - The deposited asset, if XRP, is transferred from the account that initiated the transaction to the AMM instance account, thus changing the `Balance` field of each account
-- The deposited asset, if tokens, are balanced between the AMM account and the issuer account trustline.
+- The deposited asset, if tokens, are balanced between the AMM account and the issuer account trust line.
 - The `LPTokenOut` ~ $\Delta_{LPTokens}$ are issued by the AMM instance account to the account that initiated the transaction and a new trustline is created, if there does not exist one.
 - The pool composition is updated. Note that the conservation function is not preserved in case of liquidity provision.
 
@@ -1062,7 +1062,7 @@ We introduce a new transaction **`AMMBid`** to place a bid for the auction slot.
 | ---------- | :-------: | :-------: | :-----------: |
 | `MaxBidPrice`    |           | `string` |   `STRING NUMBER`    |
 
-`MaxBidPrice` represents the maximum price that the bidder wants to pay for the slot. It is specified in units of `LPTokens`. This is not a required field. If specified let `MaxBidPrice` be `X` and let the slot-price computed by price scheduling slgorithm be `Y`, then bidder always pays the min(X, Y).     
+`MaxBidPrice` represents the maximum price that the bidder wants to pay for the slot. It is specified in units of `LPTokens`. This is not a required field. If specified let `MaxBidPrice` be `X` and let the slot-price computed by price scheduling algorithm be `Y`, then bidder always pays the min(X, Y).     
 
 ---
 
