@@ -116,7 +116,7 @@ Note that in this version, only equal-weighted two asset pools are supported. Ho
 
 ##### **`AccountRoot`** ledger entry
 
-We introduce a new field called `AMMID` to the `AccountRoot` object. It replaces directory entry to link account root and AMM object. 
+We introduce a new field called `AMMID` to the `AccountRoot` object. It provides an easy link to the corresponding `AMM` object and a way to identify the AMM `AccountRoot`. 
 
 | Field Name        |     Required?      | JSON Type | Internal Type |
 | ----------------- | :----------------: | :-------: | :-----------: |
@@ -257,7 +257,7 @@ Unlike other objects in the XRPL, there is no reserve for the `AccountRoot` and 
 ### 2.3. `Deleting the AMM instance `AccountRoot`, `AMM` and `DirectoryNode` ledger entries`
 On final withdraw (i.e. when `LPTokens` balance is 0) the AMM instance automatically deletes up to 512 trust lines. If there are fewer then 512 trustlines then `AMM`, `AccountRoot` and `DirecotoryNode` objects are deleted.  
  
-However, if there are more than 512 trustlines then AMM instance is in empty state (`LPTokens` balance is 0) and we introduce a new transaction type `AMMDelete` to delete the remaining trustlines. Any one can call `AMMDelete` transaction. `AMMDelete` also has a limit of 512 trustlines and deletes the `AMM` object and `AccountRoot` objects only if there are fewer than 512 trustlines. If there are more trustlines to delete then `AMMDelete` returns `tecINCOMPLETE` code and user should submit `AMMDelete` again.
+However, if there are more than 512 trustlines then AMM instance is in empty state (`LPTokens` balance is 0) and we introduce a new transaction type `AMMDelete` to delete the remaining trustlines. Any one can call `AMMDelete` transaction. `AMMDelete` also has a limit of 512 trustlines and deletes the `AMM`, `AccountRoot` and `DirectoryNode` objects only if there are fewer than 512 trustlines. If there are more trustlines to delete then `AMMDelete` returns `tecINCOMPLETE` code and user should submit `AMMDelete` again.
 
 In order to avoid destroying assets of the AMM instance, the implementation of the `AMMWithdraw` transaction MUST guarantee that the AMM instance has no asset reserves if no account owns its `LPTokens`.  
 
