@@ -254,7 +254,7 @@ Initially by default, $W_{A}$ = $W_{B}$ = 0.5
 
 Unlike other objects in the XRPL, there is no reserve for the `AccountRoot` and `AMM` ledger entries created by an `AMMCreate` transaction. Instead there is a higher `Fee` (~ 1 reserve) for `AMMCreate` transaction in XRP which is burned as a special transaction cost.
 
-### 2.3. `Deleting the AMM instance `AccountRoot`, `AMM` and `DirectoryNode` ledger entries`
+### 2.3. Deleting the AMM instance `AccountRoot`, `AMM` and `DirectoryNode` ledger entries
 On final withdraw (i.e. when `LPTokens` balance is 0) the AMM instance automatically deletes up to 512 trust lines. If there are fewer then 512 trustlines then `AMM`, `AccountRoot` and `DirecotoryNode` objects are deleted.  
  
 However, if there are more than 512 trustlines then AMM instance remains in empty state (`LPTokens` balance is 0). To handle cleaning this up, we introduce a new transaction type `AMMDelete` to delete the remaining trustlines. Anyone can call the `AMMDelete` transactor. `AMMDelete` also has a limit of 512 trustlines and deletes the `AMM`, `AccountRoot` and `DirectoryNode` objects only if there are fewer than 512 trustlines at the time it executes. If there are more trustlines to delete, then `AMMDelete` returns the `tecINCOMPLETE` result code and the user should submit another `AMMDelete` to delete more entries.
