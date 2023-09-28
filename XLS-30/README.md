@@ -1259,4 +1259,9 @@ Following updates after a successful **`AMMWithdraw`** transaction:
 - The pool composition is updated. Conservation function is not preserved in case of liquidity withdrawal (and is not expected to.)
 
 ## Implementation
-A proposed reference implementation is in progress here: https://github.com/XRPLF/rippled/pull/4294
+The reference implementation of this spec can be found in `rippled`:
+
+- https://github.com/XRPLF/rippled/pull/4294
+- https://github.com/XRPLF/rippled/pull/4626
+- https://github.com/XRPLF/rippled/pull/4674
+- https://github.com/XRPLF/rippled/pull/4682
