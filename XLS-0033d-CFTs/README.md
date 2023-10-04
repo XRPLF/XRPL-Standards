@@ -213,6 +213,7 @@ A set of flags indicating properties or other options associated with this **`CF
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
 | `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTokenAmount` value. |
+| `lsfAuthorized`       | `0x0002`   | If set, indicates that the issuer has authorized the holder for the CFT, this is an immutable flag that will be set through a `CFTokenTrust` transaction.|
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
@@ -482,7 +483,7 @@ An optional XRPL Address of an individual token holder balance to lock/unlock. I
  }
  ```
  
-#### 1.3.3.1.1 CFTokenSet Flags
+#### 1.3.3.1.1 CFTokenIssuanceSet Flags
 Transactions of the `CFTokenLock` type support additional values in the Flags field, as follows:
 
 | Flag Name         | Flag Value | Description |
@@ -521,7 +522,48 @@ We propose using the following format for CFT amounts::
 
 Since the `AssetCode` is an optional field, the `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
 
-### 1.3.5 The **`AccountDelete`** Transaction
+### 1.3.5 The **`CFTokenTrust`** Transaction
+This transaction allows a holder to own a `CFToken`, creating a `CFToken` object for the holder with zero balance. 
+
+If the issuer has set `lsfRequiresAuthorization`(allowlisting) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenTrust` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allowlisting in Section 1.8.0. 
+#### 1.3.5.1 CFTokenTrust
+| Field Name      | Required?          | JSON Type | Internal Type |
+| --------------- | ------------------ | --------- | ------------- |
+| `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
+
+This address can indicate either an issuer or a potential holder of a CFT.
+
+| Field Name         | Required? | JSON Type | Internal Type |
+| ------------------ | --------- | --------- |---------------|
+| `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
+
+Indicates the new transaction type **`CFTokenTrust`**. The integer value is `29 (TODO)`.
+
+| Field Name  | Required? | JSON Type | Internal Type |
+| ----------- | --------- | --------- | ------------- |
+| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+
+Indicates the ID of the CFT involved. 
+
+| Field Name  | Required? | JSON Type | Internal Type |
+| ----------- | --------- | --------- | ------------- |
+| `CFTokenHolder` |    | `string`  | `ACCOUNTID`     | 
+
+This field is only used for authorization/allowlisting. It's an optional field that specifies the holder's address whom the issuer wants to authorize.
+
+| Field Name      | Required?          | JSON Type | Internal Type |
+| --------------- | ------------------ | --------- | ------------- |
+| `Flag`          | :heavy_check_mark: | `string`  | `UINT64`      | 
+
+ 
+#### 1.3.3.5.12 CFTokenTrust Flags
+Transactions of the `CFTokenTrust` type support additional values in the Flags field, as follows:
+
+| Flag Name         | Flag Value | Description |
+|-------------------|------------|-------------|
+| `tfUntrust`     | ️`0x0001`  | If set, indicates that the holder no longer wants to hold the `CFToken`. If the the holder's `CFToken` has non-zero balance while trying to set this flag, the transaction will fail. This flag can only be set by a holder. |
+
+### 1.3.6 The **`AccountDelete`** Transaction
 We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `CFTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `CFTokenIssuances` using `CFTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render CFT balances useless/unstable for any holders.
 
 ### 1.4.0 Details on Locking CFTs
@@ -798,9 +840,32 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
- ### 1.7.0 Free CFTs
+ ### 1.7 Free CFTs
 When an holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
+
+### 1.8 Allowlisting
+In certain use cases, issuers may want the option to only allow specific accounts to holder their CFT, similar to how authorization works for TrustLines.
+#### 1.8.1 Without allowlisting
+Let's first explore how the flow looks like without allowlisting:
+1. Alice has a CFT of currency `USD`
+2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
+3. Now Bob can now receive and send payments from/to anyone using `USD`.
+4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
+5. Bob then submits a `CFTokenTrust` transaction that has set the `tfUntrust` flag, which will success fully delete `CFToken` object.
  
+
+#### 1.8.2 With allowlisting
+The issuer needs to enable allowlisting for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
+With allowlisting, there needs to be a bidirectional trust betweent the holder and the issuer. Let's explore and flow and compare the difference with above:
+1. Alice has a CFT of currency `USD` (same as above)
+2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
+3. Alice needs to send a `CFTokenTrust` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
+4. Same as step 4 above
+5. Same as step 5 above
+
+**It is important to note that the holder always must first submit the `CFTokenTrust` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenTrust` before Bob.
+
 # Appendix 1: Current Trust line Storage Requirements
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
 
@@ -831,8 +896,6 @@ MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 
 TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
  
- ### 1.7.0 Free CFTs
-When an holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
 
 # Implementation Notes
