@@ -841,22 +841,22 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
  ### 1.7 Free CFTs
-When an holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
+When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
 ### 1.8 Allowlisting
-In certain use cases, issuers may want the option to only allow specific accounts to holder their CFT, similar to how authorization works for TrustLines.
+In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
 #### 1.8.1 Without allowlisting
 Let's first explore how the flow looks like without allowlisting:
 1. Alice has a CFT of currency `USD`
 2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
-3. Now Bob can now receive and send payments from/to anyone using `USD`.
+3. Bob can now receive and send payments from/to anyone using `USD`.
 4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
-5. Bob then submits a `CFTokenTrust` transaction that has set the `tfUntrust` flag, which will success fully delete `CFToken` object.
+5. Bob then submits a `CFTokenTrust` transaction that has set the `tfUntrust` flag, which will successfully delete `CFToken` object.
  
 
 #### 1.8.2 With allowlisting
 The issuer needs to enable allowlisting for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
-With allowlisting, there needs to be a bidirectional trust betweent the holder and the issuer. Let's explore and flow and compare the difference with above:
+With allowlisting, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
 1. Alice has a CFT of currency `USD` (same as above)
 2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
 **However at this point, Bob still does not have the permission to use `USD`!**
