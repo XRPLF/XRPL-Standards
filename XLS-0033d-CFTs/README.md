@@ -896,6 +896,20 @@ MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 
 TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
  
+# Appendix 2: `CFTokenIssuanceID` construct options
+There have been several options in how to construct the CFTokenIssuanceID:
+## Problem: Hash by issuer address and currency code (conventional approach)
+This is the conventional way of constructing an identifier, as the token holder can directly submit the transaction after knowing the issuer and the currency they want to use. However, if this is implemented, it means that after the issuer destorys/burns the token, they can re-issue the token with the same currency, resulting in the same `CFTokenIssuanceID`. This behavior can be misleading to token holders who have held onto the first iteration of the token rather than the re-issued one(since both iterations have the same `CFTokenIssuanceID`). In real world use cases(especially finance), after a fungible token is burnt, it should not be possible to re-create it, and absolutely not with the same identifier. 
+
+## Option A: Currency array and limit the number of CFT issuances 
+This approach still constructs `CFTokenIssuanceID` by hashing the issuer address and currency code. But in an effort to solve the re-creatable `CFTokenIssuanceID` problem, the issuer stores an array of CFT currency codes that have been issued out. In this way, every time the issuer issues a new CFT, the ledger checks whether the currency code has already be used, and if so, the transaction fails. However, the problem with this approach is that the ledger would need to iterate through the currency array everytime the account attempts to issue a CFT, which would be unsustainable if the issuer can issue up to an unbounded number of CFTs. Hence, we impose a limit on the total number of CFTs that an account can issue(proposed limit is 32 CFTs). 
+
+But, this approach is not very clean in solving the problem, and there is a limit on the number of CFTs that the account can issue, which is not ideal since we would want the issuer to issue as many CFTs as they want. 
+
+## Option B: Construct CFTokenIssuance without currency code (current approach)
+We realized that the problem with re-creatable CFTs is due to the account/currency pair where the currency can be re-used many times after the CFT has been burnt. To solve this problem, the `CFTokenIssuanceID` is now constructed from two parameter: the issuer address and transaction sequence. Since the transaction sequence is na increasing index, `CFTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes. 
+
+Although using this approach would mean that CFT payment transactions would no longer involve the currency code, making it inconvinient for the users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
 
 
 # Implementation Notes
