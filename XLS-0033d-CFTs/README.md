@@ -102,8 +102,8 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. |
-| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the CFT can be locked both individually and globally. If not set, the CFT cannot be locked in any way.|
+| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances are locked. |
+| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.|
 | `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
@@ -188,7 +188,7 @@ A **`CFToken`** object can have the following required and optional fields. Noti
 | Field Name            | Required?          | JSON Type | Internal Type |
 | --------------------- |--------------------|-----------|---------------|
 | `CFTokenIssuanceID`   | :heavy_check_mark: |  `string` | `UINT256`     |
-| `CFTokenAmount`              | :heavy_check_mark: |  `string` | `UINT64`      |
+| `CFTAmount`              | :heavy_check_mark: |  `string` | `UINT64`      |
 | `LockedAmount`        | default            |  `string` | `UINT64`      |
 | `Flags`               | default            |  `number` | `UINT32`      |
 
@@ -196,7 +196,7 @@ A **`CFToken`** object can have the following required and optional fields. Noti
 
 The `CFTokenIssuance` identifier.
 
-###### 1.2.1.2.1.2. `CFTokenAmount`
+###### 1.2.1.2.1.2. `CFTAmount`
 
 This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
 
@@ -212,7 +212,7 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
-| `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTokenAmount` value. |
+| `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
 | `lsfAuthorized`       | `0x0002`   | If set, indicates that the issuer has authorized the holder for the CFT, this is an immutable flag that will be set through a `CFTokenTrust` transaction.|
 
 ##### 1.2.1.2.2. Example CFToken JSON
@@ -221,7 +221,7 @@ A set of flags indicating properties or other options associated with this **`CF
  {
      "TokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
      "Flags": 0,
-     "CFTokenAmount": "100000000",
+     "CFTAmount": "100000000",
      "LockedAmount": "0"
  }
  ```
@@ -303,7 +303,7 @@ This scheme is similar to the existing scheme for organizing `NFToken` objects i
      "CFTokens": {
              {
                  "CFTokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-                 "CFTokenAmount": 50000
+                 "CFTAmount": 50000
              },
              ...
       }
@@ -520,12 +520,12 @@ We propose using the following format for CFT amounts::
 }
 ```
 
-Since the `AssetCode` is an optional field, the `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
+Note: Because the `AssetCode` is an optional field, the `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
 
 ### 1.3.5 The **`CFTokenTrust`** Transaction
-This transaction allows a holder to own a `CFToken`, creating a `CFToken` object for the holder with zero balance. 
+This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
 
-If the issuer has set `lsfRequiresAuthorization`(allowlisting) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenTrust` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allowlisting in Section 1.8.0. 
+If the issuer has set `lsfRequiresAuthorization` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenTrust` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Section 1.8.0. 
 #### 1.3.5.1 CFTokenTrust
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -549,7 +549,7 @@ Indicates the ID of the CFT involved.
 | ----------- | --------- | --------- | ------------- |
 | `CFTokenHolder` |    | `string`  | `ACCOUNTID`     | 
 
-This field is only used for authorization/allowlisting. It's an optional field that specifies the holder's address whom the issuer wants to authorize.
+Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; must be empty if submitted by the holder.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -736,7 +736,7 @@ Specify a limit to the number of CFT balances returned.
            {
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
-             "CFTokenAmount": "1000",
+             "CFTAmount": "1000",
              "LockedAmount": "0"
            }
         ],
@@ -813,7 +813,7 @@ Specify a limit to the number of CFTs returned.
           "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn": {
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
-             "CFTokenAmount": "1000",
+             "CFTAmount": "1000",
              "LockedAmount": "0"
           }
         },
@@ -843,28 +843,6 @@ Used to continue querying where we left off when paginating. Omitted if there ar
  ### 1.7 Free CFTs
 When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
-### 1.8 Allowlisting
-In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
-#### 1.8.1 Without allowlisting
-Let's first explore how the flow looks like without allowlisting:
-1. Alice has a CFT of currency `USD`
-2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
-3. Bob can now receive and send payments from/to anyone using `USD`.
-4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
-5. Bob then submits a `CFTokenTrust` transaction that has set the `tfUntrust` flag, which will successfully delete `CFToken` object.
- 
-
-#### 1.8.2 With allowlisting
-The issuer needs to enable allowlisting for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
-With allowlisting, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
-1. Alice has a CFT of currency `USD` (same as above)
-2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
-**However at this point, Bob still does not have the permission to use `USD`!**
-3. Alice needs to send a `CFTokenTrust` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
-4. Same as step 4 above
-5. Same as step 5 above
-
-**It is important to note that the holder always must first submit the `CFTokenTrust` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenTrust` before Bob.
 
 # Appendix 1: Current Trust line Storage Requirements
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
@@ -910,6 +888,30 @@ But, this approach is not very clean in solving the problem, and there is a limi
 We realized that the problem with re-creatable CFTs is due to the account/currency pair where the currency can be re-used many times after the CFT has been burnt. To solve this problem, the `CFTokenIssuanceID` is now constructed from two parameter: the issuer address and transaction sequence. Since the transaction sequence is na increasing index, `CFTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes. 
 
 Although using this approach would mean that CFT payment transactions would no longer involve the currency code, making it inconvinient for the users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
+
+# Appendix 3: Allow-Listing
+In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
+## Without Allow-Listing
+Let's first explore how the flow looks like without allow-listing:
+1. Alice holds a CFT with asset-code `USD`.
+2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
+3. Bob can now receive and send payments from/to anyone using `USD`.
+4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
+5. Bob then submits a `CFTokenTrust` transaction that has set the `tfUntrust` flag, which will successfully delete `CFToken` object.
+ 
+
+## With Allow-Listing
+The issuer needs to enable allow-listing for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
+With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
+1. Alice has a CFT of currency `USD` (same as above)
+2. Bob wants to hold it, and therefore submits a `CFTokenTrust` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
+3. Alice needs to send a `CFTokenTrust` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
+4. Same as step 4 above
+5. Same as step 5 above
+
+**It is important to note that the holder always must first submit the `CFTokenTrust` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenTrust` before Bob.
+
 
 
 # Implementation Notes
