@@ -289,7 +289,7 @@ Given the DID **did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn**, do the followin
         {
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "ledger_index": "validated",
-            "type": "DID"
+            "type": "did"
         }
     ]
 }
