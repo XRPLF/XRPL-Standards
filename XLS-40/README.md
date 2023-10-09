@@ -116,7 +116,7 @@ We compute the `DID` object ID, a.k.a., `DIDID` as the `SHA-512Half` of the foll
 - The Account ID
 
 ### 4.1.3. Reserve Requirements
-The account that creates the `DID` object will incur one owner reserve ~2 XRP at the time of writing this document.
+The account that creates the `DID` object will incur one owner reserve (2 XRP at the time of writing this document).
 
 ## 4.2. XRP Ledger DID Method Specification
 In this section, we describe the DID method specification that conforms to the requirements specified in the DID specification currently published by the W3C Credentials Community Group. For more information about DIDs and DID method specifications, refer to the DID [Primer](https://github.com/WebOfTrustInfo/rwot5-boston/blob/master/topics-and-advance-readings/did-primer.md). 
