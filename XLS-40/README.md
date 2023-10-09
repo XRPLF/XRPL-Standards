@@ -110,7 +110,7 @@ Note:
 - Unique in the XRPL namespace, and 
 - Uniquely associated with the XRPL account. 
  
-We compute the `DID` object ID, a.k.a., `DIDID` as the `SHA-512Half` of the following values, concatenated in order:
+We compute the `DID` object ID, a.k.a., `DIDID`, as the `SHA-512Half` of the following values, concatenated in order:
 
 - The `DID` space key (`0x0049`)
 - The Account ID
