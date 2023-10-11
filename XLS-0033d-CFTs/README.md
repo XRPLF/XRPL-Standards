@@ -83,7 +83,6 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
 | `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
 | `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `AssetCode`         |                    | `string`  | `UINT160`     |
 | `AssetScale`        | (default)          | `number`  | `UINT8`       |
 | `MaximumAmount`     | :heavy_check_mark: | `string`  | `UINT64`      |
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
@@ -116,29 +115,23 @@ With the exception of the `lsfLocked` flag, which can be mutated via the `**CFTo
 
 The address of the account that controls both the issuance amounts and characteristics of a particular fungible token.
 
-###### 1.2.1.1.2.4. `AssetCode`
-
-A 160-bit blob of data. We recommend using only upper-case ASCII letters, ASCII digits 0 through 9, the dot (`.`) character, and the dash (`-`) character. Dots and dashes should never be the first character of an asset code, and should not be repeated sequentially.
-
-While it is possible to store any arbitrary data in this field, implementations that detect the above recommended character conformance can and should display them as human-readable text, allowing issuers to support well-known ISO-4207 currency codes in addition to custom codes. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
-
-###### 1.2.1.1.2.5. `AssetScale`
+###### 1.2.1.1.2.4. `AssetScale`
 
 An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
 
-###### 1.2.1.1.2.6. `MaximumAmount`
+###### 1.2.1.1.2.5. `MaximumAmount`
 
 This value is an unsigned number that specifies the maximum number of CFTs that can be distributed to non-issuing accounts (i.e., `minted`). For issuances that do not have a maximum limit, this value should be set to 0xFFFFFFFFFFFFFFFF.
 
-###### 1.2.1.1.2.7. `OutstandingAmount`
+###### 1.2.1.1.2.6. `OutstandingAmount`
 
 Specifies the sum of all token amounts that have been minted to all token holders. This value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This value is increased whenever an issuer pays CFTs to a non-issuer account, and decreased whenever a non-issuer pays CFTs into the issuing account.
 
-###### 1.2.1.1.2.8. `TransferFee`
+###### 1.2.1.1.2.7. `TransferFee`
 
 This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0.
 
-###### 1.2.1.1.2.9. `OwnerNode`
+###### 1.2.1.1.2.8. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
@@ -149,7 +142,6 @@ Identifies the page in the owner's directory where this item is referenced.
      "LedgerEntryType": "CFTokenIssuance",
      "Flags": 131072,
      "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-     "AssetCode": "0000000000000000000000005553440000000000",
      "AssetScale": "2",
      "MaximumAmount": "100000000",
      "OutstandingAmount": "5",
@@ -165,7 +157,7 @@ Any account may issue any number of Compact Fungible Tokens.
 
 ###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
 
-CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired **`AssetCode`**. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
+CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
 
 ###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
 
@@ -351,12 +343,6 @@ If the transaction is successful, the newly created token will be owned by the a
 
 Indicates the new transaction type **`CFTokenIssuanceCreate`**. The integer value is `25 (TODO)`.
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | --------- | --------- |---------------|
-| `AssetCode`        | ️        | `string`  | `BLOB`        |
-
-A 160-bit blob of data. It is reccommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above reccommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
-
 | Field Name         | Required?    | JSON Type | Internal Type |
 | ------------------ | ------------ | --------- |---------------|
 | `AssetScale`       | ️           | `number`  | `UINT8`       |
@@ -405,7 +391,6 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
 {
   "TransactionType": "CFTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
-  "AssetCode": "1234567",
   "AssetScale": "2",
   "TransferFee": 314,
   "MaxAmount": "50000000",
@@ -520,7 +505,7 @@ We propose using the following format for CFT amounts::
 }
 ```
 
-Note: Because the `AssetCode` is an optional field, the `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
+Note: The `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
 
 ### 1.3.5 The **`CFTokenTrust`** Transaction
 This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
@@ -651,7 +636,6 @@ Specify a limit to the number of CFTs returned.
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
              "Issuer": ......,
-             "AssetCode": .....,
              "AssetScale": .....,
              "MaximumAmount": .....,
              "OutstandingAmount": ....,
