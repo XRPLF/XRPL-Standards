@@ -12,7 +12,7 @@ Self-sovereign identity, defined as a lifetime portable digital identity that do
 
 To this end, we specify the following on XRPL:
 - A new `DID method` that describes:
-  -  The format for XRP ledger DID, and 
+  -  The format for XRP ledger DID, and
   -  Defines how XRP ledger DIDs are generated
 - How to do `CRUD operations` on XRP ledger DIDs
 
@@ -178,7 +178,7 @@ The proposal introduces a new transaction type: **`DIDSet`** that can be used to
   "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
   "Fee": "10",
   "Sequence": 391,
-  "URI": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf4dfuylqabf3oclgtqy55fbzdi",
+  "URI": "697066733A2F2F62616679626569676479727A74357366703775646D37687537367568377932366E6634646675796C71616266336F636C67747179353566627A6469",
   "Data": ,
   "SigningPubKey":"0330E7FC9D56BB25D6893BA3F317AE5BCF33B3291BD63DB32654A313222F7FD020",
   ...
@@ -304,7 +304,7 @@ A sample response to the above query might look like this:
         "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
         "account_objects": [
             {
-                "URI":"ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf4dfuylqabf3oclgtqy55fbzdi"
+                "URI": "697066733A2F2F62616679626569676479727A74357366703775646D37687537367568377932366E6634646675796C71616266336F636C67747179353566627A6469"
             }
         ],
         "validated": true
