@@ -100,11 +100,6 @@ The index of the ledger that contains the transaction that most recently modifie
 
 `DIDDocument` field SHOULD contain the <a href="https://www.w3.org/TR/did-core/#did-documents"> DID document </a> per W3C standards associated with the DID. The field is NOT checked for validity, and is limited to a maximum length of 256 bytes.
 
-Note:
-- Either `URI`, `Data` or `DIDDocument` field MUST be present to create and update the `DID` object.
-- All `URI`, `Data` and `DIDDocument` fields MUST be absent to delete the `DID` object.
-
-
 ### 4.1.2. The `DID` Object ID Format
 `DID` object may contain public data associated with the XRPL account's identity. This requires the `DID` to be:
 - Unique in the XRPL namespace, and 
