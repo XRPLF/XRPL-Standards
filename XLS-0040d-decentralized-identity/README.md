@@ -44,8 +44,8 @@ This proposal chooses to recommend W3C DID identity standard to satisfy the foll
 We propose one new ledger object and two new transaction types. 
 - **DID** is a new ledger object that is unique to an XRPL account and may contain a reference to, or the hash of, or the [W3C DID document](https://w3c-ccg.github.io/did-primer/#did-documents) itself associated with the corresponding DID.
 - **DIDSet** is a new transaction type used to perform the following two operations:
-  -  `Create` the new ledger object `DID` with `URI`, and/or `Data` fields, thus adding the required reserve towards the account that initiated the transaction.
-  -  `Update` the mutable `URI` and `Data` fields of the `DID` object.
+  -  `Create` the new ledger object `DID` with `URI`, and/or `Data`, and/or `DIDDocument` fields, thus adding the required reserve towards the account that initiated the transaction.
+  -  `Update` the mutable `URI`, `Data` and `DIDDocument` fields of the `DID` object.
 - **DIDDelete** is a new transaction type used to delete the `DID` object, thus reducing the reserve requirement towards the account that created the object.
 
 # 4. XRPL Decentralized Identifier (DID) Specification
@@ -274,15 +274,15 @@ Given the input DID for an account, follow these steps:
 - Retrieve the contents of the corresponding `DID` object in its raw format using the XRPL's [`account_objects`]( https://xrpl.org/account_objects.html#) command. Use the `account` field to specify the Account ID to retrieve all objects owned by that account, including `DID` object in the raw ledger format. Or optionally use the `type` field to filter the results by `ledger_entry` type, i.e. `DID` to retrieve the contents of just the `DID` object.
  
 ### Example
-Given the DID **did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn**, do the following:
-- Retrieve `rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn`
+Given the DID **did:xrpl:1:rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu**, do the following:
+- Retrieve `rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu`
 - Perform the `account_objects` method request to retrieve the contents of `DID` object:
 ```
 {
     "method": "account_objects",
     "params": [
         {
-            "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
             "ledger_index": "validated",
             "type": "did"
         }
@@ -293,23 +293,35 @@ Given the DID **did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn**, do the followin
 A sample response to the above query might look like this:
 
 ```
-200 OK
 {
-    "result": {
-        "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "account_objects": [
-            {
-                "URI": "697066733A2F2F62616679626569676479727A74357366703775646D37687537367568377932366E6634646675796C71616266336F636C67747179353566627A6469"
-            }
-        ],
-        "validated": true
+  "account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
+  "account_objects": [
+    {
+      "Account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
+      "DIDDocument": "646F63",
+      "Data": "617474657374",
+      "Flags": 0,
+      "LedgerEntryType": "DID",
+      "OwnerNode": "0",
+      "PreviousTxnID": "2052324F7A8F2122B7A66D35E75CBABC25CA7FEAE2C1806EB9F537220A03336F",
+      "PreviousTxnLgrSeq": 4,
+      "URI": "6469645F6578616D706C65",
+      "index": "A6F0C71B1E6EB186ED20906E655F69C693AE3C9D4D19D2110DCB85DBE1E87216"
     }
+  ],
+  "ledger_hash": "95AD8063A729FDE24EFD4A0423A26FD3F154A6DE6ECCDE99434C195D9C5BAB36",
+  "ledger_index": 4,
+  "validated": true
 }
 
 ```
-Upon receiving this response, an IPFS address (CAS) can be retrieved from the `URI` field. This address can then be resolved to retrieve the corresponding DID Document.
+Upon receiving this response:
+- A DID Document can be retrieved from the `DIDDocument` field
+- An IPFS address (CAS) can be retrieved from the `URI` field. This address can then be resolved to retrieve additional DID Document(s) and/or associated data.
+- Attestation data can be retrieved from the `Data` field.
 
-:notebook: It is recommended that the applications implementing this method extend it to enable DID document fetching from the retrieved URI.
+
+:notebook: It is recommended that the applications implementing this method extend it to enable DID document/data fetching from the retrieved URI.
 
 Alternatively, one can use the [`ledger_entry`](https://xrpl.org/ledger_entry.html#ledger_entry) method to retrieve a single ledger entry (in this case `DID`) from the XRP Ledger in its raw format. 
 
@@ -366,7 +378,7 @@ The entity which controls the private key associated with the `DID` object, i.e.
 The DID document or other data associated with the XRPL DID's `URI` and/or `Data`, and/or `DIDDocument` fields can contain any content, though it is recommended that it conforms to the W3C DID Document and Verifiable Credentials (VC) specification. As anchored DIDs on XRPL can be resolved by anyone, care should be taken to only update to resolve DID Documents and data which DO NOT expose any sensitive personal information, or information which one may not wish to be public. DID documents should be limited to verification methods and service endpoints, and SHOULD not store any personal information.
 
 ## 6.3. IPFS and Canonicity
-IPFS allows anyone to store content publicly on the nodes in a distributed network. A common misconception is that anyone can edit content, however the content-addressability of IPFS means that this new edited content will have a different address to the original. While any entity can copy a DID Document anchored with an XRPL account's `URI`, they cannot change the document that a DID resolves to via the XRPL `account_objects` resolution unless they control the private key which created the corresponding `DID` object.
+IPFS allows anyone to store content publicly on the nodes in a distributed network. A common misconception is that anyone can edit content, however the content-addressability of IPFS means that this new edited content will have a different address to the original. While any entity can copy a DID Document anchored with an XRPL account's `DIDDocument` or `URI` fields, they cannot change the document that a DID resolves to via the XRPL `account_objects` resolution unless they control the private key which created the corresponding `DID` object.
 
 For more, see [§ 10. Privacy Considerations](https://www.w3.org/TR/did-core/#privacy-considerations) in did-core. 
 
