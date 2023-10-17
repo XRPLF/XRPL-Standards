@@ -380,7 +380,7 @@ A DID is associated with a DID document. A DID document contains the necessary i
 
 Applications may choose one of the following for the DID document associated with a DID:
 - Store a reference on the ledger in the `URI` field of `DID` object to the DID document stored in one or more parts on other decentralized storage networks such as IPFS or STORJ.
-- Store a minimal DID document in the `Data` field of the `DID` object.
+- Store a minimal DID document in the `DIDDocument` field of the `DID` object.
 - Specify a minimal implicit DID document generated from the DID and other available public information.
  
 While not normative, a sample XRPL DID Document MAY look like:
