@@ -187,7 +187,7 @@ The proposal introduces a new transaction type: **`DIDSet`** that can be used to
 ```
 ## Create
 If the `DID` object associated with the `Account` does not exist, 
-  - If both `URI` and `Data` fields are not present in the transaction, then transaction fails.
+  - If either `URI`, `Data` or `DIDDocument` fields are not present in the transaction, then transaction fails.
   - Otherwise, a successful `DIDSet` transaction creates a new `DID` object with the following object ID:
 
   `SHA-512Half` of the following values, concatenated in order:
