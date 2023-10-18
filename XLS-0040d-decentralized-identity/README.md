@@ -271,46 +271,39 @@ Given the input DID for an account, follow these steps:
 
   - Compute the Account ID using the method described [here](https://xrpl.org/accounts.html#address-encoding).
 
-- Retrieve the contents of the corresponding `DID` object in its raw format using the XRPL's [`account_objects`]( https://xrpl.org/account_objects.html#) command. Use the `account` field to specify the Account ID to retrieve all objects owned by that account, including `DID` object in the raw ledger format. Or optionally use the `type` field to filter the results by `ledger_entry` type, i.e. `DID` to retrieve the contents of just the `DID` object.
+- Retrieve the contents of the corresponding `DID` object in its raw format using the XRPL's [`ledger_entry`]( https://xrpl.org/ledger_entry.html#ledger_entry) method. Use the `did` field to specify the Account ID to retrieve the `DID` object in the raw ledger format.
  
 ### Example
-Given the DID **did:xrpl:1:rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu**, do the following:
-- Retrieve `rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu`
-- Perform the `account_objects` method request to retrieve the contents of `DID` object:
+Given the DID **did:xrpl:1:rpfqJrXg5uidNo2ZsRhRY6TiF1cvYmV9Fg**, do the following:
+- Retrieve `rpfqJrXg5uidNo2ZsRhRY6TiF1cvYmV9Fg`
+- Perform the `ledger_entry` method request to retrieve the contents of `DID` object:
 ```
 {
-    "method": "account_objects",
-    "params": [
-        {
-            "account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
-            "ledger_index": "validated",
-            "type": "did"
-        }
-    ]
-}
+    "command": "ledger_entry",
+    "did": "rpfqJrXg5uidNo2ZsRhRY6TiF1cvYmV9Fg",
+    "ledger_index": 'validated',
+  }
 ```
 
 A sample response to the above query might look like this:
 
 ```
 {
-  "account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
-  "account_objects": [
-    {
-      "Account": "rDZdorj46soYhJKa26jm2cpJkgM3AfGhvu",
-      "DIDDocument": "646F63",
-      "Data": "617474657374",
-      "Flags": 0,
-      "LedgerEntryType": "DID",
-      "OwnerNode": "0",
-      "PreviousTxnID": "2052324F7A8F2122B7A66D35E75CBABC25CA7FEAE2C1806EB9F537220A03336F",
-      "PreviousTxnLgrSeq": 4,
-      "URI": "6469645F6578616D706C65",
-      "index": "A6F0C71B1E6EB186ED20906E655F69C693AE3C9D4D19D2110DCB85DBE1E87216"
-    }
-  ],
-  "ledger_hash": "95AD8063A729FDE24EFD4A0423A26FD3F154A6DE6ECCDE99434C195D9C5BAB36",
+  "index": '46813BE38B798B3752CA590D44E7FEADB17485649074403AD1761A2835CE91FF',
+  "ledger_hash": '4264238D7FBAF1BE54075BF69E63AAFE0CD33193EC15D08E6F4397B5389F181B',
   "ledger_index": 4,
+  "node": {
+    "Account": 'rpfqJrXg5uidNo2ZsRhRY6TiF1cvYmV9Fg',
+    "DIDDocument": '646F63',
+    "Data": '617474657374',
+    "Flags": 0,
+    "LedgerEntryType": 'DID',
+    "OwnerNode": '0',
+    "PreviousTxnID": 'A4C15DA185E6092DF5954FF62A1446220C61A5F60F0D93B4B09F708778E41120',
+    "PreviousTxnLgrSeq": 4,
+    "URI": '6469645F6578616D706C65',
+    "index": '46813BE38B798B3752CA590D44E7FEADB17485649074403AD1761A2835CE91FF'
+  },
   "validated": true
 }
 
@@ -323,7 +316,7 @@ Upon receiving this response:
 
 :notebook: It is recommended that the applications implementing this method extend it to enable DID document/data fetching from the retrieved URI.
 
-Alternatively, one can use the [`ledger_entry`](https://xrpl.org/ledger_entry.html#ledger_entry) method to retrieve a single ledger entry (in this case `DID`) from the XRP Ledger in its raw format. 
+Alternatively, one can use the [`account_objects`]( https://xrpl.org/account_objects.html#) command. Use the `account` field to specify the Account ID to retrieve all objects owned by that account, including `DID` object in the raw ledger format. Or optionally use the `type` field to filter the results by `ledger_entry` type, i.e. `DID` to retrieve the contents of just the `DID` object.
 
 ## 5.3. DIDDelete Transaction
 XRP ledger `DID` object owner or controller MAY want to delete the object. For this, we introduce a new transaction type called **`DIDDelete`**. A successful transaction will remove the ledger object and reduce the reserve requirement of the owner account.  
