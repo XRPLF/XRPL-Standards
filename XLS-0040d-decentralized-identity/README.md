@@ -98,7 +98,7 @@ The index of the ledger that contains the transaction that most recently modifie
 | -------------| :----------------: | :-------: | :-----------: 
 | `DIDDocument`       |                    | `string`  |   `BLOB`    |
 
-`DIDDocument` field SHOULD contain the <a href="https://www.w3.org/TR/did-core/#did-documents"> DID document </a> per W3C standards associated with the DID. The field is NOT checked for validity, and is limited to a maximum length of 256 bytes.
+`DIDDocument` field SHOULD contain the <a href="https://www.w3.org/TR/did-core/#did-documents"> DID document </a> per W3C standards associated with the DID. The `DIDDocument` field is NOT checked for validity, and is limited to a maximum length of 256 bytes.
 
 ### 4.1.2. The `DID` Object ID Format
 `DID` object may contain public data associated with the XRPL account's identity. This requires the `DID` to be:
