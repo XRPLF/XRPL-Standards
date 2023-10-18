@@ -632,7 +632,7 @@ Specify a limit to the number of CFTs returned.
 |-------------------|:---------:|
 | `cft_issuances`   | `array`   |
 
-An array of CFTokenIssuance objects created by the specified account. Includes all fields in the underlying object, `ledger_index` for the index at which this CFT was created and `deleted_ledger_index` for the index at which this CFT was deleted (if applicable).
+An array of CFTokenIssuance objects created by the specified account. Includes all fields in the existing underlying object, `ledger_index` for the index at which this CFT was last modified.  For a deleted object, only `CFTokenIssuanceID` and `deleted_ledger_index` for the index at which this CFT was deleted are shown.
 
 | Field Name        | JSON Type |
 |-------------------|:---------:|
