@@ -205,7 +205,7 @@ A set of flags indicating properties or other options associated with this **`CF
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
 | `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
-| `lsfAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT, this is an flag that will be set through a `CFTokenAuthorize` transaction. This flag can also be unset through a `CFTokenAuthorize` transaction by setting the `tfUnauthorize` flag.|
+| `lsfAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfUnauthorize` flag. |
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
