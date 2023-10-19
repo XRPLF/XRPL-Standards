@@ -510,7 +510,7 @@ Note: The `CFTokenIssuanceID` will be used to uniquely identify the CFT during a
 ### 1.3.5 The **`CFTokenAuthorize`** Transaction
 This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
 
-If the issuer has set `lsfRequiresAuthorization` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Section 1.8.0. 
+If the issuer has set `lsfRequiresAuthorization` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Appendix. 
 #### 1.3.5.1 CFTokenAuthorize
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
