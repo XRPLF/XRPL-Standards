@@ -1,6 +1,8 @@
 <pre>
   Title:        <b>Clawback Support</b>
   Description:  Enabling clawback for IOUs
+  Type:         Draft
+  
 <hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
                 <a href="mailto:shawnxie@ripple.com">Shawn Xie (Ripple)</a>
 <hr>  core_protocol_changes_required:     true
@@ -166,3 +168,8 @@ Test cases need to ensure the following:
 The Automated Market Maker (AMM) gives an account the ability to deposit issued tokens into AMM instance pool, in the form of `LPToken`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into the AMM pool cannot be clawed back.
 
 If clawing back from an AMM instance pool is required, such change will need a separate specification.
+
+## 8. Compatibility with Escrow & Paychannels (XLS-34)
+The XLS-34 gives an account the ability to "lock" issued tokens into an escrow or paychannel, in the form of `LockedBalance`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into an Escrow or Paychannel cannot be clawed back.
+
+If clawing back tokens from an Escrow or Paychannel is required, such change will need a separate specification.
