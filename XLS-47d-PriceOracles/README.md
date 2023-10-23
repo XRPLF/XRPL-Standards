@@ -365,16 +365,28 @@ A 20-byte hex string for the max ledger version to use.
 
 The `time_threshold` is used to define a time range in seconds for filtering out older price data. `time_threshold` is 4 seconds by default.
 
-The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `symbol`/`price_unit` pair, including the `UnitPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `UnitPrice` for the specified token pair, we examine up to three previous Price Oracle objects and include the most recent one that fulfills the criteria.
+The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `symbol`/`price_unit` pair, including the `SymbolPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `SymbolPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the first one that fulfills the criteria.
 
-The response data contains the following fields:
+The `get_aggregate_price` fails if:
 
-- `size` is the size of the data set used to calculate the statistics.
-- `average` is the simple average.
-- `standard_deviation` is the standard deviation.
+- The oracles array size is either 0 or greater than 200.
+- The oracles array's object doesn't include `account` or `oracle_sequence` or those fields have invalid value.
+- `symbol` or `price_unit` are missing.
+- `trim` or `time_threshold` contain invalid uint value.
+- If the resulting data set is empty.
+
+On success, the response data contains the following fields:
+
+- `entire_set` is an object of the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `average` is the simple average.
+  - `standard_deviation` is the standard deviation.
+- `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `average` is the simple average.
+  - `standard_deviation` is the standard deviation.
 - `median` is the median.
-- `trimmed_median` is the trimmed median, which is calculated if `trim` field is included.
-- `time_stamp` is the most recent time stamp out of all `LastUpdateTime` values.
+- `time` is the most recent time stamp out of all `LastUpdateTime` values.
 
 ##### Example of get_aggregate_price API JSON
 
@@ -418,12 +430,19 @@ The response data contains the following fields:
 ##### Response JSON
 
     {
-       "ledger_current_index" : 23,
-       "size": 20,
-       "average" : "74.45",
-       "standard_deviation": "15.32",
-       "median" : "74.45",
-       "trimmed_mean": "70",
-       "status" : "success",
-       "validated" : false
+      "entire_set" : {
+         "average" : "74.75",
+         "size" : 10,
+         "standard_deviation" : "0.1290994448735806"
+      },
+      "ledger_current_index" : 25,
+      "median" : "74.75",
+      "status" : "success",
+      "trimmed_set" : {
+        "average" : "74.75",
+        "size" : 6,
+        "standard_deviation" : "0.1290994448735806"
+      },
+      "validated" : false
+      "time" : 78937648
     }
