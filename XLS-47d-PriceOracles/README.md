@@ -64,9 +64,9 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
 We compute the `PriceOracle` object ID, a.k.a., `OracleID`, as the SHA-512Half of the following values, concatenated in order:
 
-The Oracle space key (0x52)
-The Owner Account ID
-The Oracle Sequence. This field must be passed to the transactions and it describes a unique Price Oracle sequence for the given account.
+- The Oracle space key (0x52)
+- The Owner Account ID
+- The Oracle Sequence. This field must be passed to the transactions and it describes a unique Price Oracle sequence for the given account.
 
 #### Example of `PriceOracle` JSON
 
@@ -180,11 +180,16 @@ Indicates a new transaction type `SetOracle`. The integer value is 49.
 The transaction fails if:
 
 - A required field is missing.
-- XRP reserve is insufficient. If the Oracle instance has less or equal than five pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
-- Transaction's `PriceDataSeries` array size exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
+- XRP reserve is insufficient. If the Oracle instance has less or equal than five token pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
+- Transaction's `PriceDataSeries` array size is empty or exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
 - `PriceDataSeries` has duplicate token pairs.
+- `PriceDataSeries` has array elements with missing `SymbolPrice`.
 - The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
+- The `URI` field length exceeds 64 bytes.
+- The `Provider` field length exceeds 64 bytes.
+- The `SymbolClass` field length exceeds 12 bytes.
+- The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
 
 If an object with the `OracleID` Object ID already exists then the new token pairs are added to the Oracle instance `PriceDataSeries` array. Note that the order of the token pairs in the `PriceDataSeries` array is not important since the token pair uniquely identifies location in the `PriceDataSeries` array of the `PriceOracle` object. Also note that not every token pair price has to be updated. I.e., even though the `PriceOracle` may define ten token pairs, `SetOracle` transaction may contain only one token pair price update. In this case the missing token pair will not include `SymbolPrice` and `Scale` fields. `PreviousTxnID` can be used to find the last updated Price Data for this token pair.
 
@@ -363,7 +368,7 @@ A 20-byte hex string for the max ledger version to use.
 |:---------|:-----------|:---------------|
 | `time_threshold` | | `number` |
 
-The `time_threshold` is used to define a time range in seconds for filtering out older price data. `time_threshold` is 4 seconds by default.
+The `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.
 
 The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `symbol`/`price_unit` pair, including the `SymbolPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `SymbolPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the first one that fulfills the criteria.
 
