@@ -347,7 +347,7 @@ Indicates the new transaction type **`CFTokenIssuanceCreate`**. The integer valu
 | ------------------ | ------------ | --------- |---------------|
 | `AssetScale`       | ️           | `number`  | `UINT8`       |
 
-An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
+An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional, and will default to `0` if not supplied.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- |---------------|
