@@ -72,7 +72,7 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 
 * The CFTokenIssuance space key (0x007E).
 * The AccountID of the issuer.
-* The AssetCode of the issuance.
+* The transaction sequence number
 
 ##### 1.2.1.1.2. Fields
 
@@ -83,7 +83,6 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
 | `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
 | `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `AssetCode`         | :heavy_check_mark: | `string`  | `UINT160`     |
 | `AssetScale`        | (default)          | `number`  | `UINT8`       |
 | `MaximumAmount`     | :heavy_check_mark: | `string`  | `UINT64`      |
 | `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
@@ -102,43 +101,37 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfFrozen`                | ️`0x0001`  | If set, indicates that all balances should be frozen. |
-| `lsfCannotFreezeBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be frozen. This has no effect on the issuers ability to globally freeze, yet provides token holders with more assurance that individual token holders will not be frozen on an ad-hoc basis, but instead all tokens will only ever be frozen or unfrozen together. |
+| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances are locked. |
+| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.|
 | `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
 | `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
 | `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
-With the exception of the `lsfFrozen` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
+With the exception of the `lsfLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
 ###### 1.2.1.1.2.3. `Issuer`
 
 The address of the account that controls both the issuance amounts and characteristics of a particular fungible token.
 
-###### 1.2.1.1.2.4. `AssetCode`
-
-A 160-bit blob of data. We recommend using only upper-case ASCII letters, ASCII digits 0 through 9, the dot (`.`) character, and the dash (`-`) character. Dots and dashes should never be the first character of an asset code, and should not be repeated sequentially.
-
-While it is possible to store any arbitrary data in this field, implementations that detect the above recommended character conformance can and should display them as human-readable text, allowing issuers to support well-known ISO-4207 currency codes in addition to custom codes. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
-
-###### 1.2.1.1.2.5. `AssetScale`
+###### 1.2.1.1.2.4. `AssetScale`
 
 An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
 
-###### 1.2.1.1.2.6. `MaximumAmount`
+###### 1.2.1.1.2.5. `MaximumAmount`
 
 This value is an unsigned number that specifies the maximum number of CFTs that can be distributed to non-issuing accounts (i.e., `minted`). For issuances that do not have a maximum limit, this value should be set to 0xFFFFFFFFFFFFFFFF.
 
-###### 1.2.1.1.2.7. `OutstandingAmount`
+###### 1.2.1.1.2.6. `OutstandingAmount`
 
 Specifies the sum of all token amounts that have been minted to all token holders. This value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This value is increased whenever an issuer pays CFTs to a non-issuer account, and decreased whenever a non-issuer pays CFTs into the issuing account.
 
-###### 1.2.1.1.2.8. `TransferFee`
+###### 1.2.1.1.2.7. `TransferFee`
 
-This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0.
+This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down, hence the fee can be rounded down to zero if the payment is small. Issuer should make sure that their CFT's `AssetScale` is large enough.
 
-###### 1.2.1.1.2.9. `OwnerNode`
+###### 1.2.1.1.2.8. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
@@ -149,7 +142,6 @@ Identifies the page in the owner's directory where this item is referenced.
      "LedgerEntryType": "CFTokenIssuance",
      "Flags": 131072,
      "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-     "AssetCode": "0000000000000000000000005553440000000000",
      "AssetScale": "2",
      "MaximumAmount": "100000000",
      "OutstandingAmount": "5",
@@ -161,11 +153,11 @@ Identifies the page in the owner's directory where this item is referenced.
  
 ##### 1.2.1.1.3. How do **`CFTokenIssuance`** objects work?
 
-Any account may issue up to 32 Compact Fungible Tokens, but each issuance must have a different **`AssetCode`**.
+Any account may issue any number of Compact Fungible Tokens.
 
 ###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
 
-CFT Issuances are uniquely identified by a combination of a type-specific prefix, the isser address and an asset code. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired **`AssetCode`**. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
+CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
 
 ###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
 
@@ -188,7 +180,7 @@ A **`CFToken`** object can have the following required and optional fields. Noti
 | Field Name            | Required?          | JSON Type | Internal Type |
 | --------------------- |--------------------|-----------|---------------|
 | `CFTokenIssuanceID`   | :heavy_check_mark: |  `string` | `UINT256`     |
-| `Amount`              | :heavy_check_mark: |  `string` | `UINT64`      |
+| `CFTAmount`              | :heavy_check_mark: |  `string` | `UINT64`      |
 | `LockedAmount`        | default            |  `string` | `UINT64`      |
 | `Flags`               | default            |  `number` | `UINT32`      |
 
@@ -196,13 +188,13 @@ A **`CFToken`** object can have the following required and optional fields. Noti
 
 The `CFTokenIssuance` identifier.
 
-###### 1.2.1.2.1.2. `Amount`
+###### 1.2.1.2.1.2. `CFTAmount`
 
 This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
 
 ###### 1.2.1.2.1.3. `LockedAmount`
 
-This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder for some other reason, such as an account freeze. 
+This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder. 
 
 This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty CFT holding.
 
@@ -212,7 +204,8 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
-| `lsfFrozen`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently frozen and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `Amount` value. |
+| `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
+| `lsfAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfUnauthorize` flag. |
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
@@ -220,7 +213,7 @@ A set of flags indicating properties or other options associated with this **`CF
  {
      "TokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
      "Flags": 0,
-     "Amount": "100000000",
+     "CFTAmount": "100000000",
      "LockedAmount": "0"
  }
  ```
@@ -302,7 +295,7 @@ This scheme is similar to the existing scheme for organizing `NFToken` objects i
      "CFTokens": {
              {
                  "CFTokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-                 "Amount": 50000
+                 "CFTAmount": 50000
              },
              ...
       }
@@ -350,17 +343,11 @@ If the transaction is successful, the newly created token will be owned by the a
 
 Indicates the new transaction type **`CFTokenIssuanceCreate`**. The integer value is `25 (TODO)`.
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | --------- | --------- |---------------|
-| `AssetCode`        | ️ ✔        | `string`  | `BLOB`        |
-
-A 160-bit blob of data. It is reccommended to use only upper-case ASCII letters in addition to the ASCII digits 0 through 9. While it's possible to store any arbitrary data in this field, implementations that detect the above reccommended characters should display them as ASCII for human readability. This also helps prevents spoofing attacks where a [homoglyph](https://en.wikipedia.org/wiki/Homoglyph) might be used to trick a person into using the wrong asset code.
-
 | Field Name         | Required?    | JSON Type | Internal Type |
 | ------------------ | ------------ | --------- |---------------|
-| `AssetScale`       | ️ ✔           | `number`  | `UINT8`       |
+| `AssetScale`       | ️           | `number`  | `UINT8`       |
 
-An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
+An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional, and will default to `0` if not supplied.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- |---------------|
@@ -370,8 +357,8 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfFrozen`                | ️`0x0001`  | If set, indicates that all balances should be frozen. |
-| `lsfCannotFreezeBalances`  | ️`0x0002`  | If set, indicates that _individual_ balances cannot be frozen. This has no effect on the issuers ability to globally freeze. |
+| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. This is a global lock that locks up all of holders' funds for this CFToken.|
+| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the CFT can be locked both individually and globally. If not set, the CFT cannot be locked in any way.|
 | `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
 | `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
@@ -388,13 +375,13 @@ The field MUST NOT be present if the `tfTransferable` flag is not set. If it is,
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
-| `MaximumAmount` | :heavy_check_mark: | `string`  | `UINT64`      | 
+| `MaximumAmount` |  | `string`  | `UINT64`      | 
 
 The maximum asset amount of this token that should ever be issued.
 
 | Field Name        | Required?          | JSON Type | Internal Type |
 | ------------------| ------------------ | --------- | ------------- |
-| `CFTokenMetadata` | :heavy_check_mark: | `string`  | `BLOB`        | 
+| `CFTokenMetadata` |  | `string`  | `BLOB`        | 
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
@@ -404,7 +391,6 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
 {
   "TransactionType": "CFTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
-  "AssetCode": "1234567",
   "AssetScale": "2",
   "TransferFee": 314,
   "MaxAmount": "50000000",
@@ -463,9 +449,9 @@ The `CFTokenIssuance` identifier.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
-| `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
+| `CFTokenHolder`       | | `string`  | `ACCOUNTID`   | 
 
-An optional XRPL Address of an individual token holder balance to freeze/unfreeze. If omitted, this transaction will apply to all any accounts holding CFTs.
+An optional XRPL Address of an individual token holder balance to lock/unlock. If omitted, this transaction will apply to all any accounts holding CFTs.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -482,13 +468,13 @@ An optional XRPL Address of an individual token holder balance to freeze/unfreez
  }
  ```
  
-#### 1.3.3.1.1 CFTokenSet Flags
-Transactions of the `CFTokenFreeze` type support additional values in the Flags field, as follows:
+#### 1.3.3.1.1 CFTokenIssuanceSet Flags
+Transactions of the `CFTokenLock` type support additional values in the Flags field, as follows:
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `tfSetFreeze`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be frozen. |
-| `tfClearFreeze`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unfrozen. |
+| `tfLock`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be locked. |
+| `tfUnlock`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unlocked. |
 
 ### 1.3.4 The **`Payment`** Transaction
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate CFT amounts.
@@ -514,35 +500,73 @@ We propose using the following format for CFT amounts::
 
 ```json
 "amount": {
-  "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-  "cft_asset": "USD",
+  "cft_issuance_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
   "value": "1"
 }
 ```
 
-The idea behind this format is that it adds only one new subfield to the `amount` field, but still distinguishes between itself and Issued Currency amounts. Using the CFT ID directly would not allow us to easily find the underlying `CFTokenIssuance` object because we would still need the `issuer` to know where to look for it.
+Note: The `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
 
-### 1.3.5 The **`AccountDelete`** Transaction
+### 1.3.5 The **`CFTokenAuthorize`** Transaction
+This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
+
+If the issuer has set `lsfRequiresAuthorization` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Appendix. 
+#### 1.3.5.1 CFTokenAuthorize
+| Field Name      | Required?          | JSON Type | Internal Type |
+| --------------- | ------------------ | --------- | ------------- |
+| `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
+
+This address can indicate either an issuer or a potential holder of a CFT.
+
+| Field Name         | Required? | JSON Type | Internal Type |
+| ------------------ | --------- | --------- |---------------|
+| `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
+
+Indicates the new transaction type **`CFTokenAuthorize`**. The integer value is `29 (TODO)`.
+
+| Field Name  | Required? | JSON Type | Internal Type |
+| ----------- | --------- | --------- | ------------- |
+| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+
+Indicates the ID of the CFT involved. 
+
+| Field Name  | Required? | JSON Type | Internal Type |
+| ----------- | --------- | --------- | ------------- |
+| `CFTokenHolder` |    | `string`  | `ACCOUNTID`     | 
+
+Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; must be empty if submitted by the holder.
+
+| Field Name      | Required?          | JSON Type | Internal Type |
+| --------------- | ------------------ | --------- | ------------- |
+| `Flag`          | :heavy_check_mark: | `string`  | `UINT64`      | 
+
+ 
+#### 1.3.3.5.12 CFTokenAuthorize Flags
+Transactions of the `CFTokenAuthorize` type support additional values in the Flags field, as follows:
+
+| Flag Name         | Flag Value | Description |
+|-------------------|------------|-------------|
+| `tfUnauthorize`     | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `CFToken`, which will be deleted as a result. If the the holder's `CFToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfAuthorized` flag on the `CFToken`.|
+
+
+### 1.3.6 The **`AccountDelete`** Transaction
 We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `CFTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `CFTokenIssuances` using `CFTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render CFT balances useless/unstable for any holders.
 
-### 1.4.0 Details on Freezing CFTs
-#### 1.4.0.1 Freezing individual balances
-To freeze an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to freeze, and set the `tfSetFreeze` flag. This operation will fail if::
+### 1.4.0 Details on Locking CFTs
+#### 1.4.0.1 Locking individual balances
+To lock an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to lock, and set the `tfLock` flag. This operation will fail if::
 
-* The CFT has the `lsfCannotFreezeBalances` flag set or,
-* The CFT issuer has the `asfNoFreeze` flag set on their account
+* The CFT has the `lsfCanLock` flag _not_ set
 
-Issuers can unfreeze the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfClearFreeze` flag set.
+Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfUnlock` flag set.
 
-#### 1.4.0.2 Freezing entire CFTs
-This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when freezing or unfreezing. This operation will fail if::
+#### 1.4.0.2 Locking entire CFTs
+This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if::
 
-* The CFT issuer has the `asfNoFreeze` flag set on their account
+* The CFT issuer has the `lsfCanLock` flag _not_ set on their account
 
-Freezing an entire CFT without freezing other assets issued by an issuer is a new feature of CFTs.
+Locking an entire CFT without locking other assets issued by an issuer is a new feature of CFTs.
 
-#### 1.4.0.3 Freezing all CFTs and Trust Lines (Global Freeze)
-When accounts enact a global freeze, which is currently used to freeze all trust lines, it will also freeze all CFTs issued by the account.
 
 ### 1.5.0 Details on Clawing-Back CFTs
 To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfAllowClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
@@ -613,7 +637,6 @@ Specify a limit to the number of CFTs returned.
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
              "Issuer": ......,
-             "AssetCode": .....,
              "AssetScale": .....,
              "MaximumAmount": .....,
              "OutstandingAmount": ....,
@@ -698,7 +721,7 @@ Specify a limit to the number of CFT balances returned.
            {
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
-             "Amount": "1000",
+             "CFTAmount": "1000",
              "LockedAmount": "0"
            }
         ],
@@ -775,7 +798,7 @@ Specify a limit to the number of CFTs returned.
           "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn": {
              "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
              "Flags": 83659,
-             "Amount": "1000",
+             "CFTAmount": "1000",
              "LockedAmount": "0"
           }
         },
@@ -802,8 +825,10 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
+ ### 1.7 Free CFTs
+When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
- 
+
 # Appendix 1: Current Trust line Storage Requirements
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
 
@@ -834,6 +859,48 @@ MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 
 TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
  
+# Appendix 2: `CFTokenIssuanceID` construct options
+There have been several options in how to construct the CFTokenIssuanceID:
+## Problem: Hash by issuer address and currency code (conventional approach)
+This is the conventional way of constructing an identifier, as the token holder can directly submit the transaction after knowing the issuer and the currency they want to use. However, if this is implemented, it means that after the issuer destorys/burns the token, they can re-issue the token with the same currency, resulting in the same `CFTokenIssuanceID`. This behavior can be misleading to token holders who have held onto the first iteration of the token rather than the re-issued one(since both iterations have the same `CFTokenIssuanceID`). In real world use cases(especially finance), after a fungible token is burnt, it should not be possible to re-create it, and absolutely not with the same identifier. 
+
+## Option A: Currency array and limit the number of CFT issuances 
+This approach still constructs `CFTokenIssuanceID` by hashing the issuer address and currency code. But in an effort to solve the re-creatable `CFTokenIssuanceID` problem, the issuer stores an array of CFT currency codes that have been issued out. In this way, every time the issuer issues a new CFT, the ledger checks whether the currency code has already be used, and if so, the transaction fails. However, the problem with this approach is that the ledger would need to iterate through the currency array everytime the account attempts to issue a CFT, which would be unsustainable if the issuer can issue up to an unbounded number of CFTs. Hence, we impose a limit on the total number of CFTs that an account can issue(proposed limit is 32 CFTs). 
+
+But, this approach is not very clean in solving the problem, and there is a limit on the number of CFTs that the account can issue, which is not ideal since we would want the issuer to issue as many CFTs as they want. 
+
+## Option B: Construct CFTokenIssuance without currency code (current approach)
+We realized that the problem with re-creatable CFTs is due to the account/currency pair where the currency can be re-used many times after the CFT has been burnt. To solve this problem, the `CFTokenIssuanceID` is now constructed from two parameter: the issuer address and transaction sequence. Since the transaction sequence is na increasing index, `CFTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes. 
+
+Although using this approach would mean that CFT payment transactions would no longer involve the currency code, making it inconvinient for the users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
+
+# Appendix 3: Allow-Listing
+In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
+## Without Allow-Listing
+Let's first explore how the flow looks like without allow-listing:
+1. Alice holds a CFT with asset-code `USD`.
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
+3. Bob can now receive and send payments from/to anyone using `USD`.
+4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
+5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfUnauthorize` flag, which will successfully delete `CFToken` object.
+ 
+
+## With Allow-Listing
+The issuer needs to enable allow-listing for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
+With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
+1. Alice has a CFT of currency `USD` (same as above)
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
+3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
+4. Same as step 4 above
+5. Same as step 5 above
+
+**It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
+
+Issuer also has the ability to unauthorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
+
+
+
 # Implementation Notes
 1. At present, there is no `CFTRedeem` transaction because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" CFT and removing it from circulation. Note that in order for this to work, issuer accounts may not hold CFT.
 
