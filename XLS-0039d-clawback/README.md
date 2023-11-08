@@ -165,7 +165,7 @@ Test cases need to ensure the following:
 - Test that the `Clawback` feature does not interfere with any other features of the token, such as Offers
 
 ## 7. Compatibility with Automated Market Maker (XLS-30)
-The Automated Market Maker (AMM) gives an account the ability to deposit issued tokens into AMM instance pool, in the form of `LPToken`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into the AMM pool cannot be clawed back.
+The Automated Market Maker (AMM) gives an account the ability to deposit issued tokens into AMM instance pool, in the form of `LPToken`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the `AMMCreate` transaction will error if either of the tokens' issuers enabled the `lsfAllowTrustLineClawback` flag on their account. 
 
 If clawing back from an AMM instance pool is required, such change will need a separate specification.
 
