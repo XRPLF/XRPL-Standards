@@ -33,9 +33,9 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 | `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
 | `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
 | `URI` | | `string` | `BLOB` |
-| `SymbolClass` | :heavy_check_mark: | `string` | `BLOB` |
+| `AssetClass` | :heavy_check_mark: | `string` | `BLOB` |
 | `PreviousTxnID` | :heavy_check_mark: | `string` | `HASH256` |
-| `PreviousTxnLgrSeq`| :heavy_check_mark: | `number ` | `UINT32` |
+| `PreviousTxnLgrSeq`| :heavy_check_mark: | `number` | `UINT32` |
 
 - `LedgerEntryType` identifies the type of ledger object. The proposal recommends the value 0x0080 as the reserved entry type.
 - `Owner` is the account that owns this object and has the update and delete privileges. It is recommended that this account has an associated [`signer list`](https://xrpl.org/set-up-multi-signing.html).
@@ -44,18 +44,18 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
   |FieldName | Required? | JSON Type | Internal Type|
   |:---------|:-----------|:---------------|:---------------|
-  | `Symbol` | :heavy_check_mark: | `string` | `CURRENCY` |
-  | `PriceUnit` | :heavy_check_mark: | `string` | `CURRENCY` |
-  | `SymbolPrice` | | `number` | `UINT64` |
+  | `BaseAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
+  | `QuoteAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
+  | `AssetPrice` | | `number` | `UINT64` |
   | `Scale` | | `number` | `UINT8` |
 
-  - `Symbol` is the symbol to be priced. Any arbitrary value should be allowed and interpreted exactly like other asset code fields in the ledger. For example, a stock or bond might be identified by its CUSIP, or a currency by its currency code. A new enum value STI_CURRENCY and class STCurrency are introduced to support the `CURRENCY` field.
-  - `PriceUnit` is the denomination in which the prices are expressed. Any arbitrary value should be allowed and interpreted exactly like other asset code fields in the ledger. For example, a bond might have a price unit of `USD`.
-  - `SymbolPrice` is the scaled asset price, which is the price value after applying the scaling factor. This is an optional field. It is not included if the last update transaction didn't include the `Symbol`/`PriceUnit` pair.
-  - `Scale` is the price's scaling factor. It represents the price's precision level. For instance, if `Scale` is `6` and the original price is `0.155` then the scaled price is `155000`. Formally, $scaledPrice = originalPrice*{10}^{scale}$. Valid `Scale` range is {0-10}. This is an optional field. It is not included if the last update transaction didn't include the `Symbol`/`PriceUnit` pair.
+  - `BaseAsset` refers to the primary asset within a trading pair. It is the asset against which the price of the quote asset is quoted. The base asset is usually considered the 'primary' asset and forms the basis for trading. Any valid identifier, such as a stock symbol, bond CUSIP, or currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, BTC is the base asset; in 912810RR9/BTC, 912810RR9 is the base asset. A new type, `STI_ASSET_TYPE`, is introduced to support the `ASSET_TYPE` field (see Appendix for details).
+  - `QuoteAsset` represents the secondary or quote asset in a trading pair. It denotes the price of one unit of the base asset. The quote asset's value is expressed in terms of the base asset. Any valid identifier such as a currency or a crypto-currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, USD is the quote asset; in 912810RR9/BTC, BTC is the quote asset. A new enum value STI_ASSET_TYPE is introduced to support the `ASSET_TYPE` field (see Appendix for details). The `BaseAsset` and `QuoteAsset` together form a trading pair, and their relationship determines the price at which one asset can be exchanged for another.
+  - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
+  - `Scale` is the price's scaling factor. It represents the price's precision level. For instance, if `Scale` is `6` and the original price is `0.155` then the scaled price is `155000`. Formally, $scaledPrice = originalPrice*{10}^{scale}$. Valid `Scale` range is {0-10}. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
 
 - `URI` is an optional [URI](https://datatracker.ietf.org/doc/html/rfc3986) field to reference price data off-chain. It is limited to 256 bytes.
-- `SymbolClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to ten ASCII hex encoded characters (0x20-0x7E).
+- `AssetClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to sixteen ASCII hex encoded characters (0x20-0x7E).
 - `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is the ripple epoch time.
 - `PreviousTxnID` is the hash of the previous transaction to modify this entry (same as on other objects with this field).
 - `PreviousTxnLgrSeq` is the ledger index of the ledger when this object was most recently updated/created (same as other objects with this field).
@@ -75,13 +75,13 @@ We compute the `PriceOracle` object ID, a.k.a., `OracleID`, as the SHA-512Half o
         "OracleID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
         "Owner": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
         "Provider": "70726F7669646572",
-        "SymbolClass": "63757272656E6379",
+        "AssetClass": "63757272656E6379",
         "PriceDataSeries": [
           {
             "PriceData": {
-              "Symbol": "XRP",
-              "PriceUnit": "USD",
-              "SymbolPrice": 74,
+              "BaseAsset": "XRP",
+              "QuoteAsset": "USD",
+              "AssetPrice": 74,
               "Scale": 2,
             }
           },
@@ -97,19 +97,19 @@ This proposal introduces several new transactions to allow for the creation, upd
 
 ### Transaction for creating or updating `PriceOracle` instance
 
-We define a new transaction **SetOracle** for creating or updating a `PriceOracle` instance.  Before the transaction can be submitted to create a new `PriceOracle` instance, the Oracle Provider has to do the following:
+We define a new transaction **OracleSet** for creating or updating a `PriceOracle` instance.  Before the transaction can be submitted to create a new `PriceOracle` instance, the Oracle Provider has to do the following:
 
 - Create or own the `Account` on the XRPL with sufficient XRP balance to meet the XRP reserve and the transaction fee requirements.
 - The Oracle Provider has to publish the `Account` account public key so that it can be used for verification by dApp’s.
 - The Oracle Provider has to publish a registry of available Price Oracles with their unique Oracle Sequence. The hash of the `Account` and the `OracleSequence` uniquely identifies the Price Oracle on-ledger object.
 
-#### Transaction fields for **SetOracle** transaction
+#### Transaction fields for **OracleSet** transaction
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
 | `TransactionType` | :heavy_check_mark: | `string`| UINT16 |
 
-Indicates a new transaction type `SetOracle`. The integer value is 49.
+Indicates a new transaction type `OracleSet`. The integer value is TBD.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -137,9 +137,9 @@ Indicates a new transaction type `SetOracle`. The integer value is 49.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
-| `SymbolClass` | | `string` | `BLOB` |
+| `AssetClass` | | `string` | `BLOB` |
 
-`SymbolClass` describes the asset's type.
+`AssetClass` describes the asset's type.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:-----------|
@@ -155,21 +155,21 @@ Indicates a new transaction type `SetOracle`. The integer value is 49.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
-| `Symbol` | :heavy_check_mark: | `string` | `CURRENCY` |
+| `BaseAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
 
-`Symbol` is the symbol to be priced.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `PriceUnit` | :heavy_check_mark: | `string` | `CURRENCY` |
-
-`PriceUnit` is the denomination in which the prices are expressed.
+`BaseAsset` is the asset to be priced.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
-| `SymbolPrice` | :heavy_check_mark: | `number` | `UINT64` |
+| `QuoteAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
 
-`SymbolPrice` is the scaled asset price, which is the price value after applying the scaling factor.
+`QuoteAsset` is the denomination in which the prices are expressed.
+
+|FieldName | Required? | JSON Type | Internal Type |
+|:---------|:-----------|:---------------|:------------|
+| `AssetPrice` | :heavy_check_mark: | `number` | `UINT64` |
+
+`AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -183,33 +183,33 @@ The transaction fails if:
 - XRP reserve is insufficient. If the Oracle instance has less or equal to five token pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
 - Transaction's `PriceDataSeries` array size is empty or exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
 - `PriceDataSeries` has duplicate token pairs.
-- `PriceDataSeries` has array elements with missing `SymbolPrice`.
+- `PriceDataSeries` has array elements with missing `AssetPrice`.
 - The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
 - The `URI` field length exceeds 64 bytes.
 - The `Provider` field length exceeds 64 bytes.
-- The `SymbolClass` field length exceeds 12 bytes.
+- The `AssetClass` field length exceeds 16 bytes.
 - The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
 
-If an object with the `OracleID` Object ID already exists then the new token pairs are added to the Oracle instance `PriceDataSeries` array. Note that the order of the token pairs in the `PriceDataSeries` array is not important since the token pair uniquely identifies location in the `PriceDataSeries` array of the `PriceOracle` object. Also note that not every token pair price has to be updated. I.e., even though the `PriceOracle` may define ten token pairs, `SetOracle` transaction may contain only one token pair price update. In this case the missing token pair will not include `SymbolPrice` and `Scale` fields. `PreviousTxnID` can be used to find the last updated Price Data for this token pair.
+If an object with the `OracleID` Object ID already exists then the new token pairs are added to the Oracle instance `PriceDataSeries` array. Note that the order of the token pairs in the `PriceDataSeries` array is not important since the token pair uniquely identifies location in the `PriceDataSeries` array of the `PriceOracle` object. Also note that not every token pair price has to be updated. I.e., even though the `PriceOracle` may define ten token pairs, `OracleSet` transaction may contain only one token pair price update. In this case the missing token pair will not include `AssetPrice` and `Scale` fields. `PreviousTxnID` can be used to find the last updated Price Data for this token pair.
 
 On success the transaction creates a new or updates existing `PriceOracle` object. If a new object is created then the owner reserve requirement is incremented by one or two depending on the `PriceDataSeries` array size.
 
-#### Example of SetOracle transaction JSON
+#### Example of OracleSet transaction JSON
 
     {
-        "TransactionType": "SetOracle",
+        "TransactionType": "OracleSet",
         "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
         "OracleSequence": 34,
         "Provider": "70726F7669646572",
         "LastUpdateTime": 743609014,
-        "SymbolClass": "63757272656E6379",
+        "AssetClass": "63757272656E6379",
         "PriceDataSeries": [
           {
             "PriceData": {
-              "Symbol": "XRP",
-              "PriceUnit": "USD",
-              "SymbolPrice": 740,
+              "BaseAsset": "XRP",
+              "QuoteAsset": "USD",
+              "AssetPrice": 740,
               "Scale": 3
             }
           }
@@ -218,15 +218,15 @@ On success the transaction creates a new or updates existing `PriceOracle` objec
 
 ### Transaction for deleting Oracle instance
 
-We define a new transaction **DeleteOracle** for deleting an Oracle instance.
+We define a new transaction **OracleDelete** for deleting an Oracle instance.
 
-#### Transaction fields for **DeleteOracle** transaction
+#### Transaction fields for **OracleDelete** transaction
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
 | `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
-Indicates a new transaction type `DeleteOracle`. The integer value is 42.
+Indicates a new transaction type `OracleDelete`. The integer value is TBD.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -240,7 +240,7 @@ Indicates a new transaction type `DeleteOracle`. The integer value is 42.
 
 `OracleSequence` is a unique identifier of the Price Oracle for the given Account.
 
-**DeleteOracle** transaction deletes the `Oracle` object from the ledger.
+**OracleDelete** transaction deletes the `Oracle` object from the ledger.
 
 The transaction fails if:
 
@@ -249,10 +249,10 @@ The transaction fails if:
 
 On success the transaction deletes the `Oracle` object and the owner’s reserve requirement is reduced by one or two depending on the `PriceDataSeries` array size.
 
-#### Example of DeleteOracle transaction JSON
+#### Example of OracleDelete transaction JSON
 
     {
-        "TransactionType": "DeleteOracle",
+        "TransactionType": "OracleDelete",
         "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
         "OracleSequence": 34
     }
@@ -286,21 +286,21 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
           "LastUpdateTime" : 743609014,
           "LedgerEntryType" : "Oracle",
           "Owner" : "rp847ow9WcPmnNpVHMQV5A4BF6vaL9Abm6",
-          "SymbolClass" : "63757272656E6379",
+          "AssetClass" : "63757272656E6379",
           "Provider": "70726F7669646572",
           "PreviousTxnID" : "6F120537D0D212FEA6E11A0DCC5410AFCA95BD98D451D046832E6C4C4398164D",
           "PreviousTxnLgrSeq" : 22,
           "PriceDataSeries": [
             {
               "PriceData: {
-                "PriceUnit" : {
+                "QuoteAsset" : {
                    "currency" : "USD"
                 },
-                "Symbol" : {
+                "BaseAsset" : {
                    "currency" : "XRP"
                 },
                 "Scale" : 1,
-                "SymbolPrice" : "740",
+                "AssetPrice" : "740",
               }
             }
           ],
@@ -330,15 +330,15 @@ A 20-byte hex string for the max ledger version to use.
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
-| `symbol` | :heavy_check_mark: | `string` |
+| `base_asset` | :heavy_check_mark: | `string` |
 
-`symbol` is the symbol to be priced.
+`base_asset` is the asset to be priced.
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
-| `price_unit` | :heavy_check_mark: | `string` |
+| `quote_asset` | :heavy_check_mark: | `string` |
 
-`price_unit` is the denomination in which the prices are expressed.
+`quote_asset` is the denomination in which the prices are expressed.
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
@@ -370,13 +370,13 @@ A 20-byte hex string for the max ledger version to use.
 
 The `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.
 
-The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `symbol`/`price_unit` pair, including the `SymbolPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `SymbolPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the first one that fulfills the criteria.
+The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `base_asset`/`quote_asset` pair, including the `AssetPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `AssetPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the first one that fulfills the criteria.
 
 The `get_aggregate_price` fails if:
 
 - The oracles array size is either 0 or greater than 200.
 - The oracles array's object doesn't include `account` or `oracle_sequence` or those fields have invalid value.
-- `symbol` or `price_unit` are missing.
+- `base_asset` or `quote_asset` are missing.
 - `trim` or `time_threshold` contain invalid uint value.
 - If the resulting data set is empty.
 
@@ -402,8 +402,8 @@ On success, the response data contains the following fields:
     "params": [
         {
             "ledger_index": "current",
-            "symbol": "XRP",
-            "price_unit": "USD",
+            "base_asset": "XRP",
+            "quote_asset": "USD",
             "flags": 7,
             "trim": 20,
             "oracles": [
@@ -450,4 +450,19 @@ On success, the response data contains the following fields:
       },
       "validated" : false
       "time" : 78937648
+    }
+
+## Appendices
+
+### Appendix 1. STI_ASSET_TYPE
+
+A new type, `STI_ASSET_TYPE`, is introduced to support `BaseAsset` and `QuoteAsset` fields' type `ASSET_TYPE`. This type can represent a standard currency code or an arbitrary asset as a 160-bit (40 character) hexadecimal string. This type is conformant to the XRPL [Currency Codes](https://xrpl.org/currency-formats.html#currency-codes). Below is a JSON example with the `BaseAsset` representing a CUSIP code `912810RR9` as a 160-bit hexadecimal string and a `QuoteAsset` representing a standard `USD` currency code:
+
+    {
+      "PriceData" : {
+        "BaseAsset" : "3931323831305252390000000000000000000000",
+        "QuoteAsset" : "USD",
+        "Scale" : 1,
+        "SymbolPrice" : 740
+      }
     }
