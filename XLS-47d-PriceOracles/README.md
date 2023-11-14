@@ -1,5 +1,5 @@
 <pre> 
-   Title:        <b>Oracles on XRP Ledger</b>
+   Title:        <b>Price Oracles on XRP Ledger</b>
    Revision:     <b>3</b> (2023-10-18)
  <hr>  Author: <a href="mailto:gtsipenyuk@ripple.com">Gregory Tsipenyuk</a>
    Affiliation:  <a href="https://ripple.com">Ripple</a>
