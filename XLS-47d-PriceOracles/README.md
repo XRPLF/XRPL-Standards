@@ -44,13 +44,13 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
   |FieldName | Required? | JSON Type | Internal Type|
   |:---------|:-----------|:---------------|:---------------|
-  | `BaseAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
-  | `QuoteAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
+  | `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
+  | `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
   | `AssetPrice` | | `number` | `UINT64` |
   | `Scale` | | `number` | `UINT8` |
 
-  - `BaseAsset` refers to the primary asset within a trading pair. It is the asset against which the price of the quote asset is quoted. The base asset is usually considered the 'primary' asset and forms the basis for trading. Any valid identifier, such as a stock symbol, bond CUSIP, or currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, BTC is the base asset; in 912810RR9/BTC, 912810RR9 is the base asset. A new type, `STI_ASSET_TYPE`, is introduced to support the `ASSET_TYPE` field (see Appendix for details).
-  - `QuoteAsset` represents the secondary or quote asset in a trading pair. It denotes the price of one unit of the base asset. The quote asset's value is expressed in terms of the base asset. Any valid identifier such as a currency or a crypto-currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, USD is the quote asset; in 912810RR9/BTC, BTC is the quote asset. A new enum value STI_ASSET_TYPE is introduced to support the `ASSET_TYPE` field (see Appendix for details). The `BaseAsset` and `QuoteAsset` together form a trading pair, and their relationship determines the price at which one asset can be exchanged for another.
+  - `BaseAsset` refers to the primary asset within a trading pair. It is the asset against which the price of the quote asset is quoted. The base asset is usually considered the 'primary' asset and forms the basis for trading. Any valid identifier, such as a stock symbol, bond CUSIP, or currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, BTC is the base asset; in 912810RR9/BTC, 912810RR9 is the base asset. A new type, `STI_CURRENCY`, is introduced to support the `CURRENCY` field (see Appendix for details).
+  - `QuoteAsset` represents the secondary or quote asset in a trading pair. It denotes the price of one unit of the base asset. The quote asset's value is expressed in terms of the base asset. Any valid identifier such as a currency or a crypto-currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, USD is the quote asset; in 912810RR9/BTC, BTC is the quote asset. A new enum value STI_CURRENCY is introduced to support the `CURRENCY` field (see Appendix for details). The `BaseAsset` and `QuoteAsset` together form a trading pair, and their relationship determines the price at which one asset can be exchanged for another.
   - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
   - `Scale` is the price's scaling factor. It represents the price's precision level. For instance, if `Scale` is `6` and the original price is `0.155` then the scaled price is `155000`. Formally, $scaledPrice = originalPrice*{10}^{scale}$. Valid `Scale` range is {0-10}. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
 
@@ -155,13 +155,13 @@ Indicates a new transaction type `OracleSet`. The integer value is TBD.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
-| `BaseAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
+| `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
 
 `BaseAsset` is the asset to be priced.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
-| `QuoteAsset` | :heavy_check_mark: | `string` | `ASSET_TYPE` |
+| `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
 
 `QuoteAsset` is the denomination in which the prices are expressed.
 
@@ -314,7 +314,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 
 `get_aggregate_price` RPC calculates the aggregate price of the specified `PriceOracle`, and returns three types of price statistics - average, median, and trimmed median if `trim` parameter is included in the request.
 
-API fields are:
+##### Input API fields
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
@@ -380,22 +380,7 @@ The `get_aggregate_price` fails if:
 - `trim` or `time_threshold` contain invalid uint value.
 - If the resulting data set is empty.
 
-On success, the response data contains the following fields:
-
-- `entire_set` is an object of the following fields:
-  - `size` is the size of the data set used to calculate the statistics.
-  - `average` is the simple average.
-  - `standard_deviation` is the standard deviation.
-- `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
-  - `size` is the size of the data set used to calculate the statistics.
-  - `average` is the simple average.
-  - `standard_deviation` is the standard deviation.
-- `median` is the median.
-- `time` is the most recent time stamp out of all `LastUpdateTime` values.
-
-##### Example of get_aggregate_price API JSON
-
-###### Request JSON
+###### Example of get_aggregate_price API JSON request
 
     {
     "method": "get_aggregate_price",
@@ -432,7 +417,22 @@ On success, the response data contains the following fields:
     ]
     }
 
-##### Response JSON
+##### Output fields
+
+On success, the response data contains the following fields:
+
+- `entire_set` is an object of the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `average` is the simple average.
+  - `standard_deviation` is the standard deviation.
+- `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `average` is the simple average.
+  - `standard_deviation` is the standard deviation.
+- `median` is the median.
+- `time` is the most recent time stamp out of all `LastUpdateTime` values.
+
+###### Example of get_aggregate_price API JSON response
 
     {
       "entire_set" : {
@@ -454,9 +454,9 @@ On success, the response data contains the following fields:
 
 ## Appendices
 
-### Appendix 1. STI_ASSET_TYPE
+### Appendix 1. STI_CURRENCY
 
-A new type, `STI_ASSET_TYPE`, is introduced to support `BaseAsset` and `QuoteAsset` fields' type `ASSET_TYPE`. This type can represent a standard currency code or an arbitrary asset as a 160-bit (40 character) hexadecimal string. This type is conformant to the XRPL [Currency Codes](https://xrpl.org/currency-formats.html#currency-codes). Below is a JSON example with the `BaseAsset` representing a CUSIP code `912810RR9` as a 160-bit hexadecimal string and a `QuoteAsset` representing a standard `USD` currency code:
+A new type, `STI_CURRENCY`, is introduced to support `BaseAsset` and `QuoteAsset` fields' type `CURRENCY`. This type can represent a standard currency code or an arbitrary asset as a 160-bit (40 character) hexadecimal string. This type is conformant to the XRPL [Currency Codes](https://xrpl.org/currency-formats.html#currency-codes). Below is a JSON example with the `BaseAsset` representing a CUSIP code `912810RR9` as a 160-bit hexadecimal string and a `QuoteAsset` representing a standard `USD` currency code:
 
     {
       "PriceData" : {
