@@ -46,8 +46,7 @@ This proposal makes a variety of assumptions, based upon observations of existin
 1. **Only Unidirectional**. This proposal does not support bidirectional trust line constructions, on the assumption that _most_ token issuers leave their trust line limit set to the default value of 0 (i.e., issuers don't allow debt relationships with token holders, by default). Thus, CFTs do not have the same "balance netting" functionality found in trust lines because CFTs have only a single balance as opposed to the two balances used by trust lines.
 2. **Few Issuances per Issuer**. The most common examples of fungible token issuance involve regulatory overhead, which makes it less common for issuers to issue _many_ fungible tokens, in the general case. In addition, existing [guidance on xrpl.org](https://xrpl.org/freezes.html#global-freeze) advises token issuers to use different addresses for each token issuance in order to better accomodate [global freeze](https://xrpl.org/enact-global-freeze.html) activities. Because of this, we assume that any individual issuer will not issue many different fungible tokens using the same address. In particular, this specification limits the number of unique CFT issuances to 32 per issuing account. If an issuer wishes to support more than this number of CFTs, additional addresses can still be used.
 3. **No Trust Limits**. Unlike current Trustline functionality where trust amount limits can be set by either party, this proposal eliminates this feature under the assumption that token holders will not acquire a CFT without first making an off-ledger trust decision. For example, a common use-case for a CFT is a fiat-backed stablecoin, where a token holder wouldn't purchase more stablecoin than they would feel comfortable holding.
-4. **No TrustSet Transactions**. CFTs may be held by any account, and therefore do not require any sort of [TrustSet](https://xrpl.org/trustset.html#trustset) transaction in order to enable holding a CFT. However, in order to disallow an arbitrary CFT sender from consuming recipient account reserves, payment _senders_ have to commit 1 incremental reserve (i.e., currently 2 XRP) when sending a token to any recipient who doesn't currently hold any CFTs (or to any recipient where sending the token would incur a new CFTokenPage). 
-5. **No Rippling**. Unlike some existing capabilities of the ledger, CFTs are not eligible for [rippling](https://xrpl.org/rippling.html#rippling), and thus do not have any configurability settings related to that functionality.
+4. **No Rippling**. Unlike some existing capabilities of the ledger, CFTs are not eligible for [rippling](https://xrpl.org/rippling.html#rippling), and thus do not have any configurability settings related to that functionality.
 
 ### 1.1.3 Release Timeline and Scope
 
@@ -101,15 +100,15 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances are locked. |
-| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.|
-| `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
-| `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
-| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| `lsfCFTLocked`                | ️`0x0001`  | If set, indicates that all balances are locked. |
+| `lsfCFTCanLock`  | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.|
+| `lsfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
+| `lsfCFTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
+| `lsfCFTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
+| `lsfCFTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
+| `lsfCFTCanClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
-With the exception of the `lsfLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
+With the exception of the `lsfCFTLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
 ###### 1.2.1.1.2.3. `Issuer`
 
@@ -204,8 +203,8 @@ A set of flags indicating properties or other options associated with this **`CF
 
 | Flag Name         | Flag Value | Description                                                             |
 |-------------------|------------|-------------------------------------------------------------------------|
-| `lsfLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
-| `lsfAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfUnauthorize` flag. |
+| `lsfCFTLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
+| `lsfCFTAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
@@ -357,13 +356,13 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `lsfLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. This is a global lock that locks up all of holders' funds for this CFToken.|
-| `lsfCanLock`  | ️`0x0002`  | If set, indicates that the CFT can be locked both individually and globally. If not set, the CFT cannot be locked in any way.|
-| `lsfRequiresAuthorization` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `lsfCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `lsfCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
-| `lsfTransferable`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
-| `lsfAllowClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| `tfCFTLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. This is a global lock that locks up all of holders' funds for this CFToken.|
+| `tfCFTCanLock`  | ️`0x0002`  | If set, indicates that the CFT can be locked both individually and globally. If not set, the CFT cannot be locked in any way.|
+| `tfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
+| `tfCFTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
+| `tfCFTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
+| `tfCFTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
+| `tfCFTCanClawback`          | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
@@ -371,7 +370,7 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001.
 
-The field MUST NOT be present if the `tfTransferable` flag is not set. If it is, the transaction should fail and a fee should be claimed.
+The field MUST NOT be present if the `tfCFTCanTransfer` flag is not set. If it is, the transaction should fail and a fee should be claimed.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -473,8 +472,8 @@ Transactions of the `CFTokenLock` type support additional values in the Flags fi
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `tfLock`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be locked. |
-| `tfUnlock`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unlocked. |
+| `tfCFTLock`     | ️`0x0001`  | If set, indicates that all CFT balances for this asset should be locked. |
+| `tfCFTUnlock`   | ️`0x0002`  | If set, indicates that all CFT balances for this asset should be unlocked. |
 
 ### 1.3.4 The **`Payment`** Transaction
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate CFT amounts.
@@ -510,7 +509,7 @@ Note: The `CFTokenIssuanceID` will be used to uniquely identify the CFT during a
 ### 1.3.5 The **`CFTokenAuthorize`** Transaction
 This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
 
-If the issuer has set `lsfRequiresAuthorization` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfRequiresAuthorization` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Appendix. 
+If the issuer has set `lsfCFTRequireAuth` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfCFTRequireAuth` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Appendix. 
 #### 1.3.5.1 CFTokenAuthorize
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -546,7 +545,7 @@ Transactions of the `CFTokenAuthorize` type support additional values in the Fla
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `tfUnauthorize`     | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `CFToken`, which will be deleted as a result. If the the holder's `CFToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfAuthorized` flag on the `CFToken`.|
+| `tfCFTUnauthorize`     | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `CFToken`, which will be deleted as a result. If the the holder's `CFToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfCFTAuthorized` flag on the `CFToken`.|
 
 
 ### 1.3.6 The **`AccountDelete`** Transaction
@@ -554,22 +553,22 @@ We propose no changes to the `AccountDelete` transaction in terms of structure. 
 
 ### 1.4.0 Details on Locking CFTs
 #### 1.4.0.1 Locking individual balances
-To lock an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to lock, and set the `tfLock` flag. This operation will fail if::
+To lock an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to lock, and set the `tfCFTLock` flag. This operation will fail if::
 
-* The CFT has the `lsfCanLock` flag _not_ set
+* The CFT has the `lsfCFTCanLock` flag _not_ set
 
-Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfUnlock` flag set.
+Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfCFTUnlock` flag set.
 
 #### 1.4.0.2 Locking entire CFTs
 This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if::
 
-* The CFT issuer has the `lsfCanLock` flag _not_ set on their account
+* The CFT issuer has the `lsfCFTCanLock` flag _not_ set on their account
 
 Locking an entire CFT without locking other assets issued by an issuer is a new feature of CFTs.
 
 
 ### 1.5.0 Details on Clawing-Back CFTs
-To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfAllowClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
+To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfCFTCanClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
 
 ### 1.6.0 APIs
 We propose several new APIs for this feature. All new APIs will be available only in `clio`.
@@ -882,16 +881,16 @@ Let's first explore how the flow looks like without allow-listing:
 2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
 3. Bob can now receive and send payments from/to anyone using `USD`.
 4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
-5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfUnauthorize` flag, which will successfully delete `CFToken` object.
+5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfCFTUnauthorize` flag, which will successfully delete `CFToken` object.
  
 
 ## With Allow-Listing
-The issuer needs to enable allow-listing for the CFT by setting the `lsfRequiresAuthorization` on the `CFTokenIssuance`.
+The issuer needs to enable allow-listing for the CFT by setting the `lsfCFTRequireAuth` on the `CFTokenIssuance`.
 With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
 1. Alice has a CFT of currency `USD` (same as above)
 2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
 **However at this point, Bob still does not have the permission to use `USD`!**
-3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
+3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfCFTAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
 4. Same as step 4 above
 5. Same as step 5 above
 
@@ -904,6 +903,6 @@ Issuer also has the ability to unauthorize a holder. In that case, if the holder
 # Implementation Notes
 1. At present, there is no `CFTRedeem` transaction because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" CFT and removing it from circulation. Note that in order for this to work, issuer accounts may not hold CFT.
 
-1. For CFTokenIssuances that have the `lsfRequiresAuthorization` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider deposit_preauth objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
+1. For CFTokenIssuances that have the `lsfCFTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider deposit_preauth objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
 
 _Originally posted by @sappenin in https://github.com/XRPLF/XRPL-Standards/discussions/82_
