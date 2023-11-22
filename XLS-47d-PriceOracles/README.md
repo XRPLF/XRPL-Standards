@@ -1,6 +1,6 @@
 <pre> 
    Title:        <b>Price Oracles on XRP Ledger</b>
-   Revision:     <b>3</b> (2023-10-18)
+   Revision:     <b>5</b> (2023-11-22)
  <hr>  Author: <a href="mailto:gtsipenyuk@ripple.com">Gregory Tsipenyuk</a>
    Affiliation:  <a href="https://ripple.com">Ripple</a>
  
@@ -56,7 +56,7 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
 - `URI` is an optional [URI](https://datatracker.ietf.org/doc/html/rfc3986) field to reference price data off-chain. It is limited to 256 bytes.
 - `AssetClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to sixteen ASCII hex encoded characters (0x20-0x7E).
-- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is the ripple epoch time.
+- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is represented in [Unix Time](https://en.wikipedia.org/wiki/Unix_time).
 - `PreviousTxnID` is the hash of the previous transaction to modify this entry (same as on other objects with this field).
 - `PreviousTxnLgrSeq` is the ledger index of the ledger when this object was most recently updated/created (same as other objects with this field).
 
@@ -145,7 +145,7 @@ Indicates a new transaction type `OracleSet`. The integer value is TBD.
 |:---------|:-----------|:---------------|:-----------|
 | `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
 
-`LastUpdateTime` is the specific point in time when the data was last updated.
+`LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -312,7 +312,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 
 #### Oracle Aggregation
 
-`get_aggregate_price` RPC calculates the aggregate price of the specified `PriceOracle`, and returns three types of price statistics - average, median, and trimmed median if `trim` parameter is included in the request.
+`get_aggregate_price` RPC calculates the aggregate price of the specified `PriceOracle` objects, and returns three types of price statistics - mean, median, and trimmed mean if `trim` parameter is included in the request.
 
 ##### Input API fields
 
@@ -362,7 +362,7 @@ A 20-byte hex string for the max ledger version to use.
 |:---------|:-----------|:---------------|
 | `trim` | | `number` |
 
-`trim` is the percentage of outliers to trim. Valid trim range is 1-25. If this parameter is included then the API returns trimmed median in addition to the average and median.
+`trim` is the percentage of outliers to trim. Valid trim range is 1-25. If this parameter is included then the API returns statistics for the trimmed data.
 
 |FieldName | Required? | JSON Type |
 |:---------|:-----------|:---------------|
@@ -370,7 +370,7 @@ A 20-byte hex string for the max ledger version to use.
 
 The `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.
 
-The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `base_asset`/`quote_asset` pair, including the `AssetPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `AssetPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the first one that fulfills the criteria.
+The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `base_asset`/`quote_asset` pair, including the `AssetPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `AssetPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the most recent one that fulfills the criteria.
 
 The `get_aggregate_price` fails if:
 
@@ -389,7 +389,6 @@ The `get_aggregate_price` fails if:
             "ledger_index": "current",
             "base_asset": "XRP",
             "quote_asset": "USD",
-            "flags": 7,
             "trim": 20,
             "oracles": [
               {
@@ -423,20 +422,20 @@ On success, the response data contains the following fields:
 
 - `entire_set` is an object of the following fields:
   - `size` is the size of the data set used to calculate the statistics.
-  - `average` is the simple average.
+  - `mean` is the simple mean.
   - `standard_deviation` is the standard deviation.
 - `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
   - `size` is the size of the data set used to calculate the statistics.
-  - `average` is the simple average.
+  - `mean` is the simple mean.
   - `standard_deviation` is the standard deviation.
 - `median` is the median.
-- `time` is the most recent time stamp out of all `LastUpdateTime` values.
+- `time` is the most recent Unit Time stamp out of all `LastUpdateTime` values.
 
 ###### Example of get_aggregate_price API JSON response
 
     {
       "entire_set" : {
-         "average" : "74.75",
+         "mean" : "74.75",
          "size" : 10,
          "standard_deviation" : "0.1290994448735806"
       },
@@ -444,7 +443,7 @@ On success, the response data contains the following fields:
       "median" : "74.75",
       "status" : "success",
       "trimmed_set" : {
-        "average" : "74.75",
+        "mean" : "74.75",
         "size" : 6,
         "standard_deviation" : "0.1290994448735806"
       },
@@ -456,7 +455,7 @@ On success, the response data contains the following fields:
 
 ### Appendix 1. STI_CURRENCY
 
-A new type, `STI_CURRENCY`, is introduced to support `BaseAsset` and `QuoteAsset` fields' type `CURRENCY`. This type can represent a standard currency code or an arbitrary asset as a 160-bit (40 character) hexadecimal string. This type is conformant to the XRPL [Currency Codes](https://xrpl.org/currency-formats.html#currency-codes). Below is a JSON example with the `BaseAsset` representing a CUSIP code `912810RR9` as a 160-bit hexadecimal string and a `QuoteAsset` representing a standard `USD` currency code:
+A new type, `STI_CURRENCY`, is introduced to support `BaseAsset` and `QuoteAsset` fields' type `CURRENCY`. This type can represent a standard currency code, XRP, or an arbitrary asset as a 160-bit (40 character) hexadecimal string. This type is generally conformant to the XRPL [Currency Codes](https://xrpl.org/currency-formats.html#currency-codes). Below is a JSON example with the `BaseAsset` representing a CUSIP code `912810RR9` as a 160-bit hexadecimal string and a `QuoteAsset` representing a standard `USD` currency code:
 
     {
       "PriceData" : {
