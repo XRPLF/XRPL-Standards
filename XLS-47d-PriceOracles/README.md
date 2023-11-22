@@ -62,17 +62,18 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
 ##### The `PriceOracle` Object ID Format
 
-We compute the `PriceOracle` object ID, a.k.a., `OracleID`, as the SHA-512Half of the following values, concatenated in order:
+We compute the `PriceOracle` object ID as the SHA-512Half of the following values, concatenated in order:
 
 - The Oracle space key (0x52)
-- The Owner Account ID
-- The Oracle Sequence. This field must be passed to the transactions and it describes a unique Price Oracle sequence for the given account.
+- The Owner Account ID, `Account`.
+- The Oracle Document ID, `OracleDocumentID`. This field describes a unique Price Oracle instance for the given account. The Oracle Document ID is maintained by the Oracle Provider.
+
+The `Owner` and `OracleDocumentID` uniquely identify the `PriceOracle` object and must be passed to the Oracle transactions.
 
 #### Example of `PriceOracle` JSON
 
     {
         "LedgerEntryType": "PriceOracle",
-        "OracleID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
         "Owner": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
         "Provider": "70726F7669646572",
         "AssetClass": "63757272656E6379",
@@ -101,106 +102,14 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 
 - Create or own the `Account` on the XRPL with sufficient XRP balance to meet the XRP reserve and the transaction fee requirements.
 - The Oracle Provider has to publish the `Account` account public key so that it can be used for verification by dApp’s.
-- The Oracle Provider has to publish a registry of available Price Oracles with their unique Oracle Sequence. The hash of the `Account` and the `OracleSequence` uniquely identifies the Price Oracle on-ledger object.
-
-#### Transaction fields for **OracleSet** transaction
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `TransactionType` | :heavy_check_mark: | `string`| UINT16 |
-
-Indicates a new transaction type `OracleSet`. The integer value is TBD.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
-
-`Account` is the XRPL account that has update and delete privileges on the Oracle being set.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `OracleSequence` | :heavy_check_mark: | `string` | `UINT32` |
-
-`OracleSequence` is a unique identifier of the Price Oracle for the given Account.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `Provider` | | `string` | `BLOB` |
-
-`Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `URI` | | `string` | `BLOB` |
-
-`URI` is an optional field to reference the price data off-chain.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `AssetClass` | | `string` | `BLOB` |
-
-`AssetClass` describes the asset's type.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:-----------|
-| `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
-
-`LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
-
-`PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. `PriceData` includes the following fields:
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-
-`BaseAsset` is the asset to be priced.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-
-`QuoteAsset` is the denomination in which the prices are expressed.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `AssetPrice` | :heavy_check_mark: | `number` | `UINT64` |
-
-`AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `Scale` | :heavy_check_mark: | `number` | `UINT8` |
-
-`Scale` is the price's scaling factor.
-
-The transaction fails if:
-
-- A required field is missing.
-- XRP reserve is insufficient. If the Oracle instance has less or equal to five token pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
-- Transaction's `PriceDataSeries` array size is empty or exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
-- `PriceDataSeries` has duplicate token pairs.
-- `PriceDataSeries` has array elements with missing `AssetPrice`.
-- The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
-- The transaction is not signed by the `Account` account or the account's multi signers.
-- The `URI` field length exceeds 64 bytes.
-- The `Provider` field length exceeds 64 bytes.
-- The `AssetClass` field length exceeds 16 bytes.
-- The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
-
-If an object with the `OracleID` Object ID already exists then the new token pairs are added to the Oracle instance `PriceDataSeries` array. Note that the order of the token pairs in the `PriceDataSeries` array is not important since the token pair uniquely identifies location in the `PriceDataSeries` array of the `PriceOracle` object. Also note that not every token pair price has to be updated. I.e., even though the `PriceOracle` may define ten token pairs, `OracleSet` transaction may contain only one token pair price update. In this case the missing token pair will not include `AssetPrice` and `Scale` fields. `PreviousTxnID` can be used to find the last updated Price Data for this token pair.
-
-On success the transaction creates a new or updates existing `PriceOracle` object. If a new object is created then the owner reserve requirement is incremented by one or two depending on the `PriceDataSeries` array size.
+- The Oracle Provider has to publish a registry of available Price Oracles with their unique `OracleDocumentID`. The hash of the `Account` and the `OracleDocumentID` uniquely identifies the Price Oracle on-ledger object.
 
 #### Example of OracleSet transaction JSON
 
     {
         "TransactionType": "OracleSet",
         "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-        "OracleSequence": 34,
+        "OracleDocumentID": 34,
         "Provider": "70726F7669646572",
         "LastUpdateTime": 743609014,
         "AssetClass": "63757272656E6379",
@@ -216,52 +125,102 @@ On success the transaction creates a new or updates existing `PriceOracle` objec
         ]
     }
 
-### Transaction for deleting Oracle instance
-
-We define a new transaction **OracleDelete** for deleting an Oracle instance.
-
-#### Transaction fields for **OracleDelete** transaction
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
-
-Indicates a new transaction type `OracleDelete`. The integer value is TBD.
+#### Transaction fields for **OracleSet** transaction
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
+| `TransactionType` | :heavy_check_mark: | `string`| UINT16 |
 | `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
+| `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
+| `Provider` | | `string` | `BLOB` |
+| `URI` | | `string` | `BLOB` |
+| `AssetClass` | | `string` | `BLOB` |
+| `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
+| `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
+| `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
+| `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
+| `AssetPrice` | :heavy_check_mark: | `number` | `UINT64` |
+| `Scale` | :heavy_check_mark: | `number` | `UINT8` |
 
-`Account` is the account that has the Oracle update and delete privileges.
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `OracleSequence` | :heavy_check_mark: | `string` | `UINT32` |
-
-`OracleSequence` is a unique identifier of the Price Oracle for the given Account.
-
-**OracleDelete** transaction deletes the `Oracle` object from the ledger.
+- `TransactionType` Indicates a new transaction type `OracleSet`. The integer value is TBD.
+- `Account` is the XRPL account that has update and delete privileges on the Oracle being set.
+- `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
+- `Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`.
+- `URI` is an optional field to reference the price data off-chain.
+- `AssetClass` describes the asset's type. `AssetClass` must be included when creating a new instance of `PriceOracle`.
+- `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time.
+- `PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. `PriceData` includes the following fields:
+- `BaseAsset` is the asset to be priced.
+- `QuoteAsset` is the denomination in which the prices are expressed.
+- `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
+- `Scale` is the price's scaling factor.
 
 The transaction fails if:
 
-- Object with the `OracleID` Object ID doesn't exist.
+- A required field is missing.
+- XRP reserve is insufficient. If the Oracle instance has less or equal to five token pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
+- Transaction's `PriceDataSeries` array size is empty or exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
+- `PriceDataSeries` has duplicate token pairs.
+- `PriceDataSeries` has array elements with missing `AssetPrice`.
+- The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
+- The `URI` field length exceeds 32 bytes.
+- The `Provider` field length exceeds 32 bytes.
+- The `AssetClass` field length exceeds 16 bytes.
+- The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
 
-On success the transaction deletes the `Oracle` object and the owner’s reserve requirement is reduced by one or two depending on the `PriceDataSeries` array size.
+An `OracleSet` transaction uniquely identifies a `PriceOracle object` with its `Account` and `OracleDocumentID` fields. If such an object does not yet exist in the ledger, it is created. Otherwise, the existing object is updated. The `Provider`, `URI`, and `AssetClass` fields are copied directly from the transaction, if present. `Provider` and `AssetClass` must be included in the transaction if the object is being created.
+
+The `PriceDataSeries` of the transaction is copied to a newly created `PriceOracle` object, or updates an existing object, like so:
+
+- `PriceData` objects for (`BaseAsset`, `QuoteAsset`) token pairs that appear in the transaction but not the object are copied to the object.
+- `PriceData` objects for token pairs that appear in both the transaction and the object are overwritten in the object.
+- `PriceData` objects for token pairs that appear only in the object are left unchanged.
+
+The order of token pairs in the transaction is not important because the token pair uniquely identifies the location of the `PriceData` object in the `PriceDataSeries` array of the `PriceOracle` object.
+
+`PreviousTxnID`, and `PreviousTxnLgrSeq` are set in the same manner as for an `AccountSet` transaction.
+
+The owner reserve of the account is updated according to the difference in the size of the `PriceDataSeries` before and after the transaction is applied: 0 for missing, 1 for 1 - 5 objects, 2 for 6 - 10 objects.
+
+### Transaction for deleting Oracle instance
+
+We define a new transaction **OracleDelete** for deleting an Oracle instance.
 
 #### Example of OracleDelete transaction JSON
 
     {
         "TransactionType": "OracleDelete",
         "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-        "OracleSequence": 34
+        "OracleDocumentID": 34
     }
+
+#### Transaction fields for **OracleDelete** transaction
+
+|FieldName | Required? | JSON Type |
+|:---------|:-----------|:---------------|
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
+| `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
+| `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
+
+- `TransacitonType` indicates a new transaction type `OracleDelete`. The integer value is TBD.
+- `Account` is the account that has the Oracle update and delete privileges.
+- `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
+
+**OracleDelete** transaction deletes the `Oracle` object from the ledger.
+
+The transaction fails if:
+
+- Object with the Oracle Object ID doesn't exist.
+- The transaction is not signed by the `Account` account or the account's multi signers.
+
+On success the transaction deletes the `Oracle` object and the owner’s reserve requirement is reduced by one or two depending on the `PriceDataSeries` array size.
 
 ### API's
 
 #### Retrieving The Oracle
 
-An Oracle object can be retrieved with the `ledger_entry` API call by specifying the `account` and `oracle_sequence`.
+An Oracle object can be retrieved with the `ledger_entry` API call by specifying the `account` and `oracle_document_id`.
 
 ##### Example of `ledger_entry` API JSON
 
@@ -271,7 +230,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
          "method ":  "ledger_entry ",
          "params" : [
              "account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-             "oracle_sequence":  34,
+             "oracle_document_id":  34,
              "ledger_index ":  "validated "
          ]
     }
@@ -312,75 +271,9 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 
 #### Oracle Aggregation
 
-`get_aggregate_price` RPC calculates the aggregate price of the specified `PriceOracle` objects, and returns three types of price statistics - mean, median, and trimmed mean if `trim` parameter is included in the request.
+`get_aggregate_price` RPC calculates the aggregate price of the specified `PriceOracle` objects, and returns three types of price statistics - mean, median, and trimmed mean if `trim` parameter is included in the request. The `PriceOracle` objects are identified by the Owner Account (`account`) and Oracle Document ID (`oracle_document_id`) fields.
 
-##### Input API fields
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `ledger_index` | | `string` or `number` (positive integer)|
-
-The ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `ledger_hash` | | `string` |
-
-A 20-byte hex string for the max ledger version to use.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `base_asset` | :heavy_check_mark: | `string` |
-
-`base_asset` is the asset to be priced.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `quote_asset` | :heavy_check_mark: | `string` |
-
-`quote_asset` is the denomination in which the prices are expressed.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `oracles` | :heavy_check_mark: | `array` |
-
-`oracles` is an array of `oracle` objects to aggregate over. `oracle` object has two fields:
-
-- |FieldName | Required? | JSON Type |
-  |:---------|:-----------|:---------------|
-  | `account` | :heavy_check_mark: | `string` |
-
-    `account` is the Oracle's account.
-
-- |FieldName | Required? | JSON Type |
-  |:---------|:-----------|:---------------|
-  | `oracle_sequence` | :heavy_check_mark: | number |
-
-  `oracle_sequence` is a unique identifier of the Price Oracle for the given Account.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `trim` | | `number` |
-
-`trim` is the percentage of outliers to trim. Valid trim range is 1-25. If this parameter is included then the API returns statistics for the trimmed data.
-
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `time_threshold` | | `number` |
-
-The `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.
-
-The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `base_asset`/`quote_asset` pair, including the `AssetPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `AssetPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the most recent one that fulfills the criteria.
-
-The `get_aggregate_price` fails if:
-
-- The oracles array size is either 0 or greater than 200.
-- The oracles array's object doesn't include `account` or `oracle_sequence` or those fields have invalid value.
-- `base_asset` or `quote_asset` are missing.
-- `trim` or `time_threshold` contain invalid uint value.
-- If the resulting data set is empty.
-
-###### Example of get_aggregate_price API JSON request
+##### Example of get_aggregate_price API JSON request
 
     {
     "method": "get_aggregate_price",
@@ -393,45 +286,30 @@ The `get_aggregate_price` fails if:
             "oracles": [
               {
                 "account": "rp047ow9WcPmnNpVHMQV5A4BF6vaL9Abm6,
-                "oracle_sequence": 34
+                "oracle_document_id": 34
               },
               {
                 "account": "rp147ow9WcPmnNpVHMQV5A4BF6vaL9Abm7,
-                "oracle_sequence": 56
+                "oracle_document_id": 56
               },
               {
                 "account": "rp247ow9WcPmnNpVHMQV5A4BF6vaL9Abm8,
-                "oracle_sequence": 2
+                "oracle_document_id": 2
               },
               {
                 "account": "rp347ow9WcPmnNpVHMQV5A4BF6vaL9Abm9,
-                "oracle_sequence": 7
+                "oracle_document_id": 7
               },
               {
                 "account": "rp447ow9WcPmnNpVHMQV5A4BF6vaL9Abm0,
-                "oracle_sequence": 109
+                "oracle_document_id": 109
               }
             ]
         }
     ]
     }
 
-##### Output fields
-
-On success, the response data contains the following fields:
-
-- `entire_set` is an object of the following fields:
-  - `size` is the size of the data set used to calculate the statistics.
-  - `mean` is the simple mean.
-  - `standard_deviation` is the standard deviation.
-- `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
-  - `size` is the size of the data set used to calculate the statistics.
-  - `mean` is the simple mean.
-  - `standard_deviation` is the standard deviation.
-- `median` is the median.
-- `time` is the most recent Unit Time stamp out of all `LastUpdateTime` values.
-
-###### Example of get_aggregate_price API JSON response
+##### Example of get_aggregate_price API JSON response
 
     {
       "entire_set" : {
@@ -450,6 +328,60 @@ On success, the response data contains the following fields:
       "validated" : false
       "time" : 78937648
     }
+
+#### Input API fields
+
+|FieldName | Required? | JSON Type |
+|:---------|:-----------|:---------------|
+| `ledger_index` | | `string` or `number` (positive integer)|
+| `ledger_hash` | | `string` |
+| `base_asset` | :heavy_check_mark: | `string` |
+| `quote_asset` | :heavy_check_mark: | `string` |
+| `oracles` | :heavy_check_mark: | `array` |
+| `trim` | | `number` |
+| `time_threshold` | | `number` |
+
+- `ledger_index` is the ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically.
+- `ledger_hash` is a 20-byte hex string for the max ledger version to use.
+- `base_asset` is the asset to be priced.
+- `quote_asset` is the denomination in which the prices are expressed.
+- `oracles` is an array of `oracle` objects to aggregate over. `oracle` object has two fields:
+
+  |FieldName | Required? | JSON Type |
+  |:---------|:-----------|:---------------|
+  | `account` | :heavy_check_mark: | `string` |
+  | `oracle_document_id` | :heavy_check_mark: | number |
+
+    - `account` is the Oracle's account.
+    - `oracle_document_id` is a unique identifier of the Price Oracle for the given Account.
+
+- `trim` is the percentage of outliers to trim. Valid trim range is 1-25. If this parameter is included then the API returns statistics for the trimmed data.
+- `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.
+
+The price data to aggregate is selected based on specific criteria. The most recent Price Oracle object is obtained for the specified oracles. The most recent `LastUpdateTime` among all objects is chosen as the upper time threshold. A Price Oracle object is included in the aggregation dataset if it satisfies the conditions of containing the specified `base_asset`/`quote_asset` pair, including the `AssetPrice` field, and its `LastUpdateTime` is within the time range of (upper threshold - time threshold) to the upper threshold. If a Price Oracle object doesn't contain the `AssetPrice` for the specified token pair, then up to three previous Price Oracle objects are examined and include the most recent one that fulfills the criteria.
+
+The `get_aggregate_price` fails if:
+
+- The oracles array size is either 0 or greater than 200.
+- The oracles array's object doesn't include `account` or `oracle_document_id` or those fields have invalid value.
+- `base_asset` or `quote_asset` are missing.
+- `trim` or `time_threshold` contain invalid uint value.
+- If the resulting data set is empty.
+
+#### Output fields
+
+On success, the response data contains the following fields:
+
+- `entire_set` is an object of the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `mean` is the simple mean.
+  - `standard_deviation` is the standard deviation.
+- `trimmed_set` is an object, which is included in the response if `trim` fields is set. The object has the following fields:
+  - `size` is the size of the data set used to calculate the statistics.
+  - `mean` is the simple mean.
+  - `standard_deviation` is the standard deviation.
+- `median` is the median.
+- `time` is the most recent Unit Time stamp out of all `LastUpdateTime` values.
 
 ## Appendices
 
