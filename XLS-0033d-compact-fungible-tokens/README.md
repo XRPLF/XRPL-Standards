@@ -854,21 +854,21 @@ No, replacing Trustlines is not the intent behind CFTs. Instead, it's likely tha
 
 While it's true there are some proposals to make Trustlines more efficient (e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to build and implement CFT is ultimately a choice that balances this risk/reward tradeoff towards introducing somethign new to avoid breaking any existing functionality.
 
-### 2.1.3. Are CFTs targeted for Mainnet or a Sidechain?
+### 2.1.4. Are CFTs targeted for Mainnet or a Sidechain?
 
-This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.6](#216-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
+This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
 
 In any event, we will first preview CFTs in a CFT-Devnet, and depending on what we learn there, revisit this issue then.
 
-### 2.1.4. Will CFTs be encoded into an STAmount, or is a new C++ object type required?
+### 2.1.5. Will CFTs be encoded into an STAmount, or is a new C++ object type required?
 
 CFTs will be able to be encoded in an `STAmount`. See [this gist](https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92) for more details.
 
-### 2.1.5. Is there a limit to the number of `CFTokenIssuance` or `CFToken` objects that a single account can hold?
+### 2.1.6. Is there a limit to the number of `CFTokenIssuance` or `CFToken` objects that a single account can hold?
 
 Practically speaking, no. The number of CFToken objects or CFTokenIssuance object that any account can hold is limited by the number of objects that can be stored in an owner directory, which is a very large number.
 
-### 2.1.6. An early draft of this CFT proposal stored `CFToken` objects in a paging structure similar to that used by NFTs. Why was that design abandoned?
+### 2.1.7. An early draft of this CFT proposal stored `CFToken` objects in a paging structure similar to that used by NFTs. Why was that design abandoned?
 
 The original design was optimized for on-ledger space savings, but it came with a tradeoff of increased complexity, both in terms of this specification and the implementation. Another consideration is the datapoint that many NFT developers struggled with the mechanism used to identify NFTs, some of which is a result of the NFT paging structure.
 
@@ -876,15 +876,15 @@ After analyzing on-ledger space requirements for (a) Trustlines, (b) `CFTokenPag
 
 With all that said, this decision is still open for debate. For example, in early 2024 the Ripple team plans to perform limit testing around Trustlines and the simpler CFT design to see how increased numbers of both types of ledger objects affect ledger performance. Once that data is complete, we'll likely revisit this design choice to either validate it or change it.
 
-### 2.1.7. Why is there no `CFTRedeem` Transaction?
+### 2.1.8. Why is there no `CFTRedeem` Transaction?
 
 This is because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" it and removing it from circulation. Note that one consequence of this design choice is that CFT issuer accounts may not also hold `CFToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming CFT payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or should that payment go into an issuer's `CFToken` amount, and still be considered as "in circulation." For simplicity, we chose the former design, restricting CFT issuers from having `CFToken` objects at all.
 
-### 2.1.8. Why can't CFToken Issuers also hold their own balances of CFT in a CFToken object?
+### 2.1.9. Why can't CFToken Issuers also hold their own balances of CFT in a CFToken object?
 
 See the question above. This design also helps enforce a security best practice where an issuing account should not also be used as an issuer's transactional account. Instead, any issuer should use a different XRPL account for non-issuance activity of their CFTs.
 
-### 2.1.9. Why not use the `DepositPreauth` transaction for Authorized CFT Functionality?
+### 2.1.10. Why not use the `DepositPreauth` transaction for Authorized CFT Functionality?
 
 For CFTokenIssuances that have the `lsfCFTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider `deposit_preauth` objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
 
