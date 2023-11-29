@@ -10,7 +10,7 @@
  
  ## Abstract
 
- This proposal adds an on-chain `PriceOracle` object to the XRPL ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance  market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles the on XRPL ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
+ This proposal adds an on-chain `PriceOracle` object to the XRP ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance  market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles the on XRP ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
 
 ### Terminology
 
@@ -23,7 +23,7 @@
 
 #### The `PriceOracle` Object
 
-The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledger and contains the following fields:
+The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP ledger and contains the following fields:
 
 |FieldName | Required? | JSON Type | Internal Type|
 |:---------|:-----------|:---------------|:---------------|
@@ -56,7 +56,7 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 
 - `URI` is an optional [URI](https://datatracker.ietf.org/doc/html/rfc3986) field to reference price data off-chain. It is limited to 256 bytes.
 - `AssetClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to sixteen ASCII hex encoded characters (0x20-0x7E).
-- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is represented in [Unix Time](https://en.wikipedia.org/wiki/Unix_time).
+- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is represented as Ripple Epoch - the number of seconds since January 1, 2000 (00:00 UTC).
 - `PreviousTxnID` is the hash of the previous transaction to modify this entry (same as on other objects with this field).
 - `PreviousTxnLgrSeq` is the ledger index of the ledger when this object was most recently updated/created (same as other objects with this field).
 
@@ -65,7 +65,7 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRPL ledge
 We compute the `PriceOracle` object ID as the SHA-512Half of the following values, concatenated in order:
 
 - The Oracle space key (0x52)
-- The Owner Account ID, `Account`.
+- The Owner Account ID, `Owner`.
 - The Oracle Document ID, `OracleDocumentID`. This field describes a unique Price Oracle instance for the given account. The Oracle Document ID is maintained by the Oracle Provider.
 
 The `Owner` and `OracleDocumentID` uniquely identify the `PriceOracle` object and must be passed to the Oracle transactions.
@@ -100,9 +100,9 @@ This proposal introduces several new transactions to allow for the creation, upd
 
 We define a new transaction **OracleSet** for creating or updating a `PriceOracle` instance.  Before the transaction can be submitted to create a new `PriceOracle` instance, the Oracle Provider has to do the following:
 
-- Create or own the `Account` on the XRPL with sufficient XRP balance to meet the XRP reserve and the transaction fee requirements.
-- The Oracle Provider has to publish the `Account` account public key so that it can be used for verification by dApp’s.
-- The Oracle Provider has to publish a registry of available Price Oracles with their unique `OracleDocumentID`. The hash of the `Account` and the `OracleDocumentID` uniquely identifies the Price Oracle on-ledger object.
+- Create or own the `Owner` on the XRPL with sufficient XRP balance to meet the XRP reserve and the transaction fee requirements.
+- The Oracle Provider has to publish the `Owner` account public key so that it can be used for verification by dApp’s.
+- The Oracle Provider has to publish a registry of available Price Oracles with their unique `OracleDocumentID`. The hash of the `Owner` and the `OracleDocumentID` uniquely identifies the Price Oracle on-ledger object.
 
 #### Example of OracleSet transaction JSON
 
@@ -132,9 +132,9 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 | `TransactionType` | :heavy_check_mark: | `string`| UINT16 |
 | `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
 | `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
-| `Provider` | | `string` | `BLOB` |
+| `Provider` | :grey_question: | `string` | `BLOB` |
 | `URI` | | `string` | `BLOB` |
-| `AssetClass` | | `string` | `BLOB` |
+| `AssetClass` | :grey_question: | `string` | `BLOB` |
 | `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
 | `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
 | `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
@@ -143,12 +143,12 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 | `Scale` | :heavy_check_mark: | `number` | `UINT8` |
 
 - `TransactionType` Indicates a new transaction type `OracleSet`. The integer value is TBD.
-- `Account` is the XRPL account that has update and delete privileges on the Oracle being set.
+- `Account` is the XRPL account that has update and delete privileges on the Oracle being set. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
 - `Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`.
 - `URI` is an optional field to reference the price data off-chain.
 - `AssetClass` describes the asset's type. `AssetClass` must be included when creating a new instance of `PriceOracle`.
-- `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time.
+- `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time. `LastUpdateTime` is stored internally on `PriceOracle` as Ripple Epoch.
 - `PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. `PriceData` includes the following fields:
 - `BaseAsset` is the asset to be priced.
 - `QuoteAsset` is the denomination in which the prices are expressed.
@@ -164,8 +164,8 @@ The transaction fails if:
 - `PriceDataSeries` has array elements with missing `AssetPrice`.
 - The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
-- The `URI` field length exceeds 32 bytes.
-- The `Provider` field length exceeds 32 bytes.
+- The `URI` field length exceeds 256 bytes.
+- The `Provider` field length exceeds 256 bytes.
 - The `AssetClass` field length exceeds 16 bytes.
 - The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
 
@@ -204,7 +204,7 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 | `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
 
 - `TransacitonType` indicates a new transaction type `OracleDelete`. The integer value is TBD.
-- `Account` is the account that has the Oracle update and delete privileges.
+- `Account` is the account that has the Oracle update and delete privileges. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
 
 **OracleDelete** transaction deletes the `Oracle` object from the ledger.
@@ -212,6 +212,7 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 The transaction fails if:
 
 - Object with the Oracle Object ID doesn't exist.
+- The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field.
 - The transaction is not signed by the `Account` account or the account's multi signers.
 
 On success the transaction deletes the `Oracle` object and the owner’s reserve requirement is reduced by one or two depending on the `PriceDataSeries` array size.
