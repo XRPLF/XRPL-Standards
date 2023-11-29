@@ -66,11 +66,12 @@ We propose two new objects and one new ledger structure:
 The **`CFTokenIssuance`** object represents a single CFT issuance and holds data associated with the issuance itself. Token issuances are created using the **`CFTokenIssuanceCreate`** transaction and can, optionally, be destroyed by the **`CFTokenIssuanceDestroy`** transaction.
 
 ##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
-The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of SHA512-Half of the following values, concatenated in order:
+
+The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is the result of SHA512-Half of the following values, concatenated in order:
 
 * The CFTokenIssuance space key (0x007E).
 * The AccountID of the issuer.
-* The transaction sequence number
+* The transaction sequence number.
 
 ##### 1.2.1.1.2. Fields
 
@@ -155,7 +156,7 @@ Any account may issue any number of Compact Fungible Tokens.
 
 ###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
 
-CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
+CFTokenIssuance objects are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
 
 ###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
 
@@ -170,9 +171,18 @@ A **`CFTokenIssuance`** can be removed using the same approach, but only if the 
 Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFTokenIssuance`** entries per account.
 
 #### 1.2.1.2. The **`CFToken`** object
+
 The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `CFToken` is derived from hashing the space key, holder's address and the `CFTokenIssuanceID`.
 
-##### 1.2.1.2.1 Fields
+##### 1.2.1.2.1. **`CFToken`** Ledger Identifier
+
+The ID of a CFToken object, a.k.a `CFTokenID` is the result of SHA512-Half of the following values, concatenated in order:
+
+* The CFTokenIssuance space key (0x007E).
+* The AccountID of the token holder.
+* The `CFTokenIssuanceID` for the issuance being held.
+      
+##### 1.2.1.2.2 Fields
 A **`CFToken`** object can have the following fields. The key of each CFToken is stored in the Owner Directory for the account that holds the `CFToken`.
 
 | Field Name            | Required?          | JSON Type | Internal Type |
@@ -186,29 +196,29 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 | `OwnerNode`               | default            |  `number` | `UINT64`      |
 | `CFTokenNode`               | default            |  `number` | `UINT64`      |
 
-###### 1.2.1.2.1.1. `LedgerEntryType`
+###### 1.2.1.2.2.1. `LedgerEntryType`
 
 The value 0x007F, mapped to the string `CFToken`, indicates that this object describes an individual account's holding of a CFT.
 
-###### 1.2.1.2.1.2. `Account`
+###### 1.2.1.2.2.2. `Account`
 
 The owner of the `CFToken`.
-###### 1.2.1.2.1.3. `CFTokenIssuanceID`
 
+###### 1.2.1.2.2.3. `CFTokenIssuanceID`
 
 The `CFTokenIssuance` identifier.
 
-###### 1.2.1.2.1.4. `CFTAmount`
+###### 1.2.1.2.2.4. `CFTAmount`
 
 This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
 
-###### 1.2.1.2.1.5. `LockedAmount`
+###### 1.2.1.2.2.5. `LockedAmount`
 
 This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder. 
 
 This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty CFT holding.
 
-###### 1.2.1.2.1.6. `Flags`
+###### 1.2.1.2.2.6. `Flags`
 
 A set of flags indicating properties or other options associated with this **`CFTokenIssuance`** object. The type specific flags proposed  are:
 
@@ -217,15 +227,15 @@ A set of flags indicating properties or other options associated with this **`CF
 | `lsfCFTLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
 | `lsfCFTAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
-###### 1.2.1.2.1.7. `OwnerNode`
+###### 1.2.1.2.2.7. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
-###### 1.2.1.2.1.8. `CFTokenNode`
+###### 1.2.1.2.2.8. `CFTokenNode`
 
 Identifies the page in the CFT directory where this item is referenced.
 
-##### 1.2.1.2.2. Example CFToken JSON
+##### 1.2.1.2.3. Example CFToken JSON
 
  ```json
  {
