@@ -834,7 +834,7 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
 ### 1.7 Free CFTs
-When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
+When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free Trustlines work today.
 
 # 2. Appendices
 
@@ -850,11 +850,15 @@ That said, there is some overlap in functionality between the two. For example, 
 
 No, replacing Trustlines is not the intent behind CFTs. Instead, it's likely that CFTs and Trustline can and will coexist because they enable subtly different use-cases (see [FAQ 4.1](#41-are-cfts-different-from-trustlines), in particular the part about "rippling.").
 
+### 2.1.3 Instead of CFTs, why not just make Trustlines smaller/better?
+
+While it's true there are some proposals to make Trustlines more efficient (e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to build and implement CFT is ultimately a choice that balances this risk/reward tradeoff towards introducing somethign new to avoid breaking any existing functionality.
+
 ### 2.1.3. Are CFTs targeted for Mainnet or a Sidechain?
 
-This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, enabling CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.6](#216-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, as well as XRPL tooling. 
+This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.6](#216-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
 
-Regardless, it might be desirable to let CFTs "bake" on a sidechain to prove their utility, and in-tandem try to [optimize trustlines storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from trustlines.
+In any event, we will first preview CFTs in a CFT-Devnet, and depending on what we learn there, revisit this issue then.
 
 ### 2.1.4. Will CFTs be encoded into an STAmount, or is a new C++ object type required?
 
