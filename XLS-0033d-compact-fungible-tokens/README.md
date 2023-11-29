@@ -60,7 +60,6 @@ We propose two new objects and one new ledger structure:
 
 1. A **`CFTokenIssuance`** is a new object that describes a fungible token issuance created by an issuer.
 1. A **`CFToken`** is a new object that describes a single account's holdings of an issued token.
-1. A **`CFTokenPage`** is a ledger structure that contains a set of **`CFToken`** objects owned by the same token holder.
 
 #### 1.2.1.1. The **`CFTokenIssuance`** object
 
@@ -171,33 +170,45 @@ A **`CFTokenIssuance`** can be removed using the same approach, but only if the 
 Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFTokenIssuance`** entries per account.
 
 #### 1.2.1.2. The **`CFToken`** object
-The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions.
+The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `CFToken` is derived from hashing the space key, holder's address and the `CFTokenIssuanceID`.
 
 ##### 1.2.1.2.1 Fields
-A **`CFToken`** object can have the following required and optional fields. Notice that, unlike other objects, no field is needed to identify the object type or current owner of the object, because CFT holdings are grouped into pages that implicitly define the object type and identify the holder.
+A **`CFToken`** object can have the following fields. The key of each CFToken is stored in the Owner Directory for the account that holds the `CFToken`.
 
 | Field Name            | Required?          | JSON Type | Internal Type |
 | --------------------- |--------------------|-----------|---------------|
+| `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
+| `Account`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `CFTokenIssuanceID`   | :heavy_check_mark: |  `string` | `UINT256`     |
 | `CFTAmount`              | :heavy_check_mark: |  `string` | `UINT64`      |
 | `LockedAmount`        | default            |  `string` | `UINT64`      |
 | `Flags`               | default            |  `number` | `UINT32`      |
+| `OwnerNode`               | default            |  `number` | `UINT64`      |
+| `CFTokenNode`               | default            |  `number` | `UINT64`      |
 
-###### 1.2.1.2.1.1. `CFTokenIssuanceID`
+###### 1.2.1.2.1.1. `LedgerEntryType`
+
+The value 0x007F, mapped to the string `CFToken`, indicates that this object describes an individual account's holding of a CFT.
+
+###### 1.2.1.2.1.2. `Account`
+
+The owner of the `CFToken`.
+###### 1.2.1.2.1.3. `CFTokenIssuanceID`
+
 
 The `CFTokenIssuance` identifier.
 
-###### 1.2.1.2.1.2. `CFTAmount`
+###### 1.2.1.2.1.4. `CFTAmount`
 
 This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
 
-###### 1.2.1.2.1.3. `LockedAmount`
+###### 1.2.1.2.1.5. `LockedAmount`
 
 This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder. 
 
 This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty CFT holding.
 
-###### 1.2.1.2.1.4. `Flags`
+###### 1.2.1.2.1.6. `Flags`
 
 A set of flags indicating properties or other options associated with this **`CFTokenIssuance`** object. The type specific flags proposed  are:
 
@@ -206,122 +217,28 @@ A set of flags indicating properties or other options associated with this **`CF
 | `lsfCFTLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
 | `lsfCFTAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
+###### 1.2.1.2.1.7. `OwnerNode`
+
+Identifies the page in the owner's directory where this item is referenced.
+
+###### 1.2.1.2.1.8. `CFTokenNode`
+
+Identifies the page in the CFT directory where this item is referenced.
+
 ##### 1.2.1.2.2. Example CFToken JSON
 
  ```json
  {
-     "TokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+     "LedgerEntryType": "CFToken",
+     "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
+     "CFTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
      "Flags": 0,
      "CFTAmount": "100000000",
-     "LockedAmount": "0"
+     "LockedAmount": "0",
+     "OwnerNode": 1,
+     "CFTokenNode": 1
  }
  ```
-
-#### 1.2.1.3. The **`CFTokenPage`** ledger entry
-
-This object represents a collection of **`CFToken`** objects owned by the same account. It is important to note that the **`CFToken`** objects themselves reside within this page, instead of in a dedicated object entry in the `SHAMap`. An account can have multiple **`CFTokenPage`** ledger objects, which form a doubly-linked list (DLL).
-
-In the interest of minimizing the size of a page and optimizing storage, the `Owner` field is not present since it is encoded as part of the object's ledger identifier (more details in the **`CFTokenPageID`** discussion below).
-
-##### 1.2.1.3.1 Fields
-
-A **`CFTokenPage`** object may have the following required and optional fields:
-
-| Field Name          | Required? | JSON Type | Internal Type |
-| ------------------- |-----------| --------- |---------------|
-| `LedgerEntryType`   | ✔️         | `string`  | `UINT16`      |
-| `PreviousPageMin`   | ️          | `string`  | `UINT256`     |
-| `NextPageMin`       | ️          | `string`  | `UINT256`     |
-| `PreviousTxnID`     | ️          | `string`  | `HASH256`     |
-| `PreviousTxnLgrSeq` | ️          | `number`  | `UINT32`      |
-| `CFTokens`          | ️✔         | `object`   | `TOKEN`      |
-
-###### 1.2.1.3.1.1. `**LedgerEntryType**` 
-
-Identifies the type of ledger object. This proposal recommends the value `0x007F` as the reserved ledger entry type.
-
-###### 1.2.1.3.1.2. `**PreviousPageMin**` 
-
-The locator of the previous page, if any. Details about this field and how it should be used are outlined below, after the construction of the **`CFTokenPageID`** is explained.
-
-###### 1.2.1.3.1.3. `**NextPageMin**` 
-
-The locator of the next page, if any. Details about this field and how it should be used are outlined below, after the construction of the **`CFTokenPageID`** is explained.
-
-###### 1.2.1.3.1.4. `**PreviousTxnID**` 
-
-Identifies the transaction ID of the transaction that most recently modified this **`CFTokenPage`** object.
-
-###### 1.2.1.3.1.5. `**PreviousTxnLgrSeq**` 
-
-The sequence of the ledger that contains the transaction that most recently modified this **`CFTokenPage`** object.
-
-###### 1.2.1.3.1.6. `**CFTokens**` 
-
-The collection of **`CFToken`** objects contained in this **`CFTokenPage`** object. This specification places an upper bound of 32 **`CFToken`** objects per page. Objects should be stored in sorted order, from low to high with the low order 96 bits of the `TokenID` used as the sorting parameter.
-
-##### 1.2.1.3.2. CFTokenPage ID Format
-
-Unlike other object identifiers on the XRP Ledger, which are derived by hashing a collection of data using `SHA512-Half`, **`CFTokenPage`** identifiers are constructed so as to specfically allow for the adoption of a more efficient paging structure, designed to enable user accounts to efficiently hold many CFTs at the same time.
-
-To that end, a unique CFTokenPage ID (a.k.a., `CFTokenPageID`) is derived by concatenating a 196-bit value that uniquely identifies a particular account's holdings of CFT, followed by a 64-bit value that uniquely identifies a particular CFT issuance. Using this construction enables efficient lookups of individual `CFTokenPage` objects without requiring iteration of the doubly-linked list of all CFTokenPages.
-
-More formally, we assume:
-
-- The function `high196(x)` returns the "high" 196 bits of a 256-bit value.
-- The function `low64(x)` returns the "low" 64-bits of a 256-bit value. 
-- A `CFTokenIssuanceID` uniqely identifies a CFT Issuance as defined above in ["CFTokenIssuance Ledger Identifier"].
-- A `CFTokenHolderID` uniquely identifies a holder of some amount of CFT (as opposed to other token types such as an NFT) and is defined as the result of SHA512-Half of the following values, concatenated in order:
-  - The `CFTokenIssuance` ledger identifier key (0x007E).
-  - The `AccountID` of the CFT holder.
-
-Therefore:
-
-- Let `CFTokenPageID` equal `high196(CFTokenHolderId)` concatenated with `low64(CFTokenIssuanceId)`.
-- Let `CFTokenIssuanceID` `A` only be included in a page with `CFTokenPageId` `B` if and only if `low64(A) >= low64(B)`.
-
-This scheme is similar to the existing scheme for organizing `NFToken` objects into `NFTokenPage`s.
-
-##### 1.2.1.3.3. Example CFTokenPage JSON
-
- ```json
- {
-     "LedgerEntryType": "CFTokenPage",
-     "PreviousTokenPage": "598EDFD7CF73460FB8C695d6a9397E907378C8A841F7204C793DCBEF5406",
-     "PreviousTokenNext": "598EDFD7CF73460FB8C695d6a9397E9073781BA3B78198904F659AAA252A",
-     "PreviousTxnID": "95C8761B22894E328646F7A70035E9DFBECC90EDD83E43B7B973F626D21A0822",
-     "PreviousTxnLgrSeq": 42891441,
-     "CFTokens": {
-             {
-                 "CFTokenID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-                 "CFTAmount": 50000
-             },
-             ...
-      }
- }
- ```
- 
-##### 1.2.1.3.4. How do **`CFTokenPage`** objects work?
-
-The page within which a **`CFToken`** entry is stored will be formed as described above. This is needed to find the correct starting point in the doubly-linked list of **`CFTokenPage`** objects if that list is large. This is because it is inefficient to have to traverse the list from the beginning if an account holds thousands of **`CFToken`** objects in hundreds of **`CFTokenPage`** objects.
-
-###### 1.2.1.3.4.1. Searching a **`CFToken`** object
-
-To search for a specific **`CFToken`**, the first step is to locate the **`CFTokenPage`**, if any, that should contain that **`CFToken`**. For that do the following:
-
-Compute the **`CFTokenPageID`** using the account of the owner and the **`CFTokenIssuanceID`** of the token, as described above. Then search for the ledger entry whose identifier is less than or equal to that value. If that entry does not exist or is not a **`CFTokenPage`**, the **`CFToken`** is not held by the given account.
-
-###### 1.2.1.3.4.2. Adding a **`CFToken`** object
-
-A **`CFToken`** object can be added by using the same approach to find the **`CFTokenPage`** it should be in and adding it to that page. If after addition the page overflows, find the `next` and `previous` pages (if any) and balance those three pages, inserting a new page as/if needed.
-
-###### 1.2.1.3.4.2. Removing a **`CFToken`** object
-
-A **`CFToken`** can be removed by using the same approach. If the number of **`CFToken`** in the page goes below a certain threshhold, an attempt will be made to consolidate the page with a `previous` or subsequent page and recover the reserve.
-
-###### 1.2.1.3.4.3. Reserve for **`CFTokenPage`** object
-
-Each **`CFTokenPage`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFToken`** entries per page, which means that for accounts that hold multiple CFTs the _effective_ reserve cost per Fungible Token can be as low as _R_/32 where _R_ is the incremental reserve.
 
 ## 1.3 Transactions
 
@@ -834,7 +751,7 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
 ### 1.7 Free CFTs
-When a holder creates a `CFTokenPage`, if the holder owns at most 2 items in the ledger including the new page, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free Trustlines work today.
+When a holder creates a `CFToken`, if the holder owns at most 2 items in the ledger including the new `CFToken`, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
 # 2. Appendices
 
@@ -923,7 +840,7 @@ In certain use cases, issuers may want the option to only allow specific account
 Let's first explore how the flow looks like without allow-listing:
 
 1. Alice holds a CFT with asset-code `USD`.
-2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve.
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve.
 3. Bob can now receive and send payments from/to anyone using `USD`.
 4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
 5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfCFTUnauthorize` flag, which will successfully delete `CFToken` object.
@@ -935,11 +852,11 @@ The issuer needs to enable allow-listing for the CFT by setting the `lsfCFTRequi
 With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
 
 1. Alice has a CFT of currency `USD` (same as above)
-2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object on a `CFTokenPage` with zero balance, and potentially taking up extra reserve. (same as above)
-   **However at this point, Bob still does not have the permission to use `USD`!**
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
 3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfCFTAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
 4. Same as step 4 above
-5. Same as step 5 above
+6. 5. Same as step 5 above
 
 **It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
 
