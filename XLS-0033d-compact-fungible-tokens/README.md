@@ -188,7 +188,7 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 
 ###### 1.2.1.2.1.1. `LedgerEntryType`
 
-Maps to the string `CFToken`.
+The value 0x007F, mapped to the string `CFToken`, indicates that this object describes an individual account's holding of a CFT.
 
 ###### 1.2.1.2.1.2. `Account`
 
