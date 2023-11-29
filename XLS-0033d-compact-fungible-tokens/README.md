@@ -173,7 +173,7 @@ Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. Th
 The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `CFToken` is derived from hashing the space key, holder's address and the `CFTokenIssuanceID`.
 
 ##### 1.2.1.2.1 Fields
-A **`CFToken`** object can have the following required and optional fields. The key of each CFToken is stored in a CFT directory designated for a particular `CFTokenIssuance`.
+A **`CFToken`** object can have the following fields. The key of each CFToken is stored in the Owner Directory for the account that holds the `CFToken`.
 
 | Field Name            | Required?          | JSON Type | Internal Type |
 | --------------------- |--------------------|-----------|---------------|
