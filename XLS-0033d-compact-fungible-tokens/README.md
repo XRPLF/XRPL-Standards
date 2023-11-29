@@ -195,6 +195,7 @@ The value 0x007F, mapped to the string `CFToken`, indicates that this object des
 The owner of the `CFToken`.
 ###### 1.2.1.2.1.3. `CFTokenIssuanceID`
 
+
 The `CFTokenIssuance` identifier.
 
 ###### 1.2.1.2.1.4. `CFTAmount`
