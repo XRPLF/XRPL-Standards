@@ -194,7 +194,6 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 | `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
 | `OwnerNode`         | default            | `number`  | `UINT64`      |
-| `CFTokenNode`       | default            | `number`  | `UINT64`      |
 
 ###### 1.2.1.2.1.1. `LedgerEntryType`
 
@@ -227,19 +226,15 @@ A set of flags indicating properties or other options associated with this **`CF
 | `lsfCFTLocked`     | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value.                                     |
 | `lsfCFTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
-###### 1.2.1.2.1.7. `CFTokenNode`
-
-Identifies the page in the CFT directory where this item is referenced.
-
-###### 1.2.1.1.2.8. `PreviousTxnID`
+###### 1.2.1.1.2.7. `PreviousTxnID`
 
 Identifies the transaction ID of the transaction that most recently modified this object.
 
-###### 1.2.1.1.2.9. `PreviousTxnLgrSeq`
+###### 1.2.1.1.2.8. `PreviousTxnLgrSeq`
 
 The sequence of the ledger that contains the transaction that most recently modified this object.
 
-###### 1.2.1.1.2.10. `OwnerNode`
+###### 1.2.1.1.2.9. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
@@ -253,8 +248,7 @@ Identifies the page in the owner's directory where this item is referenced.
      "Flags": 0,
      "CFTAmount": "100000000",
      "LockedAmount": "0",
-     "OwnerNode": 1,
-     "CFTokenNode": 1
+     "OwnerNode": 1
  }
  ```
 
@@ -266,9 +260,10 @@ This proposal introduces several new transactions to allow for the creation and 
 We define three transactions related to CFT Issuances: **`CFTokenIssuanceCreate`** and **`CFTokenIssuanceDestroy`** and  **`CFTokenIssuanceSet`** for minting, destroying, and updating CFT _Issuances_ respectively on XRPL.
 
 #### 1.3.1.1 The **`CFTokenIssuanceCreate`** transaction
-The **`CFTokenIssuanceCreate`** transaction creates an **`CFTokenIssuance`** object and adds it to the relevant directory node of the `creator`. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
 
-If the transaction is successful, the newly created token will be owned by the account (the `creator` account) which executed the transaction.
+The **`CFTokenIssuanceCreate`** transaction creates a **`CFTokenIssuance`** object and adds it to the relevant directory node of the creator account. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
+
+If the transaction is successful, the newly created token will be owned by the account (the creator account) which executed the transaction.
 
 ##### 1.3.1.1.1 Transaction-specific Fields
 | Field Name         | Required? | JSON Type | Internal Type |
