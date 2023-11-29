@@ -76,18 +76,20 @@ The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of 
 
 **`CFTokenIssuance`** objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/directorynode.html) owned by the issuer. Issuances have the following required and optional fields:
 
-| Field Name          | Required?          | JSON Type | Internal Type |
-| ------------------- |--------------------|-----------|---------------|
-| `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
-| `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
-| `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `AssetScale`        | (default)          | `number`  | `UINT8`       |
-| `MaximumAmount`     | :heavy_check_mark: | `string`  | `UINT64`      |
-| `OutstandingAmount` | :heavy_check_mark: | `string`  | `UINT64`      |
+| Field Name          | Required?           | JSON Type | Internal Type |
+|---------------------|---------------------|-----------|---------------|
+| `LedgerEntryType`   | :heavy_check_mark:  | `number`  | `UINT16`      |
+| `Flags`             | :heavy_check_mark:  | `number`  | `UINT32`      |
+| `Issuer`            | :heavy_check_mark:  | `string`  | `ACCOUNTID`   |
+| `AssetScale`        | (default)           | `number`  | `UINT8`       |
+| `MaximumAmount`     | :heavy_check_mark:  | `string`  | `UINT64`      |
+| `OutstandingAmount` | :heavy_check_mark:  | `string`  | `UINT64`      |
 | `LockedAmount`      | ️(default)          | `string`  | `UINT64`      |
 | `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
-| `CFTokenMetadata`   |                    | `string`  | `BLOB`        |
-| `OwnerNode`         | (default)          | `number`  | `UINT64`      |
+| `CFTokenMetadata`   |                     | `string`  | `BLOB`        |
+| `PreviousTxnID`     | :heavy_check_mark:  | `string`  | `HASH256`     |
+| `PreviousTxnLgrSeq` | ️:heavy_check_mark: | `number`  | `UINT32`      |
+| `OwnerNode`         | (default)           | `number`  | `UINT64`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
 
@@ -97,17 +99,17 @@ The value 0x007E, mapped to the string `CFTokenIssuance`, indicates that this ob
 
 A set of flags indicating properties or other options associated with this **`CFTokenIssuance`** object. The type specific flags proposed  are:
 
-| Flag Name         | Flag Value | Description |
-|-------------------|------------|-------------|
-| `lsfCFTLocked`                | ️`0x0001`  | If set, indicates that all balances are locked. |
-| `lsfCFTCanLock`  | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.|
-| `lsfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `lsfCFTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `lsfCFTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.
-| `lsfCFTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
-| `lsfCFTCanClawback`         | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| Flag Name           | Flag Value | Description                                                                                                                                                                                                                               |
+|---------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lsfCFTLocked`      | ️`0x0001`  | If set, indicates that all balances are locked.                                                                                                                                                                                           |
+| `lsfCFTCanLock`     | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this CFT.  If not set, the CFT cannot be locked in any way.                                                                                           |
+| `lsfCFTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.                                                                                                                  |
+| `lsfCFTCanEscrow`   | `0x0008`   | If set, indicates that _individual_ holders can place their balances into an escrow.                                                                                                                                                      |
+| `lsfCFTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.                                                                                                                                     |
+| `lsfCFTCanTransfer` | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
+| `lsfCFTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.                                                                                                                         |
 
-With the exception of the `lsfCFTLocked` flag, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
+Except for `lsfCFTLocked`, which can be mutated via the `**CFTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`CFTokenIssuanceCreate`** transaction and cannot be changed later.
 
 ###### 1.2.1.1.2.3. `Issuer`
 
@@ -129,7 +131,15 @@ Specifies the sum of all token amounts that have been minted to all token holder
 
 This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down, hence the fee can be rounded down to zero if the payment is small. Issuer should make sure that their CFT's `AssetScale` is large enough.
 
-###### 1.2.1.1.2.8. `OwnerNode`
+###### 1.2.1.1.2.8. `PreviousTxnID`
+
+Identifies the transaction ID of the transaction that most recently modified this object.
+
+###### 1.2.1.1.2.9. `PreviousTxnLgrSeq`
+
+The sequence of the ledger that contains the transaction that most recently modified this object.
+
+###### 1.2.1.1.2.10. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
@@ -175,16 +185,16 @@ The **`CFToken`** object represents an amount of a token held by an account that
 ##### 1.2.1.2.1 Fields
 A **`CFToken`** object can have the following fields. The key of each CFToken is stored in the Owner Directory for the account that holds the `CFToken`.
 
-| Field Name            | Required?          | JSON Type | Internal Type |
-| --------------------- |--------------------|-----------|---------------|
+| Field Name          | Required?          | JSON Type | Internal Type |
+|---------------------|--------------------|-----------|---------------|
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
-| `Account`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `CFTokenIssuanceID`   | :heavy_check_mark: |  `string` | `UINT256`     |
-| `CFTAmount`              | :heavy_check_mark: |  `string` | `UINT64`      |
-| `LockedAmount`        | default            |  `string` | `UINT64`      |
-| `Flags`               | default            |  `number` | `UINT32`      |
-| `OwnerNode`               | default            |  `number` | `UINT64`      |
-| `CFTokenNode`               | default            |  `number` | `UINT64`      |
+| `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
+| `CFTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT256`     |
+| `CFTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
+| `LockedAmount`      | default            | `string`  | `UINT64`      |
+| `Flags`             | default            | `number`  | `UINT32`      |
+| `OwnerNode`         | default            | `number`  | `UINT64`      |
+| `CFTokenNode`       | default            | `number`  | `UINT64`      |
 
 ###### 1.2.1.2.1.1. `LedgerEntryType`
 
@@ -193,8 +203,8 @@ The value 0x007F, mapped to the string `CFToken`, indicates that this object des
 ###### 1.2.1.2.1.2. `Account`
 
 The owner of the `CFToken`.
-###### 1.2.1.2.1.3. `CFTokenIssuanceID`
 
+###### 1.2.1.2.1.3. `CFTokenIssuanceID`
 
 The `CFTokenIssuance` identifier.
 
@@ -212,18 +222,26 @@ This value is stored as a `default` value such that it's initial value is `0`, i
 
 A set of flags indicating properties or other options associated with this **`CFTokenIssuance`** object. The type specific flags proposed  are:
 
-| Flag Name         | Flag Value | Description                                                             |
-|-------------------|------------|-------------------------------------------------------------------------|
-| `lsfCFTLocked`       | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value. |
-| `lsfCFTAuthorized`       | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
+| Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                      |
+|--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lsfCFTLocked`     | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value.                                     |
+| `lsfCFTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
-###### 1.2.1.2.1.7. `OwnerNode`
-
-Identifies the page in the owner's directory where this item is referenced.
-
-###### 1.2.1.2.1.8. `CFTokenNode`
+###### 1.2.1.2.1.7. `CFTokenNode`
 
 Identifies the page in the CFT directory where this item is referenced.
+
+###### 1.2.1.1.2.8. `PreviousTxnID`
+
+Identifies the transaction ID of the transaction that most recently modified this object.
+
+###### 1.2.1.1.2.9. `PreviousTxnLgrSeq`
+
+The sequence of the ledger that contains the transaction that most recently modified this object.
+
+###### 1.2.1.1.2.10. `OwnerNode`
+
+Identifies the page in the owner's directory where this item is referenced.
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
