@@ -424,10 +424,13 @@ We propose using the following format for CFT amounts::
 Note: The `CFTokenIssuanceID` will be used to uniquely identify the CFT during a Payment transaction.
 
 ### 1.3.5 The **`CFTokenAuthorize`** Transaction
+
 This transaction enables an account to hold an amount of a particular CFT issuance. When applied successfully, it will create a new `CFToken` object with an initial zero balance, owned by the holder account.
 
-If the issuer has set `lsfCFTRequireAuth` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfCFTRequireAuth` is not set and the issuer attempts to submit this transaction, it will fail. Read more about allow-listing in Appendix. 
+If the issuer has set `lsfCFTRequireAuth` (allow-listing) on the `CFTokenIssuance`, then the issuer must submit a `CFTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfCFTRequireAuth` is not set and the issuer attempts to submit this transaction, it will fail.
+
 #### 1.3.5.1 CFTokenAuthorize
+
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
 | `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
@@ -458,6 +461,7 @@ Specifies the holders address that the issuer wants to authorize. Only used for 
 
  
 #### 1.3.3.5.12 CFTokenAuthorize Flags
+
 Transactions of the `CFTokenAuthorize` type support additional values in the Flags field, as follows:
 
 | Flag Name         | Flag Value | Description |
@@ -466,10 +470,13 @@ Transactions of the `CFTokenAuthorize` type support additional values in the Fla
 
 
 ### 1.3.6 The **`AccountDelete`** Transaction
+
 We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `CFTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `CFTokenIssuances` using `CFTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render CFT balances useless/unstable for any holders.
 
 ### 1.4.0 Details on Locking CFTs
+
 #### 1.4.0.1 Locking individual balances
+
 To lock an individual balance of an individual CFT an issuer will submit the `CFTokenIssuanceSet` transaction, indicate the CFT and holder account that they wish to lock, and set the `tfCFTLock` flag. This operation will fail if::
 
 * The CFT has the `lsfCFTCanLock` flag _not_ set
@@ -477,20 +484,23 @@ To lock an individual balance of an individual CFT an issuer will submit the `CF
 Issuers can unlock the balance by submitting another `CFTokenIssuanceSet` transaction with the `tfCFTUnlock` flag set.
 
 #### 1.4.0.2 Locking entire CFTs
+
 This operation works the same as above, except that the holder account is not specified in the `CFTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if::
 
 * The CFT issuer has the `lsfCFTCanLock` flag _not_ set on their account
 
 Locking an entire CFT without locking other assets issued by an issuer is a new feature of CFTs.
 
-
 ### 1.5.0 Details on Clawing-Back CFTs
+
 To clawback funds from a CFT holder, the issuer must have specified that the CFT allows clawback by setting the `tfCFTCanClawback` flag when creating the CFT using the `CFTokenIssuanceCreate` transaction. Assuming a CFT was created with this flag set, clawbacks will be allowed using the `Clawback` transaction (more details to follow on how this transaction will change to accomodate the new values).
 
 ### 1.6.0 APIs
+
 We propose several new APIs for this feature. All new APIs will be available only in `clio`.
 
 #### 1.6.0.1 `cfts_by_issuer`
+
 For a given account and ledger, it will show all `CFTokenIssuances` created by this account, including any deleted `CFTokenIssuances`. Deleted CFTokenIssuance may have the same ID as new CFTokenIssuances.
 
 ##### 1.6.0.1.1 Request fields
@@ -591,7 +601,6 @@ For a given account and ledger, `account_cfts` will return all CFT balances held
   "ledger_index": "validated"
 }
 ```
-
 
 | Field Name        | Required?             | JSON Type |
 |-------------------|:---------------------:|:---------:|
@@ -741,11 +750,122 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
- ### 1.7 Free CFTs
+### 1.7 Free CFTs
 When a holder creates a `CFToken`, if the holder owns at most 2 items in the ledger including the new `CFToken`, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
+# 2. Appendices
 
-# Appendix 1: Current Trust line Storage Requirements
+## 2.1 Appendix: FAQs
+
+### 2.1.1. Are CFTs different from Trustlines?
+
+Yes, CFTs are different from Trustlines. Read more in [section 1.1.2](#112-assumptions).
+
+That said, there is some overlap in functionality between the two. For example, both CFTs and Trustlines can be used to issue a stablecoin. However, the original intent behind CFTs and Trustlines is subtly different, which impacts the on-ledger design of each. For clarity, Trustlines were invented primarily to service the idea of "community credit" and also to enhance liquidity on the ledger by making the same types of currency fungible amongst differing issuers (see [rippling](https://xrpl.org/rippling.html#rippling) for an example of each). CFTs, on the other hand, have three primary design motivations that are subtly different from Trustlines: (1) to enable tokenization using as little space (in bytes) on ledger as possible; (2) to eliminate floating point numbers and floating point math from the tokenization primitive; and (3) to make payment implementation simpler by, for example, removing [rippling](https://xrpl.org/rippling.html#rippling) and allowing CFT usage in places like [escrows](https://xrpl.org/escrow.html#escrow) or [payment channels](https://xrpl.org/payment-channels.html) in more natural ways.
+
+### 2.1.2. Are CFTs meant to replace Trustlines?
+
+No, replacing Trustlines is not the intent behind CFTs. Instead, it's likely that CFTs and Trustline can and will coexist because they enable subtly different use-cases (see [FAQ 4.1](#41-are-cfts-different-from-trustlines), in particular the part about "rippling.").
+
+### 2.1.3 Instead of CFTs, why not just make Trustlines smaller/better?
+
+While it's true there are some proposals to make Trustlines more efficient (e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to build and implement CFT is ultimately a choice that balances this risk/reward tradeoff towards introducing somethign new to avoid breaking any existing functionality.
+
+### 2.1.4. Are CFTs targeted for Mainnet or a Sidechain?
+
+This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
+
+In any event, we will first preview CFTs in a CFT-Devnet, and depending on what we learn there, revisit this issue then.
+
+### 2.1.5. Will CFTs be encoded into an STAmount, or is a new C++ object type required?
+
+CFTs will be able to be encoded in an `STAmount`. See [this gist](https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92) for more details.
+
+### 2.1.6. Is there a limit to the number of `CFTokenIssuance` or `CFToken` objects that a single account can hold?
+
+Practically speaking, no. The number of CFToken objects or CFTokenIssuance object that any account can hold is limited by the number of objects that can be stored in an owner directory, which is a very large number.
+
+### 2.1.7. An early draft of this CFT proposal stored `CFToken` objects in a paging structure similar to that used by NFTs. Why was that design abandoned?
+
+The original design was optimized for on-ledger space savings, but it came with a tradeoff of increased complexity, both in terms of this specification and the implementation. Another consideration is the datapoint that many NFT developers struggled with the mechanism used to identify NFTs, some of which is a result of the NFT paging structure.
+
+After analyzing on-ledger space requirements for (a) Trustlines, (b) `CFTokenPages`, (c) and simply storing `CFToken` objects in an Owner Directory, we determined that for a typical user (i.e., one holding ~10 different CFTs), the overall space required by the simpler design strikes a nice balance between the more complicated design and Trustlines. For example, the simpler design regquires ~3.2x more bytes on-ledger than  more complicated design. However, the simpler design requires about 30% fewer bytes on-ledger than Trustlines.
+
+With all that said, this decision is still open for debate. For example, in early 2024 the Ripple team plans to perform limit testing around Trustlines and the simpler CFT design to see how increased numbers of both types of ledger objects affect ledger performance. Once that data is complete, we'll likely revisit this design choice to either validate it or change it.
+
+### 2.1.8. Why is there no `CFTRedeem` Transaction?
+
+This is because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" it and removing it from circulation. Note that one consequence of this design choice is that CFT issuer accounts may not also hold `CFToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming CFT payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or should that payment go into an issuer's `CFToken` amount, and still be considered as "in circulation." For simplicity, we chose the former design, restricting CFT issuers from having `CFToken` objects at all.
+
+### 2.1.9. Why can't CFToken Issuers also hold their own balances of CFT in a CFToken object?
+
+See the question above. This design also helps enforce a security best practice where an issuing account should not also be used as an issuer's transactional account. Instead, any issuer should use a different XRPL account for non-issuance activity of their CFTs.
+
+### 2.1.10. Why not use the `DepositPreauth` transaction for Authorized CFT Functionality?
+
+For CFTokenIssuances that have the `lsfCFTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider `deposit_preauth` objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
+
+That said, this design is still TBD.
+
+## 2.2. Appendix: Outstanding Issues
+
+This section describes any outstanding or debatable issues that have not yet been resolved in this proposal.
+
+### 2.2.1. `CFTokenIssuanceID` options
+
+There are a variety of ways to construct a `CFTokenIssuanceID`. This section outlines three that are currently up for debate:
+
+#### 2.2.1.1. Hash issuer address and currency code
+
+This is the conventional way of constructing an identifier, as the token holder can directly submit the transaction after knowing the issuer and the currency they want to use. However, if this is implemented, it means that after the issuer destroys an entire `CFTokenIssuance` (i.e., once nobody else holds any of it), the issuer can re-issue the same token with the same currency, resulting in the same `CFTokenIssuanceID`. This behavior can be misleading to token holders who have held onto the first iteration of the token rather than the re-issued one (since both iterations have the same `CFTokenIssuanceID`). In real world use cases(especially finance), after a fungible token is burned, it should not be possible to re-create it, and absolutely not with the same identifier.
+
+#### 2.2.1.2. Option A: Currency array and limit the number of CFT issuances
+
+This approach still constructs `CFTokenIssuanceID` by hashing the issuer address and currency code. But in an effort to solve the re-creatable `CFTokenIssuanceID` problem, the issuer stores an array of CFT currency codes that have been issued out. In this way, every time the issuer issues a new CFT, the ledger checks whether the currency code has already be used, and if so, the transaction fails. However, the problem with this approach is that the ledger would need to iterate through the currency array everytime the account attempts to issue a CFT, which would be unsustainable if the issuer can issue up to an unbounded number of CFTs. Hence, we impose a limit on the total number of CFTs that an account can issue(proposed limit is 32 CFTs).
+
+But, this approach is not very clean in solving the problem, and there is a limit on the number of CFTs that the account can issue, which is not ideal since we would want the issuer to issue as many CFTs as they want.
+
+#### 2.2.1.3. Option B: Construct CFTokenIssuance without currency code (current approach)
+
+We realized that the problem with re-creatable CFTs is due to the account/currency pair where the currency can be re-used many times after the CFT has been burned. To solve this problem, the `CFTokenIssuanceID` is now constructed from two parameters: the issuer address and transaction sequence. Since the transaction sequence is an increasing index, `CFTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes.
+
+Although using this approach would mean that CFT payment transactions would no longer involve the currency code, making it inconvenient for users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
+
+### 2.2.2. Allow-Listing
+
+In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
+
+#### 2.2.2.1. Without Allow-Listing
+
+Let's first explore how the flow looks like without allow-listing:
+
+1. Alice holds a CFT with asset-code `USD`.
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve.
+3. Bob can now receive and send payments from/to anyone using `USD`.
+4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
+5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfCFTUnauthorize` flag, which will successfully delete `CFToken` object.
+
+#### 2.2.2.2. With Allow-Listing
+
+The issuer needs to enable allow-listing for the CFT by setting the `lsfCFTRequireAuth` on the `CFTokenIssuance`.
+
+With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
+
+1. Alice has a CFT of currency `USD` (same as above)
+2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
+3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfCFTAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
+4. Same as step 4 above
+6. 5. Same as step 5 above
+
+**It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
+
+Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
+
+## 2.3. Appendix: Supplemental Information
+
+### 2.3.1 Current Trust line Storage Requirements
+
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
 
 ```
@@ -774,52 +894,3 @@ MAXIMUM TOTAL SIZE:         2000 (250 bytes)
 ```
 
 TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
- 
-# Appendix 2: `CFTokenIssuanceID` construct options
-There have been several options in how to construct the CFTokenIssuanceID:
-## Problem: Hash by issuer address and currency code (conventional approach)
-This is the conventional way of constructing an identifier, as the token holder can directly submit the transaction after knowing the issuer and the currency they want to use. However, if this is implemented, it means that after the issuer destorys/burns the token, they can re-issue the token with the same currency, resulting in the same `CFTokenIssuanceID`. This behavior can be misleading to token holders who have held onto the first iteration of the token rather than the re-issued one(since both iterations have the same `CFTokenIssuanceID`). In real world use cases(especially finance), after a fungible token is burnt, it should not be possible to re-create it, and absolutely not with the same identifier. 
-
-## Option A: Currency array and limit the number of CFT issuances 
-This approach still constructs `CFTokenIssuanceID` by hashing the issuer address and currency code. But in an effort to solve the re-creatable `CFTokenIssuanceID` problem, the issuer stores an array of CFT currency codes that have been issued out. In this way, every time the issuer issues a new CFT, the ledger checks whether the currency code has already be used, and if so, the transaction fails. However, the problem with this approach is that the ledger would need to iterate through the currency array everytime the account attempts to issue a CFT, which would be unsustainable if the issuer can issue up to an unbounded number of CFTs. Hence, we impose a limit on the total number of CFTs that an account can issue(proposed limit is 32 CFTs). 
-
-But, this approach is not very clean in solving the problem, and there is a limit on the number of CFTs that the account can issue, which is not ideal since we would want the issuer to issue as many CFTs as they want. 
-
-## Option B: Construct CFTokenIssuance without currency code (current approach)
-We realized that the problem with re-creatable CFTs is due to the account/currency pair where the currency can be re-used many times after the CFT has been burnt. To solve this problem, the `CFTokenIssuanceID` is now constructed from two parameter: the issuer address and transaction sequence. Since the transaction sequence is na increasing index, `CFTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes. 
-
-Although using this approach would mean that CFT payment transactions would no longer involve the currency code, making it inconvinient for the users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
-
-# Appendix 3: Allow-Listing
-In certain use cases, issuers may want the option to only allow specific accounts to hold their CFT, similar to how authorization works for TrustLines.
-## Without Allow-Listing
-Let's first explore how the flow looks like without allow-listing:
-1. Alice holds a CFT with asset-code `USD`.
-2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve.
-3. Bob can now receive and send payments from/to anyone using `USD`.
-4. Bob no longer wants to use the CFT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `CFToken` object again.
-5. Bob then submits a `CFTokenAuthorize` transaction that has set the `tfCFTUnauthorize` flag, which will successfully delete `CFToken` object.
- 
-
-## With Allow-Listing
-The issuer needs to enable allow-listing for the CFT by setting the `lsfCFTRequireAuth` on the `CFTokenIssuance`.
-With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
-1. Alice has a CFT of currency `USD` (same as above)
-2. Bob wants to hold it, and therefore submits a `CFTokenAuthorize` transaction specifying the `CFTokenIssuanceID`, and does not specify any flag. This will create a `CFToken` object with zero balance, and potentially taking up extra reserve. (same as above)
-**However at this point, Bob still does not have the permission to use `USD`!**
-3. Alice needs to send a `CFTokenAuthorize` transaction specifying Bob's address in the `CFTokenHolder` field, and if successful, it will set the `lsfCFTAuthorized` flag on Bob's `CFToken` object. This will now finally enable Bob to use `USD`.
-4. Same as step 4 above
-5. Same as step 5 above
-
-**It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
-
-Issuer also has the ability to unauthorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
-
-
-
-# Implementation Notes
-1. At present, there is no `CFTRedeem` transaction because holders of a CFT can use a normal payment transaction to send CFT back to the issuer, thus "redeeming" CFT and removing it from circulation. Note that in order for this to work, issuer accounts may not hold CFT.
-
-1. For CFTokenIssuances that have the `lsfCFTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized CFTs. Alternatively, we might consider deposit_preauth objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around CFTs emanating from the same issuer account.
-
-_Originally posted by @sappenin in https://github.com/XRPLF/XRPL-Standards/discussions/82_
