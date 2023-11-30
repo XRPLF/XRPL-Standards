@@ -133,7 +133,7 @@ This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.
 
 Identifies the page in the owner's directory where this item is referenced.
 
-##### 1.2.1.1.2. Example **`CFTokenIssuance`** JSON
+##### 1.2.1.1.3. Example **`CFTokenIssuance`** JSON
 
  ```json
  {
@@ -148,26 +148,26 @@ Identifies the page in the owner's directory where this item is referenced.
      "OwnerNode": "74"
  }
  ```
- 
-##### 1.2.1.1.3. How do **`CFTokenIssuance`** objects work?
+
+##### 1.2.1.1.4. How do **`CFTokenIssuance`** objects work?
 
 Any account may issue any number of Compact Fungible Tokens.
 
-###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.1. Searching for a **`CFTokenIssuance`** object
 
 CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
 
-###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.2. Adding a **`CFTokenIssuance`** object
 
 A **`CFTokenIssuance`** object can be added by using the same approach to find the **`CFTokenIssuance`**, and adding it to that directory. If, after addition, the number of CFTs in the directory would exceed 32, then the operation must fail.
 
-###### 1.2.1.1.3.3. Removing a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.3. Removing a **`CFTokenIssuance`** object
 
 A **`CFTokenIssuance`** can be removed using the same approach, but only if the **`CurMintedAmount`** is equal to 0.
 
-###### 1.2.1.1.3.4. Reserve for **`CFTokenIssuance`** object
+###### 1.2.1.1.4.4. Reserve for **`CFTokenIssuance`** object
 
-Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFTokenIssuance`** entries per account.
+Each **`CFTokenIssuance`** costs an incremental reserve to the owner account.
 
 #### 1.2.1.2. The **`CFToken`** object
 The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `CFToken` is derived from hashing the space key, holder's address and the `CFTokenIssuanceID`.
@@ -239,6 +239,10 @@ Identifies the page in the CFT directory where this item is referenced.
      "CFTokenNode": 1
  }
  ```
+
+##### 1.2.1.2.3. Reserve for **`CFToken`** object
+
+Each **`CFToken`** costs an incremental reserve to the owner account.
 
 ## 1.3 Transactions
 
@@ -749,9 +753,6 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 | `marker`          | `string`  |
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
-
-### 1.7 Free CFTs
-When a holder creates a `CFToken`, if the holder owns at most 2 items in the ledger including the new `CFToken`, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
 
 # 2. Appendices
 
