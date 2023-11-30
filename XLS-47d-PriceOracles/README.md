@@ -382,7 +382,7 @@ On success, the response data contains the following fields:
   - `mean` is the simple mean.
   - `standard_deviation` is the standard deviation.
 - `median` is the median.
-- `time` is the most recent Unit Time stamp out of all `LastUpdateTime` values.
+- `time` is the most recent Unix Time stamp out of all `LastUpdateTime` values.
 
 ## Appendices
 
