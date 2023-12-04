@@ -899,7 +899,7 @@ The proposed design of a new "CFT-only" directory structure introduces a new pat
 
 As an alternative design, we might also (and instead) consider a new type of "Owner Directory" for CFTs that are (1) owned by the issuer yet (2) only holds `CFTokenID` values. In this way, this new type of directory would be more similar to an "Owner Directory" (because there's an owner), yet different because only `CFTokenID` values would be stored in this type of directory.
 
-Both proposal entail a divergence in architecture from today, so each should be debated and discussed further to explore tradeoffs and impliciations.
+Both proposals entail somewhat of a divergence in architecture from what exists, so each should be debated and discussed further to explore tradeoffs and implications.
 
 ## 2.3. Appendix: Supplemental Information
 
