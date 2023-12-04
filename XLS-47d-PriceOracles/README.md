@@ -203,7 +203,7 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 | `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
 | `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
 
-- `TransacitonType` indicates a new transaction type `OracleDelete`. The integer value is TBD.
+- `TransactionType` indicates a new transaction type `OracleDelete`. The integer value is TBD.
 - `Account` is the account that has the Oracle update and delete privileges. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
 
