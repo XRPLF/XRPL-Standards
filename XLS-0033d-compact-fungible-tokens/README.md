@@ -193,7 +193,10 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 | `CFTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
+| `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | default            | `number`  | `UINT64`      |
+| `CFTokenNode`       | default            | `number`  | `UINT64`      |
 
 ###### 1.2.1.2.1.1. `LedgerEntryType`
 
@@ -237,6 +240,10 @@ The sequence of the ledger that contains the transaction that most recently modi
 ###### 1.2.1.1.2.9. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
+
+###### 1.2.1.1.2.10. `CFTokenNode`
+
+The CFT directory has exactly the same structure as an [Owner Directory]([Owner Directory](https://xrpl.org/directorynode.html)), except this is a new type of directory that only indexes `CFTokens` for a single `CFTokenIssuance`. This directory is owned by the issuer.
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
@@ -875,6 +882,24 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 **It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
 
 Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
+
+### 2.2.3. `CFTokenNode` Directories?
+
+The original intent of the `CFTokenNode` object is that it would be a sort of "directory" (i.e., an index) that stores a list of `CFTokenID` values (each 32 bytes) that exist for a single `CFTokenIssuance`. This would allow rippled to contain an RPC endpoint that could return a paged collection of `CFToken` objects for a given issuance, or somethign similar like an RPC called `cft_holder_balances`. In theory, this could also enable rippled to operate a sort of "clean-up" operation that could remove dangling CFTokens that still live on a ledger after a corresponding `CFTokenIssuance` has been deleted (and thus return ledger reserves back to token holders).
+
+#### 2.2.3.1 Should We Have `CFTokenNode` Directories?
+
+While the introduction of a `CFTokenNode` server a particular use-case, we should debate further if we actually want to be solving that use-case, both for CFTs and more generally. For example, some in the community believe that many (most?) RPCs should be removed from rippled itself, especially ones that exist primarily for indexing purposes. That is, we should avoid storing data in the ledger that is not used by actual transactors, but instead only exists to service external processes via RPC. For example, we might consider moving these RPCs into Clio or some other service so that data indexing and more expensive indexing responsibility can be removed from the ledger itself, and thus removed as a burden for certain infrastructure operators. 
+
+On the topic of removing dangling `CFTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of translations deleting both trustlines and accounts. 
+
+#### 2.2.3.1 How Should We Design `CFTokenNode` Directories?
+
+The proposed design of a new "CFT-only" directory structure introduces a new pattern that should be considered more. For example, in the XRP Ledger there are currently two types of "Directory" -- an "Owner Directory" and an "Offer Directory." The proposal of a new type of CFT directory suggests that we create a new type of owner-less directory specifically for CFTs (similar to `NFTokenOfferNode`). This directory would indeed be similar to an "Offer Directory" in the sense that there would be no owner; but the design otherwise diverges from that concept in the sense that these new CFT directories would not be aimed at DEX or exchange operations as is the case for DEX offers and `NFTokenOfferNode` objects.
+
+As an alternative design, we might also (and instead) consider a new type of "Owner Directory" for CFTs that are (1) owned by the issuer yet (2) only holds `CFTokenID` values. In this way, this new type of directory would be more similar to an "Owner Directory" (because there's an owner), yet different because only `CFTokenID` values would be stored in this type of directory.
+
+Both proposal entail a divergence in architecture from today, so each should be debated and discussed further to explore tradeoffs and impliciations.
 
 ## 2.3. Appendix: Supplemental Information
 
