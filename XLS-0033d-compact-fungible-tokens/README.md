@@ -925,31 +925,30 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 
 **Required Fields**
 
-|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       | 
-|------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-|   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
-|             Flags |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                              |
-|           Balance |     384     |      48      | (160–224 wasted)                                                                                                                                           |
-|          LowLimit |     384     |      48      | (160–224 wasted)                                                                                                                                           |
-|         HighLimit |     384     |      48      | (160–224 wasted)                                                                                                                                           |
-|           LowNode |     64      |      8       | (often has value 0)                                                                                                                                        |
-|          HighNode |     64      |      8       | (often has value 0)                                                                                                                                        |
-|     PreviousTxnID |     256     |      32      |                                                                                                                                                            |
-| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            | 
-|  Field+Type Codes |     144     |      18      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 9 fields. |
-|               --- |     --      |     ---      |                                                                                                                                                            |
-|         SUB-TOTAL |    1616     |     202      |                                                                                                                                                            |
-|               --- |     --      |     ---      |                                                                                                                                                            |
-|      LowQualityIn |     32      |      4       |                                                                                                                                                            |   
-|     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                              |   
-|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                                           |   
-|    HighQualityOut |     32      |      4       | (160–224 wasted)                                                                                                                                           |
-|               --- |     --      |     ---      |                                                                                                                                                            |
-|         SUB-TOTAL |    1744     |     218      |                                                                                                                                                            |
-|               --- |     --      |     ---      |                                                                                                                                                            |
-|  Field+Type Codes |     208     |      26      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 4 fields. |
-|               --- |     --      |     ---      |                                                                                                                                                            |                    
-|             TOTAL |    1952     |     244      |                                                                                                                                                            |                    
+|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                          | 
+|------------------:|:-----------:|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   LedgerEntryType |     16      |      2       |                                                                                                                                                               |
+|             Flags |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |
+|           Balance |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|          LowLimit |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|         HighLimit |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|           LowNode |     64      |      8       | (often has value 0)                                                                                                                                           |
+|          HighNode |     64      |      8       | (often has value 0)                                                                                                                                           |
+|     PreviousTxnID |     256     |      32      |                                                                                                                                                               |
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                               | 
+|  Field+Type Codes |     144     |      18      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have nine fields. |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|         SUB-TOTAL |    1760     |     220      |                                                                                                                                                               |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|      LowQualityIn |     32      |      4       |                                                                                                                                                               |   
+|     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |   
+|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                                              |   
+|    HighQualityOut |     32      |      4       | (160–224 wasted)                                                                                                                                              |
+|  Field+Type Codes |     64      |      8       | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have four fields. |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|         SUB-TOTAL |     192     |      24      |                                                                                                                                                               |
+|               --- |     --      |     ---      |                                                                                                                                                               |                    
+|             TOTAL |    1952     |     244      |                                                                                                                                                               |                    
 
 #### 2.3.1.2. `CFToken` Object (Size in Bytes)
 
