@@ -891,7 +891,7 @@ The original intent of the `CFTokenNode` object is that it would be a sort of "d
 
 While the introduction of a `CFTokenNode` server a particular use-case, we should debate further if we actually want to be solving that use-case, both for CFTs and more generally. For example, some in the community believe that many (most?) RPCs should be removed from rippled itself, especially ones that exist primarily for indexing purposes. That is, we should avoid storing data in the ledger that is not used by actual transactors, but instead only exists to service external processes via RPC. For example, we might consider moving these RPCs into Clio or some other service so that data indexing and more expensive indexing responsibility can be removed from the ledger itself, and thus removed as a burden for certain infrastructure operators. 
 
-On the topic of removing dangling `CFTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of translations deleting both trustlines and accounts. 
+On the topic of removing dangling `CFTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of transactions deleting both trustlines and accounts. 
 
 #### 2.2.3.1 How Should We Design `CFTokenNode` Directories?
 
