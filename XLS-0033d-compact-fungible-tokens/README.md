@@ -178,7 +178,7 @@ The **`CFToken`** object represents an amount of a token held by an account that
 
 The ID of a CFToken object, a.k.a `CFTokenID` is the result of SHA512-Half of the following values, concatenated in order:
 
-* The CFTokenIssuance space key (0x007E).
+* The CFToken space key (0x0074).
 * The AccountID of the token holder.
 * The `CFTokenIssuanceID` for the issuance being held.
       
