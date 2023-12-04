@@ -284,8 +284,6 @@ We define three transactions related to CFT Issuances: **`CFTokenIssuanceCreate`
 
 #### 1.3.1.1 The **`CFTokenIssuanceCreate`** transaction
 
-The **`CFTokenIssuanceCreate`** transaction creates an **`CFTokenIssuance`** object and adds it to the relevant directory node of the `creator`. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
-
 The **`CFTokenIssuanceCreate`** transaction creates a **`CFTokenIssuance`** object and adds it to the relevant directory node of the creator account. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
 
 If the transaction is successful, the newly created token will be owned by the account (the creator account) which executed the transaction.
