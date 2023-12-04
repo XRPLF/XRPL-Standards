@@ -66,11 +66,12 @@ We propose two new objects and one new ledger structure:
 The **`CFTokenIssuance`** object represents a single CFT issuance and holds data associated with the issuance itself. Token issuances are created using the **`CFTokenIssuanceCreate`** transaction and can, optionally, be destroyed by the **`CFTokenIssuanceDestroy`** transaction.
 
 ##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
-The ID of an CFTokenIssuance object, a.k.a `CFTokenIssuanceID` is the result of SHA512-Half of the following values, concatenated in order:
+
+The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is the result of SHA512-Half of the following values, concatenated in order:
 
 * The CFTokenIssuance space key (0x007E).
 * The AccountID of the issuer.
-* The transaction sequence number
+* The transaction sequence number.
 
 ##### 1.2.1.1.2. Fields
 
@@ -143,7 +144,7 @@ The sequence of the ledger that contains the transaction that most recently modi
 
 Identifies the page in the owner's directory where this item is referenced.
 
-##### 1.2.1.1.2. Example **`CFTokenIssuance`** JSON
+##### 1.2.1.1.3. Example **`CFTokenIssuance`** JSON
 
  ```json
  {
@@ -158,31 +159,41 @@ Identifies the page in the owner's directory where this item is referenced.
      "OwnerNode": "74"
  }
  ```
- 
-##### 1.2.1.1.3. How do **`CFTokenIssuance`** objects work?
+
+##### 1.2.1.1.4. How do **`CFTokenIssuance`** objects work?
 
 Any account may issue any number of Compact Fungible Tokens.
 
-###### 1.2.1.1.3.1. Searching for a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.1. Searching for a **`CFTokenIssuance`** object
 
-CFT Issuances are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
+CFTokenIssuance objects are uniquely identified by a combination of a type-specific prefix, the issuer address and a transaction sequence number. To locate a specific **`CFTokenIssuance`**, the first step is to locate the owner directory for the issuer. Then, find the directory that holds `CFTokenIssuance` ledger objects and iterate through each entry to find the instance with the desired key. If that entry does not exist then the **`CFTokenIssuance`** does not exist for the given account.
 
-###### 1.2.1.1.3.2. Adding a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.2. Adding a **`CFTokenIssuance`** object
 
 A **`CFTokenIssuance`** object can be added by using the same approach to find the **`CFTokenIssuance`**, and adding it to that directory. If, after addition, the number of CFTs in the directory would exceed 32, then the operation must fail.
 
-###### 1.2.1.1.3.3. Removing a **`CFTokenIssuance`** object
+###### 1.2.1.1.4.3. Removing a **`CFTokenIssuance`** object
 
 A **`CFTokenIssuance`** can be removed using the same approach, but only if the **`CurMintedAmount`** is equal to 0.
 
-###### 1.2.1.1.3.4. Reserve for **`CFTokenIssuance`** object
+###### 1.2.1.1.4.4. Reserve for **`CFTokenIssuance`** object
 
-Each **`CFTokenIssuance`** costs an incremental reserve to the owner account. This specification allows up to 32 **`CFTokenIssuance`** entries per account.
+Each **`CFTokenIssuance`** costs an incremental reserve to the owner account.
 
 #### 1.2.1.2. The **`CFToken`** object
+
 The **`CFToken`** object represents an amount of a token held by an account that is **not** the token issuer. CFTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `CFToken` is derived from hashing the space key, holder's address and the `CFTokenIssuanceID`.
 
-##### 1.2.1.2.1 Fields
+##### 1.2.1.2.1. **`CFToken`** Ledger Identifier
+
+The ID of a CFToken object, a.k.a `CFTokenID` is the result of SHA512-Half of the following values, concatenated in order:
+
+* The CFToken space key (0x0074).
+* The `CFTokenIssuanceID` for the issuance being held.
+* The AccountID of the token holder. 
+
+##### 1.2.1.2.2. Fields
+
 A **`CFToken`** object can have the following fields. The key of each CFToken is stored in the Owner Directory for the account that holds the `CFToken`.
 
 | Field Name          | Required?          | JSON Type | Internal Type |
@@ -193,31 +204,34 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 | `CFTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
+| `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | default            | `number`  | `UINT64`      |
+| `CFTokenNode`       | default            | `number`  | `UINT64`      |
 
-###### 1.2.1.2.1.1. `LedgerEntryType`
+###### 1.2.1.2.2.1. `LedgerEntryType`
 
 The value 0x007F, mapped to the string `CFToken`, indicates that this object describes an individual account's holding of a CFT.
 
-###### 1.2.1.2.1.2. `Account`
+###### 1.2.1.2.2.2. `Account`
 
 The owner of the `CFToken`.
 
-###### 1.2.1.2.1.3. `CFTokenIssuanceID`
+###### 1.2.1.2.2.3. `CFTokenIssuanceID`
 
 The `CFTokenIssuance` identifier.
 
-###### 1.2.1.2.1.4. `CFTAmount`
+###### 1.2.1.2.2.4. `CFTAmount`
 
 This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
 
-###### 1.2.1.2.1.5. `LockedAmount`
+###### 1.2.1.2.2.5. `LockedAmount`
 
 This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder. 
 
 This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty CFT holding.
 
-###### 1.2.1.2.1.6. `Flags`
+###### 1.2.1.2.2.6. `Flags`
 
 A set of flags indicating properties or other options associated with this **`CFTokenIssuance`** object. The type specific flags proposed  are:
 
@@ -226,19 +240,23 @@ A set of flags indicating properties or other options associated with this **`CF
 | `lsfCFTLocked`     | `0x0001`   | If set, indicates that the CFT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `CFTAmount` value.                                     |
 | `lsfCFTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the CFT. This flag can be set using a `CFTokenAuthorize` transaction; it can also be "un-set" using a `CFTokenAuthorize` transaction specifying the `tfCFTUnauthorize` flag. |
 
-###### 1.2.1.1.2.7. `PreviousTxnID`
+###### 1.2.1.2.2.7. `PreviousTxnID`
 
 Identifies the transaction ID of the transaction that most recently modified this object.
 
-###### 1.2.1.1.2.8. `PreviousTxnLgrSeq`
+###### 1.2.1.2.2.8. `PreviousTxnLgrSeq`
 
 The sequence of the ledger that contains the transaction that most recently modified this object.
 
-###### 1.2.1.1.2.9. `OwnerNode`
+###### 1.2.1.2.2.9. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
-##### 1.2.1.2.2. Example CFToken JSON
+###### 1.2.1.2.2.10. `CFTokenNode`
+
+The CFT directory has exactly the same structure as an [Owner Directory](https://xrpl.org/directorynode.html), except this is a new type of directory that only indexes `CFTokens` for a single `CFTokenIssuance`. Ownership of this directory is still up for debate per [CFTokenNode Directories](#223-cftokennode-directories).
+
+##### 1.2.1.2.3. Example CFToken JSON
 
  ```json
  {
@@ -248,9 +266,14 @@ Identifies the page in the owner's directory where this item is referenced.
      "Flags": 0,
      "CFTAmount": "100000000",
      "LockedAmount": "0",
-     "OwnerNode": 1
+     "OwnerNode": 1,
+     "CFTokenNode": 1
  }
  ```
+
+##### 1.2.1.2.4. Reserve for **`CFToken`** object
+
+Each **`CFToken`** costs an incremental reserve to the owner account.
 
 ## 1.3 Transactions
 
@@ -260,6 +283,8 @@ This proposal introduces several new transactions to allow for the creation and 
 We define three transactions related to CFT Issuances: **`CFTokenIssuanceCreate`** and **`CFTokenIssuanceDestroy`** and  **`CFTokenIssuanceSet`** for minting, destroying, and updating CFT _Issuances_ respectively on XRPL.
 
 #### 1.3.1.1 The **`CFTokenIssuanceCreate`** transaction
+
+The **`CFTokenIssuanceCreate`** transaction creates an **`CFTokenIssuance`** object and adds it to the relevant directory node of the `creator`. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
 
 The **`CFTokenIssuanceCreate`** transaction creates a **`CFTokenIssuance`** object and adds it to the relevant directory node of the creator account. This transaction is the only opportunity an `issuer` has to specify any token fields that are defined as immutable (e.g., CFT Flags).
 
@@ -763,9 +788,6 @@ A JSON object representing a dictionary of accounts to CFToken objects. Includes
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
-### 1.7 Free CFTs
-When a holder creates a `CFToken`, if the holder owns at most 2 items in the ledger including the new `CFToken`, the account's owner reserve is treated as zero instead of the normal amount. This is following the status quo of how free trustlines work today.
-
 # 2. Appendices
 
 ## 2.1 Appendix: FAQs
@@ -778,7 +800,7 @@ That said, there is some overlap in functionality between the two. For example, 
 
 ### 2.1.2. Are CFTs meant to replace Trustlines?
 
-No, replacing Trustlines is not the intent behind CFTs. Instead, it's likely that CFTs and Trustline can and will coexist because they enable subtly different use-cases (see [FAQ 4.1](#41-are-cfts-different-from-trustlines), in particular the part about "rippling.").
+No, replacing Trustlines is not the intent behind CFTs. Instead, it's likely that CFTs and Trustline can and will coexist because they enable subtly different use-cases (see [FAQ 2.1.1.](#211-are-cfts-different-from-trustlines), in particular the part about rippling).
 
 ### 2.1.3 Instead of CFTs, why not just make Trustlines smaller/better?
 
@@ -786,7 +808,7 @@ While it's true there are some proposals to make Trustlines more efficient (e.g.
 
 ### 2.1.4. Are CFTs targeted for Mainnet or a Sidechain?
 
-This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-cft-proposal-stored-cftokens-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
+This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, CFTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-cft-proposal-stored-cftoken-objects-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding CFTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
 
 In any event, we will first preview CFTs in a CFT-Devnet, and depending on what we learn there, revisit this issue then.
 
@@ -874,6 +896,24 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 **It is important to note that the holder always must first submit the `CFTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `CFTokenAuthorize` before Bob.
 
 Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
+
+### 2.2.3. `CFTokenNode` Directories?
+
+The original intent of the `CFTokenNode` object is that it would be a sort of "directory" (i.e., an index) that stores a list of `CFTokenID` values (each 32 bytes) that exist for a single `CFTokenIssuance`. This would allow rippled to contain an RPC endpoint that could return a paged collection of `CFToken` objects for a given issuance, or somethign similar like an RPC called `cft_holder_balances`. In theory, this could also enable rippled to operate a sort of "clean-up" operation that could remove dangling CFTokens that still live on a ledger after a corresponding `CFTokenIssuance` has been deleted (and thus return ledger reserves back to token holders).
+
+#### 2.2.3.1 Should We Have `CFTokenNode` Directories?
+
+While the introduction of a `CFTokenNode` server a particular use-case, we should debate further if we actually want to be solving that use-case, both for CFTs and more generally. For example, some in the community believe that many (most?) RPCs should be removed from rippled itself, especially ones that exist primarily for indexing purposes. That is, we should avoid storing data in the ledger that is not used by actual transactors, but instead only exists to service external processes via RPC. For example, we might consider moving these RPCs into Clio or some other service so that data indexing and more expensive indexing responsibility can be removed from the ledger itself, and thus removed as a burden for certain infrastructure operators. 
+
+On the topic of removing dangling `CFTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of transactions deleting both trustlines and accounts. 
+
+#### 2.2.3.1 How Should We Design `CFTokenNode` Directories?
+
+The proposed design of a new "CFT-only" directory structure introduces a new pattern that should be considered more. For example, in the XRP Ledger there are currently two types of "Directory" -- an "Owner Directory" and an "Offer Directory." The proposal of a new type of CFT directory suggests that we create a new type of owner-less directory specifically for CFTs (similar to `NFTokenOfferNode`). This directory would indeed be similar to an "Offer Directory" in the sense that there would be no owner; but the design otherwise diverges from that concept in the sense that these new CFT directories would not be aimed at DEX or exchange operations as is the case for DEX offers and `NFTokenOfferNode` objects.
+
+As an alternative design, we might also (and instead) consider a new type of "Owner Directory" for CFTs that are (1) owned by the issuer yet (2) only holds `CFTokenID` values. In this way, this new type of directory would be more similar to an "Owner Directory" (because there's an owner), yet different because only `CFTokenID` values would be stored in this type of directory.
+
+Both proposals entail somewhat of a divergence in architecture from what exists, so each should be debated and discussed further to explore tradeoffs and implications.
 
 ## 2.3. Appendix: Supplemental Information
 
