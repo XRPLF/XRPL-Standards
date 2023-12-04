@@ -932,18 +932,20 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |           Balance |     384     |      48      | (160–224 wasted)                                                                                                                    |
 |          LowLimit |     384     |      48      | (160–224 wasted)                                                                                                                    |
 |         HighLimit |     384     |      48      | (160–224 wasted)                                                                                                                    |
-|           LowNode |     64      |      2       | often has value 0)                                                                                                                  |
-|          HighNode |     64      |      2       | often has value 0)                                                                                                                  |
+|           LowNode |     64      |      8       | (often has value 0)                                                                                                                 |
+|          HighNode |     64      |      8       | (often has value 0)                                                                                                                 |
 |     PreviousTxnID |     256     |      32      |                                                                                                                                     |
-| PreviousTxnLgrSeq |     32      |      2       |                                                                                                                                     |
-|  Field+Type Codes |     144     |      18      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). | 
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                     | 
 |               --- |     --      |     ---      |                                                                                                                                     |
 |         SUB-TOTAL |    1616     |     202      |                                                                                                                                     |
 |               --- |     --      |     ---      |                                                                                                                                     |
-|      LowQualityIn |     32      |      2       |                                                                                                                                     |   
+|      LowQualityIn |     32      |      4       |                                                                                                                                     |   
 |     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                       |   
-|     HighQualityIn |     32      |      48      | (160–224 wasted)                                                                                                                    |   
-|    HighQualityOut |     32      |      48      | (160–224 wasted)                                                                                                                    |   
+|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                    |   
+|    HighQualityOut |     32      |      4       | (160–224 wasted)                                                                                                                    |
+|               --- |     --      |     ---      |                                                                                                                                     |
+|         SUB-TOTAL |    1744     |     218      |                                                                                                                                     |
+|               --- |     --      |     ---      |                                                                                                                                     |
 |  Field+Type Codes |     208     |      26      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). |
 |               --- |     --      |     ---      |                                                                                                                                     |                    
 |             TOTAL |    1952     |     244      |                                                                                                                                     |                    
@@ -953,12 +955,12 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                |
 |------------------:|:-----------:|:------------:|:------------------------------------------------------------------------------------------------------------------------------------|
 |   LedgerEntryType |     16      |      2       |                                                                                                                                     |
-| CFTokenIssuanceID |     256     |      2       |                                                                                                                                     |
-|         CFTAmount |     64      |      2       |                                                                                                                                     |
-|      LockedAmount |     64      |      2       |                                                                                                                                     |
-|             Flags |     32      |      2       |                                                                                                                                     |
+| CFTokenIssuanceID |     256     |      32      |                                                                                                                                     |
+|         CFTAmount |     64      |      8       |                                                                                                                                     |
+|      LockedAmount |     64      |      8       |                                                                                                                                     |
+|             Flags |     32      |      4       |                                                                                                                                     |
 |     PreviousTxnID |     256     |      32      |                                                                                                                                     |
-| PreviousTxnLgrSeq |     32      |      2       |                                                                                                                                     |
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                     |
 |  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). |
 |               --- |     --      |     ---      |                                                                                                                                     |
 |             TOTAL |     832     |     104      |                                                                                                                                     |
