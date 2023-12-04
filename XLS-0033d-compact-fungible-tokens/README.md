@@ -243,7 +243,7 @@ Identifies the page in the owner's directory where this item is referenced.
 
 ###### 1.2.1.1.2.10. `CFTokenNode`
 
-The CFT directory has exactly the same structure as an [Owner Directory]([Owner Directory](https://xrpl.org/directorynode.html)), except this is a new type of directory that only indexes `CFTokens` for a single `CFTokenIssuance`. This directory is owned by the issuer.
+The CFT directory has exactly the same structure as an [Owner Directory]([Owner Directory](https://xrpl.org/directorynode.html)), except this is a new type of directory that only indexes `CFTokens` for a single `CFTokenIssuance`. Ownership of this directory is still up for debate per [CFTokenNode Directories](#223-cftokennode-directories).
 
 ##### 1.2.1.2.2. Example CFToken JSON
 
