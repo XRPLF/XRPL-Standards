@@ -840,7 +840,7 @@ For MPTokenIssuances that have the `lsfMPTRequireAuth` flag set, it is envisione
 
 That said, this design is still TBD.
 
-### 2.1.12. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
+### 2.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
 
 The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, allowing for the creation of both fungible and non-fungible tokens. This renaming aims to highlight the extensive capabilities inherent in this token standard.
 
