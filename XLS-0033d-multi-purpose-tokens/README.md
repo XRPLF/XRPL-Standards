@@ -842,7 +842,7 @@ That said, this design is still TBD.
 
 ### 2.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
 
-The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, allowing for the creation of both fungible and non-fungible tokens. This renaming aims to highlight the extensive capabilities inherent in this token standard.
+The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, catering towards fungible, semi-fungible, and non-fungible token use cases. This renaming aims to highlight the extensive capabilities inherent in this token standard.
 
 ## 2.2. Appendix: Outstanding Issues
 
