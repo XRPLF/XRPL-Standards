@@ -915,33 +915,63 @@ Both proposals entail somewhat of a divergence in architecture from what exists,
 
 ## 2.3. Appendix: Supplemental Information
 
-### 2.3.1 Current Trust line Storage Requirements
+### 2.3.1 On-Ledger Storage Requirements
 
-As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 234 to 250 bytes plus a minimum of 32 bytes for object owner tracking, described in more detail here:
+#### 2.3.1.1. `RippleState` Object (Size in Bytes)
 
-```
-FIELD NAME          SIZE IN BITS
-================================
-LedgerEntryType               16
-Flags                         32 ("optional" but present in > 99.99% of cases)
-Balance                      384 (160–224 wasted)
-LowLimit                     384 (160–224 wasted)
-HighLimit                    384 (160–224 wasted)
-PreviousTxnID                256
-PreviousTxnLgrSeq             32
-LowNode                       64 (often has value 0)
-HighNode                      64 (often has value 0)
---------------------------------
-REQUIRED SUBTOTAL:          1872 (234 bytes)
+As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 202 to 218 bytes plus a minimum of 32 bytes for object owner tracking. In addition, each trustline actually requires entries in both participant's Owner Directories, among other bytes.
 
-OPTIONAL FIELDS
---------------------------------
-LowQualityIn                  32
-LowQualityOut                 32
-HighQualityIn                 32
-HighQualityOut                32
---------------------------------
-MAXIMUM TOTAL SIZE:         2000 (250 bytes)
-```
+This section attempts to catalog expected size, in bytes, for both Trustlines and CFTs, in an effort to predict expected space savings.
 
-TODO: Validate these numbers as they may be slightly low for trust lines. For example, in addition to the above data, trust lines require two directory entries for low/high nodes that get created for each trust line (i.e., for each RippleState object). This creates two root objects, each 98 bytes, adding 196 bytes in total per unique issuer/holder. Conversely, for CFTs, the page structure allows for up to 32 issuances to be held by a single token holder while only incurring around 102 bytes for a CFTokenPage. Thus, every time an account wants to hold a new token, the current Trustline implementation would require _at least_ 430 bytes every time. If we imagine a single account holding 20 tokens, CFTs would require ~1040 bytes, whereas trust lines would require ~8,600 bytes!
+**Required Fields**
+
+|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                          | 
+|------------------:|:-----------:|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   LedgerEntryType |     16      |      2       |                                                                                                                                                               |
+|             Flags |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |
+|           Balance |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|          LowLimit |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|         HighLimit |     384     |      48      | (160–224 wasted)                                                                                                                                              |
+|           LowNode |     64      |      8       | (often has value 0)                                                                                                                                           |
+|          HighNode |     64      |      8       | (often has value 0)                                                                                                                                           |
+|     PreviousTxnID |     256     |      32      |                                                                                                                                                               |
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                               | 
+|  Field+Type Codes |     144     |      18      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have nine fields. |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|         SUB-TOTAL |    1760     |     220      |                                                                                                                                                               |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|      LowQualityIn |     32      |      4       |                                                                                                                                                               |   
+|     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |   
+|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                                              |   
+|    HighQualityOut |     32      |      4       | (160–224 wasted)                                                                                                                                              |
+|  Field+Type Codes |     64      |      8       | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have four fields. |
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|         SUB-TOTAL |     192     |      24      |                                                                                                                                                               |
+|               --- |     --      |     ---      |                                                                                                                                                               |                    
+|             TOTAL |    1952     |     244      |                                                                                                                                                               |                    
+
+#### 2.3.1.2. `CFToken` Object (Size in Bytes)
+
+|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
+|------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
+| CFTokenIssuanceID |     256     |      32      |                                                                                                                                                            |
+|         CFTAmount |     64      |      8       |                                                                                                                                                            |
+|      LockedAmount |     64      |      8       |                                                                                                                                                            |
+|             Flags |     32      |      4       |                                                                                                                                                            |
+|     PreviousTxnID |     256     |      32      |                                                                                                                                                            |
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            |
+|  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 7 fields. |
+|               --- |     --      |     ---      |                                                                                                                                                            |
+|             TOTAL |     832     |     104      |                                                                                                                                                            |
+
+#### 2.3.1.3. Size Comparison
+
+As can be seen from the following size comparison table, Trustlines take up approximately 2.2x as much space on ledger, in bytes, as CFTs would.
+
+|                 Description | # CFT Directories | Total Bytes (CFT) | # Trustline Directories	 | Total Bytes (Trustline) | Trustlines are X-times Larger | 
+|----------------------------:|:-----------------:|:-----------------:|:------------------------:|:-----------------------:|:-----------------------------:|
+|  Bytes for holding 1 Tokens |         1         |        226        |            2             |           488           |             2.2x              |
+| Bytes for holding 10 Tokens |         1         |       1,450       |            2             |          3,260          |             2.2x              |
+| Bytes for holding 32 Tokens |         2         |       5,556       |            4             |         12,264          |             2.2x              |
+| Bytes for holding 64 Tokens |         3         |      13,070       |            6             |         28,444          |             2.2x              |
