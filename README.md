@@ -22,4 +22,4 @@ If a suggestion requires a substantive revision and using the same number would 
 
 # Drafts
 
-A suggestion which has not yet been adopted may 'hold' a Suggestion Number but must be referred to with a __d__ suffix until it becomes a full **standard**, e.g. `XLS-10d` or `XLS-1.2d`.
+A suggestion may be marked as a draft e.g. `XLS-10d` or `XLS-1.2d` if the author/s expect further revisions in the near term. After sufficient time without change the suggestion can be referred to without the draft indicator.
