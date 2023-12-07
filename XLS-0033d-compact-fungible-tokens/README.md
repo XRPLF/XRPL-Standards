@@ -67,11 +67,19 @@ The **`CFTokenIssuance`** object represents a single CFT issuance and holds data
 
 ##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
 
-The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is the result of SHA512-Half of the following values, concatenated in order:
+The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is a 192-bit integer, concatenated in order:
 
-* The CFTokenIssuance space key (0x007E).
-* The AccountID of the issuer.
 * The transaction sequence number.
+* The AccountID of the issuer.
+
+```
+┌──────────────────────────┐┌──────────────────────────┐
+│                          ││                          │
+│      Sequence            ││     Issuer AccountID     │
+│      (32 bits)           ││        (160 bits)        │
+│                          ││                          │
+└──────────────────────────┘└──────────────────────────┘
+```
 
 ##### 1.2.1.1.2. Fields
 
@@ -91,6 +99,7 @@ The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is the result of
 | `PreviousTxnID`     | :heavy_check_mark:  | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | ️:heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | (default)           | `number`  | `UINT64`      |
+| `Sequence`          | :heavy_check_mark:  | `number`  | `UINT32`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
 
@@ -143,6 +152,10 @@ The sequence of the ledger that contains the transaction that most recently modi
 ###### 1.2.1.1.2.10. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
+
+###### 1.2.1.1.2.11. `Sequence`
+
+An identifier of the `CFTokenIssuance` and it's used to construct the `CFTokenIssuanceID`.
 
 ##### 1.2.1.1.3. Example **`CFTokenIssuance`** JSON
 
@@ -922,6 +935,62 @@ Both proposals entail somewhat of a divergence in architecture from what exists,
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 202 to 218 bytes plus a minimum of 32 bytes for object owner tracking. In addition, each trustline actually requires entries in both participant's Owner Directories, among other bytes.
 
 This section attempts to catalog expected size, in bytes, for both Trustlines and CFTs, in an effort to predict expected space savings.
+
+### 2.2.4. `STAmount` serialization
+Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
+
+## Binary Encoding
+To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` amount encoding, there are 62 bits available, so we can repurpose one to indicate if an amount is indeed a CFT or not.
+
+The rules for reading the binary amount fields would be backward compatible, as follows:
+
+1. Parse off the Field ID with a type_code (`STI_AMOUNT`). This indicates the following bytes are an `STAmount`.
+2. Inspect the next bit. If `1`, then this is **not** a CFT or XRP (instead this is a regular IOU token amount). However, if the first bit is `0`, then continue.
+3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and CFT).
+4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the bytes as a CFT.
+
+### Encoding for XRP Values (backward compatible)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────┐┌────────────────────────┐┌────────────┐┌─────────────────────────────────────────────┐ │
+│ │        0        ││           1            ││     0      ││                                             │ │
+│ │                 ││                        ││            ││                integer drops                │ │
+│ │  "Not XRP" bit  ││  Sign bit (always 1;   ││"IsCFT" bit ││                  (61 bits)                  │ │
+│ │0=XRP/CFT; 1=IOU ││       positive)        ││0=XRP; 1=CFT││                                             │ │
+│ └─────────────────┘└────────────────────────┘└────────────┘└─────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Encoding for CFT Values (backward compatible)
+
+This encoding focuses on the first 3 bytes of a CFT:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────┐┌────────────────────────┐┌────────────┐┌─────────────────────────────────────────────┐ │
+│ │        0        ││           1            ││     1      ││                                             │ │
+│ │                 ││                        ││            ││             Remaining CFT Bytes             │ │
+│ │  "Not XRP" bit  ││  Sign bit (always 1;   ││"IsCFT" bit ││                 (389 bits)                  │ │
+│ │0=XRP/CFT; 1=IOU ││       positive)        ││0=XRP; 1=CFT││                                             │ │
+│ └─────────────────┘└────────────────────────┘└────────────┘└─────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+This encoding focuses on the rest of the bytes of a CFT (264 bits):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────┐┌──────────────────┐┌──────────────────────┐┌──────────────────────────┐┌──────────────────────────┐│
+│ │    [0][1][1]    ││                  ││                      ││                          ││                          ││
+│ │                 ││     Reserved     ││   CFT Amount Value   ││      Sequence            ││     Issuer AcountID      ││
+│ │   IsCFT=true    ││     (5 bits)     ││      (64 bits)       ││      (32 bits)           ││        (160 bits)        ││
+│ │                 ││                  ││                      ││                          ││                          ││
+│ └─────────────────┘└──────────────────┘└──────────────────────┘└──────────────────────────┘└──────────────────────────┘│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Note: CFT introduces an extra leading byte in front of the 64-bit CFT value (to ensure CFT value supports full 64-bit range).
 
 **Required Fields**
 
