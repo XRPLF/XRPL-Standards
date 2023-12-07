@@ -67,7 +67,7 @@ The **`CFTokenIssuance`** object represents a single CFT issuance and holds data
 
 ##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
 
-The key of a `CFTokenIssuance` object, is the result of SHA512-Half of the following values
+The key of a `CFTokenIssuance` object, is the result of SHA512-Half of the following values, concatenated in order:
 
 * The CFTokenIssuance space key (0x007E).
 * The transaction sequence number.
