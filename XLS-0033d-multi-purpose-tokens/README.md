@@ -842,7 +842,11 @@ That said, this design is still TBD.
 
 ### 2.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
 
-The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, catering towards fungible, semi-fungible, and non-fungible token use cases. This renaming aims to highlight the extensive capabilities inherent in this token standard.
+The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, catering towards fungible, semi-fungible, and potentially even non-fungible token use cases. This renaming aims to highlight the extensive capabilities available via MPTs.
+
+For example, MPTs might be better suited than NFTs for certain semi-fungible use-cases (especially ones where each token might have a quantity greater than 1). In addition, some NFT issuers today issue multiple copies of the same NFT in order to make them semi-fungible. This technically violates the intent of the NFT spec, and may not work well in all NFT use-cases.
+
+That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
 ## 2.2. Appendix: Outstanding Issues
 
