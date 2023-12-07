@@ -65,9 +65,16 @@ We propose two new objects and one new ledger structure:
 
 The **`CFTokenIssuance`** object represents a single CFT issuance and holds data associated with the issuance itself. Token issuances are created using the **`CFTokenIssuanceCreate`** transaction and can, optionally, be destroyed by the **`CFTokenIssuanceDestroy`** transaction.
 
-##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
 
-The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is a 192-bit integer, concatenated in order:
+##### 1.2.1.1.1. **`CFTokenIssuance` Ledger Identifier** 
+
+The key of a `CFTokenIssuance` object, is the result of SHA512-Half of the following values
+
+* The transaction sequence number.
+* The AccountID of the issuer.
+
+
+The ID of a `CFTokenIssuance` object, a.k.a. `CFTokenIssuanceID`, is a 192-bit integer, concatenated in order:
 
 * The transaction sequence number.
 * The AccountID of the issuer.
@@ -80,6 +87,8 @@ The ID of a CFTokenIssuance object, a.k.a. `CFTokenIssuanceID`, is a 192-bit int
 │                          ││                          │
 └──────────────────────────┘└──────────────────────────┘
 ```
+
+**Note: The `CFTokenIssuanceID` is what the user inputs for the interface. Internally, the ledger splits the `CFTokenIssuanceID` into two components: `sequence` and `issuer` address. **
 
 ##### 1.2.1.1.2. Fields
 
@@ -213,7 +222,7 @@ A **`CFToken`** object can have the following fields. The key of each CFToken is
 |---------------------|--------------------|-----------|---------------|
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `CFTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT256`     |
+| `CFTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
 | `CFTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
@@ -383,7 +392,7 @@ Indicates the new transaction type **`CFTokenIssuanceDestroy`**. The integer val
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `CFTokenIssuanceID` |  ✔️        | `string`  | `UINT256`     | 
+| `CFTokenIssuanceID` |  ✔️        | `string`  | `UINT192`     | 
 
 Identifies the **`CFTokenIssuance`** object to be removed by the transaction.
 
@@ -408,7 +417,7 @@ Indicates the new transaction type **`CFTokenIssuanceSet`**. The integer value i
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
 
 The `CFTokenIssuance` identifier.
 
@@ -494,7 +503,7 @@ Indicates the new transaction type **`CFTokenAuthorize`**. The integer value is 
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+| `CFTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
 
 Indicates the ID of the CFT involved. 
 
@@ -992,6 +1001,9 @@ This encoding focuses on the rest of the bytes of a CFT (264 bits):
 
 Note: CFT introduces an extra leading byte in front of the 64-bit CFT value (to ensure CFT value supports full 64-bit range).
 
+*Question*: Could the ledger perform arithmetics in `uint64`? If not, we would need to decrease the range of the CFT value.
+
+
 **Required Fields**
 
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                          | 
@@ -1024,7 +1036,7 @@ Note: CFT introduces an extra leading byte in front of the 64-bit CFT value (to 
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
 |------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
-| CFTokenIssuanceID |     256     |      32      |                                                                                                                                                            |
+| CFTokenIssuanceID |     192     |      32      |                                                                                                                                                            |
 |         CFTAmount |     64      |      8       |                                                                                                                                                            |
 |      LockedAmount |     64      |      8       |                                                                                                                                                            |
 |             Flags |     32      |      4       |                                                                                                                                                            |
@@ -1032,7 +1044,7 @@ Note: CFT introduces an extra leading byte in front of the 64-bit CFT value (to 
 | PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            |
 |  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 7 fields. |
 |               --- |     --      |     ---      |                                                                                                                                                            |
-|             TOTAL |     832     |     104      |                                                                                                                                                            |
+|             TOTAL |     768     |     104      |                                                                                                                                                            |
 
 #### 2.3.1.3. Size Comparison
 
