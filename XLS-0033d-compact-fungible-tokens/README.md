@@ -939,7 +939,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 ### 2.2.4. `STAmount` serialization
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
-## Binary Encoding
+#### Binary Encoding
 To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` amount encoding, there are 62 bits available, so we can repurpose one to indicate if an amount is indeed a CFT or not.
 
 The rules for reading the binary amount fields would be backward compatible, as follows:
@@ -949,7 +949,7 @@ The rules for reading the binary amount fields would be backward compatible, as 
 3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and CFT).
 4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the bytes as a CFT.
 
-### Encoding for XRP Values (backward compatible)
+#### Encoding for XRP Values (backward compatible)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -962,7 +962,7 @@ The rules for reading the binary amount fields would be backward compatible, as 
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Encoding for CFT Values (backward compatible)
+#### Encoding for CFT Values (backward compatible)
 
 This encoding focuses on the first 3 bytes of a CFT:
 
