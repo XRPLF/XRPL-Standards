@@ -70,6 +70,7 @@ The **`CFTokenIssuance`** object represents a single CFT issuance and holds data
 
 The key of a `CFTokenIssuance` object, is the result of SHA512-Half of the following values
 
+* The CFTokenIssuance space key (0x007E).
 * The transaction sequence number.
 * The AccountID of the issuer.
 
