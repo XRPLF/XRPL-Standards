@@ -66,7 +66,7 @@ We propose two new objects and one new ledger structure:
 The **`CFTokenIssuance`** object represents a single CFT issuance and holds data associated with the issuance itself. Token issuances are created using the **`CFTokenIssuanceCreate`** transaction and can, optionally, be destroyed by the **`CFTokenIssuanceDestroy`** transaction.
 
 
-##### 1.2.1.1.1. **`CFTokenIssuance` Ledger Identifier** 
+##### 1.2.1.1.1. **`CFTokenIssuance`** Ledger Identifier
 
 The key of a `CFTokenIssuance` object, is the result of SHA512-Half of the following values
 
