@@ -10,7 +10,7 @@
  
  ## Abstract
 
- This proposal adds an on-chain `PriceOracle` object to the XRP ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance  market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles the on XRP ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
+ This proposal adds an on-chain `PriceOracle` object to the XRP Ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance  market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles the on XRP Ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
 
 ### Terminology
 
@@ -23,7 +23,7 @@
 
 #### The `PriceOracle` Object
 
-The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP ledger and contains the following fields:
+The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP Ledger and contains the following fields:
 
 |FieldName | Required? | JSON Type | Internal Type|
 |:---------|:-----------|:---------------|:---------------|
@@ -385,7 +385,7 @@ On success, the response data contains the following fields:
   - `mean` is the simple mean.
   - `standard_deviation` is the standard deviation.
 - `median` is the median.
-- `time` is the most recent Unix Time stamp out of all `LastUpdateTime` values.
+- `time` is the most recent timestamp out of all `LastUpdateTime` values.
 
 ## Appendices
 
