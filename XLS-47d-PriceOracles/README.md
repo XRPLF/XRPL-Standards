@@ -161,7 +161,7 @@ The transaction fails if:
 - XRP reserve is insufficient. If the Oracle instance has less or equal to five token pairs then the XRP reserve requirements is one, otherwise the XRP reserve requirements is two.
 - Transaction's `PriceDataSeries` array size is empty or exceeds ten when creating a new Oracle instance or Oracle's instance `PriceDataSeries` array size exceeds ten after updating the Oracle instance.
 - `PriceDataSeries` has duplicate token pairs.
-- `PriceDataSeries` has array elements with missing `AssetPrice`.
+- `PriceDataSeries` has array elements with missing `AssetPrice` and the token pair not matching an existing token pair.
 - The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
 - The `URI` field length exceeds 256 bytes.
@@ -177,6 +177,7 @@ The `PriceDataSeries` of the transaction is copied to a newly created `PriceOrac
 
 - `PriceData` objects for (`BaseAsset`, `QuoteAsset`) token pairs that appear in the transaction but not the object are copied to the object.
 - `PriceData` objects for token pairs that appear in both the transaction and the object are overwritten in the object.
+- `PriceData` objects for token pairs that appear in both the transaction and the object and have `AssetPrice` missing in the transaction are deleted from the object.
 - `PriceData` objects for token pairs that appear only in the object are left unchanged.
 
 The order of token pairs in the transaction is not important because the token pair uniquely identifies the location of the `PriceData` object in the `PriceDataSeries` array of the `PriceOracle` object.
