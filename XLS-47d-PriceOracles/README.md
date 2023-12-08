@@ -145,9 +145,9 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 - `TransactionType` Indicates a new transaction type `OracleSet`. The integer value is TBD.
 - `Account` is the XRPL account that has update and delete privileges on the Oracle being set. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
-- `Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`.
+- `Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`. It can be optionally included on update, in which case it has to match the current `Provider` value.
 - `URI` is an optional field to reference the price data off-chain.
-- `AssetClass` describes the asset's type. `AssetClass` must be included when creating a new instance of `PriceOracle`.
+- `AssetClass` describes the asset's type. `AssetClass` must be included when creating a new instance of `PriceOracle`. It can be optionally included on update, in which case it has to match the current `AssetClass` value.
 - `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time. `LastUpdateTime` is stored internally on `PriceOracle` as Ripple Epoch.
 - `PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. `PriceData` includes the following fields:
 - `BaseAsset` is the asset to be priced.
@@ -166,7 +166,9 @@ The transaction fails if:
 - The transaction is not signed by the `Account` account or the account's multi signers.
 - The `URI` field length exceeds 256 bytes.
 - The `Provider` field length exceeds 256 bytes.
+- The `Provider` field doesn't match the current `Provider` field on update.
 - The `AssetClass` field length exceeds 16 bytes.
+- The `AssetClass` field doesn't match the current `AssetClass` field on update.
 - The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
 
 An `OracleSet` transaction uniquely identifies a `PriceOracle object` with its `Account` and `OracleDocumentID` fields. If such an object does not yet exist in the ledger, it is created. Otherwise, the existing object is updated. The `Provider`, `URI`, and `AssetClass` fields are copied directly from the transaction, if present. `Provider` and `AssetClass` must be included in the transaction if the object is being created.
