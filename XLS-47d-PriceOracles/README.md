@@ -1,6 +1,6 @@
 <pre> 
    Title:        <b>Price Oracles on XRP Ledger</b>
-   Revision:     <b>5</b> (2023-11-22)
+   Revision:     <b>6</b> (2023-12-21)
  <hr>  Author: <a href="mailto:gtsipenyuk@ripple.com">Gregory Tsipenyuk</a>
    Affiliation:  <a href="https://ripple.com">Ripple</a>
  
@@ -56,7 +56,7 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP Ledger
 
 - `URI` is an optional [URI](https://datatracker.ietf.org/doc/html/rfc3986) field to reference price data off-chain. It is limited to 256 bytes.
 - `AssetClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to sixteen ASCII hex encoded characters (0x20-0x7E).
-- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is represented as Ripple Epoch - the number of seconds since January 1, 2000 (00:00 UTC).
+- `LastUpdateTime` is the specific point in time when the data was last updated. The `LastUpdateTime` is represented as Unix Time - the number of seconds since January 1, 1970 (00:00 UTC).
 - `PreviousTxnID` is the hash of the previous transaction to modify this entry (same as on other objects with this field).
 - `PreviousTxnLgrSeq` is the ledger index of the ledger when this object was most recently updated/created (same as other objects with this field).
 
@@ -75,7 +75,9 @@ The `Owner` and `OracleDocumentID` uniquely identify the `PriceOracle` object an
     {
         "LedgerEntryType": "PriceOracle",
         "Owner": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+        # "provider"
         "Provider": "70726F7669646572",
+        # "currency"
         "AssetClass": "63757272656E6379",
         "PriceDataSeries": [
           {
@@ -110,8 +112,10 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
         "TransactionType": "OracleSet",
         "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
         "OracleDocumentID": 34,
+        # "provider"
         "Provider": "70726F7669646572",
         "LastUpdateTime": 743609014,
+        # "currency"
         "AssetClass": "63757272656E6379",
         "PriceDataSeries": [
           {
@@ -142,13 +146,13 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 | `AssetPrice` | :heavy_check_mark: | `number` | `UINT64` |
 | `Scale` | :heavy_check_mark: | `number` | `UINT8` |
 
-- `TransactionType` Indicates a new transaction type `OracleSet`. The integer value is TBD.
+- `TransactionType` Indicates a new transaction type `OracleSet`.
 - `Account` is the XRPL account that has update and delete privileges on the Oracle being set. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
 - `Provider` identifies an Oracle Provider. `Provider` must be included when creating a new instance of `PriceOracle`. It can be optionally included on update, in which case it has to match the current `Provider` value.
 - `URI` is an optional field to reference the price data off-chain.
 - `AssetClass` describes the asset's type. `AssetClass` must be included when creating a new instance of `PriceOracle`. It can be optionally included on update, in which case it has to match the current `AssetClass` value.
-- `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time. `LastUpdateTime` is stored internally on `PriceOracle` as Ripple Epoch.
+- `LastUpdateTime` is the specific point in time when the data was last updated. `LastUpdateTime` is represented in Unix Time.
 - `PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. `PriceData` includes the following fields:
 - `BaseAsset` is the asset to be priced.
 - `QuoteAsset` is the denomination in which the prices are expressed.
@@ -206,7 +210,7 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 | `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
 | `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
 
-- `TransactionType` indicates a new transaction type `OracleDelete`. The integer value is TBD.
+- `TransactionType` indicates a new transaction type `OracleDelete`.
 - `Account` is the account that has the Oracle update and delete privileges. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
 - `OracleDocumentID` is a unique identifier of the Price Oracle for the given Account.
 
@@ -233,8 +237,10 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
     {
          "method ":  "ledger_entry ",
          "params" : [
-             "account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-             "oracle_document_id":  34,
+            "oracle" : {
+              "account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+              "oracle_document_id":  34,
+            },
              "ledger_index ":  "validated "
          ]
     }
@@ -249,7 +255,9 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
           "LastUpdateTime" : 743609014,
           "LedgerEntryType" : "Oracle",
           "Owner" : "rp847ow9WcPmnNpVHMQV5A4BF6vaL9Abm6",
+          # "currency"
           "AssetClass" : "63757272656E6379",
+          # "provider"
           "Provider": "70726F7669646572",
           "PreviousTxnID" : "6F120537D0D212FEA6E11A0DCC5410AFCA95BD98D451D046832E6C4C4398164D",
           "PreviousTxnLgrSeq" : 22,
@@ -395,6 +403,7 @@ A new type, `STI_CURRENCY`, is introduced to support `BaseAsset` and `QuoteAsset
 
     {
       "PriceData" : {
+        # "912810RR9"
         "BaseAsset" : "3931323831305252390000000000000000000000",
         "QuoteAsset" : "USD",
         "Scale" : 1,
