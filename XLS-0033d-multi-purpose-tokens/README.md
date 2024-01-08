@@ -1060,7 +1060,7 @@ This encoding focuses on the rest of the bytes of a MPT (264 bits):
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Note: MPT introduces an extra leading byte in front of the 64-bit MPT value (to ensure MPT value supports full 64-bit range).
+Note: MPT introduces an extra leading byte in front of the MPT value. However, despite the MPT value being 64-bit, only 63 bits can be used. This limitation arises because internally, rippled needs to convert the value to `int64`, which has a smaller positive range compared to `uint64`.
 
 *Question*: Could the ledger perform arithmetics in `uint64`? If not, we would need to decrease the range of the MPT value.
 
