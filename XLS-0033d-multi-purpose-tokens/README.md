@@ -535,7 +535,8 @@ To clawback funds from a MPT holder, the issuer must have specified that the MPT
 
 User can use the `account_objects` command and utilize the `type` field to filter the results by either `mpt_issuance` or `mptoken`. They can also use the `ledger_entry` command to query a specific `MPTokenIssuance` object by specifying `mpt_issuance_id`.
 
-In addition, one more API is introduced.
+A new `mpt_holders` API is also introduced.
+
 #### 1.6.0.1 `mpt_holders`
 For a given MPTokenIssuanceID and ledger sequence, `mpt_holders` will return all holders of that MPT and their balance. This API is likely return very large data sets, so users should expect to implement paging via the `marker` field.
 
