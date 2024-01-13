@@ -162,7 +162,7 @@ A **`Bridge`** object has the following fields:
 
 ###### 2.1.1.1.1. `LedgerIndex`
 
-The ledger index is a hash of a unique prefix for a bridge object, and the fields in `XChainBridge`.
+The ledger index is a hash of a unique prefix for a bridge object, the door account for that side of the bridge, and the currency for that side of the bridge. For example, on the locking chain, the ledger index is a hash of the unique prefix for a bridge object, the locking chain door account, and the locking chain currency. The locking chain issuer is not hashed. This intentionally constrains door accounts to at most one bridge per currency type.
 
 ###### 2.1.1.1.2. `XChainBridge`
 
@@ -301,7 +301,13 @@ See the `XChainAddAccountCreateAttestation` section for more details on what thi
 
 The **`XChainCreateBridge`** transaction creates a new `Bridge` ledger object. This tells one chain (whichever chain the transaction is submitted on) the details of the bridge.
 
-The transaction must be submitted by the door account. It must also be submitted on both chains that form the bridge in order to be a valid bridge. A door account may own at most one bridge object.
+The transaction must be submitted by the door account. It must also be submitted on both chains that form the bridge in order to be a valid bridge. A door account may own multiple bridge objects, subject to a few constraints.
+
+A bridge object must be owned by either the locking door account or the issuing chain door account. It is an error to try to create both sides of the bridge on the same chain. Doing so will result in a `tecDUPLICATE` error. For example, for a bridge with a locking door account of "Alice" and an issuing door account of "Bob" that locks "USD/gw" and issues "USD/bob", if Alice has already created this bridge, and Bob also tries to create this bridge _on the same chain as Alice_, then Bob's transaction will fail with a `tecDUPLICATE` error. It might appear that this constraint allows an account to try to block bridge creation by creating the other side of bridge accounts themselves. However, this would require them to either have the secret key for the door account or allow them to replay transactions (sidechains should have network ids that prevent transaction replay).
+
+A second constraint is a door can own at most one bridge per currency type. For example, a door account may own a bridge that locks USD/gw and a second bridge that issues EUR/door. However, a door account may not own a bridge that lock USD/gw and a second bridge that issues USD/door. The reason for this constraint is a trust line represents a net balance between two accounts. This can cause the invariant to be violated. Assume the door account that has locked 100USD/gw. Now consider what would happen if a cross chain transaction sent 100USD/door to the gw account. The trust line would have a balance of zero! This would cause future cross chain transactions to fail for lack of funds. To avoid this scenario, the door account may have at most one bridge per currency. This applies to be both the locking and issuing side.
+
+For an IOU-IOU bridge, the issuer of the IOU cannot have the `lsfAllowTrustLineClawback` set. Wrapped funds must always be backed by locked funds and clawback would break that invariant. If the flag is set the transaction will fail with `tecNO_PERMISSION`.
 
 ##### 2.2.1.1. Fields
 

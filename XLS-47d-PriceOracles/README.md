@@ -200,8 +200,8 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 
 #### Transaction fields for **OracleDelete** transaction
 
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
+|FieldName | Required? | JSON Type | Internal Type |
+|:---------|:-----------|:---------------|:------------|
 | `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 | `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
 | `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
@@ -231,13 +231,15 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 ###### Request JSON
 
     {
-         "method ":  "ledger_entry ",
+         "method": "ledger_entry",
          "params" : [
-            "oracle" : {
-              "account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-              "oracle_document_id":  34,
-            },
-             "ledger_index ":  "validated "
+            {
+              "oracle" : {
+                "account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+                "oracle_document_id":  34,
+              },
+              "ledger_index": "validated"
+            }
          ]
     }
 
@@ -259,7 +261,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
           "PreviousTxnLgrSeq" : 22,
           "PriceDataSeries": [
             {
-              "PriceData: {
+              "PriceData": {
                 "QuoteAsset" : {
                    "currency" : "USD"
                 },
@@ -293,23 +295,23 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
             "trim": 20,
             "oracles": [
               {
-                "account": "rp047ow9WcPmnNpVHMQV5A4BF6vaL9Abm6,
+                "account": "rp047ow9WcPmnNpVHMQV5A4BF6vaL9Abm6",
                 "oracle_document_id": 34
               },
               {
-                "account": "rp147ow9WcPmnNpVHMQV5A4BF6vaL9Abm7,
+                "account": "rp147ow9WcPmnNpVHMQV5A4BF6vaL9Abm7",
                 "oracle_document_id": 56
               },
               {
-                "account": "rp247ow9WcPmnNpVHMQV5A4BF6vaL9Abm8,
+                "account": "rp247ow9WcPmnNpVHMQV5A4BF6vaL9Abm8",
                 "oracle_document_id": 2
               },
               {
-                "account": "rp347ow9WcPmnNpVHMQV5A4BF6vaL9Abm9,
+                "account": "rp347ow9WcPmnNpVHMQV5A4BF6vaL9Abm9",
                 "oracle_document_id": 7
               },
               {
-                "account": "rp447ow9WcPmnNpVHMQV5A4BF6vaL9Abm0,
+                "account": "rp447ow9WcPmnNpVHMQV5A4BF6vaL9Abm0",
                 "oracle_document_id": 109
               }
             ]
@@ -333,7 +335,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
         "size" : 6,
         "standard_deviation" : "0.1290994448735806"
       },
-      "validated" : false
+      "validated" : false,
       "time" : 78937648
     }
 
@@ -358,7 +360,7 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
   |FieldName | Required? | JSON Type |
   |:---------|:-----------|:---------------|
   | `account` | :heavy_check_mark: | `string` |
-  | `oracle_document_id` | :heavy_check_mark: | number |
+  | `oracle_document_id` | :heavy_check_mark: | `number` |
 
     - `account` is the Oracle's account.
     - `oracle_document_id` is a unique identifier of the Price Oracle for the given Account.
