@@ -141,10 +141,6 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 | `AssetClass` | :grey_question: | `string` | `BLOB` |
 | `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
 | `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
-| `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-| `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-| `AssetPrice` | :heavy_check_mark: | `number` | `UINT64` |
-| `Scale` | :heavy_check_mark: | `number` | `UINT8` |
 
 - `TransactionType` Indicates a new transaction type `OracleSet`.
 - `Account` is the XRPL account that has update and delete privileges on the Oracle being set. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
@@ -173,7 +169,7 @@ The transaction fails if:
 - The `Provider` field doesn't match the current `Provider` field on update.
 - The `AssetClass` field length exceeds 16 bytes.
 - The `AssetClass` field doesn't match the current `AssetClass` field on update.
-- The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is greater than the last close time plus 30 seconds.
+- The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is not in the range of the last close time minus/plus 300 seconds.
 
 An `OracleSet` transaction uniquely identifies a `PriceOracle object` with its `Account` and `OracleDocumentID` fields. If such an object does not yet exist in the ledger, it is created. Otherwise, the existing object is updated. The `Provider`, `URI`, and `AssetClass` fields are copied directly from the transaction, if present. `Provider` and `AssetClass` must be included in the transaction if the object is being created.
 
