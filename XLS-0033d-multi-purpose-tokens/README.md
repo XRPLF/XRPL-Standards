@@ -88,7 +88,7 @@ The ID of a `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit i
 └──────────────────────────┘└──────────────────────────┘
 ```
 
-**Note: The `MPTokenIssuanceID` is what the user inputs for the interface. Internally, the ledger splits the `MPTokenIssuanceID` into two components: `sequence` and `issuer` address.**
+**Note: The `MPTokenIssuanceID` is used by the user to uniquely identify a `MPTokenIssuance` object in transaction and API parameters. Internally, the ledger splits the `MPTokenIssuanceID` into two components: `sequence` and `issuer` address.**
 
 ##### 1.2.1.1.2. Fields
 
