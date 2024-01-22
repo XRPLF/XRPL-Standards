@@ -52,7 +52,7 @@ The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP Ledger
   - `BaseAsset` refers to the primary asset within a trading pair. It is the asset against which the price of the quote asset is quoted. The base asset is usually considered the 'primary' asset and forms the basis for trading. Any valid identifier, such as a stock symbol, bond CUSIP, or currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, BTC is the base asset; in 912810RR9/BTC, 912810RR9 is the base asset. A new type, `STI_CURRENCY`, is introduced to support the `CURRENCY` field (see Appendix for details).
   - `QuoteAsset` represents the secondary or quote asset in a trading pair. It denotes the price of one unit of the base asset. The quote asset's value is expressed in terms of the base asset. Any valid identifier such as a currency or a crypto-currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, USD is the quote asset; in 912810RR9/BTC, BTC is the quote asset. A new enum value STI_CURRENCY is introduced to support the `CURRENCY` field (see Appendix for details). The `BaseAsset` and `QuoteAsset` together form a trading pair, and their relationship determines the price at which one asset can be exchanged for another.
   - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
-  - `Scale` is the price's scaling factor. It represents the price's precision level. For instance, if `Scale` is `6` and the original price is `0.155` then the scaled price is `155000`. Formally, $scaledPrice = originalPrice*{10}^{scale}$. Valid `Scale` range is {0-10}. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
+  - `Scale` is the price's scaling factor. It represents the price's precision level. For instance, if `Scale` is `6` and the original price is `0.155` then the scaled price is `155000`. Formally, $scaledPrice = originalPrice*{10}^{scale}$. Valid `Scale` range is {0-20}. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
 
 - `URI` is an optional [URI](https://datatracker.ietf.org/doc/html/rfc3986) field to reference price data off-chain. It is limited to 256 bytes.
 - `AssetClass` describes a type of the assets, for instance "currency", "commodity", "index". It is a string of up to sixteen ASCII hex encoded characters (0x20-0x7E).
@@ -153,7 +153,7 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 - `BaseAsset` is the asset to be priced.
 - `QuoteAsset` is the denomination in which the prices are expressed.
 - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
-- `Scale` is the price's scaling factor.
+- `Scale` is the price's scaling factor. `Scale` field should be omitted if `Scale` value is 0.
 
 The transaction fails if:
 
