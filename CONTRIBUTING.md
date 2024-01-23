@@ -22,7 +22,7 @@ Use the next number that has not yet been used. If a conflict occurs, it will be
 
 ### 2. Closing Discussion
 
-When a discussion has produced a well-refined standard, authors should post a comment to the discussion warning that the discussion will be closed in a few days. This allows time for those engaged with the discussion to submit final commentary. 
+When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that the discussion will be closed in a few days. This allows time (for those engaged with the discussion) to submit final commentary. 
 
 Once this waiting period has elapsed, the standard's author may close the discussion from further comment, and then move the discussion to a SPECIFICATION PULL REQUEST to add the standard into the repository as a markdown file (see below for specification formats).
 
@@ -62,9 +62,8 @@ A _Candidate Specification_ is a document that was previously a Draft, but is co
 
 ##### Publishing a Candidate Specification
 
-When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification. 
+When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification by making a PR to remove the `d` from the document folder name and update the `type` to `candidate-specification`.
 
-Assuming there is consensus to publish, a maintainer will remove the `d` from the document name, and update the `type` to `candidate-specification`.
 
 Once published as a Candidate Specification, no further substantive changes are allowed under the same XLS number.
 
