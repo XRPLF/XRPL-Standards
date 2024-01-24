@@ -991,7 +991,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
 |------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
-| MPTokenIssuanceID |     192     |      32      |                                                                                                                                                            |
+| MPTokenIssuanceID |     192     |      24      |                                                                                                                                                            |
 |         MPTAmount |     64      |      8       |                                                                                                                                                            |
 |      LockedAmount |     64      |      8       |                                                                                                                                                            |
 |             Flags |     32      |      4       |                                                                                                                                                            |
@@ -999,7 +999,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 | PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            |
 |  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 7 fields. |
 |               --- |     --      |     ---      |                                                                                                                                                            |
-|             TOTAL |     768     |     104      |                                                                                                                                                            |
+|             TOTAL |     768     |     96      |                                                                                                                                                            |
 
 #### 2.3.1.3. Size Comparison
 
@@ -1016,14 +1016,14 @@ As can be seen from the following size comparison table, Trustlines take up appr
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
 #### Binary Encoding
-To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` amount encoding, there are 62 bits available, so we can repurpose one to indicate if an amount is indeed a MPT or not.
+To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` STAmount encoding, there are 62 bits available. So, so we can repurpose one of these bits to indicate if an amount is indeed a MPT or not (and still have 4 bits left over for future use, if needed). 
 
-The rules for reading the binary amount fields would be backward compatible, as follows:
+This enables MPT amounts to be represented in the current `STAmount` binary encoding.  he rules for reading the binary amount fields would be backward compatible, as follows:
 
 1. Parse off the Field ID with a type_code (`STI_AMOUNT`). This indicates the following bytes are an `STAmount`.
-2. Inspect the next bit. If `1`, then this is **not** a MPT or XRP (instead this is a regular IOU token amount). However, if the first bit is `0`, then continue.
+2. Inspect the next bit. If its value is `1`, then continue to the next step. If not, then this `STAmount` does **not** represent an MPT nor XRP (instead this is a regular IOU token amount, and can be parsed according to existing rules for those amounts). 
 3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and MPT).
-4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the bytes as a MPT.
+4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the remaining `STAmount` bytes as an MPT.
 
 #### Encoding for XRP Values (backward compatible)
 
@@ -1047,7 +1047,7 @@ This encoding focuses on the first 3 bytes of a MPT:
 │ ┌─────────────────┐┌────────────────────────┐┌────────────┐┌─────────────────────────────────────────────┐ │
 │ │        0        ││           1            ││     1      ││                                             │ │
 │ │                 ││                        ││            ││             Remaining MPT Bytes             │ │
-│ │  "Not XRP" bit  ││  Sign bit (always 1;   ││"IsMPT" bit ││                 (389 bits)                  │ │
+│ │  "Not XRP" bit  ││  Sign bit (always 1;   ││"IsMPT" bit ││                 (256 bits)                  │ │
 │ │0=XRP/MPT; 1=IOU ││       positive)        ││0=XRP; 1=MPT││                                             │ │
 │ └─────────────────┘└────────────────────────┘└────────────┘└─────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
