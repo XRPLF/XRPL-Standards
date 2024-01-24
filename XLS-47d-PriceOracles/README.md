@@ -153,7 +153,7 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 - `BaseAsset` is the asset to be priced.
 - `QuoteAsset` is the denomination in which the prices are expressed.
 - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
-- `Scale` is the price's scaling factor. `Scale` field should be omitted if `Scale` value is 0.
+- `Scale` is the price's scaling factor, with a valid range of values {1-20}. The `Scale` field should be omitted when the `Scale` value is 0. An omitted `Scale` field implies a value of 0.
 
 The transaction fails if:
 
