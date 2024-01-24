@@ -1067,12 +1067,3 @@ This encoding focuses on the rest of the bytes of a MPT (264 bits):
 ```
 
 Note: MPT introduces an extra leading byte in front of the MPT value. However, despite the MPT value being 64-bit, only 63 bits can be used. This limitation arises because internally, rippled needs to convert the value to `int64`, which has a smaller positive range compared to `uint64`.
-
-*Question*: Could the ledger perform arithmetics in `uint64`? If not, we would need to decrease the range of the MPT value.
-
-The reasons for having a construct `MPTokenIssuanceID` by concatenating `sequence` and `issuer` are:
-* It avoids the need for double hashing of the `MPTokenIssuance` object key in the SHAMAP, as the `MPTokenIssuanceID` is no longer a key to a SHAMAP entry.
-* `Issue` class is redesigned to represent either a trustline or a MPT as an `issuer` and `variant<currency, sequence>`. This enables the `Issue` class to represent a trustline through an `issuer`/`currency` pair or a MPT through an `issuer`/`sequence` pair. The purpose of this design is to minimize the changes in the code. Consequently, this would require a change to the `MPTokenIssuanceID` construct for the following reasons:
-    * When serializing `Issue` in `STAmount`, the original `MPTokenIssuanceID` has no way of splitting into `issuer` and `sequence` because it is a hashed value. Therefore, it would require the ledger to perform a database read to get the `MPTokenIssuance` object to get the `issuer` and the `sequence` across various parts of the code, which is not desirable. 
-    * Reduces the footprint of a serialized MPT `STAmount` to 264 bits.
-* It reduces the space of `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID` (a 256-bit integer). `MPTokenIssuanceID` is a field in each `MPToken`, and therefore we are looking at a space reduction of 64 bits per `MPToken`.
