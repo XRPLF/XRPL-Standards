@@ -202,7 +202,7 @@ A **`MPTokenIssuance`** object can be added by using the same approach to find t
 
 ###### 1.2.1.1.4.3. Removing a **`MPTokenIssuance`** object
 
-A **`MPTokenIssuance`** can be removed using the same approach, but only if the **`OutstandingAmount`** is equal to 0.
+An **`MPTokenIssuance`** can be removed by locating the issuance using the approach in [Searching for an MPTokenIssuance](#121141-searching-for-a-mptokenissuance-object). If found, the object can be deleted, but only if the **`OutstandingAmount`** is equal to 0.
 
 ###### 1.2.1.1.4.4. Reserve for **`MPTokenIssuance`** object
 
