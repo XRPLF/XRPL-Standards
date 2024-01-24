@@ -164,7 +164,13 @@ Identifies the page in the owner's directory where this item is referenced.
 
 ###### 1.2.1.1.2.11. `Sequence`
 
-An identifier of the `MPTokenIssuance` and it's used to construct the `MPTokenIssuanceID`.
+A 32-bit unsigned integer that is used to ensure issuances from a given sender may only ever exist once, even if an issuance is later deleted. Whenever a new issuance is created, this value must match the account's current Sequence number.
+
+[Tickets](https://xrpl.org/tickets.html) make some exceptions from these rules so that it is possible to send transactions out of the normal order. Tickets represent sequence numbers reserved for later use; a transaction can use a Ticket instead of a normal account Sequence number.
+
+Whenever a transaction to create an MPT is included in a ledger, it uses up a sequence number (or Ticket) regardless of whether the transaction executed successfully or failed with a [tec-class error code](https://xrpl.org/tec-codes.html). Other transaction failures don't get included in ledgers, so they don't change the sender's sequence number (or have any other effects).
+
+It is possible for multiple unconfirmed MPT-creation transactions to have the same `Issuer` and sequence number. Such transactions are mutually exclusive, and at most one of them can be included in a validated ledger. (Any others ultimately have no effect.)
 
 ##### 1.2.1.1.3. Example **`MPTokenIssuance`** JSON
 
