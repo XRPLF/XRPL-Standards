@@ -15,7 +15,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 [Trust lines](https://xrpl.org/trust-lines-and-issuing.html#trust-lines-and-issuing) are a fundamental building block for many XRP Ledger tokenization features, including [CBDCs](https://en.wikipedia.org/wiki/Central_bank_digital_currency) and [fiat-collateralized stablecoins](https://www.investopedia.com/terms/s/stablecoin.asp). However, as more and more token issuers embrace the XRP Ledger, the current size of each trust line will become an impediment to ledger stability and scalability.
 
-This proposal introduces extensions to the XRP Ledger to support a more compact fungible token (i.e., MPT) type, along with operations to enumerate, purchase, sell and hold such tokens. 
+This proposal introduces extensions to the XRP Ledger to support a more multi-purpose token (i.e., MPT) type, along with operations to enumerate, purchase, sell and hold such tokens. 
 
 Unlike trust lines, MPTs do not represent bidirectional debt relationships. Instead, MPTs function more like a unidirectional trust line with only one balance, making it simpler to support common tokenization requirements, including even non-monetery use cases such as tracking reputation points in an online game. 
 
@@ -67,11 +67,28 @@ The **`MPTokenIssuance`** object represents a single MPT issuance and holds data
 
 ##### 1.2.1.1.1. **`MPTokenIssuance`** Ledger Identifier
 
-The ID of a MPTokenIssuance object, a.k.a. `MPTokenIssuanceID`, is the result of SHA512-Half of the following values, concatenated in order:
+The key of a `MPTokenIssuance` object, is the result of SHA512-Half of the following values, concatenated in order:
 
 * The MPTokenIssuance space key (0x007E).
-* The AccountID of the issuer.
 * The transaction sequence number.
+* The AccountID of the issuer.
+
+
+The ID of a `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit integer, concatenated in order:
+
+* The transaction sequence number.
+* The AccountID of the issuer.
+
+```
+┌──────────────────────────┐┌──────────────────────────┐
+│                          ││                          │
+│      Sequence            ││     Issuer AccountID     │
+│      (32 bits)           ││        (160 bits)        │
+│                          ││                          │
+└──────────────────────────┘└──────────────────────────┘
+```
+
+**Note: The `MPTokenIssuanceID` is utilized to specify a unique `MPTokenIssuance` object in JSON parameters for transactions and APIs. Internally, the ledger splits the `MPTokenIssuanceID` into two components: `sequence` and `issuer` address.**
 
 ##### 1.2.1.1.2. Fields
 
@@ -91,6 +108,7 @@ The ID of a MPTokenIssuance object, a.k.a. `MPTokenIssuanceID`, is the result of
 | `PreviousTxnID`     | :heavy_check_mark:  | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | ️:heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | (default)           | `number`  | `UINT64`      |
+| `Sequence`          | :heavy_check_mark:  | `number`  | `UINT32`      |
 
 ###### 1.2.1.1.2.1. `LedgerEntryType`
 
@@ -144,6 +162,16 @@ The sequence of the ledger that contains the transaction that most recently modi
 
 Identifies the page in the owner's directory where this item is referenced.
 
+###### 1.2.1.1.2.11. `Sequence`
+
+A 32-bit unsigned integer that is used to ensure issuances from a given sender may only ever exist once, even if an issuance is later deleted. Whenever a new issuance is created, this value must match the account's current Sequence number.
+
+[Tickets](https://xrpl.org/tickets.html) make some exceptions from these rules so that it is possible to send transactions out of the normal order. Tickets represent sequence numbers reserved for later use; a transaction can use a Ticket instead of a normal account Sequence number.
+
+Whenever a transaction to create an MPT is included in a ledger, it uses up a sequence number (or Ticket) regardless of whether the transaction executed successfully or failed with a [tec-class error code](https://xrpl.org/tec-codes.html). Other transaction failures don't get included in ledgers, so they don't change the sender's sequence number (or have any other effects).
+
+It is possible for multiple unconfirmed MPT-creation transactions to have the same `Issuer` and sequence number. Such transactions are mutually exclusive, and at most one of them can be included in a validated ledger. (Any others ultimately have no effect.)
+
 ##### 1.2.1.1.3. Example **`MPTokenIssuance`** JSON
 
  ```json
@@ -174,7 +202,7 @@ A **`MPTokenIssuance`** object can be added by using the same approach to find t
 
 ###### 1.2.1.1.4.3. Removing a **`MPTokenIssuance`** object
 
-A **`MPTokenIssuance`** can be removed using the same approach, but only if the **`CurMintedAmount`** is equal to 0.
+An **`MPTokenIssuance`** can be removed by locating the issuance using the approach in [Searching for an MPTokenIssuance](#121141-searching-for-a-mptokenissuance-object). If found, the object can be deleted, but only if the **`OutstandingAmount`** is equal to 0.
 
 ###### 1.2.1.1.4.4. Reserve for **`MPTokenIssuance`** object
 
@@ -200,7 +228,7 @@ A **`MPToken`** object can have the following fields. The key of each MPToken is
 |---------------------|--------------------|-----------|---------------|
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
-| `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT256`     |
+| `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
 | `MPTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
 | `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
@@ -370,7 +398,7 @@ Indicates the new transaction type **`MPTokenIssuanceDestroy`**. The integer val
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️        | `string`  | `UINT256`     | 
+| `MPTokenIssuanceID` |  ✔️        | `string`  | `UINT192`     | 
 
 Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 
@@ -395,7 +423,7 @@ Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value i
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
 
 The `MPTokenIssuance` identifier.
 
@@ -481,7 +509,7 @@ Indicates the new transaction type **`MPTokenAuthorize`**. The integer value is 
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT256`     | 
+| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
 
 Indicates the ID of the MPT involved. 
 
@@ -747,7 +775,7 @@ While the introduction of a `MPTokenNode` server a particular use-case, we shoul
 
 On the topic of removing dangling `MPTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of transactions deleting both trustlines and accounts. 
 
-#### 2.2.3.1 How Should We Design `MPTokenNode` Directories?
+#### 2.2.3.2 How Should We Design `MPTokenNode` Directories?
 
 The proposed design of a new "MPT-only" directory structure introduces a new pattern that should be considered more. For example, in the XRP Ledger there are currently two types of "Directory" -- an "Owner Directory" and an "Offer Directory." The proposal of a new type of MPT directory suggests that we create a new type of owner-less directory specifically for MPTs (similar to `NFTokenOfferNode`). This directory would indeed be similar to an "Offer Directory" in the sense that there would be no owner; but the design otherwise diverges from that concept in the sense that these new MPT directories would not be aimed at DEX or exchange operations as is the case for DEX offers and `NFTokenOfferNode` objects.
 
@@ -797,7 +825,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
 |------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
-| MPTokenIssuanceID |     256     |      32      |                                                                                                                                                            |
+| MPTokenIssuanceID |     192     |      24      |                                                                                                                                                            |
 |         MPTAmount |     64      |      8       |                                                                                                                                                            |
 |      LockedAmount |     64      |      8       |                                                                                                                                                            |
 |             Flags |     32      |      4       |                                                                                                                                                            |
@@ -805,7 +833,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 | PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            |
 |  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 7 fields. |
 |               --- |     --      |     ---      |                                                                                                                                                            |
-|             TOTAL |     832     |     104      |                                                                                                                                                            |
+|             TOTAL |     768     |     96      |                                                                                                                                                            |
 
 #### 2.3.1.3. Size Comparison
 
@@ -817,3 +845,59 @@ As can be seen from the following size comparison table, Trustlines take up appr
 | Bytes for holding 10 Tokens |         1         |       1,450       |            2             |          3,260          |             2.2x              |
 | Bytes for holding 32 Tokens |         2         |       5,556       |            4             |         12,264          |             2.2x              |
 | Bytes for holding 64 Tokens |         3         |      13,070       |            6             |         28,444          |             2.2x              |
+
+### 2.3.2. `STAmount` serialization
+Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
+
+#### Binary Encoding
+To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` STAmount encoding, there are 62 bits available. So, so we can repurpose one of these bits to indicate if an amount is indeed a MPT or not (and still have 4 bits left over for future use, if needed). 
+
+This enables MPT amounts to be represented in the current `STAmount` binary encoding.  he rules for reading the binary amount fields would be backward compatible, as follows:
+
+1. Parse off the Field ID with a type_code (`STI_AMOUNT`). This indicates the following bytes are an `STAmount`.
+2. Inspect the next bit. If its value is `1`, then continue to the next step. If not, then this `STAmount` does **not** represent an MPT nor XRP (instead this is a regular IOU token amount, and can be parsed according to existing rules for those amounts). 
+3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and MPT).
+4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the remaining `STAmount` bytes as an MPT.
+
+#### Encoding for XRP Values (backward compatible)
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌──────────────────┐ ┌──────────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌───────────────────────────────────────────┐ │
+│ |        0         | |          1           | |        0         | |                  | |                                           | │
+│ |                  | |                      | |                  | |     Reserved     | |                XRP Amount                 | │
+│ |  "Not XRP" bit   | | Sign bit (always 1;  | |   "IsMPT" bit    | |     (4 bits)     | |                 (57 bits)                 | │
+│ | 0=XRP/MPT; 1=IOU | |      positive)       | |   0=XRP; 1=MPT   | |                  | |                                           | │
+│ └──────────────────┘ └──────────────────────┘ └──────────────────┘ └──────────────────┘ └───────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Encoding for MPT Values (backward compatible)
+
+This encoding focuses on the first 3 bits of a MPT:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────┐┌────────────────────────┐┌────────────┐┌─────────────────────────────────────────────┐ │
+│ │        0        ││           1            ││     1      ││                                             │ │
+│ │                 ││                        ││            ││             Remaining MPT Bytes             │ │
+│ │  "Not XRP" bit  ││  Sign bit (always 1;   ││"IsMPT" bit ││                 (261 bits)                  │ │
+│ │0=XRP/MPT; 1=IOU ││       positive)        ││0=XRP; 1=MPT││                                             │ │
+│ └─────────────────┘└────────────────────────┘└────────────┘└─────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+This encoding focuses on the rest of the bytes of a MPT (264 bits):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────┐┌──────────────────┐┌──────────────────────┐┌──────────────────────────┐┌──────────────────────────┐│
+│ │    [0][1][1]    ││                  ││                      ││                          ││                          ││
+│ │                 ││     Reserved     ││   MPT Amount Value   ││      Sequence            ││     Issuer AcountID      ││
+│ │   IsMPT=true    ││     (5 bits)     ││      (64 bits)       ││      (32 bits)           ││        (160 bits)        ││
+│ │                 ││                  ││                      ││                          ││                          ││
+│ └─────────────────┘└──────────────────┘└──────────────────────┘└──────────────────────────┘└──────────────────────────┘│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Note: MPT introduces an extra leading byte in front of the MPT value. However, despite the MPT value being 64-bit, only 63 bits can be used. This limitation arises because internally, rippled needs to convert the value to `int64`, which has a smaller positive range compared to `uint64`.
