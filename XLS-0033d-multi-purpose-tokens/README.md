@@ -710,6 +710,21 @@ For example, MPTs might be better suited than NFTs for certain semi-fungible use
 
 That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
+### 2.1.12. What range does MPT amount support?
+MPT amount is an unsinged integer that accomdoates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which conducts arithmetic operations using signed `uint64`, and therefore MPT amount cannot fully support the entire unsigned 64-bit range.
+
+### 2.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
+`MPTokenIssuanceID` serves as a unique identifier for a `MPTokenIssuance` object, facilitating users in specifying the associated `MPTokenIssuance` in transactions or APIs requests. 
+
+While a straightforward approach involves using the key of the `MPTokenIssuance` object directly for convinience, this approach is not preferable due to the potential exploitation by attackers who might use the key of another object type in the transaction payload. Therefore, the main idea is to differentiate the `MPTokenIssuanceID` from the key of the `MPTokenIssuance` object itself.
+
+The design of `MPTokenIssuanceID` involves concatenating the `sequence` and `issuer` to provide a space-efficient and safe represenation of a `MPTokenIssuance`. Here are the main reasons for this design:
+* It avoids the need for double hashing of the `MPTokenIssuance` object key in the SHAMAP, as the `MPTokenIssuanceID` is no longer a key to a SHAMAP entry.
+* `Issue` class is redesigned to represent either a trustline or a MPT as an `issuer` and `variant<currency, sequence>`. This enables the `Issue` class to represent a trustline through an `issuer`/`currency` pair or a MPT through an `issuer`/`sequence` pair. The purpose of this design is to minimize the changes in the code. Consequently, this would require a change to the `MPTokenIssuanceID` construct for the following reasons:
+    * When serializing `Issue` in `STAmount`, the original `MPTokenIssuanceID` has no way of splitting into `issuer` and `sequence` because it is a hashed value. Therefore, it would require the ledger to perform a database read to get the `MPTokenIssuance` object to get the `issuer` and the `sequence` across various parts of the code, which is not desirable. 
+    * Reduces the footprint of a serialized MPT `STAmount` to 264 bits.
+* It reduces the space of `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID` (a 256-bit integer). `MPTokenIssuanceID` is a field in each `MPToken`, and therefore we are looking at a space reduction of 64 bits per `MPToken`.
+
 ## 2.2. Appendix: Outstanding Issues
 
 This section describes any outstanding or debatable issues that have not yet been resolved in this proposal.
