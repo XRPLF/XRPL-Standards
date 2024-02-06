@@ -666,7 +666,7 @@ Indicates the MPTokenIssuance we queried.
 |-------------------|:---------:|
 | `mptokens`   | `object`   |
 
-A JSON object representing a list MPToken objects. Includes all fields in the underlying MPToken object.
+A JSON object representing an array of `mptoken`s (see Section 1.6.0.3.2.1). Includes all relevant fields in the underlying MPToken object.
 
 | Field Name        | JSON Type |
 |-------------------|:---------:|
@@ -674,6 +674,8 @@ A JSON object representing a list MPToken objects. Includes all fields in the un
 
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
+##### 1.6.0.3.2.1 `mptoken` fields
+`mptokens
 # 2. Appendices
 
 ## 2.1 Appendix: FAQs
