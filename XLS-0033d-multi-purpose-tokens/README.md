@@ -480,7 +480,7 @@ We propose using the following format for MPT amounts::
 
 ```json
 "amount": {
-  "mpt_issuance_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+  "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
   "value": "1"
 }
 ```
@@ -537,6 +537,30 @@ Transactions of the `MPTokenAuthorize` type support additional values in the Fla
 
 We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `MPTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `MPTokenIssuances` using `MPTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render MPT balances useless/unstable for any holders.
 
+### 1.3.7 The **`Clawback`** Transaction
+The existing `Clawback` transaction will extend the existing `amount` field to accommodate MPT amounts. In addition, the `Clawback` transaction will introduce a new optional field, `MPTokenHolder`, to allow the issuer clawback `MPTokens` from holders' if and only if `lsfMPTAllowClawback` is set on the ``MPTokenIssuance`.
+
+#### 1.3.7.1 New `MPTokenHolder` field
+
+| Field Name  | Required? | JSON Type | Internal Type |
+| ----------- | --------- | --------- | ------------- |
+| `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
+
+Specifies the holders address that the issuer wants to clawback from. Th holder must already own a `MPToken` object with a non-zero balance.
+
+#### 1.3.7.2 Example
+
+```json
+{
+    TransactionType: "Clawback",
+    Account: "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+    Amount: {
+      value: 10,
+      mpt_issuance_id: "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    },
+    MPTokenHolder: "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG"
+}
+```
 ### 1.4.0 Details on Locking MPTs
 
 #### 1.4.0.1 Locking individual balances
@@ -573,7 +597,7 @@ For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of that M
 ```json
 {
   "command": "mpt_holders",
-  "mpt_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+  "mpt_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
   "ledger_index": "validated"
 }
 ```
@@ -612,21 +636,23 @@ Specify a limit to the number of MPTs returned.
 
 ```json
 {
-    "id": 5,
-    "status": "success",
-    "type": "response",
-    "result": {
-        "mpt_id": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-        "mpt_holders": {
-          "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn": {
-             "MPTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
-             "Flags": 83659,
-             "MPTAmount": "1000",
-             "LockedAmount": "0"
-          }
-        },
-        "validated": true
-    }
+    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+    "limit":50,
+    "ledger_index": 2,
+    "mptokens": [{
+        "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
+        "flags": 0,
+        "mpt_amount": "20",
+        "locked_amount": "1",
+        "mptoken_index": "36D91DEE5EFE4A93119A8B84C944A528F2B444329F3846E49FE921040DE17E65"
+    },
+    {
+        "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
+        "flags": 0,
+        "mpt_amount": "1",
+        "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
+    }],
+    "validated": true
 }
 ```
 
@@ -638,9 +664,9 @@ Indicates the MPTokenIssuance we queried.
 
 | Field Name        | JSON Type |
 |-------------------|:---------:|
-| `mpt_holders`   | `object`   |
+| `mptokens`   | `object`   |
 
-A JSON object representing a dictionary of accounts to MPToken objects. Includes all fields in the underlying MPToken object.
+A JSON object representing a list MPToken objects. Includes all fields in the underlying MPToken object.
 
 | Field Name        | JSON Type |
 |-------------------|:---------:|
