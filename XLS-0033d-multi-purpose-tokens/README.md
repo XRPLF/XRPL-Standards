@@ -587,7 +587,7 @@ To clawback funds from a MPT holder, the issuer must have specified that the MPT
 
 In general, existing RPC functionality can be used to interact with MPTs. For example, the `type` field of the  `account_objects` or `ledger_data` command can filter results by either `mpt_issuance` or `mptoken` values. In addition, the `ledger_entry` command can be used to query a specific `MPTokenIssuance` or `MPToken` object.
 
-A new Clio RPC is proposed.
+Also a new Clio RPC `mpt_holders` is proposed, to allow querying of all the holder of an MPT.
 
 #### 1.6.0.1 `ledger_entry` API Updates
 `ledger_entry` API is updated to query `MPTokenIssuance` and `MPToken` objects.
@@ -609,7 +609,7 @@ A `MPToken` object can be queried by specifying the the `mptoken` field.
 | `mptoken.account`      | ️String  | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.|
 
 #### 1.6.0.2 `mpt_holders` API (Clio-only)
-For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of that MPT and their balance. This RPC might return very large data sets, so users should handle result paging using the `marker` field.
+For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of an MPT and their balance. This RPC might return very large data sets, so users should handle result paging using the `marker` field.
 
 ##### 1.6.0.3.1 Request fields
 
@@ -653,24 +653,6 @@ Specify a limit to the number of MPTs returned.
 
 ##### 1.6.0.3.2 Response fields
 
-| Field Name        | JSON Type | Description |
-|-------------------|:---------:| --------- |
-| `mpt_issuance_id` | `string`  | Indicates the `MPTokenIssuance` we queried. |
-| `mptokens`   | `array`   | An array of `mptoken`s. Includes all relevant fields in the underlying `MPToken` object. |
-| `marker`          | `string`  | Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result. |
-| `limit`          | `number`  | The limit, as specified in the request|
-| `ledger_index`     | `number`  | The index of the ledger used.|
-
-A `mptoken` object has the following parameters:
-| Field Name          | JSON Type | Description |
-| ------------------- |:---------:| ----------- |
-| `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
-| `flags`             | `number`  | The flags of the MPToken objects.|
-| `mpt_amount`        | `string`  | Hex-encoded amount of the holder's balance. |
-| `locked_amount`     | `string`  | Hex-encoded amount of the locked balance. (May be discarded if the value is 0) |
-| `mptoken_index`     | `string`  | Key of the `MPToken` object. |
-
-###### 1.6.0.3.2.1 Example
 ```json
 {
     "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
@@ -692,6 +674,23 @@ A `mptoken` object has the following parameters:
     "validated": true
 }
 ```
+
+| Field Name        | JSON Type | Description |
+|-------------------|:---------:| --------- |
+| `mpt_issuance_id` | `string`  | Indicates the `MPTokenIssuance` we queried. |
+| `mptokens`   | `array`   | An array of `mptoken`s. Includes all relevant fields in the underlying `MPToken` object. |
+| `marker`          | `string`  | Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result. |
+| `limit`          | `number`  | The limit, as specified in the request|
+| `ledger_index`     | `number`  | The index of the ledger used.|
+
+A `mptoken` object has the following parameters:
+| Field Name          | JSON Type | Description |
+| ------------------- |:---------:| ----------- |
+| `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
+| `flags`             | `number`  | The flags of the MPToken objects.|
+| `mpt_amount`        | `string`  | Hex-encoded amount of the holder's balance. |
+| `locked_amount`     | `string`  | Hex-encoded amount of the locked balance. (May be omitted if the value is 0) |
+| `mptoken_index`     | `string`  | Key of the `MPToken` object. |
 
 #### 1.6.0.3 Synthetic `mpt_issuance_id` field
 `MPTokenIssuanceID` is an identifier that allows user to specify a `MPTokenIssuance` in RPCs. Therefore, a synthetically parsed `mpt_issuance_id` field is added into API responses to avoid the need for client-side parsing of the `MPTokenIssuanceID`.
