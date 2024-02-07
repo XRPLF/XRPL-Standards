@@ -726,7 +726,7 @@ Hex-encoded amount of the locked balance. (May be discarded if the value is 0)
 Key of the `MPToken` object. 
 
 #### 1.6.0.3 Synthetic `mpt_issuance_id` field
-MPTokenIssuanceID is a representation made for simplicity for user RPCs. Internally, rippled uses sequence + issuer pair to identify a unique MPTokenIssuance. Therefore, a synthetically parsed `mpt_issuance_id` field is added into API responses.
+`MPTokenIssuanceID` is an identifier that allows user to specify a `MPTokenIssuance` in RPCs. Therefore, a synthetically parsed `mpt_issuance_id` field is added into API responses to avoid the need for client-side parsing of the `MPTokenIssuanceID`.
 
 ##### 1.6.0.3.1 Transaction Metadata
  A `mpt_issuance_id` field is provided in JSON transaction metadata (not available for binary) for all successful `MPTokenIssuanceCreate` transactions. The following APIs are impacted: `tx`, `account_tx`, `subscribe` and `ledger`.
