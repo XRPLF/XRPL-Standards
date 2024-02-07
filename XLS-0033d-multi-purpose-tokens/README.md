@@ -653,6 +653,24 @@ Specify a limit to the number of MPTs returned.
 
 ##### 1.6.0.3.2 Response fields
 
+| Field Name        | JSON Type | Description |
+|-------------------|:---------:| --------- |
+| `mpt_issuance_id` | `string`  | Indicates the `MPTokenIssuance` we queried. |
+| `mptokens`   | `array`   | An array of `mptoken`s. Includes all relevant fields in the underlying `MPToken` object. |
+| `marker`          | `string`  | Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result. |
+| `limit`          | `number`  | The limit, as specified in the request|
+| `ledger_index`     | `number`  | The index of the ledger used.|
+
+A `mptoken` object has the following parameters:
+| Field Name          | JSON Type | Description |
+| ------------------- |:---------:| ----------- |
+| `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
+| `flags`             | `number`  | The flags of the MPToken objects.|
+| `mpt_amount`        | `string`  | Hex-encoded amount of the holder's balance. |
+| `locked_amount`     | `string`  | Hex-encoded amount of the locked balance. (May be discarded if the value is 0) |
+| `mptoken_index`     | `string`  | Key of the `MPToken` object. |
+
+###### 1.6.0.3.2.1 Example
 ```json
 {
     "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
@@ -675,63 +693,13 @@ Specify a limit to the number of MPTs returned.
 }
 ```
 
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `mpt_issuance_id`          | `string`  |
-
-Indicates the `MPTokenIssuance` we queried.
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `mptokens`   | `object`   |
-
-A JSON object representing an array of `mptoken`s (see Section 1.6.0.3.2.1). Includes all relevant fields in the underlying `MPToken` object.
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `marker`          | `string`  |
-
-Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
-
-##### 1.6.0.3.2.1 `mptoken` fields
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `account`          | `string`  |
-
-The account address of the holder who owns the `MPToken`. 
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `flags`          | `number`  |
-
-The flags of the MPToken objects.
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `mpt_amount`          | `string`  |
-
-Hex-encoded amount of the holder's balance.
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `locked_amount`          | `string`  |
-
-Hex-encoded amount of the locked balance. (May be discarded if the value is 0)
-
-| Field Name        | JSON Type |
-|-------------------|:---------:|
-| `mptoken_index`          | `string`  |
-
-Key of the `MPToken` object. 
-
 #### 1.6.0.3 Synthetic `mpt_issuance_id` field
 `MPTokenIssuanceID` is an identifier that allows user to specify a `MPTokenIssuance` in RPCs. Therefore, a synthetically parsed `mpt_issuance_id` field is added into API responses to avoid the need for client-side parsing of the `MPTokenIssuanceID`.
 
 ##### 1.6.0.3.1 Transaction Metadata
  A `mpt_issuance_id` field is provided in JSON transaction metadata (not available for binary) for all successful `MPTokenIssuanceCreate` transactions. The following APIs are impacted: `tx`, `account_tx`, `subscribe` and `ledger`.
 
- ##### 1.6.0.3.1.1 Example
+ ###### 1.6.0.3.1.1 Example
  Example of a `tx` response:
 ```json
 {
@@ -764,7 +732,7 @@ Key of the `MPToken` object.
 ##### 1.6.0.3.2 Object
 A `mpt_issuance_id` field is provided in JSON `MPTokenIssuance` objects (not available for binary). The following APIs are impacted: `ledger_data` and `account_objects`.
 
-##### 1.6.0.3.2.1 Example
+###### 1.6.0.3.2.1 Example
 Example of an `account_objects` response:
 
 ```json
