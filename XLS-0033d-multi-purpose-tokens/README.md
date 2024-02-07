@@ -222,7 +222,7 @@ The ID of a MPToken object, a.k.a `MPTokenID` is the result of SHA512-Half of th
 
 ##### 1.2.1.2.2. Fields
 
-A **`MPToken`** object can have the following fields. The key of each MPToken is stored in the Owner Directory for the account that holds the `MPToken`.
+A **`MPToken`** object can have the following fields.
 
 | Field Name          | Required?          | JSON Type | Internal Type |
 |---------------------|--------------------|-----------|---------------|
@@ -235,7 +235,6 @@ A **`MPToken`** object can have the following fields. The key of each MPToken is
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | default            | `number`  | `UINT64`      |
-| `MPTokenNode`       | default            | `number`  | `UINT64`      |
 
 ###### 1.2.1.2.2.1. `LedgerEntryType`
 
@@ -280,10 +279,6 @@ The sequence of the ledger that contains the transaction that most recently modi
 
 Identifies the page in the owner's directory where this item is referenced.
 
-###### 1.2.1.2.2.10. `MPTokenNode`
-
-The MPT directory has exactly the same structure as an [Owner Directory](https://xrpl.org/directorynode.html), except this is a new type of directory that only indexes `MPTokens` for a single `MPTokenIssuance`. Ownership of this directory is still up for debate per [MPTokenNode Directories](#223-mptokennode-directories).
-
 ##### 1.2.1.2.3. Example MPToken JSON
 
  ```json
@@ -294,8 +289,7 @@ The MPT directory has exactly the same structure as an [Owner Directory](https:/
      "Flags": 0,
      "MPTAmount": "100000000",
      "LockedAmount": "0",
-     "OwnerNode": 1,
-     "MPTokenNode": 1
+     "OwnerNode": 1
  }
  ```
 
@@ -765,17 +759,17 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 
 Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
 
-### 2.2.3. `MPTokenNode` Directories?
+### 2.2.3. `MPTokenNode` Directories? (Outdated)
 
 The original intent of the `MPTokenNode` object is that it would be a sort of "directory" (i.e., an index) that stores a list of `MPTokenID` values (each 32 bytes) that exist for a single `MPTokenIssuance`. This would allow rippled to contain an RPC endpoint that could return a paged collection of `MPToken` objects for a given issuance, or somethign similar like an RPC called `mpt_holder_balances`. In theory, this could also enable rippled to operate a sort of "clean-up" operation that could remove dangling MPTokens that still live on a ledger after a corresponding `MPTokenIssuance` has been deleted (and thus return ledger reserves back to token holders).
 
-#### 2.2.3.1 Should We Have `MPTokenNode` Directories?
+#### 2.2.3.1 Should We Have `MPTokenNode` Directories? (Outdated)
 
 While the introduction of a `MPTokenNode` server a particular use-case, we should debate further if we actually want to be solving that use-case, both for MPTs and more generally. For example, some in the community believe that many (most?) RPCs should be removed from rippled itself, especially ones that exist primarily for indexing purposes. That is, we should avoid storing data in the ledger that is not used by actual transactors, but instead only exists to service external processes via RPC. For example, we might consider moving these RPCs into Clio or some other service so that data indexing and more expensive indexing responsibility can be removed from the ledger itself, and thus removed as a burden for certain infrastructure operators. 
 
 On the topic of removing dangling `MPTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of transactions deleting both trustlines and accounts. 
 
-#### 2.2.3.2 How Should We Design `MPTokenNode` Directories?
+#### 2.2.3.2 How Should We Design `MPTokenNode` Directories? (Outdated)
 
 The proposed design of a new "MPT-only" directory structure introduces a new pattern that should be considered more. For example, in the XRP Ledger there are currently two types of "Directory" -- an "Owner Directory" and an "Offer Directory." The proposal of a new type of MPT directory suggests that we create a new type of owner-less directory specifically for MPTs (similar to `NFTokenOfferNode`). This directory would indeed be similar to an "Offer Directory" in the sense that there would be no owner; but the design otherwise diverges from that concept in the sense that these new MPT directories would not be aimed at DEX or exchange operations as is the case for DEX offers and `NFTokenOfferNode` objects.
 
