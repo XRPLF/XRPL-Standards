@@ -595,15 +595,15 @@ A new Clio RPC is proposed.
 #### 1.6.0.1.1 `mpt_issuance` Field
 A `MPTokenIssuance` object can be queried by specifying the the `mpt_issuance` field.
 
-| Field Name           | Type| Description                                                                                                                                                                                                                               |
-|---------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `mpt_issuance`      | ️String  | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
+| Field Name           | Type    | Description |
+|--------------------- |:-------:| ------------|
+| `mpt_issuance`       | ️String   | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
 
 #### 1.6.0.1.1 `mptoken` Field
 A `MPToken` object can be queried by specifying the the `mptoken` field.
 
-| Field Name           | Type| Description                                                                                                                                                                                                                               |
-|---------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Field Name           | Type    | Description |
+|--------------------- |:-------:| ------------|
 | `mptoken`      | ️Object or String  | If string, interpret as ledger entry ID of the `MPToken` to retrieve. If an object, requires the sub-fields `account` and `mpt_issuance_id` to unique identify the `MPToken`.|
 | `mptoken.mpt_issuance_id`      | ️String  | (Required if `mptoken` is specified as an object) The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
 | `mptoken.account`      | ️String  | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.|
