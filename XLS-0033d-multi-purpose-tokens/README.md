@@ -675,7 +675,37 @@ A JSON object representing an array of `mptoken`s (see Section 1.6.0.3.2.1). Inc
 Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result.
 
 ##### 1.6.0.3.2.1 `mptoken` fields
-`mptokens
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `account`          | `string`  |
+
+The account address of the holder who owns a MPToken. 
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `flags`          | `number`  |
+
+The flags of the MPToken objects.
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `mpt_amount`          | `string`  |
+
+Hex-encoded amount of the holder's balance.
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `locked_amount`          | `string`  |
+
+Hex-encoded amount of how much is locked. (may be discarded if the value is 0)
+
+| Field Name        | JSON Type |
+|-------------------|:---------:|
+| `mptoken_index`          | `string`  |
+
+Key of the MPToken object. 
+
 # 2. Appendices
 
 ## 2.1 Appendix: FAQs
