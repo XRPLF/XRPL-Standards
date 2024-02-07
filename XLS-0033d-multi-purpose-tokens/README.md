@@ -290,7 +290,7 @@ The MPT directory has exactly the same structure as an [Owner Directory](https:/
  {
      "LedgerEntryType": "MPToken",
      "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
-     "MPTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+     "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
      "Flags": 0,
      "MPTAmount": "100000000",
      "LockedAmount": "0",
@@ -408,7 +408,7 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
  {
        "TransactionType": "MPTokenIssuanceDestroy",
        "Fee": 10,
-       "MPTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000"
+       "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E"
  }
  ```
  
@@ -443,7 +443,7 @@ An optional XRPL Address of an individual token holder balance to lock/unlock. I
  {
        "TransactionType": "MPTokenIssuanceSet",
        "Fee": 10,
-       "MPTokenIssuanceID": "00070C4495F14B0E44F78A264E41713C64B5F89242540EE255534400000000000000",
+       "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
        "Flags": 1
  }
  ```
@@ -552,13 +552,13 @@ Specifies the holders address that the issuer wants to clawback from. Th holder 
 
 ```json
 {
-    TransactionType: "Clawback",
-    Account: "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-    Amount: {
-      value: 10,
-      mpt_issuance_id: "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    "TransactionType": "Clawback",
+    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+    "Amount": {
+      "value": 10,
+      "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
     },
-    MPTokenHolder: "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG"
+    "MPTokenHolder": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG"
 }
 ```
 ### 1.4.0 Details on Locking MPTs
