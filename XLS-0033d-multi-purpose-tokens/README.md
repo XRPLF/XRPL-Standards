@@ -710,6 +710,26 @@ For example, MPTs might be better suited than NFTs for certain semi-fungible use
 
 That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
+### 2.1.12. What range does MPT amount support?
+An MPT `amount` is an unsigned integer that accommodates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which internally stores its amount value as an `int64_t` type. As a design choice, we elected to not refactor `Number` to accommodate any different size because that change would impact too many existing code paths to justify its benefit.
+
+### 2.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
+There are three important motivations for this design choice.
+
+First, we wanted to guard against an issuer accidentally (or maliciously) deleting an MPT issuance and then recreating it later with the same MPT identifier, most importantly to guard against any potential confusion on the part of previous token holders, or otherwise. Thus, it’s important that our design prevents deleted MPT issuances from being recreated at a later point in time by the same issuer. Using the `sequence` + `issuer` accomplished that goal.
+
+A second motivation is that we didn’t want the externally facing `MPTokenIdentifier` to be the actual identifier used to lookup an `MPTIssuance` in the ShaMap. This is because, in general, rippled should never allow external callers to specify a direct location in the ShaMap – instead, this value should always be computed, and combined with a transaction type or contextual data to inform the lookup.
+
+Last but not least, our design seeks to impose the fewest number of changes in the `rippled` codebase as possible. To this end, our design has the following implications:
+
+1. The `Issue` class in rippled will be redesigned to represent both a trustline or an MPT. In the case of an MPT, the `Issue` will have an `issuer` and `variant<currency, sequence>`. This enables the `Issue` class to be used to represent a trustline through an `issuer`/`currency` pair or an MPT through an `issuer`/`sequence` pair.
+2. When serializing `Issue` into an `STAmount`, the binary encoding can be split into `issuer` and `sequence` for easy decomposition. This removes any need to query the ledger to find this information (i.e., this is a primary reason not to use a simple hash as an MPT identifier when communicating to outsider clients.
+
+Some benefits of this design approach include that is (1) reduces the footprint of a serialized MPT `STAmount` to 264 bits; and (2) reduces the space required by an `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID`, which required 256-bits. Because `MPTokenIssuanceID` is a field in each `MPToken`, this will yield a space reduction of 64 bits per `MPToken`.
+
+### 2.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
+Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
+
 ## 2.2. Appendix: Outstanding Issues
 
 This section describes any outstanding or debatable issues that have not yet been resolved in this proposal.
