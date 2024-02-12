@@ -711,7 +711,7 @@ For example, MPTs might be better suited than NFTs for certain semi-fungible use
 That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
 ### 2.1.12. What range does MPT amount support?
-MPT amount is an unsigned integer that accomdoates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which conducts arithmetic operations using signed `uint64`, and therefore MPT amount cannot fully support the entire unsigned 64-bit range.
+An MPT `amount` is an unsigned integer that accommodates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which internally stores its amount value as an `int64_t` type. As a design choice, we elected to not refactor `Number` to accommodate any different size because that change would impact too many existing code paths to justify its benefit.
 
 ### 2.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
 There are three important motivations for this design choice.
