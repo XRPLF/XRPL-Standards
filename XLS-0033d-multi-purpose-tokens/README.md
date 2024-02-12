@@ -754,39 +754,39 @@ Example of an `account_objects` response:
 }
 ```
 
-# 7. Appendices
+### A. Appendices
 
-## 7.1. Appendix: FAQs
+#### A.1. Appendix: FAQs
 
-### 7.1.1. Are MPTs different from Trustlines?
+##### A.1.1. Are MPTs different from Trustlines?
 
 Yes, MPTs are different from Trustlines. Read more in [section 1.2](#112-assumptions).
 
 That said, there is some overlap in functionality between the two. For example, both MPTs and Trustlines can be used to issue a stablecoin. However, the original intent behind MPTs and Trustlines is subtly different, which impacts the on-ledger design of each. For clarity, Trustlines were invented primarily to service the idea of "community credit" and also to enhance liquidity on the ledger by making the same types of currency fungible amongst differing issuers (see [rippling](https://xrpl.org/rippling.html#rippling) for an example of each). MPTs, on the other hand, have three primary design motivations that are subtly different from Trustlines: (1) to enable tokenization using as little space (in bytes) on ledger as possible; (2) to eliminate floating point numbers and floating point math from the tokenization primitive; and (3) to make payment implementation simpler by, for example, removing [rippling](https://xrpl.org/rippling.html#rippling) and allowing MPT usage in places like [escrows](https://xrpl.org/escrow.html#escrow) or [payment channels](https://xrpl.org/payment-channels.html) in more natural ways.
 
-### 7.1.2. Are MPTs meant to replace Trustlines?
+##### A.1.2. Are MPTs meant to replace Trustlines?
 
 No, replacing Trustlines is not the intent behind MPTs. Instead, it's likely that MPTs and Trustline can and will coexist because they enable subtly different use-cases (see [FAQ 2.1.1.](#211-are-mpts-different-from-trustlines), in particular the part about rippling).
 
-### 7.1.3. Instead of MPTs, why not just make Trustlines smaller/better?
+##### A.1.3. Instead of MPTs, why not just make Trustlines smaller/better?
 
 While it's true there are some proposals to make Trustlines more efficient (e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to build and implement MPT is ultimately a choice that balances this risk/reward tradeoff towards introducing somethign new to avoid breaking any existing functionality.
 
-### 7.1.4. Are MPTs targeted for Mainnet or a Sidechain?
+##### A.1.4. Are MPTs targeted for Mainnet or a Sidechain?
 
 This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, MPTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-mpt-proposal-stored-mptoken-objects-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding MPTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
 
 In any event, we will first preview MPTs in a MPT-Devnet, and depending on what we learn there, revisit this issue then.
 
-### 7.1.5. Will MPTs be encoded into an STAmount, or is a new C++ object type required?
+##### A.1.5. Will MPTs be encoded into an STAmount, or is a new C++ object type required?
 
 MPTs will be able to be encoded in an `STAmount`. See [this gist](https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92) for more details.
 
-### 7.1.6. Is there a limit to the number of `MPTokenIssuance` or `MPToken` objects that a single account can hold?
+##### A.1.6. Is there a limit to the number of `MPTokenIssuance` or `MPToken` objects that a single account can hold?
 
 Practically speaking, no. The number of MPToken objects or MPTokenIssuance object that any account can hold is limited by the number of objects that can be stored in an owner directory, which is a very large number.
 
-### 7.1.7. An early draft of this MPT proposal stored `MPToken` objects in a paging structure similar to that used by NFTs. Why was that design abandoned?
+##### A.1.7. An early draft of this MPT proposal stored `MPToken` objects in a paging structure similar to that used by NFTs. Why was that design abandoned?
 
 The original design was optimized for on-ledger space savings, but it came with a tradeoff of increased complexity, both in terms of this specification and the implementation. Another consideration is the datapoint that many NFT developers struggled with the mechanism used to identify NFTs, some of which is a result of the NFT paging structure.
 
@@ -794,21 +794,21 @@ After analyzing on-ledger space requirements for (a) Trustlines, (b) `MPTokenPag
 
 With all that said, this decision is still open for debate. For example, in early 2024 the Ripple team plans to perform limit testing around Trustlines and the simpler MPT design to see how increased numbers of both types of ledger objects affect ledger performance. Once that data is complete, we'll likely revisit this design choice to either validate it or change it.
 
-### 7.1.8. Why is there no `MPTRedeem` Transaction?
+##### A.1.8. Why is there no `MPTRedeem` Transaction?
 
 This is because holders of a MPT can use a normal payment transaction to send MPT back to the issuer, thus "redeeming" it and removing it from circulation. Note that one consequence of this design choice is that MPT issuer accounts may not also hold `MPToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming MPT payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or should that payment go into an issuer's `MPToken` amount, and still be considered as "in circulation." For simplicity, we chose the former design, restricting MPT issuers from having `MPToken` objects at all.
 
-### 7.1.9. Why can't MPToken Issuers also hold their own balances of MPT in a MPToken object?
+##### A.1.9. Why can't MPToken Issuers also hold their own balances of MPT in a MPToken object?
 
 See the question above. This design also helps enforce a security best practice where an issuing account should not also be used as an issuer's transactional account. Instead, any issuer should use a different XRPL account for non-issuance activity of their MPTs.
 
-### 7.1.10. Why not use the `DepositPreauth` transaction for Authorized MPT Functionality?
+##### A.1.10. Why not use the `DepositPreauth` transaction for Authorized MPT Functionality?
 
 For MPTokenIssuances that have the `lsfMPTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized MPTs. Alternatively, we might consider `deposit_preauth` objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around MPTs emanating from the same issuer account.
 
 That said, this design is still TBD.
 
-### 7.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
+##### A.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
 
 The initial name, "Compact Fungible Token", did not effectively convey the flexibility and versatility of this token standard. Therefore, we introduced a new name, "Multi-Purpose Token", to better reflect its capacity to accommodate user customization, catering towards fungible, semi-fungible, and potentially even non-fungible token use cases. This renaming aims to highlight the extensive capabilities available via MPTs.
 
@@ -816,10 +816,10 @@ For example, MPTs might be better suited than NFTs for certain semi-fungible use
 
 That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
-### 7.1.12. What range does MPT amount support?
+##### A.1.12. What range does MPT amount support?
 An MPT `amount` is an unsigned integer that accommodates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which internally stores its amount value as an `int64_t` type. As a design choice, we elected to not refactor `Number` to accommodate any different size because that change would impact too many existing code paths to justify its benefit.
 
-### 7.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
+##### A.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
 There are three important motivations for this design choice.
 
 First, we wanted to guard against an issuer accidentally (or maliciously) deleting an MPT issuance and then recreating it later with the same MPT identifier, most importantly to guard against any potential confusion on the part of previous token holders, or otherwise. Thus, it’s important that our design prevents deleted MPT issuances from being recreated at a later point in time by the same issuer. Using the `sequence` + `issuer` accomplished that goal.
@@ -833,14 +833,14 @@ Last but not least, our design seeks to impose the fewest number of changes in t
 
 Some benefits of this design approach include that is (1) reduces the footprint of a serialized MPT `STAmount` to 264 bits; and (2) reduces the space required by an `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID`, which required 256-bits. Because `MPTokenIssuanceID` is a field in each `MPToken`, this will yield a space reduction of 64 bits per `MPToken`.
 
-### 7.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
+##### A.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
 Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
 
-## 7.2. Appendix: Supplemental Information
+#### A.2. Appendix: Supplemental Information
 
-### 7.2.1. On-Ledger Storage Requirements
+##### A.2.1. On-Ledger Storage Requirements
 
-#### 7.2.1.1. `RippleState` Object (Size in Bytes)
+###### A.2.1.1. `RippleState` Object (Size in Bytes)
 
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 202 to 218 bytes plus a minimum of 32 bytes for object owner tracking. In addition, each trustline actually requires entries in both participant's Owner Directories, among other bytes.
 
@@ -873,7 +873,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |               --- |     --      |     ---      |                                                                                                                                                               |                    
 |             TOTAL |    1952     |     244      |                                                                                                                                                               |                    
 
-#### 7.2.1.2. `MPToken` Object (Size in Bytes)
+###### A.2.1.2. `MPToken` Object (Size in Bytes)
 
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
 |------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -888,7 +888,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |               --- |     --      |     ---      |                                                                                                                                                            |
 |             TOTAL |     768     |     96      |                                                                                                                                                            |
 
-#### 7.2.1.3. Size Comparison
+###### A.2.1.3. Size Comparison
 
 As can be seen from the following size comparison table, Trustlines take up approximately 2.2x as much space on ledger, in bytes, as MPTs would.
 
@@ -899,10 +899,10 @@ As can be seen from the following size comparison table, Trustlines take up appr
 | Bytes for holding 32 Tokens |         2         |       5,556       |            4             |         12,264          |             2.2x              |
 | Bytes for holding 64 Tokens |         3         |      13,070       |            6             |         28,444          |             2.2x              |
 
-### 7.2.2. `STAmount` serialization
+##### A.2.2. `STAmount` serialization
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
-#### Binary Encoding
+###### Binary Encoding
 To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` STAmount encoding, there are 62 bits available. So, so we can repurpose one of these bits to indicate if an amount is indeed a MPT or not (and still have 4 bits left over for future use, if needed). 
 
 This enables MPT amounts to be represented in the current `STAmount` binary encoding.  he rules for reading the binary amount fields would be backward compatible, as follows:
@@ -912,7 +912,7 @@ This enables MPT amounts to be represented in the current `STAmount` binary enco
 3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and MPT).
 4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the remaining `STAmount` bytes as an MPT.
 
-#### Encoding for XRP Values (backward compatible)
+###### Encoding for XRP Values (backward compatible)
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -925,7 +925,7 @@ This enables MPT amounts to be represented in the current `STAmount` binary enco
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Encoding for MPT Values (backward compatible)
+###### Encoding for MPT Values (backward compatible)
 
 This encoding focuses on the first 3 bits of a MPT:
 
@@ -955,11 +955,11 @@ This encoding focuses on the rest of the bytes of a MPT (264 bits):
 
 Note: MPT introduces an extra leading byte in front of the MPT value. However, despite the MPT value being 64-bit, only 63 bits can be used. This limitation arises because internally, rippled needs to convert the value to `int64`, which has a smaller positive range compared to `uint64`.
 
-### 7.2.3. Allow-Listing
+##### A.2.3. Allow-Listing
 
 In certain use cases, issuers may want the option to only allow specific accounts to hold their MPT, similar to how authorization works for TrustLines.
 
-#### 7.2.3.1. Without Allow-Listing
+###### A.2.3.1. Without Allow-Listing
 
 Let's first explore how the flow looks like without allow-listing:
 
@@ -969,7 +969,7 @@ Let's first explore how the flow looks like without allow-listing:
 4. Bob no longer wants to use the MPT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `MPToken` object again.
 5. Bob then submits a `MPTokenAuthorize` transaction that has set the `tfMPTUnauthorize` flag, which will successfully delete `MPToken` object.
 
-#### 7.2.3.2. With Allow-Listing
+###### A.2.3.2. With Allow-Listing
 
 The issuer needs to enable allow-listing for the MPT by setting the `lsfMPTRequireAuth` on the `MPTokenIssuance`.
 
