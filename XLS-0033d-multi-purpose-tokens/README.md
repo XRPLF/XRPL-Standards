@@ -681,7 +681,7 @@ A `mptoken` object has the following parameters:
 | Field Name          | JSON Type | Description |
 | ------------------- |:---------:| ----------- |
 | `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
-| `flags`             | `number`  | The flags of the MPToken objects.|
+| `flags`             | `number`  | The flags of the `MPToken` object.|
 | `mpt_amount`        | `string`  | Hex-encoded amount of the holder's balance. |
 | `locked_amount`     | `string`  | Hex-encoded amount of the locked balance. (May be omitted if the value is 0) |
 | `mptoken_index`     | `string`  | Key of the `MPToken` object. |
@@ -836,84 +836,11 @@ Some benefits of this design approach include that is (1) reduces the footprint 
 ### 2.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
 Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
 
-## 2.2. Appendix: Outstanding Issues
+## 2.2. Appendix: Supplemental Information
 
-This section describes any outstanding or debatable issues that have not yet been resolved in this proposal.
+### 2.2.1 On-Ledger Storage Requirements
 
-### 2.2.1. `MPTokenIssuanceID` options
-
-There are a variety of ways to construct a `MPTokenIssuanceID`. This section outlines three that are currently up for debate:
-
-#### 2.2.1.1. Hash issuer address and currency code
-
-This is the conventional way of constructing an identifier, as the token holder can directly submit the transaction after knowing the issuer and the currency they want to use. However, if this is implemented, it means that after the issuer destroys an entire `MPTokenIssuance` (i.e., once nobody else holds any of it), the issuer can re-issue the same token with the same currency, resulting in the same `MPTokenIssuanceID`. This behavior can be misleading to token holders who have held onto the first iteration of the token rather than the re-issued one (since both iterations have the same `MPTokenIssuanceID`). In real world use cases(especially finance), after a fungible token is burned, it should not be possible to re-create it, and absolutely not with the same identifier.
-
-#### 2.2.1.2. Option A: Currency array and limit the number of MPT issuances
-
-This approach still constructs `MPTokenIssuanceID` by hashing the issuer address and currency code. But in an effort to solve the re-creatable `MPTokenIssuanceID` problem, the issuer stores an array of MPT currency codes that have been issued out. In this way, every time the issuer issues a new MPT, the ledger checks whether the currency code has already be used, and if so, the transaction fails. However, the problem with this approach is that the ledger would need to iterate through the currency array everytime the account attempts to issue a MPT, which would be unsustainable if the issuer can issue up to an unbounded number of MPTs. Hence, we impose a limit on the total number of MPTs that an account can issue(proposed limit is 32 MPTs).
-
-But, this approach is not very clean in solving the problem, and there is a limit on the number of MPTs that the account can issue, which is not ideal since we would want the issuer to issue as many MPTs as they want.
-
-#### 2.2.1.3. Option B: Construct MPTokenIssuance without currency code (current approach)
-
-We realized that the problem with re-creatable MPTs is due to the account/currency pair where the currency can be re-used many times after the MPT has been burned. To solve this problem, the `MPTokenIssuanceID` is now constructed from two parameters: the issuer address and transaction sequence. Since the transaction sequence is an increasing index, `MPTokenIssuanceID` will never be re-created. And thus, the AssetCode/currency can be made as an optional field that's going to be used purely for metadata purposes.
-
-Although using this approach would mean that MPT payment transactions would no longer involve the currency code, making it inconvenient for users, it is still an acceptable compromise. The ledger already has something similar - NFToken has a random identifier and uses clio for API services.
-
-### 2.2.2. Allow-Listing
-
-In certain use cases, issuers may want the option to only allow specific accounts to hold their MPT, similar to how authorization works for TrustLines.
-
-#### 2.2.2.1. Without Allow-Listing
-
-Let's first explore how the flow looks like without allow-listing:
-
-1. Alice holds a MPT with asset-code `USD`.
-2. Bob wants to hold it, and therefore submits a `MPTokenAuthorize` transaction specifying the `MPTokenIssuanceID`, and does not specify any flag. This will create a `MPToken` object with zero balance, and potentially taking up extra reserve.
-3. Bob can now receive and send payments from/to anyone using `USD`.
-4. Bob no longer wants to use the MPT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `MPToken` object again.
-5. Bob then submits a `MPTokenAuthorize` transaction that has set the `tfMPTUnauthorize` flag, which will successfully delete `MPToken` object.
-
-#### 2.2.2.2. With Allow-Listing
-
-The issuer needs to enable allow-listing for the MPT by setting the `lsfMPTRequireAuth` on the `MPTokenIssuance`.
-
-With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
-
-1. Alice has a MPT of currency `USD` (same as above)
-2. Bob wants to hold it, and therefore submits a `MPTokenAuthorize` transaction specifying the `MPTokenIssuanceID`, and does not specify any flag. This will create a `MPToken` object with zero balance, and potentially taking up extra reserve. (same as above)
-**However at this point, Bob still does not have the permission to use `USD`!**
-3. Alice needs to send a `MPTokenAuthorize` transaction specifying Bob's address in the `MPTokenHolder` field, and if successful, it will set the `lsfMPTAuthorized` flag on Bob's `MPToken` object. This will now finally enable Bob to use `USD`.
-4. Same as step 4 above
-6. 5. Same as step 5 above
-
-**It is important to note that the holder always must first submit the `MPTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `MPTokenAuthorize` before Bob.
-
-Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
-
-### 2.2.3. `MPTokenNode` Directories? (Old Design)
-
-The original intent of the `MPTokenNode` object is that it would be a sort of "directory" (i.e., an index) that stores a list of `MPTokenID` values (each 32 bytes) that exist for a single `MPTokenIssuance`. This would allow rippled to contain an RPC endpoint that could return a paged collection of `MPToken` objects for a given issuance, or somethign similar like an RPC called `mpt_holder_balances`. In theory, this could also enable rippled to operate a sort of "clean-up" operation that could remove dangling MPTokens that still live on a ledger after a corresponding `MPTokenIssuance` has been deleted (and thus return ledger reserves back to token holders).
-
-#### 2.2.3.1 Should We Have `MPTokenNode` Directories? (Old Design)
-
-While the introduction of a `MPTokenNode` server a particular use-case, we should debate further if we actually want to be solving that use-case, both for MPTs and more generally. For example, some in the community believe that many (most?) RPCs should be removed from rippled itself, especially ones that exist primarily for indexing purposes. That is, we should avoid storing data in the ledger that is not used by actual transactors, but instead only exists to service external processes via RPC. For example, we might consider moving these RPCs into Clio or some other service so that data indexing and more expensive indexing responsibility can be removed from the ledger itself, and thus removed as a burden for certain infrastructure operators. 
-
-On the topic of removing dangling `MPTokenObjects`, this solution would introduce a background thread into rippled that might have unintended consequences on actual node operation. In addition, the pre-exising way for ledger cleanup to occur is for account holders to issue delete transactions; for example, we've seen very many of these types of transactions deleting both trustlines and accounts. 
-
-#### 2.2.3.2 How Should We Design `MPTokenNode` Directories? (Old Design)
-
-The proposed design of a new "MPT-only" directory structure introduces a new pattern that should be considered more. For example, in the XRP Ledger there are currently two types of "Directory" -- an "Owner Directory" and an "Offer Directory." The proposal of a new type of MPT directory suggests that we create a new type of owner-less directory specifically for MPTs (similar to `NFTokenOfferNode`). This directory would indeed be similar to an "Offer Directory" in the sense that there would be no owner; but the design otherwise diverges from that concept in the sense that these new MPT directories would not be aimed at DEX or exchange operations as is the case for DEX offers and `NFTokenOfferNode` objects.
-
-As an alternative design, we might also (and instead) consider a new type of "Owner Directory" for MPTs that are (1) owned by the issuer yet (2) only holds `MPTokenID` values. In this way, this new type of directory would be more similar to an "Owner Directory" (because there's an owner), yet different because only `MPTokenID` values would be stored in this type of directory.
-
-Both proposals entail somewhat of a divergence in architecture from what exists, so each should be debated and discussed further to explore tradeoffs and implications.
-
-## 2.3. Appendix: Supplemental Information
-
-### 2.3.1 On-Ledger Storage Requirements
-
-#### 2.3.1.1. `RippleState` Object (Size in Bytes)
+#### 2.2.1.1. `RippleState` Object (Size in Bytes)
 
 As described in issue [#3866](https://github.com/ripple/rippled/issues/3866#issue-919201191), the size of a [RippleState](https://xrpl.org/ripplestate.html#ripplestate) object is anywhere from 202 to 218 bytes plus a minimum of 32 bytes for object owner tracking. In addition, each trustline actually requires entries in both participant's Owner Directories, among other bytes.
 
@@ -946,7 +873,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |               --- |     --      |     ---      |                                                                                                                                                               |                    
 |             TOTAL |    1952     |     244      |                                                                                                                                                               |                    
 
-#### 2.3.1.2. `MPToken` Object (Size in Bytes)
+#### 2.2.1.2. `MPToken` Object (Size in Bytes)
 
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
 |------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -961,7 +888,7 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |               --- |     --      |     ---      |                                                                                                                                                            |
 |             TOTAL |     768     |     96      |                                                                                                                                                            |
 
-#### 2.3.1.3. Size Comparison
+#### 2.2.1.3. Size Comparison
 
 As can be seen from the following size comparison table, Trustlines take up approximately 2.2x as much space on ledger, in bytes, as MPTs would.
 
@@ -972,7 +899,7 @@ As can be seen from the following size comparison table, Trustlines take up appr
 | Bytes for holding 32 Tokens |         2         |       5,556       |            4             |         12,264          |             2.2x              |
 | Bytes for holding 64 Tokens |         3         |      13,070       |            6             |         28,444          |             2.2x              |
 
-### 2.3.2. `STAmount` serialization
+### 2.2.2. `STAmount` serialization
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
 #### Binary Encoding
@@ -1027,3 +954,34 @@ This encoding focuses on the rest of the bytes of a MPT (264 bits):
 ```
 
 Note: MPT introduces an extra leading byte in front of the MPT value. However, despite the MPT value being 64-bit, only 63 bits can be used. This limitation arises because internally, rippled needs to convert the value to `int64`, which has a smaller positive range compared to `uint64`.
+
+### 2.2.3. Allow-Listing
+
+In certain use cases, issuers may want the option to only allow specific accounts to hold their MPT, similar to how authorization works for TrustLines.
+
+#### 2.2.3.1. Without Allow-Listing
+
+Let's first explore how the flow looks like without allow-listing:
+
+1. Alice holds a MPT with asset-code `USD`.
+2. Bob wants to hold it, and therefore submits a `MPTokenAuthorize` transaction specifying the `MPTokenIssuanceID`, and does not specify any flag. This will create a `MPToken` object with zero balance, and potentially taking up extra reserve.
+3. Bob can now receive and send payments from/to anyone using `USD`.
+4. Bob no longer wants to use the MPT, meaning that he needs to return his entire amount of `USD` back to the issuer through a `Payment` transaction. Resulting in a zero-balance `MPToken` object again.
+5. Bob then submits a `MPTokenAuthorize` transaction that has set the `tfMPTUnauthorize` flag, which will successfully delete `MPToken` object.
+
+#### 2.2.3.2. With Allow-Listing
+
+The issuer needs to enable allow-listing for the MPT by setting the `lsfMPTRequireAuth` on the `MPTokenIssuance`.
+
+With allow-listing, there needs to be a bidirectional trust between the holder and the issuer. Let's explore the flow and compare the difference with above:
+
+1. Alice has a MPT of currency `USD` (same as above)
+2. Bob wants to hold it, and therefore submits a `MPTokenAuthorize` transaction specifying the `MPTokenIssuanceID`, and does not specify any flag. This will create a `MPToken` object with zero balance, and potentially taking up extra reserve. (same as above)
+**However at this point, Bob still does not have the permission to use `USD`!**
+3. Alice needs to send a `MPTokenAuthorize` transaction specifying Bob's address in the `MPTokenHolder` field, and if successful, it will set the `lsfMPTAuthorized` flag on Bob's `MPToken` object. This will now finally enable Bob to use `USD`.
+4. Same as step 4 above
+6. 5. Same as step 5 above
+
+**It is important to note that the holder always must first submit the `MPTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `MPTokenAuthorize` before Bob.
+
+Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
