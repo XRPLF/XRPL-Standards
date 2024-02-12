@@ -980,7 +980,7 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 **However at this point, Bob still does not have the permission to use `USD`!**
 3. Alice needs to send a `MPTokenAuthorize` transaction specifying Bob's address in the `MPTokenHolder` field, and if successful, it will set the `lsfMPTAuthorized` flag on Bob's `MPToken` object. This will now finally enable Bob to use `USD`.
 4. Same as step 4 above
-6. 5. Same as step 5 above
+5. Same as step 5 above
 
 **It is important to note that the holder always must first submit the `MPTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `MPTokenAuthorize` before Bob.
 
