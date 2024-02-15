@@ -178,7 +178,7 @@ The `PriceDataSeries` of the transaction is copied to a newly created `PriceOrac
 - `PriceData` objects for (`BaseAsset`, `QuoteAsset`) token pairs that appear in the transaction but not the object are copied to the object.
 - `PriceData` objects for token pairs that appear in both the transaction and the object are overwritten in the object.
 - `PriceData` objects for token pairs that appear in both the transaction and the object and have `AssetPrice` missing in the transaction are deleted from the object.
-- `PriceData` objects for token pairs that appear only in the object are left unchanged.
+- `PriceData` objects for token pairs that appear only in the object have `AssetPrice` and `Scale` removed. These fields are omitted from the object to signify that the price is outdated.
 
 The order of token pairs in the transaction is not important because the token pair uniquely identifies the location of the `PriceData` object in the `PriceDataSeries` array of the `PriceOracle` object.
 
