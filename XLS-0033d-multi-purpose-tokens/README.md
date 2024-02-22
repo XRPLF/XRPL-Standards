@@ -331,7 +331,6 @@ Specifies the flags for this transaction. In addition to the universal transacti
 
 | Flag Name         | Flag Value | Description |
 |-------------------|------------|-------------|
-| `tfMPTLocked`                | ️`0x0001`  | If set, indicates that all balances should be locked. This is a global lock that locks up all of holders' funds for this MPToken.|
 | `tfMPTCanLock`  | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.|
 | `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
 | `tfMPTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
