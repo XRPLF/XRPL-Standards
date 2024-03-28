@@ -26,11 +26,9 @@ The architecture will be as follows:
 
 The first non-C++ language in which to implement this design will be Python. This is because there is an easy-to-use and well-documented C/C++ API, which will make the connectors easier to write, and it is usually well-known by devs of C++/other similar languages.
 
-We will initially implement this project in 4 languages:
+We will initially implement this project in 2 languages:
 -   C++
 -   Python
--   Javascript
--   Rust
 
 _Note:_ this design only applies to transactions and ledger objects, not RPC requests. There will be a separate design for that at a later point in time, as it would also be useful to have plugin versions of those features. It will likely be similar.
 
@@ -336,7 +334,7 @@ The field code of the `SField` of the inner object.
 The parameters of the inner object.
 
 ### 3.9 Shutdown
-Some languages, like Python and JavaScript, interact with C++ by running an interpreter in C++ that runs the code. Plugins written in these languages need to be told to shut down the interpreter when `rippled` shuts down. This is essentially a plugin cleanup function, and has a `void` return type.
+Some languages, like Python and JavaScript, interact with C++ by running an interpreter in C++ that runs the code. Plugins written in these languages sometimes need to be told to shut down the interpreter when `rippled` shuts down. This is essentially a plugin cleanup function, and has a `void` return type.
 
 - `extern “C” shutdown` (needed if any shutdown cleanup is needed)
 
