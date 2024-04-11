@@ -24,7 +24,7 @@ Use the next number that has not yet been used. If a conflict occurs, it will be
 
 When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that the discussion will be closed in a few days. This allows time (for those engaged with the discussion) to submit final commentary. 
 
-Once this waiting period has elapsed, the standard's author may close the discussion from further comment, and then move the discussion to a SPECIFICATION PULL REQUEST to add the standard into the repository as a markdown file (see below for specification formats).
+Once this waiting period has elapsed, the standard's author may close the discussion from further comment, and then move the discussion to a [**specification pull request**](#3.-specification-pull-requests) to add the standard into the repository as a markdown file (see below for specification formats).
 
 Next, the discussion author should edit the discussion to include a link to the PR. The last comment on the discussion should also be a link to the PR.
 
