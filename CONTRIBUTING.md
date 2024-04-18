@@ -20,7 +20,7 @@ When creating a new discussion for your idea, the discussion title should follow
 #### Specification Number
 Use the next number that has not yet been used. If a conflict occurs, it will be fixed by a maintainer or editor. Maintainers or editors also reserve the right to remove or re-number proposals as necessary. The number is important, as it will be used to reference features and ideas throughout the community.
 
-### 2. Closing Discussion
+### 2. Closing a Discussion
 
 When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that the discussion will be closed in a few days. This allows time (for those engaged with the discussion) to submit final commentary. 
 
