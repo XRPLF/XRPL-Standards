@@ -779,7 +779,7 @@ In any event, we will first preview MPTs in a MPT-Devnet, and depending on what 
 
 #### A.1.5. Will MPTs be encoded into an STAmount, or is a new C++ object type required?
 
-MPTs will be able to be encoded in an `STAmount`. See [this gist](https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92) for more details.
+MPTs will be able to be encoded in an `STAmount`. See the appendix called [STAmount Serialization](#a22-stamount-serialization) for more details.
 
 #### A.1.6. Is there a limit to the number of `MPTokenIssuance` or `MPToken` objects that a single account can hold?
 
