@@ -2,7 +2,7 @@
 title: Dynamic Non Fungible Tokens (dNFTs)
 type: Spec
 author: Vet 
-co-author: Mayukha Vadari
+co-author: Mayukha Vadari, TeQu
 </pre>
 
 ## Abstract
