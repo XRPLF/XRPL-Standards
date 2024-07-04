@@ -35,14 +35,14 @@ Oracles could supply dynamic real-world data to NFTs. To illustrate, a `dynamic 
 	 New Flags
 		- tfMutable
 
-### 3.1 lsfMutable
+### 3.1 tfMutable
 
 New flags for `NFTokenMint`:
 
 
 | Flag Name	        | Flag Value       |  Description     | 
 |-------------------|:----------------:|:-------------------------------------------------------------------------------------:|
-| `lsfMutable` | `0x00000016` | `Allow issuer (or an entity authorized by the issuer) to modify “URI”.` |
+| `tfMutable` | `0x00000010` | `Allow issuer (or an entity authorized by the issuer) to modify “URI”.` |
 
 
 
