@@ -97,8 +97,8 @@ Example (modify URI):
 	  }
 
 
-If `lsfMutable` is not set, executing NFTokenModify should fail!
+If `tfMutable` is not set, executing NFTokenModify should fail!
 
-If `lsfMutable` is set, executing NFTokenModify should fail when neither `Issuer` or an `account`authorized via `NFTokenMinter`, according to the specific flag, is executing the transaction.
+If `tfMutable` is set, executing NFTokenModify should fail when neither `Issuer` or an `account` authorized via `NFTokenMinter`, according to the specific flag, is executing the transaction.
 
 This approach takes into consideration that  `NFToken Flags` are part of the `NFTokenID`, mutating anything that is part of the `NFTokenID` must be avoided.
