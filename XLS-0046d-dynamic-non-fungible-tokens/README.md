@@ -9,7 +9,7 @@ co-author: Mayukha Vadari, TeQu
 
 This proposal aims to provide support for XLS-20 NFTs to modify/upgrade token properties.
 
-XLS-20 provides -Non-Fungible Token- support, these tokens are immutable and don’t allow any changes. Currently NFTs can’t be modified, resulting often in new mints, which leads to ledger bloat that eat valuable resources as well as experimental approaches to use website endpoints to mimic dynamic abilities.
+[XLS-20](link to spec) provides [Non-Fungible Token](link to docs) support, these tokens are immutable and don’t allow any changes. Currently NFTs can’t be modified, resulting often in new mints, which leads to ledger bloat that eat valuable resources as well as experimental approaches to use website endpoints to mimic dynamic abilities.
 
 Apart from the use of immutable NFTs, there is a wide range of use cases around dNFTs (Dynamic Non-Fungible Tokens) which are considered mutable NFTs. The goal is to provide both options to developers and users to cover all aspects of non fungibility, while choosing the least invasive approach to achieve this functionality.
 
