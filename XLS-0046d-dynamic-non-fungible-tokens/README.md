@@ -57,7 +57,7 @@ Transaction-specific Fields
 |-------------------|:----------------:|:---------------:|:---------------:|
 | `TransactionType` | `✔️` | `string` | `UINT16` |
 
-Indicates the `account` which is owning the NFT, in case of `account` not specified, it's implied that the submitting `account` is also the `Owner` of the NFT.
+Indicates the `account` which is owning the NFT, in case of `Owner` not specified, it's implied that the submitting `account` is also the `Owner` of the NFT.
 
 | Field Name	  | Required?	      |  JSON Type	 | Internal Type    | 
 |-------------------|:----------------:|:---------------:|:---------------:|
