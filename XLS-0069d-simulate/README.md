@@ -48,7 +48,6 @@ The shape of the return object is very similar to the [response of the `tx` meth
 |---|---|---|---|
 |`tx_json`|If `binary` was `false`|`object`|The transaction that was simulated, including auto-filled values. Included if `binary` was `false`.|
 |`tx_blob`|If `binary` was `true`|`string`|The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`.|
-| `hash` |✔️ | `string` | The unique identifying hash of the transaction. |
 | `ledger_index` |✔️ | `number` | The ledger index of the ledger that includes this transaction. |
 | `meta` |  | `object` (JSON) or `string` (binary) | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code).|
 
@@ -168,12 +167,9 @@ Performance tests will need to be conducted in order to ensure that a malicious 
          "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
          "value": "1"
        }
-     },
-     "ledger_index": 21184399,
-     "ledger_hash": "BA614E270F9430E6602F253905613B7A049342C4146645698A5077EBABBADF00",
+     }
    },
    "id": 2,
-   "api_version": 2,
    "status": "success",
    "type": "response"
  }
