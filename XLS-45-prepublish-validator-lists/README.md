@@ -1,5 +1,5 @@
 <pre>
-title: <b>prepublish validator lists</b>
+title: <b>Prepublish Validator Lists</b>
 type: released in rippled 1.7.0
 description: Future activation date and improved expiration handling of UNLs
 author: <a href="mailto:ed@ripple.com">Ed Hennis (Ripple)</a>
