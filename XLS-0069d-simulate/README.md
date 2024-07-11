@@ -190,13 +190,17 @@ No, because the ledger state, which affects how a transaction is processed, may 
 If the node is configured to provide public API access, yes. The load is similar to that of the `submit` method. If performance tests reveal that the function takes too much of a node’s resources even with [rate limits](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/rate-limiting/), then it may be an admin-only method, which means that you would need administrator access to a node, or need to run your own node, to call this function.
 
 ### A.4: What types of transactions can be simulated?
-All transaction types can be simulated.
+All transaction types can be simulated. You can use it to ensure that your transaction is correctly formatted and has the right settings, or to determine the outcome of large or complex transactions, or something else entirely.
 
 ### A.5: Can I use this method for debugging transactions?
 Absolutely! The simulate function is a valuable tool for debugging and troubleshooting transactions before they are submitted to the network. You can test different scenarios and identify potential issues before committing the actual transaction.
 
 ### A.6: Can I use this method to test transactions sent by accounts that I don’t control (such as a customer’s account)?
 Yes, since the simulated transaction does not need to be signed.
+
+### A.7: Why is this API useful if I can just replicate the scenario in a testnet?
+
+If you're trying to run a complex transaction, or just a DEX transaction, it can be difficult to replicate the entire system in a testnet. There may also be factors and edgecases that your transaction will run into that you simply don't think about replicating in your testnet recreation.
 
 ### A.7: Why isn’t this function instead called [insert alternative here]?
 Several other names were considered during the ideation process, such as `submit_dry_run`, `dry_run`, or `preview`, or even just including a `dry_run: true` parameter in the submit method. We decided against having the word “submit” anywhere in the name of the method to avoid confusion from people thinking that the method actually submits a transaction, and the name "simulate" has some precedent in being used by other systems and APIs.
