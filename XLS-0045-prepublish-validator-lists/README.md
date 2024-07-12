@@ -8,20 +8,30 @@ author: <a href="mailto:ed@ripple.com">Ed Hennis (Ripple)</a>
 
 ## Abstract
 
-Adds a future effective date to UNLs so that all nodes in the peer network can switch to a new UNL simultaneously. 
-Creates a new version of the VL file spec to allow publishing multiple UNLs in one file, including current and
-future UNLs. Adds enforcement of the UNL expiration date so that rippled will act similarly to being amendment
-blocked if it has no active valid UNL.
+Each XRPL server (node) must be configured with a UNL (Unique Node List), which
+lists the validating nodes that the server considers trusted. A validator list
+includes the public key of the list publisher, a manifest, a signature, a
+version, and a base64-encoded blob that contains a UNL.
 
-:bangbang: Note that these changes were merged into rippled in
-    [1.7.0-b10](https://github.com/XRPLF/rippled/pull/3720) on
-    January 11, 2021. The original pull request was titled
-    ["Support UNLs with future effective dates: (UNL v2)"](https://github.com/XRPLF/rippled/pull/3619). The
-    original specification was published on a (now?) private repository. The purpose of this XLS is to make
-    the specification of these changes more accessible so that related tooling can be updated, and to make it
-    easier for UNL publishers to use the new format. Any improvements to this spec can be integrated into
-    rippled in a later pull request. Most of this content is written from the perspective of rippled before
-    these changes were merged.
+This document defines version 2 of the VL (Validator List) spec. Compared to
+version 1, it adds a future effective date so that nodes in the peer-to-peer
+network can switch to a new UNL simultaneously. It also supports publishing
+multiple UNLs in one file, allowing future UNLs to be included alongside a
+current UNL.
+
+This spec also defines the enforcement of the UNL expiration date so that a
+server will act similarly to being amendment-blocked if it has no active valid
+UNL.
+
+This spec was finalized and implemented in `rippled` version
+[1.7.0-b10](https://github.com/XRPLF/rippled/pull/3720) on January 11, 2021. The
+original pull request was titled ["Support UNLs with future effective dates:
+(UNL v2)"](https://github.com/XRPLF/rippled/pull/3619). The purpose of this XLS
+is to make the specification of these changes widely accessible so that related
+tooling can be updated. Any further improvements to the VL format should be
+defined in a new spec and implemented in `rippled` with a new pull request. Most
+of the following content is written from the perspective of `rippled` before
+these changes were merged.
 
 ## Motivation
 
@@ -140,6 +150,13 @@ The `blob` format is
   ]
 }
 ```
+
+"[ripple time](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time)"
+is the number of seconds since the "Ripple Epoch" of January 1, 2000 (00:00
+UTC). This is similar to how the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)
+works, except the Ripple Epoch is 946,684,800 seconds after the Unix Epoch. Do
+not convert Ripple Epoch times to Unix Epoch times in 32-bit variables, as this
+could lead to integer overflows.
 
 #### Future format
 
@@ -269,8 +286,12 @@ See the [appendix](#appendix) for descriptions of some other migration
 strategies that were considered and rejected.
 
 -------------------------------------------- ---------
-:bangbang: Since this code was merged, there have been several amendments enabled on Mainnet,
-  so there are no versions of rippled that don't support v2.
+:bangbang: Support for XLS-45 has been fully deployed across all XRPL Mainnet
+nodes.
+
+This is because, after the "UNLv2" implementation was included in a release,
+amendments from that release (or later) have been enabled. For details, see
+[Amendment Blocked Servers](https://xrpl.org/docs/concepts/networks-and-servers/amendments/#amendment-blocked-servers).
 -------------------------------------------- ---------
 
 
