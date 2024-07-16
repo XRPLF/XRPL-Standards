@@ -48,7 +48,7 @@ This proposal suggests changing the behavior at __Step 3__ to
 
 
 #### 2.1.2. Order Book and AMM
-In the payment engine, offers and AMM pools can be consumed in the path when cross-currency exchange is involved, it will result in change of trustline balance. 
+In the payment engine, offers and AMM pools can be consumed in the path when cross-currency payment is involved, it will result in change of trustline balance. 
 ##### 2.1.2.1. Order Book
 Currently, consumption of offers is allowed even if the offer owner has been individually frozen on the trustline of the buy amount (`TakerPays`). This proposal introduces a new change: __if the offer owner has been individually frozen on the trustline of `TakerPays` currency, the offer is considered to be _unfunded_ and therefore the step fails .__
 ##### 2.1.2.1.1. Example
