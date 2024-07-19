@@ -560,7 +560,7 @@ Specifies the holders address that the issuer wants to clawback from. Th holder 
 
 To lock an individual balance of an individual MPT an issuer will submit the `MPTokenIssuanceSet` transaction, indicate the MPT and holder account that they wish to lock, and set the `tfMPTLock` flag. This operation will fail if::
 
-* The MPT has the `lsfMPTCanLock` flag _not_ set
+* The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
 Issuers can unlock the balance by submitting another `MPTokenIssuanceSet` transaction with the `tfMPTUnlock` flag set.
 
@@ -568,7 +568,7 @@ Issuers can unlock the balance by submitting another `MPTokenIssuanceSet` transa
 
 This operation works the same as above, except that the holder account is not specified in the `MPTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if::
 
-* The MPT issuer has the `lsfMPTCanLock` flag _not_ set on their account
+* The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
 Locking an entire MPT without locking other assets issued by an issuer is a new feature of MPTs.
 
