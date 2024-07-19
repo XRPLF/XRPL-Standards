@@ -49,7 +49,7 @@ The shape of the return object is very similar to the [response of the `tx` meth
 |`tx_json`|If `binary` was `false`|`object`|The transaction that was simulated, including auto-filled values. Included if `binary` was `false`.|
 |`tx_blob`|If `binary` was `true`|`string`|The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`.|
 | `ledger_index` |✔️ | `number` | The ledger index of the ledger that includes this transaction. |
-| `meta` |  | `object` (JSON) or `string` (binary) | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code).|
+| `metadata` |  | `object` (JSON) or `string` (binary) | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code).|
 
 ### 2.3. Error Cases
 
@@ -93,93 +93,98 @@ Performance tests will need to be conducted in order to ensure that a malicious 
 #### 4.1.2. Response
 ```
 {
-   "result": {
-     "tx_json": {
-       "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-       "DeliverMax": {
-         "currency": "USD",
-         "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-         "value": "1"
-       },
-       "Destination": "ra5nK24KXen9AHvsdFTKHSANinZseWnPcX",
-       "Fee": "10",
-       "Flags": 2147483648,
-       "Sequence": 360,
-       "TransactionType": "Payment"
-     },
-     "meta": {
-       "AffectedNodes": [
-         {
-           "ModifiedNode": {
-             "FinalFields": {
-               "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-               "AccountTxnID": "4D5D90890F8D49519E4151938601EF3D0B30B16CD6A519D9C99102C9FA77F7E0",
-               "Balance": "75159663",
-               "Flags": 9043968,
-               "OwnerCount": 5,
-               "Sequence": 361,
-               "TransferRate": 1004999999
-             },
-             "LedgerEntryType": "AccountRoot",
-             "LedgerIndex": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
-             "PreviousFields": {
-               "AccountTxnID": "2B44EBE00728D04658E597A85EC4F71D20503B31ABBF556764AD8F7A80BA72F6",
-               "Balance": "75169663",
-               "Sequence": 360
-             },
-             "PreviousTxnID": "2B44EBE00728D04658E597A85EC4F71D20503B31ABBF556764AD8F7A80BA72F6",
-             "PreviousTxnLgrSeq": 18555460
-           }
-         },
-         {
-           "ModifiedNode": {
-             "FinalFields": {
-               "Balance": {
-                 "currency": "USD",
-                 "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
-                 "value": "12.0301"
-               },
-               "Flags": 65536,
-               "HighLimit": {
-                 "currency": "USD",
-                 "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                 "value": "0"
-               },
-               "HighNode": "0",
-               "LowLimit": {
-                 "currency": "USD",
-                 "issuer": "ra5nK24KXen9AHvsdFTKHSANinZseWnPcX",
-                 "value": "100"
-               },
-               "LowNode": "0"
-             },
-             "LedgerEntryType": "RippleState",
-             "LedgerIndex": "96D2F43BA7AE7193EC59E5E7DDB26A9D786AB1F7C580E030E7D2FF5233DA01E9",
-             "PreviousFields": {
-               "Balance": {
-                 "currency": "USD",
-                 "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
-                 "value": "11.0301"
-               }
-             },
-             "PreviousTxnID": "7FFE02667225DFE39594663DEDC823FAF188AC5F036A9C2CA3259FB5379C82B4",
-             "PreviousTxnLgrSeq": 9787698
-           }
-         }
-       ],
-       "TransactionIndex": 0,
-       "TransactionResult": "tesSUCCESS",
-       "delivered_amount": {
-         "currency": "USD",
-         "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-         "value": "1"
-       }
-     }
-   },
-   "id": 2,
-   "status": "success",
-   "type": "response"
- }
+  "id": 2,
+  "result": {
+    "applied": false,
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The simulated transaction would have been applied.",
+    "ledger_index": 3,
+    "metadata": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+              "AccountTxnID": "4D5D90890F8D49519E4151938601EF3D0B30B16CD6A519D9C99102C9FA77F7E0",
+              "Balance": "75159663",
+              "Flags": 9043968,
+              "OwnerCount": 5,
+              "Sequence": 361,
+              "TransferRate": 1004999999
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
+            "PreviousFields": {
+              "AccountTxnID": "2B44EBE00728D04658E597A85EC4F71D20503B31ABBF556764AD8F7A80BA72F6",
+              "Balance": "75169663",
+              "Sequence": 360
+            },
+            "PreviousTxnID": "2B44EBE00728D04658E597A85EC4F71D20503B31ABBF556764AD8F7A80BA72F6",
+            "PreviousTxnLgrSeq": 18555460
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "USD",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "12.0301"
+              },
+              "Flags": 65536,
+              "HighLimit": {
+                "currency": "USD",
+                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "value": "0"
+              },
+              "HighNode": "0",
+              "LowLimit": {
+                "currency": "USD",
+                "issuer": "ra5nK24KXen9AHvsdFTKHSANinZseWnPcX",
+                "value": "100"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "96D2F43BA7AE7193EC59E5E7DDB26A9D786AB1F7C580E030E7D2FF5233DA01E9",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "USD",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "11.0301"
+              }
+            },
+            "PreviousTxnID": "7FFE02667225DFE39594663DEDC823FAF188AC5F036A9C2CA3259FB5379C82B4",
+            "PreviousTxnLgrSeq": 9787698
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": {
+        "currency": "USD",
+        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "value": "1"
+      }
+    },
+    "tx_json": {
+      "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+      "DeliverMax": {
+        "currency": "USD",
+        "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "value": "1"
+      },
+      "Destination": "ra5nK24KXen9AHvsdFTKHSANinZseWnPcX",
+      "Fee": "10",
+      "Flags": 2147483648,
+      "Sequence": 360,
+      "TransactionType": "Payment"
+    }
+  },
+  "status": "success",
+  "type": "response"
+}
  ```
 
 # Appendix
