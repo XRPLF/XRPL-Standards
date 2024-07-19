@@ -36,9 +36,9 @@ The `simulate` method applies a transaction (and returns the result and metadata
 |`tx_json`| |`object`|The transaction to simulate, in JSON format.|
 |`binary`| |`boolean`|If `true`, return transaction data and metadata as binary [serialized](https://xrpl.org/docs/references/protocol/binary-format/) to hexadecimal strings. If `false`, return transaction data and metadata as JSON. The default is `false`.|
 
-A valid request must have exactly one of `tx_blob` or `tx_json` included. The transaction **must** be unsigned.
+A valid request must have exactly one of `tx_blob` or `tx_json` included. The transaction **must** be unsigned (though public keys, if included, will still be verified).
 
-If the `Fee` field is omitted (not set) in the transaction, then the server will [automatically fill in](https://xrpl.org/docs/references/protocol/transactions/common-fields/#auto-fillable-fields) a value. The calculated `Fee` value will be present in the response. The same is true of the `Sequence` field.
+If the `Fee` field is omitted (not set) in the transaction, then the server will [automatically fill in](https://xrpl.org/docs/references/protocol/transactions/common-fields/#auto-fillable-fields) a value. The calculated `Fee` value will be present in the response. The same is true of the `Sequence` and `SigningPubKey` fields.
 
 ### 2.2. Response Fields
 
@@ -50,6 +50,13 @@ The shape of the return object is very similar to the [response of the `tx` meth
 |`tx_blob`|If `binary` was `true`|`string`|The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`.|
 | `ledger_index` |✔️ | `number` | The ledger index of the ledger that includes this transaction. |
 | `meta` |  | `object` (JSON) or `string` (binary) | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code).|
+
+### 2.3. Error Cases
+
+The RPC will error (i.e. not return a response in the shape described above) if:
+* Both (or neither) `tx_json` and `tx_blob` are included in the request.
+* Any of the fields are of an incorrect type.
+* The transaction is signed.
 
 ## 3. Security
 
@@ -202,8 +209,8 @@ Yes, since the simulated transaction does not need to be signed.
 
 If you're trying to run a complex transaction, or just a DEX transaction, it can be difficult to replicate the entire system in a testnet. There may also be factors and edgecases that your transaction will run into that you simply don't think about replicating in your testnet recreation.
 
-### A.7: Why isn’t this function instead called [insert alternative here]?
-Several other names were considered during the ideation process, such as `submit_dry_run`, `dry_run`, or `preview`, or even just including a `dry_run: true` parameter in the submit method. We decided against having the word “submit” anywhere in the name of the method to avoid confusion from people thinking that the method actually submits a transaction, and the name "simulate" has some precedent in being used by other systems and APIs.
+### A.8: Why isn’t this function instead called [insert alternative here]?
+Several other names were considered during the ideation process, such as `submit_dry_run`, `dry_run`, or `preview`, or even just including a `dry_run: true` parameter in the submit method. We decided against having the word `“submit”` anywhere in the name of the method to avoid confusion from people thinking that the method actually submits a transaction, and the name `"simulate"` has some precedent in being used by other systems and APIs.
 
 ## Appendix B: Example Use Cases
 
