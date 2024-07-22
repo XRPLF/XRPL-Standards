@@ -48,8 +48,9 @@ The shape of the return object is very similar to the [response of the `tx` meth
 |---|---|---|---|
 |`tx_json`|If `binary` was `false`|`object`|The transaction that was simulated, including auto-filled values. Included if `binary` was `false`.|
 |`tx_blob`|If `binary` was `true`|`string`|The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`.|
-| `ledger_index` |✔️ | `number` | The ledger index of the ledger that includes this transaction. |
-| `metadata` |  | `object` (JSON) or `string` (binary) | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code).|
+|`ledger_index`|✔️|`number`|The ledger index of the ledger that includes this transaction.|
+|`meta`|If `binary` was `false`|`object`|Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `false`.|
+|`meta_blob`|If `binary` was `true`|`string`| Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `true`.|
 
 ### 2.3. Error Cases
 
@@ -100,7 +101,7 @@ Performance tests will need to be conducted in order to ensure that a malicious 
     "engine_result_code": 0,
     "engine_result_message": "The simulated transaction would have been applied.",
     "ledger_index": 3,
-    "metadata": {
+    "meta": {
       "AffectedNodes": [
         {
           "ModifiedNode": {
@@ -177,7 +178,6 @@ Performance tests will need to be conducted in order to ensure that a malicious 
       },
       "Destination": "ra5nK24KXen9AHvsdFTKHSANinZseWnPcX",
       "Fee": "10",
-      "Flags": 2147483648,
       "Sequence": 360,
       "TransactionType": "Payment"
     }
