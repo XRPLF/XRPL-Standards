@@ -365,10 +365,9 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
   "TransactionType": "MPTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
   "AssetScale": "2",
-  "TransferFee": 314,
-  "MaxAmount": "50000000",
-  "Flags": 83659,
-  "MPTokenMetadata": "FOO",
+  "MaximumAmount": "5F5E100",
+  "Flags": 66,
+  "MPTokenMetadata": "464F4F",
   "Fee": 10
 }
 ```
