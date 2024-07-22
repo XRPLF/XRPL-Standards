@@ -31,9 +31,9 @@ In the current behavior, after the issuer freezes a trustline by setting `lsfHig
 Let's take a look at an example where rippling is involved in transfering the funds and compare how the result differs between the current and proposed behaviors.
 
 ```
-+-------+           USD           +--------+           USD           +-------+
-| Alice | ----------------------> | Issuer | ----------------------> |  Bob  |
-+-------+                         +--------+      (Bob is frozen)    +-------+
++-------+           USD           +---------+           USD           +-------+
+| Alice | ----------------------> | Gateway | ----------------------> |  Bob  |
++-------+                         +---------+      (Bob is frozen)    +-------+
 ```
 
 Consider the following scenario:
@@ -48,61 +48,39 @@ This proposal suggests changing the behavior at __Step 3__ to
 
 
 #### 2.1.2. Order Book and AMM
-In the payment engine, offers and AMM pools can be consumed in the path when cross-currency payment is involved, it will result in change of trustline balance. 
+In the payment engine, offers and AMM pools can be consumed in the path when cross-currency payment is involved, it will result in change of trustline balance. This proposal introduces behavior changes to how offers work, as they currently allow the receipt of funds on a frozen trustline. However, no changes are introduced for the AMM pool, as the AMM account already denies the receipt of funds if its trustlines are frozen by the issuer of the assets.
+
 ##### 2.1.2.1. Order Book
-Currently, consumption of offers is allowed even if the offer owner has been individually frozen on the trustline of the buy amount (`TakerPays`). This proposal introduces a new change: __if the offer owner has been individually frozen on the trustline of `TakerPays` currency, the offer is considered to be _unfunded_ and therefore the step fails .__
+Currently, consumption of offers is allowed even if the buy amount (`TakerPays`) has been individually frozen. This proposal introduces a new change: __if the offer owner has been individually frozen on the trustline of `TakerPays` currency, the offer is considered to be _unfunded_ and therefore the step fails .__
 ##### 2.1.2.1.1. Example
 Let's take a look at an example where offer is involved in transfering the funds and compare how the result differs between the current and proposed behaviors.
 
 
 ```
-                                     Bob's Offer
-+-------+         USD             +--------------+          XRP            +-------+
-| Alice | ----------------------> | Sell: 100 XRP| ----------------------> | Carol |
-+-------+     SendMax: 100 USD    +--------------+                         +-------+
-              Amount: 100 XRP     | Buy: 100 USD |       
-                                  +--------------+
-                                   (Bob is frozen)                             
+                                                                     Bob's Offer
++-------+         USD            +---------+        USD           +--------------+          XRP            +-------+
+| Alice | ---------------------> | Gateway | -------------------> | Sell: 100 XRP| ----------------------> | Carol |
++-------+     SendMax: 100 USD   +---------+                      +--------------+                         +-------+
+              Amount: 100 XRP                                     | Buy: 100 USD |       
+                                                                  +--------------+
+                                                                   (Bob is frozen)                             
 ```
 
 Consider the following scenario:
 
 1. Issuer account issues USD to both Alice and Bob, each of which has a trustline.
 2. Issuer individually freezes Bob's trustline.
-3. Alice attempts to send a XRP to Carol through a `Payment` transaction using Bob's offer to exchange USD for XRP. In the current behavior, Alice will be able to successfully send 100 XRP to Carol, and Bob receives 100 USD.
+3. Alice attempts to send XRP to Carol through a `Payment` transaction using Bob's offer to exchange USD for XRP. In the current behavior, Alice will be able to successfully send 100 XRP to Carol, and Bob receives 100 USD.
 
 This proposal suggests changing the behavior at  __Step 3__ to 
 
-> Alice attempts to send a XRP to Carol through a `Payment` transaction using Bob's offer to exchange USD for XRP. Alice fails to send XRP to Carol because Bob's offer is unfunded due to the frozen trustline.
-
-##### 2.1.2.2. AMM
-Similarly, an AMM step can increase the trustline balance of a token holder even if they have been individually frozen. This proposal introduces a new change: __the step fails if the token being swapped out of an AMM pool results in an increase in the balance of a frozen trustline.__
-
-##### 2.1.2.2.1. Example
-Let's take a look at an example where AMM is involved in transfering the funds and compare how the result differs between the current and proposed behaviors.
-
-```
-                                     AMM Pool
-+-------+        XRP              +------------+          USD            +-------+
-| Alice | ----------------------> | 100 XRP    | ----------------------> |  Bob  |
-+-------+     SendMax: 100 XRP    +------------+     (Bob is frozen)     +-------+
-              Amount: 100 USD     | 10000 USD  |       
-                                  +------------+                                                      
-```
-
-Consider the following scenario:
-
-1. Issuer account issues USD to Bob, who has a trustline.
-2. An AMM pool is created with USD and XRP assets and assume the pool has a quality good enough to provide XRP to USD swaps.
-3. Alice attempts to send a cross-currency `Payment` transaction to Bob, who's frozen. In the current behavior, Alice will be able to successfully send USD to Bob through the AMM pool by swapping XRP for USD.
-
-This proposal suggests changing the behavior at __Step 3__ to 
-
-> Alice attempts to send a cross-currency `Payment` transaction to Bob, who's frozen. Alice _fails_ to send USD to Bob through the AMM pool because Bob has been individually frozen.
+> Alice attempts to send XRP to Carol through a `Payment` transaction using Bob's offer to exchange USD for XRP. Alice fails to send XRP to Carol because Bob's offer is unfunded due to the frozen trustline.
 
 ### 2.2. `OfferCreate` transaction
 This proposal introduces a new change to the `OfferCreate` transaction. Currently, if the holder has been frozen, they are still allowed to submit a `OfferCreate` transaction that specifies `TakerPays` as the frozen token, allowing them to receive more funds despite already being frozen by the issuer. We propose the following change:
 * `OfferCreate` returns `tecUNFUNDED_OFFER` if the currency of `TakerPays` has been frozen by the issuer (either individually or globally)
+
+Moreover, any existing offers with `TakerPays` currency frozen _can no longer be consumed and will be considered as an _unfunded_ offer that will be implicitly cancelled by new Offers that cross it._
 
 ## 3. Invariants
 One potential invariant could be disallowing any increase in the balance of a frozen trustline as a result of a `Payment` transaction.
