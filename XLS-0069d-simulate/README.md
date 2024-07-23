@@ -1,3 +1,4 @@
+
 <pre>
 Title:       <b>Simulating Transaction Execution</b>
 Revision:    <b>1</b> (2024-07-23)
@@ -216,6 +217,10 @@ If you're trying to run a complex transaction, or just a DEX transaction, it can
 
 ### A.8: Why isn’t this function instead called [insert alternative here]?
 Several other names were considered during the ideation process, such as `submit_dry_run`, `dry_run`, or `preview`, or even just including a `dry_run: true` parameter in the submit method. We decided against having the word `“submit”` anywhere in the name of the method to avoid confusion from people thinking that the method actually submits a transaction, and the name `"simulate"` has some precedent in being used by other systems and APIs.
+
+### A.9: Will `NetworkID` also be autofilled?
+
+No, because it's useful to ensure that users are running their transactions on the correct network.
 
 ## Appendix B: Example Use Cases
 
