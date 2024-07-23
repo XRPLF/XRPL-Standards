@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Simulating Transaction Execution</b>
-Revision:    <b>1</b> (2024-06-03)
+Revision:    <b>1</b> (2024-07-23)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
              <a href="mailto:elliot@ripple.com">Elliot Lee</a>
@@ -14,7 +14,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 The XRPL protocol supports numerous different transaction types, with more being added over time. Many transactions are complex and can have numerous modes, flags, and parameters. Some combinations of these can lead to unpredictable results, especially since transactions frequently behave differently depending on the current state of the ledger. This is particularly paramount for high-value transactions, as it is crucial to understand the likely outcome of the transaction and ensure that its effects align with expectations.
 
-This proposal puts forth a new API method, tentatively titled `simulate`, which executes a [dry run](https://en.wikipedia.org/wiki/Dry_run_(testing)) of a transaction submission. Unlike the existing `submit` function, `simulate` never submits the transaction to the network. This allows users to test transactions and preview their results (including metadata) without committing them to the XRP Ledger.
+This spec proposes a new API method named `simulate`, which executes a [dry run](https://en.wikipedia.org/wiki/Dry_run_(testing)) of a transaction submission. Unlike the existing `submit` function, `simulate` never submits the transaction to the network. This allows users to test transactions and preview their results (including metadata) without committing them to the XRP Ledger.
 
 The `simulate` API method offers an efficient way to safely experiment with transactions on any ledger, such as the Mainnet ledger. Unlike using test networks, which can require faithfully replicating an entire scenario for experimentation, `simulate` allows users to "apply" transactions to a Mainnet (or other) ledger without actually submitting the transaction to be applied permanently. This allows developers and users to test and refine their transactions with confidence before committing them for real.
 
@@ -30,13 +30,13 @@ The `simulate` method applies a transaction (and returns the result and metadata
 
 ### 2.1. Request Fields
 
-|Field Name|Required?|JSON Type|Description|
-|-------|---------|---------|---------|
-|`tx_blob`| |`string`|The transaction to simulate, in [binary format](https://xrpl.org/docs/references/protocol/binary-format/).|
-|`tx_json`| |`object`|The transaction to simulate, in JSON format.|
-|`binary`| |`boolean`|If `true`, return transaction data and metadata as binary [serialized](https://xrpl.org/docs/references/protocol/binary-format/) to hexadecimal strings. If `false`, return transaction data and metadata as JSON. The default is `false`.|
+|Field Name|JSON Type|Description|
+|-------|---------|---------|
+|`tx_blob`|`string`|The transaction to simulate, in [binary format](https://xrpl.org/docs/references/protocol/binary-format/).|
+|`tx_json`|`object`|The transaction to simulate, in JSON format.|
+|`binary`|`boolean`|If `true`, return transaction data and metadata as binary [serialized](https://xrpl.org/docs/references/protocol/binary-format/) to hexadecimal strings. If `false`, return transaction data and metadata as JSON. The default is `false`.|
 
-A valid request must have exactly one of `tx_blob` or `tx_json` included. The transaction **must** be unsigned (though public keys, if included, will still be verified).
+A valid request must have exactly one of `tx_blob` or `tx_json` included. The transaction **must** be unsigned. Public keys (`SigningPubKey`), if included, will be verified.
 
 If the `Fee` field is omitted (not set) in the transaction, then the server will [automatically fill in](https://xrpl.org/docs/references/protocol/transactions/common-fields/#auto-fillable-fields) a value. The calculated `Fee` value will be present in the response. The same is true of the `Sequence` and `SigningPubKey` fields.
 
@@ -63,11 +63,11 @@ The RPC will error (i.e. not return a response in the shape described above) if:
 
 The transaction will not actually be submitted. Users and tooling will have to be careful to be using the right RPC when they want to submit vs. not submit.
 
-Since the simulated transaction must be unsigned, a malicious rippled node cannot submit a transaction that a user only wanted to simulate, not submit.
+Since the simulated transaction must be unsigned, a malicious `rippled` node cannot submit a transaction that a user only wanted to simulate, not submit.
 
-However, a malicious rippled node could still lie about what your transaction does, or front-run your transaction.
+However, a malicious `rippled` node could still lie about what your transaction does, or front-run your transaction.
 
-Performance tests will need to be conducted in order to ensure that a malicious user cannot DoS a rippled node by calling this function too many times, especially when pertaining to a complex transaction that affects many ledger objects. If it is too taxing on a node, it may be implemented as an admin-only method.
+Performance tests will need to be conducted in order to ensure that a malicious user cannot DoS a `rippled` node by calling this function too many times, especially when pertaining to a complex transaction that affects many ledger objects. If it is too taxing on a node, it may be implemented as an admin-only method.
 
 ## 4. Example
 
