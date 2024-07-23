@@ -1,4 +1,3 @@
-
 <pre>
 Title:       <b>Simulating Transaction Execution</b>
 Revision:    <b>1</b> (2024-07-23)
