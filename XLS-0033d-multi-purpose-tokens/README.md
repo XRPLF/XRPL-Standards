@@ -364,10 +364,10 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
 {
   "TransactionType": "MPTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
-  "AssetScale": "2",
-  "MaximumAmount": "5F5E100",
-  "Flags": 66,
-  "MPTokenMetadata": "464F4F",
+  "AssetScale": "2", // <-- Divisible into 100 units / 10^2
+  "MaximumAmount": "5F5E100", //  <-- 100,000,000 (Hex)
+  "Flags": 66, // <-- tfMPTCanLock and tfMPTCanClawback
+  "MPTokenMetadata": "464F4F", // <-- "FOO" (HEX)
   "Fee": 10
 }
 ```
