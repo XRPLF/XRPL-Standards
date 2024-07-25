@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Simulating Transaction Execution</b>
-Revision:    <b>1</b> (2024-07-23)
+Revision:    <b>1</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
              <a href="mailto:elliot@ripple.com">Elliot Lee</a>
