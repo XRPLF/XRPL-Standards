@@ -18,7 +18,7 @@ This proposal introduces new improvements on how frozen trustlines interacts wit
 
 ## 2. Specification
 ### 2.1. Payment Engine
-Payment engine executes paths that is made of steps to connect the sender to the receiver. In general, funds can be deposited into a frozen trustline through one of the two steps:
+Payment engine executes paths that is made of steps to connect the sender to the receiver. In general, funds can be deposited into a frozen trustline through one of two steps:
 * Rippling
 * Order book or AMM
 
@@ -80,7 +80,7 @@ This proposal suggests changing the behavior at  __Step 3__ to
 This proposal introduces a new change to the `OfferCreate` transaction. Currently, if the holder has been frozen, they are still allowed to submit a `OfferCreate` transaction that specifies `TakerPays` as the frozen token, allowing them to receive more funds despite already being frozen by the issuer. We propose the following change:
 * `OfferCreate` returns `tecFROZEN` if the currency of `TakerPays` has been frozen by the issuer (either individually or globally)
 
-Moreover, any existing offers with `TakerPays` currency frozen _can no longer be consumed and will be considered as an _unfunded_ offer that will be implicitly cancelled by new Offers that cross it._
+Moreover, any existing offers with `TakerPays` currency frozen __can no longer be consumed and will be considered as an _unfunded_ offer that will be implicitly cancelled by new Offers that cross it.__
 
 ## 3. Invariants
 One potential invariant could be disallowing any increase in the balance of a frozen trustline as a result of any type of transaction.
