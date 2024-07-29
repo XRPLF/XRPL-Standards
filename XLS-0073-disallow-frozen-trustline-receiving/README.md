@@ -10,7 +10,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-This amendment empowers token issuers on the XRP Ledger to regulate tokens to prevent misuse by blacklisted accounts. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that blacklisted token holders can no longer receive funds. These changes will significantly improve use cases such as stablecoins, where ensuring regulatory compliance is essential.
+This amendment empowers token issuers on the XRP Ledger to prevent token misuse by frozen account holders. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that frozen token holders cannot receive funds until or unless their trustline is unfrozen. These changes will significantly improve use cases such as stablecoins and real world assets (RWA), where ensuring regulatory compliance is essential.
 
 ## 1. Overview
 This proposal introduces new improvements on how frozen trustlines interacts with payment, offers, DEX and AMM. In essence, trustlines, that have been frozen (either individually or globally), should not be able to receive funds in any way.
