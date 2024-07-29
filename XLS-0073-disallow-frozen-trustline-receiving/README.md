@@ -1,7 +1,7 @@
 <pre>
-Title:       <b>Disallow Receiving on Frozen Trustlines</b>
+Title:       <b>XLS-73d Disallow Receiving on Frozen Trustlines</b>
 Type:        <b>draft</b>
-
+Revision:    <b>1</b> (2024-07-29)
 Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
 Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
@@ -10,7 +10,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-This amendment empowers token issuers on the XRP Ledger to regulate tokens in an effort to prevent misuse by blacklisted accounts. This document proposes enhancements to the interactions between frozen assets and payment. This proposal will ensure that blacklisted token holders can no longer receive funds, which will significantly improve use cases such as stablecoins, where ensuring regulatory compliance is essential.
+This amendment empowers token issuers on the XRP Ledger to regulate tokens to prevent misuse by blacklisted accounts. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that blacklisted token holders can no longer receive funds. These changes will significantly improve use cases such as stablecoins, where ensuring regulatory compliance is essential.
 
 ## 1. Overview
 This proposal introduces new improvements on how frozen trustlines interacts with payment, offers, DEX and AMM. In essence, trustlines, that have been frozen (either individually or globally), should not be able to receive funds in any way.
@@ -57,13 +57,13 @@ Let's take a look at an example where offer is involved in transfering the funds
 
 
 ```
-                                                                     Bob's Offer
-+-------+         USD            +---------+        USD           +--------------+          XRP            +-------+
-| Alice | ---------------------> | Gateway | -------------------> | Sell: 100 XRP| ----------------------> | Carol |
-+-------+     SendMax: 100 USD   +---------+                      +--------------+                         +-------+
-              Amount: 100 XRP                                     | Buy: 100 USD |       
-                                                                  +--------------+
-                                                                   (Bob is frozen)                             
+                                                                 Bob's Offer
++-------+         USD            +---------+        USD       +--------------+      XRP     +-------+
+| Alice | ---------------------> | Gateway | ---------------> | Sell: 100 XRP| -----------> | Carol |
++-------+     SendMax: 100 USD   +---------+                  +--------------+              +-------+
+              Amount: 100 XRP                                 | Buy: 100 USD |       
+                                                              +--------------+
+                                                               (Bob is frozen)                             
 ```
 
 Consider the following scenario:
@@ -83,7 +83,7 @@ This proposal introduces a new change to the `OfferCreate` transaction. Currentl
 Moreover, any existing offers with `TakerPays` currency frozen _can no longer be consumed and will be considered as an _unfunded_ offer that will be implicitly cancelled by new Offers that cross it._
 
 ## 3. Invariants
-One potential invariant could be disallowing any increase in the balance of a frozen trustline as a result of a `Payment` transaction.
+One potential invariant could be disallowing any increase in the balance of a frozen trustline as a result of any type of transaction.
 
 
 
