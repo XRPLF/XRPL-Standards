@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Atomic/Batch Transactions</b>
-Revision:    <b>3</b>
+Revision:    <b>4</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
