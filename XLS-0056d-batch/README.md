@@ -21,7 +21,8 @@ Some use-cases that may be enabled by batch transactions include (but are certai
 * All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
 * Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
 * Platform fees: Package platform fees within the transaction itself, simplifying the process.
-* Swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
+* Trustless swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
+* Flash loans: Borrowing funds, using them, and returning them all in the same transaction.
 * Withdrawing accounts (multi-account): Attempt a withdrawal from your checking account, and if that fails, withdraw from your savings account instead.
 
 ## 1. Overview
@@ -211,26 +212,30 @@ The fields contained in this object are:
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
-|`Account`|✔️|`string`|`AccountID`|
-|`OuterSequence`|✔️|`number`|`UInt32`|
+|`OuterAccount`|✔️|`string`|`AccountID`|
 |`Sequence`| |`number`|`UInt32`|
+|`TicketSequence`| |`number`|`UInt32`|
 |`BatchIndex`|✔️|`number`|`UInt8`|
 
-#### 3.1.1. `Account`
+#### 3.1.1. `OuterAccount`
 
 This is the account that is submitting the outer `Batch` transaction.
 
-#### 3.1.2. `OuterSequence`
+#### 3.1.2. `Sequence`
 
-This is the sequence number of the outer `Batch` transaction. Its inclusion ensures that there are no hash collisions with other `Batch` transactions.
+This is the next valid sequence number of the inner transaction sender (i.e. all inner _and_ outer transactions from the same account will have the same `BatchTxn.Sequence` value). Its inclusion ensures that there are no hash collisions with other `Batch` transactions, and also allows for proper sequence number calculation (see section 4.2 for more details).
 
-#### 3.1.3. `Sequence`
+In other words, a single-account `Batch` transaction will have the same sequence number in the outer transaction _and_ all the inner transactions.
 
-This is the next available sequence number for the inner transaction's account. This only needs to be included in a multi-account `Batch` transaction. See section 4.1 for an explanation as to why this is needed.
+#### 3.1.3. `TicketSequence`
+
+If the account submitting the inner transaction wants to use a ticket instead of their natural sequence number, they can use this field instead of the `Sequence` field.
 
 #### 3.1.4. `BatchIndex`
 
-This is the (0-indexed) index of the inner transaction within the existing `Batch` transaction. The first inner transaction will have `BatchIndex` value `0`, the second will be `1`, etc. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Batch` transaction, and that the transactions are all placed in the right order.
+This is the (0-indexed) index of the inner transaction within the existing `Batch` transaction, per account. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Batch` transaction, the sequence numbers are properly handled, and the transactions are all placed in the right order.
+
+In other words, the first inner transaction from Alice will have `BatchIndex` value `0`, the second will be `1`, etc. Then, the first transaction from Bob (and the third overall transaction) will have `BatchIndex` value of `0` again, and so on.
 
 ## 4. Edge Cases of Transaction Processing
 
@@ -240,9 +245,7 @@ Inner transactions don't have `Sequence`s or `TicketSequence`s, unlike a normal 
 
 Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
 
-To get around this, in single-account `Batch` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `BatchTxn.OuterSequence + BatchTxn.BatchIndex`.
-
-Multi-account transactions use the same "phantom sequence number" strategy, but instead uses the equation `BatchTxn.Sequence + BatchTxn.BatchIndex`, since the `OuterSequence` does not map to the inner transaction's account.
+To get around this, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `BatchTxn.TicketSequence ?? (BatchTxn.Sequence + BatchTxn.BatchIndex)`. Note that this means that any 
 
 ### 4.2. Sequence Number Handling
 
@@ -304,8 +307,8 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
           value: "2"
         },
         BatchTxn: {
-          Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-          OuterSequence: 3,
+          OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+          Sequence: 3,
           BatchIndex: 0
         },
         Sequence: 0,
@@ -321,8 +324,8 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
         Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
         Amount: "1000",
         BatchTxn: {
-          Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-          OuterSequence: 3,
+          OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+          Sequence: 3,
           BatchIndex: 1
         },
         Sequence: 0,
@@ -374,8 +377,8 @@ Note that the inner transactions are committed as normal transactions, and the `
       value: "2"
     },
     BatchTxn: {
-      Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-      OuterSequence: 3,
+      OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+      Sequence: 3,
       BatchIndex: 0
     },
     Sequence: 0,
@@ -389,8 +392,8 @@ Note that the inner transactions are committed as normal transactions, and the `
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
     BatchTxn: {
-      Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-      OuterSequence: 3,
+      OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+      Sequence: 3,
       BatchIndex: 1
     },
     Sequence: 0,
@@ -431,8 +434,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
         BatchTxn: {
-          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-          OuterSequence: 4,
+          OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           Sequence: 4,
           BatchIndex: 0
         },
@@ -453,10 +455,9 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
           value: "2"
         },
         BatchTxn: {
-          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-          OuterSequence: 4,
+          OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           Sequence: 20,
-          BatchIndex: 1
+          BatchIndex: 0
         },
         Sequence: 0,
         Fee: "0",
@@ -535,8 +536,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
     BatchTxn: {
-      Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-      OuterSequence: 4,
+      OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       Sequence: 4,
       BatchIndex: 0
     },
@@ -555,10 +555,9 @@ Note that the inner transactions are committed as normal transactions, and the `
       value: "2"
     },
     BatchTxn: {
-      Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-      OuterSequence: 4,
+      OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       Sequence: 20,
-      BatchIndex: 1
+      BatchIndex: 0
     },
     Sequence: 0,
     Fee: "0",
