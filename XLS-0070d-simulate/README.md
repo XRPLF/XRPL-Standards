@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>On-Chain Credentials</b>
-Revision:    <b>3</b> (2024-07-23)
+Revision:    <b>3</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
