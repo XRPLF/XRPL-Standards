@@ -13,10 +13,17 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 This amendment empowers token issuers on the XRP Ledger to prevent token misuse by frozen account holders. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that frozen token holders cannot receive funds until or unless their trustline is unfrozen. These changes will significantly improve use cases such as stablecoins and real world assets (RWA), where ensuring regulatory compliance is essential.
 
 ## 1. Overview
-This proposal introduces new improvements on how frozen trustlines interacts with payment, offers, DEX and AMM. In essence, trustlines, that have been frozen (either individually or globally), should not be able to receive funds in any way. **This is a breaking change.**
+This proposal introduces new trustline flag,`lsfInboundFrozen`,  that interacts with payment, offers, DEX and AMM. In essence, issuers can block receiving of funds for holders who have been frozen inbound. **This is a breaking change.**
 
 
 ## 2. Specification
+### 2.1. Inbound freeze mechanism
+The Inbound Freeze feature is a setting on a trust line. When an issuer enables the Inbound Freeze setting, the following rules apply to the tokens in that trust line:
+- The counterparty of that trust line can no longer increase its balance on the trust line, except in direct payments from the issuer.
+- The counterparty can still send payments to others on the inbound frozen trustline
+- The counterparty's offers to buy the tokens in the inbound frozen trustline are considered __unfunded__
+#### 2.1.1. `RippleState` object
+Two new flags lsfLowInboundFreeze and lsfHighInboundFreeze are introduced in the `RippleState` (trustline) object.
 ### 2.1. Payment Engine
 Payment engine executes paths that is made of steps to connect the sender to the receiver. In general, funds can be deposited into a frozen trustline through one of two steps:
 * Rippling
