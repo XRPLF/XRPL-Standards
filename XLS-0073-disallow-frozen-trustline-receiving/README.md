@@ -19,7 +19,7 @@ This proposal introduces a new inbound-freeze feature for the trustlines that in
 ## 2. Specification
 ### 2.1. Inbound-Freeze Mechanism
 The Inbound-Freeze feature is a setting on a trust line. When an issuer enables the Inbound-Freeze setting, the following rules apply to the tokens in that trust line:
-- The counterparty of that trust line can no longer increase its balance on the trust line, except in direct payments from the issuer.
+- The counterparty of that trust line can no longer increase their balance on the trust line, except in direct payments from the issuer.
 - The counterparty can still send payments to others on the inbound-frozen trustline
 - The counterparty's offers to buy the tokens in the inbound-frozen trustline are considered __unfunded__
 #### 2.1.1. `RippleState` Object
@@ -67,12 +67,12 @@ Consider the following scenario:
 
 
 #### 2.1.2. Order Book and AMM
-In the payment engine, offers and AMM pools can be consumed in the path when cross-currency payment is involved, it will result in change of trustline balance. This proposal introduces behavior changes to how offers work, as they currently allow the receipt of funds on a frozen trustline. However, no changes are introduced for the AMM pool, as the AMM account already denies the receipt of funds if its trustlines are frozen by the issuer of the assets.
+In the payment engine, offers and AMM pools can be consumed in the path when a cross-currency payment is involved, resulting in a change to the trustline balance. This proposal introduces behavior changes to the order book and AMM steps when trustlines have been inbound-frozen.
 
 ##### 2.1.2.1. Order Book
 This proposal introduces a change to the order book step: __if the offer owner has been inbound-frozen on the trustline of the `TakerPays` token, the offer is considered to be _unfunded_ and the step fails.__
 
-##### 2.1.2.1.1. Example
+###### Example
 Let's take a look at an example where offer is involved in transfering the funds and compare how the result differs between the current and proposed behaviors.
 
 
@@ -95,7 +95,7 @@ Consider the following scenario:
 ##### 2.1.2.2. AMM
 This proposal introduces a change to the AMM step: __if the AMM account has been inbound-frozen by the issuer on the trustline of the token that its trying to swap in, the step fails.__
 
-##### 2.1.2.2.1. Example
+###### Example
 Let's take a look at an example where an AMM pool is involved in transfering the funds:
 
 
@@ -125,7 +125,7 @@ Moreover, any existing offers where the owner has been inbound-frozen on the `Ta
 
 ### 2.3. `AMMWithdraw` transaction
 This proposal introduces a new change to the `AMMWithdraw` transaction:
-* `AMMWithdraw` returns `tecINBOUND_FROZEN` if the holder is inbound-frozen for either one of the assets in the pool.
+* `AMMWithdraw` returns `tecINBOUND_FROZEN` if the holder is inbound-frozen for either of the assets in the pool.
 
 
 ## 3. Invariants
