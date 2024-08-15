@@ -509,7 +509,7 @@ Indicates the ID of the MPT involved.
 | ----------- | --------- | --------- | ------------- |
 | `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
 
-Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; must be empty if submitted by the holder.
+Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; should not be present if submitted by the holder.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
