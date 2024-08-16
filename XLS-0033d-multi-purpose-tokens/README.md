@@ -198,7 +198,7 @@ MPTokenIssuance objects are uniquely identified by a combination of a type-speci
 
 ###### 2.1.1.4.2. Adding a **`MPTokenIssuance`** object
 
-A **`MPTokenIssuance`** object can be added by using the same approach to find the **`MPTokenIssuance`**, and adding it to that directory. If, after addition, the number of MPTs in the directory would exceed 32, then the operation must fail.
+A **`MPTokenIssuance`** object can be added by using the same approach to find the **`MPTokenIssuance`**, and adding it to that directory.
 
 ###### 2.1.1.4.3. Removing a **`MPTokenIssuance`** object
 
@@ -342,9 +342,9 @@ Specifies the flags for this transaction. In addition to the universal transacti
 | ------------- | --------- | --------- | ------------- |
 | `TransferFee` |           | `number`  | `UINT16`      | 
 
-The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001.
+The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001. The default value is 0 if this field is not specified.
 
-The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it is, the transaction should fail and a fee should be claimed.
+The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it is, the transaction should fail with `temMALFORMED`.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
@@ -509,7 +509,7 @@ Indicates the ID of the MPT involved.
 | ----------- | --------- | --------- | ------------- |
 | `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
 
-Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; must be empty if submitted by the holder.
+Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; should not be present if submitted by the holder.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
