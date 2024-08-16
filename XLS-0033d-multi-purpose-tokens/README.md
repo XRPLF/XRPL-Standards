@@ -342,7 +342,7 @@ Specifies the flags for this transaction. In addition to the universal transacti
 | ------------- | --------- | --------- | ------------- |
 | `TransferFee` |           | `number`  | `UINT16`      | 
 
-The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001.
+The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001. The default value is 0 if this field is not specified.
 
 The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it is, the transaction should fail with `temMALFORMED`.
 
