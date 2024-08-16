@@ -198,7 +198,7 @@ MPTokenIssuance objects are uniquely identified by a combination of a type-speci
 
 ###### 2.1.1.4.2. Adding a **`MPTokenIssuance`** object
 
-A **`MPTokenIssuance`** object can be added by using the same approach to find the **`MPTokenIssuance`**, and adding it to that directory. If, after addition, the number of MPTs in the directory would exceed 32, then the operation must fail.
+A **`MPTokenIssuance`** object can be added by using the same approach to find the **`MPTokenIssuance`**, and adding it to that directory.
 
 ###### 2.1.1.4.3. Removing a **`MPTokenIssuance`** object
 
