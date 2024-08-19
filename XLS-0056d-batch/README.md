@@ -27,11 +27,12 @@ Some use-cases that may be enabled by batch transactions include (but are certai
 
 ## 1. Overview
 
-This spec proposes one new transaction: `Batch`. It also proposes an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureBatch`.
+This spec adds one new transaction: `Batch`. It also adds an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureBatch`.
 
 The rough idea of this design is that users can include "sub-transactions" inside `Batch`, and these transactions are processed atomically. The design also supports transactions from different accounts in the same `Batch` wrapper transaction.
 
 ### 1.1. Terminology
+
 * **Inner transaction**: the sub-transactions included in the `Batch` transaction, that are executed atomically.
 * **Outer transaction**: the wrapper `Batch` transaction itself.
 * **Batch mode** or **mode**: the "mode" of batch processing that the transaction uses. See section 2.2 for more details.
@@ -94,6 +95,8 @@ This spec supports four modes:
 * `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00000004`)
 * `INDEPENDENT` or `tfIndependent` (with a value of `0x00000008`)
 
+A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
+
 #### 2.2.1. `ALLORNOTHING`
 All or nothing. All transactions must succeed for any of them to succeed.
 
@@ -117,8 +120,6 @@ Each inner transaction:
 * **Must not** have a sequence number. It must use a sequence number value of `0`.
 * **Must not** have a fee. It must use a fee value of `"0"`.
 * **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
-
-A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
 **This field is not included in the validated transaction, nor is it used to compute the outer transaction signature(s)**, since all transactions are included separately as a part of the ledger.
 
@@ -191,11 +192,7 @@ There will also be a pointer back to the parent outer transaction (`parent_batch
 
 ## 3. Transaction Common Fields
 
-As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/common-fields/) are the fields that all transactions currently have.
-
-<!--There are too many and I didn't want to list them all, it cluttered up the spec - but maybe it can be a collapsed section?-->
-
-We propose these modifications:
+This standard adds one new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/):
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
@@ -203,7 +200,7 @@ We propose these modifications:
 
 ### 3.1. `BatchTxn`
 
-The `BatchTxn` inner object **must** be included in any inner transaction of a `Batch` transaction. Its inclusion:
+The `BatchTxn` inner object **must** be included in any inner transaction of a `Batch` transaction (and must not be included in any other transactions). Its inclusion:
 * Prevents hash collisions between identical transactions (since sequence numbers aren't included).
 * Ensures that every transaction has a sequence number associated with it, so that created ledger objects that use it in their ID generation can still operate.
 * Allows users to more easily organize their transactions in the correct order.
