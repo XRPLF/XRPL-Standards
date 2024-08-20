@@ -27,7 +27,6 @@ We propose:
 * Creating a `Credential` ledger object
 * Modifying the `DepositPreauth` ledger object
 * Modifying the `DepositPreauth` transaction
-* Creating a `Credential` ledger object
 * Creating a `CredentialCreate` transaction type
 * Creating a `CredentialAccept` transaction type
 * Creating a `CredentialDelete` transaction type
