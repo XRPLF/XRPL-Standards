@@ -19,7 +19,7 @@ On-chain credentialing can streamline various processes within the XRPL ecosyste
 
 ## 1. Overview
 
-This design adds support for creating, accepting, and deleting credentials. It also extends the existing [Deposit Authorization](https://xrpl.org/docs/concepts/accounts/depositauth) feature, allowing accounts to not only whitelist specific accounts, but also whitelist accounts with specific credentials.
+This design adds support for creating, accepting, and deleting credentials. It also extends the existing [Deposit Authorization](https://xrpl.org/docs/concepts/accounts/depositauth) feature, allowing accounts to not only allowlist specific accounts, but also allowlist accounts with specific credentials.
 
 This proposal only supports blocking the interactions that Deposit Authorization supports, such as direct payments. However, future proposals could add support for credential-gating in other parts of the XRPL, such as AMMs or lending pools.
 
@@ -31,36 +31,47 @@ We propose:
 * Creating a `CredentialAccept` transaction type
 * Creating a `CredentialDelete` transaction type
 
-This feature will require an amendment, tentatively titled `featureCredentialAuth`.
+This feature will require an amendment, tentatively titled `CredentialAuth`.
 
 ### 1.1. Background: DIDs and Verifiable Credentials (VCs)
 
 A [verifiable credential](https://en.wikipedia.org/wiki/Verifiable_credentials) (VC), as defined by the [W3C specification](https://www.w3.org/TR/vc-data-model-2.0/), is a secure and tamper-evident way to represent information about a subject, such as an individual, organization, or even an IoT device. These credentials are issued by a trusted entity and can be verified by third parties without directly involving the issuer at all.
 
-For a clearer understanding of the relationship between [DIDs (Decentralized Identifiers)](https://en.wikipedia.org/wiki/Decentralized_identifier) and VCs, a real-world example is considered. A DID serves as a unique identifier for an entity, similar to a fingerprint or a photo of a person (their physical characteristics). In contrast, a VC acts as a verifiable piece of information associated with that DID, much like a driver's license or passport. When a third party needs to verify an identity claim, they can examine the VC presented by the entity and ensure it aligns with the corresponding DID (such as comparing the photo on a driver's license to the physical characteristics of the person to whom it supposedly belongs).
+For a clearer understanding of the relationship between [DIDs (Decentralized Identifiers)](https://en.wikipedia.org/wiki/Decentralized_identifier) and VCs, consider the following analogy. A DID serves as a unique identifier for an entity, similar to a fingerprint or a photo of a person (their physical characteristics). In contrast, a VC acts as a verifiable piece of information associated with that DID, much like a driver's license or passport. When a third party needs to verify an identity claim, they can examine the VC presented by the entity and ensure it aligns with the corresponding DID (such as comparing the photo on a driver's license to the physical characteristics of the person to whom it supposedly belongs).
 
 ### 1.2. Terminology
 
 * **Credential**: A representation of one or more assertions made by an issuer. For example, a passport is a representation of the assertion that a person is a citizen of a given country.
 * **Issuer**: The account that creates (issues) the credential. For example, a passport is issued by a country's government.
 * **Subject**: The account that the credential is issued to. For example, a passport is issued to a specific person.
-* **Whitelist**: A list of accounts that are allowed to do a given action, or (if used as a verb) the action of adding an account to said list.
-* **Preauthorization**: Essentially the same thing as whitelisting.
+* **Allowlist**: A list of accounts that are allowed to do a given action, or (if used as a verb) the action of adding an account to said list.
+* **Preauthorization**: Essentially the same thing as allowlisting.
 
 *Note: These definitions do not directly match the definitions listed in the [W3C Verifiable Credentials spec](https://www.w3.org/TR/vc-data-model-2.0/#terminology). These terms are used in a slightly different way in the context of this spec.* 
 
 ### 1.3. Basic Flow
 
-In this scenario, an authorizer/verifier account, Verity, is a regulated entity wants to ensure that she is only interacting with properly KYC'd accounts.
+This example scenario features three parties with different roles:
+	
+* Verity is a regulated business that wants to interact only with properly KYC'd accounts, to ensure legal compliance. This makes Verity an _authorizer_ or _verifier_ because they configure which accounts are allowed (authorized) to interact with them.
+* Isabel is a credential issuer that vets accounts and issues credentials on-chain attesting that the accounts are who they say they are.
+* Alice is a user who wants to interact with Verity.
 
-* Verity sets up her account such that she only wants to interact with properly KYC'd accounts. He trusts Isabel, a credential issuer, to properly vet accounts and issue credentials attesting to that.
-* Alice, who wants to interact with Verity's account, submits her KYC documents to Isabel off-chain. Isabel creates a credential attesting to her trustworthiness on-chain.
-* Alice accepts the credential, making it a valid credential.
-* Alice can now interact with/send funds to Verity.
+The authorization flow in this scenario works as follows:
+
+1. Verity sets up her account so that only authorized accounts can interact with it. Since she trusts Isabel to properly vet accounts and issue credentials attesting to that, she configures her account to accept credentials issued by Isabel.
+2. Alice submits her KYC documents to Isabel privately, off-chain.
+3. Isabel examines Alice's documents and creates a credential on-chain attesting to Alice's trustworthiness.
+4. Alice accepts the credential, making it valid.
+5. Alice can now interact with/send funds to Verity.
+
+Importantly, the KYC documents that Alice sends to Isabel can include personally identifiable or private information that's needed to verify Alice's identity, but this information is never published or stored on-chain and Verity never needs to see it. Also, other businesses that trust Isabel can accept the same credentials so Alice does not need to repeatedly re-verify for every party she wants to interact with.
 
 ## 2. On-Ledger Object: `Credential`
 
-This object will be an on-chain representation of a credential, while ensuring that any sensitive details are kept off-chain, to protect the subject's privacy.
+This ledger object is an on-chain representation of a credential.
+
+This object costs one owner reserve for either the issuer or the subject of the credential, depending on whether the subject has accepted it.
 
 ### 2.1. Fields
 
@@ -72,8 +83,8 @@ This object will be an on-chain representation of a credential, while ensuring t
 |`Issuer`| ✔️|`string`|`AccountID`|The issuer of the credential.|
 |`CredentialType`| ✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
-|`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document).|
-|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`.|
+|`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document). This field isn't checked for validity and is limited to a maximum length of 256 bytes.|
+|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the owner's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
 |`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 
@@ -91,6 +102,8 @@ The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, 
 #### 2.1.3. `CredentialType`
 
 This value is similar to the NFT `Taxon` value, where the value's meaning will be decided by the issuer. It may be the same as a claim in a VC, but could also represent a subset of such a claim.
+
+It has a maximum length of 256 bytes.
 
 ### 2.2. Account Deletion
 
@@ -147,9 +160,9 @@ The list has a maximum size of 8 credentials.
 
 ## 4. Transaction: `DepositPreauth`
 
-This transaction currently creates and deletes `DepositPreauth` objects, thereby whitelisting and unwhitelisting accounts.
+This transaction currently creates and deletes `DepositPreauth` objects, thereby allowlisting and un-allowlisting accounts.
 
-This spec extends that functionality to also support whitelisting and unwhitelisting credentials.
+This spec extends that functionality to also support allowlisting and un-allowlisting credentials.
 
 ### 4.1. Fields
 
