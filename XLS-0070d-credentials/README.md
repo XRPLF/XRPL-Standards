@@ -329,7 +329,7 @@ Transactions that accept this field:
   * Has not been accepted.
   * Isn't a credential issued to the `Account` sending the transaction.
 * `CredentialIDs` is included, but the destination doesn't have Deposit Authorization set up, or the transaction doesn't have a destination (e.g. `AccountSet`).
-* The `CredentialIDs` are not authorized by the destination.
+* The group of `CredentialIDs` are not authorized by the destination.
 
 Note: the transaction will still fail if too many credentials are included. The exact list must be provided.
 
