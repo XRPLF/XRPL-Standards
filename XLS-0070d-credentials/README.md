@@ -315,7 +315,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/co
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
-|`CredentialIDs`| ✔️|`array`|`Vector256`|Credential(s) to attach to the transaction.|
+|`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
 
 Transactions that accept this field:
 * Basically anything with a `Destination` field (like a payment) or something that has to be accepted by the destination (like an escrow/check).
@@ -325,6 +325,7 @@ Transactions that accept this field:
 * Any of the `CredentialIDs` isn't an object that exists.
 * Any of the `CredentialIDs` isn't a `Credential` object.
 * Any of the `CredentialIDs` is an expired `Credential` object.
+* Any of the `CredentialIDs` have not been accepted.
 * `CredentialIDs` is included, but the destination doesn't have Deposit Authorization set up, or the transaction doesn't have a destination (e.g. `AccountSet`).
 * The `CredentialIDs` are not authorized by the destination.
 
@@ -332,8 +333,8 @@ Note: the transaction will still fail if too many credentials are included. The 
 
 ### 8.3. State Changes
 
-* If the credential isn't valid, it gets blocked.
-* If the credential is expired, it is deleted.
+* If the credential isn't valid, the transaction gets blocked.
+* If the credential is expired, the credential is deleted.
 
 ## 9. RPC: `deposit_authorized`
 
