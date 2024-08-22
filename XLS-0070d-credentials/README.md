@@ -322,10 +322,12 @@ Transactions that accept this field:
 
 ### 8.2. Failure Conditions
 
-* Any of the `CredentialIDs` isn't an object that exists.
-* Any of the `CredentialIDs` isn't a `Credential` object.
-* Any of the `CredentialIDs` is an expired `Credential` object.
-* Any of the `CredentialIDs` have not been accepted.
+* Any of the `CredentialIDs`:
+  * Isn't an object that exists.
+  * Isn't a `Credential` object.
+  * Is an expired `Credential` object.
+  * Has not been accepted.
+  * Isn't a credential issued to the `Account` sending the transaction.
 * `CredentialIDs` is included, but the destination doesn't have Deposit Authorization set up, or the transaction doesn't have a destination (e.g. `AccountSet`).
 * The `CredentialIDs` are not authorized by the destination.
 
@@ -333,7 +335,7 @@ Note: the transaction will still fail if too many credentials are included. The 
 
 ### 8.3. State Changes
 
-* If the credential isn't valid, the transaction gets blocked.
+* If the credential isn't valid, the transaction fails.
 * If the credential is expired, the credential is deleted.
 
 ## 9. RPC: `deposit_authorized`
