@@ -59,7 +59,7 @@ Payment engine executes paths that is made of steps to connect the sender to the
 This proposal proposes changes to both steps above to ensure a deep-frozen trustline _cannot_ increase its balance.
 
 #### 2.2.1. Rippling
-This proposal suggests an update: __any deep-frozen_ trustline can not increase nor decrease its balance as a result of any transaction__.
+This proposal suggests an update: __the receipt of funds in a deep-frozen trust line as a result of a rippling step will fail.__.
 
 ##### Example
 Let's take a look at an example of how deep-freeze impacts rippling:
@@ -77,10 +77,10 @@ Consider the following scenario:
 3. Alice attempts to send a USD `Payment` to Bob. The transaction _fails_ because Bob's USD trustline has been deep-frozen and can no longer receive funds.
 
 #### 2.2.2. Order Book and AMM
-In the payment engine, offers and AMM pools can be consumed in the path when a cross-currency payment is involved, resulting in a change to the trustline balance. This proposal introduces behavior changes to the order book and AMM steps when trustlines have been deep-frozen.
+In the payment engine, offers and AMM pools can be consumed in the path when a cross-currency payment is involved, resulting in a change to the trustline balance. This proposal introduces behavior changes to the order book step when trustlines have been deep-frozen.
 
 ##### 2.2.2.1. Order Book
-This proposal introduces a change to the order book step: __if the offer owner has been deep-frozen on the trustline of the `TakerPays` token, the offer is considered to be _unfunded_ and the step fails.__
+This proposal introduces a change to the order book step: __if the offer owner has been deep-frozen for the `TakerPays` token (buy amount), the offer is considered to be _unfunded_ and the step fails.__
 
 ###### Example
 Let's take a look at an example of how deep-freeze impacts order book:
@@ -103,29 +103,7 @@ Consider the following scenario:
 3. Alice attempts to send XRP to Carol through a `Payment` transaction using Bob's offer to exchange USD for XRP. Alice fails to send XRP to Carol because Bob's offer is unfunded due to the deep-frozen trustline.
 
 ##### 2.2.2.2. AMM
-This proposal introduces a change to the AMM step: __if the AMM account has been deep-frozen by the issuer on the trustline of the token that its trying to swap in, the step fails.__
-
-###### Example
-Let's take a look at an example of how deep-freeze impacts order book:
-
-
-```
-                                                                 AMM Pool
-+-------+         USD            +---------+        USD       +-----------+      XRP     +-------+
-| Alice | ---------------------> | Gateway | ---------------> |  1000 XRP | -----------> | Carol |
-+-------+     SendMax: 100 USD   +---------+                  +-----------+              +-------+
-              Amount: 100 XRP                                 |  100 USD  |       
-                                                              +-----------+
-                                                            (AMM Account is 
-                                                            deep-frozen for USD)                             
-```
-
-Consider the following scenario:
-
-1. Issuer account issues USD to both Alice and Bob, each of which has a trustline.
-2. An AMM pool is created with XRP and USD
-3. Issuer deep-freezes AMM account's USD trustline.
-4. Alice attempts to send XRP to Carol through a `Payment` transaction using the AMM Pool to exchange USD for XRP. The transaction fails because AMM account's USD trustline has been deep-frozen and can no longer swap in USD.
+The AMM step does not require any changes because, currently, an AMM step fails if the AMM account is frozen for any involved asset. Since a deep-frozen asset would already be regularly frozen, no additional checks are needed when an asset is deep-frozen.
 
 ### 2.3. `OfferCreate` transaction
 This proposal introduces a new change to the `OfferCreate` transaction:
