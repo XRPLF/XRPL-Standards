@@ -151,7 +151,7 @@ This field is an array of inner objects. The contents of these inner objects det
 
 If more than one credential is included in the list, all of those credentials must be included (effectively ANDing them together).
 
-The list has a minimum size of 1 and maximum size of 8 credentials.
+The list has a minimum size of 1 and a maximum size of 8 credentials.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
@@ -178,6 +178,8 @@ This proposal adds two new fields:
 |------------|-----------|-----------|---------------|-------------|
 |`AuthorizeCredentials`| |`array`|`STArray`|The credential(s) to preauthorize. |
 |`UnauthorizeCredentials` | |`array`|`STArray`|The credential(s) whose preauthorization should be revoked.|
+
+**Exactly one of** the `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` fields must be included.
 
 #### 4.1.1. `AuthorizeCredentials` and `UnauthorizeCredentials`
 
@@ -222,16 +224,17 @@ There are two possible methods of doing so:
 
 #### 5.1.1. `Subject` and `Issuer`
 
-Only one of these two fields must be specified. If `Subject` is specified, `Account` is the issuer. If `Issuer` is specified, `Account` is the subject.
+Exactly one of these two fields must be specified. If `Subject` is specified, `Account` is the issuer. If `Issuer` is specified, `Account` is the subject.
 
 #### 5.1.2. `Signature`
 
-If the subject is submitting the account, a signature must be included from the issuer attesting to the credential. This signature will sign a simple JSON that looks something like this:
+If the subject is submitting the account, a signature must be included from the issuer attesting to the credential. This signature will sign an encoded object that looks something like this:
 ```typescript
 {
     Issuer: "rISABEL......",
     Subject: "rALICE.......",
     CredentialType: "123ABC",
+    Expiration: 12345678, // if applicable
 }
 ```
 
@@ -340,7 +343,7 @@ Note: the transaction will still fail if too many credentials are included. The 
 
 ## 9. RPC: `deposit_authorized`
 
-The [`deposit_authorized` RPC method](https://xrpl.org/deposit_authorized.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
+The [`deposit_authorized` RPC method](https://xrpl.org/deposit_authorized.html) already exists on the XRPL. This proposal suggests some modifications to also support credential authorization.
 
 ### 9.1. Request Fields
 
