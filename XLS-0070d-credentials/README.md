@@ -241,7 +241,7 @@ If the subject is submitting the account, a signature must be included from the 
 ### 5.2. Failure Conditions
 
 * Both or neither `Subject` and `Issuer` are specified (i.e. there must be only one of the two fields).
-* The account in `Subject`/`Issuer` doesn't exist.
+* The account in `Subject` doesn't exist.
 * `Issuer` is included but `Signature` is not.
 * The time in `Expiration` is in the past.
 * The `URI` field is too long (limit 256 bytes).
@@ -570,7 +570,7 @@ It's much faster to have the credential ID included - it's easy to make sure tha
 
 Yes, even if they still have issued credentials in existence.
 
-### A.8: Does a credential issue have to have an on-chain account?
+### A.8: Does a credential issuer have to have an on-chain account?
 
 No, though they must have a valid keypair. If the second method of creating a credential is used (via a signature from the issuer), the issuer can still attest to a credential without having to have an account on-chain. This is to ensure closer compliance with the W3C Verifiable Credentials spec (see section 9).
 
