@@ -1,5 +1,5 @@
 <pre>
-Title:       <b>XLS-73d Deep-freeze</b>
+Title:       <b>XLS-77d Deep-freeze</b>
 Type:        <b>draft</b>
 Revision:    <b>2</b> (2024-08-22)
 Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
@@ -10,7 +10,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-This amendment empowers token issuers on the XRP Ledger to prevent token misuse by frozen account holders. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that frozen token holders cannot receive funds until or unless their trustline is unfrozen. These changes will significantly improve use cases such as stablecoins and real world assets (RWA), where ensuring regulatory compliance is essential.
+This amendment empowers token issuers on the XRP Ledger to prevent token misuse by frozen account holders. The document outlines enhancements to the interactions between frozen assets and payments, ensuring that frozen token holders cannot receive funds until or unless their trustline is unfrozen. These changes will enable token issuers to more easily comply with regulations on the XRPL. For example, prevent tokens from flowing to wallets identified on sanctions lists, thereby enhancing regulatory compliance for use cases such as regulated stablecoins and real-world assets (RWA).
 
 ## 1. Overview
 This proposal introduces a new deep-freeze feature for the trustlines that interacts with payment, offers, DEX and AMM. In essence, issuers can block sending and receiving of funds for holders who have been deep-frozen. 
