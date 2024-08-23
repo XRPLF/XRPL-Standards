@@ -59,7 +59,7 @@ Payment engine executes paths that is made of steps to connect the sender to the
 This proposal proposes changes to both steps above to ensure a deep-frozen trustline _cannot_ increase its balance.
 
 #### 2.2.1. Rippling
-This proposal suggests an update: __the receipt of funds in a deep-frozen trust line as a result of a rippling step will fail.__.
+This proposal suggests an update: __the receipt of funds in a deep-frozen trust line as a result of a rippling step will fail.__
 
 ##### Example
 Let's take a look at an example of how deep-freeze impacts rippling:
@@ -114,15 +114,22 @@ Moreover, any existing offers where the owner has been deep-frozen on the `Taker
 ### 2.4. `AMMWithdraw` transaction
 This proposal does not need to change the `AMMWithdraw` transaction due to the deep-freeze, as all deep-frozen tokens have already been regularly frozen, preventing the withdrawal of either regularly frozen or deep-frozen tokens.
 
-
 ## 3. Invariants
 Possible invariants:
 - Disallowing any increase in the balance of an deep-frozen trustline as a result of any type of transaction.
 - A trust line cannot have the `lsfLowDeepFreeze` flag set without also having the `lsfLowFreeze` flag set, and the same applies to the `lsfHighDeepFreeze` flag. 
 
+## 4. FAQ
+### Why can't we embed the disallow-receiving into the existing freeze without introducing a new flag?
+Altering the existing freeze functionality to disallow receiving would be a significant breaking change, potentially disrupting the workflows of current users. Instead, it is preferable to introduce a configurable flag, offering additional flexibility without affecting the existing behavior.
 
-## FAQ
-### Why can't we embed disallow receiving into existing freeze feature without introducing a new flag?
+### Why can't this be a separate feature named "block-receiving"?
+The block-receiving feature shares similarities with the existing freeze functionality, as both aim to prevent unauthorized or blacklisted parties from transferring funds. Creating it as a separate feature would introduce unnecessary complexities, such as the need to add a new account-level flag to toggle the feature. Integrating it into the existing framework avoids these complications while maintaining consistency.
+
+
+
+
+
 
 
 
