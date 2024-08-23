@@ -1,12 +1,12 @@
 <pre>
-Title:       <b>XLS-73d Deep-freeze Trustlines</b>
+Title:       <b>XLS-73d Deep-freeze</b>
 Type:        <b>draft</b>
 Revision:    <b>2</b> (2024-08-22)
 Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
 Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
 
-#  Deep-freeze Trustlines
+#  Deep-freeze
 
 ## Abstract
 
