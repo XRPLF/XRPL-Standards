@@ -151,7 +151,7 @@ This field is an array of inner objects. The contents of these inner objects det
 
 If more than one credential is included in the list, all of those credentials must be included (effectively ANDing them together).
 
-The list has a maximum size of 8 credentials.
+The list has a minimum size of 1 and maximum size of 8 credentials.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
