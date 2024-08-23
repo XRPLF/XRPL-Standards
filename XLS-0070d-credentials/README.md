@@ -135,7 +135,7 @@ We propose these modifications:
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Authorize`| |`string`|`AccountID`|This field already exists, but is becoming optional.|
-|`AuthorizeCredentials`| |`array`|`STArray`|The credential that received the preauthorization. (Any account with this credential can send preauthorized payments).|
+|`AuthorizeCredentials`| |`array`|`STArray`|The credential(s) that received the preauthorization. (Any account with these credentials can send preauthorized payments).|
 
 #### 3.1.1. Object ID
 
