@@ -143,7 +143,7 @@ The ID of this object will be either a hash of the `Account` and `Authorize` fie
 
 #### 3.1.2. `Authorize`
 
-This field is now optional, and a valid `DepositPreauth` object must either have the `Authorize` field or the `AuthorizeCredentials` field.
+This field is now optional, and a valid `DepositPreauth` object must have **exactly one of** the `Authorize` field or the `AuthorizeCredentials` field.
 
 #### 3.1.3. `AuthorizeCredentials`
 
