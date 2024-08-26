@@ -126,6 +126,9 @@ Altering the existing freeze functionality to disallow receiving would be a sign
 ### Why can't this be a separate feature named "block-receiving"?
 The block-receiving feature shares similarities with the existing freeze functionality, as both aim to prevent unauthorized or blacklisted parties from transferring funds. Creating it as a separate feature would introduce unnecessary complexities, such as the need to add a new account-level flag to toggle the feature. Integrating it into the existing framework avoids these complications while maintaining consistency.
 
+### How does MPT freeze/lock behavior differ from IOU?
+The MPT freeze/lock functionality differs somewhat from how IOUs work today. When an MPT holder is locked, they cannot send or receive MPT payments, so a single flag is sufficient. In contrast, for IOUs, the regular freeze only disallows sending. If the issuer wants to block receiving as well, they must apply a deep-freeze.
+
 
 
 
