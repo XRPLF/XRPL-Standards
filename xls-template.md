@@ -55,9 +55,9 @@ core_protocol_changes_required: <true/false> # Indicates whether the proposal re
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 
 <!--
-The following is an example of how you can document new object types and fields:
+The following is an example of how you can document new transactions, ledger entry types, and fields:
 
-#### The **`<object name>`** object
+#### **`<entry name>`** ledger entry
 
 <High level overview, explaining the object>
 
@@ -71,7 +71,7 @@ The following is an example of how you can document new object types and fields:
 |-------------------|:----------------:|:---------------:|:-----------------:|
 | `<field name>` | :heavy_check_mark: | `<string, number, object, array, boolean>` | `<UINT128, UINT160, UINT256, ...>` |
 
-<Any explanatory text about specific fields>
+<Any explanatory text about specific fields. For example, if an object must contain exactly one of three fields, note that here.>
 
 ###### Flags
 
@@ -80,6 +80,10 @@ The following is an example of how you can document new object types and fields:
 >| `lsf<flag name>` | `0x0001`| <flag description> |
 
 <Any explanatory text about specific flags>
+
+For "Internal Type, most fields should use existing types defined in the XRPL binary format's type list here: https://xrpl.org/docs/references/protocol/binary-format#type-list . If a new type must be defined, add a separate section describing the rationale for the type, its binary format, and JSON representation.
+
+For cases of transaction definitions, note any error cases that can occur. If the transaction can fail with a tec-class result code, specify which code to use. (Since tec codes are immutable data recorded in the ledger, changing them can render previous data incompatible with the current implementation. Also, tec codes are finite and limited, so it's best to reuse existing codes where appropriate.) Details of error codes can be vague or incomplete at first, but should be refined as the proposal moves through the candidate specification process.
 -->
 
 ## Rationale
@@ -118,6 +122,17 @@ No backward compatibility issues found.
   If the test suite is too large to reasonably be included inline, then consider adding it as one or more files in the folder with this XLS. External links are discouraged.
 
   TODO: Remove this comment before submitting
+-->
+
+## Invariants
+
+<!--
+  This section is optional, but recommended.
+
+  Invariants are rules for a feature's behavior that should never be broken, which define the borders of normal behavior and the assumptions involved in the design. If a situation violates an invariant, then it can be identified as unintended behavior; this helps to catch and prevent bugs. Code for the XRP Ledger includes invariant checks, which can prevent a transaction from executing if it would otherwise violate an invariant rule, preventing buggy or corrupted data from becoming part of the XRP Ledger's immutable history. The invariants defined here can be used to create invariant checks, although this spec can include invariants that are impractical to check at runtime.
+
+  TODO: Remove this comment before submitting
+
 -->
 
 ## Reference Implementation
