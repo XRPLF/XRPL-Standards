@@ -148,7 +148,7 @@ Specifies the sum of all token amounts that have been minted to all token holder
 
 ###### 2.1.1.2.7. `TransferFee`
 
-This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down, hence the fee can be rounded down to zero if the payment is small. Issuer should make sure that their MPT's `AssetScale` is large enough.
+This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down, hence the fee can be rounded down to zero if the payment is small. Issuers should make sure that their MPT's `AssetScale` is large enough.
 
 ###### 2.1.1.2.8. `PreviousTxnID`
 
@@ -792,7 +792,7 @@ After analyzing on-ledger space requirements for (a) Trustlines, (b) `MPTokenPag
 
 With all that said, this decision is still open for debate. For example, in early 2024 the Ripple team plans to perform limit testing around Trustlines and the simpler MPT design to see how increased numbers of both types of ledger objects affect ledger performance. Once that data is complete, we'll likely revisit this design choice to either validate it or change it.
 
-#### A.1.8. Why is there no `MPTRedeem` Transaction?
+#### A.1.8. Why is there no `MPTokenRedeem` Transaction?
 
 This is because holders of a MPT can use a normal payment transaction to send MPT back to the issuer, thus "redeeming" it and removing it from circulation. Note that one consequence of this design choice is that MPT issuer accounts may not also hold `MPToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming MPT payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or should that payment go into an issuer's `MPToken` amount, and still be considered as "in circulation." For simplicity, we chose the former design, restricting MPT issuers from having `MPToken` objects at all.
 
@@ -804,7 +804,7 @@ See the question above. This design also helps enforce a security best practice 
 
 For MPTokenIssuances that have the `lsfMPTRequireAuth` flag set, it is envisioned that a [DepositPreauth](https://xrpl.org/depositpreauth.html) transaction could be used with minor adaptations to distinguish between pre-authorized trust lines and pre-authorized MPTs. Alternatively, we might consider `deposit_preauth` objects might apply to both, under the assumption that a single issuer restricting trust lines will want to make the same restrictions around MPTs emanating from the same issuer account.
 
-That said, this design is still TBD.
+If this change is introduced, it will be done via a future amendment.
 
 #### A.1.11. Why was the name Compact Fungible Token renamed to Multi-Purpose Token?
 
@@ -833,6 +833,10 @@ Some benefits of this design approach include that is (1) reduces the footprint 
 
 #### A.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
 Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
+
+#### A.1.15. Why does `MPTokenIssuance` include an `AssetCode` instead of letting this exist solely in `MPTokenMetadata`?
+
+This specification generally prefers to have any MPT metadata reside inside of an issuer-defined `MPTokenMetadata`blob. However, `AssetScale` is an exception so that on-ledger transactors or other on-ledger components can properly perform mathematical computations on an MPT amount.
 
 ### A.2. Appendix: Supplemental Information
 
