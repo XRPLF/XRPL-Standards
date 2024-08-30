@@ -836,7 +836,7 @@ Primarily because we did not want MPT meta-data (e.g., currency code, asset prec
 
 #### A.1.15. Why does `MPTokenIssuance` include an `AssetCode` instead of letting this exist solely in `MPTokenMetadata`?
 
-This specification generally prefers to have any MPT metadata reside inside of an issuer-defined `MPTokenMetadata`blob. However, `AssetScale` is an exception so that on-ledger transactors or other on-ledger components can properly perform mathematical computations on an MPT amount.
+This specification generally prefers to have any MPT metadata reside inside of an issuer-defined `MPTokenMetadata` blob. However, `AssetScale` is an exception so that on-ledger transactors or other on-ledger components can properly perform mathematical computations on an MPT amount.
 
 ### A.2. Appendix: Supplemental Information
 
