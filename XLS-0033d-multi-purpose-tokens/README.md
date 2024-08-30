@@ -834,7 +834,7 @@ Some benefits of this design approach include that is (1) reduces the footprint 
 #### A.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
 Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
 
-#### A.1.15. Why does `MPTokenIssuance` include an `AssetCode` instead of letting this exist solely in `MPTokenMetadata`?
+#### A.1.15. Why does `MPTokenIssuance` include an `AssetScale` instead of letting this exist solely in `MPTokenMetadata`?
 
 This specification generally prefers to have any MPT metadata reside inside of an issuer-defined `MPTokenMetadata` blob. However, `AssetScale` is an exception so that on-ledger transactors or other on-ledger components can properly perform mathematical computations on an MPT amount.
 
