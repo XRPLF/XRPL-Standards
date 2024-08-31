@@ -831,12 +831,22 @@ Last but not least, our design seeks to impose the fewest number of changes in t
 
 Some benefits of this design approach include that is (1) reduces the footprint of a serialized MPT `STAmount` to 264 bits; and (2) reduces the space required by an `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID`, which required 256-bits. Because `MPTokenIssuanceID` is a field in each `MPToken`, this will yield a space reduction of 64 bits per `MPToken`.
 
-#### A.1.14. Why doesn’t an `MPTokenIssuanceID` simply hash an issuer address and currency code?
-Primarily because we did not want MPT meta-data (e.g., currency code, asset precision, common name, currency symbol, etc.) to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
+#### A.1.14. Why isn’t `MPTokenIssuanceID` constructed from the hash of an issuer address and currency code?
+Primarily because we did not want MPT meta-data to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
 
-#### A.1.15. Why does `MPTokenIssuance` include an `AssetScale` instead of letting this exist solely in `MPTokenMetadata`?
+#### A.1.15. What is MPT metadata, and how do we envision it being defined?
 
-This specification generally prefers to have any MPT metadata reside inside of an issuer-defined `MPTokenMetadata` blob. However, `AssetScale` is an exception so that on-ledger transactors or other on-ledger components can properly perform mathematical computations on an MPT amount.
+MPT metadata provides supplementary information about an MPT that doesn't require formal definition within this spec. This data can vary widely between different asset types and issuances, encompassing details like asset codes, common names, symbols, or even visual representations.
+
+To accommodate this diversity, this specification defines the `MPTokenMetadata` blob field, which allows issuers to define their own metadata standards, tailored to their specific requirements. For instance, issuers could adopt a JSON schema, similar to those used in Ethereum's [ERC-1155](https://eips.ethereum.org/EIPS/eip-1155#erc-1155-metadata-uri-json-schema) standard, to encode structured metadata. This encoded data could enable applications to decode and utilize it for various purposes.
+
+The key idea here is that metadata does not need to be consistent across all issuances. Instead, it's up to each issuer to choose the meaning of this data, though it's possible that a majority of issuers of similar assets might choose similar or even identical metadata standards.
+
+#### A.1.16. Why does `MPTokenIssuance` include an `AssetScale` instead of letting this exist solely in `MPTokenMetadata`?
+
+`AssetScale` is a normative field within MPTs to ensure consistent interpretation across applications, both for display and computation. For instance, in the case of a USD stablecoin MPT with a scale of `2`, application would display a payment of 100 units as `$0.01`. Likewise, applications performing calculations on MPT amounts should have a consistent method to convert them into different denominations. For example, an application that utilizes dollars as its base unit should treat the above as a payment of one dollar and not a payment of 100 dollars.
+
+While not currently required by today's transactors, `AssetScale` also prepares for future on-ledger functionality that might require it.
 
 ### A.2. Appendix: Supplemental Information
 
