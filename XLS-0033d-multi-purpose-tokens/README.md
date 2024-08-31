@@ -844,7 +844,7 @@ The key idea here is that metadata does not need to be consistent across all iss
 
 #### A.1.16. Why does `MPTokenIssuance` include an `AssetScale` instead of letting this exist solely in `MPTokenMetadata`?
 
-`AssetScale` is a normative field within MPTs to ensure consistent interpretation across applications, both for display and computation. For instance, in the case of a USD stablecoin MPT with a scale of `2`, application would display a payment of 100 units as `$0.01`. Likewise, applications performing calculations on MPT amounts should have a consistent method to convert them into different denominations. For example, an application that utilizes dollars as its base unit should treat the above as a payment of one dollar and not a payment of 100 dollars.
+`AssetScale` is a normative field within MPTs to ensure consistent interpretation across applications, both for display and computation. For instance, in the case of a USD stablecoin MPT with a scale of `2`, applications would display a payment of 100 units as `$0.01`. Likewise, applications performing calculations on MPT amounts should have a consistent method to convert them into different denominations. For example, an application that utilizes dollars as its base unit should treat the above as a payment of one dollar and not a payment of 100 dollars.
 
 While not currently required by today's transactors, `AssetScale` also prepares for future on-ledger functionality that might require it.
 
