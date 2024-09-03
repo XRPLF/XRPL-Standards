@@ -237,6 +237,7 @@ If the subject is submitting the account, a signature (and the corresponding pub
     Issuer: "rISABEL......",
     Subject: "rALICE.......",
     CredentialType: "123ABC",
+    URI: "example.com", // will be in hex
     Expiration: 12345678, // if applicable
 }
 ```
