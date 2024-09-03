@@ -218,6 +218,7 @@ There are two possible methods of doing so:
 |`Subject`| |`string`|`AccountID`|The subject of the credential.|
 |`Issuer`| |`string`|`AccountID`|The issuer of the credential.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+|`IssuerPubKey`| |`string`|`AccountID`|The public key of the issuer.|
 |`Signature`| |`string`|`Blob`|A signature from the issuer attesting to the credential.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
 |`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document).|
@@ -226,9 +227,11 @@ There are two possible methods of doing so:
 
 Exactly one of these two fields must be specified. If `Subject` is specified, `Account` is the issuer. If `Issuer` is specified, `Account` is the subject.
 
-#### 5.1.2. `Signature`
+If `Issuer` is specified, `IssuerPubKey` and `Signature` must also be included. If `Subject` is specified, then those two fields must not be included.
 
-If the subject is submitting the account, a signature must be included from the issuer attesting to the credential. This signature will sign an encoded object that looks something like this:
+#### 5.1.2. `IssuerPubKey` and `Signature`
+
+If the subject is submitting the account, a signature (and the corresponding public key) must be included from the issuer attesting to the credential. This signature will sign an encoded object that looks something like this:
 ```typescript
 {
     Issuer: "rISABEL......",
