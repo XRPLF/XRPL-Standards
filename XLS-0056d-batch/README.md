@@ -133,7 +133,11 @@ While this field seems complicated/confusing to work with, it can easily be abst
 
 This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Batch` transaction; otherwise, the normal transaction signature provides the same security guarantees.
 
-Every account that has at least one inner transaction, excluding the outer account (if applicable), must have a `BatchSigners` field.
+This field must be provided if more than one account has inner transactions included in the `Batch`. In that case, this field must contain signatures from all accounts whose inner transactions are included, excluding the account signing the outer transaction (if applicable).
+
+If all inner transactions are from the same account, this field must be omitted, as the `TxnSignature` field (the normal transaction signature field) will be used instead.
+
+Each object in this array contains the following fields:
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
