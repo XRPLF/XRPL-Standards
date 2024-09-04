@@ -146,6 +146,8 @@ Each object in this array contains the following fields:
 |`Signature`| |`string`|`STBlob`|
 |`Signers`| |`array`|`STArray`|
 
+Either the `SigningPubKey` and `Signature` fields must be included, or the `Signers` field.
+
 #### 2.5.1. `Account`
 
 This is an account that has at least one inner transaction.
@@ -182,11 +184,11 @@ It will contain a list of objects that have the following fields for every trans
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
 |`TransactionHash`|✔️|`string`|`STUInt256`|
-|`TransactionResult`|✔️|`string`|`STUInt8`|
+|`TransactionResult`|✔️|`string`|`STBlob`|
 
 Some important things to note:
 * It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` mode, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
-* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALLORNOTHING` mode is used, but one of the transaction fails.
+* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, if the `ALLORNOTHING` mode is used and _any_ inner transaction fails, _none_ of the inner transactions will be included in the ledger.
 
 #### 2.6.2. Inner Transactions
 
@@ -470,13 +472,6 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
   BatchSigners: [
     {
       BatchSigner: {
-        Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-        SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
-        Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
-      }
-    },
-    {
-      BatchSigner: {
         Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
         Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
@@ -511,13 +506,6 @@ Note that the inner transactions are committed as normal transactions, and the `
       "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
     ],
     BatchSigners: [
-      {
-        BatchSigner: {
-          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-          SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
-          Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
-        }
-      },
       {
         BatchSigner: {
           Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
