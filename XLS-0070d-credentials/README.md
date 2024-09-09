@@ -97,13 +97,15 @@ The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, 
 |-----------|------------|
 |`lsfAccepted`|`0x00010000`|
 
-`lsfAccepted` is on if the subject of the credential has accepted the credential. If it is off, the issuer has the reserve burden; if it is on, the burden moves to the subject.
+The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction, or if the secondary signing flow is used to create the credential.
+
+A credential should not be considered "valid" until it has been accepted.
 
 #### 2.1.3. `CredentialType`
 
 This value is similar to the NFT `Taxon` value, where the value's meaning will be decided by the issuer. It may be the same as a claim in a VC, but could also represent a subset of such a claim.
 
-It has a maximum length of 256 bytes.
+It has a maximum length of 256 bytes, and cannot be an empty string.
 
 ### 2.2. Account Deletion
 
@@ -255,7 +257,8 @@ If the subject is submitting the account, a signature (and the corresponding pub
 
 If the transaction is successful:
 * The `Credential` object is created.
-* If `Issuer` == `Account`, then the `lsfAccepted` flag is enabled.
+* If `Issuer` is specified (i.e. the subject is creating the credential with the issuer's permission), then the `lsfAccepted` flag is enabled.
+* If `Subject` === `Account` (i.e. the subject and issuer are the same account), then the `lsfAccepted` flag is enabled.
 
 ## 6. Transaction: `CredentialAccept`
 
