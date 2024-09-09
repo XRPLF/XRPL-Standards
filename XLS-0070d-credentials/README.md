@@ -262,7 +262,7 @@ If the transaction is successful:
 
 ## 6. Transaction: `CredentialAccept`
 
-This transaction transfers a credential from the `Issuer` to the `Account`. It is not a valid credential until it has been transferred.
+This transaction accepts a credential issued to the `Account`. The credential is not considered valid until it has been transferred/accepted.
 
 ### 6.1. Fields
 
@@ -295,6 +295,8 @@ It can be executed by:
 * The account, anytime.
 * Anyone, after the expiration time is up.
 
+Deleting a credential is also how a credential is un-accepted.
+
 ### 7.1. Fields
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
@@ -308,7 +310,7 @@ It can be executed by:
 ### 7.2. Failure Conditions
 
 * The credential described by the `Subject`, `Issuer`, and `CredentialType` fields doesn't exist.
-* The `Account` isn't the issuer or account, and the expiration hasn't passed.
+* The `Account` isn't the issuer or subject, and the expiration hasn't passed.
 
 ### 7.3. State Changes
 
@@ -435,7 +437,7 @@ This is the object created by the `CredentialCreate` transaction.
     Flags: 0,
     Subject: "rALICE.......",
     Issuer: "rISABEL......",
-    CredentialType: "123ABC",
+    CredentialType: "4B5943", // "KYC" in hex
     Expiration: 789004799, // the end of the year
     URI: "isabel.com/credentials/kyc/alice" // This will be converted into hex
 }
@@ -450,7 +452,7 @@ Alice accepts the credential, thereby making it valid.
     TransactionType: "CredentialAccept",
     Account: "rALICE.......",
     Issuer: "rISABEL......",
-    CredentialType: "123ABC"
+    CredentialType: "4B5943"
 }
 ```
 
