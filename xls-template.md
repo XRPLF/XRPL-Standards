@@ -81,9 +81,9 @@ The following is an example of how you can document new transactions, ledger ent
 
 <Any explanatory text about specific flags>
 
-For "Internal Type, most fields should use existing types defined in the XRPL binary format's type list here: https://xrpl.org/docs/references/protocol/binary-format#type-list . If a new type must be defined, add a separate section describing the rationale for the type, its binary format, and JSON representation.
+For "Internal Type", most fields should use existing types defined in the XRPL binary format's type list here: https://xrpl.org/docs/references/protocol/binary-format#type-list . If a new type must be defined, add a separate section describing the rationale for the type, its binary format, and JSON representation.
 
-For cases of transaction definitions, note any error cases that can occur. If the transaction can fail with a tec-class result code, specify which code to use. (Since tec codes are immutable data recorded in the ledger, changing them can render previous data incompatible with the current implementation. Also, tec codes are finite and limited, so it's best to reuse existing codes where appropriate.) Details of error codes can be vague or incomplete at first, but should be refined as the proposal moves through the candidate specification process.
+When defining transactions, please identify any potential error scenarios. If a transaction can fail with a `tec`-class result code, specify the appropriate code. Remember that tec codes are immutable ledger entries, so changing them can cause compatibility issues with older data. Additionally, as tec codes are limited in number, it's best to reuse existing codes whenever possible. While error code details may be initially vague or incomplete, they should be refined as the proposal progresses through the candidate specification process.
 -->
 
 ## Rationale
@@ -129,7 +129,7 @@ No backward compatibility issues found.
 <!--
   This section is optional, but recommended.
 
-  Invariants are rules for a feature's behavior that should never be broken, which define the borders of normal behavior and the assumptions involved in the design. If a situation violates an invariant, then it can be identified as unintended behavior; this helps to catch and prevent bugs. Code for the XRP Ledger includes invariant checks, which can prevent a transaction from executing if it would otherwise violate an invariant rule, preventing buggy or corrupted data from becoming part of the XRP Ledger's immutable history. The invariants defined here can be used to create invariant checks, although this spec can include invariants that are impractical to check at runtime.
+Invariants are fundamental rules governing a feature's behavior that must always hold true. They define the boundaries of expected behavior and the underlying assumptions of the design. If a situation violates an invariant, it can be classified as unintended behavior, aiding in bug detection and prevention. The XRP Ledger's code incorporates invariant checks to prevent transactions from executing if they would violate an invariant rule, thereby safeguarding the ledger's immutable history from erroneous or corrupted data. While the invariants specified here can be used to create invariant checks, some may be impractical to verify at runtime.
 
   TODO: Remove this comment before submitting
 
