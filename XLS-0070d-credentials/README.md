@@ -308,6 +308,8 @@ Deleting a credential is also how a credential is un-accepted.
 |`Issuer`| |`string`|`AccountID`|The issuer of the credential. If omitted, `Account` is assumed to be the issuer.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 
+_Note: If an account is deleting a credential it issued to itself, then either `Subject` or `Issuer` can be specified, but at least one must be._
+
 ### 7.2. Failure Conditions
 
 * The credential described by the `Subject`, `Issuer`, and `CredentialType` fields doesn't exist.
