@@ -30,6 +30,7 @@ We propose:
 * Creating a `CredentialCreate` transaction type
 * Creating a `CredentialAccept` transaction type
 * Creating a `CredentialDelete` transaction type
+* Modifying other transactions that are affected by Deposit Authorization
 
 This feature will require an amendment, tentatively titled `CredentialAuth`.
 
