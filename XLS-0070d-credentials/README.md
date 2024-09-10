@@ -317,20 +317,21 @@ Deleting a credential is also how a credential is un-accepted.
 If the transaction is successful:
 * The `Credential` object is deleted.
 
-## 8. Transactions: Common Fields
+## 8. Any Transaction Affected by Deposit Authorization
 
 ### 8.1. Fields
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/common-fields/) are the fields that all transactions currently have.
 
-<!--There are too many and I didn't want to list them all, it cluttered up the spec - but maybe it can be a collapsed section?-->
+The transactions that this field will be added to are:
+* `Payment`
+* `EscrowFinish`
+* `PaymentChannelClaim`
+* `AccountDelete`
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
 |`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
-
-Transactions that accept this field:
-* Basically anything with a `Destination` field (like a payment) or something that has to be accepted by the destination (like an escrow/check).
 
 ### 8.2. Failure Conditions
 
