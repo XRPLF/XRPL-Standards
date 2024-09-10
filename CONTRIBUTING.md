@@ -60,6 +60,8 @@ Assuming there is consensus to publish, one of the project maintainers will revi
 
 A _Candidate Specification_ is a document that was previously a Draft, but is considered stable enough by the community such that no further changes are required. Once an XLS becomes a Candidate Specification, no further substantive changes are allowed under the same XLS number.
 
+Refinements in detail are still allowed and recommended. For example, you can clarify exact error cases and define the error codes and transaction result codes that occur in those cases.
+
 ##### Publishing a Candidate Specification
 
 When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification by making a PR to remove the `d` from the document folder name and update the `type` to `candidate-specification`.
