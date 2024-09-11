@@ -140,15 +140,13 @@ We propose these modifications:
 |`Authorize`| |`string`|`AccountID`|This field already exists, but is becoming optional.|
 |`AuthorizeCredentials`| |`array`|`STArray`|The credential(s) that received the preauthorization. (Any account with these credentials can send preauthorized payments).|
 
+A valid `DepositPreauth` object must have **exactly one of** the `Authorize` field or the `AuthorizeCredentials` field.
+
 #### 3.1.1. Object ID
 
 The ID of this object will be either a hash of the `Account` and `Authorize` fields (as it currently is), or a hash of the `Account` and the contents of `AuthorizeCredentials` fields, combined with the unique space key for `DepositAuth` objects: `0x0070`.
 
-#### 3.1.2. `Authorize`
-
-This field is now optional, and a valid `DepositPreauth` object must have **exactly one of** the `Authorize` field or the `AuthorizeCredentials` field.
-
-#### 3.1.3. `AuthorizeCredentials`
+#### 3.1.2. `AuthorizeCredentials`
 
 This field is an array of inner objects. The contents of these inner objects determine the credential(s) that are accepted.
 
