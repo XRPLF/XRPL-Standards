@@ -148,7 +148,7 @@ Specifies the sum of all token amounts that have been minted to all token holder
 
 ###### 2.1.1.2.7. `TransferFee`
 
-This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down, hence the fee can be rounded down to zero if the payment is small. Issuers should make sure that their MPT's `AssetScale` is large enough.
+This value specifies the fee, in tenths of a [basis point](https://en.wikipedia.org/wiki/Basis_point), charged by the issuer for secondary sales of the token, if such sales are allowed at all. Valid values for this field are between 0 and 50,000 inclusive. A value of 1 is equivalent to 1/10 of a basis point or 0.001%, allowing transfer rates between 0% and 50%. A `TransferFee` of 50,000 corresponds to 50%. The default value for this field is 0. Any decimals in the transfer fee will be rounded down to the nearest whole value if the fraction is less than 0.5, and rounded up to the nearest whole value if the fraction is greater than or equal to 0.5. Therefore, this fee may be rounded down to zero if the payment is very small. Issuers should make sure that their MPT's `AssetScale` is large enough to properly accommodate expected fee values.
 
 ###### 2.1.1.2.8. `PreviousTxnID`
 
