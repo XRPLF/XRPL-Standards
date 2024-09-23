@@ -119,11 +119,7 @@ In other words, if the `Subject` or `Issuer` deletes their account, the `Credent
 
 ## 3. Transaction: `CredentialCreate`
 
-This transaction creates a `Credential` object.
-
-There are two possible methods of doing so:
-* The issuer submits this transaction, and `CredentialAccept` is used for the subject to accept the transaction.
-* The credential data is passed off-chain from the issuer to the subject. The subject then submits the credential themselves, alongside an issuer signature, to the ledger.
+This transaction creates a `Credential` object. It must be sent by the issuer.
 
 ### 3.1. Fields
 
@@ -151,7 +147,7 @@ If the transaction is successful:
 
 ## 4. Transaction: `CredentialAccept`
 
-This transaction accepts a credential issued to the `Account`. The credential is not considered valid until it has been transferred/accepted.
+This transaction accepts a credential issued to the `Account` (i.e. the `Account` is the `Subject` of the `Credential` object). The credential is not considered valid until it has been transferred/accepted.
 
 ### 4.1. Fields
 
@@ -301,8 +297,6 @@ If the transaction is successful:
 ## 8. Any Transaction Affected by Deposit Authorization
 
 ### 8.1. Fields
-
-As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/common-fields/) are the fields that all transactions currently have.
 
 The transactions that this field will be added to are:
 * `Payment`
@@ -549,7 +543,7 @@ Yes.
 
 ### A.5: Can an issuer edit the details of a credential once it's created?
 
-No, it would have to be deleted and recreated. This is similar to needing to get a new card if your license/passport expires. If the `Subject`, `Issuer`, and `CredentialType` stay the same, though, the object will still have the same ID as before.
+No, it would have to be deleted and recreated. This is similar to needing to get a new card if your license/passport expires. However, if the `Subject`, `Issuer`, and `CredentialType` stay the same, the object will still have the same ID as before.
 
 ### A.6: Why do I need to include the `CredentialIDs` field in my transaction? Shouldn't the XRPL be able to figure out whether I have a valid credential automatically?
 
@@ -559,24 +553,28 @@ It's much faster to have the credential ID included - it's easy to make sure tha
 
 ### A.7: Can a credential issuer delete their account?
 
-Yes, even if they still have issued credentials in existence.
+Yes, though the credentials they created will be deleted.
 
 ### A.8: Does a credential issuer have to have an on-chain account?
 
-No, though they must have a valid keypair. If the second method of creating a credential is used (via a signature from the issuer), the issuer can still attest to a credential without having to have an account on-chain. This is to ensure closer compliance with the W3C Verifiable Credentials spec (see section 9).
+Yes.
 
 ### A.9: How do I get a list of credentials that an issuer has issued?
 
-The answer to that question is still being investigated. One option would be a Clio API.
+The `account_objects` RPC will return a list of all `Credential` objects an account is involved in - both as `Subject` and `Issuer`. To get a list of just the ones an account has issued, just filter that list for `Credential`s that have that account as the `Issuer`.
 
-### A.10: Can I edit the list of credentials stored in `AuthorizeCredentials`?
+### A.10: How do I get a list of credentials that an account has been issued?
+
+The `account_objects` RPC will return a list of all `Credential` objects an account is involved in - both as `Subject` and `Issuer`. To get a list of just the ones an account has been issued, just filter that list for `Credential`s that have that account as the `Subject`.
+
+### A.11: Can I edit the list of credentials stored in `AuthorizeCredentials`?
 
 No, you have to delete the `DepositPreauth` object and recreate it with the new list.
 
-### A.11: Does the list of credentials in `AuthorizeCredentials` _have_ to be AND-ed together? Can I instead use it as an OR list (i.e. only provide one of the credentials instead of all)? Or some complex combination?
+### A.12: Does the list of credentials in `AuthorizeCredentials` _have_ to be AND-ed together? Can I instead use it as an OR list (i.e. only provide one of the credentials instead of all)? Or some complex combination?
 
 No. You can OR credential(s) by putting them in separate `DepositPreauth` objects. For performance reasons, it is much easier to do a credential lookup if you need to have all of the credentials. Otherwise, you'd have to search the whole list. In addition, people who need to use this feature will likely not find the object reserve cost-prohibitive.
 
-### A.12: Why are `CredentialCreate` and `CredentialDelete` separate transactions?
+### A.13: Why are `CredentialCreate` and `CredentialDelete` separate transactions?
 
 It's easier and clearer to have those be separate operations.
