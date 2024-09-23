@@ -136,7 +136,8 @@ This transaction creates a `Credential` object. It must be sent by the issuer.
 
 * The account in `Subject` doesn't exist.
 * The time in `Expiration` is in the past.
-* The `URI` field is too long (limit 256 bytes).
+* The `URI` field is empty or too long (limit 256 bytes).
+* The `CredentialType` field is empty or too long (limit 256 bytes).
 * The account doesn't have enough reserve for the object.
 
 ### 3.3. State Changes
