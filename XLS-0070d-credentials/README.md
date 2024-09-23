@@ -26,10 +26,10 @@ This proposal only supports blocking the interactions that Deposit Authorization
 We propose:
 * Creating a `Credential` ledger object
 * Modifying the `DepositPreauth` ledger object
-* Modifying the `DepositPreauth` transaction
 * Creating a `CredentialCreate` transaction type
 * Creating a `CredentialAccept` transaction type
 * Creating a `CredentialDelete` transaction type
+* Modifying the `DepositPreauth` transaction
 * Modifying other transactions that are affected by Deposit Authorization
 
 This feature will require an amendment, tentatively titled `CredentialAuth`.
@@ -164,13 +164,104 @@ The list has a minimum size of 1 and a maximum size of 8 credentials.
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 
-## 4. Transaction: `DepositPreauth`
+## 4. Transaction: `CredentialCreate`
+
+This transaction creates a `Credential` object.
+
+There are two possible methods of doing so:
+* The issuer submits this transaction, and `CredentialAccept` is used for the subject to accept the transaction.
+* The credential data is passed off-chain from the issuer to the subject. The subject then submits the credential themselves, alongside an issuer signature, to the ledger.
+
+### 4.1. Fields
+
+| Field Name | Required? | JSON Type | Internal Type | Description |
+|------------|-----------|-----------|---------------|-------------|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialCreate`).|
+|`Account`|✔️|`string`|`AccountID`|The issuer of the credential.|
+|`Subject`|✔️|`string`|`AccountID`|The subject of the credential.|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+|`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
+|`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document).|
+
+### 4.2. Failure Conditions
+
+* The account in `Subject` doesn't exist.
+* The time in `Expiration` is in the past.
+* The `URI` field is too long (limit 256 bytes).
+* The account doesn't have enough reserve for the object.
+
+### 4.3. State Changes
+
+If the transaction is successful:
+* The `Credential` object is created.
+* If `Subject` === `Account` (i.e. the subject and issuer are the same account), then the `lsfAccepted` flag is enabled.
+
+## 5. Transaction: `CredentialAccept`
+
+This transaction accepts a credential issued to the `Account`. The credential is not considered valid until it has been transferred/accepted.
+
+### 5.1. Fields
+
+| Field Name | Required? | JSON Type | Internal Type | Description |
+|------------|-----------|-----------|---------------|-------------|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialAccept`).|
+|`Account`|✔️|`string`|`AccountID`|The subject of the credential.|
+|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+
+### 5.2. Failure Conditions
+
+* The account in `Account` or `Issuer` doesn't exist.
+* There is no valid credential described by the fields of the transaction.
+* The credential has already been accepted.
+* The `Account` doesn't have enough reserve for the object.
+
+### 5.3. State Changes
+
+If the transaction is successful:
+* The `lsfAccepted` flag is turned on in the credential.
+* The `Credential` object is moved from the issuer's owner directory to the subject's.
+
+## 6. Transaction: `CredentialDelete`
+
+This transaction deletes a `Credential` object.
+
+It can be executed by:
+* The issuer, anytime.
+* The account, anytime.
+* Anyone, after the expiration time is up.
+
+Deleting a credential is also how a credential is un-accepted.
+
+### 6.1. Fields
+
+| Field Name | Required? | JSON Type | Internal Type | Description |
+|------------|-----------|-----------|---------------|-------------|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialDelete`).|
+|`Account`|✔️|`string`|`AccountID`|The transaction submitter.|
+|`Subject`| |`string`|`AccountID`|The person that the credential is for. If omitted, `Account` is assumed to be the subject.|
+|`Issuer`| |`string`|`AccountID`|The issuer of the credential. If omitted, `Account` is assumed to be the issuer.|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+
+_Note: If an account is deleting a credential it issued to itself, then either `Subject` or `Issuer` can be specified, but at least one must be._
+
+### 6.2. Failure Conditions
+
+* The credential described by the `Subject`, `Issuer`, and `CredentialType` fields doesn't exist.
+* The `Account` isn't the issuer or subject, and the expiration hasn't passed.
+
+### 6.3. State Changes
+
+If the transaction is successful:
+* The `Credential` object is deleted.
+
+## 7. Transaction: `DepositPreauth`
 
 This transaction currently creates and deletes `DepositPreauth` objects, thereby allowlisting and un-allowlisting accounts.
 
 This spec extends that functionality to also support allowlisting and un-allowlisting credentials.
 
-### 4.1. Fields
+### 7.1. Fields
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/depositpreauth/#depositpreauth-fields) are the existing fields for the `DepositPreauth` transaction:
 
@@ -187,11 +278,11 @@ This proposal adds two new fields:
 
 **Exactly one of** the `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` fields must be included.
 
-#### 4.1.1. `AuthorizeCredentials` and `UnauthorizeCredentials`
+#### 7.1.1. `AuthorizeCredentials` and `UnauthorizeCredentials`
 
 These fields follow the same rules outlined in section 3.1.3 for the `Credential` object's `AuthorizeCredentials` field. 
 
-### 4.2. Failure Conditions
+### 7.2. Failure Conditions
 * Existing failure conditions for `DepositPreauth` will still be obeyed.
 * None or more than one of `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` are included (i.e. there must be exactly one of these fields included).
 * The issuer of the credential doesn't exist.
@@ -202,101 +293,10 @@ These fields follow the same rules outlined in section 3.1.3 for the `Credential
 	* The array is too long (i.e. has more than 8 credentials).
 	* The array is empty (i.e. has no credentials).
 
-### 4.3. State Changes
-
-If the transaction is successful:
-* The `DepositPreauth` object is created or deleted.
-
-## 5. Transaction: `CredentialCreate`
-
-This transaction creates a `Credential` object.
-
-There are two possible methods of doing so:
-* The issuer submits this transaction, and `CredentialAccept` is used for the subject to accept the transaction.
-* The credential data is passed off-chain from the issuer to the subject. The subject then submits the credential themselves, alongside an issuer signature, to the ledger.
-
-### 5.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialCreate`).|
-|`Account`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`Subject`|✔️|`string`|`AccountID`|The subject of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
-|`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
-|`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document).|
-
-### 5.2. Failure Conditions
-
-* The account in `Subject` doesn't exist.
-* The time in `Expiration` is in the past.
-* The `URI` field is too long (limit 256 bytes).
-* The account doesn't have enough reserve for the object.
-
-### 5.3. State Changes
-
-If the transaction is successful:
-* The `Credential` object is created.
-* If `Subject` === `Account` (i.e. the subject and issuer are the same account), then the `lsfAccepted` flag is enabled.
-
-## 6. Transaction: `CredentialAccept`
-
-This transaction accepts a credential issued to the `Account`. The credential is not considered valid until it has been transferred/accepted.
-
-### 6.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialAccept`).|
-|`Account`|✔️|`string`|`AccountID`|The subject of the credential.|
-|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
-
-### 6.2. Failure Conditions
-
-* The account in `Account` or `Issuer` doesn't exist.
-* There is no valid credential described by the fields of the transaction.
-* The credential has already been accepted.
-* The `Account` doesn't have enough reserve for the object.
-
-### 6.3. State Changes
-
-If the transaction is successful:
-* The `lsfAccepted` flag is turned on in the credential.
-* The `Credential` object is moved from the issuer's owner directory to the subject's.
-
-## 7. Transaction: `CredentialDelete`
-
-This transaction deletes a `Credential` object.
-
-It can be executed by:
-* The issuer, anytime.
-* The account, anytime.
-* Anyone, after the expiration time is up.
-
-Deleting a credential is also how a credential is un-accepted.
-
-### 7.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialDelete`).|
-|`Account`|✔️|`string`|`AccountID`|The transaction submitter.|
-|`Subject`| |`string`|`AccountID`|The person that the credential is for. If omitted, `Account` is assumed to be the subject.|
-|`Issuer`| |`string`|`AccountID`|The issuer of the credential. If omitted, `Account` is assumed to be the issuer.|
-|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
-
-_Note: If an account is deleting a credential it issued to itself, then either `Subject` or `Issuer` can be specified, but at least one must be._
-
-### 7.2. Failure Conditions
-
-* The credential described by the `Subject`, `Issuer`, and `CredentialType` fields doesn't exist.
-* The `Account` isn't the issuer or subject, and the expiration hasn't passed.
-
 ### 7.3. State Changes
 
 If the transaction is successful:
-* The `Credential` object is deleted.
+* The `DepositPreauth` object is created or deleted.
 
 ## 8. Any Transaction Affected by Deposit Authorization
 
