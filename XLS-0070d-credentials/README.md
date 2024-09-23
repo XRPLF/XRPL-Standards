@@ -74,6 +74,8 @@ This ledger object is an on-chain representation of a credential.
 
 This object costs one owner reserve for either the issuer or the subject of the credential, depending on whether the subject has accepted it.
 
+The `Credential` object will live in both the `Subject` and `Issuer`'s owner directories (similar to a trustline or escrow).
+
 ### 2.1. Fields
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
@@ -85,7 +87,8 @@ This object costs one owner reserve for either the issuer or the subject of the 
 |`CredentialType`| ✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
 |`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document). This field isn't checked for validity and is limited to a maximum length of 256 bytes.|
-|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the owner's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`.|
+|`SubjectNode`|✔️|`string`|`UInt64`|A hint indicating which page of the subject's owner directory links to this object, in case the directory consists of multiple pages.|
+|`IssuerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the issuer's owner directory links to this object, in case the directory consists of multiple pages.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
 |`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 
@@ -111,6 +114,8 @@ It has a maximum length of 256 bytes, and cannot be an empty string.
 ### 2.2. Account Deletion
 
 The `Credential` object is not a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
+
+In other words, if the `Subject` or `Issuer` deletes their account, the `Credential` object will automatically be deleted (rather than prevent them from deleting their account).
 
 ## 3. On-Ledger Object: `DepositPreauth`
 
