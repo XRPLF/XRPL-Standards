@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>On-Chain Credentials</b>
-Revision:    <b>3</b>
+Revision:    <b>4</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -80,11 +80,11 @@ The `Credential` object will live in both the `Subject` and `Issuer`'s owner dir
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`Credential`).|
-|`Flags`| ✔️|`number`|`UInt32`|Flag values associated with this object.|
-|`Subject`| ✔️|`string`|`AccountID`|The account that the credential is for.|
-|`Issuer`| ✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`| ✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+|`LedgerEntryType`|✔️|`string`|`UInt16`|The ledger object's type (`Credential`).|
+|`Flags`|✔️|`number`|`UInt32`|Flag values associated with this object.|
+|`Subject`|✔️|`string`|`AccountID`|The account that the credential is for.|
+|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
 |`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document). This field isn't checked for validity and is limited to a maximum length of 256 bytes.|
 |`SubjectNode`|✔️|`string`|`UInt64`|A hint indicating which page of the subject's owner directory links to this object, in case the directory consists of multiple pages.|
@@ -219,40 +219,16 @@ There are two possible methods of doing so:
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`CredentialCreate`).|
-|`Account`| ✔️|`string`|`AccountID`|The subject or issuer of the credential.|
-|`Subject`| |`string`|`AccountID`|The subject of the credential.|
-|`Issuer`| |`string`|`AccountID`|The issuer of the credential.|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialCreate`).|
+|`Account`|✔️|`string`|`AccountID`|The issuer of the credential.|
+|`Subject`|✔️|`string`|`AccountID`|The subject of the credential.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
-|`IssuerPubKey`| |`string`|`AccountID`|The public key of the issuer.|
-|`Signature`| |`string`|`Blob`|A signature from the issuer attesting to the credential.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
 |`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document).|
 
-#### 5.1.1. `Subject` and `Issuer`
-
-Exactly one of these two fields must be specified. If `Subject` is specified, `Account` is the issuer. If `Issuer` is specified, `Account` is the subject.
-
-If `Issuer` is specified, `IssuerPubKey` and `Signature` must also be included. If `Subject` is specified, then those two fields must not be included.
-
-#### 5.1.2. `IssuerPubKey` and `Signature`
-
-If the subject is submitting the account, a signature (and the corresponding public key) must be included from the issuer attesting to the credential. This signature will sign an encoded object that looks something like this:
-```typescript
-{
-    Issuer: "rISABEL......",
-    Subject: "rALICE.......",
-    CredentialType: "123ABC",
-    URI: "example.com", // will be in hex
-    Expiration: 12345678, // if applicable
-}
-```
-
 ### 5.2. Failure Conditions
 
-* Both or neither `Subject` and `Issuer` are specified (i.e. there must be only one of the two fields).
 * The account in `Subject` doesn't exist.
-* `Issuer` is included but `Signature` is not.
 * The time in `Expiration` is in the past.
 * The `URI` field is too long (limit 256 bytes).
 * The account doesn't have enough reserve for the object.
@@ -261,7 +237,6 @@ If the subject is submitting the account, a signature (and the corresponding pub
 
 If the transaction is successful:
 * The `Credential` object is created.
-* If `Issuer` is specified (i.e. the subject is creating the credential with the issuer's permission), then the `lsfAccepted` flag is enabled.
 * If `Subject` === `Account` (i.e. the subject and issuer are the same account), then the `lsfAccepted` flag is enabled.
 
 ## 6. Transaction: `CredentialAccept`
@@ -272,9 +247,9 @@ This transaction accepts a credential issued to the `Account`. The credential is
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`CredentialAccept`).|
-|`Account`| ✔️|`string`|`AccountID`|The subject of the credential.|
-|`Issuer`| ✔️|`string`|`AccountID`|The issuer of the credential.|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialAccept`).|
+|`Account`|✔️|`string`|`AccountID`|The subject of the credential.|
+|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
 
 ### 6.2. Failure Conditions
@@ -305,8 +280,8 @@ Deleting a credential is also how a credential is un-accepted.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`CredentialDelete`).|
-|`Account`| ✔️|`string`|`AccountID`|The transaction submitter.|
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`CredentialDelete`).|
+|`Account`|✔️|`string`|`AccountID`|The transaction submitter.|
 |`Subject`| |`string`|`AccountID`|The person that the credential is for. If omitted, `Account` is assumed to be the subject.|
 |`Issuer`| |`string`|`AccountID`|The issuer of the credential. If omitted, `Account` is assumed to be the issuer.|
 |`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
