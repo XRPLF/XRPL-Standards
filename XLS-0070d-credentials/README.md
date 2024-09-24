@@ -139,6 +139,7 @@ This transaction creates a `Credential` object. It must be sent by the issuer.
 * The `URI` field is empty or too long (limit 256 bytes).
 * The `CredentialType` field is empty or too long (limit 256 bytes).
 * The account doesn't have enough reserve for the object.
+* A duplicate credential already exists (with the same `Subject`, `Issuer`, and `CredentialType`).
 
 ### 3.3. State Changes
 
@@ -161,16 +162,19 @@ This transaction accepts a credential issued to the `Account` (i.e. the `Account
 
 ### 4.2. Failure Conditions
 
-* The account in `Account` or `Issuer` doesn't exist.
+* The account in `Issuer` doesn't exist.
 * There is no valid credential described by the fields of the transaction.
 * The credential has already been accepted.
 * The `Account` doesn't have enough reserve for the object.
+* The credential has already expired.
 
 ### 4.3. State Changes
 
 If the transaction is successful:
 * The `lsfAccepted` flag is turned on in the credential.
-* The `Credential` object is moved from the issuer's owner directory to the subject's.
+* The burden of reserve for the `Credential` object is moved from the issuer to the subject.
+
+If the credential has already expired, then the object will be deleted.
 
 ## 5. Transaction: `CredentialDelete`
 
@@ -197,13 +201,14 @@ _Note: If an account is deleting a credential it issued to itself, then either `
 
 ### 5.2. Failure Conditions
 
+* Neither `Subject` nor `Issuer` is specified.
 * The credential described by the `Subject`, `Issuer`, and `CredentialType` fields doesn't exist.
 * The `Account` isn't the issuer or subject, and the expiration hasn't passed.
 
 ### 5.3. State Changes
 
 If the transaction is successful:
-* The `Credential` object is deleted.
+* The `Credential` object is deleted (from both owner directories).
 
 ## 6. On-Ledger Object: `DepositPreauth`
 
@@ -237,7 +242,7 @@ A valid `DepositPreauth` object must have **exactly one of** the `Authorize` fie
 
 #### 6.1.1. Object ID
 
-The ID of this object will be either a hash of the `Account` and `Authorize` fields (as it currently is), or a hash of the `Account` and the contents of `AuthorizeCredentials` fields, combined with the unique space key for `DepositAuth` objects: `0x0070`.
+The ID of this object will be either a hash of the `Account` and `Authorize` fields (as it currently is), or a hash of the `Account` and the contents of `AuthorizeCredentials` fields, combined with the unique space key for `DepositPreauth` objects. This unique space key will be different for account-based `DepositPreauth` objects vs. credential-based `DepositPreauth` objects, to avoid the possibility of a hash collision.
 
 #### 6.1.2. `AuthorizeCredentials`
 
@@ -277,18 +282,21 @@ This proposal adds two new fields:
 
 #### 7.1.1. `AuthorizeCredentials` and `UnauthorizeCredentials`
 
-These fields follow the same rules outlined in section 3.1.3 for the `Credential` object's `AuthorizeCredentials` field. 
+These fields follow the same rules outlined in section 6.1.2 for the `DepositPreauth` object's `AuthorizeCredentials` field. 
 
 ### 7.2. Failure Conditions
 * Existing failure conditions for `DepositPreauth` will still be obeyed.
 * None or more than one of `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` are included (i.e. there must be exactly one of these fields included).
-* The issuer of the credential doesn't exist.
-* If `UnauthorizeCredentials` is included in the transaction, the credential(s) are not currently authorized.
+* If `UnauthorizeCredentials` is included in the transaction:
+	* The array is too long (i.e. has more than 8 credentials).
+	* The array is empty (i.e. has no credentials).
+    * The credential(s) are not currently authorized.
 * If `AuthorizeCredentials` is included in the transaction:
 	* The credential(s) are already authorized.
 	* The account doesn't have enough reserve for the object.
 	* The array is too long (i.e. has more than 8 credentials).
 	* The array is empty (i.e. has no credentials).
+    * The issuer of the credential doesn't exist.
 
 ### 7.3. State Changes
 
@@ -324,8 +332,8 @@ Note: the transaction will still fail if too many credentials are included. The 
 
 ### 8.3. State Changes
 
-* If the credential isn't valid, the transaction fails.
-* If the credential is expired, the credential is deleted.
+* If a credential isn't valid, the transaction fails.
+* If a credential is expired, the credential is deleted.
 
 ## 9. RPC: `deposit_authorized`
 
