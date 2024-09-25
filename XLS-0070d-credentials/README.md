@@ -317,6 +317,10 @@ The transactions that this field will be added to are:
 |------------|-----------|-----------|---------------|
 |`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
 
+#### 8.1.1. `CredentialIDs`
+
+The credentials included must not be expired. If there are duplicates provided in the list, they will be silently de-duped.
+
 ### 8.2. Failure Conditions
 
 * Any of the `CredentialIDs`:
@@ -325,10 +329,13 @@ The transactions that this field will be added to are:
   * Is an expired `Credential` object.
   * Has not been accepted.
   * Isn't a credential issued to the `Account` sending the transaction.
-* `CredentialIDs` is included, but the destination doesn't have Deposit Authorization set up, or the transaction doesn't have a destination (e.g. `AccountSet`).
 * The group of `CredentialIDs` is not authorized by the destination.
 
-Note: the transaction will still fail if too many credentials are included. The exact list must be provided.
+There is an [existing exception](https://xrpl.org/docs/concepts/accounts/depositauth#precise-semantics) in the Deposit Auth design to allow an XRP payment to an account with Deposit Auth enabled that has a balance less than or equal to the minimum Account Reserve requirement (currently 10 XRP). This is to prevent an account from becoming "stuck" by being unable to send transactions but also unable to receive XRP. There will be no added support for this with credentials; in other words, if a payment satisfying these criteria is sent with non-preauthorized credentials included, the transaction would fail (but would succeed if the credentials are removed).
+
+_Note: the transaction will still fail if too many credentials are included. The exact list must be provided._
+
+_Note: the transaction will succeed if (non-expired) credentials are included, but the account does not have Deposit Auth enabled._
 
 ### 8.3. State Changes
 
