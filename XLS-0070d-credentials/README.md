@@ -290,7 +290,7 @@ These fields follow the same rules outlined in section 6.1.2 for the `DepositPre
 * If `UnauthorizeCredentials` is included in the transaction:
 	* The array is too long (i.e. has more than 8 credentials).
 	* The array is empty (i.e. has no credentials).
-    * The credential(s) are not currently authorized.
+	* The credential(s) are not currently authorized.
 * If `AuthorizeCredentials` is included in the transaction:
 	* The credential(s) are already authorized.
 	* The account doesn't have enough reserve for the object.
