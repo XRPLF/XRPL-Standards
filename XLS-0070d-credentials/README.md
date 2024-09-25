@@ -84,7 +84,7 @@ The `Credential` object will live in both the `Subject` and `Issuer`'s owner dir
 |`Flags`|✔️|`number`|`UInt32`|Flag values associated with this object.|
 |`Subject`|✔️|`string`|`AccountID`|The account that the credential is for.|
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer.|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer. This field is limited to a maximum length of 64 bytes.|
 |`Expiration`| |`number`|`UInt32`|Optional credential expiration.|
 |`URI`| |`string`|`Blob`|Optional additional data about the credential (such as a link to the VC document). This field isn't checked for validity and is limited to a maximum length of 256 bytes.|
 |`SubjectNode`|✔️|`string`|`UInt64`|A hint indicating which page of the subject's owner directory links to this object, in case the directory consists of multiple pages.|
@@ -109,7 +109,7 @@ A credential should not be considered "valid" until it has been accepted.
 
 This value is similar to the NFT `Taxon` value, where the value's meaning will be decided by the issuer. It may be the same as a claim in a VC, but could also represent a subset of such a claim.
 
-It has a maximum length of 256 bytes, and cannot be an empty string.
+It has a maximum length of 64 bytes, and cannot be an empty string.
 
 ### 2.2. Account Deletion
 
@@ -137,7 +137,7 @@ This transaction creates a `Credential` object. It must be sent by the issuer.
 * The account in `Subject` doesn't exist.
 * The time in `Expiration` is in the past.
 * The `URI` field is empty or too long (limit 256 bytes).
-* The `CredentialType` field is empty or too long (limit 256 bytes).
+* The `CredentialType` field is empty or too long (limit 64 bytes).
 * The account doesn't have enough reserve for the object.
 * A duplicate credential already exists (with the same `Subject`, `Issuer`, and `CredentialType`).
 
