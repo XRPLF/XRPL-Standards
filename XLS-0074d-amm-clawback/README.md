@@ -164,7 +164,7 @@ It has the following subfields:
 #### 2.3.3. AMMClawback transaction examples
 
 ##### 2.3.3.1 Only one token is issued by the issuer
-Assue we have an AMM pool consisting two tokens FOO and Bar. And the proportion of FOO and BAR is 1:2. And the issuer `rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL` only issues FOO, BAR is issued by some other account.
+Assume we have an AMM pool consisting two tokens FOO and Bar. And the proportion of FOO and BAR is 1:2. And the issuer `rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL` only issues FOO, BAR is issued by some other account.
 
 ```
 {
@@ -195,7 +195,7 @@ Assue we have an AMM pool consisting two tokens FOO and Bar. And the proportion 
 - `tfClawTwoAssets` can not be set because BAR is not issued by the issuer.
 
 ##### 2.3.3.2 Both tokens are issued by the same issuer
-Assue we have an AMM pool consisting two tokens FOO and Bar. And the proportion of FOO and BAR is 1:2. And the issuer `rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL` issues both FOO and BAR.
+Assume we have an AMM pool consisting two tokens FOO and Bar. And the proportion of FOO and BAR is 1:2. And the issuer `rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL` issues both FOO and BAR.
 ```
 {
   "TransactionType": "AMMClawback",
