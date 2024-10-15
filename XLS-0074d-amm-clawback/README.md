@@ -20,7 +20,11 @@ This proposal introduces new improvements on how AMM interacts with frozen asset
 Currently if an asset in the AMM pool is frozen (either global or individual), we can still deposit the paired token into the AMM pool (if the paired asset is not frozen). This proposal introduces:
 * Prohibit a wallet from depositing new tokens (single-sided and double-sided) into an AMM pool if at least one of the tokens the wallet owns has been frozen (either individually or globally) by the token issuer.
 
-### 1.2. AMM and Clawback
+### 1.2. AMM and Unauthorized Asset
+At present, if an account is not authorized to hold a token in the AMM pool, it can still make a single deposit of the other paired token, provided it is authorized for that token. This proposal introduces:
+* Prevent a wallet from depositing new tokens (either single-sided or double-sided) into an AMM pool if it is not authorized to hold one or both of the tokens in the pool.
+
+### 1.3. AMM and Clawback
 Currently, accounts that have enabled clawback cannot create AMM pools. This proposal introduces the following:
 * Allow an account to create AMM pool even if one of the tokens has enabled `lsfAllowTrustLineClawback`. However, token issuers will not be allowed to claw back from the AMM account using the `Clawback` transaction.
 * Introduce a new `AMMClawback` transaction to allow token issuers to exclusively claw back from AMM pools that has one of their tokens, according to the current proportion in the pool.
@@ -31,6 +35,7 @@ Currently, accounts that have enabled clawback cannot create AMM pools. This pro
 
 This proposal introduces changes to the behavior of the `AMMDeposit` transaction when tokens in trustlines interact with Automated Market Maker (AMM) pools. 
 
+#### 2.1.1. AMMDeposit for Frozen Asset
 Assume we have created an Automated Market Maker (AMM) pool with two assets: A and B. Currently, asset A is frozen (either individually or globally). The following table outlines whether specific scenarios are allowed or prohibited for the current behavior and proposed behavior:
 
 | Scenario                | Current Behavior  | Proposed Behavior     |
@@ -40,6 +45,18 @@ Assume we have created an Automated Market Maker (AMM) pool with two assets: A a
 | Only Deposit B          | Allowed           | Prohibited            |  
 
 As illustrated in the table above, the primary change is that when one asset in the AMM pool is frozen, depositing the other asset is no longer allowed. This means that deposits are prohibited for the non-frozen asset when its paired asset is frozen.
+
+#### 2.1.1. AMMDeposit for Unauthorized Asset
+Assume we have created an Automated Market Maker (AMM) pool with two assets: A and B. The issuer of A has set `lsfRequireAuth` and the holder is not authorized to hold A.
+The table below summarizes the allowed and prohibited scenarios under the current and proposed behavior:
+
+| Scenario                      | Current Behavior  | Proposed Behavior     |
+|-------------------------------|-------------------|-----------------------|
+| Double-Asset Deposit          | Prohibited        | Prohibited            |
+| Only Deposit A (Unauthorized) | Prohibited        | Prohibited            |
+| Only Deposit B                | Allowed           | Prohibited            |  
+
+The primary change is that when the holder is not allowed to hold one of the token in the AMM pool, depositing the other asset is no longer allowed.
 
 ### 2.2. Allowing AMM Pool Creation with Clawback-Enabled Tokens
 Currently, when clawback is enabled for the issuer account by setting `lsfAllowTrustLineClawback` flag, `AMMCreate` is prohibited against this issuer. After the AMMClawback amendment, `AMMCreate` is allowed for clawback-enabled issuer. But the issuer can not clawback from the AMM account using `Clawback` transaction. `AMMClawback` transaction is needed for the issuer to clawback from an AMM account.  
