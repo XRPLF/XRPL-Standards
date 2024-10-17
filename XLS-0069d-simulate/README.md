@@ -3,7 +3,7 @@ Title:       <b>Simulating Transaction Execution</b>
 Revision:    <b>1</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-             <a href="mailto:elliot@ripple.com">Elliot Lee</a>
+             <a href="mailto:xrpl-standards-draft@ripple.com">Elliot Lee</a>
 
 Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
@@ -231,3 +231,9 @@ This is not intended to be an exhaustive list.
 * Experiment with different features of the XRPL with real-world data without needing to spend any money.
 * In user interfaces, provide users with a preview of what a transaction (e.g. `Payment`, `OfferCreate`, ...) can be expected to do.
 * Get the current price of an AMM ([related issue](https://github.com/XRPLF/rippled/issues/5007)).
+
+## Appendix B: Proposed Implementation
+
+A proposed implementation is available here: https://github.com/XRPLF/rippled/pull/5069
+
+As of 2024-10-17, the implementation is complete but awaiting code review approvals. You can build the PR branch, run `rippled`, [sync to the network of your choice](https://xrpl.org/docs/infrastructure/configuration/connect-your-rippled-to-the-xrp-test-net#connect-your-rippled-to-a-parallel-network) (e.g. Mainnet), and start using `simulate` today.
