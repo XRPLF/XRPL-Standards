@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Simulating Transaction Execution</b>
-Revision:    <b>1</b>
+Revision:    <b>2</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
              <a href="mailto:xrpl-standards-draft@ripple.com">Elliot Lee</a>
@@ -232,7 +232,7 @@ This is not intended to be an exhaustive list.
 * In user interfaces, provide users with a preview of what a transaction (e.g. `Payment`, `OfferCreate`, ...) can be expected to do.
 * Get the current price of an AMM ([related issue](https://github.com/XRPLF/rippled/issues/5007)).
 
-## Appendix B: Proposed Implementation
+## Appendix C: Proposed Implementation
 
 A proposed implementation is available here: https://github.com/XRPLF/rippled/pull/5069
 
