@@ -64,7 +64,7 @@ The array will be sorted by `Issuer`, so that searching it for a match is more p
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d).|
+|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d).|
 
 ### 2.2. Account Deletion
 
