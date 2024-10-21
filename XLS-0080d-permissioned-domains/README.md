@@ -43,6 +43,7 @@ This object represents a permissioned domain.
 |`Flags`| ✔️|`number`|`UInt32`|Flag values associated with this object.|
 |`LedgerEntryType`|✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
 |`Owner`|✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
+|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages.|
 |`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain.|
 |`AcceptedCredentials`|✔️|`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this entry.|
@@ -60,12 +61,10 @@ This is an array of inner objects referencing a type of credential. The maximum 
 
 The array will be sorted by `Issuer`, so that searching it for a match is more performant.
 
-If this field is not included in the domain, then credentials do not need to be used when interacting with anything using the domain (i.e. there are no credential-based rules).
-
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A value to identify the type of credential from the issuer.|
+|`CredentialType`|✔️|`string`|`Blob`|A value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d).|
 
 ### 2.2. Account Deletion
 
@@ -80,7 +79,6 @@ This transaction creates or modifies a `PermissionedDomain` object.
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainSet`).|
-|`Flags`| |`number`|`UInt32`|Set of bit-flags for this transaction.|
 |`Account`|✔️|`string`|`AccountID`|The account sending the transaction.|
 |`DomainID`| |`string`|`Hash256`|The domain to modify. Must be included if modifying an existing domain.|
 |`AcceptedCredentials`|✔️|`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field.|
@@ -89,6 +87,7 @@ This transaction creates or modifies a `PermissionedDomain` object.
 
 * `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
 * The `AcceptedCredentials` array is empty or too long (limit 10).
+* Any credential in `AcceptedCredentials` has an empty `CredentialType` or a `CredentialType` longer than 64 bytes (as per XLS-70d).
 * If `DomainID` is included:
 	* That domain doesn't exist.
 	* The `Account` isn't the domain owner.
