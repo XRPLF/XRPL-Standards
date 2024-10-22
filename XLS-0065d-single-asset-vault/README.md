@@ -247,7 +247,7 @@ The following variables define the Vault balance:
 - $\Delta_{asset}$ - the change in the total amount of assets after a deposit, withdrawal, or redemption.
 - $\Delta_{share}$ - che change in the total amount of shares after a deposit, withdrawal, or redemption.
 
-- $\Iota$ - the unrealized loss of the vault.
+- $\Iota_{}$ - the unrealized loss of the vault.
 
 ###### 2.1.7.2.1 **Deposit**
 
