@@ -275,7 +275,7 @@ The following equations govern the updated vault composition after a successful 
 
 We compute the number of shares to burn to withdraw $\Delta_{asset}$ as follows:
 
-$$\Delta_{share} = \frac{\Delta_{asset} \times (\Gamma_{share} + 0^{\Gamma_{share}})}{\Gamma_{asset} + \iota + 0^{\Gamma_{asset}}} $$
+$$\Delta_{share} = \frac{\Delta_{asset} \times (\Gamma_{share} + 0^{\Gamma_{share}})}{\Gamma_{asset} - \iota + 0^{\Gamma_{asset}}} $$
 
 The following equations govern the updated vault composition after a successful withdrawal:
 
