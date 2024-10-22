@@ -83,7 +83,7 @@ Issuers can only claw back issued tokens in the AMM pool only if the `lsfAllowTr
 By designating the holder account, asset, asset2 and amount, this transaction will:  
 - Claw back the specified amount of asset held by the specified holder account that are in the specified AMM account.
 - This transaction will initiate a two-asset withdrawal of the specified amount of tokens on the current proportion from the AMM pool.
-- Provided `Asset`'s issuer should match `Account`. Otherwise, `tecNO_PERMISSION` will be returned.
+- Provided `Asset`'s issuer should match `Account`. Otherwise, `temMALFORMED` will be returned.
 - If the issuer only issues one token in the AMM pool:
   - The issuer's `asset` will return to the issuer's account.
   - The paired `asset2` which is not issued by the issuer will be transferred back to the holder's account.
@@ -126,7 +126,7 @@ By designating the holder account, asset, asset2 and amount, this transaction wi
 |---------------------|:----------------:|:-------------:|:-----------------:|
 | `Asset`             |:heavy_check_mark:|`object`       |   `ISSUE`         |  
 
-`Asset` specifies the token that the issuer wants to claw back from the AMM pool. `Asset`'s issuer must match with `Account`. If it does not, the system will return an error: `tecNO_PERMISSION`.  
+`Asset` specifies the token that the issuer wants to claw back from the AMM pool. `Asset`'s issuer must match with `Account`. If it does not, the system will return an error: `temMALFORMED`.  
 
 It has the following subfields:
 
