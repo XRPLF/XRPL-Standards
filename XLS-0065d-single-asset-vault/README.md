@@ -247,13 +247,13 @@ The following variables define the Vault balance:
 - $\Delta_{asset}$ - the change in the total amount of assets after a deposit, withdrawal, or redemption.
 - $\Delta_{share}$ - che change in the total amount of shares after a deposit, withdrawal, or redemption.
 
-- $\Iota_{}$ - the unrealized loss of the vault.
+- $\iota$ - the unrealized loss of the vault.
 
 ###### 2.1.7.2.1 **Deposit**
 
 We compute the number of shares ($\Delta_{share}$) a depositor will receive as follows:
 
-$$\Delta_{share} = \frac{\Delta_{asset} \times (\Gamma_{share} + 0^{\Gamma_{share}})}{\Gamma_{asset} + 0^{\Gamma_{asset}}} $$
+$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} + 0^{\Gamma_{asset}}} $$
 
 The following equations govern the updated vault composition after a successful deposit:
 
@@ -264,7 +264,7 @@ The following equations govern the updated vault composition after a successful 
 
 We compute the number of assets ($\Delta_{asset}$) returned by burning $\Delta_{share}$ as follows:
 
-$$\Delta_{asset} = \frac{\Delta_{share} \times (\Gamma_{asset} - \Iota + 0^{asset})}{\Gamma_{share} + 0^{\Gamma_{share}}} $$
+$$\Delta_{asset} = \Delta_{share} \times \frac{\Gamma_{asset} - \iota}{\Gamma_{share} + 0^{\Gamma_{share}}} $$
 
 The following equations govern the updated vault composition after a successful redemption:
 
@@ -275,7 +275,7 @@ The following equations govern the updated vault composition after a successful 
 
 We compute the number of shares to burn to withdraw $\Delta_{asset}$ as follows:
 
-$$\Delta_{share} = \frac{\Delta_{asset} \times (\Gamma_{share} + 0^{\Gamma_{share}})}{\Gamma_{asset} - \Iota + 0^{\Gamma_{asset}}} $$
+$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} - \iota + 0^{\Gamma_{asset}}} $$
 
 The following equations govern the updated vault composition after a successful withdrawal:
 
