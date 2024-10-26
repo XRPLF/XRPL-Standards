@@ -389,7 +389,7 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
   "TransactionType": "MPTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
   "AssetScale": "2", // <-- Divisible into 100 units / 10^2
-  "MaximumAmount": "5F5E100", //  <-- 100,000,000 (Hex)
+  "MaximumAmount": "100000000", //  <-- 100,000,000
   "Flags": 66, // <-- tfMPTCanLock and tfMPTCanClawback
   "MPTokenMetadata": "464F4F", // <-- "FOO" (HEX)
   "Fee": 10
@@ -761,7 +761,7 @@ Example of an `account_objects` response:
             "Flags": 64,
             "Issuer": "rBT9cUqK6UvpvZhPFNQ2qpUTin8rDokBeL",
             "LedgerEntryType": "MPTokenIssuance",
-            "OutstandingAmount": "5a",
+            "OutstandingAmount": "50",
             "OwnerNode": "0",
             "PreviousTxnID": "BDC5ECA6B115C74BF4DA83E36325A2F55DF9E2C968A5CC15EB4D009D87D5C7CA",
             "PreviousTxnLgrSeq": 308,
