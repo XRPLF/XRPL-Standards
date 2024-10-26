@@ -339,7 +339,7 @@ If the transaction is successful, the newly created token will be owned by the a
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
 
-Indicates the new transaction type **`MPTokenIssuanceCreate`**. The integer value is `25 (TODO)`.
+Indicates the new transaction type **`MPTokenIssuanceCreate`**. The integer value is `54`.
 
 | Field Name         | Required?    | JSON Type | Internal Type |
 | ------------------ | ------------ | --------- |---------------|
@@ -410,7 +410,7 @@ If this operation succeeds, the corresponding **`MPTokenIssuance`** is removed a
 | ----------        | --------- | --------- | ------------- |
 | `TransactionType` |  ✔️        | `string`  | `UINT16`      | 
 
-Indicates the new transaction type **`MPTokenIssuanceDestroy`**. The integer value is `26` (TODO).
+Indicates the new transaction type **`MPTokenIssuanceDestroy`**. The integer value is `55`.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
@@ -435,7 +435,7 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
 
-Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value is `28 (TODO)`.
+Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value is `56`.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
