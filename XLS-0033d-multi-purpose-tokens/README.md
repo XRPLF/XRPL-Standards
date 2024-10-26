@@ -431,6 +431,7 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 ### 3.3. The **`MPTokenIssuanceSet`** Transaction
 
 #### 3.3.1. MPTokenIssuanceSet
+
 | Field Name         | Required? | JSON Type | Internal Type |
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
@@ -443,11 +444,11 @@ Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value i
 
 The `MPTokenIssuance` identifier.
 
-| Field Name      | Required?          | JSON Type | Internal Type |
-| --------------- | ------------------ | --------- | ------------- |
-| `MPTokenHolder`       | | `string`  | `ACCOUNTID`   | 
+| Field Name      | Required? | JSON Type | Internal Type |
+|-----------------|-----------|-----------|---------------|
+| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   | 
 
-An optional XRPL Address of an individual token holder balance to lock/unlock. If omitted, this transaction will apply to all any accounts holding MPTs.
+An optional XRPL Address of an individual token holder balance to lock/unlock. If omitted, this transaction will apply to all accounts holding MPTs.
 
 | Field Name      | Required?          | JSON Type | Internal Type |
 | --------------- | ------------------ | --------- | ------------- |
