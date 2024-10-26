@@ -609,9 +609,11 @@ To clawback funds from a MPT holder, the issuer must have specified that the MPT
 
 ## 6. APIs
 
-In general, existing RPC functionality can be used to interact with MPTs. For example, the `type` field of the  `account_objects` or `ledger_data` command can filter results by either `mpt_issuance` or `mptoken` values. In addition, the `ledger_entry` command can be used to query a specific `MPTokenIssuance` or `MPToken` object.
+In general, existing RPC functionality can be used to interact with MPTs. For example, the `type` field of the
+`account_objects` or `ledger_data` command can filter results by either `mpt_issuance` or `mptoken` values. In addition,
+the `ledger_entry` command can be used to query a specific `MPTokenIssuance` or `MPToken` object.
 
-This specification introduces a new Clio RPC `mpt_holders` to allow querying of all the holder of an MPT.
+This specification introduces a new Clio RPC called `mpt_holders` to allow querying all the holders of an MPT.
 
 ### 6.1. `ledger_entry` API Updates
 `ledger_entry` API is updated to query `MPTokenIssuance` and `MPToken` objects.
