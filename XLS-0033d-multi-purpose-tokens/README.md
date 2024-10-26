@@ -553,13 +553,15 @@ Transactions of the `MPTokenAuthorize` type support additional values in the Fla
 |-------------------|------------|-------------|
 | `tfMPTUnauthorize`     | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `MPToken`, which will be deleted as a result. If the the holder's `MPToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfMPTAuthorized` flag on the `MPToken`.|
 
-
 ### 3.6. The **`AccountDelete`** Transaction
 
 This spec introduces no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `MPTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `MPTokenIssuances` using `MPTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render MPT balances useless/unstable for any holders.
 
 ### 3.7. The **`Clawback`** Transaction
-The existing `Clawback` transaction will extend the existing `amount` field to accommodate MPT amounts. In addition, the `Clawback` transaction will introduce a new optional field, `MPTokenHolder`, to allow the issuer clawback `MPTokens` from holders' if and only if `lsfMPTAllowClawback` is set on the `MPTokenIssuance`.
+
+The existing `Clawback` transaction will extend the existing `amount` field to accommodate MPT amounts. In addition, the
+`Clawback` transaction will introduce a new optional field, `MPTokenHolder`, to allow the issuer to clawback `MPTokens`
+from holders if and only if `lsfMPTAllowClawback` is set on the `MPTokenIssuance`.
 
 #### 3.7.1. New `MPTokenHolder` field
 
