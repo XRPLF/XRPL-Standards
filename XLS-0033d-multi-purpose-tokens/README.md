@@ -127,8 +127,8 @@ A set of flags indicating properties or other options associated with this **`MP
 | `lsfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.                                                                                                                                     |
 | `lsfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
 | `lsfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.                                                                                                                         |
-
-Except for `lsfMPTLocked`, which can be mutated via the `**MPTokenIssuanceSet**` transactions, these flags are **immutable**: they can only be set during the **`MPTokenIssuanceCreate`** transaction and cannot be changed later.
+Except for `lsfMPTLocked`, which can be mutated via the **`MPTokenIssuanceSet`** transaction, these flags are
+**immutable** and can only be set once, at issuance creation, using the **`MPTokenIssuanceCreate`** transaction.
 
 ###### 2.1.1.2.3. `Issuer`
 
@@ -136,7 +136,27 @@ The address of the account that controls both the issuance amounts and character
 
 ###### 2.1.1.2.4. `AssetScale`
 
-An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0.
+Every MPT asset has an off-ledger standard unit of account. For example, the standard unit of account for a USD
+stablecoin is, in theory, one dollar. However, an MPT issuer might prefer to make the smallest unit of an MPT something
+smaller than the asset's standard unit, to enable on-ledger fractionalization while adhering to the limitation that
+MPTs only support whole numbers (MPT units must be integers). For example, an issuer might want each MPT unit to
+represent one cent instead of a whole dollar. Using `AssetScale`, MPT issuers can represent this difference as the
+number of orders of magnitude between a standard unit and an MPT unit.
+
+More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one standard unit
+equals $10^{-scale}$ of a corresponding MPT unit.
+
+The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
+
+$$StdUnit = 10^{-scale} * MptUnit \tag{I}$$
+
+$$MptUnit = StdUnit / 10^{-scale} \tag{II}$$
+
+Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
+each MPT unit represents one standard unit. an `MPTokenIssuance` with an `AssetScale` of `2` would mean each MPT unit
+represents `0.01` standard units, requiring `100` MPT units to equal one standard unit. More plainly, an
+`MPTokenIssuance` with an `AssetScale` of `2` would allow an issuer to create an MPT that represents "cents", with
+applications being able to display amounts correctly (e.g., of 1 unit would display as `$0.01`).
 
 ###### 2.1.1.2.5. `MaximumAmount`
 
@@ -211,14 +231,18 @@ Each **`MPTokenIssuance`** costs an incremental reserve to the owner account.
 #### 2.1.2. The **`MPToken`** object
 
 The **`MPToken`** object represents an amount of a token held by an account that is **not** the token issuer. MPTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `MPToken` is derived from hashing the space key, holder's address and the `MPTokenIssuanceID`.
+The **`MPToken`** object represents an amount of a token held by an account that is **not** the token issuer. MPTs are
+acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of
+transactions. The object key of the `MPToken` is derived from hashing the space key, holder's address and the
+`MPTokenIssuanceID`.
 
 ##### 2.1.2.1. **`MPToken`** Ledger Identifier
 
-The ID of a MPToken object, a.k.a `MPTokenID` is the result of SHA512-Half of the following values, concatenated in order:
+The Key of an MPToken object is the result of SHA512-Half of the following values, concatenated in order:
 
-* The MPToken space key (0x0074).
+* The MPToken space key (0x007F).
 * The `MPTokenIssuanceID` for the issuance being held.
-* The AccountID of the token holder. 
+* The AccountID of the token holder.
 
 ##### 2.1.2.2. Fields
 
@@ -915,14 +939,23 @@ As can be seen from the following size comparison table, Trustlines take up appr
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
 ##### Binary Encoding
-To support this idea, we first need a way to leverage the current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP` STAmount encoding, there are 62 bits available. So, so we can repurpose one of these bits to indicate if an amount is indeed a MPT or not (and still have 4 bits left over for future use, if needed). 
 
-This enables MPT amounts to be represented in the current `STAmount` binary encoding.  he rules for reading the binary amount fields would be backward compatible, as follows:
+To support this idea, we first need a way to leverage the
+current [STAmount](https://xrpl.org/serialization.html#amount-fields) binary encoding. To accomplish this, we notice
+that for XRP amounts, the maximum amount of XRP (10^17 drops) only requires 57 bits. However, in the current `XRP`
+STAmount encoding, there are 62 bits available. So, so we can repurpose one of these bits to indicate if an amount is
+indeed a MPT or not (and still have 4 bits left over for future use, if needed).
+
+This enables MPT amounts to be represented in the current `STAmount` binary encoding. he rules for reading the binary
+amount fields would be backward compatible, as follows:
 
 1. Parse off the Field ID with a type_code (`STI_AMOUNT`). This indicates the following bytes are an `STAmount`.
-2. Inspect the next bit. If its value is `1`, then continue to the next step. If not, then this `STAmount` does **not** represent an MPT nor XRP (instead this is a regular IOU token amount, and can be parsed according to existing rules for those amounts). 
+2. Inspect the next bit. If its value is `1`, then continue to the next step. If not, then this `STAmount` does **not**
+   represent an MPT nor XRP (instead this is a regular IOU token amount, and can be parsed according to existing rules
+   for those amounts).
 3. Ignore (for now) the 2nd bit (this is the sign-bit, and is always 1 for both XRP and MPT).
-4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the remaining `STAmount` bytes as an MPT.
+4. Inspect the 3rd bit. If `0`, then parse as an XRP value per usual. However, if `1`, then parse the remaining
+   `STAmount` bytes as an MPT.
 
 ##### Encoding for XRP Values (backward compatible)
 
@@ -997,3 +1030,4 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 **It is important to note that the holder always must first submit the `MPTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `MPTokenAuthorize` before Bob.
 
 Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
+the issuer's responsibility to clawback these funds.
