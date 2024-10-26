@@ -56,7 +56,7 @@ XLS-33 will only cover the addition of the new data structures for MPTs, integra
 
 ### 2.1. On-Ledger Data Structures
 
-We propose two new objects and one new ledger structure:
+This specification introduces two new objects and one new ledger structure:
 
 1. A **`MPTokenIssuance`** is a new object that describes a fungible token issuance created by an issuer.
 1. A **`MPToken`** is a new object that describes a single account's holdings of an issued token.
@@ -116,7 +116,7 @@ The value 0x007E, mapped to the string `MPTokenIssuance`, indicates that this ob
 
 ###### 2.1.1.2.2. `Flags`
 
-A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags proposed  are:
+A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
 | Flag Name           | Flag Value | Description                                                                                                                                                                                                                               |
 |---------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -284,7 +284,7 @@ This value is stored as a `default` value such that it's initial value is `0`, i
 
 ###### 2.1.2.2.6. `Flags`
 
-A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags proposed  are:
+A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
 | Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                      |
 |--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -487,7 +487,7 @@ Currently, the `amount` field takes one of two forms. The below example indicate
 "amount": "1"
 ```
 
-The below example indicates an amount of 1 USD issued by the indicated account:
+The below example indicates an amount of 1 USD issued by the indicated account as an IOU:
 
 ```json
 "amount": {
@@ -497,7 +497,7 @@ The below example indicates an amount of 1 USD issued by the indicated account:
 }
 ```
 
-We propose using the following format for MPT amounts:
+The below example indicates an amount of 1 USD issued by the indicated account as an MPT:
 
 ```json
 "amount": {
@@ -556,7 +556,7 @@ Transactions of the `MPTokenAuthorize` type support additional values in the Fla
 
 ### 3.6. The **`AccountDelete`** Transaction
 
-We propose no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `MPTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `MPTokenIssuances` using `MPTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render MPT balances useless/unstable for any holders.
+This spec introduces no changes to the `AccountDelete` transaction in terms of structure. However, accounts that have `MPTokenIssuance`s may not be deleted. These accounts will need to destroy each of their `MPTokenIssuances` using `MPTokenIssuanceDestroy` first before being able to delete their account. Without this restriction (or a similar one), issuers could render MPT balances useless/unstable for any holders.
 
 ### 3.7. The **`Clawback`** Transaction
 The existing `Clawback` transaction will extend the existing `amount` field to accommodate MPT amounts. In addition, the `Clawback` transaction will introduce a new optional field, `MPTokenHolder`, to allow the issuer clawback `MPTokens` from holders' if and only if `lsfMPTAllowClawback` is set on the `MPTokenIssuance`.
@@ -608,7 +608,7 @@ To clawback funds from a MPT holder, the issuer must have specified that the MPT
 
 In general, existing RPC functionality can be used to interact with MPTs. For example, the `type` field of the  `account_objects` or `ledger_data` command can filter results by either `mpt_issuance` or `mptoken` values. In addition, the `ledger_entry` command can be used to query a specific `MPTokenIssuance` or `MPToken` object.
 
-Also a new Clio RPC `mpt_holders` is proposed, to allow querying of all the holder of an MPT.
+This specification introduces a new Clio RPC `mpt_holders` to allow querying of all the holder of an MPT.
 
 ### 6.1. `ledger_entry` API Updates
 `ledger_entry` API is updated to query `MPTokenIssuance` and `MPToken` objects.
