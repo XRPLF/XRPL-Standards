@@ -480,13 +480,14 @@ Transactions of the `MPTokenLock` type support additional values in the Flags fi
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate MPT amounts.
 
 #### 3.4.1. The `amount` field
-Currently, the amount field takes one of two forms. The below indicates an amount of 1 drop of XRP::
+
+Currently, the `amount` field takes one of two forms. The below example indicates an amount of 1 drop of XRP:
 
 ```json
 "amount": "1"
 ```
 
-The below indicates an amount of USD $1 issued by the indicated amount::
+The below example indicates an amount of 1 USD issued by the indicated account:
 
 ```json
 "amount": {
@@ -496,7 +497,7 @@ The below indicates an amount of USD $1 issued by the indicated amount::
 }
 ```
 
-We propose using the following format for MPT amounts::
+We propose using the following format for MPT amounts:
 
 ```json
 "amount": {
@@ -585,7 +586,7 @@ Specifies the holders address that the issuer wants to clawback from. Th holder 
 
 ### 4.1. Locking individual balances
 
-To lock an individual balance of an individual MPT an issuer will submit the `MPTokenIssuanceSet` transaction, indicate the MPT and holder account that they wish to lock, and set the `tfMPTLock` flag. This operation will fail if::
+To lock an individual balance of an individual MPT an issuer will submit the `MPTokenIssuanceSet` transaction, indicate the MPT and holder account that they wish to lock, and set the `tfMPTLock` flag. This operation will fail if:
 
 * The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
@@ -593,7 +594,7 @@ Issuers can unlock the balance by submitting another `MPTokenIssuanceSet` transa
 
 ### 4.2. Locking entire MPTs
 
-This operation works the same as above, except that the holder account is not specified in the `MPTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if::
+This operation works the same as above, except that the holder account is not specified in the `MPTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if:
 
 * The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
