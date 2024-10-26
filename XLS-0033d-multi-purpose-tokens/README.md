@@ -526,7 +526,7 @@ This address can indicate either an issuer or a potential holder of a MPT.
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
 
-Indicates the new transaction type **`MPTokenAuthorize`**. The integer value is `29 (TODO)`.
+Indicates the new transaction type **`MPTokenAuthorize`**. The integer value is `57`.
 
 | Field Name  | Required? | JSON Type | Internal Type |
 | ----------- | --------- | --------- | ------------- |
@@ -538,12 +538,12 @@ Indicates the ID of the MPT involved.
 | ----------- | --------- | --------- | ------------- |
 | `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
 
-Specifies the holders address that the issuer wants to authorize. Only used for authorization/allow-listing; should not be present if submitted by the holder.
+Specifies the holder's address that the issuer wants to authorize. Only used for authorization/allow-listing; should not
+be present if submitted by the holder.
 
-| Field Name      | Required?          | JSON Type | Internal Type |
-| --------------- | ------------------ | --------- | ------------- |
-| `Flag`          | :heavy_check_mark: | `string`  | `UINT64`      | 
-
+| Field Name | Required?          | JSON Type | Internal Type |
+|------------|--------------------|-----------|---------------|
+| `Flag`     | :heavy_check_mark: | `string`  | `UINT64`      |
  
 #### 3.3.5.12. MPTokenAuthorize Flags
 
