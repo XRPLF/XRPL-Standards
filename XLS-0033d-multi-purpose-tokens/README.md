@@ -626,13 +626,14 @@ A `MPTokenIssuance` object can be queried by specifying the the `mpt_issuance` f
 | `mpt_issuance`       | ️String   | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
 
 ### 6.1.1. `mptoken` Field
-A `MPToken` object can be queried by specifying the the `mptoken` field.
 
-| Field Name           | Type    | Description |
-|--------------------- |:-------:| ------------|
-| `mptoken`      | ️Object or String  | If string, interpret as ledger entry ID of the `MPToken` to retrieve. If an object, requires the sub-fields `account` and `mpt_issuance_id` to unique identify the `MPToken`.|
-| `mptoken.mpt_issuance_id`      | ️String  | (Required if `mptoken` is specified as an object) The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
-| `mptoken.account`      | ️String  | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.|
+A `MPToken` object can be queried by specifying the `mptoken` field.
+
+| Field Name                |       Type        | Description                                                                                                                                                                     |
+|---------------------------|:-----------------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `mptoken`                 | ️Object or String | If string, interpret as ledger entry ID of the `MPToken` to retrieve. If an object, requires the sub-fields `account` and `mpt_issuance_id` to uniquely identify the `MPToken`. |
+| `mptoken.mpt_issuance_id` |      ️String      | (Required if `mptoken` is specified as an object) The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.                                                 |
+| `mptoken.account`         |      ️String      | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.                                                                                          |
 
 ### 6.2. `mpt_holders` API (Clio-only)
 For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of an MPT and their balance. This RPC might return very large data sets, so users should handle result paging using the `marker` field.
