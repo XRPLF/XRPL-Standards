@@ -565,11 +565,12 @@ from holders if and only if `lsfMPTAllowClawback` is set on the `MPTokenIssuance
 
 #### 3.7.1. New `MPTokenHolder` field
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
+| Field Name      | Required? | JSON Type | Internal Type |
+|-----------------|-----------|-----------|---------------|
+| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   | 
 
-Specifies the holders address that the issuer wants to clawback from. Th holder must already own a `MPToken` object with a non-zero balance.
+Specifies the MPT holder's address that the issuer wants to clawback from. The MPT holder must already own an `MPToken`
+object with a non-zero balance.
 
 #### 3.7.2. Example
 
