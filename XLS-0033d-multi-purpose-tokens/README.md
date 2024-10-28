@@ -145,7 +145,7 @@ represent one cent instead of a whole dollar. Using `AssetScale`, MPT issuers ca
 number of orders of magnitude between a standard unit and an MPT unit.
 
 More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one standard unit
-equals $10^{-scale}$ of a corresponding MPT unit.
+equals $10^{scale}$ of a corresponding MPT unit.
 
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
 
