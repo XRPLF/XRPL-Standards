@@ -127,6 +127,7 @@ A set of flags indicating properties or other options associated with this **`MP
 | `lsfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.                                                                                                                                     |
 | `lsfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
 | `lsfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.                                                                                                                         |
+
 Except for `lsfMPTLocked`, which can be mutated via the **`MPTokenIssuanceSet`** transaction, these flags are
 **immutable** and can only be set once, at issuance creation, using the **`MPTokenIssuanceCreate`** transaction.
 
