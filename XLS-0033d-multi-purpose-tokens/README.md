@@ -1075,4 +1075,3 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 **It is important to note that the holder always must first submit the `MPTokenAuthorize` transaction before the issuer.** This means that in the example above, steps 2 and 3 cannot be reversed where Alice submits the `MPTokenAuthorize` before Bob.
 
 Issuer also has the ability to de-authorize a holder. In that case, if the holder still has outstanding funds, then it's the issuer's responsibility to clawback these funds.
-the issuer's responsibility to clawback these funds.
