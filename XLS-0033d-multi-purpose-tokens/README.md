@@ -834,24 +834,22 @@ That said, we'll need to consider any future requirements and tradeoffs here bef
 
 #### A.1.12. What numeric range do MPT amounts support?
 
-In general, MPT `amount` fields are represented using unsigned 64-bit integers that can support values between `0` and
-`2^64 -1` (inclusive). An exception to this rule occurs when MPT amounts are represented in a payment or any other
-transaction that requires an `STAmount`. In these instances, the MPT amount values are limited to values between `0` and
-`2^63 -1` (inclusive), because this is the range supported by `STAmount`.
+In general, `amount` fields in MPT-related ledger objects are represented using unsigned 64-bit integers that can support values
+between `0` and`2^64 -1` (inclusive). An exception to this rule occurs when MPT amounts are represented in a payment or
+any other transaction that requires an `STAmount`. In these instances, the MPT amount values are limited to values
+between `0` and `2^63 -1` (inclusive), because this is the range supported by `STAmount`.
 
-As part of the design of MPTs, it was decided to limit the range of MPTs in any `STAmount` so that MPT amounts would
-work correctly with the `Number` class, which is used internally in rippled for any many mathematical operations such as
-inside the DEX, AMM, or otherwise.
+Because of this limitation, the maximum amounts allowed by any balance tracking field in `MPTokenIssuance` and `MPToken` 
+are also limited to values between `0` and `2^63 -1` (inclusive), although these values may be increased in the future 
+to enable more tokens to exist. 
 
-At present, the `Number` class is unable to represent numeric values larger than `2^63 - 307` without loss of precision
-or overflow (depending on how the `Number` class's overflow behavior is configured for any particular runtime
-operation). While refactoring the `Number` class to support larger internal types was considered, it would have resulted
-in performance penalties for all `Number` usages, so we elected to simply limit the size of MPT amounts inside of an
-`STAmount` instead. The only real side effect of this design choice is that in certain scenarios where an MPT issuance's
-`MaxAmount` exceeds the value allowed by `STAmount` (i.e., exceeds `2^63-1`), then a single payment, DEX offer, or AMM
-transaction would not be able to represent the entire supply of an MPT in one single transaction. However, such a
-scenario is incredibly unlikely and is thus not considered benign (in the worst case, two transactions could be used to
-arrive at the desired outcome).
+For context, MPT amounts in `STAmount` objects are limited to the above range so that MPT amounts will eventually work
+correctly with the `Number` class, which is used internally in rippled for any many mathematical operations such as
+inside the DEX, AMM, or otherwise. At present, the `Number` class is unable to represent numeric values larger than
+`2^63 - 307` without loss of precision or overflow (depending on how the `Number` class's overflow behavior is
+configured for any particular runtime operation). While refactoring the `Number` class to support larger internal types
+was considered, it would have resulted in performance penalties for all `Number` usages, so we elected to simply limit
+the size of MPT amounts inside of `STAmount` instead.
 
 #### A.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
 There are three important motivations for this design choice.
