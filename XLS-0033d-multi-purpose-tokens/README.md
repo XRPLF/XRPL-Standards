@@ -100,7 +100,7 @@ The ID of a `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit i
 | `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
 | `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `AssetScale`        | (default)          | `number`  | `UINT8`       |
-| `MaximumAmount`     | :heavy_check_mark: | `string`  | `UINT64`      |
+| `MaximumAmount`     | (default)          | `string`  | `UINT64`      |
 | `OutstandingAmount` | (default)          | `string`  | `UINT64`      |
 | `LockedAmount`      | (default)          | `string`  | `UINT64`      |
 | `TransferFee`       | (default)          | `number`  | `UINT16`      |
@@ -140,8 +140,9 @@ An asset scale is the difference, in orders of magnitude, between a standard uni
 
 ###### 2.1.1.2.5. `MaximumAmount`
 
-An unsigned 64-bit number that specifies the maximum number of MPTs that can be distributed to non-issuing
-accounts (i.e., `minted`). The default and maximum value is 0x7FFF'FFFF'FFFF'FFFF. However, this limit may increase in the future, so specifying a custom value is recommended if a specific limit is required.
+An unsigned 64-bit number that specifies the maximum number of MPTs that can be distributed to non-issuing accounts (
+i.e., `minted`). The default and maximum value is `0x7FFF'FFFF'FFFF'FFFF`. However, this limit may increase in the
+future, so issuers that require a specific limit should always specify a custom value.
 
 ###### 2.1.1.2.6. `OutstandingAmount`
 
@@ -317,6 +318,7 @@ The **`MPTokenIssuanceCreate`** transaction creates a **`MPTokenIssuance`** obje
 If the transaction is successful, the newly created token will be owned by the account (the creator account) which executed the transaction.
 
 ##### 3.1.1.1. Transaction-specific Fields
+
 | Field Name         | Required? | JSON Type | Internal Type |
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
@@ -356,11 +358,16 @@ The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it i
 |-----------------|-----------|-----------|---------------|
 | `MaximumAmount` |           | `string`  | `UINT64`      | 
 
-The maximum asset amount of this token that should ever be issued.
+The maximum number of this token's units that should ever be issued. This field is optional. If omitted, the
+implementation will set this to an empty default field value, which will be interpreted at runtime as the current
+maximum allowed value (currently `0x7FFF'FFFF'FFFF'FFFF`).
 
-| Field Name        | Required?          | JSON Type | Internal Type |
-| ------------------| ------------------ | --------- | ------------- |
-| `MPTokenMetadata` |  | `string`  | `BLOB`        | 
+Note that the maximum allowed value may increase in the future, so callers should specify a custom value if a specific
+limit is required.
+
+| Field Name        | Required? | JSON Type | Internal Type |
+|-------------------|-----------|-----------|---------------|
+| `MPTokenMetadata` |           | `string`  | `BLOB`        | 
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
