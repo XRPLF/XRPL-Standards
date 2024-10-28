@@ -141,7 +141,7 @@ An asset scale is the difference, in orders of magnitude, between a standard uni
 ###### 2.1.1.2.5. `MaximumAmount`
 
 An unsigned 64-bit number that specifies the maximum number of MPTs that can be distributed to non-issuing
-accounts (i.e., `minted`). The maximum value of this field is `0xFFFF'FFFF'FFFF'FFFF`.
+accounts (i.e., `minted`). The default and maximum value is 0x7FFF'FFFF'FFFF'FFFF. However, this limit may increase in the future, so specifying a custom value is recommended if a specific limit is required.
 
 ###### 2.1.1.2.6. `OutstandingAmount`
 
