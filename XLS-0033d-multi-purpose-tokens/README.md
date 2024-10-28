@@ -407,7 +407,7 @@ in which it is being held, effectively removing the token issuance from the ledg
 If this operation succeeds, the corresponding **`MPTokenIssuance`** is removed and the owner’s reserve requirement is
 reduced by one. This operation must fail if there are any holders of the MPT in question.
 
-Note the destroying an `MPTokenIssuance` does not remove associated `MPToken` objects from accounts that have held a
+Note that destroying an `MPTokenIssuance` does not remove associated `MPToken` objects from accounts that have held a
 deleted token. These can instead be removed using an `MPTokenAuthorize` transaction. 
 
 #### 3.2.1. Transaction-specific Fields
