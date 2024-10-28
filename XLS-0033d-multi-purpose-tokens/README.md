@@ -145,19 +145,19 @@ represent one cent instead of a whole dollar. Using `AssetScale`, MPT issuers ca
 number of orders of magnitude between a standard unit and an MPT unit.
 
 More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one standard unit
-equals $10^{-scale}$ of a corresponding MPT unit.
+equals $10^{scale}$ of a corresponding MPT unit.
 
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
 
-$$StdUnit = 10^{-scale} * MptUnit \tag{I}$$
+$$StdUnit = MptUnit / 10^{scale} *\tag{I}$$
 
-$$MptUnit = StdUnit / 10^{-scale} \tag{II}$$
+$$MptUnit = 10^{scale} * StdUnit \tag{II}$$
 
 Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
 each MPT unit represents one standard unit. However, an `MPTokenIssuance` with an `AssetScale` of `2` would mean each
 MPT unit represents `0.01` standard units, requiring `100` MPT units to equal one standard unit. More plainly, an
 USD stablecoin `MPTokenIssuance` with an `AssetScale` of `2` would allow an issuer to create an MPT that represents
-"cents", with applications being able to display amounts correctly (e.g., of 1 unit would display as `$0.01`).
+"cents", with applications being able to display amounts correctly (e.g., 1 unit would display as `$0.01`).
 
 ###### 2.1.1.2.5. `MaximumAmount`
 
