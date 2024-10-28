@@ -148,7 +148,7 @@ accounts (i.e., `minted`). The maximum value of this field is `0xFFFF'FFFF'FFFF'
 An unsigned 64-bit number that specifies the sum of all token amounts that have been minted to all token holders. This
 value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This
 value is increased whenever an issuer pays MPTs to a non-issuer account, and decreased whenever a non-issuer pays MPTs
-into the issuing account. The maximum value of this field is `0xFFFF'FFFF'FFFF'FFFF`.
+into the issuing account. The maximum value of this field is `0x7FFF'FFFF'FFFF'FFFF`.
 
 ###### 2.1.1.2.7. `TransferFee`
 
