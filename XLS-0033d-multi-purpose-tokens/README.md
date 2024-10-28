@@ -841,7 +841,7 @@ or overflow (depending on how the `Number` class's overflow behavior is configur
 operation). While refactoring the `Number` class to support larger internal types was considered, it would have resulted
 in performance penalties for all `Number` usages, so we elected to simply limit the size of MPT amounts inside of an
 `STAmount` instead. The only real side effect of this design choice is that in certain scenarios where an MPT issuance's
-`MaxAmount` exceeds the value allowed by `STAMount` (i.e., exceeds `2^63-1`), then a single payment, DEX offer, or AMM
+`MaxAmount` exceeds the value allowed by `STAmount` (i.e., exceeds `2^63-1`), then a single payment, DEX offer, or AMM
 transaction would not be able to represent the entire supply of an MPT in one single transaction. However, such a
 scenario is incredibly unlikely and is thus not considered benign (in the worst case, two transactions could be used to
 arrive at the desired outcome).
