@@ -385,7 +385,7 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
 
 ##### 3.1.1.2. Example **`MPTokenIssuanceCreate`** transaction
 
-```json
+```js
 {
   "TransactionType": "MPTokenIssuanceCreate",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
