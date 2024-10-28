@@ -853,7 +853,7 @@ The key idea here is that metadata does not need to be consistent across all iss
 
 While not currently required by today's transactors, `AssetScale` also prepares for future on-ledger functionality that might require it.
 
-#### A.1.17 What impact with MPTs have on the rippled codebase when it comes to representing issuers, currency types, or token amounts?
+#### A.1.17 What impact will MPTs have on the rippled codebase when it comes to representing issuers, currency types, or token amounts?
 
 The following changes have been made to the rippled codebase to accommodate this spec: 
 
