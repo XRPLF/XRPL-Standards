@@ -803,7 +803,13 @@ No, replacing Trustlines is not the intent behind MPTs. Instead, it's likely tha
 
 #### A.1.3. Instead of MPTs, why not just make Trustlines smaller/better?
 
-While it's true there are some proposals to make Trustlines more efficient (e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and even (eliminate Custom Math)[https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to build and implement MPT is ultimately a choice that balances this risk/reward tradeoff towards introducing somethign new to avoid breaking any existing functionality.
+While it's true there are some proposals to make Trustlines more efficient (
+e.g., [optimize Trustline storage](https://github.com/XRPLF/rippled/issues/3866) and
+even [eliminate Custom Math](https://github.com/XRPLF/rippled/issues/4120) from Trustlines), both of these are
+reasonably large changes that would change important aspect of the RippleState implementation. Any time we make changes
+like this, the risk is that these changes impact existing functionality in potentially unforeseen ways. The choice to
+build and implement MPT is ultimately a choice that balances this risk/reward tradeoff towards introducing something new
+to avoid breaking any existing functionality.
 
 #### A.1.4. Are MPTs targeted for Mainnet or a Sidechain?
 
