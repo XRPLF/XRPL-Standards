@@ -401,10 +401,13 @@ This transaction assumes that the issuer of the token is the signer of the trans
 ### 3.2. The **`MPTokenIssuanceDestroy`** transaction
 
 The **`MPTokenIssuanceDestroy`** transaction is used to remove an **`MPTokenIssuance`** object from the directory node
-in which it is being held, effectively removing the token from the ledger (i.e., "destroying" it).
+in which it is being held, effectively removing the token issuance from the ledger (i.e., "destroying" it).
 
 If this operation succeeds, the corresponding **`MPTokenIssuance`** is removed and the owner’s reserve requirement is
 reduced by one. This operation must fail if there are any holders of the MPT in question.
+
+Note the destroying an `MPTokenIssuance` does not remove associated `MPToken` objects from accounts that have held a
+deleted token. These can instead be removed using an `MPTokenAuthorize` transaction. 
 
 #### 3.2.1. Transaction-specific Fields
 
@@ -510,9 +513,15 @@ Note: The `MPTokenIssuanceID` will be used to uniquely identify the MPT during a
 
 ### 3.5. The **`MPTokenAuthorize`** Transaction
 
-This transaction enables an account to hold an amount of a particular MPT issuance. When applied successfully, it will create a new `MPToken` object with an initial zero balance, owned by the holder account.
+This transaction enables an account to hold an amount of a particular MPT issuance. When applied successfully, it will
+create a new `MPToken` object with an initial zero balance, owned by the holder account.
 
-If the issuer has set `lsfMPTRequireAuth` (allow-listing) on the `MPTokenIssuance`, then the issuer must submit a `MPTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfMPTRequireAuth` is not set and the issuer attempts to submit this transaction, it will fail.
+If the issuer has set `lsfMPTRequireAuth` (allow-listing) on the `MPTokenIssuance`, then the issuer must submit a
+`MPTokenAuthorize` transaction as well in order to give permission to the holder. If `lsfMPTRequireAuth` is not set and
+the issuer attempts to submit this transaction, it will fail.
+
+This transaction can also be used to delete an `MPToken` object with a zero balance by submitting it with the
+`tfMPTUnauthorize` flag set.
 
 #### 3.5.1. MPTokenAuthorize
 
