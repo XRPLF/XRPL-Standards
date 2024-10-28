@@ -137,7 +137,7 @@ The address of the account that controls both the issuance amounts and character
 
 ###### 2.1.1.2.4. `AssetScale`
 
-Every MPT asset has an off-ledger standard unit of account. For example, the standard unit of account for a USD
+Every MPT asset has an off-ledger standard unit. For example, the standard unit for a USD
 stablecoin is, in theory, one dollar. However, an MPT issuer might prefer to make the smallest unit of an MPT something
 smaller than the asset's standard unit, to enable on-ledger fractionalization while adhering to the limitation that
 MPTs only support whole numbers (MPT units must be integers). For example, an issuer might want each MPT unit to
