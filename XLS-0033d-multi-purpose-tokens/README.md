@@ -831,26 +831,10 @@ lookup an `MPTIssuance` in the ShaMap. This is because, in general, rippled shou
 specify a direct location in the ShaMap – instead, this value should always be computed, and combined with a transaction
 type or contextual data to inform the lookup.
 
-Last but not least, our design seeks to impose the fewest number of changes in the `rippled` codebase as possible. To
-this end, our design has the following implications:
-
-- Asset is added. it replaces Issue in many contexts. Issue stays as-is; it supports only XRP and IOU. Asset supports XRP,
-IOU, and MPT. in my opinion, it does not matter how it works internally. the point is that when you need to represent a
-token type, you use Asset
-
-- STAmount stays, but now supports MPT in addition to XRP and IOU by holding an Asset instead of an Issue.
-- STIssue stays, but now supports MPT in addition to XRP and IOU by holding an Asset instead of an Issue.
-1. The `Issue` class in rippled will be redesigned to represent both a trustline or an MPT. In the case of an MPT, the
-   `Issue` will have an `issuer` and `variant<currency, sequence>`. This enables the `Issue` class to be used to
-   represent a trustline through an `issuer`/`currency` pair or an MPT through an `issuer`/`sequence` pair.
-2. When serializing `Issue` into an `STAmount`, the binary encoding can be split into `issuer` and `sequence` for easy
-   decomposition. This removes any need to query the ledger to find this information (i.e., this is a primary reason not
-   to use a simple hash as an MPT identifier when communicating to outsider clients.
-
-Some benefits of this design approach include that is (1) reduces the footprint of a serialized MPT `STAmount` to 264
-bits; and (2) reduces the space required by an `MPTokenIssuanceID` to 192 bits compared to original `MPTokenIssuanceID`,
-which required 256-bits. Because `MPTokenIssuanceID` is a field in each `MPToken`, this will yield a space reduction of
-64 bits per `MPToken`.
+Last, but certainly not least, this design approach reduces the footprint of a serialized MPT `STAmount` to 264
+bits by reducing the space required by an `MPTokenIssuanceID` to 192 bits (when compared to original
+`MPTokenIssuanceID`, which required 256-bits). Because `MPTokenIssuanceID` is a field in each `MPToken`, this will yield
+a space reduction of 64 bits per `MPToken`.
 
 #### A.1.14. Why isn’t `MPTokenIssuanceID` constructed from the hash of an issuer address and currency code?
 Primarily because we did not want MPT meta-data to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
