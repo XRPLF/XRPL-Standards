@@ -126,7 +126,7 @@ By designating the holder account, asset, asset2 and amount, this transaction wi
 |---------------------|:----------------:|:-------------:|:-----------------:|
 | `Asset`             |:heavy_check_mark:|`object`       |   `ISSUE`         |  
 
-`Asset` specifies the token that the issuer wants to claw back from the AMM pool. `Asset`'s issuer must match with `Account`. If it does not, the system will return an error: `temMALFORMED`.  
+`Asset` specifies the token that the issuer wants to claw back from the AMM pool. `Asset`'s issuer must match with `Account`. If it does not, the system will return an error: `temMALFORMED`. Notice always put the token to be clawed back in `Asset` insead of `Asset2`.
 
 It has the following subfields:
 
@@ -141,13 +141,13 @@ It has the following subfields:
 |---------------------|:----------------:|:-------------:|:-----------------:|
 | `Asset2`            |:heavy_check_mark:|`object`       |   `ISSUE`         |
 
-`Asset2` specifies the other asset in the AMM pool.  
+`Asset2` specifies the other asset in the AMM pool.
 
 It has the following subfields:
 
 | Field name |     Required?      | Description                              |
 | :--------: | :----------------: | :--------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the paired token's issuer      |
+|  `issuer`  |                    | specifies the paired token's issuer, omit for xrp      |
 | `currency` | :heavy_check_mark: | specifies the paired token's currency    |
 
 ---
@@ -275,3 +275,26 @@ Assume we have an AMM pool consisting two tokens FOO and Bar. And the proportion
 - In this example, both FOO and BAR are issued by the same issuer. So `tfClawTwoAssets` is allowed to be set.
 - Since `Amount` is not given and `tfClawTwoAssets` is set, the issuer will clawback all the holder's FOO and the corresponding BAR from the AMM pool. (FOO and BAR clawed back amounts reflect the two-asset withdrawal amounts from redeeming all holder's LPtokens in the AMM pool.)
 - `tfClawTwoAssets` is used to determine if BAR will be clawed back or goes back to the holder.
+
+##### 2.3.3.5 Clawback token from a pool containing XRP
+```
+{
+  "TransactionType": "AMMClawback",
+  "Account": "rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL",
+  "Holder": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+  "Asset": {
+      "currency" : "FOO",
+      "issuer" : "rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL"
+  },
+  "Asset2" : {
+      "currency" : "XRP",
+  },
+  "Amount": {
+      "currency" : "FOO",
+      "issuer" : "rPdYxU9dNkbzC5Y2h4jLbVJ3rMRrk7WVRL",
+      "value" : "1000"
+  }
+}
+```
+- In this example, the issuer will clawback 1000 FOO from the AMM pool FOO/XRP. And the corresponding proportion of XRP will go back to the holder.
+- Notice XRP can not be clawed back.
