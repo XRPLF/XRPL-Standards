@@ -208,19 +208,19 @@ ultimately have no effect.)
 
 ##### 2.1.1.3. Example **`MPTokenIssuance`** JSON
 
- ```json
+```json
  {
-     "LedgerEntryType": "MPTokenIssuance",
-     "Flags": 131072,
-     "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-     "AssetScale": "2",
-     "MaximumAmount": "100000000",
-     "OutstandingAmount": "5",
-     "TransferFee": 50000,     
-     "MPTokenMetadata": "",
-     "OwnerNode": "74"
- }
- ```
+  "LedgerEntryType": "MPTokenIssuance",
+  "Flags": 131072,
+  "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+  "AssetScale": "2",
+  "MaximumAmount": "100000000",
+  "OutstandingAmount": "5",
+  "TransferFee": 50000,
+  "MPTokenMetadata": "",
+  "OwnerNode": "74"
+}
+```
 
 ##### 2.1.1.4. How do **`MPTokenIssuance`** objects work?
 
@@ -318,17 +318,17 @@ Identifies the page in the owner's directory where this item is referenced.
 
 ##### 2.1.2.3. Example MPToken JSON
 
- ```json
+```json
  {
-     "LedgerEntryType": "MPToken",
-     "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
-     "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
-     "Flags": 0,
-     "MPTAmount": "100000000",
-     "LockedAmount": "0",
-     "OwnerNode": 1
- }
- ```
+  "LedgerEntryType": "MPToken",
+  "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+  "Flags": 0,
+  "MPTAmount": "100000000",
+  "LockedAmount": "0",
+  "OwnerNode": 1
+}
+```
 
 ##### 2.1.2.4. Reserve for **`MPToken`** object
 
@@ -438,13 +438,13 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 
 #### 3.2.2. Example **`MPTokenIssuanceDestroy`** JSON
 
- ```json
+```json
  {
-       "TransactionType": "MPTokenIssuanceDestroy",
-       "Fee": 10,
-       "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E"
- }
- ```
+  "TransactionType": "MPTokenIssuanceDestroy",
+  "Fee": 10,
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E"
+}
+```
  
 ### 3.3. The **`MPTokenIssuanceSet`** Transaction
 
@@ -475,14 +475,14 @@ to all accounts holding MPTs.
 
 #### 3.3.2. Example **`MPTokenIssuanceSet`** JSON
 
- ```json
+```json
  {
-       "TransactionType": "MPTokenIssuanceSet",
-       "Fee": 10,
-       "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
-       "Flags": 1
- }
- ```
+  "TransactionType": "MPTokenIssuanceSet",
+  "Fee": 10,
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+  "Flags": 1
+}
+```
  
 #### 3.3.1.1. MPTokenIssuanceSet Flags
 Transactions of the `MPTokenLock` type support additional values in the Flags field, as follows:
@@ -500,25 +500,31 @@ The existing `Payment` transaction will not have any new top-level fields or fla
 Currently, the `amount` field takes one of two forms. The below example indicates an amount of 1 drop of XRP:
 
 ```json
-"amount": "1"
+{
+  "amount": "1"
+}
 ```
 
 The below example indicates an amount of 1 USD issued by the indicated account as an IOU:
 
 ```json
-"amount": {
-  "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-  "currency": "USD",
-  "value": "1"
+{
+  "amount": {
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+    "currency": "USD",
+    "value": "1"
+  }
 }
 ```
 
 The below example indicates an amount of 1 USD issued by the indicated account as an MPT:
 
 ```json
-"amount": {
-  "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-  "value": "1"
+{
+  "amount": {
+    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    "value": "1"
+  }
 }
 ```
 
@@ -748,7 +754,9 @@ A `mptoken` object has the following parameters:
  A `mpt_issuance_id` field is provided in JSON transaction metadata (not available for binary) for all successful `MPTokenIssuanceCreate` transactions. The following APIs are impacted: `tx`, `account_tx`, `subscribe` and `ledger`.
 
  ##### 6.3.1.1. Example
- Example of a `tx` response:
+
+Example of a `tx` response:
+
 ```json
 {
    "result": {
@@ -781,6 +789,7 @@ A `mptoken` object has the following parameters:
 A `mpt_issuance_id` field is provided in JSON `MPTokenIssuance` objects (not available for binary). The following APIs are impacted: `ledger_data` and `account_objects`.
 
 ##### 6.3.2.1. Example
+
 Example of an `account_objects` response:
 
 ```json
