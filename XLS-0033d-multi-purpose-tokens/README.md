@@ -67,7 +67,7 @@ The **`MPTokenIssuance`** object represents a single MPT issuance and holds data
 
 ##### 2.1.1.1. **`MPTokenIssuance`** Ledger Identifier
 
-The key of an `MPTokenIssuance` object is computed using a SHA512-Half of the following values, concatenated in order:
+The key of an `MPTokenIssuance` object is computed using the SHA512-Half of the following values, concatenated in order:
 
 * The `MPTokenIssuance` space key (0x007E).
 * The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
@@ -251,7 +251,7 @@ transactions. The object key of the `MPToken` is derived from hashing the space 
 
 ##### 2.1.2.1. **`MPToken`** Ledger Identifier
 
-The Key of an MPToken object is the result of SHA512-Half of the following values, concatenated in order:
+The Key of an MPToken object is computed using the SHA512-Half of the following values, concatenated in order:
 
 * The `MPToken` space key (0x007F).
 * The `MPTokenIssuanceID` for the issuance being held.
