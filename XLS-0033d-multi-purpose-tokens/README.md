@@ -67,17 +67,19 @@ The **`MPTokenIssuance`** object represents a single MPT issuance and holds data
 
 ##### 2.1.1.1. **`MPTokenIssuance`** Ledger Identifier
 
-The key of a `MPTokenIssuance` object, is the result of SHA512-Half of the following values, concatenated in order:
+The key of an `MPTokenIssuance` object is computed using a SHA512-Half of the following values, concatenated in order:
 
-* The MPTokenIssuance space key (0x007E).
-* The transaction sequence number.
-* The AccountID of the issuer.
+* The `MPTokenIssuance` space key (0x007E).
+* The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
+* The `AccountID` of the MPT issuer.
 
+The ID of an `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit integer that contains the following
+fields, concatenated in order:
 
-The ID of a `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit integer, concatenated in order:
+* The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
+* The `AccountID` of the MPT issuer.
 
-* The transaction sequence number.
-* The AccountID of the issuer.
+This is represented graphically as follows:
 
 ```
 ┌──────────────────────────┐┌──────────────────────────┐
@@ -88,7 +90,9 @@ The ID of a `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit i
 └──────────────────────────┘└──────────────────────────┘
 ```
 
-**Note: The `MPTokenIssuanceID` is utilized to specify a unique `MPTokenIssuance` object in JSON parameters for transactions and APIs. Internally, the ledger splits the `MPTokenIssuanceID` into two components: `sequence` and `issuer` address.**
+**Note: `MPTokenIssuanceID` is utilized to specify a unique `MPTokenIssuance` object in JSON parameters for
+transactions and APIs. Internally, the ledger splits the `MPTokenIssuanceID` into two components: `sequence`
+and `issuer` address.**
 
 ##### 2.1.1.2. Fields
 
@@ -185,13 +189,22 @@ Identifies the page in the owner's directory where this item is referenced.
 
 ###### 2.1.1.2.11. `Sequence`
 
-A 32-bit unsigned integer that is used to ensure issuances from a given sender may only ever exist once, even if an issuance is later deleted. Whenever a new issuance is created, this value must match the account's current Sequence number.
+A 32-bit unsigned integer that is used to ensure issuances from a given sender may only ever exist once, even if an
+issuance is later deleted. Whenever a new issuance is created, this value must match the account's current Sequence
+number.
 
-[Tickets](https://xrpl.org/tickets.html) make some exceptions from these rules so that it is possible to send transactions out of the normal order. Tickets represent sequence numbers reserved for later use; a transaction can use a Ticket instead of a normal account Sequence number.
+[Tickets](https://xrpl.org/tickets.html) make some exceptions to these rules so that it is possible to send transactions
+out of the normal order. Tickets represent sequence numbers reserved for later use; a transaction can use a Ticket
+instead of a normal account Sequence number.
 
-Whenever a transaction to create an MPT is included in a ledger, it uses up a sequence number (or Ticket) regardless of whether the transaction executed successfully or failed with a [tec-class error code](https://xrpl.org/tec-codes.html). Other transaction failures don't get included in ledgers, so they don't change the sender's sequence number (or have any other effects).
+Whenever a transaction to create an MPT is included in a ledger, it uses up a sequence number (or Ticket) regardless of
+whether the transaction executed successfully or failed with a [tec-class error code](https://xrpl.org/tec-codes.html).
+Other transaction failures don't get included in ledgers, so they don't change the sender's sequence number (or have any
+other effects).
 
-It is possible for multiple unconfirmed MPT-creation transactions to have the same `Issuer` and sequence number. Such transactions are mutually exclusive, and at most one of them can be included in a validated ledger. (Any others ultimately have no effect.)
+It is possible for multiple unconfirmed MPT-creation transactions to have the same `Issuer` and sequence number. Such
+transactions are mutually exclusive, and at most one of them can be included in a validated ledger (Any others
+ultimately have no effect.)
 
 ##### 2.1.1.3. Example **`MPTokenIssuance`** JSON
 
@@ -231,7 +244,6 @@ Each **`MPTokenIssuance`** costs an incremental reserve to the owner account.
 
 #### 2.1.2. The **`MPToken`** object
 
-The **`MPToken`** object represents an amount of a token held by an account that is **not** the token issuer. MPTs are acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of transactions. The object key of the `MPToken` is derived from hashing the space key, holder's address and the `MPTokenIssuanceID`.
 The **`MPToken`** object represents an amount of a token held by an account that is **not** the token issuer. MPTs are
 acquired via ordinary Payment or DEX transactions, and can optionally be redeemed or exchanged using these same types of
 transactions. The object key of the `MPToken` is derived from hashing the space key, holder's address and the
@@ -241,9 +253,9 @@ transactions. The object key of the `MPToken` is derived from hashing the space 
 
 The Key of an MPToken object is the result of SHA512-Half of the following values, concatenated in order:
 
-* The MPToken space key (0x007F).
+* The `MPToken` space key (0x007F).
 * The `MPTokenIssuanceID` for the issuance being held.
-* The AccountID of the token holder.
+* The `AccountID` of the token holder.
 
 ##### 2.1.2.2. Fields
 
