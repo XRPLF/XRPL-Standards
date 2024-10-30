@@ -39,7 +39,7 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
     - [**3.1.3. VaultDelete Transaction**](#313-vaultdelete-transaction)
   - [**3.2. VaultDeposit & VaultWithdraw Transactions**](#32-vaultdeposit-and-vaultwithdraw-transactions)
     - [**3.2.1. VaultDeposit Transaction**](#321-vaultdeposit-transaction)
-    - [**3.2.2. VaultWiwthdraw Transaction**](#322-vaultwithdraw-transaction)
+    - [**3.2.2. VaultWithdraw Transaction**](#322-vaultwithdraw-transaction)
   - [**3.3. VaultClawback Transaction**](#33-vaultclawback-transaction)
 - [Appendix](#appendix)
 
@@ -509,12 +509,11 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                       |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                    |
-| `AssetAmount`     | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The exact amount of Vault asset to withdraw.                            |
-| `ShareAmount`     | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The exact amount of shares the account is willing to redeem.            |
+| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                            |
 | `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
-If `AssetAmount` is specified, calculate the share cost using the [**Withdraw formula**](#21713-withdraw).
-If `ShareAmount` is specified, calculate the assets amount using the [**Redeem formula**](#21712-redeem).
+If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21713-withdraw).
+If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21712-redeem).
 
 In sections below assume the following variables:
 
@@ -539,21 +538,20 @@ In sections below assume the following variables:
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
   - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
 
-- Both `AssetAmount` and `ShareAmount` are specified.
-- The unit of `ShareAmount` is not shares of the vault.
+- The unit of `Amount` is not shares of the vault.
+- The unit of `Amount` is not asset of the vault.
 
 - There is insufficient liquidity in the vault to fill the request:
 
-  - `Loan.SharesTotal` < `ShareAmount`.
-  - `Loan.AssetsAvailable` < `AssetAmount`.
-  - `Loan.AssetsAvailable` < $\Delta_{asset}$.
+- If `Amount` is the vaults share:
+  - `Loan.SharesTotal` < `Amount`.
+    - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount`.
 
-- The sumbmitter has innsuficient shares:
+If `Amount` is the vaults asset:
+  - `Loan.AssetsAvailable` < `Amount`.
 
-  - If `ShareAmount` is specified and:
-    - The shares `MPToken.MPTAmount` of the `Account` is less than `ShareAmount`.
-  - If `AssetAmount` is specified and:
-    - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$.
+- `Loan.AssetsAvailable` < $\Delta_{asset}$.
+- The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$.
 
 - The `Destination` account is specified and it does not have permission to receive the asset.
 
