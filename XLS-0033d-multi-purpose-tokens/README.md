@@ -916,7 +916,7 @@ are also limited to values between `0` and `2^63 -1` (inclusive), although these
 to enable more tokens to exist. 
 
 For context, MPT amounts in `STAmount` objects are limited to the above range so that MPT amounts will eventually work
-correctly with the `Number` class, which is used internally in rippled for any many mathematical operations such as
+correctly with the `Number` class, which is used internally in rippled for certain mathematical operations such as
 inside the DEX, AMM, or otherwise. At present, the `Number` class is unable to represent numeric values larger than
 `2^63 - 307` without loss of precision or overflow (depending on how the `Number` class's overflow behavior is
 configured for any particular runtime operation). While refactoring the `Number` class to support larger internal types
