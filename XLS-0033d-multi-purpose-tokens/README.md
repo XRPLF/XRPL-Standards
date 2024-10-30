@@ -110,7 +110,7 @@ and `issuer` address.**
 | `MPTokenMetadata`   |                     | `string`  | `BLOB`        |
 | `PreviousTxnID`     | :heavy_check_mark:  | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | ️:heavy_check_mark: | `number`  | `UINT32`      |
-| `OwnerNode`         | (default)           | `number`  | `UINT64`      |
+| `OwnerNode`         | :heavy_check_mark:  | `number`  | `UINT64`      |
 | `Sequence`          | :heavy_check_mark:  | `number`  | `UINT32`      |
 
 ###### 2.1.1.2.1. `LedgerEntryType`
@@ -269,7 +269,7 @@ A **`MPToken`** object can have the following fields.
 | `Flags`             | default            | `number`  | `UINT32`      |
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
-| `OwnerNode`         | default            | `number`  | `UINT64`      |
+| `OwnerNode`         | :heavy_check_mark: | `number`  | `UINT64`      |
 
 ###### 2.1.2.2.1. `LedgerEntryType`
 
