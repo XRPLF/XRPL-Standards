@@ -106,7 +106,6 @@ and `issuer` address.**
 | `AssetScale`        | (default)          | `number`  | `UINT8`       |
 | `MaximumAmount`     | (default)          | `string`  | `UINT64`      |
 | `OutstandingAmount` | (default)          | `string`  | `UINT64`      |
-| `LockedAmount`      | (default)          | `string`  | `UINT64`      |
 | `TransferFee`       | (default)          | `number`  | `UINT16`      |
 | `MPTokenMetadata`   |                    | `string`  | `BLOB`        |
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
@@ -268,15 +267,14 @@ A **`MPToken`** object can have the following fields.
 
 | Field Name          | Required?          | JSON Type | Internal Type |
 |---------------------|--------------------|-----------|---------------|
-| `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
+| `LedgerEntryType`   | :heavy_check_mark: | `string`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
 | `MPTAmount`         | default            | `string`  | `UINT64`      |
-| `LockedAmount`      | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
-| `OwnerNode`         | default            | `number`  | `UINT64`      |
+| `OwnerNode`         | :heavy_check_mark: | `number`  | `UINT64`      |
 
 ###### 2.1.2.2.1. `LedgerEntryType`
 
@@ -296,30 +294,24 @@ An unsigned 64-bit number that specifies a positive amount of tokens currently h
 stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. The maximum value of
 this field is `0xFFFF'FFFF'FFFF'FFFF`.
 
-###### 2.1.2.2.5. `LockedAmount`
-
-This value specifies a positive amount of tokens that are currently held in a token holder's account but that are unavailable to be used by the token holder. Locked tokens might, for example, represent value currently being held in escrow, or value that is otherwise inaccessible to the token holder. 
-
-This value is stored as a `default` value such that it's initial value is `0`, in order to save space on the ledger for a an empty MPT holding.
-
-###### 2.1.2.2.6. `Flags`
+###### 2.1.2.2.5. `Flags`
 
 A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
 | Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                      |
 |--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lsfMPTLocked`     | `0x0001`   | If set, indicates that the MPT owned by this account is currently locked and cannot be used in any XRP transactions other than sending value back to the issuer. When this flag is set, the `LockedAmount` must equal the `MPTAmount` value.                                     |
+| `lsfMPTLocked`     | `0x0001`   | If set, indicates that the MPT owned by this account is currently locked and cannot be used in any transactions other than sending value back to the issuer.                                                                                                                     |
 | `lsfMPTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the MPT. This flag can be set using a `MPTokenAuthorize` transaction; it can also be "un-set" using a `MPTokenAuthorize` transaction specifying the `tfMPTUnauthorize` flag. |
 
-###### 2.1.2.2.7. `PreviousTxnID`
+###### 2.1.2.2.6. `PreviousTxnID`
 
 Identifies the transaction ID of the transaction that most recently modified this object.
 
-###### 2.1.2.2.8. `PreviousTxnLgrSeq`
+###### 2.1.2.2.7. `PreviousTxnLgrSeq`
 
 The sequence of the ledger that contains the transaction that most recently modified this object.
 
-###### 2.1.2.2.9. `OwnerNode`
+###### 2.1.2.2.8. `OwnerNode`
 
 Identifies the page in the owner's directory where this item is referenced.
 
@@ -332,7 +324,6 @@ Identifies the page in the owner's directory where this item is referenced.
   "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "Flags": 0,
   "MPTAmount": "100000000",
-  "LockedAmount": "0",
   "OwnerNode": 1
 }
 ```
@@ -973,6 +964,19 @@ should treat the above as a payment of one dollar and not a payment of 100 dolla
 
 While not currently required by today's transactors, `AssetScale` also prepares for future on-ledger functionality that might require it.
 
+#### A.1.17. Why was `LockedAmount` removed from the spec?
+
+The original design of this specification envisioned tracking locked MPT balances at both the issuance level (i.e., the
+total amount of a single issuance's locked tokens) and also envisioned tracking locked amounts inside each `MPToken` (
+i.e., to support partially locking a single user's MPT balance). However, these designs were abandoned.
+
+For the former idea, tracking locked balances at the `MPTokenIssuance` level is unnecessary because this specification
+assumes that any MPT transferred to an escrow (or any other object) is considered to be a transfer of ownership ).
+Therefore, treating those funds as "locked" is inaccurate.
+
+For the latter concern, _partially_ locking an individual user's MPT balance was abandoned as being more complex than
+necessary. Instead, MPT Global and user-level balance locking is likely sufficient.
+
 ### A.2. Appendix: Supplemental Information
 
 #### A.2.1. On-Ledger Storage Requirements
@@ -1017,24 +1021,23 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
 | MPTokenIssuanceID |     192     |      24      |                                                                                                                                                            |
 |         MPTAmount |     64      |      8       |                                                                                                                                                            |
-|      LockedAmount |     64      |      8       |                                                                                                                                                            |
 |             Flags |     32      |      4       |                                                                                                                                                            |
 |     PreviousTxnID |     256     |      32      |                                                                                                                                                            |
 | PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                            |
 |  Field+Type Codes |     112     |      14      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have 7 fields. |
 |               --- |     --      |     ---      |                                                                                                                                                            |
-|             TOTAL |     768     |     96      |                                                                                                                                                            |
+|             TOTAL |     704     |      88      |                                                                                                                                                            |
 
 ##### A.2.1.3. Size Comparison
 
-As can be seen from the following size comparison table, Trustlines take up approximately 2.2x as much space on ledger, in bytes, as MPTs would.
+As can be seen from the following size comparison table, Trustlines take up approximately 2.2-2.4x as much space on ledger, in bytes, as MPTs would.
 
 |                 Description | # MPT Directories | Total Bytes (MPT) | # Trustline Directories	 | Total Bytes (Trustline) | Trustlines are X-times Larger | 
 |----------------------------:|:-----------------:|:-----------------:|:------------------------:|:-----------------------:|:-----------------------------:|
-|  Bytes for holding 1 Tokens |         1         |        226        |            2             |           488           |             2.2x              |
-| Bytes for holding 10 Tokens |         1         |       1,450       |            2             |          3,260          |             2.2x              |
-| Bytes for holding 32 Tokens |         2         |       5,556       |            4             |         12,264          |             2.2x              |
-| Bytes for holding 64 Tokens |         3         |      13,070       |            6             |         28,444          |             2.2x              |
+|  Bytes for holding 1 Tokens |         1         |        218        |            2             |           488           |             2.2x              |
+| Bytes for holding 10 Tokens |         1         |       1,370       |            2             |          3,260          |             2.4x              |
+| Bytes for holding 32 Tokens |         2         |       5,300       |            4             |         12,264          |             2.3x              |
+| Bytes for holding 64 Tokens |         3         |      12,558       |            6             |         28,444          |             2.3x              |
 
 #### A.2.2. `STAmount` serialization
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
