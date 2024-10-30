@@ -262,7 +262,7 @@ A **`MPToken`** object can have the following fields.
 
 | Field Name          | Required?          | JSON Type | Internal Type |
 |---------------------|--------------------|-----------|---------------|
-| `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
+| `LedgerEntryType`   | :heavy_check_mark: | `string`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
 | `MPTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
