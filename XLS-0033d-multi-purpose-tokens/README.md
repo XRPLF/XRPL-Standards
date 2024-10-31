@@ -160,6 +160,8 @@ The following equations formalize the relationship between an asset's standard u
 $${MptUnit} = 10^{scale} * {StdUnit} \tag{II}$$
 ```
 
+$$ {StdUnit} = {MptUnit} / 10^{scale} \tag{I} $$
+
 $${MptUnit} = 10^{scale} * {StdUnit} \tag{II}$$
 
 Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
