@@ -152,15 +152,7 @@ equals $10^{scale}$ of a corresponding MPT unit.
 
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
 
-```math
-{StdUnit} = {MptUnit} / 10^{scale}
-```
-
-```math
-$${MptUnit} = 10^{scale} * {StdUnit} $$
-```
-
-$$ \StdUnit = \MptUnit / 10^{scale} $$
+$$ {StdUnit} = {MptUnit} / 10^{scale} $$
 
 $${MptUnit} = 10^{scale} * {StdUnit} $$
 
