@@ -153,11 +153,11 @@ equals $10^{scale}$ of a corresponding MPT unit.
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
 
 ```math
-StdUnit = MptUnit / 10^{scale} \tag{I}
+{StdUnit} = {MptUnit} / 10^{scale} \tag{I}
 ```
 
 ```math
-$$MptUnit = 10^{scale} * StdUnit \tag{II}$$
+$${MptUnit} = 10^{scale} * {StdUnit} \tag{II}$$
 ```
 
 Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
