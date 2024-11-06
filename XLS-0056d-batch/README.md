@@ -157,7 +157,7 @@ It will contain a list of objects that have the following fields for every trans
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
 |`TransactionHash`|✔️|`string`|`STUInt256`|
-|`TransactionResult`|✔️|`string`|`STBlob`|
+|`InnerResult`|✔️|`string`|`STBlob`|
 
 Some important things to note:
 * It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` mode, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
