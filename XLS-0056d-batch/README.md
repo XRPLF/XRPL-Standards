@@ -1,6 +1,5 @@
 <pre>
 Title:       <b>Atomic/Batch Transactions</b>
-Revision:    <b>4</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -49,31 +48,6 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`TxnIDs`|✔️|`array`|`Vector256`|
 |`BatchSigners`| |`array`|`STArray`|
 
-<!--
-```typescript
-{
-    TransactionType: "Batch",
-    Account: "r.....",
-    Flags: "1",
-    TxnIDs: [transaction hashes...]
-    RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
-    BatchSigners: [ // only sign the list of transaction hashes and probably the batch mode
-      BatchSigner: {
-        Account: "r.....",
-        Signature: "...."
-      },
-      BatchSigner: {
-        Account: "r.....",
-        Signers: [...] // multisign
-      },
-      ...
-    ],
-    SigningPubKey: "....",
-    TxnSignature: "...."
-}
-```
--->
-
 ### 2.1. `Fee`
 
 The fee for the outer transaction is:
@@ -116,8 +90,7 @@ All transactions will be applied, regardless of failure.
 `RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. These transactions can come from one account or multiple accounts.
 
 Each inner transaction:
-* **Must** contain a `BatchTxn` field (see section 3 for details).
-* **Must not** have a sequence number. It must use a sequence number value of `0`.
+* **Must** contain the `tfInnerBatchTxn` flag (see section 3 for details).
 * **Must not** have a fee. It must use a fee value of `"0"`.
 * **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
 
@@ -143,16 +116,16 @@ Each object in this array contains the following fields:
 |:---------|:-----------|:---------------|:------------|
 |`Account`|✔️|`string`|`STAccount`|
 |`SigningPubKey`| |`string`|`STBlob`|
-|`Signature`| |`string`|`STBlob`|
+|`TxnSignature`| |`string`|`STBlob`|
 |`Signers`| |`array`|`STArray`|
 
-Either the `SigningPubKey` and `Signature` fields must be included, or the `Signers` field.
+Either the `SigningPubKey` and `TxnSignature` fields must be included, or the `Signers` field.
 
 #### 2.5.1. `Account`
 
 This is an account that has at least one inner transaction.
 
-#### 2.5.2. `SigningPubKey` and `Signature`
+#### 2.5.2. `SigningPubKey` and `TxnSignature`
 
 These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `Flags` and `TxnIDs` fields.
 
@@ -198,66 +171,13 @@ There will also be a pointer back to the parent outer transaction (`parent_batch
 
 ## 3. Transaction Common Fields
 
-This standard adds one new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/):
+This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
 
-| Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
-|`BatchTxn`| |`object`|`STObject`|
+| Flag Name | Value |
+|-----------|-------|
+|`tfInnerBatchTxn`|`0x40000000`|
 
-### 3.1. `BatchTxn`
-
-The `BatchTxn` inner object **must** be included in any inner transaction of a `Batch` transaction (and must not be included in any other transactions). Its inclusion:
-* Prevents hash collisions between identical transactions (since sequence numbers aren't included).
-* Ensures that every transaction has a sequence number associated with it, so that created ledger objects that use it in their ID generation can still operate.
-* Allows users to more easily organize their transactions in the correct order.
-
-The fields contained in this object are:
-
-| Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
-|`OuterAccount`|✔️|`string`|`AccountID`|
-|`Sequence`| |`number`|`UInt32`|
-|`TicketSequence`| |`number`|`UInt32`|
-|`BatchIndex`|✔️|`number`|`UInt8`|
-
-#### 3.1.1. `OuterAccount`
-
-This is the account that is submitting the outer `Batch` transaction.
-
-#### 3.1.2. `Sequence`
-
-This is the next valid sequence number of the inner transaction sender (i.e. all inner _and_ outer transactions from the same account will have the same `BatchTxn.Sequence` value). Its inclusion ensures that there are no hash collisions with other `Batch` transactions, and also allows for proper sequence number calculation (see section 4.2 for more details).
-
-In other words, a single-account `Batch` transaction will have the same sequence number in the outer transaction _and_ all the inner transactions.
-
-#### 3.1.3. `TicketSequence`
-
-If the account submitting the inner transaction wants to use a ticket instead of their natural sequence number, they can use this field instead of the `Sequence` field.
-
-#### 3.1.4. `BatchIndex`
-
-This is the (0-indexed) index of the inner transaction within the existing `Batch` transaction, per account. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Batch` transaction, the sequence numbers are properly handled, and the transactions are all placed in the right order.
-
-In other words, the first inner transaction from Alice will have `BatchIndex` value `0`, the second will be `1`, etc. Then, the first transaction from Bob (and the third overall transaction) will have `BatchIndex` value of `0` again, and so on.
-
-## 4. Edge Cases of Transaction Processing
-
-Inner transactions don't have `Sequence`s or `TicketSequence`s, unlike a normal transaction. This causes some problems when it comes to transaction processing, due to a few edge cases.
-
-### 4.1. Ledger Object ID Generation
-
-Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
-
-To get around this, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `BatchTxn.TicketSequence ?? (BatchTxn.Sequence + BatchTxn.BatchIndex)`. Note that this means that any 
-
-### 4.2. Sequence Number Handling
-
-Section 4.1 describes how sequence numbers are used in inner transactions.
-
-The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) if any inner transactions are processed. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number for each account will be incremented by the total number of inner transactions included in the `Batch` transaction, to avoid any hash collisions.
-
-In other words,
-$$Sequence_{new} = Sequence_{old} + numInnerTxns$$
+This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
 
 ## 5. Security
 
@@ -302,6 +222,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
     {
       RawTransaction: {
         TransactionType: "OfferCreate",
+        Flags: 1073741824,
         Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
         TakerGets: "6000000",
         TakerPays: {
@@ -309,12 +230,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
-        BatchTxn: {
-          OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-          Sequence: 3,
-          BatchIndex: 0
-        },
-        Sequence: 0,
+        Sequence: 3,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -323,15 +239,11 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
     {
       RawTransaction: {
         TransactionType: "Payment",
+        Flags: 1073741824,
         Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
         Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
         Amount: "1000",
-        BatchTxn: {
-          OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-          Sequence: 3,
-          BatchIndex: 1
-        },
-        Sequence: 0,
+        Sequence: 5,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -372,6 +284,7 @@ Note that the inner transactions are committed as normal transactions, and the `
   },
   {
     TransactionType: "OfferCreate",
+    Flags: 1073741824,
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     TakerGets: "6000000",
     TakerPays: {
@@ -379,27 +292,18 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
-    BatchTxn: {
-      OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-      Sequence: 3,
-      BatchIndex: 0
-    },
-    Sequence: 0,
+    Sequence: 3,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
   },
   {
     TransactionType: "Payment",
+    Flags: 1073741824,
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
-    BatchTxn: {
-      OuterAccount: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-      Sequence: 3,
-      BatchIndex: 1
-    },
-    Sequence: 0,
+    Sequence: 4,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
@@ -433,15 +337,11 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
     {
       RawTransaction: {
         TransactionType: "Payment",
+        Flags: 1073741824,
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
-        BatchTxn: {
-          OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-          Sequence: 4,
-          BatchIndex: 0
-        },
-        Sequence: 0,
+        Sequence: 4,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -450,6 +350,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
     {
       RawTransaction: {
         TransactionType: "Payment",
+        Flags: 1073741824,
         Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         Amount: {
@@ -457,12 +358,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
-        BatchTxn: {
-          OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-          Sequence: 20,
-          BatchIndex: 0
-        },
-        Sequence: 0,
+        Sequence: 20,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -474,7 +370,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
       BatchSigner: {
         Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
-        Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+        TxnSignature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
       }
     },
   ],
@@ -510,7 +406,7 @@ Note that the inner transactions are committed as normal transactions, and the `
         BatchSigner: {
           Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
           SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
-          Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+          TxnSignature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
         }
       },
     ],
@@ -521,21 +417,18 @@ Note that the inner transactions are committed as normal transactions, and the `
   },
   {
     TransactionType: "Payment",
+    Flags: 1073741824,
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
-    BatchTxn: {
-      OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-      Sequence: 4,
-      BatchIndex: 0
-    },
-    Sequence: 0,
+    Sequence: 4,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
   },
   {
     TransactionType: "Payment",
+    Flags: 1073741824,
     Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Amount: {
@@ -543,12 +436,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
-    BatchTxn: {
-      OuterAccount: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-      Sequence: 20,
-      BatchIndex: 0
-    },
-    Sequence: 0,
+    Sequence: 20,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
