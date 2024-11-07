@@ -230,7 +230,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
-        Sequence: 3,
+        Sequence: 4,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -292,7 +292,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
-    Sequence: 3,
+    Sequence: 4,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
@@ -303,7 +303,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
-    Sequence: 4,
+    Sequence: 5,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
@@ -341,7 +341,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
-        Sequence: 4,
+        Sequence: 5,
         Fee: "0",
         SigningPubKey: "",
         TxnSignature: ""
@@ -421,7 +421,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
-    Sequence: 4,
+    Sequence: 5,
     Fee: "0",
     SigningPubKey: "",
     TxnSignature: ""
