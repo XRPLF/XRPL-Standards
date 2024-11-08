@@ -64,10 +64,10 @@ The fees for the individual inner transactions are paid here instead of in the i
 The `Flags` field represents the **batch mode** of the transaction. Exactly one must be specified in a `Batch` transaction.
 
 This spec supports four modes: 
-* `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00000001`)
-* `ONLYONE` or `tfOnlyOne` (with a value of `0x00000002`)
-* `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00000004`)
-* `INDEPENDENT` or `tfIndependent` (with a value of `0x00000008`)
+* `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00010000`)
+* `ONLYONE` or `tfOnlyOne` (with a value of `0x00020000`)
+* `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00040000`)
+* `INDEPENDENT` or `tfIndependent` (with a value of `0x00080000`)
 
 A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
