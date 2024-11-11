@@ -101,7 +101,7 @@ The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, 
 |-----------|------------|
 |`lsfAccepted`|`0x00010000`|
 
-The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction, or if the secondary signing flow is used to create the credential.
+The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction.
 
 A credential should not be considered "valid" until it has been accepted.
 
@@ -285,6 +285,7 @@ This proposal adds two new fields:
 These fields follow the same rules outlined in section 6.1.2 for the `DepositPreauth` object's `AuthorizeCredentials` field. 
 
 ### 7.2. Failure Conditions
+
 * Existing failure conditions for `DepositPreauth` will still be obeyed.
 * None or more than one of `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` are included (i.e. there must be exactly one of these fields included).
 * If `UnauthorizeCredentials` is included in the transaction:
@@ -313,13 +314,9 @@ The transactions that this field will be added to are:
 * `PaymentChannelClaim`
 * `AccountDelete`
 
-| Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
+| Field Name | Required? | JSON Type | Internal Type | Description |
+|------------|-----------|-----------|---------------|-------------|
 |`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
-
-#### 8.1.1. `CredentialIDs`
-
-The credentials included must not be expired. If there are duplicates provided in the list, they will be silently de-duped.
 
 ### 8.2. Failure Conditions
 
@@ -330,6 +327,7 @@ The credentials included must not be expired. If there are duplicates provided i
   * Has not been accepted.
   * Isn't a credential issued to the `Account` sending the transaction.
 * The group of `CredentialIDs` is not authorized by the destination.
+* There are duplicates in the list of `CredentialIDs`.
 
 There is an [existing exception](https://xrpl.org/docs/concepts/accounts/depositauth#precise-semantics) in the Deposit Auth design to allow an XRP payment to an account with Deposit Auth enabled that has a balance less than or equal to the minimum Account Reserve requirement (currently 10 XRP). This is to prevent an account from becoming "stuck" by being unable to send transactions but also unable to receive XRP. There will be no added support for this with credentials; in other words, if a payment satisfying these criteria is sent with non-preauthorized credentials included, the transaction would fail (but would succeed if the credentials are removed).
 
@@ -372,6 +370,12 @@ This proposal puts forward the following addition:
 |`ledger_index`| |`number`|The ledger index of the ledger version that was used to generate this response.|
 |`ledger_current_index`| |`number`|The ledger index of the current in-progress ledger version, which was used to generate this response.|
 |`validated`| |`boolean`|If true, the information comes from a validated ledger version.|
+
+This proposal puts forward the following addition:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`credentials`| |`array`|The object IDs of `Credential` objects. If this field is included, then the credential will be taken into account when analyzing whether the sender can send funds to the destination.|
 
 ## 10. Compliance with W3C Spec
 
