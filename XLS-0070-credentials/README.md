@@ -288,21 +288,22 @@ These fields follow the same rules outlined in section 6.1.2 for the `DepositPre
 
 * Existing failure conditions for `DepositPreauth` will still be obeyed.
 * None or more than one of `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` are included (i.e. there must be exactly one of these fields included).
-* If `UnauthorizeCredentials` is included in the transaction:
-	* The array is too long (i.e. has more than 8 credentials).
-	* The array is empty (i.e. has no credentials).
-	* The credential(s) are not currently authorized.
-* If `AuthorizeCredentials` is included in the transaction:
-	* The credential(s) are already authorized.
+* If authorizing/unauthorizing a credential:
+  * The issuer of a credential doesn't exist.
+  * The array is too long (i.e. has more than 8 credentials).
+  * The array is empty (i.e. has no credentials).
+  * There are duplicates in the list provided.
+  * If `UnauthorizeCredentials` is included in the transaction, the credentials are not currently authorized.
+  * If `AuthorizeCredentials` is included in the transaction:
+    * The credentials are already authorized.
 	* The account doesn't have enough reserve for the object.
-	* The array is too long (i.e. has more than 8 credentials).
-	* The array is empty (i.e. has no credentials).
-    * The issuer of the credential doesn't exist.
 
 ### 7.3. State Changes
 
 If the transaction is successful:
 * The `DepositPreauth` object is created or deleted.
+
+The `DepositPreauth` object will store a sorted list of credentials.
 
 ## 8. Any Transaction Affected by Deposit Authorization
 
@@ -339,6 +340,7 @@ _Note: the transaction will succeed if (non-expired) credentials are included, b
 
 * If a credential isn't valid, the transaction fails.
 * If a credential is expired, the credential is deleted.
+* If the transaction is pre-authorized (either via account or via credential), the transaction will succeed.
 
 ## 9. RPC: `deposit_authorized`
 
