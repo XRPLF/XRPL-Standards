@@ -32,7 +32,7 @@ We propose:
 * Modifying the `DepositPreauth` transaction
 * Modifying other transactions that are affected by Deposit Authorization
 
-This feature will require an amendment, tentatively titled `CredentialAuth`.
+This feature will require an amendment, tentatively titled `Credentials`.
 
 ### 1.1. Background: DIDs and Verifiable Credentials (VCs)
 
@@ -90,11 +90,11 @@ The `Credential` object will live in both the `Subject` and `Issuer`'s owner dir
 |`SubjectNode`|✔️|`string`|`UInt64`|A hint indicating which page of the subject's owner directory links to this object, in case the directory consists of multiple pages.|
 |`IssuerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the issuer's owner directory links to this object, in case the directory consists of multiple pages.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
-|`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
+|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 
 #### 2.1.1. Object ID
 
-The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, and `CredentialType` fields, combined with a unique space key for `Credential` objects, which will be defined during implementation.
+The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, and `CredentialType` fields, combined with a unique space key for `Credential` objects (`D`).
 
 #### 2.1.2. `Flags`
 | Flag Name | Flag Value |
@@ -228,7 +228,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 |`LedgerEntryType`|✔️|`string`|`UInt16`|The value `0x0070`, mapped to the string `"DepositPreauth"`, indicates that this is a `DepositPreauth` object.|
 |`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
-|`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
+|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 </details>
 
 We propose these modifications:
@@ -352,7 +352,7 @@ The [`deposit_authorized` RPC method](https://xrpl.org/deposit_authorized.html) 
 |------------|-----------|-----------|-------------|
 |`source_account`|✔️|`string`|The sender of a possible payment.|
 |`destination_account`|✔️|`string`|The recipient of a possible payment.|
-|`ledger_hash`| |`string`|A 20-byte hex string for the ledger version to use. |
+|`ledger_hash`| |`string`|A hex string for the ledger version to use. |
 |`ledger_index`| |`string` or `number`|The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.|
 
 This proposal puts forward the following addition:
