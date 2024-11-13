@@ -101,7 +101,7 @@ The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, 
 |-----------|------------|
 |`lsfAccepted`|`0x00010000`|
 
-The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction, or if the secondary signing flow is used to create the credential.
+The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction.
 
 A credential should not be considered "valid" until it has been accepted.
 
