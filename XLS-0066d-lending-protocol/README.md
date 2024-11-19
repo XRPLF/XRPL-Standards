@@ -124,7 +124,7 @@ There are three basic interest rates associated with a Loan:
 
 The lending protocol charges a number of fees that the Loan Broker can configure. The protocol will not charge the fees if the Loan Broker has not deposited enough First-Loss Capital.
 
-- **`Management Fee`**: This is a percentage of interest charged by the Loan Broker. Intuitively, the Vault depositors pay this fee.
+- **`Management Fee`**: This is a fee charged by the Loan Broker, calculated as a percentage of the interest earned on loans. It's deducted from the interest that would otherwise go to the Vault depositors. Essentially, borrowers pay the full interest, but before that interest reaches depositors, the Loan Broker takes their cut.
 - **`Loan Origination Fee`**: A nominal fee paid to the Loan Broker taken from the principal lent.
 - **`Loan Service Fee`**: A nominal fee paid on top of each loan payment.
 - **`Late Payment Fee`**: A nominal fee paid on top of a late payment.
@@ -144,13 +144,6 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - **`Amortization`**: The gradual repayment of a loan through scheduled payments that cover both interest and principal over time.
 - **`Repayment Schedule`**: A detailed plan that outlines when and how much a borrower must pay to repay the Loan fLoan.
 - **`Grace Period`**: A set period after the Loan's due date after which the Loan Broker can default the Loan
-- **`Origination Fee`**: A nominal one-time fee the loan broker charges for processing a new loan application.
-- **`Service Fee`**: A recurring nominal charge the Borrower pays during Loan payment.
-- **`Management Fee`**: A percentage fee charged by the Borrower on the loan interest before returning the interest to the Vault.
-- **`Late Payment Fee`**: A penalty charged to the Borrower for failing to make a payment on or before its due date.
-- **`Interest Rate`**: The percentage charged by the loan broker on the loan principal, representing the cost of borrowing.
-- **`Late Interest Rate`**: A higher interest rate applied to overdue loan payments as a penalty for late repayment.
-- **`Closing Interest Rate`**: The final interest rate charged when the Loan is closed or fully repaid.
 
 ### 1.6.2 Actors
 
