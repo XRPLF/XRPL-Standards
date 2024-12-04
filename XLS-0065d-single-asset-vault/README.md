@@ -464,6 +464,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
   - `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
 
 - The `Asset` is an `IOU`:
+
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
   - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
   - The `RippleState` object `Balance` < `Amount` (insufficient balance).
@@ -474,8 +475,7 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 - Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
 - Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-
-- Increase the `AssetsTotal` and `AssetsAvailable` by `Amount`.
+- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
 
 - If the `Vault.Asset` is `XRP`:
 
@@ -491,8 +491,6 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
   - Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
-
-- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by $\Delta_{asset}$.
 
 ##### 3.2.1.3 Invariants
 
@@ -542,16 +540,16 @@ In sections below assume the following variables:
 
 - There is insufficient liquidity in the vault to fill the request:
 
-- If `Amount` is the vaults share:
+  - If `Amount` is the vaults share:
 
-  - `MPTokenIssuance(Vault.Share).OutstandingAmount` < `Amount`.
-  - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount`.
-  - `Vault.AssetsAvailable` < $\Delta_{asset}$.
+    - `MPTokenIssuance(Vault.Share).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
+    - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
+    - `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
 
-- If `Amount` is the vaults asset:
+  - If `Amount` is the vaults asset:
 
-  - `Vault.AssetsAvailable` < `Amount`.
-  - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$.
+    - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
+    - `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
 - The `Destination` account is specified and it does not have permission to receive the asset.
 
