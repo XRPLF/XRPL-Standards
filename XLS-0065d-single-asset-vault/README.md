@@ -23,7 +23,7 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
   - [**1.2. Terminology**](#12-terminology)
   - [**1.3. Actors**](#13-actors)
   - [**1.4 Connecting to the Vault**](#14-connecting-to-the-vault)
-- [**2. Ledger Entires**](#2-ledger-entries)
+- [**2. Ledger Entries**](#2-ledger-entries)
   - [**2.1. `Vault` Ledger Entry**](#21-vault-ledger-entry)
     - [**2.1.1. Object Identifier**](#211-object-identifier)
     - [**2.1.2. Fields**](#212-fields)
@@ -282,15 +282,15 @@ The following equations govern the updated vault composition after a successful 
 - $\Gamma_{asset} = \Gamma_{asset} - \Delta_{asset}$ New balance of assets in the vault.
 - $\Gamma_{share} = \Gamma_{share} - \Delta_{share}$ New share balance in the vault.
 
-##### 2.1.7.2 Withdrawal Policy
+##### 2.1.7.3 Withdrawal Policy
 
 Withdrawal policy controls the logic used when removing liquidity from a vault. Each strategy has its own implementation, but it can be used in multiple vaults once implemented. Therefore, different vaults may have different withdrawal policies. The specification introduces the following options:
 
-###### 2.1.7.2.1 `first-come-first-serve`
+###### 2.1.7.3.1 `first-come-first-serve`
 
 The First Come, First Serve strategy treats all requests equally, allowing a depositor to redeem any amount of assets provided they have a sufficient number of shares.
 
-#### 2.1.7 Frozen Assets
+#### 2.1.8 Frozen Assets
 
 The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
 
@@ -311,7 +311,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | Field Name             |     Required?      |     JSON Type      | Internal Type |      Default Value       | Description                                                                     |
 | ---------------------- | :----------------: | :----------------: | :-----------: | :----------------------: | :------------------------------------------------------------------------------ |
 | `TransactionType`      | :heavy_check_mark: |      `string`      |   `Uint16`    |           `58`           | The transaction type.                                                           |
-| `Flags`                | :heavy_check_mark: |      `string`      |   `Uint32`    |            0             | Specifies the flags for the Vault.                                              |
+| `Flags`                | :heavy_check_mark: |      `number`      |   `Uint32`    |            0             | Specifies the flags for the Vault.                                              |
 | `Data`                 |                    |      `string`      |    `Blob`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                 |
 | `Asset`                | :heavy_check_mark: | `string or object` |    `Issue`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
 | `AssetsMaximum`        |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
