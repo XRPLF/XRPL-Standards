@@ -294,6 +294,10 @@ The First Come, First Serve strategy treats all requests equally, allowing a dep
 
 The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
 
+#### 2.1.9 Transfer Fees
+
+The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/tokens/transfer-fees) to `VaultDeposit` and `VaultWithdraw` transactions. Furthermore, whenever a protocol moves assets from or to a Vault, the `Transfer Fee` must not be charged.
+
 [**Return to Index**](#index)
 
 ## 3. Transactions
@@ -381,7 +385,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `59`      | The transaction type.                                                                                                                                |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                                        |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                      |
-| `AssetsMaximum`   |                    | `number`  |   `Uint64`    |       0       | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` of the Vault unless the value is `0`. |
+| `AssetsMaximum`   |                    | `number`  |   `Uint64`    |              | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` of the Vault unless the value is `0`. |
 
 ##### 3.1.2.1 Failure Conditions
 
@@ -391,6 +395,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 - If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
   - The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
 - The transaction is attempting to modify an immutable field.
+- The transaction does not specify any of the modifiable fields.
 
 ##### 3.1.2.2 State Changes
 
@@ -562,6 +567,8 @@ In sections below assume the following variables:
 
 - If the `Vault.Asset` is an `IOU`:
 
+  - If the Depositor (or Destination) account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
+
   - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
   - Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
@@ -612,7 +619,8 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 - If `Vault.Asset` is an `MPT` and:
   - `MPTokenIssuance.Issuer` is not the submitter of the transaction.
-  - The `MPToken` object for the `Vault.Share` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
+
+- The `MPToken` object for the `Vault.Share` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
 ##### 3.3.1.2 State Changes
 
