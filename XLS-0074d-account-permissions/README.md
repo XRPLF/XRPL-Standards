@@ -1,6 +1,5 @@
 <pre>
 Title:       <b>Account Permissions</b>
-Revision:    <b>1</b> (2024-08-21)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
