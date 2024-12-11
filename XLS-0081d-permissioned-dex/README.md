@@ -1,6 +1,5 @@
 <pre>
 Title:       <b>Permissioned DEXes</b>
-Revision:    <b>3</b> (2024-12-02)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
