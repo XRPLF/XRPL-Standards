@@ -1,25 +1,11 @@
-# XRP Ledger Standards 
-### Standards implementation discussion, requests for comment
+# XRP Ledger Standards
 
-To ensure interoperability between XRP (Ledger) core protocol, ecosystem applications, tools, pursuing a great user experience, the community (developers, users, etc.) _should_ discuss and work towards agreement on certain implementation standards.
-  
+XRP Ledger Standards (XLSs) describe standards and specifications relating to the XRP Ledger ecosystem that help achieve the following goals:
+
+* Ensure interoperability and compatibility between XRP Ledger core protocol, ecosystem applications, tools, and platforms.
+* Maintain a continued, excellent user experience around every application or system.
+* Drive alignment and agreement in the XRPL community (i.e., developers, users, operators, etc).
+ 
 # [Contributing](./CONTRIBUTING.md)
 
-Please see [CONTRIBUTING.md](./CONTRIBUTING.md)
-
-# Directory
-
-When a standard moves to a folder + file(s) in the Code section of this repository, it should be added to the `standards.toml` file:
-https://github.com/XRPLF/XRPL-Standards/blob/master/standards.toml
-
-# Numbering
-
-**Suggestions/Standards** must be **numbered** and referenced in the following format: XLS-# where # is a natural number (without left padded zeros), called the __Suggestion/Standard Number__.
-
-# Revisions
-
-If a suggestion/standard requires a substantive revision and using the same number would result in confusion, a separator '.' may be added, e.g. `XLS-1.1`.
-
-# Drafts
-
-A suggestion/standard may be marked as a draft e.g. `XLS-10d` or `XLS-1.2d` if the author/s expect further revisions in the near term. After sufficient time without change the suggestion/standard can be referred to without the draft indicator.
+The exact process for organizing and contributing to this repository is defined in [CONTRIBUTING.md](./CONTRIBUTING.md). If you would like to contribute, please read more there. 
