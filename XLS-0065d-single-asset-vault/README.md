@@ -41,6 +41,7 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
     - [**3.2.1. VaultDeposit Transaction**](#321-vaultdeposit-transaction)
     - [**3.2.2. VaultWithdraw Transaction**](#322-vaultwithdraw-transaction)
   - [**3.3. VaultClawback Transaction**](#33-vaultclawback-transaction)
+  - [**3.4. Payment Transaction**](#34-payment-transaction)
 - [**4. API**](#4-api)
 - [Appendix](#appendix)
 
@@ -130,10 +131,10 @@ A vault has the following fields:
 | `Account`              |    `N/A`    | :heavy_check_mark: |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                       |
 | `Data`                 |    `Yes`    |                    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                         |
 | `Asset`                |    `No`     | :heavy_check_mark: | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                |
-| `AssetsTotal`          |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                     |
-| `AssetsAvailable`      |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                  |
+| `AssetTotal`          |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                     |
+| `AssetAvailable`      |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                  |
 | `LossUnrealized`       |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
-| `AssetsMaximum`        |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
+| `AssetMaximum`        |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `Share`                |    `N/A`    | :heavy_check_mark: |      `object`      |     `MPT`     |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`     |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
 | `PermissionedDomainID` |    `No`     |                    |      `string`      |   `HASH256`   |     None      | The permissioned domain identifier of the Vault. This value is ignored if the vault is public.    |
@@ -214,7 +215,7 @@ The "paper loss" temporarily decreases the vault value. A malicious depositor ma
 Consider a vault with a total value of $1.0m and total shares of $1.0m. Assume the "paper loss" for the vault is $900k. The new exchange rate is as follows:
 
 $$
-exchangeRate = \frac{AssetsTotal - LossUnrealized}{SharesTotal}
+exchangeRate = \frac{AssetTotal - LossUnrealized}{ShareTotal}
 $$
 
 $$
@@ -224,7 +225,7 @@ $$
 After the "paper loss" is cleared, the new effective exchange rate would be as follows:
 
 $$
-exchangeRate = \frac{AssetsTotal}{SharesTotal}
+exchangeRate = \frac{AssetTotal}{ShareTotal}
 $$
 
 $$
@@ -318,7 +319,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `Flags`                | :heavy_check_mark: |      `number`      |   `Uint32`    |            0             | Specifies the flags for the Vault.                                              |
 | `Data`                 |                    |      `string`      |    `Blob`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                 |
 | `Asset`                | :heavy_check_mark: | `string or object` |    `Issue`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
-| `AssetsMaximum`        |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
+| `AssetMaximum`        |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
 | `MPTokenMetadata`      |                    |      `string`      |    `Blob`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
 | `WithdrawalPolicy`     |                    |      `string`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
 | `PermissionedDomainID` |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with this Vault object.           |
@@ -385,15 +386,15 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `59`      | The transaction type.                                                                                                                                |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                                        |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                      |
-| `AssetsMaximum`   |                    | `number`  |   `Uint64`    |              | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` of the Vault unless the value is `0`. |
+| `AssetMaximum`   |                    | `number`  |   `Uint64`    |              | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetTotal` of the Vault unless the value is `0`. |
 
 ##### 3.1.2.1 Failure Conditions
 
 - `Vault` object with the specified `VaultID` does not exist on the ledger.
 - The submitting account is not the `Owner` of the vault.
 - The `Data` field is larger than 256 bytes.
-- If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
-  - The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
+- If `Vault.AssetMaximum` > `0` AND `AssetMaximum` > 0 AND:
+  - The `AssetMaximum` < `Vault.AssetTotal` (new `AssetMaximum` cannot be lower than the current `AssetTotal`).
 - The transaction is attempting to modify an immutable field.
 - The transaction does not specify any of the modifiable fields.
 
@@ -420,7 +421,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 - `Vault` object with the `VaultID` does not exist on the ledger.
 - The submitting account is not the `Owner` of the vault.
-- `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.Share).OutstandingAmount` are greater than zero.
+- `AssetTotal`, `AssetAvailable`, or `MPTokenIssuance(Vault.Share).OutstandingAmount` are greater than zero.
 - The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
 
 ##### 3.1.3.2 State Changes
@@ -458,7 +459,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 - `Vault` object with the `VaultID` does not exist on the ledger.
 - The asset type of the vault does not match the asset type the depositor is depositing.
 - The depositor does not have sufficient funds to make a deposit.
-- Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
+- Adding the `Amount` to the `AssetTotal` of the vault would exceed the `AssetMaximum`.
 - The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain.
 
 - The `Vault.Asset` is `MPT`:
@@ -480,7 +481,7 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 - Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
 - Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+- Increase the `AssetTotal` and `AssetAvailable` of the `Vault` by `Amount`.
 
 - If the `Vault.Asset` is `XRP`:
 
@@ -549,12 +550,12 @@ In sections below assume the following variables:
 
     - `MPTokenIssuance(Vault.Share).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
     - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
-    - `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
+    - `Vault.AssetAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
 
   - If `Amount` is the vaults asset:
 
     - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
-    - `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
+    - `Vault.AssetAvailable` < `Amount` (the vault has insufficient assets).
 
 - The `Destination` account is specified and it does not have permission to receive the asset.
 
@@ -586,7 +587,7 @@ In sections below assume the following variables:
 
   - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-- Decrease the `AssetsTotal` and `AssetsAvailable` by $\Delta_{asset}$
+- Decrease the `AssetTotal` and `AssetAvailable` by $\Delta_{asset}$
 
 ##### 3.2.2.3 Invariants
 
@@ -598,7 +599,7 @@ In sections below assume the following variables:
 
 #### 3.3.1 `VaultClawback` transaction
 
-The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. The Clawback transaction must respect any future fees or penalties.
+The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetAvailable`. The Clawback transaction must respect any future fees or penalties.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                    |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
@@ -626,11 +627,11 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 - If the `Vault.Asset` is an `IOU`:
 
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`.
+  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetAvailable`, $\Delta_{asset}$`)`.
 
 - If the `Vault.Asset` is an `MPT`:
 
-  - Decrease the `MPToken.MPTAmount` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Decrease the `MPToken.MPTAmount` by `min(Vault.AssetAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
 - Update the `MPToken` object for the `Vault.Share` of the depositor `AccountRoot`:
 
@@ -641,7 +642,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
   - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-- Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
+- Decrease the `AssetTotal` and `AssetAvailable` by `min(Vault.AssetAvailable`, $\Delta_{asset}$`)`
 
 ##### 3.3.1.3 Invariants
 
@@ -677,6 +678,8 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
     - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
     - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
 
+[**Return to Index**](#index)
+
 ## 4. API
 
 ### 4.1 RPC `ledger_entry`
@@ -706,12 +709,12 @@ We propose adding the following fields to the `ledger_entry` method:
 | `Account`              | :heavy_check_mark: |      `string`      | The address of the Vaults _pseudo-account_.                                                       |
 | `Data`                 | :heavy_check_mark: |      `string`      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                         |
 | `Asset`                | :heavy_check_mark: | `string or object` | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                |
-| `AssetsTotal`          | :heavy_check_mark: |      `number`      | The total value of the vault.                                                                     |
-| `AssetsAvailable`      | :heavy_check_mark: |      `number`      | The asset amount that is available in the vault.                                                  |
+| `AssetTotal`          | :heavy_check_mark: |      `number`      | The total value of the vault.                                                                     |
+| `AssetAvailable`      | :heavy_check_mark: |      `number`      | The asset amount that is available in the vault.                                                  |
 | `LossUnrealized`       | :heavy_check_mark: |      `number`      | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
-| `AssetsMaximum`        | :heavy_check_mark: |      `number`      | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
+| `AssetMaximum`        | :heavy_check_mark: |      `number`      | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `Share`                | :heavy_check_mark: |      `object`      | The identifier of the share MPTokenIssuance object.                                               |
-| `SharesTotal`          | :heavy_check_mark: |      `number`      | The total amount of shares issued by the vault.                                                   |
+| `ShareTotal`          | :heavy_check_mark: |      `number`      | The total amount of shares issued by the vault.                                                   |
 | `WithdrawalPolicy`     | :heavy_check_mark: |      `string`      | Indicates the withdrawal strategy used by the Vault.                                              |
 | `PermissionedDomainID` | :heavy_check_mark: |      `string`      | The permissioned domain identifier of the Vault. This value is ignored if the vault is public.    |
 
@@ -734,15 +737,15 @@ We propose adding the following fields to the `ledger_entry` method:
     "issuer": "rIssuer1234567890abcdef1234567890abcdef",
     "value": "1000"
   },
-  "AssetsTotal": 1000000,
-  "AssetsAvailable": 800000,
+  "AssetTotal": 1000000,
+  "AssetAvailable": 800000,
   "LossUnrealized": 200000,
-  "AssetsMaximum": 0,
+  "AssetMaximum": 0,
   "Share": {
     "TokenID": "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
     "Issuer": "rShareIssuer1234567890abcdef1234567890abcdef"
   },
-  "SharesTotal": 5000,
+  "ShareTotal": 5000,
   "WithdrawalPolicy": "FIFO",
   "PermissionedDomainID": "example-domain-id"
 }
