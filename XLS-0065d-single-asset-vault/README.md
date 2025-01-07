@@ -459,7 +459,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 - The asset type of the vault does not match the asset type the depositor is depositing.
 - The depositor does not have sufficient funds to make a deposit.
 - Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
-- The `Vault` `lsfPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain.
+- The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain.
 
 - The `Vault.Asset` is `MPT`:
 
@@ -648,6 +648,34 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 **TBD**
 
 [**Return to Index**](#index)
+
+## 3.4 Payment Transaction
+
+### 3.4.1 `Payment` transaction
+
+The Single Asset Vault does not introduce new `Payment` transaction fields. However, it adds additional failure conditions and state changes when transfering Vault shares.
+
+#### 3.4.1.1 Failure Conditions
+
+- If `Payment.Amount` is a `Vault` share AND:
+  
+  - The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain.
+  - The `Vault` `tfVaultShareNonTransferable` flag is set.
+
+  - The `Vault.Asset` is `MPT`:
+
+    - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+    - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+    - `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
+    - `MPToken(MPTokenIssuanceID, PseudoAccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
+    - `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
+    
+  - The `Vault.Asset` is an `IOU`:
+
+    - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the payer account.
+    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
+    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
 
 ## 4. API
 
