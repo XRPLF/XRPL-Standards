@@ -251,9 +251,9 @@ Example 1: # Issuing a Loan #
 ** Initial States **
 
 -- Vault --
-AssetsTotal         = 100,000 Tokens
-AssetsAvailable     = 100,000 Tokens
-SharesTotal         = 100,000 Shares
+AssetTotal         = 100,000 Tokens
+AssetAvailable     = 100,000 Tokens
+ShareTotal         = 100,000 Shares
 
 -- Lending Protocol --
 DebtTotal           = 0
@@ -274,16 +274,16 @@ LoanInterest        = LoanPrincipal x LoanInterestRate
 
 -- Vault --
 # Increase the potential value of the Vault
-AssetsTotal     = AssetsTotal + ((LoanInterest - (LoanInterest x ManagementFeeRate)))
+AssetTotal     = AssetTotal + ((LoanInterest - (LoanInterest x ManagementFeeRate)))
                 = 100,000 + (100 - (100 x 0.1)) = 100,000 + 90
                 = 100,090 Tokens
 
-# Decrease Assets Available in the Vault
-AssetsAvailable = AssetsAvailable - LoanPrincipal
+# Decrease Asset Available in the Vault
+AssetAvailable = AssetAvailable - LoanPrincipal
                 = 100,000 - 1,000
                 = 99,000 Tokens
 
-SharesTotal     = (UNCHANGED)
+ShareTotal     = (UNCHANGED)
 
 -- Lending Protocol --
 # Increase Lending Protocol Debt
@@ -299,9 +299,9 @@ Example 2: # Loan Payment #
 ** Initial States **
 
 -- Vault --
-AssetsTotal         = 100,090 Tokens
-AssetsAvailable     = 99,000 Tokens
-SharesTotal         = 100,000 Shares
+AssetTotal         = 100,090 Tokens
+AssetAvailable     = 99,000 Tokens
+ShareTotal         = 100,000 Shares
 
 -- Lending Protocol --
 DebtTotal           = 1,090 Tokens
@@ -329,14 +329,14 @@ PaymentInterestPortion  = 50 Tokens
 ** State Changes **
 
 -- Vault --
-AssetsTotal     = (UNCHANGED)
+AssetTotal     = (UNCHANGED)
 
-# Increase Assets Available in the Vault
-AssetsAvailable = AssetsAvailable + PaymentPrincipalPortion + (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate)
+# Increase Asset Available in the Vault
+AssetAvailable = AssetAvailable + PaymentPrincipalPortion + (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate)
                 = 99,000 + 500 + (50 - (50 x 0.1))
                 = 99,545 Tokens
 
-SharesTotal     = (UNCHANGED)
+ShareTotal     = (UNCHANGED)
 
 -- Lending Protocol --
 
@@ -368,9 +368,9 @@ Example 1: Loan Default
 ** Initial States **
 
 -- Vault --
-AssetsTotal             = 100,090 Tokens
-AssetsAvailable         = 99,000 Tokens
-SharesTotal             = 100,000 Tokens
+AssetTotal             = 100,090 Tokens
+AssetAvailable         = 99,000 Tokens
+ShareTotal             = 100,000 Tokens
 
 -- Lending Protocol --
 DebtTotal               = 1,090 Tokens
@@ -396,15 +396,15 @@ DefaultRemaining    = DefaultAmount - DefaultCovered
 ** State Changes **
 
 -- Vault --
-AssetsTotal     = AssetsTotal - DefaultRemaining
+AssetTotal     = AssetTotal - DefaultRemaining
                 = 100,090 - 1,079.1
                 = 99,010.9 Tokens
 
-AssetsAvailable = AssetsAvailable + DefaultCovered
+AssetAvailable = AssetAvailable + DefaultCovered
                 = 99,000 + 10.9
                 = 99,010.9 Tokens
 
-SharesTotal = (UNCHANGED)
+ShareTotal = (UNCHANGED)
 
 -- Lending Protocol --
 DebtTotal       = DebtTotal - DefaultAmount
@@ -459,8 +459,8 @@ The `LoanID` is calculated as follows:
 | `GracePeriod`             |    `No`     | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The number of seconds after the Payment Due Date that the Loan can be Defaulted.                                                                               |
 | `PreviousPaymentDate`     |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                         `0`                         | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `NextPaymentDueDate`      |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |    `LoanSet.StartDate + LoanSet.PaymentInterval`    | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
-| `PaymentsRemaining`       |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentsTotal`               | The number of payments remaining on the Loan.                                                                                                                  |
-| `AssetsAvailable`         |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
+| `PaymentRemaining`       |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentTotal`               | The number of payments remaining on the Loan.                                                                                                                  |
+| `AssetAvailable`         |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
 | `PrincipalOutstanding`    |    `No`     | :heavy_check_mark: | `number`  |   `NUMBER`    |            `LoanSet.PrincipalRequested`             | The principal amount requested by the Borrower.                                                                                                                |
 
 ##### 2.2.2.1 Flags
@@ -697,7 +697,7 @@ The transaction creates a new `Loan` object.
 | `CloseInterestRate`  |                    | `number`  |   `UINT16`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
 | `PrincipalRequested` | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
 | `StartDate`          | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
-| `PaymentsTotal`      |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
+| `PaymentTotal`      |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
 | `PaymentInterval`    |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
 | `GracePeriod`        |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
 | `Lender`             | :heavy_check_mark: | `object`  |  `STObject`   |     `N/A`     | An inner object that contains the signature of the Lender over the transaction.                                                               |
@@ -760,7 +760,7 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
 
 - Insufficient assets in the Vault:
 
-  - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable` < `Loan.PrincipalRequested`.
+  - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetAvailable` < `Loan.PrincipalRequested`.
 
 - Exceeds maximum Debt of the LoanBroker:
 
@@ -781,12 +781,12 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
 
 - `Vault(LoanBroker(LoanBrokerID).VaultID)` object state changes:
 
-  - Decrease Assets Available in the Vault:
+  - Decrease Asset Available in the Vault:
 
-    - `Vault.AssetsAvailable -= Loan.PrincipalRequested`.
+    - `Vault.AssetAvailable -= Loan.PrincipalRequested`.
 
   - Increase the Total Value of the Vault:
-    - `Vault.AssetsTotal += LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)` where `LoanInterest` is the Loan's total interest.
+    - `Vault.AssetTotal += LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)` where `LoanInterest` is the Loan's total interest.
 
 - `LoanBroker(LoanBrokerID)` object changes:
 
@@ -816,7 +816,7 @@ The transaction deletes an existing `Loan` object.
 - A `Loan` object with the specified `LoanID` does not exist on the ledger.
 - The Account submitting the `LoanDelete` is not the `LoanBroker.Owner` or the `Loan.Borrower`.
 - The Loan is active:
-  - `Loan.PaymentsRemaining > 0`
+  - `Loan.PaymentRemaining > 0`
 
 ##### 3.2.2.2 State Changes
 
@@ -851,7 +851,7 @@ The transaction deletes an existing `Loan` object.
 
 - If `Loan(LoanID).Flags == lsfLoanImpaired` AND `tfLoanImpair` flag is provided.
 
-- `Loan.PaymentsRemaining == 0`.
+- `Loan.PaymentRemaining == 0`.
 
 - The `tfDefault` flag is specified and:
   - `CurrentTime` < `Loan.NextPaymentDueDate + Loan.GracePeriod`.
@@ -863,7 +863,7 @@ The transaction deletes an existing `Loan` object.
   - Calculate the amount of the Default that First-Loss Capital covers:
 
     - The default Amount equals the outstanding principal and interest, excluding any funds unclaimed by the Borrower.
-      - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding) - Loan.AssetsAvailable`.
+      - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding) - Loan.AssetAvailable`.
     - Apply the First-Loss Capital to the Default Amount
       - `DefaultCovered = min((LoanBroker(Loan.LoanBrokerID).DebtTotal x LoanBroker(Loan.LoanBrokerID).CoverRateMinimum)  x LoanBroker(Loan.LoanBrokerID).CoverRateLiquidation, DefaultAmount)`
     - `DefaultAmount -= DefaultCovered`
@@ -871,15 +871,15 @@ The transaction deletes an existing `Loan` object.
   - Update the `Vault` object:
 
     - Decrease the Total Value of the Vault:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsTotal -= DefaultAmount`.
-    - Increase the Assets Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += DefaultCovered + Loan.AssetsAvailable`.
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetTotal -= DefaultAmount`.
+    - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetAvailable += DefaultCovered + Loan.AssetAvailable`.
 
 - Update the `LoanBroker` object:
 
   - Decrease the Debt of the LoanBroker:
     - `LoanBroker(LoanBrokerID).DebtTotal -= `
-    - `Loan.PrincipalOutstanding + Loan.InterestOutstanding + Loan.AssetsAvailable`
+    - `Loan.PrincipalOutstanding + Loan.InterestOutstanding + Loan.AssetAvailable`
   - Decrease the First-Loss Capital Cover Available:
     - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
   - Decrease the number of active Loans:
@@ -888,8 +888,8 @@ The transaction deletes an existing `Loan` object.
 - Update the `Loan` object:
 
   - `Loan(LoanID).Flags = lsfLoanDefault`
-  - `Loan(LoanID).PaymentsRemaining = 0`
-  - `Loan(LoanID).AssetsAvailable = 0`
+  - `Loan(LoanID).PaymentRemaining = 0`
+  - `Loan(LoanID).AssetAvailable = 0`
   - `Loan(LoanID).PrincipalOutstanding = 0`
 
 - If `tfLoanImpair` flag is specified:
@@ -942,7 +942,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
   - `Loan.StartDate > CurrentTime`.
 - There are insufficient assets:
 
-  - `Loan.AssetsAvailable` < `Amount`.
+  - `Loan.AssetAvailable` < `Amount`.
 
 - The `Loan` has `lsfLoanImpaired` or `lsfLoanDefault` flags set.
 
@@ -977,7 +977,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
   - Decrease the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
-- Decrease `Loan.AssetsAvailable` by `Amount`.
+- Decrease `Loan.AssetAvailable` by `Amount`.
 
 ##### 3.2.4.3 Invariants
 
@@ -1036,7 +1036,7 @@ totalDue = periodicPayment + loanServiceFee
 $$
 
 $$
-periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentsRemaining}}{(1 + periodicRate)^{PaymentsRemaining} - 1}
+periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
 $$
 
 where the periodic interest rate is the interest rate charged per payment period:
@@ -1069,7 +1069,7 @@ $$
 latePaymentInterest = principalOutstanding \times \frac{lateInterestRate \times secondsSinceLastPayment}{365 \times 24 \times 60 \times 60}
 $$
 
-A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetsTotal` must be recalculate
+A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetTotal` must be recalculate
 d.
 Assume the function `PeriodicPayment()` returns the expected periodic payment, split into `principalPeriodic` and `interestPeriodic`. Furthermore, assume the function `LatePayment()` that implements the Late Payment formula. The function returns the late payment split into `principalLate` and `interestLate`, where `interestLate` is calculated using the formula above. Note that `principalPeriodic == principalLate` and `interestLate > interestPeriodic` are used only when the payment is late. Otherwise, `interestLate == interestPeriodic`.
 
@@ -1130,7 +1130,7 @@ $$
 prepaymentPenalty = principalOutstanding \times closeInterestRate
 $$
 
-An early payment pays less interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the Vault value (captured by `Vault.AssetsTotal`) must be recalculated after an early payment.
+An early payment pays less interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the Vault value (captured by `Vault.AssetTotal`) must be recalculated after an early payment.
 
 Assume a function `CurrentValue()` that returns `principalOutstanding` and `interestOutstanding` of the Loan. Furthermore, assume a function `ClosePayment()` that implements the Full Payment calculation. The function returns the total full payment due split into `principal` and `interest`.
 
@@ -1298,7 +1298,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
 - The submitter `AccountRoot.Account` is not equal to `Loan.Borrower`.
 
-- `Loan.PaymentsRemaining` or `Loan.PrincipalOutstanding` is `0`.
+- `Loan.PaymentRemaining` or `Loan.PrincipalOutstanding` is `0`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
@@ -1336,10 +1336,10 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
     - `Loan(LoanID).Flags = 0`
 
-  - Decrease `Loan.PaymentsRemaining` by `full_periodic_payments`.
+  - Decrease `Loan.PaymentRemaining` by `full_periodic_payments`.
   - Decrease `Loan.PrincipalOutstanding` by `principal_paid`.
 
-  - If `Loan.PaymentsRemaining > 0` and `LoanPrincipalOutstanding > 0`:
+  - If `Loan.PaymentRemaining > 0` and `LoanPrincipalOutstanding > 0`:
 
     - Set the next payment date: `Loan.NextPaymentDueDate += Loan.PaymentInterval * full_periodic_payments`.
     - Set the previous payment date: `Loan.PreviousPaymentDate = Loan.NextPaymentDueDate - Loan.PaymentInterval`.
@@ -1370,7 +1370,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Update the LoanBroker Debt by the change in the management fee:
     - `LoanBroker.DebtTotal -= (valueChange x LoanBroker.ManagementFeeRate)`
-  - If `LoanPaymentsRemaining == 0` and `LoanPrincipalOutstanding == 0`:
+  - If `LoanPaymentRemaining == 0` and `LoanPrincipalOutstanding == 0`:
     - Decrease active loans:
       - `LoanBroker.OwnerCount = LoanBroker.OwnerCount - 1`
 
@@ -1378,19 +1378,19 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Increase available assets in the Vault by the amount paid:
 
-    - `Vault.AssetsAvailable = Vault.AssetsAvailable + totalPaid`
+    - `Vault.AssetAvailable = Vault.AssetAvailable + totalPaid`
 
   - Update the Vault total value by the change in the Loan total value:
 
-    - `Vault.AssetsTotal = Vault.AssetsTotal + valueChange`
+    - `Vault.AssetTotal = Vault.AssetTotal + valueChange`
 
   - Update the Vault total value by the change in the management fee:
 
-    - `Vault.AssetsTotal = Vault.AssetsTotal - (vaultChange x LoanBroker.managementFeeRate)`
+    - `Vault.AssetTotal = Vault.AssetTotal - (vaultChange x LoanBroker.managementFeeRate)`
 
   - If there is **not enough** first-loss capital: `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
     - The management fee was not charged; decrease Vault TotalValue:
-      - `Loan.AssetsTotal = Loan.AssetsTotal + feeManagement`
+      - `Loan.AssetTotal = Loan.AssetTotal + feeManagement`
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
