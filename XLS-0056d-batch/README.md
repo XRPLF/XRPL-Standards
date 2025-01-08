@@ -45,7 +45,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`Fee`|✔️|`string`|`STAmount`|
 |`Flags`|✔️|`number`|`UInt32`|
 |`RawTransactions`|!|`array`|`STArray`|
-|`TxnIDs`|✔️|`array`|`Vector256`|
+|`TransactionIDs`|✔️|`array`|`Vector256`|
 |`BatchSigners`| |`array`|`STArray`|
 
 ### 2.1. `Fee`
@@ -55,7 +55,7 @@ The fee for the outer transaction is:
 $$(n+2)*base\textunderscore fee + \sum_{innerTxns} Txn.Fee$$
 (where `n` is the number of signatures included in the outer transaction)
 
-In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions (which incorporates factors like higher fees for multisign or `AMMCreate`).
+In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions (which incorporates factors like higher fees for `AMMCreate` or `EscrowFinish`), plus 
 
 The fees for the individual inner transactions are paid here instead of in the inner transaction itself, to ensure that fee escalation is calculated on the total cost of the transaction instead of just the overhead.
 
@@ -96,15 +96,15 @@ Each inner transaction:
 
 **This field is not included in the validated transaction, nor is it used to compute the outer transaction signature(s)**, since all transactions are included separately as a part of the ledger.
 
-### 2.4. `TxnIDs`
+### 2.4. `TransactionIDs`
 
-`TxnIDs` contains a list of the transaction hashes/IDs for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Batch` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `TxnIDs` **must** be in the same order as the raw transactions in `RawTransactions`.
+`TransactionIDs` contains a list of the transaction hashes/IDs for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Batch` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `TransactionIDs` **must** be in the same order as the raw transactions in `RawTransactions`.
 
 While this field seems complicated/confusing to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling, and it's easy for `rippled` to check a hash doesn't match its corresponding transaction in `RawTransaction`.
 
 ### 2.5. `BatchSigners`
 
-This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Batch` transaction; otherwise, the normal transaction signature provides the same security guarantees.
+This field operates similarly to [multi-signing](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Batch` transaction; otherwise, the normal transaction signature provides the same security guarantees.
 
 This field must be provided if more than one account has inner transactions included in the `Batch`. In that case, this field must contain signatures from all accounts whose inner transactions are included, excluding the account signing the outer transaction (if applicable).
 
@@ -127,11 +127,11 @@ This is an account that has at least one inner transaction.
 
 #### 2.5.2. `SigningPubKey` and `TxnSignature`
 
-These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `Flags` and `TxnIDs` fields.
+These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `Flags` and `TransactionIDs` fields.
 
 #### 2.5.3. `Signers`
 
-This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `Flags` and `TxnIDs` fields.
+This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `Flags` and `TransactionIDs` fields.
 
 ### 2.6. Metadata
 
@@ -150,24 +150,11 @@ For example, a ledger that only has one `Batch` transaction containing 2 inner t
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
-There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` modes, since those may only process a subset of transactions, and for debugging with all modes. This section will be called `BatchExecutions`.
-
-It will contain a list of objects that have the following fields for every transaction that is processed (successfully or unsuccessfully):
-
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-|`TransactionHash`|✔️|`string`|`STUInt256`|
-|`InnerResult`|✔️|`string`|`STBlob`|
-
-Some important things to note:
-* It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` mode, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
-* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, if the `ALLORNOTHING` mode is used and _any_ inner transaction fails, _none_ of the inner transactions will be included in the ledger.
-
 #### 2.6.2. Inner Transactions
 
 Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Batch` transactions as if they were normal.
 
-There will also be a pointer back to the parent outer transaction (`parent_batch`), for ease of development (similar to the `nftoken_id` field).
+There will also be a pointer back to the parent outer transaction (`BatchTransactionID`).
 
 ## 3. Transaction Common Fields
 
@@ -214,7 +201,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
   TransactionType: "Batch",
   Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
   Flags: "1",
-  TxnIDs: [
+  TransactionIDs: [
     "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
     "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
   ],
@@ -273,7 +260,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     TransactionType: "Batch",
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Flags: "1",
-    TxnIDs: [
+    TransactionIDs: [
       "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
       "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
     ],
@@ -329,7 +316,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
   TransactionType: "Batch",
   Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
   Flags: "1",
-  TxnIDs: [
+  TransactionIDs: [
     "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
     "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
   ],
@@ -397,7 +384,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     TransactionType: "Batch",
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Flags: "1",
-    TxnIDs: [
+    TransactionIDs: [
       "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
       "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
     ],
@@ -501,3 +488,7 @@ This was deemed unnecessary. If you have a need for this, please provide example
 ### A.11: What if I want the inner transaction accounts to handle their own fees?
 
 That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
+
+### A.12: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069d-simulate) work with Batch?
+
+Some extra processing will be needed for that. Batch transactions likely won't be able to be simulated at first.
