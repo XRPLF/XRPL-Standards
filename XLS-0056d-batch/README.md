@@ -475,11 +475,9 @@ On the flip side, tickets are still needed for other use-cases, such as needing 
 
 No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction. Inner transactions will also be excluded from consensus for the same reason.
 
-### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
+### A.9: How does this work in conjunction with [XLS-75d](https://github.com/XRPLF/XRPL-Standards/discussions/218)? If I give an account powers over the `Batch` transaction, can it effectively run all transaction types?
 
-The answer to this question is still being investigated. Some potential answers:
-* All signer lists should have access to this transaction but only for the transaction types they have powers over
-* Only the global signer list can have access to this transaction
+No, `OnBehalfOf` will not be allowed on `Batch` transactions. Instead, the inner transactions must include the `OnBehalfOf` field.
 
 ### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
 
@@ -487,7 +485,7 @@ This was deemed unnecessary. If you have a need for this, please provide example
 
 ### A.11: What if I want the inner transaction accounts to handle their own fees?
 
-That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
+That is not supported. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead, and ensures that even if all of the transactions fail, the transaction fees are still charged.
 
 ### A.12: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069d-simulate) work with Batch?
 
