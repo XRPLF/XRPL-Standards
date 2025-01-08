@@ -678,6 +678,10 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
     - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
     - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
 
+#### 3.4.1.2 State Changes
+
+- If `MPToken`object for shares does not exist for the destination account, create one.
+
 [**Return to Index**](#index)
 
 ## 4. API
