@@ -119,7 +119,7 @@ The fee for the outer transaction is:
 $$(n+2)*base\textunderscore fee + \sum_{innerTxns} Txn.Fee$$
 (where `n` is the number of signatures included in the outer transaction)
 
-In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions (which incorporates factors like higher fees for `AMMCreate` or `EscrowFinish`), plus 
+In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions (which incorporates factors like higher fees for `AMMCreate` or `EscrowFinish`), plus an additional base fee amount for each additional signature in the transaction (e.g. from `BatchSigners`).
 
 The fees for the individual inner transactions are paid here instead of in the inner transaction itself, to ensure that fee escalation is calculated on the total cost of the transaction instead of just the overhead.
 
