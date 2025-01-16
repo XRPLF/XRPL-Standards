@@ -98,20 +98,20 @@ and `issuer` address.**
 
 **`MPTokenIssuance`** objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/directorynode.html) owned by the issuer. Issuances have the following required and optional fields:
 
-| Field Name          | Required?           | JSON Type | Internal Type |
-|---------------------|---------------------|-----------|---------------|
-| `LedgerEntryType`   | :heavy_check_mark:  | `number`  | `UINT16`      |
-| `Flags`             | :heavy_check_mark:  | `number`  | `UINT32`      |
-| `Issuer`            | :heavy_check_mark:  | `string`  | `ACCOUNTID`   |
-| `AssetScale`        | (default)           | `number`  | `UINT8`       |
-| `MaximumAmount`     | :heavy_check_mark:  | `string`  | `UINT64`      |
-| `OutstandingAmount` | :heavy_check_mark:  | `string`  | `UINT64`      |
-| `TransferFee`       | ️(default)          | `number`  | `UINT16`      |
-| `MPTokenMetadata`   |                     | `string`  | `BLOB`        |
-| `PreviousTxnID`     | :heavy_check_mark:  | `string`  | `HASH256`     |
-| `PreviousTxnLgrSeq` | ️:heavy_check_mark: | `number`  | `UINT32`      |
-| `OwnerNode`         | :heavy_check_mark:  | `number`  | `UINT64`      |
-| `Sequence`          | :heavy_check_mark:  | `number`  | `UINT32`      |
+| Field Name          | Required?          | JSON Type | Internal Type |
+|---------------------|--------------------|-----------|---------------|
+| `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
+| `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
+| `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
+| `AssetScale`        | (default)          | `number`  | `UINT8`       |
+| `MaximumAmount`     | (default)          | `string`  | `UINT64`      |
+| `OutstandingAmount` | (default)          | `string`  | `UINT64`      |
+| `TransferFee`       | (default)          | `number`  | `UINT16`      |
+| `MPTokenMetadata`   |                    | `string`  | `BLOB`        |
+| `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
+| `OwnerNode`         | (default)          | `number`  | `UINT64`      |
+| `Sequence`          | :heavy_check_mark: | `number`  | `UINT32`      |
 
 ###### 2.1.1.2.1. `LedgerEntryType`
 
@@ -164,11 +164,16 @@ USD stablecoin `MPTokenIssuance` with an `AssetScale` of `2` would allow an issu
 
 ###### 2.1.1.2.5. `MaximumAmount`
 
-This value is an unsigned number that specifies the maximum number of MPTs that can be distributed to non-issuing accounts (i.e., `minted`). For issuances that do not have a maximum limit, this value should be set to 0xFFFFFFFFFFFFFFFF.
+An unsigned 64-bit number that specifies the maximum number of MPTs that can be distributed to non-issuing accounts (
+i.e., `minted`). The default and maximum value is `0x7FFF'FFFF'FFFF'FFFF`. However, this limit may increase in the
+future, so issuers that require a specific limit should always specify a custom value.
 
 ###### 2.1.1.2.6. `OutstandingAmount`
 
-Specifies the sum of all token amounts that have been minted to all token holders. This value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This value is increased whenever an issuer pays MPTs to a non-issuer account, and decreased whenever a non-issuer pays MPTs into the issuing account.
+An unsigned 64-bit number that specifies the sum of all token amounts that have been minted to all token holders. This
+value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This
+value is increased whenever an issuer pays MPTs to a non-issuer account, and decreased whenever a non-issuer pays MPTs
+into the issuing account. The maximum value of this field is `0x7FFF'FFFF'FFFF'FFFF`.
 
 ###### 2.1.1.2.7. `TransferFee`
 
@@ -265,7 +270,7 @@ A **`MPToken`** object can have the following fields.
 | `LedgerEntryType`   | :heavy_check_mark: | `string`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
-| `MPTAmount`         | :heavy_check_mark: | `string`  | `UINT64`      |
+| `MPTAmount`         | default            | `string`  | `UINT64`      |
 | `Flags`             | default            | `number`  | `UINT32`      |
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
@@ -285,7 +290,9 @@ The `MPTokenIssuance` identifier.
 
 ###### 2.1.2.2.4. `MPTAmount`
 
-This value specifies a positive amount of tokens currently held by the owner. Valid values for this field are between 0x0 and 0xFFFFFFFFFFFFFFFF.
+An unsigned 64-bit number that specifies a positive amount of tokens currently held by the owner. This value can be
+stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. The maximum value of
+this field is `0xFFFF'FFFF'FFFF'FFFF`.
 
 ###### 2.1.2.2.5. `Flags`
 
@@ -339,6 +346,7 @@ The **`MPTokenIssuanceCreate`** transaction creates a **`MPTokenIssuance`** obje
 If the transaction is successful, the newly created token will be owned by the account (the creator account) which executed the transaction.
 
 ##### 3.1.1.1. Transaction-specific Fields
+
 | Field Name         | Required? | JSON Type | Internal Type |
 | ------------------ | --------- | --------- |---------------|
 | `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
@@ -374,15 +382,20 @@ The value specifies the fee to charged by the issuer for secondary sales of the 
 
 The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it is, the transaction should fail with `temMALFORMED`.
 
-| Field Name      | Required?          | JSON Type | Internal Type |
-| --------------- | ------------------ | --------- | ------------- |
-| `MaximumAmount` |  | `string`  | `UINT64`      | 
+| Field Name      | Required? | JSON Type | Internal Type |
+|-----------------|-----------|-----------|---------------|
+| `MaximumAmount` |           | `string`  | `UINT64`      | 
 
-The maximum asset amount of this token that should ever be issued.
+The maximum number of this token's units that should ever be issued. This field is optional. If omitted, the
+implementation will set this to an empty default field value, which will be interpreted at runtime as the current
+maximum allowed value (currently `0x7FFF'FFFF'FFFF'FFFF`).
 
-| Field Name        | Required?          | JSON Type | Internal Type |
-| ------------------| ------------------ | --------- | ------------- |
-| `MPTokenMetadata` |  | `string`  | `BLOB`        | 
+Note that the maximum allowed value may increase in the future, so callers should specify a custom value if a specific
+limit is required.
+
+| Field Name        | Required? | JSON Type | Internal Type |
+|-------------------|-----------|-----------|---------------|
+| `MPTokenMetadata` |           | `string`  | `BLOB`        | 
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
@@ -857,7 +870,12 @@ With all that said, this decision is still open for debate. For example, in earl
 
 #### A.1.8. Why is there no `MPTokenRedeem` Transaction?
 
-This is because holders of a MPT can use a normal payment transaction to send MPT back to the issuer, thus "redeeming" it and removing it from circulation. Note that one consequence of this design choice is that MPT issuer accounts may not also hold `MPToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming MPT payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or should that payment go into an issuer's `MPToken` amount, and still be considered as "in circulation." For simplicity, we chose the former design, restricting MPT issuers from having `MPToken` objects at all.
+This is because holders of a MPT can use a normal payment transaction to send MPT back to the issuer, thus "redeeming"
+it and removing it from circulation. Note that one consequence of this design choice is that MPT issuer accounts may not
+also hold `MPToken` objects because, if the issuer could do such a thing, it would be ambiguous where incoming MPT
+payments should go (i.e., should that payment be a redemption and reduce the total amount of outstanding issuance, or
+should that payment go into an issuer's `MPToken` amount, and still be considered as "in circulation." For simplicity,
+we chose the former design, restricting MPT issuers from having `MPToken` objects at all).
 
 #### A.1.9. Why can't MPToken Issuers also hold their own balances of MPT in a MPToken object?
 
@@ -877,8 +895,24 @@ For example, MPTs might be better suited than NFTs for certain semi-fungible use
 
 That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
 
-#### A.1.12. What range does MPT amount support?
-An MPT `amount` is an unsigned integer that accommodates up to 63 bits. This limitation arises from the rippled implementation for the `Number` class, which internally stores its amount value as an `int64_t` type. As a design choice, we elected to not refactor `Number` to accommodate any different size because that change would impact too many existing code paths to justify its benefit.
+#### A.1.12. What numeric range do MPT amounts support?
+
+In general, `amount` fields in MPT-related ledger objects are represented using unsigned 64-bit integers that can support values
+between `0` and`2^64 -1` (inclusive). An exception to this rule occurs when MPT amounts are represented in a payment or
+any other transaction that requires an `STAmount`. In these instances, the MPT amount values are limited to values
+between `0` and `2^63 -1` (inclusive), because this is the range supported by `STAmount`.
+
+Because of this limitation, the maximum amounts allowed by any balance tracking field in `MPTokenIssuance` and `MPToken` 
+are also limited to values between `0` and `2^63 -1` (inclusive), although these values may be increased in the future 
+to enable more tokens to exist. 
+
+For context, MPT amounts in `STAmount` objects are limited to the above range so that MPT amounts will eventually work
+correctly with the `Number` class, which is used internally in rippled for certain mathematical operations such as
+inside the DEX, AMM, or otherwise. At present, the `Number` class is unable to represent numeric values larger than
+`2^63 - 307` without loss of precision or overflow (depending on how the `Number` class's overflow behavior is
+configured for any particular runtime operation). While refactoring the `Number` class to support larger internal types
+was considered, it would have resulted in performance penalties for all `Number` usages, so we elected to simply limit
+the size of MPT amounts inside of `STAmount` instead.
 
 #### A.1.13. Why is `MPTokenIssuanceID` constructed using `sequence` + `issuer`?
 
