@@ -141,24 +141,30 @@ The address of the account that controls both the issuance amounts and character
 ###### 2.1.1.2.4. `AssetScale`
 
 Every MPT asset has an off-ledger standard unit. For example, the standard unit for a USD
-stablecoin is, in theory, one dollar. However, an MPT issuer might prefer to make the smallest unit of an MPT something
+stablecoin is typically one US dollar. However, an MPT issuer might prefer to make the smallest unit of an MPT something
 smaller than the asset's standard unit, to enable on-ledger fractionalization while adhering to the limitation that
-MPTs only support whole numbers (MPT units must be integers). For example, an issuer might want each MPT unit to
+MPTs only support whole numbers (i.e., MPT units must be integers). For example, an issuer might want each MPT unit to
 represent one cent instead of a whole dollar. Using `AssetScale`, MPT issuers can represent this difference as the
 number of orders of magnitude between a standard unit and an MPT unit.
 
-More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one standard unit
-equals $10^{-scale}$ of a corresponding MPT unit.
+More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one MPT unit equals $10^{-scale}$ 
+of a corresponding standard unit.
 
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
 
-$${StdUnit} = {MptUnit} / 10^{scale}$$
+$${StdUnits} = {MptUnits} / 10^{scale} ⟺ {StdUnits} = {MptUnits} * 10^{-scale}$$
 
-$${MptUnit} = {StdUnit} * 10^{scale}$$
+$${MptUnits} = {StdUnits} / 10^{-scale} ⟺ {MptUnits} = {StdUnits} * 10^{scale}$$
+
+To solve for 1 unit of each, the following equations can be used:
+
+$$1 MptUnit = 10^{-scale} {StdUnits}$$
+
+$$1 StdUnit = 10^{scale} {MptUnits}$$
 
 Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
 each MPT unit represents one standard unit. However, an `MPTokenIssuance` with an `AssetScale` of `2` would mean each
-MPT unit represents `0.01` standard units, requiring `100` MPT units to equal one standard unit. More plainly, an
+MPT unit represents `0.01` standard units, requiring `100` MPT units to equal one standard unit. More plainly, a
 USD stablecoin `MPTokenIssuance` with an `AssetScale` of `2` would allow an issuer to create an MPT that represents
 "cents", with applications being able to display amounts correctly (e.g., 1 unit would display as `$0.01`).
 
