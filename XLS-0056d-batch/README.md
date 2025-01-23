@@ -529,7 +529,10 @@ For this reason, inner transactions must include sequence numbers.
 
 That is not supported. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead, and ensures that even if all of the transactions fail, the transaction fees are still charged.
 
-### A.13: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069d-simulate) work with Batch?
+### A.13: Can I create an account and send transactions from it in the same `Batch`?
+
+Yes, as long as you use the master key of that account. Setting a regular key/signer list in the middle of the `Batch` won't work, since that key isn't valid at the time of processing the outer transaction (when the signatures are checked).
+
+### A.14: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069d-simulate) work with Batch?
 
 Some extra processing will be needed for that. As a result, Batch transactions likely won't be able to be simulated at first.
-
