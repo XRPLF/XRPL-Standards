@@ -138,13 +138,13 @@ For example, a ledger that only has one `Batch` transaction containing 2 inner t
 
 #### 2.6.1. Outer Transactions
 
-Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
+Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing. The error code will also only be based on the outer transaction processing (e.g. sequence and fee), and it will return a `tesSUCCESS` error even if the inner transaction processing fails.
 
 #### 2.6.2. Inner Transactions
 
 Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Batch` transactions as if they were normal.
 
-There will also be a pointer back to the parent outer transaction (`BatchTransactionID`).
+There will also be a pointer back to the parent outer transaction (`ParentBatchID`).
 
 ## 3. Transaction Common Fields
 
@@ -485,9 +485,9 @@ That is definitely a concern. Ways to mitigate this are still being investigated
 * Have higher fees for `Batch` transactions
 * Submit the `Batch` transactions at the end of the ledger
 
-### A.4: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
+### A.4: What error is returned if the inner transactions fail (e.g. in `tfALLORNOTHING` or `tfONLYONE`)?
 
-A general error, `temBATCH_FAILED`/`tecBATCH_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
+The only way to directly tell that this fails is because unless there is a `tec` error, no inner transaction would be validated. Some debug tools will be provided (such as parsing the rippled debug logs), and ideas to improve this in the future (such as a separate database to store `Batch` outputs) are being discussed.
 
 ### A.5: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
