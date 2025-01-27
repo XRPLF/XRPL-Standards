@@ -1175,7 +1175,7 @@ For the calculation, assume the following variables:
 - Let $\mathcal{V}$ and $\mathcal{v}$ represent the total and outstanding value of the Loan. $\mathcal{V} = \mathcal{P} + \mathcal{I}$ and $\mathcal{v} = \mathcal{p} + \mathcal{i}$.
 - Finally, let $\mathcal{m}$ represent the management fee rate of the Loan Broker.
 
-Assume $f(\mathcal{v})$ is a Loan payment, $f(\mathcal{v}) = \mathcal{v'}$, the new outstanding loan value is equal to the application of the payment transaction to the current outstanding value. Furthermore, assume $\mathcal{V} \xrightarrow{f(\mathcal{v})} \mathcal{V'}$, is the change in the Loan total value as the result of applying $f(\mathcal{v})$.
+Assume $f(\mathcal{v})$ is a Loan payment, $f(\mathcal{v}) = \mathcal{v'}$, the new outstanding loan value is equal to the application of the payment transaction to the current outstanding value. Furthermore, assume $\mathcal{V} \xrightarrow{f(\mathcal{v})}$ $\mathcal{V'}$, is the change in the Loan total value as the result of applying $f(\mathcal{v})$.
 
 we say that $\mathcal{V'} = \mathcal{P'} + \mathcal{I'}$. It's important to note that a payment transaction must never change the total principal. I.e. $\mathcal{P} = \mathcal{P'}$, the change in total value is caused by the change in total interest only.
 
