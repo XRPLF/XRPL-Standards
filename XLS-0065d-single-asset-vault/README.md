@@ -137,7 +137,6 @@ A vault has the following fields:
 | `AssetMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `Share`             |    `N/A`    | :heavy_check_mark: |      `object`      |     `MPT`     |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
-| `DomainID`          |    `No`     |                    |      `string`      |   `HASH256`   |     None      | The permissioned domain identifier of the Vault. This value is ignored if the vault is public.    |
 
 ##### 2.1.2.1 Flags
 
@@ -322,7 +321,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `AssetMaximum`     |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
 | `MPTokenMetadata`  |                    |      `string`      |    `Blob`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
 | `WithdrawalPolicy` |                    |      `string`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
-| `DomainID`         |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with this Vault object.           |
+| `DomainID`         |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
 
 ##### 3.1.1.1 Flags
 
@@ -365,6 +364,8 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 - Create a new `Vault` ledger object.
 - Create a new `MPTokenIssuance` ledger object for the vault shares.
+  - If the `DomainID` is provided:
+    - `MPTokenIssuance(Vault.Share).DomainID = DomainID` (Set the Permissioned Domain ID).
 - Create a new `AccountRoot`[_pseudo-account_](https://github.com/XRPLF/XRPL-Standards/discussions/191) object setting the `PseudoOwner` to `VaultID`.
 
 - If `Vault.Asset` is an `IOU`:
@@ -391,7 +392,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                          |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                        |
 | `AssetMaximum`    |                    | `number`  |   `Uint64`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetTotal` unless the value is `0`. |
-| `DomainID`        |                    | `string`  |   `Hash256`   |               | The `PermissionedDomain` object ID associated with this Vault object.                                                                  |
+| `DomainID`        |                    | `string`  |   `Hash256`   |               | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                           |
 
 ##### 3.1.2.1 Failure Conditions
 
@@ -400,15 +401,17 @@ The `VaultSet` updates an existing `Vault` ledger object.
 - The `Data` field is larger than 256 bytes.
 - If `Vault.AssetMaximum` > `0` AND `AssetMaximum` > 0 AND:
   - The `AssetMaximum` < `Vault.AssetTotal` (new `AssetMaximum` cannot be lower than the current `AssetTotal`).
-- The Vault already has a `DomainID` (`DomainID` can be only set once).
+- `MPTokenIssuance(Vault.Share).DomainID != ""` (Permissioned Domain is already set).
 - The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
-- The `PermissionedDomain` object does not exist.
+- The `PermissionedDomain` object does not exist with the provided `DomainID`.
 - The transaction is attempting to modify an immutable field.
 - The transaction does not specify any of the modifiable fields.
 
 ##### 3.1.2.2 State Changes
 
 - Update mutable fields in the `Vault` ledger object.
+- If `DomainID` is provided:
+  - Set `MPTokenIssuance(Vault.Share).DomainID = DomainID` (Set the Permissioned Domain).
 
 ##### 3.1.2.3 Invariants
 
@@ -468,7 +471,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 - The asset type of the vault does not match the asset type the depositor is depositing.
 - The depositor does not have sufficient funds to make a deposit.
 - Adding the `Amount` to the `AssetTotal` of the vault would exceed the `AssetMaximum`.
-- The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain.
+- The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
 
 - The `Vault.Asset` is `MPT`:
 
@@ -669,7 +672,7 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
 
 - If `Payment.Amount` is a `Vault` share AND:
 
-  - The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain.
+  - The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain of the Vaults Share.
   - The `Vault` `tfVaultShareNonTransferable` flag is set.
 
   - The `Vault.Asset` is `MPT`:
@@ -729,7 +732,6 @@ We propose adding the following fields to the `ledger_entry` method:
 | `Share`             | :heavy_check_mark: |      `object`      | The identifier of the share MPTokenIssuance object.                                               |
 | `ShareTotal`        | :heavy_check_mark: |      `number`      | The total amount of shares issued by the vault.                                                   |
 | `WithdrawalPolicy`  | :heavy_check_mark: |      `string`      | Indicates the withdrawal strategy used by the Vault.                                              |
-| `DomainID`          | :heavy_check_mark: |      `string`      | The permissioned domain identifier of the Vault. This value is ignored if the vault is public.    |
 
 #### 4.1.2.1 Example
 
@@ -744,7 +746,7 @@ We propose adding the following fields to the `ledger_entry` method:
   "OwnerNode": 2,
   "Owner": "rEXAMPLE9AbCdEfGhIjKlMnOpQrStUvWxYz",
   "Account": "rPseudoAcc1234567890abcdef1234567890abcdef",
-  "Data": "This is arbitrary metadata about the vault.",
+  "Data": "5468697320697320617262697472617279206D657461646174612061626F757420746865207661756C742E",
   "Asset": {
     "currency": "USD",
     "issuer": "rIssuer1234567890abcdef1234567890abcdef",
@@ -759,8 +761,7 @@ We propose adding the following fields to the `ledger_entry` method:
     "Issuer": "rShareIssuer1234567890abcdef1234567890abcdef"
   },
   "ShareTotal": 5000,
-  "WithdrawalPolicy": "FIFO",
-  "DomainID": "example-domain-id"
+  "WithdrawalPolicy": "FIFO"
 }
 ```
 
@@ -781,3 +782,9 @@ We chose this design in order to reduce the amount of off-chain math required to
 The `VaultWithdraw` transaction does not respect the permissioned domain rules. In other words, any account that holds the shares of the Vault can withdraw them.
 
 The decision was made to avoid a situation where a depositor deposits assets to a private vault to then have their access revoked by invalidating their credentials, and thus loosing access to their funds.
+
+### A-1.3 How can a depositor transfer shares to another account?
+
+Vault shares are a first-class assets, meaning that they can be transfered and used in other on-ledger protocols that support MPTokens. However, the payee (or the receiver) of the shares must have permissions to hold the shares and the assset that the shares represent. For example, if the shares are for a private Vault containing `USDC` the destination account must be in the permissioned domain of the Vault, and have permissions to hold `USDC`.
+
+In addion, any compliance mechanisms applied to `USDC` will also apply to the share. For example, if the Issuer of `USDC` freezes the Trustline of the payee, then the payee will not be able to receive any shares representing `USDC`.
