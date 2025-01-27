@@ -158,9 +158,9 @@ $${MptUnits} = {StdUnits} / 10^{-scale} ⟺ {MptUnits} = {StdUnits} * 10^{scale}
 
 To solve for 1 unit of each, the following equations can be used:
 
-$$1 MptUnit = 10^{-scale} {StdUnits}$$
+$$1 MptUnit = 10^{-scale} StdUnits$$
 
-$$1 StdUnit = 10^{scale} {MptUnits}$$
+$$1 StdUnit = 10^{scale} MptUnits$$
 
 Mapping these equations to the USD stablecoin example above, an `MPTokenIssuance` with an `AssetScale` of `0` would mean
 each MPT unit represents one standard unit. However, an `MPTokenIssuance` with an `AssetScale` of `2` would mean each
