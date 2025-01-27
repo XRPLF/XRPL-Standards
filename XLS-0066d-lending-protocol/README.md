@@ -557,7 +557,6 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 
 - The `OwnerCount` field is greater than zero.
-- `CoverAvailable` is greater than zero.
 
 ##### 3.1.2.2 State Changes
 
