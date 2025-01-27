@@ -209,6 +209,7 @@ The `LoanBroker` object has the following fields:
 | `PreviousTxnLgrSeq`    |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                        |
 | `Sequence`             |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
 | `OwnerNode`            |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
+| `VaultNode`            |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                         |
 | `VaultID`              |    `No`     | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
 | `Owner`                |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the account that is the Loan Broker.                                                                                                                                                          |
 | `Data`                 |    `Yes`    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
@@ -226,7 +227,7 @@ The Lending Protocol uses the `_pseudo-account_` of the associated `Vault` objec
 
 #### 2.1.4 Ownership
 
-The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the _`pseudo-account`_.
+The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the _`pseudo-account`_. The `_pseudo_account_` `OwnerDirectory` page is captured by the `VaultNode` field.
 
 The `LoanBroker` requires tracking associated `Loan` objects to prevent the `LoanBroker` object from being deleted while loans are active as well as future RPC endpoints. Therefore, the `LoanBroker` has an associated [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) object.
 
@@ -443,6 +444,7 @@ The `LoanID` is calculated as follows:
 | `PreviousTxnLgrSeq`       |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The ledger sequence containing the transaction that last modified this object.                                                                                 |
 | `Sequence`                |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The transaction sequence number that created the loan.                                                                                                         |
 | `OwnerNode`               |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the owner's directory.                                                                                    |
+| `LoanBrokerNode`          |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
 | `LoanBrokerID`            |    `No`     | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
 | `Borrower`                |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |                        `N/A`                        | The address of the account that is the borrower.                                                                                                               |
 | `LoanOriginationFee`      |    `No`     | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                |
@@ -459,8 +461,8 @@ The `LoanID` is calculated as follows:
 | `GracePeriod`             |    `No`     | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The number of seconds after the Payment Due Date that the Loan can be Defaulted.                                                                               |
 | `PreviousPaymentDate`     |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                         `0`                         | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `NextPaymentDueDate`      |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |    `LoanSet.StartDate + LoanSet.PaymentInterval`    | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
-| `PaymentRemaining`       |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentTotal`               | The number of payments remaining on the Loan.                                                                                                                  |
-| `AssetAvailable`         |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
+| `PaymentRemaining`        |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentTotal`                | The number of payments remaining on the Loan.                                                                                                                  |
+| `AssetAvailable`          |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
 | `PrincipalOutstanding`    |    `No`     | :heavy_check_mark: | `number`  |   `NUMBER`    |            `LoanSet.PrincipalRequested`             | The principal amount requested by the Borrower.                                                                                                                |
 
 ##### 2.2.2.1 Flags
@@ -471,13 +473,13 @@ The `Loan` object supports the following flags:
 | -------------------- | :--------: | :---------: | :----------------------------------------------------: |
 | `lsfLoanDefault`     |  `0x0001`  |    `No`     |     If set, indicates that the Loan is defaulted.      |
 | `lsfLoanImpaired`    |  `0x0002`  |    `Yes`    |      If set, indicates that the Loan is impaired.      |
-| `lsfLoanOverpayment` |  `0x0003`  |    `No`     | If set, indicates that the Loan supports overpayments. |
+| `lsfLoanOverpayment` |  `0x0004`  |    `No`     | If set, indicates that the Loan supports overpayments. |
 
 #### 2.2.3 Ownership
 
 The `Loan` objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the `Borrower`.
 
-Furthermore, to facilitate the `Loan` object lookup from the `LoanBroker`, the object is also tracked in the `OwnerDirectory` associated with the `LoanBroker` object.
+Furthermore, to facilitate the `Loan` object lookup from the `LoanBroker`, the object is also tracked in the `OwnerDirectory` associated with the `LoanBroker` object. The `OwnerDirectory` page of the `LoanBroker` is captured by the `LoanBrokerNode` field.
 
 #### 2.2.4 Reserves
 
@@ -563,6 +565,22 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 - Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's `_pseudo-account_`.
 - Delete the `OwnerDirectory` associated with the `LoanBroker` object.
 
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+
+  - Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by `CoverAvailable`.
+  - Increase the `Balance` field of the submitter `AccountRoot` by `CoverAvailable`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
+
+  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
+  - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
+
+  - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Increase the `MPToken.MPTAmount` by `CoverAvailable` of the submitter `MPToken` object for the `Vault.Asset`.
+
+
 ##### 3.1.2.3 Invariants
 
 **TBD**
@@ -571,7 +589,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 #### 3.1.3 `LoanBrokerCoverDeposit`
 
-The transaction creates a new `LoanBroker` object or updates an existing one.
+The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                       |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------ |
@@ -583,6 +601,9 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+  - `AccountRoot(LoanBroker.Owner).Balance < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
@@ -648,9 +669,9 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - Has `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
-- The submitter is attempting to withdraw an Asset that does not match the Asset of the Vault.
-
 - The `LoanBroker.CoverAvailable` < `Amount`.
+
+- `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
 
 ##### 3.2.2.2 State Changes
 
@@ -697,7 +718,7 @@ The transaction creates a new `Loan` object.
 | `CloseInterestRate`  |                    | `number`  |   `UINT16`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
 | `PrincipalRequested` | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
 | `StartDate`          | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
-| `PaymentTotal`      |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
+| `PaymentTotal`       |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
 | `PaymentInterval`    |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
 | `GracePeriod`        |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
 | `Lender`             | :heavy_check_mark: | `object`  |  `STObject`   |     `N/A`     | An inner object that contains the signature of the Lender over the transaction.                                                               |
@@ -756,7 +777,7 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
 
 - `PaymentInterval` is less than `60` seconds.
 - `GracePeriod` is greater than the `PaymentInterval`.
-- `Loan.StartDate < CurrentTime`.
+- `Loan.StartDate < LastClosedLedger.CloseTime`.
 
 - Insufficient assets in the Vault:
 
@@ -841,7 +862,7 @@ The transaction deletes an existing `Loan` object.
 | ---------------- | :--------: | :--------------------------------------------- |
 | `tfLoanDefault`  |  `0x0001`  | Indicates that the Loan should be defaulted.   |
 | `tfLoanImpair`   |  `0x0002`  | Indicates that the Loan should be impaired.    |
-| `tfLoanUnimpair` |  `0x0003`  | Indicates that the Loan should be un-impaired. |
+| `tfLoanUnimpair` |  `0x0004`  | Indicates that the Loan should be un-impaired. |
 
 ##### 3.2.3.1 Failure Conditions
 
@@ -854,7 +875,7 @@ The transaction deletes an existing `Loan` object.
 - `Loan.PaymentRemaining == 0`.
 
 - The `tfDefault` flag is specified and:
-  - `CurrentTime` < `Loan.NextPaymentDueDate + Loan.GracePeriod`.
+  - `LastClosedLedger.CloseTime` < `Loan.NextPaymentDueDate + Loan.GracePeriod`.
 
 ##### 3.2.3.2 State Changes
 
@@ -939,7 +960,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 - A `Loan` object with the specified `LoanID` does not exist on the ledger.
 - The `AccountRoot.Account` of the submitter is not `Loan.Borrower`.
 - The Loan has not started:
-  - `Loan.StartDate > CurrentTime`.
+  - `Loan.StartDate > LastClosedLedger.CloseTime`.
 - There are insufficient assets:
 
   - `Loan.AssetAvailable` < `Amount`.
@@ -958,7 +979,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
 - The `Borrower` missed a payment:
-  - `CurrentTime > Loan.NextPaymentDueDate`.
+  - `LastClosedLedger.CloseTime > Loan.NextPaymentDueDate`.
 
 ##### 3.2.4.2 State Changes
 
@@ -1294,7 +1315,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
 - A `Loan` object with specified `LoanID` does not exist on the ledger.
 
-- The Loan has not started yet: `Loan.StartDate > CurrentTime`.
+- The Loan has not started yet: `Loan.StartDate > LastClosedLedger.CloseTime`.
 
 - The submitter `AccountRoot.Account` is not equal to `Loan.Borrower`.
 
@@ -1311,9 +1332,9 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     - Has `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
-- If `CurrentTime > Loan.NextPaymentDueDate` and `Amount` < `LatePaymentAmount()`
+- If `LastClosedLedger.CloseTime > Loan.NextPaymentDueDate` and `Amount` < `LatePaymentAmount()`
 
-- If `CurrentTime <= Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
+- If `LastClosedLedger.CloseTime <= Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
 ##### 3.2.5.4 State Changes
 
