@@ -740,9 +740,9 @@ An inner object that contains the signature of the Lender over the transaction. 
 
 The final transaction must include `Signature` or `Signers`.
 
-If the `Signers` field is necessary, then the total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base\_fee$
+If the `Signers` field is necessary, then the total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$
 
-The total fee calculation for signatures will now be $(1 + |tx.Signers| + |tx.Lender.Signers|) \times base\_fee$.
+The total fee calculation for signatures will now be $(1 + |tx.Signers| + |tx.Lender.Signers|) \times base_fee$.
 
 This field is not a signing field (it will not be included in transaction signatures, though the `Signature` or `Signers` field will be included in the stored transaction).
 
@@ -1012,7 +1012,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                 |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                       |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be drawn from. |
+| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
 | `Amount`          | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The amount of funds to pay.                 |
 
 ##### 3.2.5.1 Payment Types
@@ -1177,7 +1177,7 @@ For the calculation, assume the following variables:
 
 Assume $f(\mathcal{v})$ is a Loan payment, $f(\mathcal{v}) = \mathcal{v'}$, the new outstanding loan value is equal to the application of the payment transaction to the current outstanding value. Furthermore, assume $\mathcal{V} \xrightarrow{f(\mathcal{v})} \mathcal{V'}$, is the change in the Loan total value as the result of applying $f(\mathcal{v})$.
 
-we say that $\mathcal{V'} = \mathcal{P'} + \mathcal{I'}$. It's important to note that a payment transaction must never change the total principal. I.e. $\mathcal{P} = \mathcal{P'}$, the change in total value is caused by the change in total principal only.
+we say that $\mathcal{V'} = \mathcal{P'} + \mathcal{I'}$. It's important to note that a payment transaction must never change the total principal. I.e. $\mathcal{P} = \mathcal{P'}$, the change in total value is caused by the change in total interest only.
 
 $\Delta_{\mathcal{V}} = \mathcal{I'} - \mathcal{I}$ is the total value change of the Loan. When $\Delta_{\mathcal{V}} > 0$ the total value of the Loan increased, when $\Delta_{\mathcal{V}} < 0$ the total value decreased, and if $\Delta_{\mathcal{V}} = 0$ the value remained the same.
 
