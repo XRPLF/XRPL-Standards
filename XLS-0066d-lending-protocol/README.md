@@ -359,7 +359,7 @@ The First-Loss Capital is an optional mechanism to protect the Vault depositors 
 Whenever the available cover falls below the minimum cover required, two consequences occur:
 
 - The Lender cannot issue new Loans.
-- The Lender cannot receive fees. Borrower fees are ignored (i.e. the Borrower does not have to pay a Loan payment fee), and the Management Fee is instead deposited into a Vault.
+- The Lender cannot directly receive fees. The fees are instead added to the First Loss Capital to cover the deficit. 
 
 **Examples**
 
@@ -482,7 +482,6 @@ The `Loan` objects are stored in the ledger and tracked in two [Owner Directorie
 - The `OwnerNode` is the `Owner Directory` of the `Borrower` who is the main `Owner` of the `Loan` object, and therefore is responsible for the owner reserve.
 - The `LoanBroker` `_pseudo-account_` `Owner Directory` to track all loans associated with the same `LoanBroker` object.
 
-
 #### 2.2.4 Reserves
 
 The `Loan` object costs one owner reserve for the `Borrower`.
@@ -582,7 +581,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 ##### 3.1.2.3 Invariants
 
-- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` for the `LoanBroker` does not exist 
+- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` for the `LoanBroker` does not exist
 
 [**Return to Index**](#index)
 
@@ -1378,29 +1377,27 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
     - `feeManagement = interest_paid x LoanBroker.ManagementFeeRate`
 
+  - Decrease the management fee from totalPaid amount:
+
+    - `totalPaid = totalPaid - feeManagement`
+
   - If there is **not enough** first-loss capital: `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Do not charge the management, add it to the total debt:
-      - `LoanBroker.DebtTotal += feeManagement`
+    - Add the fee to to First Loss Cover Pool:
 
-  - If there is **enough** first-loss capital: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
-
-    - Decrease the management fee from totalPaid amount:
-      - `totalPaid = totalPaid - feeManagement`
+      - `LoanBroker.CoverAvailable = LoanBroker.CoverAvailable + (feeManagement + fee_paid)`
 
   - Decrease LoanBroker Debt by the amount paid:
 
-    - `LoanBroker.DebtTotal -= totalPaid`
+    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - totalPaid`
 
   - Update the LoanBroker Debt by the Loan value change:
 
-    - `LoanBroker.DebtTotal += valueChange`
+    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal + valueChange`
 
   - Update the LoanBroker Debt by the change in the management fee:
-    - `LoanBroker.DebtTotal -= (valueChange x LoanBroker.ManagementFeeRate)`
-  - If `LoanPaymentRemaining == 0` and `LoanPrincipalOutstanding == 0`:
-    - Decrease active loans:
-      - `LoanBroker.OwnerCount = LoanBroker.OwnerCount - 1`
+
+    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - (valueChange x LoanBroker.ManagementFeeRate)`
 
 - `Vault(LoanBroker(Loan.LoanBrokerID).VaultID)` state changes:
 
@@ -1416,35 +1413,42 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
     - `Vault.AssetTotal = Vault.AssetTotal - (vaultChange x LoanBroker.managementFeeRate)`
 
-  - If there is **not enough** first-loss capital: `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
-    - The management fee was not charged; decrease Vault TotalValue:
-      - `Loan.AssetTotal = Loan.AssetTotal + feeManagement`
-
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `Balance` field of the `LoanBroker.Owner` `AccountRoot` by `fee_paid + management_fee`.
+    - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+
+  - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
+
+    - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `principal_paid + interest_paid + fee_paid` (the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_).
 
   - Decrease the `Balance` field of the submitter `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
-  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum` :
+  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee`.
+    - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+
+  - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
+
+    - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid` (the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_).
 
   - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset`.
-
+    - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  
+  - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
+    - Increase the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`(the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_) .
+  
   - Decrease the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the submitter `MPToken` object for the `Vault.Asset`.
 
 [**Return to Index**](#index)
