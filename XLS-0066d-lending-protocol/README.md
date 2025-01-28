@@ -480,7 +480,7 @@ The `Loan` object supports the following flags:
 The `Loan` objects are stored in the ledger and tracked in two [Owner Directories](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode).
 
 - The `OwnerNode` is the `Owner Directory` of the `Borrower` who is the main `Owner` of the `Loan` object, and therefore is responsible for the owner reserve.
-- The `LoanBroker` `_pseudo-account_` `Owner Directory` to track all loans associated with the same `LoanBroker` object.
+- The `LoanBrokerNode` is the `Owner Directory` for the `LoanBroker` to track all loans associated with the same `LoanBroker` object.
 
 #### 2.2.4 Reserves
 
