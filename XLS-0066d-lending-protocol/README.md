@@ -443,7 +443,7 @@ The `LoanID` is calculated as follows:
 | `PreviousTxnID`           |    `N/A`    | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the transaction that last modified this object.                                                                                                      |
 | `PreviousTxnLgrSeq`       |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The ledger sequence containing the transaction that last modified this object.                                                                                 |
 | `Sequence`                |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The transaction sequence number that created the loan.                                                                                                         |
-| `OwnerNode`               |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the owner's directory.                                                                                    |
+| `OwnerNode`               |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                         |
 | `LoanBrokerNode`          |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
 | `LoanBrokerID`            |    `No`     | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
 | `Borrower`                |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |                        `N/A`                        | The address of the account that is the borrower.                                                                                                               |
@@ -477,9 +477,11 @@ The `Loan` object supports the following flags:
 
 #### 2.2.3 Ownership
 
-The `Loan` objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the `Borrower`.
+The `Loan` objects are stored in the ledger and tracked in two [Owner Directories](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode).
 
-Furthermore, to facilitate the `Loan` object lookup from the `LoanBroker`, the object is also tracked in the `OwnerDirectory` associated with the `LoanBroker` object. The `OwnerDirectory` page of the `LoanBroker` is captured by the `LoanBrokerNode` field.
+- The `OwnerNode` is the `Owner Directory` of the `Borrower` who is the main `Owner` of the `Loan` object, and therefore is responsible for the owner reserve.
+- The `LoanBroker` `_pseudo-account_` `Owner Directory` to track all loans associated with the same `LoanBroker` object.
+
 
 #### 2.2.4 Reserves
 
@@ -562,7 +564,6 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 - Delete `LoanBrokerID` from the `OwnerDirectory` of the submitting account.
 - Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's `_pseudo-account_`.
-- Delete the `OwnerDirectory` associated with the `LoanBroker` object.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
@@ -579,10 +580,9 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
   - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `CoverAvailable` of the submitter `MPToken` object for the `Vault.Asset`.
 
-
 ##### 3.1.2.3 Invariants
 
-**TBD**
+- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` for the `LoanBroker` does not exist 
 
 [**Return to Index**](#index)
 
@@ -602,6 +602,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+
   - `AccountRoot(LoanBroker.Owner).Balance < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
@@ -844,6 +845,13 @@ The transaction deletes an existing `Loan` object.
 - `LoanBroker.OwnerCount -= 1`
 - Delete the `Loan` object.
 - Release reserve funds back to the Borrower.
+- Remove `LoanID` from the `DirectoryNode.Indexes`.
+- If `LoanBroker.OwnerCount = 0`
+  - Delete the `LoanBroker` `DirectoryNode`.
+
+##### 3.2.2.3 Invariants
+
+- If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0`
 
 [**Return to Index**](#index)
 
@@ -1009,11 +1017,11 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                 |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------ |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                       |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                    |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
-| `Amount`          | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The amount of funds to pay.                 |
+| `Amount`          | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The amount of funds to pay.              |
 
 ##### 3.2.5.1 Payment Types
 
