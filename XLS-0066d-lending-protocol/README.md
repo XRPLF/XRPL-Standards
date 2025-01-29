@@ -157,27 +157,27 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 |    Depositor    |                          |    LoanBroker   |                       |     Borrower    |
 |   AccountRoot   |                          |   AccountRoot   |                       |   AccountRoot   |
 |-----------------|                          |-----------------|                       |-----------------|
-| Owner Directory |                          | Owner Directory |                       | Owner Directory |
-+-----------------+                          +-----------------+                       +-----------------+
-      ^         |                                     |                                         |
-      |       Reserve                  ____________Reserve____________                       Reserve
-   Account      |                     |                               |                         |
-      |         V                     V                               V                         V
+| Owner Directory |                          | Owner Directory | <-----OwnerNode       | Owner Directory | <---------
++-----------------+                          +-----------------+           |           +-----------------+          |
+      ^         |                                     |                    |                    |                   |
+      |       Reserve                  ____________Reserve____________     |                  Reserve               |
+   Account      |                     |                               |    |                    |                   |
+      |         V                     V                               V    |                    V                   |
++-----------------+          +-----------------+          +-----------------+          +-----------------+          |
+|                 |          |                 |1        N|                 |1        N|                 |          |
+|     MPToken     |          |      Vault      |--------->|   LoanBroker    |--------->|       Loan      |-OwnerNode-
+|                 |          |                 |          |                 |          |                 |
 +-----------------+          +-----------------+          +-----------------+          +-----------------+
-|                 |          |                 |1        N|                 |1        N|                 |
-|     MPToken     |          |      Vault      |--------->|   LoanBroker    |--------->|       Loan      |
-|                 |          |                 |          |-----------------|          |                 |
-+-----------------+          +-----------------+          | Owner Directory |          +-----------------+
-         |                            ^                  +-----------------+                    ^
-      Issuance                        | ___________       ____________^  |_________Link_________|
-         |                            |            Account            |
-         V                            ^               |               ^
-+-----------------+                   |      +-----------------+      |
-|      Share      |                   |      |  Pseudo-Account |      |
-| MPTokenIssuance |<------Issuer------| -----|   AccountRoot   |      |
-|                 |                   |_Link_|-----------------|_Link_|
-+-----------------+                          | Owner Directory |
-                                             +-----------------+
+         |                            ^                        |    ^                            |
+      Issuance                        |                        |    |                            |
+         |                         Account                     | Account                         |
+         V                            |              -VaultNode-    |                            |
++-----------------+          +-----------------+     |    +-----------------+                    |
+|      Share      |          |  Pseudo-Account |     |    |  Pseudo-Account |                    |
+| MPTokenIssuance |<--Issuer-|   AccountRoot   |     |    |   AccountRoot   |                    |
+|                 |          |-----------------|     |    |-----------------|                    |
++-----------------+          | Owner Directory | <----    | Owner Directory | <- LoanBrokerNode---
+                             +-----------------+          +-----------------+
 ```
 
 [**Return to Index**](#index)
@@ -211,7 +211,8 @@ The `LoanBroker` object has the following fields:
 | `OwnerNode`            |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
 | `VaultNode`            |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                         |
 | `VaultID`              |    `No`     | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
-| `Owner`                |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the account that is the Loan Broker.                                                                                                                                                          |
+| `Account`              |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
+| `Owner`                |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
 | `Data`                 |    `Yes`    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
 | `ManagementFeeRate`    |    `No`     |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                 |
 | `OwnerCount`           |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                       |
@@ -223,13 +224,11 @@ The `LoanBroker` object has the following fields:
 
 #### 2.1.3 `LoanBroker `_pseudo-account_`
 
-The Lending Protocol uses the `_pseudo-account_` of the associated `Vault` object to hold the First-Loss Capital.
+The `LoanBroker` _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker, as well as Loan funds. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
 #### 2.1.4 Ownership
 
-The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the _`pseudo-account`_. The `_pseudo_account_` `OwnerDirectory` page is captured by the `VaultNode` field.
-
-The `LoanBroker` requires tracking associated `Loan` objects to prevent the `LoanBroker` object from being deleted while loans are active as well as future RPC endpoints. Therefore, the `LoanBroker` has an associated [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) object.
+The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the `Vault` _`pseudo-account`_. The `_pseudo_account_` `OwnerDirectory` page is captured by the `VaultNode` field.
 
 The `RootIndex` of the `DirectoryNode` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
@@ -359,7 +358,7 @@ The First-Loss Capital is an optional mechanism to protect the Vault depositors 
 Whenever the available cover falls below the minimum cover required, two consequences occur:
 
 - The Lender cannot issue new Loans.
-- The Lender cannot directly receive fees. The fees are instead added to the First Loss Capital to cover the deficit. 
+- The Lender cannot directly receive fees. The fees are instead added to the First Loss Capital to cover the deficit.
 
 **Examples**
 
@@ -480,7 +479,7 @@ The `Loan` object supports the following flags:
 The `Loan` objects are stored in the ledger and tracked in two [Owner Directories](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode).
 
 - The `OwnerNode` is the `Owner Directory` of the `Borrower` who is the main `Owner` of the `Loan` object, and therefore is responsible for the owner reserve.
-- The `LoanBrokerNode` is the `Owner Directory` for the `LoanBroker` to track all loans associated with the same `LoanBroker` object.
+- The `LoanBrokerNode` is the `Owner Directory` for the `LoanBroker` _pseudo-account_ to track all loans associated with the same `LoanBroker` object.
 
 #### 2.2.4 Reserves
 
@@ -533,8 +532,20 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 - If `LoanBrokerID` is not specified:
 
+  - Create a new `LoanBroker` ledger object.
+
+  - Create a new `AccountRoot` _pseudo-account_ object, setting the `AccountRoot.LoanBrokerID` to `LoanBrokerID`.
+
+    - If the `Vault(VaultID).Asset` is an `IOU`:
+
+      - Create a `Trustline` between the `Issuer` and the `LoanBroker` _pseudo-account_.
+
+    - If the `Vault(VaultID).Asset` is an `MPT`:
+
+      - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
+
   - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account.
-  - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's `_pseudo-account_`.
+  - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's _pseudo-account_.
 
 - If `LoanBrokerID` is specified:
   - Update appropriate fields.
@@ -562,22 +573,25 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 ##### 3.1.2.2 State Changes
 
 - Delete `LoanBrokerID` from the `OwnerDirectory` of the submitting account.
-- Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's `_pseudo-account_`.
+- Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by `CoverAvailable`.
+  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
   - Increase the `Balance` field of the submitter `AccountRoot` by `CoverAvailable`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
+  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
   - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `CoverAvailable` of the submitter `MPToken` object for the `Vault.Asset`.
+
+- Delete the `LoanBroker` _pseudo-account_ `AccountRoot` object.
+- Delete the `LoanBroker` ledger object.
 
 ##### 3.1.2.3 Invariants
 
@@ -621,17 +635,17 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
+  - Increase the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - Decrease the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+  - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Increase the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Decrease the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
 - Increase `LoanBroker.CoverAvailable` by `Amount`.
@@ -676,17 +690,17 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
+  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
@@ -791,13 +805,27 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
 
 ##### 3.2.1.5 State Changes
 
-- If the Loan Asset is an `IOU`:
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+
+  - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested`.
+  - Increase the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `Loan.LoanOriginationFee`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - Create a `Trustline` between the `Issuer` and the `Borrower` if one does not exist.
 
-- If the Loan Asset is an `MPT`:
+  - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested`.
+  - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
   - Create an `MPToken` object for the `Borrower` if one does not exist.
+
+  - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested`.
+  - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset` by `Loan.LoanOriginationFee`
 
 - `Vault(LoanBroker(LoanBrokerID).VaultID)` object state changes:
 
@@ -813,8 +841,8 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
   - `LoanBroker.DebtTotal += Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)`
   - `LoanBroker.OwnerCount += 1`
 
-  - If the `DirectoryNode` for the `LoanBroker` does not exist, create one.
-    - Add `LoanID` to `DirectoryNode.Indexes`.
+  - Add `LoanID` to `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
+  - Add `LoanID` to `DirectoryNode.Indexes` of the `Borrower` `AccountRoot`.
 
 ##### 3.2.1.4 Invariants
 
@@ -840,13 +868,33 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.2.2 State Changes
 
-- Remove `LoanID` from the Owner Directory associated with the `LoanBroker`.
-- `LoanBroker.OwnerCount -= 1`
+- If `Loan(LoanID).AssetAvailable > 0` (transfer remaining funds to the borrower):
+
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
+
+  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan(LoanID).AssetAvailable`.
+  - Increase the `Balance` field of `Loan(LoanID).Borrower` `AccountRoot` by `Loan(LoanID).AssetAvailable`.
+
+- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
+
+  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetAvailable`.
+  - Increase the `RippleState` balance between the `Loan(LoanID).Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetAvailable`.
+
+- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
+
+  - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetAvailable`.
+  - Increase the `MPToken.MPTAmount` of the `Loan(LoanID).Borrower` `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetAvailable`
+
 - Delete the `Loan` object.
-- Release reserve funds back to the Borrower.
-- Remove `LoanID` from the `DirectoryNode.Indexes`.
+
+- Remove `LoanID` from `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
 - If `LoanBroker.OwnerCount = 0`
-  - Delete the `LoanBroker` `DirectoryNode`.
+
+  - Delete the `LoanBroker` _pseudo-account_ `DirectoryNode`.
+
+- Remove `LoanID` from `DirectoryNode.Indexes` of the `Borrower` `AccountRoot`.
+
+- `LoanBroker.OwnerCount -= 1`
 
 ##### 3.2.2.3 Invariants
 
@@ -919,6 +967,23 @@ The transaction deletes an existing `Loan` object.
   - `Loan(LoanID).AssetAvailable = 0`
   - `Loan(LoanID).PrincipalOutstanding = 0`
 
+- Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
+
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
+
+    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+    - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
+
+    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `DefaultCovered`.
+    - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `DefaultCovered`.
+
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
+
+    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `DefaultCovered`.
+    - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `DefaultCovered`.
+
 - If `tfLoanImpair` flag is specified:
 
   - Update the `Vault` object (set "paper loss"):
@@ -967,7 +1032,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 - The `AccountRoot.Account` of the submitter is not `Loan.Borrower`.
 - The Loan has not started:
   - `Loan.StartDate > LastClosedLedger.CloseTime`.
-- There are insufficient assets:
+- There are insufficient assets in the `Loan`:
 
   - `Loan.AssetAvailable` < `Amount`.
 
@@ -991,17 +1056,17 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
+  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
 - Decrease `Loan.AssetAvailable` by `Amount`.
@@ -1415,40 +1480,47 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
+  - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+  
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `Balance` field of the `LoanBroker.Owner` `AccountRoot` by `fee_paid + management_fee`.
-    - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
 
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `principal_paid + interest_paid + fee_paid` (the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_).
+    - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `fee_paid + management_fee`. (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
 
   - Decrease the `Balance` field of the submitter `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
+  - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee`.
-    - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
 
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid` (the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_).
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
 
   - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
+  - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset`.
-    - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  
+
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
-    - Increase the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`(the payment and management fee was added to First Loss Capital, and thus transfered to the _pseudo-account_) .
-  
+
+    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+
   - Decrease the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the submitter `MPToken` object for the `Vault.Asset`.
 
 [**Return to Index**](#index)
