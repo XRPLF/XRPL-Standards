@@ -790,11 +790,16 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
   5. The `Borrower` signs the transaction, filling the `CounterpartySignature` field.
   6. The `Borrower` submits the transaction.
 
-##### 3.2.1.4 Failure Conditions
+##### 3.2.1.4 Fees
+
+The account specified in the `Account` field pays the transaction fee.
+
+##### 3.2.1.5 Failure Conditions
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-- `Lender. Signature` is invalid.
+- If neither the `Account` or the `Counterparty` field are the `LoanBroker.Owner`.
+- If the `Counterparty` field is not specified and the submitting account is not `LoanBroker.Owner`.
+- If the `Counterparty.Signature` is invalid.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
@@ -826,7 +831,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 - Insufficient First-Loss Capital:
   - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
-##### 3.2.1.5 State Changes
+##### 3.2.1.6 State Changes
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
@@ -867,7 +872,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
   - Add `LoanID` to `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
   - Add `LoanID` to `DirectoryNode.Indexes` of the `Borrower` `AccountRoot`.
 
-##### 3.2.1.4 Invariants
+##### 3.2.1.7 Invariants
 
 **TBD**
 
