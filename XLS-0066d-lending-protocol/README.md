@@ -715,26 +715,26 @@ In this section we specify transactions associated with the `Loan` ledger entry.
 
 The transaction creates a new `Loan` object.
 
-| Field Name           |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                   |
-| -------------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`    | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                                                                                                                         |
-| `LoanBrokerID`       | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
-| `Flags`              |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
-| `Data`               |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
-| `Borrower`           | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the account that is the borrower.                                                                                              |
-| `LoanOriginationFee` |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
-| `LoanServiceFee`     |                    | `number`  |   `NUMBER`    |       0       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
-| `LatePaymentFee`     |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
-| `ClosePaymentFee`    |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when an early full repayment is made.                                                   |
-| `InterestRate`       |                    | `number`  |   `UINT16`    |       0       | Annualized interest rate of the Loan in basis points.                                                                                         |
-| `LateInterestRate`   |                    | `number`  |   `UINT16`    |       0       | A premium added to the interest rate for late payments in basis points. Valid values are between 0 and 10000 inclusive. (0 - 100%)            |
-| `CloseInterestRate`  |                    | `number`  |   `UINT16`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
-| `PrincipalRequested` | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
-| `StartDate`          | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
-| `PaymentTotal`       |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
-| `PaymentInterval`    |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
-| `GracePeriod`        |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
-| `Lender`             | :heavy_check_mark: | `object`  |  `STObject`   |     `N/A`     | An inner object that contains the signature of the Lender over the transaction.                                                               |
+| Field Name              |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                   |
+| ----------------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`       | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                                                                                                                         |
+| `LoanBrokerID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
+| `Flags`                 |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
+| `Data`                  |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
+| `Counterparty`          |                    | `string`  |  `AccountID`  |     `N/A`     | The address of the counterparty of the Loan.                                                                                                  |
+| `CounterpartySignature` | :heavy_check_mark: | `string`  |  `STObject`   |     `N/A`     | The signature of the counterparty over the transaction.                                                                                       |
+| `LoanOriginationFee`    |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
+| `LoanServiceFee`        |                    | `number`  |   `NUMBER`    |       0       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
+| `LatePaymentFee`        |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
+| `ClosePaymentFee`       |                    | `number`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when an early full repayment is made.                                                   |
+| `InterestRate`          |                    | `number`  |   `UINT16`    |       0       | Annualized interest rate of the Loan in basis points.                                                                                         |
+| `LateInterestRate`      |                    | `number`  |   `UINT16`    |       0       | A premium added to the interest rate for late payments in basis points. Valid values are between 0 and 10000 inclusive. (0 - 100%)            |
+| `CloseInterestRate`     |                    | `number`  |   `UINT16`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
+| `PrincipalRequested`    | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
+| `StartDate`             | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
+| `PaymentTotal`          |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
+| `PaymentInterval`       |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
+| `GracePeriod`           |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
 
 ##### 3.2.1.1 `Flags`
 
@@ -742,15 +742,15 @@ The transaction creates a new `Loan` object.
 | ------------------- | :--------: | :---------------------------------------------- |
 | `tfLoanOverpayment` |  `0x0001`  | Indicates that the vault supports overpayments. |
 
-##### 3.2.1.2 `Lender`
+##### 3.2.1.2 `CounterpartySignature`
 
 An inner object that contains the signature of the Lender over the transaction. The fields contained in this object are:
 
-| Field Name      |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                            |
-| --------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                     |
-| `Signature`     | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields, including the `Signature` of the Borrower.                                   |
-| `Signers`       | :heavy_check_mark: |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `LoanBroker.Owner` signers to indicate their approval of this transaction. |
+| Field Name      |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                        |
+| --------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
+| `SigningPubKey` | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
+| `Signature`     | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `Signers`       | :heavy_check_mark: |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
 The final transaction must include `Signature` or `Signers`.
 
@@ -762,10 +762,33 @@ This field is not a signing field (it will not be included in transaction signat
 
 ##### 3.2.1.3 Multi-Signing
 
-The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `LoanBroke.Owner` to create a Loan. Therefore, the `LoanSet` transaction must be signed by both parties. The multi-signature flow is as follows:
+The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `LoanBroke.Owner` to create a Loan. Therefore, the `LoanSet` transaction must be signed by both parties.
 
-1. The `Borrower` creates a new transaction with the pre-agreed terms of the Loan and signs the transaction.
-2. The `Lender` signs over all signing fields, including the signature of the `Borrower`.
+Either of the parties (Borrower or Loan Issuer) may initiate the transaction. The user flow is as follows:
+
+- `Borrower` initiates the transaction:
+
+  1. The `Borrower` creates the transaction from their account, setting the pre-agreed terms.
+
+  - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
+
+  2. The `Borrower` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
+  3. The `Borrower` sends the transaction to the `Loan Issuer`.
+  4. The `Loan Issuer` verifies the loan-terms are as agreed upon and verifies the signature of the `Borrower`.
+  5. The `Loan Issuer` signs the transaction, filling the `CounterpartySignature` field.
+  6. The `Loan Issuer` submits the transaction.
+
+- `Loan Issuer` initiates the transaction:
+
+  1. The `Loan Issuer` creates the transaction from their account setting the pre-agreed terms.
+
+  - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
+
+  2. The `Loan Issuer` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
+  3. The `Loan Issuer` sends the transaction to the `Borrower`.
+  4. The `Borrower` verifies the loan-terms are as agreed upon and verifies the signature of the `Loan Issuer`.
+  5. The `Borrower` signs the transaction, filling the `CounterpartySignature` field.
+  6. The `Borrower` submits the transaction.
 
 ##### 3.2.1.4 Failure Conditions
 
@@ -1161,8 +1184,8 @@ $$
 latePaymentInterest = principalOutstanding \times \frac{lateInterestRate \times secondsSinceLastPayment}{365 \times 24 \times 60 \times 60}
 $$
 
-A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetTotal` must be recalculate
-d.
+A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetTotal` must be recalculated.
+
 Assume the function `PeriodicPayment()` returns the expected periodic payment, split into `principalPeriodic` and `interestPeriodic`. Furthermore, assume the function `LatePayment()` that implements the Late Payment formula. The function returns the late payment split into `principalLate` and `interestLate`, where `interestLate` is calculated using the formula above. Note that `principalPeriodic == principalLate` and `interestLate > interestPeriodic` are used only when the payment is late. Otherwise, `interestLate == interestPeriodic`.
 
 $$
@@ -1481,7 +1504,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
   - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
-  
+
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `Balance` field of the `LoanBroker.Owner` `AccountRoot` by `fee_paid + management_fee`.
