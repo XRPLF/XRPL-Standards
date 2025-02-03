@@ -355,7 +355,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 - The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
-- The `PermisionedDomain` object does not exist on the ledger.
+- The `PermissionedDomain` object does not exist with the provided `DomainID`.
 
 - The `Data` field is larger than 256 bytes.
 - The account submiting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
@@ -401,7 +401,6 @@ The `VaultSet` updates an existing `Vault` ledger object.
 - The `Data` field is larger than 256 bytes.
 - If `Vault.AssetMaximum` > `0` AND `AssetMaximum` > 0 AND:
   - The `AssetMaximum` < `Vault.AssetTotal` (new `AssetMaximum` cannot be lower than the current `AssetTotal`).
-- `MPTokenIssuance(Vault.Share).DomainID != ""` (Permissioned Domain is already set).
 - The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
 - The `PermissionedDomain` object does not exist with the provided `DomainID`.
 - The transaction is attempting to modify an immutable field.
