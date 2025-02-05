@@ -1,6 +1,6 @@
 <pre>    
 Title:        <b>Single Asset Tokenized Vault</b>
-Revision:     <b>1</b> (2024-10-18)
+Revision:     <b>1</b> (2025-02-05)
 
 <hr>Authors:    
   <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
@@ -87,7 +87,6 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 - **Vault**: A ledger entry for aggregating liquidity and providing this liquidity to one or more accessors.
 - **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens).
 - **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens) created by the _pseudo-account_ of the vault.
-  **Protocol Instance**: A separate XRP Ledger protocol requiring access to aggregated liquidity.
 
 ### 1.3 Actors
 
