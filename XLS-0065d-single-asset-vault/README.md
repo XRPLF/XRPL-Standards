@@ -320,7 +320,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `Asset`            | :heavy_check_mark: | `string or object` |    `Issue`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
 | `AssetMaximum`     |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
 | `MPTokenMetadata`  |                    |      `string`      |    `Blob`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
-| `WithdrawalPolicy` |                    |      `string`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
+| `WithdrawalPolicy` |                    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
 | `DomainID`         |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
 
 ##### 3.1.1.1 Flags
@@ -760,7 +760,7 @@ We propose adding the following fields to the `ledger_entry` method:
     "Issuer": "rShareIssuer1234567890abcdef1234567890abcdef"
   },
   "ShareTotal": 5000,
-  "WithdrawalPolicy": "FIFO"
+  "WithdrawalPolicy": "0x0001"
 }
 ```
 
