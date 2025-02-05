@@ -544,12 +544,12 @@ In sections below assume the following variables:
 
   - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
   - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-  - `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor)
+  - `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor)
 
 - The `Asset` is an `IOU`:
 
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
+  - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
 
 - The unit of `Amount` is not shares of the vault.
 - The unit of `Amount` is not asset of the vault.
