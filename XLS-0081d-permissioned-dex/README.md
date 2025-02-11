@@ -282,8 +282,7 @@ There will also be the following in addition, if the `DomainID` is included:
 * The payment isn't a cross-currency payment.
 * The domain doesn't exist.
 * The `Account` is not a domain member.
-* The currencies used in `Amount`, `SendMax`, and `DeliverMin` are not permitted as a part of the domain's rules.
-* The paths do not satisfy the domain's rules (e.g. a path includes a currency that isn't allowed to be part of the domain).
+* The paths do not satisfy the domain's rules (e.g. a path includes an account that isn't a part of the domain).
 
 ### 5.3. State Changes
 
