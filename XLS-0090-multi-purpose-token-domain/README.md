@@ -1,8 +1,8 @@
 <pre>
 Title:       <b>PermissionedDomain for Multi-Purpose Token</b>
 Type:        <b>draft</b>
-State:       <b>Updates: (XLS-33)[https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens]</b>
-Requires:   <b>(XLS-80)[https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains]</b>
+State:       <b>Updates: XLS-33</b>
+Requires:   <b>XLS-80</b>
 
 Authors:  
              <a href="mailto:vtumas@ripple.com">Vito Tumas</a>
