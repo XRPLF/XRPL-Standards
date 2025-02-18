@@ -61,6 +61,8 @@ The `Vault` object supports the following flags:
 
 #### 3.1.1. `MPTokenIssuaceCreate` Transaction
 
+This section outlines changes made to the `MPTokenIssuanceCreate` transaction. In summary, the specification adds a new `DomainID` field to the transaction.
+
 #### 3.1.1.1. Fields
 
 | Field Name | Change Type | Required? | JSON Type | Internal Type | Default Value | Description                                |
@@ -89,6 +91,38 @@ The `Vault` object supports the following flags:
   "DomainID": "ASOHFiufiuewfviwuisdvubiuwb"
 }
 ```
+
+### 3.1.2. `MPTokenIssuanceSet` Transaction
+
+This section outlines changes made to the `MPTokenIssuanceSet` transaction. In summary, the specification adds a new `DomainID` field to the transaction.
+
+#### 3.1.2.1. Fields
+
+| Field Name | Change Type | Required? | JSON Type | Internal Type | Default Value | Description                                |
+| ---------- | :---------: | :-------: | :-------: | :-----------: | :-----------: | :----------------------------------------- |
+| `DomainID` |    `New`    |   `No`    | `string`  |   `HASH256`   |     None      | The ID of the `PermissionedDomain` object. |
+
+#### 3.1.2.2. Failure Conditions
+
+- The `PermissionedDomain(DomainID)` object does not exist on the ledger.
+- If the ` MPTokenIssuance.lsfMPTRequireAuth` flag is NOT set and `DomainID` is provided (a Domain cannot be added to a public Multi-Purpose Token). 
+
+#### 3.1.2.3. State Changes
+
+- Update the `MPTokenIssuance.DomainID` field.
+
+#### 3.1.1.4. Example
+
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Fee": 10,
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+  "Flags": 1,
+  "DomainID": "ASOHFiufiuewfviwuisdvubiuwb"
+}
+```
+
 
 ## 3.2. `MPToken` Transactions
 
