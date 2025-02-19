@@ -2,7 +2,7 @@
 Title:       <b>PermissionedDomain for Multi-Purpose Token</b>
 Type:        <b>draft</b>
 State:       <b>Updates: XLS-33</b>
-Requires:   <b>XLS-80</b>
+Requires:   <b> XLS-80</b>
 
 Authors:  
              <a href="mailto:vtumas@ripple.com">Vito Tumas</a>
@@ -15,7 +15,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 The issuer of a Multi-Purpose Token may require explicit authorization for individuals to hold the token. This is done through the issuer submitting an `MPTokenAuthorize` transaction, which authorizes each account individually.
 
-The (XLS-80)[https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains] specification introduces a new mechanism for broader authorization. The Permissioned Domain specifies a list of accepted `(Issuer, Type)` credential pairs within the domain. Any holder of valid credentials can interact with the protocols in this Permissioned Domain.
+The [XLS-80](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains) specification introduces a new mechanism for broader authorization. The Permissioned Domain specifies a list of accepted `(Issuer, Type)` credential pairs within the domain. Any holder of valid credentials can interact with the protocols in this Permissioned Domain.
 
 This specification adds `PermissionedDomain` support to the Multi-Purpose Token. By allowing the issuer to set a `DomainID`, we provide a more unified and efficient mechanism for controlling who may hold or receive the asset.
 
@@ -25,7 +25,8 @@ This specification adds `PermissionedDomain` support to the Multi-Purpose Token.
 
 ### 2.1. `MPTokenIssuance` Ledger Entry
 
-This section outlines the changes made to the `MPTokenIssuance` object. In summary, the XLS adds a new `DomainID` field to the `MPTokenIssuance` object.
+This section outlines the changes made to the `MPTokenIssuance` object. In summary, the XLS adds a new `DomainID` field to the `MPTokenIssuance` object. The `DomainID` is used to track which `PermissionedDomain` the `MPT` uses to controll access rules.
+
 
 #### 2.1.1. Fields
 
@@ -39,7 +40,7 @@ An optional identifier for the `PermissionedDomain` object linked to the `MPToke
 
 ### 2.2. `MPToken` Ledger Entry
 
-This section outlines the changes made to the `MPToken` object. In summary, the XLS adds a new `Flags` value, `lsfMPTDomainCheck`.
+This section outlines the changes made to the `MPToken` object. In summary, the XLS adds a new `Flags` value, `lsfMPTDomainCheck`. The `lsfMPTDomainCheck` flag indicates that the credentials of the MPT holder must be verified. This flag is set automatically when the `MPToken` object is created and the associated `MPTokenIssuance` object has the `DomainID` set.
 
 #### 2.2.1. Fields
 
@@ -61,7 +62,7 @@ The `Vault` object supports the following flags:
 
 #### 3.1.1. `MPTokenIssuaceCreate` Transaction
 
-This section outlines changes made to the `MPTokenIssuanceCreate` transaction. In summary, the specification adds a new `DomainID` field to the transaction.
+This section outlines changes made to the `MPTokenIssuanceCreate` transaction. The specification adds a new `DomainID` field to the transaction. If the `DomainID` is specified when creating a new `MPTokenIssuance` it can be later changed by submitting a `MPTokenIssuanceSet` transaction. If the `DomainID` was not set when creating the `MPTokenIssuance` it cannot be assigned later. See [3.1.2.](#312-mptokenissuanceset-transaction) for additional details.
 
 #### 3.1.1.1. Fields
 
@@ -94,7 +95,7 @@ This section outlines changes made to the `MPTokenIssuanceCreate` transaction. I
 
 ### 3.1.2. `MPTokenIssuanceSet` Transaction
 
-This section outlines changes made to the `MPTokenIssuanceSet` transaction. In summary, the specification adds a new `DomainID` field to the transaction.
+This section describes the modifications made to the `MPTokenIssuanceSet` transaction. A new `DomainID` field has been added to the transaction specification. The `DomainID` can only be changed if the `MPTokenIssuance` object was initially created with a `DomainID`. Additionally, all `MPToken` objects linked to an `MPTokenIssuance` with a PermissionedDomain must have the `lsfMPTDomainCheck` flag enabled. However, there is currently no method to identify all `MPToken` objects associated with a specific `MPTokenIssuance`. Retroactively assigning a `DomainID` would necessitate updating the `lsfMPTDomainCheck` for all related `MPToken` objects. Since these objects cannot be retrieved, this process could lead to inconsistencies.
 
 #### 3.1.2.1. Fields
 
@@ -105,7 +106,7 @@ This section outlines changes made to the `MPTokenIssuanceSet` transaction. In s
 #### 3.1.2.2. Failure Conditions
 
 - The `PermissionedDomain(DomainID)` object does not exist on the ledger.
-- If the ` MPTokenIssuance.lsfMPTRequireAuth` flag is NOT set and `DomainID` is provided (a Domain cannot be added to a public Multi-Purpose Token). 
+- The ` MPTokenIssuance.DomainID` field is not set (a Domain cannot be added to a to a Multi-Purpose Token was not created with a PermissionedDomain). 
 
 #### 3.1.2.3. State Changes
 
@@ -122,7 +123,6 @@ This section outlines changes made to the `MPTokenIssuanceSet` transaction. In s
   "DomainID": "ASOHFiufiuewfviwuisdvubiuwb"
 }
 ```
-
 
 ## 3.2. `MPToken` Transactions
 
@@ -145,7 +145,7 @@ This change does not introduce additional failure conditions.
 
 ### 3.3.1. `Payment` Transaction
 
-The following changes are made to the payment transaction.
+The following changes have been made to the Payment transaction. When transferring Multi-Purpose Tokens (MPTs) that belong to a PermissionedDomain, both the sender and the receiver must either have credentials accepted in the Domain or receive explicit authorization from the `Issuer`, as indicated by the `MPToken.lsfMPTAuthorized` flag. However, Payment transactions involving the `Issuer` of the Multi-Purpose Token are exempt from this requirement.
 
 #### 3.3.1.1. Fields
 
