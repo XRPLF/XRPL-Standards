@@ -134,7 +134,7 @@ A vault has the following fields:
 | `AssetAvailable`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                  |
 | `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
 | `AssetMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
-| `Share`             |    `N/A`    | :heavy_check_mark: |      `object`      |     `MPT`     |       0       | The identifier of the share MPTokenIssuance object.                                               |
+| `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
 
 ##### 2.1.2.1 Flags
@@ -364,7 +364,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 - Create a new `Vault` ledger object.
 - Create a new `MPTokenIssuance` ledger object for the vault shares.
   - If the `DomainID` is provided:
-    - `MPTokenIssuance(Vault.Share).DomainID = DomainID` (Set the Permissioned Domain ID).
+    - `MPTokenIssuance(Vault.MPTokenIssuanceID).DomainID = DomainID` (Set the Permissioned Domain ID).
 - Create a new `AccountRoot`[_pseudo-account_](https://github.com/XRPLF/XRPL-Standards/discussions/191) object setting the `PseudoOwner` to `VaultID`.
 
 - If `Vault.Asset` is an `IOU`:
@@ -409,7 +409,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 - Update mutable fields in the `Vault` ledger object.
 - If `DomainID` is provided:
-  - Set `MPTokenIssuance(Vault.Share).DomainID = DomainID` (Set the Permissioned Domain).
+  - Set `MPTokenIssuance(Vault.MPTokenIssuanceID).DomainID = DomainID` (Set the Permissioned Domain).
 
 ##### 3.1.2.3 Invariants
 
@@ -430,7 +430,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 - `Vault` object with the `VaultID` does not exist on the ledger.
 - The submitting account is not the `Owner` of the vault.
-- `AssetTotal`, `AssetAvailable`, or `MPTokenIssuance(Vault.Share).OutstandingAmount` are greater than zero.
+- `AssetTotal`, `AssetAvailable`, or `MPTokenIssuance(Vault.MPTokenIssuanceID).OutstandingAmount` are greater than zero.
 - The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
 
 ##### 3.1.3.2 State Changes
@@ -543,7 +543,7 @@ In sections below assume the following variables:
 
   - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
   - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-  - `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor)
+  - `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
 
 - The `Asset` is an `IOU`:
 
@@ -557,7 +557,7 @@ In sections below assume the following variables:
 
   - If `Amount` is the vaults share:
 
-    - `MPTokenIssuance(Vault.Share).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
+    - `MPTokenIssuance(Vault.MPTokenIssuanceID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
     - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
     - `Vault.AssetAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
 
@@ -584,15 +584,17 @@ In sections below assume the following variables:
 
 - If the `Vault.Asset` is an `MPT`:
 
+  - If the Depositor (or Destination) account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
+  
   - Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
 
-- Update the `MPToken` object for the `Vault.Share` of the depositor `AccountRoot`:
+- Update the `MPToken` object for the `Vault.MPTokenIssuanceID` of the depositor `AccountRoot`:
 
   - Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
   - If `MPToken.MPTAmount == 0`, delete the object.
 
-- Update the `MPTokenIssuance` object for the `Vault.Share`:
+- Update the `MPTokenIssuance` object for the `Vault.MPTokenIssuanceID`:
 
   - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
@@ -631,7 +633,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
   - `MPTokenIssuance.Issuer` is not the submitter of the transaction.
 
-- The `MPToken` object for the `Vault.Share` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
+- The `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
 ##### 3.3.1.2 State Changes
 
@@ -643,12 +645,12 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
   - Decrease the `MPToken.MPTAmount` by `min(Vault.AssetAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
-- Update the `MPToken` object for the `Vault.Share` of the depositor `AccountRoot`:
+- Update the `MPToken` object for the `Vault.MPTokenIssuanceID` of the depositor `AccountRoot`:
 
   - Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
   - If `MPToken.MPTAmount == 0`, delete the object.
 
-- Update the `MPTokenIssuance` object for the `Vault.Share`:
+- Update the `MPTokenIssuance` object for the `Vault.MPTokenIssuanceID`:
 
   - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
@@ -727,8 +729,7 @@ We propose adding the following fields to the `ledger_entry` method:
 | `AssetAvailable`    | :heavy_check_mark: |      `number`      | The asset amount that is available in the vault.                                                  |
 | `LossUnrealized`    | :heavy_check_mark: |      `number`      | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
 | `AssetMaximum`      | :heavy_check_mark: |      `number`      | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
-| `Share`             | :heavy_check_mark: |      `object`      | The identifier of the share MPTokenIssuance object.                                               |
-| `ShareTotal`        | :heavy_check_mark: |      `number`      | The total amount of shares issued by the vault.                                                   |
+| `Share`             | :heavy_check_mark: |      `object`      | The `MPT` object of the vault share. |
 | `WithdrawalPolicy`  | :heavy_check_mark: |      `string`      | Indicates the withdrawal strategy used by the Vault.                                              |
 
 #### 4.1.2.1 Example
@@ -755,8 +756,8 @@ We propose adding the following fields to the `ledger_entry` method:
   "LossUnrealized": 200000,
   "AssetMaximum": 0,
   "Share": {
-    "TokenID": "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
-    "Issuer": "rShareIssuer1234567890abcdef1234567890abcdef"
+    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    "value": "1", 
   },
   "ShareTotal": 5000,
   "WithdrawalPolicy": "0x0001"
