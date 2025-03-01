@@ -112,6 +112,7 @@ and `issuer` address.**
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
 | `OwnerNode`         | (default)          | `number`  | `UINT64`      |
 | `Sequence`          | :heavy_check_mark: | `number`  | `UINT32`      |
+| `DomainID`          |                    | `string`  | `HASH256`     |
 
 ###### 2.1.1.2.1. `LedgerEntryType`
 
@@ -216,6 +217,10 @@ It is possible for multiple unconfirmed MPT-creation transactions to have the sa
 transactions are mutually exclusive, and at most one of them can be included in a validated ledger (Any others
 ultimately have no effect.)
 
+###### 2.1.1.2.12. `DomainID`
+
+An optional ID of the `PermissionedDomain` object associated with the `MPTokenIssuance`. When the `DomainID` is specified, the account must have credentials accepted in the `PermissionedDomain` to hold the `MPT`. 
+
 ##### 2.1.1.3. Example **`MPTokenIssuance`** JSON
 
 ```json
@@ -304,10 +309,11 @@ this field is `0xFFFF'FFFF'FFFF'FFFF`.
 
 A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
-| Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                      |
-|--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lsfMPTLocked`     | `0x0001`   | If set, indicates that the MPT owned by this account is currently locked and cannot be used in any transactions other than sending value back to the issuer.                                                                                                                     |
-| `lsfMPTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the MPT. This flag can be set using a `MPTokenAuthorize` transaction; it can also be "un-set" using a `MPTokenAuthorize` transaction specifying the `tfMPTUnauthorize` flag. |
+| Flag Name           | Flag Value | Description                                                                                                                                                                                                                                                                      |
+|---------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lsfMPTLocked`      | `0x0001`   | If set, indicates that the MPT owned by this account is currently locked and cannot be used in any transactions other than sending value back to the issuer.                                                                                                                     |
+| `lsfMPTAuthorized`  | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the MPT. This flag can be set using a `MPTokenAuthorize` transaction; it can also be "un-set" using a `MPTokenAuthorize` transaction specifying the `tfMPTUnauthorize` flag. |
+| `lsfMPTDomainCheck` | `0x0003`   | If set, indicates that _individual_ holders must have credentials in the `PermissionedDomain` of the `MPTokenIssuance`. This flag is set automatically when the associated `MPTokenIssuance` object has a `DomainID` set.                                                        |
 
 ###### 2.1.2.2.6. `PreviousTxnID`
 
@@ -359,9 +365,9 @@ If the transaction is successful, the newly created token will be owned by the a
 
 Indicates the new transaction type **`MPTokenIssuanceCreate`**. The integer value is `54`.
 
-| Field Name         | Required?    | JSON Type | Internal Type |
-| ------------------ | ------------ | --------- |---------------|
-| `AssetScale`       | ️           | `number`  | `UINT8`       |
+| Field Name    | Required?    | JSON Type | Internal Type |
+| ------------- | ------------ | --------- |---------------|
+| `AssetScale`  | ️             | `number`  | `UINT8`       |
 
 An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional, and will default to `0` if not supplied.
 
@@ -371,14 +377,14 @@ An asset scale is the difference, in orders of magnitude, between a standard uni
 
 Specifies the flags for this transaction. In addition to the universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`), the following transaction-specific flags are defined and used to set the appropriate fields in the Fungible Token:
 
-| Flag Name         | Flag Value | Description |
-|-------------------|------------|-------------|
-| `tfMPTCanLock`  | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.|
-| `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `tfMPTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `tfMPTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
-| `tfMPTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
-| `tfMPTCanClawback`          | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| Flag Name          | Flag Value | Description                                                                                                                  |
+|------------------- |------------|------------------------------------------------------------------------------------------------------------------------------|
+| `tfMPTCanLock`     | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way. |
+| `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.      |
+| `tfMPTCanEscrow`   | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow.                                          |
+| `tfMPTCanTrade`    | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX.                                |
+| `tfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer.                                   |
+| `tfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.             |
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
@@ -405,6 +411,12 @@ limit is required.
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
+| Field Name        | Required? | JSON Type | Internal Type |
+| ------------------| ----------| --------- | ------------- |
+| `DomainID`        |           | `string`  | `HASH256`     | 
+
+The `ID` of the `PermissionedDomain` object. The transaction will fail if the `PermissionedDomain` object does not exist. Furthermore, `lsfMPTRequireAuth` will be set implicitly when `DomainID` is provided.
+
 ##### 3.1.1.2. Example **`MPTokenIssuanceCreate`** transaction
 
 ```js
@@ -415,7 +427,8 @@ Arbitrary metadata about this issuance, in hex format. The limit for this field 
   "MaximumAmount": "100000000", //  <-- 100,000,000
   "Flags": 66, // <-- tfMPTCanLock and tfMPTCanClawback
   "MPTokenMetadata": "464F4F", // <-- "FOO" (HEX)
-  "Fee": 10
+  "Fee": 10,
+  "DomainID": "ASOHFiufiuewfviwuisdvubiuwb" 
 }
 ```
 
@@ -440,8 +453,8 @@ deleted token. These can instead be removed using an `MPTokenAuthorize` transact
 
 Indicates the new transaction type **`MPTokenIssuanceDestroy`**. The integer value is `55`.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
+| Field Name          | Required? | JSON Type | Internal Type |
+| ------------------- | --------- | --------- | ------------- |
 | `MPTokenIssuanceID` |  ✔️        | `string`  | `UINT192`     | 
 
 Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
@@ -466,11 +479,17 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 
 Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value is `56`.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
+| Field Name          | Required? | JSON Type | Internal Type |
+| ------------------- | --------- | --------- | ------------- |
+| `MPTokenIssuanceID` |  ✔️        | `string`  | `UINT192`     | 
 
 The `MPTokenIssuance` identifier.
+
+| Field Name  | Required?  | JSON Type | Internal Type |
+| ----------- | ---------- | --------- | ------------- |
+| `DomainID`  |            | `string`  | `HASH256`     | 
+
+The `ID` of the `PermissionedDomain` object. The transaction will fail if the `PermissionedDomain` object does not exist, the `DomainID` is already set or `lsfMPTRequireAuth` flag is not set.
 
 | Field Name      | Required? | JSON Type | Internal Type |
 |-----------------|-----------|-----------|---------------|
@@ -748,7 +767,7 @@ Specify a limit to the number of MPTs returned.
 | `limit`          | `number`  | The limit, as specified in the request|
 | `ledger_index`     | `number`  | The index of the ledger used.|
 
-A `mptoken` object has the following parameters:
+The `MPToken` object has the following parameters:
 | Field Name          | JSON Type | Description |
 | ------------------- |:---------:| ----------- |
 | `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
@@ -988,6 +1007,14 @@ The following changes have been made to the rippled codebase to accommodate this
   explicit conversions in the opposite direction.
 * There are implicit conversions from `MPTIssue` and `Issue` to `Asset`, and explicit conversions in the opposite
   direction.
+
+#### A.1.19. Why does `MPTokenIssuance` use `PermissionedDomain`?
+
+`PermissionedDomain` provides a less granular authorization mechanism to hold the `MPT`. Any account can hold the `MPT` as long as it has credentials issued by an Issuer accepted in the `PermissionedDomain`, In case the credentials expire or are revoked by the Credential Issuer, the holder can only transfer them back to the `MPT` Issuer, and may not receive `MPTs`.
+
+#### A.1.20. What happens when `MPTokenIssuace` uses `PermissionedDomain` and explicit authorization to hold an asset in the `MPToken` object?
+
+Authorization is treated as a union. I.e. as long as the account has a permision (either via `PermissionedDomain` of explicit authorization captured by the `lsfMPTAuthorized` flag), it will be able to send and receive the `MPT`.
 
 ### A.2. Appendix: Supplemental Information
 
