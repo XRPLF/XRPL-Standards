@@ -166,7 +166,7 @@ This change does not introduce additional state changes.
 
 # Appendix
 
-## A-1 F.A.Q
+## A-1 F.A.Q.
 
 ### A-1.1. Why does `MPTokenIssuance` use `PermissionedDomain`?
 
