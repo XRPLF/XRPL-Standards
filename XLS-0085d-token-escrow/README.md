@@ -85,7 +85,7 @@ The `EscrowCreate` transaction is modified as follows:
    - If the token is frozen (IOU) or locked (MPT) for the source, the transaction fails with `tecFROZEN`.
 
 5. **Insufficient Spendable Balance:**
-   - If the source lacks sufficient spendable balance, the transaction fails with `tecINSUFFICIENT_FUNDS`.
+   - If the source account lacks sufficient spendable balance, the transaction fails with `tecUNFUNDED`.
 
 **State Changes:**
 
