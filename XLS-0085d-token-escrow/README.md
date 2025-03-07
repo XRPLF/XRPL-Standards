@@ -207,7 +207,7 @@ The `EscrowCreate` transaction is modified as follows:
 |-------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
 | **Trustlines**                | Required between accounts and issuer                                     | Not used                                                                   |
 | **Issuer Flag for Escrow**    | `lsfAllowTokenEscrow` (account flag)                                       | `tfMPTCanEscrow` (token flag)                                              |
-| **Transfer Flags**            | N/A                                                                      | `tfMPTCanTransfer` must be enabled for transfer and escrow                 |
+| **Transfer Flags**            | N/A                                                                      | `tfMPTCanTransfer` must be enabled for  escrow                 |
 | **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens |
 | **Destination Authorization** | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required |
 | **Freeze/Lock Conditions**    | **Deep Freeze** prevents `EscrowFinish`, but allows `EscrowCancel`; Global/Individual Freeze allows both operations | **Lock Conditions (Deep Freeze Equivalent)** prevent `EscrowFinish`, but allow `EscrowCancel` |
