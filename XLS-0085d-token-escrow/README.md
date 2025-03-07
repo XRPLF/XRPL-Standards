@@ -51,7 +51,7 @@ The `EscrowCreate` transaction is modified as follows:
 
 | Field     | Required? | JSON Type        | Internal Type | Description                                                                                                                                        |
 |-----------|-----------|------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Amount`  | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and set aside in escrow. Can represent XRP, an IOU token, or an MPT. Must always be a positive value. |
+| `Amount`  | Yes       | Object or String | Amount  | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value.|
 | `CancelAfter`  | False       | Number | UInt32        | (Optional) The time, in seconds since the Ripple Epoch, when this escrow expires. This value is immutable; the funds can only be returned to the sender after this time. Required when creating an Escrow with IOU or MPT |
 
 **Process Overview:**
