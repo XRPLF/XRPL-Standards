@@ -71,7 +71,7 @@ The `EscrowCreate` transaction is modified as follows:
 1. **Issuer Does Not Allow Token Escrow or Transfer:**
    - **IOU Tokens**: If the issuer's account does not have the `lsfAllowTokenEscrow` flag set, the transaction fails with `tecNO_PERMISSION`.
    - **MPTs**:
-     - If the token lacks the `tfMPTCanEscrow` flag, the transaction fails with `tecNO_PERMISSION`.
+     - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanEscrow` flag, the transaction fails with `tecNO_PERMISSION`.
      - If the token lacks the `tfMPTCanTransfer` flag, the transaction fails with `tecNO_PERMISSION`.
 
 2. **Source Account Not Authorized to Hold Token:**
