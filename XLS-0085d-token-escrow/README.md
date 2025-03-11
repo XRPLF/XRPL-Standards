@@ -78,7 +78,7 @@ The `EscrowCreate` transaction is modified as follows:
    - If the issuer requires authorization and the source is not authorized, the transaction fails with `tecNO_AUTH`.
 
 3. **Source Account's Token Holding Issues:**
-   - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecNO_LINE`.
+   - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecUNFUNDED `.
    - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
 4. **Source Account is Frozen or Token is Locked:**
