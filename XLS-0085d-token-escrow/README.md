@@ -183,7 +183,9 @@ The `EscrowCreate` transaction is modified as follows:
 - **Fee Calculation**: The escrowed amount is adjusted according to the `TransferFee` upon settlement, potentially reducing the final amount credited to the destination.
 - **Consistent Fee Application**: Both IOUs and MPTs use the transfer rate or fee stored at escrow creation, ensuring predictability for the destination.
 
-## 1.5. `Escrow` Ledger Object
+## 1.5. Ledger Object Updates
+
+### 1.5.1 `Escrow` Ledger Object
 
 The `Escrow` ledger object is updated as follows:
 
@@ -192,6 +194,22 @@ The `Escrow` ledger object is updated as follows:
 | `Amount`        | Object or String | Amount        | The amount to be delivered by the held payment. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                 |
 | `TransferRate`  | Number           | UInt32        | The transfer rate or fee at which the funds are escrowed, stored at creation and used during settlement. Applicable to both IOUs and MPTs.                   |
 | `IssuerNode`    | Number           | UInt64        | *(Optional)* The ledger index of the issuer's directory node associated with the `Escrow`. Used when the issuer is neither the source nor destination account.|
+
+### 1.5.2 `MPToken` Ledger Object
+
+The `MPToken` ledger object is updated as follows:
+
+| Field Name      | JSON Type        | Internal Type | Description                                                                                                                                                  |
+|-----------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sfEscrowAmount`        | Object | Amount        | *(Optional)* The total of all outstanding escrows for this issuance.                                |
+
+### 1.5.3 `MPTokenIssuance` Ledger Object
+
+The `MPTokenIssuance` ledger object is updated as follows:
+
+| Field Name      | JSON Type        | Internal Type | Description                                                                                                                                                  |
+|-----------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sfEscrowAmount`        | Object | Amount        | *(Optional)* The total of all outstanding escrows for this issuance.                                 |
 
 ## 1.6. Future Considerations
 
