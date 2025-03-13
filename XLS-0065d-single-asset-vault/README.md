@@ -629,11 +629,13 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
   - The `Issuer` account is not the submitter of the transaction.
   - If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+  - If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
 
 - If `Vault.Asset` is an `MPT` and:
 
   - `MPTokenIssuance.Issuer` is not the submitter of the transaction.
   - `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
+  - If the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
 
 - The `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
