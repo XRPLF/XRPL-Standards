@@ -54,44 +54,35 @@ The `EscrowCreate` transaction is modified as follows:
 | `Amount`  | Yes       | Object or String | Amount  | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value.|
 | `CancelAfter`  | False       | Number | UInt32        | (Optional) The time, in seconds since the Ripple Epoch, when this escrow expires. This value is immutable; the funds can only be returned to the sender after this time. Required when creating an Escrow with IOU or MPT |
 
-**Process Overview:**
-
-- **Deduction from Source:**
-  - **IOU Tokens**: The escrowed amount is deducted from the source account's trustline balance with the issuer.
-  - **MPTs**: The escrowed amount is deducted from the source account's MPT balance.
-- **Escrow Object Creation:**
-  - An `Escrow` ledger object is created, holding the specified amount and associated conditions.
-  - **Fields Set**:
-    - `Amount` (IOU or MPT)
-    - `TransferRate` (stored at the time of creation for both IOUs and MPTs)
-    - `IssuerNode` (if the issuer is neither the source nor the destination)
-
 **Failure Conditions:**
 
-1. **Issuer Does Not Allow Token Escrow or Transfer:**
+- **Issuer is the Source:**
+  - If the source account is the issuer of the token, the transaction fails with `tecNO_PERMISSION`.
+
+- **Issuer Does Not Allow Token Escrow or Transfer:**
    - **IOU Tokens**: If the issuer's account does not have the `lsfAllowTokenEscrow` flag set, the transaction fails with `tecNO_PERMISSION`.
    - **MPTs**:
      - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanEscrow` flag, the transaction fails with `tecNO_PERMISSION`.
      - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanTransfer` flag, the transaction fails with `tecNO_PERMISSION`.
 
-2. **Source Account Not Authorized to Hold Token:**
+- **Source Account Not Authorized to Hold Token:**
    - If the issuer requires authorization and the source is not authorized, the transaction fails with `tecNO_AUTH`.
 
-3. **Source Account's Token Holding Issues:**
+- **Source Account's Token Holding Issues:**
    - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecUNFUNDED `.
    - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
-4. **Source Account is Frozen or Token is Locked:**
-   - If the token is frozen (IOU) or locked (MPT) for the source, the transaction fails with `tecFROZEN`.
+- **Source Account is Frozen or Token is Locked:**
+   - If the token is frozen (global/individual/deepfreeze) (IOU) or locked (MPT) for the source, the transaction fails with `tecFROZEN`.
 
-5. **Insufficient Spendable Balance:**
+- **Insufficient Spendable Balance:**
    - If the source account lacks sufficient spendable balance, the transaction fails with `tecUNFUNDED`.
 
 **State Changes:**
 
-- **Transfer from Source to Issuer Holding:**
-  - **IOU Tokens**: Amount deducted from the source's trustline balance.
-  - **MPTs**: Amount moved to a holding controlled by the issuer; the issuer's total outstanding amount remains unchanged.
+- **Adjustment from Source to Issuer:**
+  - **IOU Tokens**: The escrow `Amount` is deducted from the source's trustline balance.
+  - **MPTs**: The escrow `Amount` is deducted from the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is increased on both the source's MPT and the MPT issuance.
 - **Escrow Object Creation:**
   - The `Escrow` ledger object includes:
     - `CancelAfter`: When the Escrow Expires (Required on IOU/MPT)
@@ -101,103 +92,67 @@ The `EscrowCreate` transaction is modified as follows:
 
 ### 1.2.2. `EscrowFinish`
 
-**Process Overview:**
-
-- **Authorization and Token Holding Checks:**
-  - The destination must have an existing trustline (IOUs) or token holding (MPTs).
-  - **Authorization Required**:
-    - If the issuer requires authorization and the destination is not authorized, the transaction fails with `tecNO_AUTH`.
-    - A new trustline or MPT holding cannot be created during `EscrowFinish` if authorization is required.
-- **Freeze and Lock Conditions:**
-  - **IOU Tokens**:
-    - **Deep Freeze**: If the token is deep frozen, the transaction fails with `tecFROZEN`.
-    - **Global/Individual Freeze**: If the token is globally or individually frozen, the transaction succeeds.
-  - **MPTs**:
-    - **Lock Conditions (Deep Freeze Equivalent)**: If the token is locked (frozen) for the destination, the transaction fails with `tecFROZEN`.
-    - **Transfer Flags**: If `tfMPTCanTransfer` is not enabled, transaction fails with `tecNO_PERMISSION`.
-- **Transfer Mechanics:**
-  - **IOU Tokens**: Escrowed amount (adjusted for `TransferRate`) is transferred to the destination's trustline balance.
-  - **MPTs**: Escrowed amount (adjusted for `TransferFee`) is transferred to the destination's MPT balance.
-
 **Failure Conditions:**
 
-1. **Destination Not Authorized to Hold Token:**
+- **Destination Not Authorized to Hold Token:**
    - If authorization is required and the destination is not authorized, transaction fails with `tecNO_AUTH`.
 
-2. **Destination Lacks Trustline or MPT Holding:**
+- **Destination Lacks Trustline or MPT Holding:**
    - **IOU Tokens**: If the destination lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
    - **MPTs**: If the destination does not hold the MPT, transaction fails with `tecNO_ENTRY`.
-   - A new trustline or MPT holding cannot be created during `EscrowFinish` if authorization is required.
+   - A new trustline or MPT holding may be created during `EscrowFinish` if authorization is not required.
 
-3. **Cannot Create Trustline or MPT Holding:**
+- **Cannot Create Trustline or MPT Holding:**
    - If unable to create due to lack of authorization or reserves, transaction fails with `tecNO_AUTH` or `tecINSUFFICIENT_RESERVE`.
 
-4. **Destination Account is Frozen or Token is Locked:**
-
+- **Destination Account is Frozen or Token is Locked:**
    - **IOU Tokens**:
      - **Deep Freeze**: If the token is deep frozen, the transaction fails with `tecFROZEN`.
      - **Global/Individual Freeze**: The transaction succeeds despite the token being globally or individually frozen.
-
    - **MPTs**:
      - **Lock Conditions (Equivalent to Deep Freeze)**: Transaction fails with `tecFROZEN`.
-     - **Transfer Flags**: If `tfMPTCanTransfer` is not enabled, transaction fails with `tecNO_PERMISSION`.
 
 **State Changes:**
 
-- **Transfer from Issuer Holding to Destination:**
-  - **IOU Tokens**: Adjusted amount credited to destination's trustline balance.
-  - **MPTs**: Adjusted amount credited to destination's MPT balance.
+- **Auto create Trustline or MPToken:**
+  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the recipient, then a trustline will be created.
+  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the recipient, then the MPT will be created.
+- **Adjustment from Issuer to Destination:**
+  - **IOU Tokens**: The escrow `Amount` is added to the destination's trustline balance.
+  - **MPTs**: The escrow `Amount` is added to the destination's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is decreased on both the destination's MPT and the MPT issuance.
 - **Deletion of Escrow Object:**
   - The `Escrow` object is deleted after successful settlement.
 
 ### 1.2.3. `EscrowCancel`
 
-**Process Overview:**
-
-- **Authorization and Token Holding Checks:**
-  - The source must have an existing trustline (IOUs) or token holding (MPTs).
-  - **Authorization Required**:
-    - If the issuer requires authorization and the source is not authorized, the transaction fails with `tecNO_AUTH`.
-    - A new trustline or MPT holding cannot be created during `EscrowCancel` if authorization is required.
-- **Freeze and Lock Conditions:**
-  - **IOU Tokens**:
-    - **Deep Freeze**: The transaction succeeds regardless of freeze status.
-    - **Global/Individual Freeze**: The transaction succeeds regardless of freeze status.
-  - **MPTs**:
-    - **Lock Conditions (Deep Freeze Equivalent)**: The transaction succeeds regardless of lock status.
-    - **Transfer Flags**: If `tfMPTCanTransfer` is not enabled, transaction fails with `tecNO_PERMISSION`.
-- **Transfer Mechanics:**
-  - **IOU Tokens**: Escrowed amount returned to source's trustline balance.
-  - **MPTs**: Escrowed amount moved back to source's MPT balance.
-
 **Failure Conditions:**
 
-1. **Source Not Authorized to Hold Token:**
+- **Source Not Authorized to Hold Token:**
    - If authorization is required and the source is not authorized, transaction fails with `tecNO_AUTH`.
 
-2. **Source Lacks Trustline or MPT Holding:**
+- **Source Lacks Trustline or MPT Holding:**
    - **IOU Tokens**: If the source lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
    - **MPTs**: If the source does not hold the MPT, transaction fails with `tecNO_ENTRY`.
-   - A new trustline or MPT holding cannot be created during `EscrowCancel` if authorization is required.
+   - A new trustline or MPT holding may be created during `EscrowCancel` if authorization is not required.
 
-3. **Cannot Create Trustline or MPT Holding:**
+- **Cannot Create Trustline or MPT Holding:**
    - If unable to create due to lack of authorization or reserves, transaction fails with `tecNO_AUTH` or `tecINSUFFICIENT_RESERVE`.
 
-4. **Source Account is Frozen or Token is Locked:**
-
+- **Source Account is Frozen or Token is Locked:**
    - **IOU Tokens**:
      - **Deep Freeze**: The transaction succeeds, allowing the escrow to be cancelled.
      - **Global/Individual Freeze**: The transaction succeeds, allowing the escrow to be cancelled.
-
    - **MPTs**:
      - **Lock Conditions (Deep Freeze Equivalent)**: The transaction succeeds, allowing the escrow to be cancelled.
-     - **Transfer Flags**: If `tfMPTCanTransfer` is not enabled, transaction fails with `tecNO_PERMISSION`.
 
 **State Changes:**
 
-- **Return from Issuer Holding to Source:**
-  - **IOU Tokens**: Amount returned to source's trustline balance.
-  - **MPTs**: Amount moved back to source's MPT balance.
+- **Auto create Trustline or MPToken:**
+  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the recipient, then a trustline will be created.
+  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the recipient, then the MPT will be created.
+- **Adjustment from Issuer to Source:**
+  - **IOU Tokens**: The escrow `Amount` is added to the source's trustline balance.
+  - **MPTs**: The escrow `Amount` is added to the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is decreased on both the source's MPT and the MPT issuance.
 - **Deletion of Escrow Object:**
   - The `Escrow` object is deleted after successful cancellation.
 
@@ -228,11 +183,7 @@ The `EscrowCreate` transaction is modified as follows:
 - **Fee Calculation**: The escrowed amount is adjusted according to the `TransferFee` upon settlement, potentially reducing the final amount credited to the destination.
 - **Consistent Fee Application**: Both IOUs and MPTs use the transfer rate or fee stored at escrow creation, ensuring predictability for the destination.
 
-## 1.5. Impact on Outstanding Amount (MPTs)
-
-- **Issuer's Outstanding Amount**: When an MPT escrow is created, the amount is moved to a holding controlled by the issuer, but the issuer's total outstanding amount does not change. This design ensures the issuer does not issue more tokens than allowed.
-
-## 1.6. `Escrow` Ledger Object
+## 1.5. `Escrow` Ledger Object
 
 The `Escrow` ledger object is updated as follows:
 
@@ -241,3 +192,9 @@ The `Escrow` ledger object is updated as follows:
 | `Amount`        | Object or String | Amount        | The amount to be delivered by the held payment. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                 |
 | `TransferRate`  | Number           | UInt32        | The transfer rate or fee at which the funds are escrowed, stored at creation and used during settlement. Applicable to both IOUs and MPTs.                   |
 | `IssuerNode`    | Number           | UInt64        | *(Optional)* The ledger index of the issuer's directory node associated with the `Escrow`. Used when the issuer is neither the source nor destination account.|
+
+## 1.6. Future Considerations
+
+1. Clawback: XLS-85d currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
+
+2. Issuer as Source: XLS-85d currently does not allow the issuer to be the source of the Escrow. If your use case requires this functionality you should create a new account, send the MPT or IOU to that account and then Escrow the token.
