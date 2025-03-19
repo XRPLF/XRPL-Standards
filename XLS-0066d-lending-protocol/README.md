@@ -749,16 +749,16 @@ An inner object that contains the signature of the Lender over the transaction. 
 | Field Name      |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                        |
 | --------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
 | `SigningPubKey` | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
-| `TxSignature`   | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `TxnSignature`   | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
 | `Signers`       | :heavy_check_mark: |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
-The final transaction must include `TxSignature` or `Signers` fields.
+The final transaction must include `TxnSignature` or `Signers` fields.
 
 If the `Signers` field is necessary, then the total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$
 
 The total fee calculation for signatures will now be $(1 + |tx.Signers| + |tx.Lender.Signers|) \times base_fee$.
 
-This field is not a signing field (it will not be included in transaction signatures, though the `TxSignature` or `Signers` field will be included in the stored transaction).
+This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
 ##### 3.2.1.3 Multi-Signing
 
@@ -799,7 +799,7 @@ The account specified in the `Account` field pays the transaction fee.
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - If neither the `Account` or the `Counterparty` field are the `LoanBroker.Owner`.
 - If the `Counterparty` field is not specified and the submitting account is not `LoanBroker.Owner`.
-- If the `Counterparty.Signature` is invalid.
+- If the `Counterparty.TxnSignature` is invalid.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
