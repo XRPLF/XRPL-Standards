@@ -17,21 +17,21 @@ Currently, critical issuer actions, such as authorizing trustlines, require dire
 ## 1. Overview
 
 We propose:
-* Creating a `AccountPermission` ledger object.
-* Creating a `AccountPermissionSet` transaction type.
+* Creating a `Delegate` ledger object.
+* Creating a `DelegateSet` transaction type.
 
 We also propose modifying the transaction common fields.
 
-This feature will require an amendment, tentatively titled `AccountPermission`.
+This feature will require an amendment, tentatively titled `PermissionDelegation`.
 
 ### 1.1. Terminology
 
 * **Delegating account**: The main account, which is delegating permissions to another account.
-* **Delegated account**: The account that is having permissions delegated to it.
+* **Delegate**: The account that is having permissions delegated to it.
 
 ### 1.2. Basic Flow
 
-Isaac, a token issuer, wants to set up his account to follow security best practices and separation of responsibilities. He wants Alice to manage token issuing and Bob to manage trustlines. He is also working with Kylie, a KYC provider, who he wants to be able to authorize trustlines but not have any other permissions (as she is an external party).
+Isaac, a token issuer, wants to set up his account to follow security best practices and separation of responsibilities. He wants some of his employees to have some sub-permissions on the account, and manage their own separate keys - Alice to manage token issuing and Bob to manage trustlines. He is also working with Kylie, a KYC provider, who he wants to be able to authorize trustlines but not have any other permissions (as she is an external party).
 
 He can authorize:
 * Alice's account for the `Payment` transaction permission.
@@ -40,7 +40,7 @@ He can authorize:
 
 The full set of available permissions is listed in [XLS-74d, Account Permissions](https://github.com/XRPLF/XRPL-Standards/discussions/217)
 
-## 2. On-Ledger Object: `AccountPermission`
+## 2. On-Ledger Object: `Delegate`
 
 This object represents a set of permissions that an account has delegated to another account, and is modeled to be similar to [`DepositPreauth` objects](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/depositpreauth).
 
@@ -49,7 +49,7 @@ This object represents a set of permissions that an account has delegated to ano
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`LedgerIndex`| ✔️|`string`|`Hash256`|The unique ID of the ledger object.|
-|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`AccountPermission`)|
+|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`Delegate`).|
 |`Account`| ✔️|`string`|`AccountID`|The account that wants to authorize another account.|
 |`Authorize`| ✔️|`string`|`AccountID`|The authorized account.|
 |`Permissions`| ✔️|`string`|`STArray`|The transaction permissions that the account has access to.|
@@ -59,7 +59,7 @@ This object represents a set of permissions that an account has delegated to ano
 
 #### 2.1.1. Object ID
 
-The ID of this object will be a hash of the `Account` and `Authorize` fields, combined with the unique space key for `AccountPermission` objects, which will be defined during implementation.
+The ID of this object will be a hash of the `Account` and `Authorize` fields, combined with the unique space key for `Delegate` objects, which will be defined during implementation.
 
 #### 2.1.2. `Permissions`
 
@@ -67,9 +67,9 @@ This field is an array of permissions to delegate to the account, as listed in [
 
 ### 2.2. Account Deletion
 
-The `AccountPermission` object is not a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
+The `Delegate` object is not a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
 
-## 3. Transaction: `AccountPermissionSet`
+## 3. Transaction: `DelegateSet`
 
 This object represents a set of permissions that an account has delegated to another account, and is modeled to be similar to the [`DepositPreauth` transaction type](https://xrpl.org/docs/references/protocol/transactions/types/depositpreauth).
 
@@ -77,7 +77,7 @@ This object represents a set of permissions that an account has delegated to ano
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`AccountPermissionSet`).|
+|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`DelegateSet`).|
 |`Account`| ✔️|`string`|`AccountID`|The account that wants to authorize another account.|
 |`Authorize`|✔️|`string`|`AccountID`|The authorized account.|
 |`Permissions`| ✔️|`string`|`STArray`|The transaction permissions that the account has been granted.|
@@ -94,7 +94,7 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 ### 3.3. State Changes
 
-A `AccountPermission` object will be created, modified, or deleted based on the provided fields.
+A `Delegate` object will be created, modified, or deleted based on the provided fields.
 
 ## 4. Transactions: Common Fields
 
@@ -108,13 +108,12 @@ We propose these modifications:
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`OnBehalfOf`| |`string`|`AccountID`|The account that the transaction is being sent on behalf of.|
+|`Delegate`| |`string`|`AccountID`|The delegate account that is sending the transaction.|
 
 ### 4.2. Failure Conditions
 
-* The `OnBehalfOf` account doesn't exist.
-* The `OnBehalfOf` account hasn't authorized the transaction's `Account` to send transactions on behalf of it.
-* The `OnBehalfOf` account hasn't authorized the transaction's `Account` to send this particular transaction type/granular permission on behalf of it.
+* The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
+* The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
 
 ### 4.3. State Changes
 
@@ -126,10 +125,10 @@ The transaction succeeds as if the transaction was sent by the `OnBehalfOf` acco
 
 In this example, Isaac is delegating the `Payment` permission to Alice.
 
-#### 5.1.1. `AccountPermissionSet` Transaction
+#### 5.1.1. `DelegateSet` Transaction
 ```typescript
 {
-    TransactionType: "AccountPermissionSet",
+    TransactionType: "DelegateSet",
     Account: "rISAAC......",
     Authorize: "rALICE......",
     Permissions: [{Permission: {PermissionValue: "Payment"}}],
@@ -138,10 +137,10 @@ In this example, Isaac is delegating the `Payment` permission to Alice.
 
 _Note: the weird format of `Permissions`, with needing an internal object, is due to peculiarities in the [XRPL's Binary Format](https://xrpl.org/docs/references/protocol/binary-format). It can be cleaned up/simplified in tooling._
 
-#### 5.1.2. `AccountPermission` Ledger Object
+#### 5.1.2. `Delegate` Ledger Object
 ```typescript
 {
-    LedgerEntryType: "AccountPermission",
+    LedgerEntryType: "Delegate",
     Account: "rISAAC......",
     Authorize: "rALICE......",
     Permissions: [{Permission: {PermissionValue: "Payment"}}],
@@ -152,10 +151,10 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 ```typescript
 {
     Transaction: "Payment",
-    Account: "rALICE......",
+    Account: "rISAAC......",
     Amount: "1000000000",
     Destination: "rCHARLIE......",
-    OnBehalfOf: "rISAAC......"
+    Delegate: "rALICE......"
 }
 ```
 
@@ -163,20 +162,20 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 
 In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
-#### 5.2.1. `AccountPermissionSet` Transaction
+#### 5.2.1. `DelegateSet` Transaction
 ```typescript
 {
-    TransactionType: "AccountPermissionSet",
+    TransactionType: "DelegateSet",
     Account: "rISAAC......",
     Authorize: "rBOB......",
     Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
 }
 ```
 
-#### 5.2.2. `AccountPermission` Ledger Object
+#### 5.2.2. `Delegate` Ledger Object
 ```typescript
 {
-    LedgerEntryType: "AccountPermission",
+    LedgerEntryType: "Delegate",
     Account: "rISAAC......",
     Authorize: "rBOB......",
     Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
@@ -190,14 +189,14 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
 ```typescript
 {
     Transaction: "TrustSet",
-    Account: "rBOB......",
+    Account: "rISAAC......",
     LimitAmount: {
         currency: "USD",
         issuer: "rHOLDEN......",
         value: "0",
     },
     Flags: 0x00100000, // tfSetFreeze
-    OnBehalfOf: "rISAAC......"
+    OnBehalfOf: "rBOB......"
 }
 ```
 
@@ -205,20 +204,20 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
 
 In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kylie.
 
-#### 5.3.1. `AccountPermissionSet` Transaction
+#### 5.3.1. `DelegateSet` Transaction
 ```typescript
 {
-    TransactionType: "AccountPermissionSet",
+    TransactionType: "DelegateSet",
     Account: "rISAAC......",
     Authorize: "rKYLIE......",
     Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
 }
 ```
 
-#### 5.3.2. `AccountPermission` Object
+#### 5.3.2. `Delegate` Object
 ```typescript
 {
-    LedgerEntryType: "AccountPermission",
+    LedgerEntryType: "Delegate",
     Account: "rISAAC......",
     Authorize: "rKYLIE......",
     Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
@@ -232,14 +231,14 @@ In this example, Kylie is authorizing Holden's trustline.
 ```typescript
 {
     Transaction: "TrustSet",
-    Account: "rBOB......",
+    Account: "rISAAC......",
     LimitAmount: {
         currency: "USD",
         issuer: "rHOLDEN......",
         value: "0",
     },
     Flags: 0x00010000, // tfSetfAuth
-    OnBehalfOf: "rISAAC......"
+    OnBehalfOf: "rKYLIE......"
 }
 ```
 
@@ -249,13 +248,13 @@ Note that this transaction will fail if:
 
 ## 6. Invariants
 
-An account should never be able to send a transaction on behalf of another account without a valid `AccountPermission` object.
+An account should never be able to send a transaction on behalf of another account without a valid `Delegate` object.
 
 ## 7. Security
 
-Delegating permissions to other accounts requires a high degree of trust, especially when the delegated account can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `AccountPermissionSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
+Delegating permissions to other accounts requires a high degree of trust, especially when the delegated account can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `DelegateSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
 
-All tooling indicating whether an account has been blackholed will need to be updated to also check if `AccountSet`, `SetRegularKey`, `SignerListSet`, or `AccountPermissionSet` permissions have been delegated.
+To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
 On the other hand, this mechanism also offers a granular approach to authorization, allowing accounts to selectively grant specific permissions without compromising overall account control. This approach provides a balance between security and usability, empowering account holders to manage their assets and interactions more effectively.
 
@@ -289,7 +288,7 @@ The account that sends the transaction pays the transaction fees (not the delega
 
 *Note that the `NFTokenMinter` field provides more permissions than just `NFTokenMint`ing; it provides permissions over offers and burning as well (though of course multiple permissions can be delegated to one account).* 
 
-The biggest advantage to using the `NFTokenMint` field is that it's "free" (it doesn't cost any additional reserve). Delegating a permission to an account costs one object reserve (for the `AccountPermission` object).
+The biggest advantage to using the `NFTokenMint` field is that it's "free" (it doesn't cost any additional reserve). Delegating a permission to an account costs one object reserve (for the `Delegate` object).
 
 On the other hand, with this proposal, you can have as many accounts with the `NFTokenMint` permission as you want. The minting account can also mint NFTs directly into your account, instead of into their own account.
 
@@ -301,8 +300,8 @@ Yes, in certain cases. For example, an account could still be considered "blackh
 
 ### B.4: Can I delegate permissions to a `Batch` transaction ([XLS-56d](https://github.com/XRPLF/XRPL-Standards/discussions/162))?
 
-No, `OnBehalfOf` will not be allowed on `Batch` transactions. Instead, the inner transactions must include the `OnBehalfOf` field.
+No, delegation will not be allowed on `Batch` transactions. Instead, the inner transactions must include the `Delegate` field.
 
-### B.5: Why is the process of unauthorizing an account different between the `DepositPreauth` transaction and the `AccountPermissionSet` transaction?
+### B.5: Why is the process of unauthorizing an account different between the `DepositPreauth` transaction and the `DelegateSet` transaction?
 
 The `DepositPreauth` transaction has an `Unauthorize` field. It seemed more confusing to use such a paradigm here, but it can be changed if there are strong objections.
