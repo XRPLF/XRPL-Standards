@@ -110,6 +110,12 @@ We propose these modifications:
 |------------|-----------|-----------|---------------|-------------|
 |`Delegate`| |`string`|`AccountID`|The delegate account that is sending the transaction.|
 
+#### 4.1.1. `Delegate`
+
+The way the `Delegate` field works is somewhat akin to `RegularKey`. The `Account` field is the delegating account, the `Delegate` field is the delegate, and the public key and signature is based on the delegate's keys.
+
+The delegate will pay the fees on the transaction, to prevent a delegate from draining an account's XRP via fees.
+
 ### 4.2. Failure Conditions
 
 * The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
