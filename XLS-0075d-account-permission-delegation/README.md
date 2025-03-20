@@ -123,7 +123,7 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 ### 4.3. State Changes
 
-The transaction succeeds as if the transaction was sent by the `OnBehalfOf` account. 
+The transaction succeeds, and the fee is charged to the `Delegate` account. 
 
 ## 5. Examples
 
@@ -202,7 +202,7 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
         value: "0",
     },
     Flags: 0x00100000, // tfSetFreeze
-    OnBehalfOf: "rBOB......"
+    Delegate: "rBOB......"
 }
 ```
 
@@ -244,7 +244,7 @@ In this example, Kylie is authorizing Holden's trustline.
         value: "0",
     },
     Flags: 0x00010000, // tfSetfAuth
-    OnBehalfOf: "rKYLIE......"
+    Delegate: "rKYLIE......"
 }
 ```
 
