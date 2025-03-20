@@ -10,7 +10,7 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-This proposal introduces a delegated authorization mechanism to enhance the flexibility and usability of XRPL accounts.
+This proposal introduces an authorization delegation mechanism to enhance the flexibility and usability of XRPL accounts.
 
 Currently, critical issuer actions, such as authorizing trustlines, require direct control by the account's keys, hindering operational efficiency and complex use cases. By empowering account holders to selectively delegate specific permissions to other accounts, this proposal aims to enhance account usability without compromising security. This mechanism will unlock new possibilities for XRPL applications, such as multi-party workflows and advanced account management strategies.
 
@@ -71,7 +71,7 @@ The `Delegate` object is not a [deletion blocker](https://xrpl.org/docs/concepts
 
 ## 3. Transaction: `DelegateSet`
 
-This object represents a set of permissions that an account has delegated to another account, and is modeled to be similar to the [`DepositPreauth` transaction type](https://xrpl.org/docs/references/protocol/transactions/types/depositpreauth).
+This transaction allows an account to delegate certain permissions to another account. It is loosely modeled to be similar to the [`DepositPreauth` transaction type](https://xrpl.org/docs/references/protocol/transactions/types/depositpreauth).
 
 ### 3.1. Fields
 
@@ -258,7 +258,7 @@ An account should never be able to send a transaction on behalf of another accou
 
 ## 7. Security
 
-Delegating permissions to other accounts requires a high degree of trust, especially when the delegated account can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `DelegateSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
+Delegating permissions to other accounts requires a high degree of trust, especially when the delegate can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `DelegateSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
 
 To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
@@ -277,10 +277,10 @@ In XLS-49d:
 
 In this proposal:
 * There is no direct multisign support (though permissions can be delegated to an account with a multisign setup).
-* The keys that have been delegated to are self-governed (i.e. the delegating account doesn't control the signer list on an account that has been delegated to).
+* The delegate's keys to are self-governed (i.e. the delegating account doesn't control the signer list on its delegate).
 * A permission may be delegated to as many accounts/signer lists as one is willing to pay reserve for.
 * There is one reserve per delegated account.
-* The delegated account pays the fees.
+* The delegate pays the fees.
 
 Both are useful for slightly different usecases; XLS-49d is more useful when you want multiple signatures to guard certain features, while this proposal is useful when you want certain parties to have access to certain features. This proposal does support XLS-49d-like usage, but it would cost more XRP, as a second account would need to be created.
 
@@ -288,7 +288,7 @@ Both are useful for slightly different usecases; XLS-49d is more useful when you
 
 ### B.1: Who pays the transaction fees?
 
-The account that sends the transaction pays the transaction fees (not the delegating account, but the delegated account).
+The account that sends the transaction pays the transaction fees (not the delegating account, but the delegate).
 
 ### B.2: How does using an `NFTokenMint` permission compare to using the existing `NFTokenMinter` account field?
 
