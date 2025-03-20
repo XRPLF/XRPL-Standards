@@ -296,7 +296,7 @@ The account that sends the transaction pays the transaction fees (not the delega
 
 The biggest advantage to using the `NFTokenMint` field is that it's "free" (it doesn't cost any additional reserve). Delegating a permission to an account costs one object reserve (for the `Delegate` object).
 
-On the other hand, with this proposal, you can have as many accounts with the `NFTokenMint` permission as you want. The minting account can also mint NFTs directly into your account, instead of into their own account.
+On the other hand, with this proposal, you can have as many accounts with the `NFTokenMint` permission as you want, instead of just one. The minting account can also mint NFTs directly into your account, instead of into their own account.
 
 Given the overlap in functionality, the `NFTokenMinter` field could potentially be deprecated in the future.
 
