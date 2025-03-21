@@ -89,8 +89,7 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 ### 3.2. Failure Conditions
 
 * `Permissions` is too long (the limit is 10), or includes duplicates.
-* Any of the specified permissions are invalid.
-* The account specified in `Authorize` doesn't exist.
+* Any of the specified permissions are invalid
 
 ### 3.3. State Changes
 
