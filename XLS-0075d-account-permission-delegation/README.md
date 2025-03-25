@@ -90,6 +90,7 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 * `Permissions` is too long (the limit is 10), or includes duplicates.
 * Any of the specified permissions are invalid.
+* `Authorize` is the same as `Account`.
 
 ### 3.3. State Changes
 
@@ -119,6 +120,7 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 * The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
 * The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
+* `Delegate` is the same as `Account`.
 
 ### 4.3. State Changes
 
