@@ -141,9 +141,9 @@ A vault has the following fields:
 
 The `Vault` object supports the following flags:
 
-| Flag Name         | Flag Value | Modifiable? |                 Description                  |
-| ----------------- | :--------: | :---------: | :------------------------------------------: |
-| `lsfVaultPrivate` |  `0x0001`  |    `No`     | If set, indicates that the vault is private. |
+| Flag Name         |  Flag Value   | Modifiable? |                 Description                  |
+| ----------------- | :-----------: | :---------: | :------------------------------------------: |
+| `lsfVaultPrivate` | `0x00010000` |    `No`     | If set, indicates that the vault is private. |
 
 #### 2.1.3 Vault `_pseudo-account_`
 
@@ -324,10 +324,10 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 ##### 3.1.1.1 Flags
 
-| Flag Name                     | Flag Value | Description                                                                              |
-| ----------------------------- | :--------: | :--------------------------------------------------------------------------------------- |
-| `tfVaultPrivate`              |  `0x0001`  | Indicates that the vault is private. It can only be set during Vault creation.           |
-| `tfVaultShareNonTransferable` |  `0x0002`  | Indicates the vault share is non-transferable. It can only be set during Vault creation. |
+| Flag Name                     |  Flag Value  | Description                                                                              |
+| ----------------------------- | :----------: | :--------------------------------------------------------------------------------------- |
+| `tfVaultPrivate`              | `0x00010000` | Indicates that the vault is private. It can only be set during Vault creation.           |
+| `tfVaultShareNonTransferable` | `0x00020000` | Indicates the vault share is non-transferable. It can only be set during Vault creation. |
 
 ###### 3.1.1.2 WithdrawalPolicy
 
