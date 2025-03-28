@@ -141,8 +141,8 @@ A vault has the following fields:
 
 The `Vault` object supports the following flags:
 
-| Flag Name         |  Flag Value   | Modifiable? |                 Description                  |
-| ----------------- | :-----------: | :---------: | :------------------------------------------: |
+| Flag Name         |  Flag Value  | Modifiable? |                 Description                  |
+| ----------------- | :----------: | :---------: | :------------------------------------------: |
 | `lsfVaultPrivate` | `0x00010000` |    `No`     | If set, indicates that the vault is private. |
 
 #### 2.1.3 Vault `_pseudo-account_`
@@ -719,15 +719,15 @@ We propose adding the following fields to the `ledger_entry` method:
 | Field Name          |     Required?      | JSON Type | Description                                                                                       |
 | ------------------- | :----------------: | :-------: | :------------------------------------------------------------------------------------------------ |
 | `LedgerEntryType`   | :heavy_check_mark: | `string`  | Ledger object type.                                                                               |
-| `LedgerIndex`       | :heavy_check_mark: | `string`  | Ledger object identifier.                                                                         |
+| `index`             | :heavy_check_mark: | `string`  | Ledger object identifier.                                                                         |
 | `Flags`             | :heavy_check_mark: | `string`  | Ledger object flags.                                                                              |
 | `PreviousTxnID`     | :heavy_check_mark: | `string`  | Identifies the transaction ID that most recently modified this object.                            |
 | `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | The sequence of the ledger that contains the transaction that most recently modified this object. |
 | `Sequence`          | :heavy_check_mark: | `number`  | The transaction sequence number that created the vault.                                           |
-| `OwnerNode`         | :heavy_check_mark: | `number`  | Identifies the page where this item is referenced in the owner's directory.                       |
 | `Owner`             | :heavy_check_mark: | `string`  | The account address of the Vault Owner.                                                           |
+| `OwnerNode`         | :heavy_check_mark: | `number`  | Identifies the page where this item is referenced in the owner's directory.                       |
 | `Account`           | :heavy_check_mark: | `string`  | The address of the Vaults _pseudo-account_.                                                       |
-| `Data`              | :heavy_check_mark: | `string`  | Arbitrary metadata about the Vault. Limited to 256 bytes.                                         |
+| `Data`              |                    | `string`  | Arbitrary metadata about the Vault. Limited to 256 bytes.                                         |
 | `Asset`             | :heavy_check_mark: | `object`  | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                |
 | `AssetsTotal`       | :heavy_check_mark: | `string`  | The total value of the vault.                                                                     |
 | `AssetsAvailable`   | :heavy_check_mark: | `string`  | The asset amount that is available in the vault.                                                  |
@@ -741,32 +741,30 @@ We propose adding the following fields to the `ledger_entry` method:
 
 ```type-script
 {
-  "LedgerEntryType": "Vault",
-  "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
-  "Flags": "0",
-  "PreviousTxnID": "9A8765B4321CDE987654321CDE987654321CDE987654321CDE987654321CDE98",
-  "PreviousTxnLgrSeq": 12345678,
-  "Sequence": 1,
-  "OwnerNode": 2,
-  "Owner": "rEXAMPLE9AbCdEfGhIjKlMnOpQrStUvWxYz",
-  "Account": "rPseudoAcc1234567890abcdef1234567890abcdef",
-  "Data": "5468697320697320617262697472617279206D657461646174612061626F757420746865207661756C742E",
-  "Asset": {
-    "currency": "USD",
-    "issuer": "rIssuer1234567890abcdef1234567890abcdef",
-    "value": "1000"
+  "LedgerEntryType" : "Vault",
+  "index" : "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3"
+  "Flags" : 0,
+  "PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
+  "PreviousTxnLgrSeq" : 6,
+  "Sequence" : 5,
+  "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+  "OwnerNode" : "0",
+  "Account" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+  "Asset" :
+  {
+    "currency" : "IOU",
+    "issuer" : "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
   },
-  "AssetTotal": 1000000,
-  "AssetAvailable": 800000,
-  "LossUnrealized": 200000,
-  "AssetMaximum": 0,
-  "Share": {
-    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-    "value": "1",
+  "AssetsTotal" : "100",
+  "AssetsAvailable" : "100",
+  "LossUnrealized" : "0",
+  "Share" :
+  {
+    "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
   },
-  "ShareTotal": 5000,
-  "WithdrawalPolicy": "0x0001"
-}
+  "SharesTotal" : "100",
+  "WithdrawalPolicy" : 1,
+},
 ```
 
 [**Return to Index**](#index)
