@@ -1,6 +1,6 @@
 <pre>    
 Title:        <b>Single Asset Tokenized Vault</b>
-Revision:     <b>1</b> (2025-03-13)
+Revision:     <b>2</b> (2025-03-13)
 
 <hr>Authors:    
   <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
