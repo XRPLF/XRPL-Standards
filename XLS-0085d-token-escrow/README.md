@@ -119,7 +119,20 @@ The `EscrowCreate` transaction is modified as follows:
   - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the recipient, then the MPT will be created.
 - **Adjustment from Issuer to Destination:**
   - **IOU Tokens**: The escrow `Amount` is added to the destination's trustline balance.
-  - **MPTs**: The escrow `Amount` is added to the destination's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is decreased on both the destination's MPT and the MPT issuance.
+  - **MPTs**:
+    - If the escrow sender is the issuer of the asset that was escrowed and the destination is not the issuer, then:
+      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
+      2.  The `Amount` on the destination's `MPToken` is increased by the escrow's `Amount`.
+      3. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is unchanged. 
+    - If the escrow sender is not the issuer of the asset that was escrowed but the destination is the issuer of the asset, then:
+      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
+      2.  No `MPToken` objects are changed because MPT issuers may not hold MPTokens.
+      3. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount` (i.e., this escrow finish is a "redemption").
+    - If neither the escrow source nor destination is the issuer of the asset that was escrowed, then
+      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by the escrow `Amount`.
+      2.  The `EscrowedAmount` on the source's `MPToken` is decreased by the escrow `Amount`.
+      3.  The `Amount` on the destination's `MPToken` is increased by the escrow `Amount`.
+      4. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is unchanged. 
 - **Deletion of Escrow Object:**
   - The `Escrow` object is deleted after successful settlement.
 
