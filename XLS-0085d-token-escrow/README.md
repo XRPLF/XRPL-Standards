@@ -7,11 +7,6 @@ Type: Draft
 Author:
     Denis Angell, XRPL-Labs [dangell7](https://github.com/dangell7)
 Affiliation: XRPL-Labs
-Contributors:
-    Richard Holland, XRPL-Labs [RichardAH](https://github.com/RichardAH)
-    Ed Hennis, Ripple [ximinez](https://github.com/ximinez)
-    Mayukha Vadari, Ripple [msvadari](https://github.com/msvadari)
-    David Fuelling, Ripple [sappenin](https://github.com/sappenin)
 ```
 
 > This proposal, XLS85d, replaces [XLS34d](https://github.com/XRPLF/XRPL-Standards/discussions/88) and draws inspiration from https://github.com/XRPLF/XRPL-Standards/discussions/133
