@@ -1,6 +1,7 @@
 <pre>
 Title:       <b>Multi-Purpose Tokens (MPTs)</b>
 Type:        <b>draft</b>
+State:       <b>Updated by: XLS-90</b>
 
 Author:  
              <a href="mailto:fuelling@ripple.com">David Fuelling</a>
