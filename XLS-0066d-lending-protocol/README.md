@@ -219,8 +219,8 @@ The `LoanBroker` object has the following fields:
 | `DebtTotal`            |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
 | `DebtMaximum`          |      `Yes`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
 | `CoverAvailable`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
-| `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT16`    |       0       | The 1/10th basis point of the `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
-| `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT16`    |       0       | The 1/10th basis point of minimum required first loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
+| `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
+| `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
 #### 2.1.3 `LoanBroker `_pseudo-account_`
 
@@ -510,8 +510,8 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `Data`                 |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive.                                  |
 | `DebtMaximum`          |                    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                     |
-| `CoverRateMinimum`     |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
-| `CoverRateLiquidation` |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+| `CoverRateMinimum`     |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateLiquidation` |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
 ##### 3.1.1.1 Failure Conditions
 
