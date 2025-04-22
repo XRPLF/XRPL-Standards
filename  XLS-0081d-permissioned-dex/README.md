@@ -303,7 +303,13 @@ We propose these additions:
 
 #### 5.1.1. `DomainID`
 
-The `DomainID` can be included if the sender intends it to be a cross-currency payment (i.e. if the payment is going to interact with the DEX). The domain will only play it's role if there is a path that involves offer book. Notes: it's still possible that `DomainID` is included but the payment does not interact with DEX, meaning that the `DomainID` will be ignored during payment paths.
+The `DomainID` can be included if the sender intends it to be a cross-currency payment (i.e. if the payment is going to interact with the DEX). The domain will only play it's role if there is a path that involves offer book.
+
+> Note: it's still possible that `DomainID` is included but the payment does not interact with DEX, it simply means that the `DomainID` will be ignored during payment paths.
+
+#### 5.1.2. Hybrid offer
+
+An existing hybrid offer can be consumed like a regular offer on the ledger. To consume a hybrid offer using the open orderbook, omit the `DomainID` from `Payment` and include a valid `path` involving the hybrid offer. To consume a hybrid offer using domain orderbook, include the `DomainID` in `Payment`.
 
 ### 5.2. Failure Conditions
 
@@ -313,7 +319,7 @@ There will also be the following in addition, if the `DomainID` is included:
 
 - The domain doesn't exist.
 - The `Account` and `Destination` is not a domain member.
-- The offer owner during a payment path is no longer part of the domain (if it's the only offer).
+- The offer owner during a payment path is no longer part of the domain (if there are no other valid offers).
 - The paths do not satisfy the domain's rules (e.g. a path includes an account that isn't a part of the domain).
 
 ### 5.3. State Changes
