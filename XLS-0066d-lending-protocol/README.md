@@ -509,7 +509,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `Flags`                |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Lending Protocol.                                                                                                      |
 | `Data`                 |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive.                                  |
-| `DebtMaximum`          |                    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                     |
+| `DebtMaximum`          |                    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.                                    |
 | `CoverRateMinimum`     |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
@@ -595,7 +595,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 ##### 3.1.2.3 Invariants
 
-- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` for the `LoanBroker` does not exist
+- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
 
 [**Return to Index**](#index)
 
@@ -616,7 +616,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - `AccountRoot(LoanBroker.Owner).Balance < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
+  - `AccountRoot(LoanBroker.Owner).Balance - Reserve(AccountRoot(LoanBroker.Owner).OwnerCount) < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
@@ -666,7 +666,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. |
 | `Amount`          | :heavy_check_mark: | `object`  |   `NUMBER`    |       0       | The amount of Vault asset to withdraw.                        |
 
-##### 3.2.2.1 Failure conditions
+##### 3.1.4.1 Failure conditions
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
@@ -686,7 +686,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 - `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
 
-##### 3.2.2.2 State Changes
+##### 3.1.4.2 State Changes
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
@@ -748,15 +748,17 @@ An inner object that contains the signature of the Lender over the transaction. 
 
 | Field Name      |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                        |
 | --------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
-| `TxnSignature`   | :heavy_check_mark: | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
-| `Signers`       | :heavy_check_mark: |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
+| `SigningPubKey` |                              | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
+| `TxnSignature`   |                               | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `Signers`       |                                |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
-The final transaction must include `TxnSignature` or `Signers` fields.
+The final transaction must include exactly one of 
+1. The `SigningPubKey` and `TxnSignature` fields, or
+2. The `Signers` field.
 
-If the `Signers` field is necessary, then the total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$
+The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
-The total fee calculation for signatures will now be $(1 + |tx.Signers| + |tx.Lender.Signers|) \times base_fee$.
+The total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base_fee$.
 
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
