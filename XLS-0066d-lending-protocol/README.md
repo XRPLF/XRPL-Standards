@@ -461,7 +461,7 @@ The `LoanID` is calculated as follows:
 | `PreviousPaymentDate`     |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                         `0`                         | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `NextPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |    `LoanSet.StartDate + LoanSet.PaymentInterval`    | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
 | `PaymentRemaining`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentTotal`                | The number of payments remaining on the Loan.                                                                                                                  |
-| `AssetsAvailable`          |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
+| `AssetsAvailable`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
 | `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |            `LoanSet.PrincipalRequested`             | The principal amount requested by the Borrower.                                                                                                                |
 
 ##### 2.2.2.1 Flags
@@ -509,7 +509,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `Flags`                |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Lending Protocol.                                                                                                      |
 | `Data`                 |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive.                                  |
-| `DebtMaximum`          |                    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.                                    |
+| `DebtMaximum`          |                    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |                    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
@@ -607,7 +607,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                             |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
-| `Amount`          | :heavy_check_mark: | `object`  |   `NUMBER`    |       0       | The Fist-Loss Capital amount to deposit.          |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to deposit.          |
 
 ##### 3.1.3.1 Failure Conditions
 
@@ -664,7 +664,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                             |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. |
-| `Amount`          | :heavy_check_mark: | `object`  |   `NUMBER`    |       0       | The amount of Vault asset to withdraw.                        |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The amount of Vault asset to withdraw.                        |
 
 ##### 3.1.4.1 Failure conditions
 
@@ -746,13 +746,14 @@ The transaction creates a new `Loan` object.
 
 An inner object that contains the signature of the Lender over the transaction. The fields contained in this object are:
 
-| Field Name      |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                        |
-| --------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` |                              | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
-| `TxnSignature`   |                               | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
-| `Signers`       |                                |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
+| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                        |
+| --------------- | :-------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
+| `SigningPubKey` |           | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
+| `TxnSignature`  |           | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `Signers`       |           |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
-The final transaction must include exactly one of 
+The final transaction must include exactly one of
+
 1. The `SigningPubKey` and `TxnSignature` fields, or
 2. The `Signers` field.
 
@@ -1054,7 +1055,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                       |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be drawn from. |
-| `Amount`          | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The amount of funds to drawdown.            |
+| `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to drawdown.            |
 
 ##### 3.2.4.1 Failure Conditions
 
@@ -1115,7 +1116,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                    |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
-| `Amount`          | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The amount of funds to pay.              |
+| `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.              |
 
 ##### 3.2.5.1 Payment Types
 
