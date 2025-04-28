@@ -836,6 +836,9 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.2.1.6 State Changes
 
+- Create the `Loan` object.
+- Increment `AccountRoot(Borrower).OwnerCount` by `1`
+
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
   - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested`.
