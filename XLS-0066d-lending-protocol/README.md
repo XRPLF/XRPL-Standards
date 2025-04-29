@@ -630,6 +630,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
     - Has `lsfMPTLocked` flag set.
     - `MPTAmount` < `Amount`.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
+  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set (the asset is not transferable).
 
 ##### 3.1.3.2 State Changes
 
@@ -673,15 +674,17 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The trustline between the submitter account and the `Issuer` of the asset is frozen.
+  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
-    - Has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
-
+  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set (the asset is not transferable).
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+  
 - The `LoanBroker.CoverAvailable` < `Amount`.
 
 - `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
