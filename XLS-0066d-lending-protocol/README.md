@@ -806,7 +806,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - If neither the `Account` or the `Counterparty` field are the `LoanBroker.Owner`.
-- If the `Counterparty` field is not specified and the submitting account is not `LoanBroker.Owner`.
+- If the `Counterparty` field is not specified and the `CounterpartySignature` is not from the `LoanBroker.Owner`.
 - If the `Counterparty.TxnSignature` is invalid.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
