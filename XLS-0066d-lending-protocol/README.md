@@ -208,6 +208,7 @@ The `LoanBroker` object has the following fields:
 | `PreviousTxnID`        |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                    |
 | `PreviousTxnLgrSeq`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                        |
 | `Sequence`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
+| `LoanSequence`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                           |
 | `OwnerNode`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
 | `VaultNode`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                         |
 | `VaultID`              |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
@@ -430,7 +431,7 @@ The `LoanID` is calculated as follows:
   - The `Loan` space key `0x004C` (capital L)
   - The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the Borrower account.
   - The `LoanBrokerID` of the associated `LoanBroker` object.
-  - The `Sequence` number of the **`LoanSet`** transaction. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
+  - The `LoanSequence` of the `LoanBroker` object.
 
 #### 2.2.2 Fields
 
@@ -442,6 +443,7 @@ The `LoanID` is calculated as follows:
 | `PreviousTxnID`           |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the transaction that last modified this object.                                                                                                      |
 | `PreviousTxnLgrSeq`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The ledger sequence containing the transaction that last modified this object.                                                                                 |
 | `Sequence`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The transaction sequence number that created the loan.                                                                                                         |
+| `LoanSequence`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The sequence number of the Loan.                                                                                                                               |
 | `OwnerNode`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                         |
 | `LoanBrokerNode`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
 | `LoanBrokerID`            |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
@@ -842,7 +844,8 @@ The account specified in the `Account` field pays the transaction fee.
 ##### 3.2.1.6 State Changes
 
 - Create the `Loan` object.
-- Increment `AccountRoot(Borrower).OwnerCount` by `1`
+- Increment `AccountRoot(Borrower).OwnerCount` by `1`.
+- Increment `LoanBroker.LoanSequence` by `1`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
@@ -1569,3 +1572,9 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 **TBD**
 
 # Appendix
+
+## A-1 F.A.Q.
+
+### A-1.1 What is the `LoanBroker.LoanSequence` field?
+
+A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created.
