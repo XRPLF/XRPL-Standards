@@ -1,0 +1,57 @@
+# XLS-XID: eXistence ID (XID)
+
+**Propuesta para una Identidad Digital Global descentralizada construida sobre XRP Ledger (XRPL).**
+
+---
+
+## Resumen
+
+XID (eXistence ID) es una propuesta de estándar para una identidad digital global interoperable, privada y soberana, construida sobre XRPL. Este sistema permite a los individuos tener control total sobre su identidad, gestionar su información clave y facilitar interacciones seguras en servicios públicos, financieros y sociales en un mundo interconectado.
+
+---
+
+## Propósito
+
+Crear una capa de identidad digital en XRPL que permita:
+
+- Identificación única, universal y segura.
+- Control y portabilidad de datos personales.
+- Interacciones confiables sin depender de terceros centralizados.
+- Inclusión digital, especialmente en regiones sin sistemas de identidad.
+
+---
+
+## Componentes clave
+
+- **XID Core**: Identificador único vinculado a una clave criptográfica (clave pública del usuario).
+- **XID Metadata**: Datos opcionales compartibles (nombre, país, edad, etc.) en campos cifrados.
+- **XID Trust Map**: Lista de relaciones confiables con validadores, instituciones, gobiernos o personas.
+- **Modo Vida**: Función de emergencia que permite compartir un subconjunto seguro de datos clave en caso de accidente o situación crítica.
+
+---
+
+## Casos de uso
+
+- Identificación para servicios gubernamentales.
+- KYC simplificado y portable para bancos o exchanges.
+- Sistemas de votación descentralizada.
+- Registros médicos portátiles y verificados.
+- Control de acceso digital a plataformas, eventos, etc.
+
+---
+
+## Ejemplo técnico básico
+
+Cada XID se representa como un NFT semi-estático en XRPL, conteniendo:
+
+```json
+{
+  "XID": "xrp:JulioA.XID",
+  "public_key": "ED1234ABCD5678...",
+  "encrypted_metadata": "01a8f94b...",
+  "trust_map": ["gov.ve", "onxrp.com", "XHUniversity"],
+  "modo_vida": {
+    "emergency_contact": "xrp:wife.Ana.XID",
+    "medical_data_hash": "b87f...d92"
+  }
+}
