@@ -974,7 +974,7 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.3.2 State Changes
 
-- If the `tfDefault` flag is specified:
+- If the `tfLoanDefault` flag is specified:
 
   - Calculate the amount of the Default that First-Loss Capital covers:
 
@@ -998,12 +998,10 @@ The transaction deletes an existing `Loan` object.
     - `Loan.PrincipalOutstanding + Loan.InterestOutstanding + Loan.AssetsAvailable`
   - Decrease the First-Loss Capital Cover Available:
     - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
-  - Decrease the number of active Loans:
-    - `LoanBroker(LoanBrokerID).OwnerCount -= 1`
 
 - Update the `Loan` object:
 
-  - `Loan(LoanID).Flags = lsfLoanDefault`
+  - `Loan(LoanID).Flags |= lsfLoanDefault`
   - `Loan(LoanID).PaymentRemaining = 0`
   - `Loan(LoanID).AssetsAvailable = 0`
   - `Loan(LoanID).PrincipalOutstanding = 0`
@@ -1032,7 +1030,7 @@ The transaction deletes an existing `Loan` object.
     - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1. Payment Types**](#3251-payment-types), which outlines how to calculate total interest outstanding)
 
   - Update the `Loan` object:
-    - `Loan(LoanID).Flags = lsfLoanImpaired`
+  - `Loan(LoanID).Flags |= lsfLoanImpaired`
     - If `currentTime < Loan(LoanID).NextPaymentDueDate` (if the loan payment is not yet late):
       - `Loan(LoanID).NextPaymentDueDate = currentTime` (move the next payment due date to now)
 
@@ -1043,7 +1041,7 @@ The transaction deletes an existing `Loan` object.
 
   - Update the `Loan` object:
 
-    - `Loan(LoanID).Flags = 0`
+  - `Loan(LoanID).Flags &= ~lsfLoanImpaired`
     - If `Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval > currentTime` (the loan was unimpaired within the payment interval):
 
       - `Loan(LoanID).NextPaymentDueDate = Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval`
