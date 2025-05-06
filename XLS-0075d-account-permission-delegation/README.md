@@ -282,14 +282,14 @@ In XLS-49d:
 * There is multisign support by default.
 * The signer list is controlled by the delegating account.
 * There may be at most one list per permission, with a maximum of 32 signers.
-* There is a total of one reserve per signer list.
+* There is a total of one object reserve per signer list.
 * The delegating account pays the fees.
 
 In this proposal:
 * There is no direct multisign support (though permissions can be delegated to an account with a multisign setup).
 * The delegate's keys to are self-governed (i.e. the delegating account doesn't control the signer list on its delegate).
 * A permission may be delegated to as many accounts/signer lists as one is willing to pay reserve for.
-* There is one reserve per delegated account.
+* There is one account reserve per delegated account.
 * The delegate pays the fees.
 
 Both are useful for slightly different usecases; XLS-49d is more useful when you want multiple signatures to guard certain features, while this proposal is useful when you want certain parties to have access to certain features. This proposal does support XLS-49d-like usage, but it would cost more XRP, as a second account would need to be created.
