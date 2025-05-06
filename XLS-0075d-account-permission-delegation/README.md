@@ -2,6 +2,8 @@
 Title:       <b>Account Permission Delegation</b>
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
+             <a href="mailto:yqian@ripple.com">Yinyi Qian</a> (Ripple)
+             <a href="mailto:ed@ripple.com">Ed Hennis</a> (Ripple)
 
 Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
@@ -82,7 +84,7 @@ This transaction allows an account to delegate certain permissions to another ac
 |`Authorize`|✔️|`string`|`AccountID`|The authorized account.|
 |`Permissions`| ✔️|`string`|`STArray`|The transaction permissions that the account has been granted.|
 
-### 3.1.1. `Permissions`
+#### 3.1.1. `Permissions`
 
 This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list.
 
@@ -96,13 +98,15 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 A `Delegate` object will be created, modified, or deleted based on the provided fields.
 
+### 3.4. Reserves
+
+This object will cost 1 reserve, which is charged to the `Account`.
+
 ## 4. Transactions: Common Fields
 
 ### 4.1. Fields
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/common-fields/) are the fields that all transactions currently have.
-
-<!--There are too many and I didn't want to list them all, it cluttered up the spec - but maybe it can be a collapsed section?-->
 
 We propose these modifications:
 
@@ -114,7 +118,7 @@ We propose these modifications:
 
 The way the `Delegate` field works is somewhat akin to `RegularKey`. The `Account` field is the delegating account, the `Delegate` field is the delegate, and the public key and signature is based on the delegate's keys.
 
-The delegate will pay the fees on the transaction, to prevent a delegate from draining an account's XRP via fees.
+The delegate will pay the fees on the transaction, to prevent a delegate from draining an account's XRP via fees. Only the `Account`'s sequence number is incremented, not the `Delegate`'s.
 
 ### 4.2. Failure Conditions
 
