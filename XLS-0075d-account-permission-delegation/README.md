@@ -116,7 +116,9 @@ We propose these modifications:
 
 #### 4.1.1. `Delegate`
 
-The way the `Delegate` field works is somewhat akin to `RegularKey`. The `Account` field is the delegating account, the `Delegate` field is the delegate, and the public key and signature is based on the delegate's keys.
+The way the `Delegate` field works is somewhat akin to `RegularKey`. The `Account` field is the delegating account, the `Delegate` field is the delegate, and the `SigningPubKey` and `TxnSignature` is based on the delegate's keys.
+
+If a `Delegate` has [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing) enabled, they can also use that multisign setup on their delegated transactions.
 
 The delegate will pay the fees on the transaction, to prevent a delegate from draining an account's XRP via fees. Only the `Account`'s sequence number is incremented, not the `Delegate`'s.
 
