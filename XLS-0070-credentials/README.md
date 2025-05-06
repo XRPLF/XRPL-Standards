@@ -32,7 +32,7 @@ We propose:
 * Modifying the `DepositPreauth` transaction
 * Modifying other transactions that are affected by Deposit Authorization
 
-This feature will require an amendment, tentatively titled `CredentialAuth`.
+This feature will require an amendment, tentatively titled `Credentials`.
 
 ### 1.1. Background: DIDs and Verifiable Credentials (VCs)
 
@@ -90,18 +90,18 @@ The `Credential` object will live in both the `Subject` and `Issuer`'s owner dir
 |`SubjectNode`|✔️|`string`|`UInt64`|A hint indicating which page of the subject's owner directory links to this object, in case the directory consists of multiple pages.|
 |`IssuerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the issuer's owner directory links to this object, in case the directory consists of multiple pages.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
-|`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
+|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 
 #### 2.1.1. Object ID
 
-The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, and `CredentialType` fields, combined with a unique space key for `Credential` objects, which will be defined during implementation.
+The ID of this object will be a hash that incorporates the `Subject`, `Issuer`, and `CredentialType` fields, combined with a unique space key for `Credential` objects (`D`).
 
 #### 2.1.2. `Flags`
 | Flag Name | Flag Value |
 |-----------|------------|
 |`lsfAccepted`|`0x00010000`|
 
-The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction, or if the secondary signing flow is used to create the credential.
+The `lsfAccepted` flag represents whether the subject of the credential has accepted the credential. If this flag is disabled, the issuer is responsible for this ledger entry's reserve; if the flag is enabled, the subject of the credential is responsible for the reserve instead. This flag is disabled by default, but is enabled as the result of a successful `CredentialAccept` transaction.
 
 A credential should not be considered "valid" until it has been accepted.
 
@@ -228,7 +228,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 |`LedgerEntryType`|✔️|`string`|`UInt16`|The value `0x0070`, mapped to the string `"DepositPreauth"`, indicates that this is a `DepositPreauth` object.|
 |`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`.|
 |`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
-|`PreviousTxnLgrSeqNumber`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
+|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
 </details>
 
 We propose these modifications:
@@ -285,23 +285,25 @@ This proposal adds two new fields:
 These fields follow the same rules outlined in section 6.1.2 for the `DepositPreauth` object's `AuthorizeCredentials` field. 
 
 ### 7.2. Failure Conditions
+
 * Existing failure conditions for `DepositPreauth` will still be obeyed.
 * None or more than one of `Authorize`, `Unauthorize`, `AuthorizeCredentials`, and `UnauthorizeCredentials` are included (i.e. there must be exactly one of these fields included).
-* If `UnauthorizeCredentials` is included in the transaction:
-	* The array is too long (i.e. has more than 8 credentials).
-	* The array is empty (i.e. has no credentials).
-	* The credential(s) are not currently authorized.
-* If `AuthorizeCredentials` is included in the transaction:
-	* The credential(s) are already authorized.
+* If authorizing/unauthorizing a credential:
+  * The issuer of a credential doesn't exist.
+  * The array is too long (i.e. has more than 8 credentials).
+  * The array is empty (i.e. has no credentials).
+  * There are duplicates in the list provided.
+  * If `UnauthorizeCredentials` is included in the transaction, the credentials are not currently authorized.
+  * If `AuthorizeCredentials` is included in the transaction:
+    * The credentials are already authorized.
 	* The account doesn't have enough reserve for the object.
-	* The array is too long (i.e. has more than 8 credentials).
-	* The array is empty (i.e. has no credentials).
-    * The issuer of the credential doesn't exist.
 
 ### 7.3. State Changes
 
 If the transaction is successful:
 * The `DepositPreauth` object is created or deleted.
+
+The `DepositPreauth` object will store a sorted list of credentials.
 
 ## 8. Any Transaction Affected by Deposit Authorization
 
@@ -313,8 +315,8 @@ The transactions that this field will be added to are:
 * `PaymentChannelClaim`
 * `AccountDelete`
 
-| Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
+| Field Name | Required? | JSON Type | Internal Type | Description |
+|------------|-----------|-----------|---------------|-------------|
 |`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
 
 #### 8.1.1. `CredentialIDs`
@@ -330,6 +332,7 @@ The credentials included must not be expired. If there are duplicates provided i
   * Has not been accepted.
   * Isn't a credential issued to the `Account` sending the transaction.
 * The group of `CredentialIDs` is not authorized by the destination.
+* There are duplicates in the list of `CredentialIDs`.
 
 There is an [existing exception](https://xrpl.org/docs/concepts/accounts/depositauth#precise-semantics) in the Deposit Auth design to allow an XRP payment to an account with Deposit Auth enabled that has a balance less than or equal to the minimum Account Reserve requirement (currently 10 XRP). This is to prevent an account from becoming "stuck" by being unable to send transactions but also unable to receive XRP. There will be no added support for this with credentials; in other words, if a payment satisfying these criteria is sent with non-preauthorized credentials included, the transaction would fail (but would succeed if the credentials are removed).
 
@@ -341,6 +344,7 @@ _Note: the transaction will succeed if (non-expired) credentials are included, b
 
 * If a credential isn't valid, the transaction fails.
 * If a credential is expired, the credential is deleted.
+* If the transaction is pre-authorized (either via account or via credential), the transaction will succeed.
 
 ## 9. RPC: `deposit_authorized`
 
@@ -352,7 +356,7 @@ The [`deposit_authorized` RPC method](https://xrpl.org/deposit_authorized.html) 
 |------------|-----------|-----------|-------------|
 |`source_account`|✔️|`string`|The sender of a possible payment.|
 |`destination_account`|✔️|`string`|The recipient of a possible payment.|
-|`ledger_hash`| |`string`|A 20-byte hex string for the ledger version to use. |
+|`ledger_hash`| |`string`|A hex string for the ledger version to use. |
 |`ledger_index`| |`string` or `number`|The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.|
 
 This proposal puts forward the following addition:
@@ -372,6 +376,12 @@ This proposal puts forward the following addition:
 |`ledger_index`| |`number`|The ledger index of the ledger version that was used to generate this response.|
 |`ledger_current_index`| |`number`|The ledger index of the current in-progress ledger version, which was used to generate this response.|
 |`validated`| |`boolean`|If true, the information comes from a validated ledger version.|
+
+This proposal puts forward the following addition:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`credentials`| |`array`|The object IDs of `Credential` objects. If this field is included, then the credential will be taken into account when analyzing whether the sender can send funds to the destination.|
 
 ## 10. Compliance with W3C Spec
 
