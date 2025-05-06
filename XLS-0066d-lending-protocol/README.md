@@ -238,7 +238,7 @@ The `RootIndex` of the `DirectoryNode` object is the result of [`SHA512-Half`](h
 
 #### 2.1.5 Reserves
 
-The `LoanBroker` object costs one owner reserve for the account creating it.
+The `LoanBroker` object costs two owner reserve for the account creating it.
 
 #### 2.1.6 Accounting
 
@@ -380,36 +380,48 @@ CoverRateLiquidation    = 0.1 (10%)
 CoverAvailable          = 1,000 Tokens
 
 -- Loan --
-DefaultAmount = 1,090 Tokens
+AssetsAvailable       = 500 Tokens
+PrincipleOutstanding  = 1,000 Tokens
+InterestOutstanding   = 90 Tokens
 
 
 # First-Loss Capital liquidation maths
 
+DefaultAmount = PrincipleOutstanding + InterestOutstanding - AssetsAvailable
+              = 1,000 + 90 - 500
+              = 590
+
 # The amount of the default that the first-loss capital scheme will cover
-DefaultCovered     = min((DebtTotal x CoverRateMinimum) x CoverRateLiquidation, DefaultAmount)
-                    = min((1,090 * 0.1) * 0.1, 1,090) = min(10.9, 1,090)
+DefaultCovered      = min((DebtTotal x CoverRateMinimum) x CoverRateLiquidation, DefaultAmount)
+                    = min((1,090 * 0.1) * 0.1, 1,090) = min(10.9, 590)
                     = 10.9 Tokens
 
-DefaultRemaining    = DefaultAmount - DefaultCovered
-                    = 1,090 - 10.9
-                    = 1,079.1 Tokens
+Loss                = DefaultAmount - DefaultCovered
+                    = 590 - 10.9
+                    = 579.1 Tokens
+
+FundsReturned       = DefaultCovered + AssetsAvailable
+                    = 10.9 + 500
+                    = 510.9
+
+# Note, Loss + FundsReturned MUST be equal to PrincipleOutstanding + InterestOutstanding
 
 ** State Changes **
 
 -- Vault --
-AssetsTotal     = AssetsTotal - DefaultRemaining
-                = 100,090 - 1,079.1
-                = 99,010.9 Tokens
+AssetsTotal     = AssetsTotal - Loss
+                = 100,090 - 579.1
+                = 99,510.9 Tokens
 
-AssetsAvailable = AssetsAvailable + DefaultCovered
-                = 99,000 + 10.9
-                = 99,010.9 Tokens
+AssetsAvailable = AssetsAvailable + FundsReturned
+                = 99,000 + 510.9
+                = 99,510.9 Tokens
 
 SharesTotal = (UNCHANGED)
 
 -- Lending Protocol --
-DebtTotal       = DebtTotal - DefaultAmount
-                = 1,090 - 1,090
+DebtTotal       = DebtTotal - PrincipleOutstanding + InterestOutstanding
+                = 1,090 - (1,000 + 90)
                 = 0 Tokens
 
 CoverAvailable  = CoverAvailable - DefaultCovered
@@ -447,7 +459,7 @@ The `LoanID` is calculated as follows:
 | `LoanBrokerNode`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                        `N/A`                        | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
 | `LoanBrokerID`            |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
 | `Borrower`                |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |                        `N/A`                        | The address of the account that is the borrower.                                                                                                               |
-| `LoanOriginationFee`      |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                |
+| `LoanOriginationFee`      |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal nds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                  |
 | `LoanServiceFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                 |
 | `LatePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                  |
 | `ClosePaymentFee`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                        `N/A`                        | A nominal funds amount paid to the `LoanBroker.Owner` when a payment full payment is made.                                                                     |
@@ -685,7 +697,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set (the asset is not transferable).
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-  
+
 - The `LoanBroker.CoverAvailable` < `Amount`.
 
 - `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
@@ -913,18 +925,18 @@ The transaction deletes an existing `Loan` object.
 
   - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-  - Increase the `Balance` field of `Loan(LoanID).Borrower` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
+    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
+    - Increase the `Balance` field of `Loan(LoanID).Borrower` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
 
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-  - Increase the `RippleState` balance between the `Loan(LoanID).Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
+    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
+    - Increase the `RippleState` balance between the `Loan(LoanID).Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
 
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
+  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`.
-  - Increase the `MPToken.MPTAmount` of the `Loan(LoanID).Borrower` `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`
+    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`.
+    - Increase the `MPToken.MPTAmount` of the `Loan(LoanID).Borrower` `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`
 
 - Delete the `Loan` object.
 
@@ -953,6 +965,8 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.3.1 `Flags`
 
+`LoanManage` transaction `Flags` are mutually exclusive.
+
 | Flag Name        |  Flag Value  | Description                                    |
 | ---------------- | :----------: | :--------------------------------------------- |
 | `tfLoanDefault`  | `0x00010000` | Indicates that the Loan should be defaulted.   |
@@ -965,11 +979,12 @@ The transaction deletes an existing `Loan` object.
 - The `Account` submitting the transaction is not the `LoanBroker.Owner`.
 - The `lsfLoanDefault` flag is set on the Loan object. Once a Loan is defaulted, it cannot be modified.
 
-- If `Loan(LoanID).Flags == lsfLoanImpaired` AND `tfLoanImpair` flag is provided.
+- If `Loan(LoanID).Flags == lsfLoanImpaired` AND `tfLoanImpair` flag is provided (impairing an already impaired loan).
+- If `Loan(LoanID).Flags == 0` AND `tfLoanUnimpair` flag is provided (clearning impairment for an uninpaired loan).
 
 - `Loan.PaymentRemaining == 0`.
 
-- The `tfDefault` flag is specified and:
+- The `tfLoanDefault` flag is specified and:
   - `LastClosedLedger.CloseTime` < `Loan.NextPaymentDueDate + Loan.GracePeriod`.
 
 ##### 3.2.3.2 State Changes
@@ -990,12 +1005,14 @@ The transaction deletes an existing `Loan` object.
       - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsTotal -= DefaultAmount`.
     - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += DefaultCovered + Loan.AssetsAvailable`.
+    - If `Loan.lsfLoanImpaired` flag is set:
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
 
 - Update the `LoanBroker` object:
 
   - Decrease the Debt of the LoanBroker:
     - `LoanBroker(LoanBrokerID).DebtTotal -= `
-    - `Loan.PrincipalOutstanding + Loan.InterestOutstanding + Loan.AssetsAvailable`
+    - `Loan.PrincipalOutstanding + Loan.InterestOutstanding`
   - Decrease the First-Loss Capital Cover Available:
     - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
 
@@ -1027,7 +1044,7 @@ The transaction deletes an existing `Loan` object.
 
   - Update the `Vault` object (set "paper loss"):
 
-    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1. Payment Types**](#3251-payment-types), which outlines how to calculate total interest outstanding)
+    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
   - Update the `Loan` object:
   - `Loan(LoanID).Flags |= lsfLoanImpaired`
@@ -1037,11 +1054,11 @@ The transaction deletes an existing `Loan` object.
 - If the `tfLoanUnimpair` flag is specified:
 
   - Update the `Vault` object (clear "paper loss"):
-  - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1. Payment Types**](#3251-payment-types), which outlines how to calculate total interest outstanding)
-
+  - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
   - Update the `Loan` object:
 
   - `Loan(LoanID).Flags &= ~lsfLoanImpaired`
+
     - If `Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval > currentTime` (the loan was unimpaired within the payment interval):
 
       - `Loan(LoanID).NextPaymentDueDate = Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval`
@@ -1332,7 +1349,32 @@ $$
 LoanBroker.DebtTotal = LoanBroker.DebtTotal - managementFeeChange
 $$
 
-##### 3.2.5.2 Transaction Pseudo-code
+##### 3.2.5.2 Total Loan Value Calculation
+
+At any point in time the following forumula can be used to calculate the total remaining value of the loan:
+
+$$
+totalValueOutstanding = periodicPayment \times paymentsRemaining
+$$
+
+We calculate the total interest outstanding as follows:
+
+$$
+totalInterestOutstanding = totalValueOutstanding - principalOutstanding
+$$
+
+$$
+periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
+$$
+
+where the periodic interest rate is the interest rate charged per payment period:
+
+$$
+periodicRate = \frac{interestRate \times paymentInterval}{365 \times 24 \times 60 \times 60}
+$$
+
+
+##### 3.2.5.3 Transaction Pseudo-code
 
 The following is the pseudo-code for handling a Loan payment transaction.
 
@@ -1421,7 +1463,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     return (total_principal_paid, total_interest_paid, loan_value_change, total_fee_paid)
 ```
 
-##### 3.2.5.3 Failure Conditions
+##### 3.2.5.4 Failure Conditions
 
 - A `Loan` object with specified `LoanID` does not exist on the ledger.
 
@@ -1446,7 +1488,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
 - If `LastClosedLedger.CloseTime <= Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
-##### 3.2.5.4 State Changes
+##### 3.2.5.5 State Changes
 
 Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`.
 
@@ -1564,7 +1606,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 [**Return to Index**](#index)
 
-##### 3.2.5.4 Invariants
+##### 3.2.5.6 Invariants
 
 **TBD**
 
