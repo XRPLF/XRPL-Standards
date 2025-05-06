@@ -168,7 +168,7 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
     Amount: "1000000000",
     Destination: "rCHARLIE......",
     Delegate: "rALICE......",
-	SigningPubKey: "ALICE...."
+    SigningPubKey: "ALICE...."
 }
 ```
 
