@@ -319,6 +319,10 @@ The transactions that this field will be added to are:
 |------------|-----------|-----------|---------------|-------------|
 |`CredentialIDs`| |`array`|`Vector256`|Credential(s) to attach to the transaction.|
 
+#### 8.1.1. `CredentialIDs`
+
+The credentials included must not be expired. If there are duplicates provided in the list, they will be silently de-duped.
+
 ### 8.2. Failure Conditions
 
 * Any of the `CredentialIDs`:
