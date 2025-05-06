@@ -165,7 +165,8 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
     Account: "rISAAC......",
     Amount: "1000000000",
     Destination: "rCHARLIE......",
-    Delegate: "rALICE......"
+    Delegate: "rALICE......",
+	SigningPubKey: "ALICE...."
 }
 ```
 
@@ -207,7 +208,8 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
         value: "0",
     },
     Flags: 0x00100000, // tfSetFreeze
-    Delegate: "rBOB......"
+    Delegate: "rBOB......",
+    SigningPubKey: "BOB......"
 }
 ```
 
@@ -249,7 +251,8 @@ In this example, Kylie is authorizing Holden's trustline.
         value: "0",
     },
     Flags: 0x00010000, // tfSetfAuth
-    Delegate: "rKYLIE......"
+    Delegate: "rKYLIE......",
+    SigningPubKey: "KYLIE...."
 }
 ```
 
