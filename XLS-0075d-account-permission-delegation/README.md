@@ -86,7 +86,7 @@ This transaction allows an account to delegate certain permissions to another ac
 
 #### 3.1.1. `Permissions`
 
-This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list.
+This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list. The list of permissions, if included and non-empty, will replace the existing list.
 
 ### 3.2. Failure Conditions
 
@@ -96,7 +96,11 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 ### 3.3. State Changes
 
-A `Delegate` object will be created, modified, or deleted based on the provided fields.
+If a `Delegate` object doesn't exist that matches the `Account` and `Authorize` fields, it will be created with the included list of permissions.
+
+If a `Delegate` object exists:
+- If the list of `Permissions` is empty, the `Delegate` object will be deleted.
+- If the list of `Permissions` is non-empty, the list of `Permissions` in the `Delegate` object will be replaced.
 
 ### 3.4. Reserves
 
