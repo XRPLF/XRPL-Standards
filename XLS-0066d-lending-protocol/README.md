@@ -1351,7 +1351,21 @@ $$
 
 ##### 3.2.5.2 Total Loan Value Calculation
 
-At any point in time the following forumula can be used to calculate the total remaining value of the loan:
+At any point in time the following formulae can be used to calculate the total remaining value of the loan.
+
+The periodic interest rate is the interest rate charged per payment period.
+
+$$
+periodicRate = \frac{interestRate \times paymentInterval}{365 \times 24 \times 60 \times 60}
+$$
+
+The payment is computed based on the periodic rate, principal outstanding, and number of payments remaining. (This means the payment amount can decrease if the borrow pays principal early.)
+
+$$
+periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
+$$
+
+The total loan value is simply:
 
 $$
 totalValueOutstanding = periodicPayment \times paymentsRemaining
@@ -1361,16 +1375,6 @@ We calculate the total interest outstanding as follows:
 
 $$
 totalInterestOutstanding = totalValueOutstanding - principalOutstanding
-$$
-
-$$
-periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
-$$
-
-where the periodic interest rate is the interest rate charged per payment period:
-
-$$
-periodicRate = \frac{interestRate \times paymentInterval}{365 \times 24 \times 60 \times 60}
 $$
 
 
