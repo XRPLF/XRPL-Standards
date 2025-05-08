@@ -1,14 +1,12 @@
 <pre>
-Title:       <b>Account Permission Delegation</b>
+Title:       <b>Permission Delegation</b>
 
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
+Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a> (Ripple)
              <a href="mailto:yqian@ripple.com">Yinyi Qian</a> (Ripple)
              <a href="mailto:ed@ripple.com">Ed Hennis</a> (Ripple)
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
 </pre>
 
-# Account Permission Delegation
+# Permission Delegation
 
 ## Abstract
 
@@ -19,8 +17,9 @@ Currently, critical issuer actions, such as authorizing trustlines, require dire
 ## 1. Overview
 
 We propose:
-* Creating a `Delegate` ledger object.
-* Creating a `DelegateSet` transaction type.
+
+- Creating a `Delegate` ledger object.
+- Creating a `DelegateSet` transaction type.
 
 We also propose modifying the transaction common fields.
 
@@ -28,17 +27,18 @@ This feature will require an amendment, tentatively titled `PermissionDelegation
 
 ### 1.1. Terminology
 
-* **Delegating account**: The main account, which is delegating permissions to another account.
-* **Delegate**: The account that is having permissions delegated to it.
+- **Delegating account**: The main account, which is delegating permissions to another account.
+- **Delegate**: The account that is having permissions delegated to it.
 
 ### 1.2. Basic Flow
 
 Isaac, a token issuer, wants to set up his account to follow security best practices and separation of responsibilities. He wants some of his employees to have some sub-permissions on the account, and manage their own separate keys - Alice to manage token issuing and Bob to manage trustlines. He is also working with Kylie, a KYC provider, who he wants to be able to authorize trustlines but not have any other permissions (as she is an external party).
 
 He can authorize:
-* Alice's account for the `Payment` transaction permission.
-* Bob's account for the `TrustSet` transaction permission.
-* Kylie's account for the `TrustlineAuthorize` granular permission.
+
+- Alice's account for the `Payment` transaction permission.
+- Bob's account for the `TrustSet` transaction permission.
+- Kylie's account for the `TrustlineAuthorize` granular permission.
 
 The full set of available permissions is listed in [XLS-74d, Account Permissions](https://github.com/XRPLF/XRPL-Standards/discussions/217)
 
@@ -48,16 +48,16 @@ This object represents a set of permissions that an account has delegated to ano
 
 ### 2.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`LedgerIndex`| ✔️|`string`|`Hash256`|The unique ID of the ledger object.|
-|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`Delegate`).|
-|`Account`| ✔️|`string`|`AccountID`|The account that wants to authorize another account.|
-|`Authorize`| ✔️|`string`|`AccountID`|The authorized account.|
-|`Permissions`| ✔️|`string`|`STArray`|The transaction permissions that the account has access to.|
-|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages.|
-|`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this object.|
-|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The index of the ledger that contains the transaction that most recently modified this object.|
+| Field Name          | Required? | JSON Type | Internal Type | Description                                                                                                                          |
+| ------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `LedgerIndex`       | ✔️        | `string`  | `Hash256`     | The unique ID of the ledger object.                                                                                                  |
+| `LedgerEntryType`   | ✔️        | `string`  | `UInt16`      | The ledger object's type (`Delegate`).                                                                                               |
+| `Account`           | ✔️        | `string`  | `AccountID`   | The account that wants to authorize another account.                                                                                 |
+| `Authorize`         | ✔️        | `string`  | `AccountID`   | The authorized account.                                                                                                              |
+| `Permissions`       | ✔️        | `string`  | `STArray`     | The transaction permissions that the account has access to.                                                                          |
+| `OwnerNode`         | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. |
+| `PreviousTxnID`     | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this object.                                                     |
+| `PreviousTxnLgrSeq` | ✔️        | `number`  | `UInt32`      | The index of the ledger that contains the transaction that most recently modified this object.                                       |
 
 #### 2.1.1. Object ID
 
@@ -77,12 +77,12 @@ This transaction allows an account to delegate certain permissions to another ac
 
 ### 3.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`DelegateSet`).|
-|`Account`| ✔️|`string`|`AccountID`|The account that wants to authorize another account.|
-|`Authorize`|✔️|`string`|`AccountID`|The authorized account.|
-|`Permissions`| ✔️|`string`|`STArray`|The transaction permissions that the account has been granted.|
+| Field Name        | Required? | JSON Type | Internal Type | Description                                                    |
+| ----------------- | --------- | --------- | ------------- | -------------------------------------------------------------- |
+| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`DelegateSet`).                          |
+| `Account`         | ✔️        | `string`  | `AccountID`   | The account that wants to authorize another account.           |
+| `Authorize`       | ✔️        | `string`  | `AccountID`   | The authorized account.                                        |
+| `Permissions`     | ✔️        | `string`  | `STArray`     | The transaction permissions that the account has been granted. |
 
 #### 3.1.1. `Permissions`
 
@@ -90,15 +90,16 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 ### 3.2. Failure Conditions
 
-* `Permissions` is too long (the limit is 10), or includes duplicates.
-* Any of the specified permissions are invalid.
-* `Authorize` is the same as `Account`.
+- `Permissions` is too long (the limit is 10), or includes duplicates.
+- Any of the specified permissions are invalid.
+- `Authorize` is the same as `Account`.
 
 ### 3.3. State Changes
 
 If a `Delegate` object doesn't exist that matches the `Account` and `Authorize` fields, it will be created with the included list of permissions.
 
 If a `Delegate` object exists:
+
 - If the list of `Permissions` is empty, the `Delegate` object will be deleted.
 - If the list of `Permissions` is non-empty, the list of `Permissions` in the `Delegate` object will be replaced.
 
@@ -114,9 +115,9 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/co
 
 We propose these modifications:
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`Delegate`| |`string`|`AccountID`|The delegate account that is sending the transaction.|
+| Field Name | Required? | JSON Type | Internal Type | Description                                           |
+| ---------- | --------- | --------- | ------------- | ----------------------------------------------------- |
+| `Delegate` |           | `string`  | `AccountID`   | The delegate account that is sending the transaction. |
 
 #### 4.1.1. `Delegate`
 
@@ -128,13 +129,13 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 ### 4.2. Failure Conditions
 
-* The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
-* The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
-* `Delegate` is the same as `Account`.
+- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
+- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
+- `Delegate` is the same as `Account`.
 
 ### 4.3. State Changes
 
-The transaction succeeds, and the fee is charged to the `Delegate` account. 
+The transaction succeeds, and the fee is charged to the `Delegate` account.
 
 ## 5. Examples
 
@@ -143,6 +144,7 @@ The transaction succeeds, and the fee is charged to the `Delegate` account.
 In this example, Isaac is delegating the `Payment` permission to Alice.
 
 #### 5.1.1. `DelegateSet` Transaction
+
 ```typescript
 {
     TransactionType: "DelegateSet",
@@ -155,6 +157,7 @@ In this example, Isaac is delegating the `Payment` permission to Alice.
 _Note: the weird format of `Permissions`, with needing an internal object, is due to peculiarities in the [XRPL's Binary Format](https://xrpl.org/docs/references/protocol/binary-format). It can be cleaned up/simplified in tooling._
 
 #### 5.1.2. `Delegate` Ledger Object
+
 ```typescript
 {
     LedgerEntryType: "Delegate",
@@ -165,6 +168,7 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 ```
 
 #### 5.1.3. `Payment` Transaction
+
 ```typescript
 {
     Transaction: "Payment",
@@ -181,6 +185,7 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
 #### 5.2.1. `DelegateSet` Transaction
+
 ```typescript
 {
     TransactionType: "DelegateSet",
@@ -191,6 +196,7 @@ In this example, Isaac is delegating the `TrustSet` permission to Bob.
 ```
 
 #### 5.2.2. `Delegate` Ledger Object
+
 ```typescript
 {
     LedgerEntryType: "Delegate",
@@ -224,6 +230,7 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
 In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kylie.
 
 #### 5.3.1. `DelegateSet` Transaction
+
 ```typescript
 {
     TransactionType: "DelegateSet",
@@ -234,6 +241,7 @@ In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kyli
 ```
 
 #### 5.3.2. `Delegate` Object
+
 ```typescript
 {
     LedgerEntryType: "Delegate",
@@ -263,8 +271,9 @@ In this example, Kylie is authorizing Holden's trustline.
 ```
 
 Note that this transaction will fail if:
-* The trustline with Holden doesn't exist.
-* Kylie tries to change any trustline setting that isn't just the `tfSetfAuth` flag.
+
+- The trustline with Holden doesn't exist.
+- Kylie tries to change any trustline setting that isn't just the `tfSetfAuth` flag.
 
 ## 6. Invariants
 
@@ -283,18 +292,20 @@ On the other hand, this mechanism also offers a granular approach to authorizati
 ## Appendix A: Comparing with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144), Multiple Signer Lists
 
 In XLS-49d:
-* There is multisign support by default.
-* The signer list is controlled by the delegating account.
-* There may be at most one list per permission, with a maximum of 32 signers.
-* There is a total of one object reserve per signer list.
-* The delegating account pays the fees.
+
+- There is multisign support by default.
+- The signer list is controlled by the delegating account.
+- There may be at most one list per permission, with a maximum of 32 signers.
+- There is a total of one object reserve per signer list.
+- The delegating account pays the fees.
 
 In this proposal:
-* There is no direct multisign support (though permissions can be delegated to an account with a multisign setup).
-* The delegate's keys to are self-governed (i.e. the delegating account doesn't control the signer list on its delegate).
-* A permission may be delegated to as many accounts/signer lists as one is willing to pay reserve for.
-* There is one account reserve per delegated account.
-* The delegate pays the fees.
+
+- There is no direct multisign support (though permissions can be delegated to an account with a multisign setup).
+- The delegate's keys to are self-governed (i.e. the delegating account doesn't control the signer list on its delegate).
+- A permission may be delegated to as many accounts/signer lists as one is willing to pay reserve for.
+- There is one account reserve per delegated account.
+- The delegate pays the fees.
 
 Both are useful for slightly different usecases; XLS-49d is more useful when you want multiple signatures to guard certain features, while this proposal is useful when you want certain parties to have access to certain features. This proposal does support XLS-49d-like usage, but it would cost more XRP, as a second account would need to be created.
 
@@ -306,7 +317,7 @@ The account that sends the transaction pays the transaction fees (not the delega
 
 ### B.2: How does using an `NFTokenMint` permission compare to using the existing `NFTokenMinter` account field?
 
-*Note that the `NFTokenMinter` field provides more permissions than just `NFTokenMint`ing; it provides permissions over offers and burning as well (though of course multiple permissions can be delegated to one account).* 
+_Note that the `NFTokenMinter` field provides more permissions than just `NFTokenMint`ing; it provides permissions over offers and burning as well (though of course multiple permissions can be delegated to one account)._
 
 The biggest advantage to using the `NFTokenMint` field is that it's "free" (it doesn't cost any additional reserve). Delegating a permission to an account costs one object reserve (for the `Delegate` object).
 
