@@ -1001,13 +1001,14 @@ The transaction deletes an existing `Loan` object.
     - Apply the First-Loss Capital to the Default Amount
       - `DefaultCovered = min((LoanBroker(Loan.LoanBrokerID).DebtTotal x LoanBroker(Loan.LoanBrokerID).CoverRateMinimum)  x LoanBroker(Loan.LoanBrokerID).CoverRateLiquidation, DefaultAmount)`
     - `DefaultAmount -= DefaultCovered`
+    - `ReturnToVault = DefaultCovered + Loan.AssetsAvailable`
 
   - Update the `Vault` object:
 
     - Decrease the Total Value of the Vault:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsTotal -= DefaultAmount`.
     - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += DefaultCovered + Loan.AssetsAvailable`.
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += ReturnToVault`.
     - If `Loan.lsfLoanImpaired` flag is set:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
 
@@ -1026,39 +1027,40 @@ The transaction deletes an existing `Loan` object.
   - `Loan(LoanID).AssetsAvailable = 0`
   - `Loan(LoanID).PrincipalOutstanding = 0`
 
-- Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
+  - Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
 
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
+    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
-    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
-    - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+      - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
+      - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
 
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
+    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `DefaultCovered`.
-    - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `DefaultCovered`.
+      - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
+      - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
 
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
+    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `DefaultCovered`.
-    - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `DefaultCovered`.
+      - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
+      - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
 
-- If `tfLoanImpair` flag is specified:
+  - If `tfLoanImpair` flag is specified:
 
-  - Update the `Vault` object (set "paper loss"):
+    - Update the `Vault` object (set "paper loss"):
 
-    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
-  - Update the `Loan` object:
-  - `Loan(LoanID).Flags |= lsfLoanImpaired`
-    - If `currentTime < Loan(LoanID).NextPaymentDueDate` (if the loan payment is not yet late):
-      - `Loan(LoanID).NextPaymentDueDate = currentTime` (move the next payment due date to now)
+    - Update the `Loan` object:
+    - `Loan(LoanID).Flags |= lsfLoanImpaired`
+      - If `currentTime < Loan(LoanID).NextPaymentDueDate` (if the loan payment is not yet late):
+        - `Loan(LoanID).NextPaymentDueDate = currentTime` (move the next payment due date to now)
 
-- If the `tfLoanUnimpair` flag is specified:
+  - If the `tfLoanUnimpair` flag is specified:
 
-  - Update the `Vault` object (clear "paper loss"):
-  - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
-  - Update the `Loan` object:
+    - Update the `Vault` object (clear "paper loss"):
+    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+    
+    - Update the `Loan` object:
 
     - `CandidateDueDate = max(Loan.PreviousPaymentDate, Loan.StartDate) + Loan.PaymentInterval`
 
