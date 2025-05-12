@@ -1428,7 +1428,6 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
         return "insufficient amount paid" error
     }
 
-    loan.payments_remaining -= full_periodic_payments
     loan.next_payment_due_date = loan.next_payment_due_date + loan.payment_interval * full_periodic_payments
     loan.last_payment_date = loan.next_payment_due_date - loan.payment_interval
 
@@ -1441,11 +1440,12 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     while full_periodic_payments > 0 {
         total_principal_paid += periodic_payment.principal
         total_interest_paid += periodic_payment.interest
+        loan.payments_remaining -= full_periodic_payments
+        loan.principal_outstanding -= periodic_payment.principal
+
         periodic_payment = loan.compute_periodic_payment()
         full_periodic_payments -= 1
     }
-
-    loan.principal_outstanding -= total_principal_paid
 
     let overpayment = min(loan.principal_outstanding, amount % periodic_payment)
     if overpayment > 0 && is_set(lsfOverpayment) {
