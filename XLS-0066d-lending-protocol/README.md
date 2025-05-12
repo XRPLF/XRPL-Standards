@@ -1488,9 +1488,9 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     - Has `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
-- If `LastClosedLedger.CloseTime > Loan.NextPaymentDueDate` and `Amount` < `LatePaymentAmount()`
+- If `LastClosedLedger.CloseTime >= Loan.NextPaymentDueDate` and `Amount` < `LatePaymentAmount()`
 
-- If `LastClosedLedger.CloseTime <= Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
+- If `LastClosedLedger.CloseTime < Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
 ##### 3.2.5.5 State Changes
 
