@@ -1057,13 +1057,13 @@ The transaction deletes an existing `Loan` object.
   - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
   - Update the `Loan` object:
 
-  - `Loan(LoanID).Flags &= ~lsfLoanImpaired`
+    - `CandidateDueDate = max(Loan.PreviousPaymentDate, Loan.StartDate) + Loan.PaymentInterval`
 
-    - If `Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval > currentTime` (the loan was unimpaired within the payment interval):
+    - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
 
-      - `Loan(LoanID).NextPaymentDueDate = Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval`
+      - `Loan(LoanID).NextPaymentDueDate = CandidateDueDate`
 
-    - If `Loan(LoanID).PreviousPaymentDate + Loan(LoanID).PaymentInterval < currentTime` (the loan was unimpaired after the original payment due date):
+    - If `CandidateDueDate <= currentTime` (the loan was unimpaired after the original payment due date):
       - `Loan(LoanID).NextPaymentDueDate = currentTime + Loan(LoanID).PaymentInterval`
 
 ##### 3.2.3.3 Invariants
