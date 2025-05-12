@@ -551,7 +551,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
     - If the `Vault(VaultID).Asset` is an `IOU`:
 
-      - Create a `Trustline` between the `Issuer` and the `LoanBroker` _pseudo-account_.
+      - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
 
     - If the `Vault(VaultID).Asset` is an `MPT`:
 
@@ -634,14 +634,16 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The trustline `Balance` < `Amount`.
+  - The `RippleState` object `Balance` < `Amount` (Depositor has insufficient funds).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
     - Has `lsfMPTLocked` flag set.
     - `MPTAmount` < `Amount`.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set (the asset is not transferable).
 
@@ -689,7 +691,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
@@ -824,13 +826,14 @@ The account specified in the `Account` field pays the transaction fee.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The trustline between the submitter account and the `Issuer` of the asset is frozen.
+  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
-    - Has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
 - Either of the `tfDefault`, `tfImpair` or `tfUnimpair` flags are set.
@@ -866,7 +869,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Create a `Trustline` between the `Issuer` and the `Borrower` if one does not exist.
+  - Create a `RippleState` object between the `Issuer` and the `Borrower` if one does not exist.
 
   - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested`.
   - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
@@ -1096,13 +1099,14 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The trustline between the submitter account and the `Issuer` of the asset is frozen.
+  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
-    - Has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
 - The `Borrower` missed a payment:
@@ -1477,16 +1481,19 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
 - `Loan.PaymentRemaining` or `Loan.PrincipalOutstanding` is `0`.
 
+- The Borrower paid insufficient amount: `full_periodic_payments < 0`.
+
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The trustline between the submitter account and the `Issuer` of the asset is frozen.
+  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
-    - Has `lsfMPTLocked` flag set.
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
 - If `LastClosedLedger.CloseTime >= Loan.NextPaymentDueDate` and `Amount` < `LatePaymentAmount()`
 
