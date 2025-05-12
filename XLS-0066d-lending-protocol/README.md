@@ -850,10 +850,10 @@ The account specified in the `Account` field pays the transaction fee.
 
 - Exceeds maximum Debt of the LoanBroker:
 
-  - `LoanBroker(LoanBrokerID).DebtMaximum` < `LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested`
+  - `LoanBroker(LoanBrokerID).DebtMaximum` < `Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)`
 
 - Insufficient First-Loss Capital:
-  - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested) x LoanBroker(LoanBrokerID).CoverRateMinimum`
+  - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
 ##### 3.2.1.6 State Changes
 
