@@ -1473,6 +1473,20 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
 ##### 3.2.5.4 Failure Conditions
 
+Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`. `totalDue` is the minimum payment due by the borrower.
+
+Assume the payment is handled by a function that implements the [Pseudo-Code](#3252-transaction-pseudo-code) that returns `principal_paid`, `interest_paid`, `value_change` and `fee_paid`, where:
+
+- `principal_paid` is the amount of principal that the payment covered.
+- `interest_paid` is the amount of interest that the payment covered.
+- `fee_paid` is the amount of fee that the payment covered.
+- `totalPaid = principal_paid + interest_paid + fee_paid` is the total amount the borrower paid.
+- `value_change` is the amount by which the total value of the Loan changed.
+  - If `value_change` < `0`, Loan value decreased.
+  - If `value_change` > `0`, Loan value increased.
+
+Furthermore, assume `full_periodic_payments` variable represents the number of payment intervals that the payment covered.
+
 - A `Loan` object with specified `LoanID` does not exist on the ledger.
 
 - The Loan has not started yet: `Loan.StartDate > LastClosedLedger.CloseTime`.
@@ -1500,19 +1514,6 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 - If `LastClosedLedger.CloseTime < Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
 ##### 3.2.5.5 State Changes
-
-Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`.
-
-Assume the payment is handled by a function that implements the [Pseudo-Code](#3252-transaction-pseudo-code) that returns `principal_paid`, `interest_paid`, `value_change` and `fee_paid`, where:
-
-- `principal_paid` is the amount of principal that the payment covered.
-- `interest_paid` is the amount of interest that the payment covered.
-- `fee_paid` is the amount of fee that the payment covered.
-- `value_change` is the amount by which the total value of the Loan changed.
-  - If `value_change` < `0`, Loan value decreased.
-  - If `value_change` > `0`, Loan value increased.
-
-Furthermore, assume `full_periodic_payments` variable represents the number of payment intervals that the payment covered.
 
 - `Loan` object state changes:
 
