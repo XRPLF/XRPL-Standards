@@ -1217,6 +1217,10 @@ $$
 totalDue = periodicPayment + latePaymentFee + latePaymentInterest
 $$
 
+$$
+secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.previousPaymentDate, Loan.startDate)
+$$
+
 A special, late payment interest rate is applied for the over-due period:
 
 $$
@@ -1272,6 +1276,10 @@ $$
 totalDue = principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee
 $$
 
+$$
+secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.previousPaymentDate, Loan.startDate)
+$$
+
 Accrued interest up to the point of early closure is calculated as follows:
 
 $$
@@ -1293,8 +1301,6 @@ The value change for an early full repayment is calculated as follows:
 $$
 valueChange = (prepaymentPenalty) - (interestOutstanding - accruedInterest)
 $$
-
-Note that `valueChange <= 0` as an early repayment reduces the total value of the Loan.
 
 ###### 3.2.5.1.5 Management Fee Calculations
 
