@@ -49,7 +49,7 @@ This version intentionally skips the complex mechanisms of automated on-chain co
   - [**3.1. LoanBroker Transactions**](#31-loanbroker-transactions)
     - [**3.1.1. LoanBrokerSet Transaction**](#311-loanbrokerset)
     - [**3.1.2. LoanBrokerDelete Transaction**](#312-loanbrokerdelete)
-    - [**3.1.3. LoanBrokerCovereposit Transaction**](#313-loanbrokercoverdeposit)
+    - [**3.1.3. LoanBrokerCoverDeposit Transaction**](#313-loanbrokercoverdeposit)
     - [**3.1.4. LoanBrokerCoverWithdraw Transaction**](#314-loanbrokercoverwithdraw)
   - [**3.2 Loan Transactions**](#32-loan-transactions)
     - [**3.2.1. LoanSet Transaction**](#321-loanset-transaction)
