@@ -1,8 +1,8 @@
-<pre>    
+<pre>
 Title:        <b>Single Asset Tokenized Vault</b>
 Revision:     <b>2</b> (2025-03-13)
 
-<hr>Authors:    
+<hr>Authors:
   <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
   <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
 
@@ -14,7 +14,7 @@ Affiliation:
 
 ## _Abstract_
 
-A Single Asset Vault is a new on-chain primitive for aggregating assets from one or more depositors, and making the assets available for other on-chain protocols. The Single Asset Vault uses [Multi-Purpose-Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens) to represent ownership shares of the Vault. The Vault serves diverse purposes, such as lending markets, aggregators, yield-bearing tokens, asset management, etc. The Single Asset Vault decouples the liquidity provision functionality from the specific protocol logic.
+A Single Asset Vault is a new on-chain primitive for aggregating assets from one or more depositors, and making the assets available for other on-chain protocols. The Single Asset Vault uses [Multi-Purpose-Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens) to represent ownership shares of the Vault. The Vault serves diverse purposes, such as lending markets, aggregators, yield-bearing tokens, asset management, etc. The Single Asset Vault decouples the liquidity provision functionality from the specific protocol logic.
 
 ## Index
 
@@ -80,13 +80,13 @@ A Single Asset Vault can be either public or private. Any depositor can deposit 
 
 #### 1.1.3 Yield Bearing Shares
 
-Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
+Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
 
 ### 1.2 Terminology
 
 - **Vault**: A ledger entry for aggregating liquidity and providing this liquidity to one or more accessors.
-- **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens).
-- **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens) created by the _pseudo-account_ of the vault.
+- **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
+- **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens) created by the _pseudo-account_ of the vault.
 
 ### 1.3 Actors
 
@@ -110,7 +110,7 @@ The **`Vault`** ledger entry describes the state of the tokenized vault.
 The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
 - The `Vault` space key `0x0056` (capital V)
-- The `AccountID`(https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
+- The `AccountID`(<https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields>) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
 #### 2.1.2 Fields
@@ -162,7 +162,7 @@ The `Vault` object costs one reserve fee per object created:
 
 #### 2.1.6 Vault Shares
 
-Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
+Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
 
 ##### 2.1.6.1 `MPTokenIssuance`
 
@@ -182,6 +182,7 @@ Here’s the table with the headings "Field," "Description," and "Value":
 **Flags**
 
 The following flags are set based on whether the shares are transferable and if the vault is public or private.
+
 | **Condition** | **Transferable** | **Non-Transferable** |
 | ----------------- | -------------------------------------------------------------------------------------- | ------------------- |
 | **Public Vault** | `lsfMPTCanEscrow` <br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer` | No Flags |
@@ -193,7 +194,7 @@ The `MPToken` object represents the amount of shares held by a depositor. It is 
 
 ###### 2.1.6.2.1 `MPToken` Values
 
-The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens#2122-fields).
+The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2112-fields).
 
 | **Condition**     | **Transferable**   | **Non-Transferable** |
 | ----------------- | ------------------ | -------------------- |
@@ -291,7 +292,7 @@ The First Come, First Serve strategy treats all requests equally, allowing a dep
 
 #### 2.1.8 Frozen Assets
 
-The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
+The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
 
 #### 2.1.9 Transfer Fees
 
@@ -486,7 +487,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ##### 3.2.1.2 State Changes
 
-If no `MPToken` object exists for the depositor, create one. For object details, see [3.4.2 `MPToken`](#3.4.2-MPToken).
+If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
 
 - Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
 - Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
@@ -524,8 +525,8 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 | `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                            |
 | `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
-If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21713-withdraw).
-If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21712-redeem).
+- If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
+- If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21722-redeem).
 
 In sections below assume the following variables:
 
@@ -608,7 +609,7 @@ In sections below assume the following variables:
 
 ## 3.3 VaultClawback Transaction
 
-#### 3.3.1 `VaultClawback` transaction
+#### 3.3.1 `VaultClawback` Transaction
 
 The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. The Clawback transaction must respect any future fees or penalties.
 
@@ -755,94 +756,94 @@ Here’s the updated table with your requested modifications:
 Vault holding an `IOU`:
 
 ```type-script
-	"result" :
-	{
-		"ledger_current_index" : 7,
-		"status" : "success",
-		"validated" : false,
-		"vault" :
-		{
-			"Account" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
-			"Asset" :
-			{
-				"currency" : "IOU",
-				"issuer" : "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
-			},
-			"AssetsAvailable" : "100",
-			"AssetsTotal" : "100",
-			"Flags" : 0,
-			"LedgerEntryType" : "Vault",
-			"LossUnrealized" : "0",
-			"Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-			"OwnerNode" : "0",
-			"PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
-			"PreviousTxnLgrSeq" : 6,
-			"Sequence" : 5,
-			"ShareMPTID" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E",
-			"WithdrawalPolicy" : 1,
-			"index" : "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
-			"shares" :
-			{
-				"Flags" : 0,
-				"Issuer" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
-				"LedgerEntryType" : "MPTokenIssuance",
-				"OutstandingAmount" : "100",
-				"OwnerNode" : "0",
-				"PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
-				"PreviousTxnLgrSeq" : 6,
-				"Sequence" : 1,
-				"index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
-				"mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
-			}
-		}
-	}
+ "result" :
+ {
+  "ledger_current_index" : 7,
+  "status" : "success",
+  "validated" : false,
+  "vault" :
+  {
+   "Account" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+   "Asset" :
+   {
+    "currency" : "IOU",
+    "issuer" : "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
+   },
+   "AssetsAvailable" : "100",
+   "AssetsTotal" : "100",
+   "Flags" : 0,
+   "LedgerEntryType" : "Vault",
+   "LossUnrealized" : "0",
+   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+   "OwnerNode" : "0",
+   "PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
+   "PreviousTxnLgrSeq" : 6,
+   "Sequence" : 5,
+   "ShareMPTID" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E",
+   "WithdrawalPolicy" : 1,
+   "index" : "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
+   "shares" :
+   {
+    "Flags" : 0,
+    "Issuer" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+    "LedgerEntryType" : "MPTokenIssuance",
+    "OutstandingAmount" : "100",
+    "OwnerNode" : "0",
+    "PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
+    "PreviousTxnLgrSeq" : 6,
+    "Sequence" : 1,
+    "index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
+    "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
+   }
+  }
+ }
 ```
 
 Vault holding an `MPT`:
 
 ```
 {
-	"result" :
-	{
-		"ledger_hash" : "31E9E3738E9A07219E49BC7B71E2CD9490AC3CDFB6CB2FD4F173FB8AE1619B34",
-		"ledger_index" : 11,
-		"status" : "success",
-		"validated" : true,
-		"vault" :
-		{
-			"Account" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
-			"Asset" :
-			{
-				"mpt_issuance_id" : "000000065E7AE0F677CFC3478DD710CD900EE92B99AB5B7A"
-			},
-			"AssetsAvailable" : "0",
-			"AssetsTotal" : "0",
-			"Flags" : 0,
-			"LedgerEntryType" : "Vault",
-			"LossUnrealized" : "0",
-			"Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-			"OwnerNode" : "0",
-			"PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
-			"PreviousTxnLgrSeq" : 10,
-			"Sequence" : 4,
-			"ShareMPTID" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D",
-			"WithdrawalPolicy" : 1,
-			"index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
-			"shares" :
-			{
-				"Flags" : 56,
-				"Issuer" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
-				"LedgerEntryType" : "MPTokenIssuance",
-				"OutstandingAmount" : "0",
-				"OwnerNode" : "0",
-				"PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
-				"PreviousTxnLgrSeq" : 10,
-				"Sequence" : 1,
-				"index" : "5D316FC6A8C5D2344F5A85E256DCBF06A9596C79B2F450ED7BF4E7E8442F8668",
-				"mpt_issuance_id" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D"
-			}
-		}
-	}
+ "result" :
+ {
+  "ledger_hash" : "31E9E3738E9A07219E49BC7B71E2CD9490AC3CDFB6CB2FD4F173FB8AE1619B34",
+  "ledger_index" : 11,
+  "status" : "success",
+  "validated" : true,
+  "vault" :
+  {
+   "Account" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
+   "Asset" :
+   {
+    "mpt_issuance_id" : "000000065E7AE0F677CFC3478DD710CD900EE92B99AB5B7A"
+   },
+   "AssetsAvailable" : "0",
+   "AssetsTotal" : "0",
+   "Flags" : 0,
+   "LedgerEntryType" : "Vault",
+   "LossUnrealized" : "0",
+   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+   "OwnerNode" : "0",
+   "PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
+   "PreviousTxnLgrSeq" : 10,
+   "Sequence" : 4,
+   "ShareMPTID" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D",
+   "WithdrawalPolicy" : 1,
+   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+   "shares" :
+   {
+    "Flags" : 56,
+    "Issuer" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
+    "LedgerEntryType" : "MPTokenIssuance",
+    "OutstandingAmount" : "0",
+    "OwnerNode" : "0",
+    "PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
+    "PreviousTxnLgrSeq" : 10,
+    "Sequence" : 1,
+    "index" : "5D316FC6A8C5D2344F5A85E256DCBF06A9596C79B2F450ED7BF4E7E8442F8668",
+    "mpt_issuance_id" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D"
+   }
+  }
+ }
 }
 ```
 
@@ -850,47 +851,47 @@ Vault holding `XRP`:
 
 ```
 {
-	"result" :
-	{
-		"ledger_hash" : "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
-		"ledger_index" : 6,
-		"status" : "success",
-		"validated" : true,
-		"vault" :
-		{
-			"Account" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-			"Asset" :
-			{
-				"currency" : "XRP"
-			},
-			"AssetsAvailable" : "0",
-			"AssetsTotal" : "0",
-			"Flags" : 0,
-			"LedgerEntryType" : "Vault",
-			"LossUnrealized" : "0",
-			"Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-			"OwnerNode" : "0",
-			"PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-			"PreviousTxnLgrSeq" : 5,
-			"Sequence" : 4,
-			"ShareMPTID" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
-			"WithdrawalPolicy" : 1,
-			"index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
-			"shares" :
-			{
-				"Flags" : 56,
-				"Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-				"LedgerEntryType" : "MPTokenIssuance",
-				"OutstandingAmount" : "0",
-				"OwnerNode" : "0",
-				"PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-				"PreviousTxnLgrSeq" : 5,
-				"Sequence" : 1,
-				"index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
-				"mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
-			}
-		}
-	}
+ "result" :
+ {
+  "ledger_hash" : "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+  "ledger_index" : 6,
+  "status" : "success",
+  "validated" : true,
+  "vault" :
+  {
+   "Account" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+   "Asset" :
+   {
+    "currency" : "XRP"
+   },
+   "AssetsAvailable" : "0",
+   "AssetsTotal" : "0",
+   "Flags" : 0,
+   "LedgerEntryType" : "Vault",
+   "LossUnrealized" : "0",
+   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+   "OwnerNode" : "0",
+   "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+   "PreviousTxnLgrSeq" : 5,
+   "Sequence" : 4,
+   "ShareMPTID" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
+   "WithdrawalPolicy" : 1,
+   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+   "shares" :
+   {
+    "Flags" : 56,
+    "Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+    "LedgerEntryType" : "MPTokenIssuance",
+    "OutstandingAmount" : "0",
+    "OwnerNode" : "0",
+    "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+    "PreviousTxnLgrSeq" : 5,
+    "Sequence" : 1,
+    "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
+    "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
+   }
+  }
+ }
 }
 ```
 
@@ -900,7 +901,7 @@ Vault holding `XRP`:
 
 [**Return to Index**](#index)
 
-## A-1 F.A.Q.
+## A-1 F.A.Q
 
 ### A-1.1 Why does the specification allow both `Withdraw` and `Redeem` and not just one of them?
 
@@ -920,7 +921,7 @@ In addion, any compliance mechanisms applied to `USDC` will also apply to the sh
 
 ### A-1.4 What is the difference between the `VaultOwner` and the `pseudo-account`?
 
-XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and MPT must be held by an account). The Vault Object (or any other object, such as the AMM) cannot hold assets directly. Therefore, a pseudo-account is created that holds the assets on behalf of that object. The pseudo-account is a stand-alone account, that cannot receive funds, it cannot send transactions, it is there to only hold assets. So for example, when a depositor deposits assets into a vault, in reality this transaction moves the assets from the depositor account to the pseudo-account.
+XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and MPT) must be held by an account. The Vault Object (or any other object, such as the AMM) cannot hold assets directly. Therefore, a pseudo-account is created that holds the assets on behalf of that object. The pseudo-account is a stand-alone account, that cannot receive funds, it cannot send transactions, it is there to only hold assets. So for example, when a depositor deposits assets into a vault, in reality this transaction moves the assets from the depositor account to the pseudo-account. Furthermore, the Vault `pseudo-account` is the Issuer of the Vault shares.
 
 ### A-1.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
