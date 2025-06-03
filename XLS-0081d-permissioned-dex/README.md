@@ -273,7 +273,7 @@ If the `DomainID` is included in the `OfferCreate` transaction, the DEX will use
 
 ## 5. Transaction: `Payment`
 
-A `Payment` transaction represents a transfer of value from one account to another, and can involve currency conversions and crossing the orderbook. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
+A `Payment` transaction represents a transfer of value from one account to another, and can involve currency conversions and crossing the orderbook. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains. Also, this transaction will not delete expired credentials as it traverses offers on the permissioned order book.
 
 ### 5.1. Fields
 
@@ -625,6 +625,10 @@ No, multiple offers would need to be placed for it to be in multiple domains.
 ### A.7: Can direct IOU payments be permissioned?
 
 No, because they don't go through the DEX. The issuer and destination can be directly verified for compliance and trust.
+
+### A.8: Why doesn't Payment transaction delete expired credentials?
+
+Each domain can have up to 10 credentials. This means that when a payment traverses the order book, it could potentially delete up to 10 credential objects for each offer. This would substantially increase the transaction metadata size and could impact ledger throughput. Adding this functionality would require additional performance evaluation.
 
 ## Appendix B: Alternate Designs
 
