@@ -114,7 +114,7 @@ This spec proposes adding the following fields:
 | Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                     |
 | ----------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `DomainID`        |           | `string`  | `Hash256`     | The domain that the offer must be a part of.                                                                                    |
-| `AdditionalBooks` |           | `array`   | `STArry`      | An additional list of order book directories that this offer belongs to. Currently this field only applicable to hybrid offers. |
+| `AdditionalBooks` |           | `array`   | `STArray`     | An additional list of order book directories that this offer belongs to. Currently this field only applicable to hybrid offers. |
 
 One new flag `lsfHybrid` is introduced:
 
@@ -273,7 +273,7 @@ If the `DomainID` is included in the `OfferCreate` transaction, the DEX will use
 
 ## 5. Transaction: `Payment`
 
-A `Payment` transaction represents a transfer of value from one account to another, and can involve currency conversions and crossing the orderbook. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains. Also, this transaction will not delete expired credentials as it traverses offers on the permissioned order book.
+A `Payment` transaction represents a transfer of value from one account to another, and can involve currency conversions and crossing the orderbook. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
 
 ### 5.1. Fields
 
@@ -298,34 +298,34 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 We propose these additions:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                                                                       |
-| ---------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| `DomainID` |           | `string`  | `Hash256`     | The domain the sender intends to use. Both the sender and destination must be part of this domain |
+| Field Name | Required? | JSON Type | Internal Type | Description                                                                                        |
+| ---------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| `DomainID` |           | `string`  | `Hash256`     | The domain the sender intends to use. Both the sender and destination must be part of this domain. |
 
 #### 5.1.1. `DomainID`
 
-The `DomainID` can be included if the sender intends it to be a cross-currency payment (i.e. if the payment is going to interact with the DEX). The domain will only play it's role if there is a path that involves offer book.
+The `DomainID` can be included if the sender intends it to be a cross-currency payment (i.e. if the payment is going to interact with the DEX). The domain will only play it's role if there is a path that crossing an orderbook.
 
 > Note: it's still possible that `DomainID` is included but the payment does not interact with DEX, it simply means that the `DomainID` will be ignored during payment paths.
 
-#### 5.1.2. Hybrid offer
+#### 5.2. Consuming Hybrid offers
 
 An existing hybrid offer can be consumed like a regular offer on the ledger. To consume a hybrid offer using the open orderbook, omit the `DomainID` from `Payment` and include a valid `path` involving the hybrid offer. To consume a hybrid offer using domain orderbook, include the `DomainID` in `Payment`.
 
-### 5.2. Failure Conditions
+### 5.3. Failure Conditions
 
 The existing set of failure conditions for `Payment` will continue to exist.
 
 There will also be the following in addition, if the `DomainID` is included:
 
 - The domain doesn't exist.
-- The `Account` and `Destination` is not a domain member.
+- The `Account` or `Destination` is not a domain member.
 - The offer owner during a payment path is no longer part of the domain (if there are no other valid offers).
 - The paths do not satisfy the domain's rules (e.g. a path includes an account that isn't a part of the domain).
 
-### 5.3. State Changes
+### 5.4. State Changes
 
-The existing set of state changes for a successful `Payment` transaction will continue to exist.
+The existing set of state changes for a successful `Payment` transaction will continue to exist. Also, this transaction will not delete expired credentials as it traverses offers on the permissioned order book.
 
 ## 6. RPC: `book_offers`
 
@@ -588,11 +588,7 @@ No open offer will be filled by a permissioned offer.
 
 ## 13. Security
 
-The trust assumptions are the same as with permissioned domains.
-
-## n+1. Open Questions
-
-- Does a permissioned offer need to be able to be part of multiple domains? If so, the `DomainID` field should be replaced with a `DomainIDs` field (to accommodate a list)
+The trust assumptions are the same as with [permissioned domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains#7-security).
 
 # Appendix
 
