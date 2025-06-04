@@ -784,6 +784,7 @@ Vault holding an `IOU`:
    "index" : "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
    "shares" :
    {
+    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
     "Flags" : 0,
     "Issuer" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
     "LedgerEntryType" : "MPTokenIssuance",
@@ -831,6 +832,7 @@ Vault holding an `MPT`:
    "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
    "shares" :
    {
+    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
     "Flags" : 56,
     "Issuer" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
     "LedgerEntryType" : "MPTokenIssuance",
@@ -879,6 +881,7 @@ Vault holding `XRP`:
    "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
    "shares" :
    {
+    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
     "Flags" : 56,
     "Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
     "LedgerEntryType" : "MPTokenIssuance",
@@ -901,7 +904,7 @@ Vault holding `XRP`:
 
 [**Return to Index**](#index)
 
-## A-1 F.A.Q
+## A-1 F.A.Q.
 
 ### A-1.1 Why does the specification allow both `Withdraw` and `Redeem` and not just one of them?
 
