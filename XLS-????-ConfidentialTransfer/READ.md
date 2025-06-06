@@ -1,6 +1,6 @@
 # XLS-ConfidentialTransfer: Confidential transfers for XRPL
 
-**Authors:** Murat Cenk  
+**Authors:** Murat Cenk, Aanchal Malhotra  
 **Status:** Draft  
 **Type:** XRPL Standard (XLS)  
 **Version:** 0.1
