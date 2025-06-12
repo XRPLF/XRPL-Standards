@@ -42,7 +42,30 @@ This proposal aims to:
 | EqualityProof   | Blob   | Yes      | ZK proof that EncryptedBalance equals Amount |
 | PublicKey       | Blob   | Yes      | Sender's EC-ElGamal public key             |
 
+
 ---
+### EC-ElGamal Ciphertext of the amount
+- Let G be the generator of the elliptic curve group.
+- Let pk be the user’s EC-ElGamal public key.
+- The user wants to encrypt a known plaintext amount m.
+- The ciphertext is of the form C = (r⋅G, m⋅G + r⋅pk) where r is a randomly chosen blinding scalar and the operation "⋅" is used for representing the elliptic curve scalar multiplication (point multipli action) operation.
+### Equality between plaintext and ciphertext
+The EqualityProof in the ConfidentialMint transaction proves, in zero-knowledge, that the plaintext amount m (given explicitly as Amount) matches the encrypted value in the EncryptedBalance field (an EC-ElGamal ciphertext).
+The proof aims to prove that the provided plaintext Amount = m was correctly encrypted into EncryptedBalance C = (A, B), where A = r⋅G, B = m⋅G + r⋅pk without revealing r.
+#### How to Generate EqualityProof
+- The EqualityProof is a sigma protocol proving knowledge of r such that A = r⋅G and B − m⋅G = r⋅pk. This is a standard Chaum-Pedersen proof of equality of discrete logarithms across two bases (G and pk), showing the discrete logarithm of A base G is equal to the discrete logarithm of B - mG base pk.
+#### Steps to Generate the Proof
+- Choose a random scalar t ∈ Zq
+- Compute commitments: T1 = t⋅G and T2 = t⋅pk
+- Compute challenge c = H(A,B,T1,T2,m)
+- Compute response s = t + c⋅r mod q
+#### The proof
+The proof is then commitments (T1,T2) and the response s. 
+#### Verification 
+This tuple allows the verifier to check
+s⋅G = T1 + c⋅A
+s⋅pk = T2 + c(B−mG)
+If both hold, the verifier is convinced the ciphertext indeed encrypts m, without learning r.
 
 ### ConfidentialSend Transaction Format
 
@@ -56,6 +79,24 @@ This proposal aims to:
 | PublicKeys    | Blob | Yes      | Public keys used in the transaction              |
 
 ---
+### Equality between two two EC-ElGamal ciphertexts
+This section presents the construction of a ZKP for plaintext equality between two EC-ElGamal ciphertexts by showing that both ciphertexts encrypt the same message, possibly under different public keys and randomness.
+#### Setting
+- Let the two ciphertexts be C1 = (R1, S1) = (r1G,mG + r1P1) and C2 = (R2, S2) =  (r2G,mG + r2P2) where m ∈ Zq is the message (as a scalar), r1, r2 ∈ Zq​ are random nonces, and P1 and P2​ are public keys of two parties. We want to prove in zero-knowledge that both ciphertexts encrypt the same value m, without revealing it. Prove knowledge of m, r1, r2m, r1​, r2​ such that
+S1 − r1P1 = mG = S2 − r2P2.
+- In other words, S1 − r1P1 = S2 − r2P2.This reduces to proving that the discrete log of two points is equal under different bases.
+Protocol (non-interactive, Fiat–Shamir)
+- Let’s define A1 = S1 − r1P1 and  A2 = S2 − r2P2. So we want to prove that
+logG(A1) = logG(A2) = m.
+- Prover chooses random w ∈ Zq.
+- Computes t1 = wG and t2 = wG (same generator here, but could be different if generalizing)
+- Computes challenge c = H(G,A1,A2,t1,t2)(using a hash function modeled as a random oracle)
+- Computes response z = w + c⋅m mod q.
+#### the proof
+- The proof sent to verifier c and z.
+#### Verification
+Checks if zG is equal to t1 + cA1 and t2 + cA2. Since A1 = A2, both equations are equivalent and only one is necessary, but sending both gives integrity.
+
 
 ### Validation Rules
 
@@ -97,8 +138,28 @@ Two supported methods:
 | StealthAddress | Blob   | Yes      | `P = H(r·B_view) + B_spend`                |
 | Metadata       | Blob   | Optional | Encrypted memo or payload                  |
 
-- Validation: transfers public XRP to stealth address
-- Receiver scans ledger with `b_view` key
+### Stealth Protocol
+Let the two primary parties involved in the protocol be:
+- Alice (Sender): Holds keys a (private key) and A  (public key, where A = aG), where G is the generator point on the elliptic curve.
+- Bob (Receiver): Holds keys b (private key) and B (public key, where B = bG).
+#### Key Generation by the Receiver (Bob): 
+- Bob, the recipient, generates an elliptic curve key pair. The private key is b and the public key is B = bG. This key pair will be used to derive a stealth address and facilitate the process of recipient verification.
+#### Stealth Address Creation by the Sender (Alice) 
+- Alice, the sender, generates a random scalar r to ensure the one-time nature of the stealth address. 
+- Alice calculates the temporary public key R as follows: R = rG. 
+- R is included in the transaction and shared publicly, but it cannot be linked to Alice or Bob without their private keys. 
+- Alice computes the shared secret s using Bob's public key B: s = H(rB) where H is a cryptographic hash function that ensures the output is uniformly distributed and secure. 
+- Alice uses the shared secret s to derive the one-time public key P for this transaction: P = sG+B. The resulting P is a unique public key only recognizable only by Bob, the recipient.
+#### Recipient Key Recovery by Bob
+- Bob scans the blockchain for transactions containing the temporary public key R. 
+- For each detected R, Bob computes the shared secret: s = H(bR). 
+- Bob then reconstructs P using the shared secret and his public key: P = sG + B. 
+- To spend the funds, Bob computes the one-time private key a′ = H(bR) + b. 
+- This ensures that: a′G = (H(bR) + b)G = sG + B = P and Bob can now use a′ to authorize transactions involving P.
+
+#### Validation
+- Sender transfers public XRP to stealth address.
+- Receiver scans ledger with `b_view` key.
 
 ---
 
@@ -184,6 +245,47 @@ Combines:
 | NewNotes       | List | Yes      | New notes with (Commitment, OwnerKey, EphemeralKey) |
 | RangeProofs    | Blob | Yes      | ZK range proofs on outputs                    |
 | BalanceProof   | Blob | Yes      | ZK proof: input = sum(output)                 |
+
+#### One-time ring signatures and key images
+
+A one-time ring signature allows a sender to prove they control one of a set of public keys without revealing which one. This ensures sender anonymity. To prevent double-spending, each signature includes a key image derived from the sender’s private key. This image is verifiable for uniqueness but does not reveal which key it was derived from.
+#### Key Definitions
+Let G be the elliptic curve base point used by XRPL (e.g., Ed25519 or secp256k1). We have
+- x be the private key
+- P = x·G be the public key
+- Hp(P) be a hash-to-curve function
+- I = x·Hp(P) be the key image
+#### Signature construction
+Given a message m and a ring of public keys S = {P₀, P₁, ..., Pₙ}, the signer is at index s and has private key x_s.
+1. Generate random scalars qᵢ for all i ∈ [0, n]
+2. Generate random responses wᵢ for all i ≠ s
+3. Compute:
+   - Lᵢ = qᵢ·G if i = s, else Lᵢ = qᵢ·G + wᵢ·Pᵢ
+   - Rᵢ = qᵢ·Hp(Pᵢ) if i = s, else Rᵢ = qᵢ·Hp(Pᵢ) + wᵢ·I
+
+4. Compute challenge:
+c = H(m || L₀, ..., Lₙ || R₀, ..., Rₙ)
+5. Derive:
+   - cₛ = c - Σ_{i ≠ s} cᵢ mod l
+   - rₛ = qₛ - cₛ·x_s mod l
+6. The final signature is:
+σ = (I, {cᵢ}, {rᵢ})
+#### Signature verification
+Given a message m, signature σ = (I, {cᵢ}, {rᵢ}), and public key set S = {P₀, ..., Pₙ}:
+1. Compute:
+   - Lᵢ' = rᵢ·G + cᵢ·Pᵢ
+   - Rᵢ' = rᵢ·Hp(Pᵢ) + cᵢ·I
+2. Compute challenge:
+c' = H(m || L₀', ..., Lₙ' || R₀', ..., Rₙ')
+3. Accept the signature if:
+c' = Σ_{i=0 to n} cᵢ mod l
+#### Key image linkability
+Validators maintain a global set of used key images. To prevent double-spending:
+If the key image I has been seen before, the transaction is rejected.
+If not, the key image is added to the ledger as spent and the transaction is accepted.
+Because I = x·Hp(P) is unique for each private key x, a note can only be spent once.
+
+
 
 **Validator Actions:**
 - Verify `RingSignature`, `KeyImage`, `RangeProofs`, `BalanceProof`
