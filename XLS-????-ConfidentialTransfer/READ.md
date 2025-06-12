@@ -26,14 +26,14 @@ This proposal aims to:
 
 ## Specification
 
-### Transaction Types
+### Transaction types
 
 - **ConfidentialMint**: Converts a public XRP balance into an encrypted confidential balance.
 - **ConfidentialSend**: Transfers confidential amounts between users using dual encryption and zero-knowledge proofs.
 
 ---
 
-### ConfidentialMint Transaction Format
+### ConfidentialMint transaction format
 
 | Field           | Type   | Required | Description                                |
 |----------------|--------|----------|--------------------------------------------|
@@ -66,7 +66,7 @@ which is a valid EC-ElGamal encryption of (m1 + m2). Similarly, subtraction:
 produces a ciphertext encrypting (m1 - m2). These homomorphic properties enable secure balance updates on ledger entries without revealing the plaintext amounts.
 
 ---
-### Equality Proof Between Plaintext and Ciphertext
+### Equality proof between plaintext and ciphertext
 
 In the `ConfidentialMint` transaction, the `EqualityProof` is a zero-knowledge proof showing that a given plaintext amount `m` matches the encrypted value in the EC-ElGamal ciphertext `C = (A, B)`.
 
@@ -100,7 +100,7 @@ This corresponds to a standard **Chaum-Pedersen proof** of equality of discrete 
 4. Compute the response:
    s = t + c * r mod q
 
-#### The Proof
+#### The proof
 
 The proof consists of the tuple `(T1, T2, s)`
 
@@ -113,7 +113,7 @@ To verify the proof, the verifier recomputes the challenge `c` and checks that:
 
 If both equalities hold, the verifier is convinced that the ciphertext `(A, B)` correctly encrypts the known plaintext `m` without learning `r`.
 
-### ConfidentialSend Transaction Format
+### ConfidentialSend transaction format
 
 | Field         | Type | Required | Description                                       |
 |---------------|------|----------|---------------------------------------------------|
@@ -125,7 +125,7 @@ If both equalities hold, the verifier is convinced that the ciphertext `(A, B)` 
 | PublicKeys    | Blob | Yes      | Public keys used in the transaction              |
 
 ---
-### Equality Proof Between Two EC-ElGamal Ciphertexts
+### Equality proof between two EC-ElGamal ciphertexts
 
 This section describes a zero-knowledge proof (ZKP) that two EC-ElGamal ciphertexts encrypt the same plaintext value `m`, possibly using different public keys and randomness. The proof reveals nothing about `m`, `r1`, or `r2`.
 
@@ -189,7 +189,7 @@ Since `A1 = A2`, verifying either is sufficient, but verifying both adds consist
 
 If the equations hold, the verifier is convinced that both ciphertexts encrypt the same plaintext `m` without learning anything about `m`, `r1`, or `r2`.
 
-### Validation Rules
+### Validation rules
 
 - Validate equality and range proofs
 - Perform EC-ElGamal homomorphic updates:
@@ -200,7 +200,7 @@ If the equations hold, the verifier is convinced that both ciphertexts encrypt t
 
 ---
 
-### Ledger Changes
+### Ledger changes
 
 - New encrypted balance field in AccountRoot object
 - New transaction types: `ConfidentialMint` and `ConfidentialSend`
@@ -208,7 +208,7 @@ If the equations hold, the verifier is convinced that both ciphertexts encrypt t
 
 ---
 
-### Compliance: Selective Disclosure
+### Compliance: Selective disclosure
 
 Two supported methods:
 - **Auditor Encryption**: Encrypted output for auditor + equality proof
@@ -216,9 +216,9 @@ Two supported methods:
 
 ---
 
-## Appendix A: Receiver Privacy Extensions
+## Appendix A: Receiver privacy extensions
 
-### A.1 Use Case 1: Receiver Anonymity Only (No Amount Confidentiality)
+### A.1 Use Case 1: Receiver anonymity only (No amount confidentiality)
 
 **Transaction Type:** `ReceiverPrivacySend`
 
@@ -229,7 +229,7 @@ Two supported methods:
 | StealthAddress | Blob   | Yes      | `P = H(r·B_view) + B_spend`                |
 | Metadata       | Blob   | Optional | Encrypted memo or payload                  |
 
-### Stealth Protocol
+### Stealth protocol
 
 This section describes how sender and receiver generate unlinkable, one-time addresses using elliptic curve Diffie-Hellman and hashing. The goal is to enable recipient privacy by ensuring that only the receiver can detect and spend funds sent to a stealth address.
 
@@ -242,7 +242,7 @@ This section describes how sender and receiver generate unlinkable, one-time add
 
 Here, `G` is the generator point of the elliptic curve group.
 
-#### Step 1: Receiver Key Generation (Bob)
+#### Step 1: Receiver key generation (Bob)
 
 - Bob generates a static keypair:
   - Private key: `b ∈ Z_q`
@@ -250,7 +250,7 @@ Here, `G` is the generator point of the elliptic curve group.
 
 This keypair is used for deriving stealth addresses and later recovering received notes.
 
-#### Step 2: Stealth Address Generation (Alice)
+#### Step 2: Stealth address generation (Alice)
 
 - Alice generates a fresh ephemeral scalar `r ∈ Z_q`
 - Computes the temporary public key `R = r * G`
@@ -269,7 +269,7 @@ This `R` is published with the transaction.
 
 This `P` is the stealth address used in the note or output.
 
-#### Step 3: Recipient Detection and Key Recovery (Bob)
+#### Step 3: Recipient detection and key recovery (Bob)
 
 - Bob monitors the ledger for transactions containing `R`.
 - For each detected `R`, Bob computes:
@@ -296,7 +296,7 @@ Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bo
 
 ---
 
-### A.2 Use Case 2: Receiver Anonymity with Confidential Amounts
+### A.2 Use Case 2: Receiver anonymity with confidential amounts
 
 **Transaction Type:** `ReceiverPrivacyConfidentialSend`
 
@@ -315,7 +315,7 @@ Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bo
 
 ---
 
-## Appendix B: Full Confidential and Private Transfers
+## Appendix B: Full confidential and private transfers
 
 Combines:
 - Confidential balances and amounts
@@ -324,7 +324,7 @@ Combines:
 
 ---
 
-### Transaction Types
+### Transaction types
 
 | Transaction Type          | Description                                           |
 |---------------------------|-------------------------------------------------------|
@@ -335,7 +335,7 @@ Combines:
 
 ---
 
-### NoteMintFromPublic Transaction Format
+### NoteMintFromPublic transaction format
 
 | Field         | Type   | Required | Description                                  |
 |---------------|--------|----------|----------------------------------------------|
@@ -352,7 +352,7 @@ Combines:
 
 ---
 
-### NoteMint Transaction Format
+### NoteMint transaction format
 
 | Field         | Type | Required | Description                              |
 |---------------|------|----------|------------------------------------------|
@@ -361,14 +361,14 @@ Combines:
 | EphemeralKey  | Blob | Yes      | For stealth detection                    |
 | RangeProof    | Blob | Yes      | ZK proof: balance covers note amount     |
 
-**Validator Actions:**
+**Validator actions:**
 - Verify `RangeProof`
 - Deduct note amount homomorphically
 - Store Note with `Spent = false`
 
 ---
 
-### ConfidentialTransfer Transaction Format
+### ConfidentialTransfer transaction format
 
 | Field          | Type | Required | Description                                   |
 |----------------|------|----------|-----------------------------------------------|
@@ -379,7 +379,7 @@ Combines:
 | RangeProofs    | Blob | Yes      | ZK range proofs on outputs                    |
 | BalanceProof   | Blob | Yes      | ZK proof: input = sum(output)                 |
 
-### One-Time Ring Signatures and Key Images
+### One-Time ring signatures and key images
 
 This section describes a cryptographic scheme that allows a sender to prove, in zero knowledge, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
 
@@ -398,7 +398,7 @@ This `I` is unlinkable to `x` but uniquely identifies a spent key.
 
 ---
 
-### Signature Construction
+### Signature construction
 
 Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of public keys (the ring). The signer is at index `s` with private key `x_s`.
 
@@ -435,7 +435,7 @@ Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of publi
 
 ---
 
-### Signature Verification
+### Signature verification
 
 Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = {P_0, ..., P_n}`:
 
@@ -456,7 +456,7 @@ Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = 
 
 ---
 
-### Key Image Linkability
+### Key image linkability
 
 To prevent double-spending:
 
@@ -468,7 +468,7 @@ Since the key image is deterministically derived from the signer’s private key
 
 
 
-**Validator Actions:**
+**Validator actions:**
 - Verify `RingSignature`, `KeyImage`, `RangeProofs`, `BalanceProof`
 - Reject reused `KeyImage`
 - Mark input note as spent
@@ -476,21 +476,21 @@ Since the key image is deterministically derived from the signer’s private key
 
 ---
 
-### ConfidentialBurn Transaction Format
+### ConfidentialBurn transaction format
 
 | Field         | Type | Required | Description                              |
 |---------------|------|----------|------------------------------------------|
 | Commitment    | Blob | Yes      | Note commitment to burn                  |
 | EqualityProof | Blob | Yes      | ZK proof: commitment encodes amount      |
 
-**Validator Actions:**
+**Validator actions:**
 - Verify `EqualityProof`
 - Mark note as spent
 - Credit XRP to public balance
 
 ---
 
-## Security Considerations
+## Security considerations
 
 - ZKPs must be sound
 - EC-ElGamal ciphertexts must be randomized
