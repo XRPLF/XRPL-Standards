@@ -51,6 +51,7 @@ This version intentionally skips the complex mechanisms of automated on-chain co
     - [**3.1.2. LoanBrokerDelete Transaction**](#312-loanbrokerdelete)
     - [**3.1.3. LoanBrokerCoverDeposit Transaction**](#313-loanbrokercoverdeposit)
     - [**3.1.4. LoanBrokerCoverWithdraw Transaction**](#314-loanbrokercoverwithdraw)
+    - [**3.1.5. LoanBrokerCoverClawback Transaction**](#315-loanbrokercoverclawback)
   - [**3.2 Loan Transactions**](#32-loan-transactions)
     - [**3.2.1. LoanSet Transaction**](#321-loanset-transaction)
     - [**3.2.2. LoanDelete Transaction**](#322-loandelete-transaction)
@@ -73,6 +74,7 @@ The specification introduces the following transactions:
 - **`LoanBrokerDelete`**: A transaction to delete an existing `LoanBroker` object.
 - **`LoanBrokerCoverDeposit`**: A transaction to deposit First-Loss Capital.
 - **`LoanBrokerCoverWithdraw`**: A transaction to withdraw First-Loss Capital.
+- **`LoanBrokerCoverClawback`**: A transaction to clawback the First-Loss Capital. This transaction can only be submitted by the Issuer of the asset.
 - **`LoanSet`**: A transaction to create a new `Loan` object.
 - **`LoanDelete`**: A transaction to delete an existing `Loan` object.
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
@@ -680,7 +682,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                                       |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The amount of Vault asset to withdraw.                                  |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw. |
 | `Destination`     |                    | `string`  |   `AccountID` |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
 ##### 3.1.4.1 Failure conditions
@@ -748,6 +750,53 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - Create a  `MPToken` object for the `Destination` `AccountRoot` if it does not exist.
     - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
 
+- Decrease `LoanBroker.CoverAvailable` by `Amount`.
+
+[**Return to Index**](#index)
+
+#### 3.1.5 `LoanBrokerCoverClawback`
+
+The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from the `LoanBroker`. The transaction can only be submitted by the Issuer of the Loan asset. Furthermore, the transaction can only clawback funds up to the minimum cover required for the current loans.
+
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                                       |
+| `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to clawback. If the amount is `0` clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum` |
+
+##### 3.1.5.1 Failure conditions
+
+- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
+
+- If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU` and:
+
+  - The Issuer account is not the submitter of the transaction.
+  - If the `AccountRoot(Issuer)` object does not have lsfAllowTrustLineClawback flag set (the asset does not support clawback).
+  - If the `AccountRoot(Issuer)` has the lsfNoFreeze flag set (the asset cannot be frozen).
+
+- If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT` and:
+
+  - MPTokenIssuance.Issuer is not the submitter of the transaction.
+  - MPTokenIssuance.lsfMPTCanClawback flag is not set (the asset does not support clawback).
+  - If the MPTokenIssuance.lsfMPTCanLock flag is NOT set (the asset cannot be locked).
+
+- The `Amount` > `0` and `LoanBroker.CoverAvailable` < `Amount`.
+
+- `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+
+##### 3.1.5.2 State Changes
+  
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
+
+  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+  
+- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
+
+  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
 
 [**Return to Index**](#index)
@@ -1659,8 +1708,12 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 # Appendix
 
-## A-1 F.A.Q
+## A-1 F.A.Q.
 
-### A-1.1 What is the `LoanBroker.LoanSequence` field?
+### A-1.1. What is the `LoanBroker.LoanSequence` field?
 
 A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created.
+
+### A-1-2. Why the `LoanBrokerCoverClawback` cannot clawback the full LoanBroker.CoverAvailable amount?
+
+The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
