@@ -186,8 +186,6 @@ Since `A1 = A2`, verifying either is sufficient, but verifying both adds consist
 If the equations hold, the verifier is convinced that both ciphertexts encrypt the same plaintext `m` without learning anything about `m`, `r1`, or `r2`.
 
 
-
-
 ---
 ### Bitwise Range Proof
 
@@ -323,8 +321,10 @@ A base-3 range proof includes:
 - `n` 3-ary OR-proofs ensuring d_i ∈ {0,1,2}
 - An aggregation check: ∑ 3^i * C_i = C
 - An EqualityProof linking `C` and the ciphertext
+
 Using base-3 decomposition reduces the number of digits required (compared to base-2),
 trading off slightly more complex per-digit proofs for fewer total commitments.
+
 ---
 ### Bulletproof Range Proof
 
@@ -393,6 +393,7 @@ A Bulletproof-based range proof includes:
 - An `EqualityProof` linking `C` and the EC-ElGamal ciphertext
   
 Bulletproofs are well-suited for high-performance applications where minimizing proof size and verification cost is critical, while preserving strong zero-knowledge guarantees.
+
 ---
 ### Validation Rules
 
