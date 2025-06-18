@@ -323,7 +323,6 @@ A base-3 range proof includes:
 - `n` 3-ary OR-proofs ensuring d_i ∈ {0,1,2}
 - An aggregation check: ∑ 3^i * C_i = C
 - An EqualityProof linking `C` and the ciphertext
-
 Using base-3 decomposition reduces the number of digits required (compared to base-2),
 trading off slightly more complex per-digit proofs for fewer total commitments.
 ---
@@ -392,9 +391,8 @@ A Bulletproof-based range proof includes:
 - A single Pedersen commitment `C = m * G + r * H`
 - A compact logarithmic-size ZK proof that `m ∈ [0, 2^n)`
 - An `EqualityProof` linking `C` and the EC-ElGamal ciphertext
-
-Bulletproofs are well-suited for high-performance applications where minimizing proof size and
-verification cost is critical, while preserving strong zero-knowledge guarantees.
+  
+Bulletproofs are well-suited for high-performance applications where minimizing proof size and verification cost is critical, while preserving strong zero-knowledge guarantees.
 ---
 ### Validation Rules
 
