@@ -26,14 +26,14 @@ This proposal aims to:
 
 ## Specification
 
-### Transaction types
+### Transaction Types
 
 - **ConfidentialMint**: Converts a public XRP balance into an encrypted confidential balance.
 - **ConfidentialSend**: Transfers confidential amounts between users using dual encryption and zero-knowledge proofs.
 
 ---
 
-### ConfidentialMint transaction format
+### ConfidentialMint Transaction Format
 
 | Field           | Type   | Required | Description                                |
 |----------------|--------|----------|--------------------------------------------|
@@ -66,7 +66,7 @@ which is a valid EC-ElGamal encryption of (m1 + m2). Similarly, subtraction:
 produces a ciphertext encrypting (m1 - m2). These homomorphic properties enable secure balance updates on ledger entries without revealing the plaintext amounts.
 
 ---
-### Equality proof between plaintext and ciphertext
+### Equality Proof Between Plaintext and Ciphertext
 
 In the `ConfidentialMint` transaction, the `EqualityProof` is a zero-knowledge proof showing that a given plaintext amount `m` matches the encrypted value in the EC-ElGamal ciphertext `C = (A, B)`.
 
@@ -100,7 +100,7 @@ This corresponds to a standard **Chaum-Pedersen proof** of equality of discrete 
 4. Compute the response:
    s = t + c * r mod q
 
-#### The proof
+#### The Proof
 
 The proof consists of the tuple `(T1, T2, s)`
 
@@ -113,7 +113,7 @@ To verify the proof, the verifier recomputes the challenge `c` and checks that:
 
 If both equalities hold, the verifier is convinced that the ciphertext `(A, B)` correctly encrypts the known plaintext `m` without learning `r`.
 
-### ConfidentialSend transaction format
+### ConfidentialSend Transaction Format
 
 | Field         | Type | Required | Description                                       |
 |---------------|------|----------|---------------------------------------------------|
@@ -125,9 +125,9 @@ If both equalities hold, the verifier is convinced that the ciphertext `(A, B)` 
 | PublicKeys    | Blob | Yes      | Public keys used in the transaction              |
 
 ---
-### Equality proof between two EC-ElGamal ciphertexts
+### Equality Proof Between Two EC-ElGamal Ciphertexts
 
-This section describes a zero-knowledge proof (ZKP) that two EC-ElGamal ciphertexts encrypt the same plaintext value `m`, possibly using different public keys and randomness. The proof reveals nothing about `m`, `r1`, or `r2`.
+This section describes a ZKP that two EC-ElGamal ciphertexts encrypt the same plaintext value `m`, possibly using different public keys and randomness. The proof reveals nothing about `m`, `r1`, or `r2`.
 
 #### Setting
 
@@ -157,14 +157,12 @@ This reduces to proving that two group elements `A1` and `A2` have the same disc
 #### Protocol (Non-Interactive via Fiat–Shamir)
 
 1. Prover computes:
-   A1 = S1 - r1 * P1
-   A2 = S2 - r2 * P2
+   A1 = S1 - r1 * P1 and A2 = S2 - r2 * P2
 
 2. Chooses a random scalar `w ∈ Z_q`
 
 3. Computes:
-   t1 = w * G
-   t2 = w * G
+   t1 = w * G and t2 = w * G
 
 4. Computes challenge:
    c = H(G, A1, A2, t1, t2)
@@ -174,9 +172,7 @@ This reduces to proving that two group elements `A1` and `A2` have the same disc
 
 #### The Proof
 
-The proof consists of:
-- challenge `c`
-- response `z`
+The proof consists of A1, A2, t1, t2, and z.
 
 #### Verification
 
@@ -189,7 +185,218 @@ Since `A1 = A2`, verifying either is sufficient, but verifying both adds consist
 
 If the equations hold, the verifier is convinced that both ciphertexts encrypt the same plaintext `m` without learning anything about `m`, `r1`, or `r2`.
 
-### Validation rules
+
+
+
+---
+### Bitwise Range Proof
+
+In the `ConfidentialSend` transaction, the `RangeProof` field is a ZKP
+that ensures the  `balanace - m ≥  0`. This prevents encoding invalid or negative amounts
+while maintaining confidentiality.
+
+#### Bit Decomposition
+
+The prover represents the amount `m ∈ Z_q` as a binary sum:
+
+    m = b_0 * 2^0 + b_1 * 2^1 + ... + b_{n-1} * 2^{n-1}, where each b_i ∈ {0,1}
+
+#### Commitments to Bits
+
+Each bit `b_i` is committed using a Pedersen commitment:
+
+    C_i = b_i * G + r_i * H
+
+where
+- `G` and `H` are independent elliptic curve generators
+- `r_i ∈ Z_q` is a blinding factor for bit `i`
+
+#### Aggregation of Commitments
+
+The prover computes the overall commitment to the amount:
+
+    C = ∑_{i=0}^{n-1} 2^i * C_i = m * G + r * H
+
+where
+
+    r = ∑_{i=0}^{n-1} 2^i * r_i
+
+This `C` serves as the link between the bitwise decomposition and the encrypted value.
+
+#### Bit Validity Proofs (b_i ∈ {0,1})
+
+For each bit commitment `C_i`, the prover constructs a zero-knowledge OR-proof
+demonstrating that:
+
+    C_i = 0 * G + r_0 * H    or    C_i = 1 * G + r_1 * H
+
+This is instantiated using a standard disjunctive Σ-protocol based on by Cramer, Damgård, and Schoenmakers (CRYPTO 1994).  The interactive protocol is converted to a non-interactive form via the Fiat–Shamir heuristic.
+
+#### Linking to EC-ElGamal Ciphertext
+
+The bit commitment `C` is linked to the EC-ElGamal ciphertext:
+
+    (A, B) = (r * G, m * G + r * pk)
+
+This is done using the `EqualityProof` described earlier, via a Chaum–Pedersen protocol
+showing that:
+
+    C - m * G = r * H
+    B - m * G = r * pk
+
+Without revealing `m` or `r`.
+
+#### Summary
+
+The complete bitwise range proof includes:
+- `n` Pedersen commitments to bits: C_0, ..., C_{n-1}
+- `n` OR-proofs that each b_i ∈ {0,1}
+- An aggregation check that ∑ 2^i * C_i = C
+- An EqualityProof that C and the ciphertext represent the same `m`
+
+This ensures that `m` is a valid non-negative amount encrypted under EC-ElGamal
+while maintaining zero knowledge.
+
+---
+### Base-3 Range Proof
+
+As an alternative to bitwise decomposition, the `RangeProof` may use a base-3 (ternary) decomposition,
+where the plaintext amount `m ∈ [0, 3^n)` is expressed using digits in `{0, 1, 2}`.
+
+This method reduces the number of proof elements compared to bitwise proofs, at the cost of more complex
+per-digit validity checks. It is particularly useful when optimizing for proof size.
+
+#### Base-3 Decomposition
+
+The prover expresses the value `m` as:
+
+    m = d_0 * 3^0 + d_1 * 3^1 + ... + d_{n-1} * 3^{n-1}, where each d_i ∈ {0, 1, 2}
+
+#### Commitments to Digits
+
+Each ternary digit `d_i` is committed using a Pedersen commitment:
+
+    C_i = d_i * G + r_i * H
+
+Where:
+- `G` and `H` are independent elliptic curve generators
+- `r_i ∈ Z_q` is a blinding scalar
+
+#### Aggregation of Commitments
+
+The prover computes the aggregate commitment to the value:
+
+    C = ∑_{i=0}^{n-1} 3^i * C_i = m * G + r * H
+
+Where:
+
+    r = ∑_{i=0}^{n-1} 3^i * r_i
+
+This `C` links the ternary digit commitments to the encrypted value `m`.
+
+#### Digit Validity Proofs (d_i ∈ {0,1,2})
+
+To ensure each committed digit `d_i` is in `{0,1,2}`, the prover uses a **zero-knowledge OR-proof** over three cases:
+
+    C_i = 0 * G + r_0 * H
+    C_i = 1 * G + r_1 * H
+    C_i = 2 * G + r_2 * H
+
+This is a 3-ary disjunctive Σ-protocol, following the generalized Cramer–Damgård–Schoenmakers (CDS) framework.
+
+As with bitwise proofs, this interactive protocol is made non-interactive via the Fiat–Shamir transform.
+
+#### Linking to EC-ElGamal Ciphertext
+
+The aggregate commitment `C` is linked to the EC-ElGamal ciphertext `(A, B)` using the same
+`EqualityProof` described earlier:
+
+    A = r * G
+    B = m * G + r * pk
+
+The `EqualityProof` confirms that both representations encode the same plaintext `m`.
+
+#### Summary
+
+A base-3 range proof includes:
+- `n` Pedersen digit commitments: C_0, ..., C_{n-1}
+- `n` 3-ary OR-proofs ensuring d_i ∈ {0,1,2}
+- An aggregation check: ∑ 3^i * C_i = C
+- An EqualityProof linking `C` and the ciphertext
+
+Using base-3 decomposition reduces the number of digits required (compared to base-2),
+trading off slightly more complex per-digit proofs for fewer total commitments.
+---
+### Bulletproof Range Proof
+
+As an alternative to bitwise or base-3 decompositions, the `RangeProof` may use **Bulletproofs** by Bünz, Bootle, Boneh, Poelstra, Wuille, and Maxwell that is
+a logarithmic-size zero-knowledge proof system efficiently proving that a committed value lies
+within a certain range without revealing it.
+
+This approach significantly reduces proof size and verification time for typical 64-bit confidential
+amounts, and is suitable when compactness and scalability are important.
+
+#### Commitment
+
+The prover commits to the amount `m` using a standard Pedersen commitment:
+
+    C = m * G + r * H
+
+Where:
+- `G`, `H` are independent elliptic curve generators
+- `r ∈ Z_q` is a blinding scalar
+- `m ∈ Z_q` is the confidential plaintext amount
+
+#### Range Statement
+
+The prover proves in zero knowledge that:
+
+    0 ≤ m < 2^n
+
+For example, with `n = 64`, the proof shows that `m` is a valid 64-bit non-negative integer.
+
+Unlike bitwise proofs, Bulletproofs do **not** require committing to each bit individually. Instead,
+the full range proof is built from the single commitment `C`.
+
+#### Proof Protocol
+
+The Bulletproof protocol constructs an inner product argument that proves `m` is composed of valid bits
+without sending each bit commitment separately. The protocol includes:
+
+1. Vector polynomials encoding the bits of `m`
+2. An interactive proof of the inner product
+3. Fiat–Shamir transformation to make it non-interactive
+
+The resulting proof size is:
+
+    Size = 2 * log₂(n) + 9 group elements
+
+For `n = 64`, the proof is ~700 bytes — significantly smaller than bitwise or base-3 alternatives.
+
+#### Linking to EC-ElGamal Ciphertext
+
+The Pedersen commitment `C` used in the Bulletproof must be shown to match the plaintext value
+used in the EC-ElGamal ciphertext:
+
+    A = r * G
+    B = m * G + r * pk
+
+This linkage is proven using the standard `EqualityProof` described earlier:
+
+    C - m * G = r * H
+    B - m * G = r * pk
+
+#### Summary
+
+A Bulletproof-based range proof includes:
+- A single Pedersen commitment `C = m * G + r * H`
+- A compact logarithmic-size ZK proof that `m ∈ [0, 2^n)`
+- An `EqualityProof` linking `C` and the EC-ElGamal ciphertext
+
+Bulletproofs are well-suited for high-performance applications where minimizing proof size and
+verification cost is critical, while preserving strong zero-knowledge guarantees.
+---
+### Validation Rules
 
 - Validate equality and range proofs
 - Perform EC-ElGamal homomorphic updates:
@@ -200,25 +407,25 @@ If the equations hold, the verifier is convinced that both ciphertexts encrypt t
 
 ---
 
-### Ledger changes
+### Ledger Changes
 
 - New encrypted balance field in AccountRoot object
 - New transaction types: `ConfidentialMint` and `ConfidentialSend`
 - Optional support for auditor ciphertexts and note objects
-
 ---
-
-### Compliance: Selective disclosure
+### Compliance: Selective Disclosure
 
 Two supported methods:
 - **Auditor Encryption**: Encrypted output for auditor + equality proof
 - **On-Demand Disclosure**: Users may share decryption key/amount when required
 
----
 
-## Appendix A: Receiver privacy extensions
 
-### A.1 Use Case 1: Receiver anonymity only (No amount confidentiality)
+
+
+## Appendix A: Receiver Privacy Extensions
+
+### A.1 Use Case 1: Receiver Anonymity Only (No Amount Confidentiality)
 
 **Transaction Type:** `ReceiverPrivacySend`
 
@@ -229,7 +436,7 @@ Two supported methods:
 | StealthAddress | Blob   | Yes      | `P = H(r·B_view) + B_spend`                |
 | Metadata       | Blob   | Optional | Encrypted memo or payload                  |
 
-### Stealth protocol
+### Stealth Protocol
 
 This section describes how sender and receiver generate unlinkable, one-time addresses using elliptic curve Diffie-Hellman and hashing. The goal is to enable recipient privacy by ensuring that only the receiver can detect and spend funds sent to a stealth address.
 
@@ -242,7 +449,7 @@ This section describes how sender and receiver generate unlinkable, one-time add
 
 Here, `G` is the generator point of the elliptic curve group.
 
-#### Step 1: Receiver key generation (Bob)
+#### Step 1: Receiver Key Generation (Bob)
 
 - Bob generates a static keypair:
   - Private key: `b ∈ Z_q`
@@ -250,7 +457,7 @@ Here, `G` is the generator point of the elliptic curve group.
 
 This keypair is used for deriving stealth addresses and later recovering received notes.
 
-#### Step 2: Stealth address generation (Alice)
+#### Step 2: Stealth Address Generation (Alice)
 
 - Alice generates a fresh ephemeral scalar `r ∈ Z_q`
 - Computes the temporary public key `R = r * G`
@@ -269,7 +476,7 @@ This `R` is published with the transaction.
 
 This `P` is the stealth address used in the note or output.
 
-#### Step 3: Recipient detection and key recovery (Bob)
+#### Step 3: Recipient Detection and Key Recovery (Bob)
 
 - Bob monitors the ledger for transactions containing `R`.
 - For each detected `R`, Bob computes:
@@ -296,7 +503,7 @@ Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bo
 
 ---
 
-### A.2 Use Case 2: Receiver anonymity with confidential amounts
+### A.2 Use Case 2: Receiver Anonymity with Confidential Amounts
 
 **Transaction Type:** `ReceiverPrivacyConfidentialSend`
 
@@ -315,7 +522,7 @@ Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bo
 
 ---
 
-## Appendix B: Full confidential and private transfers
+## Appendix B: Full Confidential and Private Transfers
 
 Combines:
 - Confidential balances and amounts
@@ -324,7 +531,7 @@ Combines:
 
 ---
 
-### Transaction types
+### Transaction Types
 
 | Transaction Type          | Description                                           |
 |---------------------------|-------------------------------------------------------|
@@ -335,7 +542,7 @@ Combines:
 
 ---
 
-### NoteMintFromPublic transaction format
+### NoteMintFromPublic Transaction Format
 
 | Field         | Type   | Required | Description                                  |
 |---------------|--------|----------|----------------------------------------------|
@@ -352,7 +559,7 @@ Combines:
 
 ---
 
-### NoteMint transaction format
+### NoteMint Transaction Format
 
 | Field         | Type | Required | Description                              |
 |---------------|------|----------|------------------------------------------|
@@ -361,14 +568,14 @@ Combines:
 | EphemeralKey  | Blob | Yes      | For stealth detection                    |
 | RangeProof    | Blob | Yes      | ZK proof: balance covers note amount     |
 
-**Validator actions:**
+**Validator Actions:**
 - Verify `RangeProof`
 - Deduct note amount homomorphically
 - Store Note with `Spent = false`
 
 ---
 
-### ConfidentialTransfer transaction format
+### ConfidentialTransfer Transaction Format
 
 | Field          | Type | Required | Description                                   |
 |----------------|------|----------|-----------------------------------------------|
@@ -379,7 +586,7 @@ Combines:
 | RangeProofs    | Blob | Yes      | ZK range proofs on outputs                    |
 | BalanceProof   | Blob | Yes      | ZK proof: input = sum(output)                 |
 
-### One-Time ring signatures and key images
+### One-Time Ring Signatures and Key Images
 
 This section describes a cryptographic scheme that allows a sender to prove, in zero knowledge, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
 
@@ -398,7 +605,7 @@ This `I` is unlinkable to `x` but uniquely identifies a spent key.
 
 ---
 
-### Signature construction
+### Signature Construction
 
 Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of public keys (the ring). The signer is at index `s` with private key `x_s`.
 
@@ -435,7 +642,7 @@ Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of publi
 
 ---
 
-### Signature verification
+### Signature Verification
 
 Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = {P_0, ..., P_n}`:
 
@@ -456,7 +663,7 @@ Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = 
 
 ---
 
-### Key image linkability
+### Key Image Linkability
 
 To prevent double-spending:
 
@@ -468,7 +675,7 @@ Since the key image is deterministically derived from the signer’s private key
 
 
 
-**Validator actions:**
+**Validator Actions:**
 - Verify `RingSignature`, `KeyImage`, `RangeProofs`, `BalanceProof`
 - Reject reused `KeyImage`
 - Mark input note as spent
@@ -476,21 +683,21 @@ Since the key image is deterministically derived from the signer’s private key
 
 ---
 
-### ConfidentialBurn transaction format
+### ConfidentialBurn Transaction Format
 
 | Field         | Type | Required | Description                              |
 |---------------|------|----------|------------------------------------------|
 | Commitment    | Blob | Yes      | Note commitment to burn                  |
 | EqualityProof | Blob | Yes      | ZK proof: commitment encodes amount      |
 
-**Validator actions:**
+**Validator Actions:**
 - Verify `EqualityProof`
 - Mark note as spent
 - Credit XRP to public balance
 
 ---
 
-## Security considerations
+## Security Considerations
 
 - ZKPs must be sound
 - EC-ElGamal ciphertexts must be randomized
