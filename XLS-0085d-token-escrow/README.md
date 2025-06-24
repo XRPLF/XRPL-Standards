@@ -219,6 +219,14 @@ The `MPTokenIssuance` ledger object is updated as follows:
 |-----------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `sfEscrowAmount`        | Object | Amount        | *(Optional)* The total of all outstanding escrows for this issuance.                                 |
 
+### 1.5.4 `AccountRoot` Ledger Object
+
+This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot`:
+
+| Flag Name       |  Flag Value  |
+|:---------------:|:------------:|
+| `lsfAllowTrustLineLocking` | `0x40000000` | 
+
 ## 1.6. Future Considerations
 
 1. Clawback: XLS-85d currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
