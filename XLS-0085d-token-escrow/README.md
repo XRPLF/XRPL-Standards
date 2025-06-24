@@ -55,7 +55,7 @@ The `EscrowCreate` transaction is modified as follows:
   - If the source account is the issuer of the token, the transaction fails with `tecNO_PERMISSION`.
 
 - **Issuer Does Not Allow Token Escrow or Transfer:**
-   - **IOU Tokens**: If the issuer's account does not have the `lsfAllowTokenEscrow` flag set, the transaction fails with `tecNO_PERMISSION`.
+   - **IOU Tokens**: If the issuer's account does not have the `lsfAllowTrustLineLocking` flag set, the transaction fails with `tecNO_PERMISSION`.
    - **MPTs**:
      - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanEscrow` flag, the transaction fails with `tecNO_PERMISSION`.
      - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanTransfer` flag, the transaction fails with `tecNO_PERMISSION` unless the destination address of the Escrow is the issuer of the MPT.
@@ -169,7 +169,7 @@ The `EscrowCreate` transaction is modified as follows:
 | Aspect                        | IOU Tokens                                                               | Multi-Purpose Tokens (MPTs)                                                |
 |-------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
 | **Trustlines**                | Required between accounts and issuer                                     | Not used                                                                   |
-| **Issuer Flag for Escrow**    | `lsfAllowTokenEscrow` (account flag)                                       | `tfMPTCanEscrow` (token flag)                                              |
+| **Issuer Flag for Escrow**    | `lsfAllowTrustLineLocking` (account flag)                                       | `tfMPTCanEscrow` (token flag)                                              |
 | **Transfer Flags**            | N/A                                                                      | `tfMPTCanTransfer` must be enabled for  escrow                 |
 | **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens |
 | **Destination Authorization** | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required |
