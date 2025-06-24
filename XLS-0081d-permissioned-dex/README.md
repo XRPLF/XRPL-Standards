@@ -346,9 +346,9 @@ As a reference, here are the fields that `book_offers` currently accepts:
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                                                       |
-| ---------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then the offers will be filtered to only show the valid domain offers for that domain. |
+| Field Name | Required? | JSON Type | Description                                                                                                                                                                                                                                                                                       |
+| ---------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is provided, the response will include only valid domain offers associated with that specific domain. If omitted, the response will include only hybrid and open offers for the trading pair, excluding all domain-specific offers. |
 
 ### 6.2. Response Fields
 
