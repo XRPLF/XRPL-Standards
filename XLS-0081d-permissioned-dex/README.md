@@ -382,9 +382,9 @@ As a reference, here are the fields that the `path_find` `create` subcommand cur
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                                              |
-| ---------- | --------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain. |
+| Field Name | Required? | JSON Type | Description                                                                                                                        |
+| ---------- | --------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
 
 ### 7.2. Response Fields
 
@@ -424,9 +424,9 @@ As a reference, here are the fields that `ripple_path_find` currently accepts:
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                                              |
-| ---------- | --------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain. |
+| Field Name | Required? | JSON Type | Description                                                                                                                        |
+| ---------- | --------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
 
 ### 8.2. Response Fields
 
