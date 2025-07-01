@@ -35,12 +35,31 @@ This proposal aims to:
 
 ### ConfidentialMint Transaction Format
 
-| Field           | Type   | Required | Description                                |
-|----------------|--------|----------|--------------------------------------------|
-| Amount          | UInt64 | Yes      | The plain XRP amount to convert            |
-| EncryptedBalance| Blob   | Yes      | EC-ElGamal ciphertext of the amount        |
-| EqualityProof   | Blob   | Yes      | ZK proof that EncryptedBalance equals Amount |
-| PublicKey       | Blob   | Yes      | Sender's EC-ElGamal public key             |
+| Field              | Type       | Required | Description                                                                 |
+|-------------------|------------|----------|-----------------------------------------------------------------------------|
+| TransactionType    | UInt16     | Yes      | Must be set to `ConfidentialMint`                                           |
+| Account            | AccountID  | Yes      | XRPL account initiating the mint and funding the confidential balance       |
+| Amount             | UInt64     | Yes      | Public XRP amount to be converted into a confidential balance               |
+| EncryptedBalance   | Blob       | Yes      | EC-ElGamal ciphertext of `Amount`                                           |
+| EqualityProof      | Blob       | Yes      | ZK proof that `EncryptedBalance` encrypts `Amount`                          |
+| PublicKey          | Blob       | Yes      | EC-ElGamal public key used for encryption                                   |
+| Fee                | UInt64     | Yes      | XRP fee for processing the transaction                                      |
+| Sequence           | UInt32     | Yes      | Current sequence number of the sending account                              |
+| SigningPubKey      | Blob       | Yes      | Public key used to authorize the transaction                                |
+| TxnSignature       | Blob       | Yes      | Signature over the transaction blob                                         |
+
+    {
+    "TransactionType": "ConfidentialMint",
+    "Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
+    "Amount": "1000000",
+    "EncryptedBalance": "028f12...e9b3",  
+    "EqualityProof": "03ab45...cc11",
+    "PublicKey": "0381c5...af12",  
+    "Fee": "10",
+    "Sequence": 100,
+    "SigningPubKey": "EDD6C5...A12F",
+    "TxnSignature": "3044...0220"
+    }
 
 
 ---
