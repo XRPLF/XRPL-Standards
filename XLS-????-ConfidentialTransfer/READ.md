@@ -24,6 +24,22 @@ This proposal aims to:
 
 ---
 
+## Terminology
+
+| Term               | Definition                                                                                                                   |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------|
+| **ConfidentialMint** | Transaction that converts public XRP into an encrypted confidential balance.                                                 |
+| **ConfidentialSend** | Transaction that transfers encrypted value between users using zero-knowledge proofs.                                        |
+| **EC-ElGamal**      | Elliptic curve–based public-key encryption scheme supporting additive homomorphism.                                          |
+| **EncryptedBalance**| An EC-ElGamal ciphertext stored on-ledger that represents a confidential amount.                                             |
+| **EqualityProof**   | ZKP that a ciphertext encrypts a known plaintext value.                                                                      |
+| **RangeProof**      | ZKP that an encrypted value lies within a valid numeric range.                                                               |
+| **PublicKey**       | EC-ElGamal encryption public key used to encrypt confidential amounts; distinct from the signing key.                        |
+| **SigningPubKey**   | Standard XRPL public key used to authorize transactions.                                                                     |
+| **StealthAddress**  | One-time public key derived from recipient’s view and spend keys; hides recipient identity.                                  |
+| **Note**            | A cryptographic commitment representing a confidential amount in the full anonymity mode.                                    |
+| **KeyImage**        | A unique elliptic curve point derived from a private key, used to prevent double-spending in ring signature–based transfers. |
+---
 ## Specification
 
 ### Transaction Types
@@ -60,7 +76,6 @@ This proposal aims to:
     "SigningPubKey": "EDD6C5...A12F",
     "TxnSignature": "3044...0220"
     }
-
 
 ---
 ### EC-ElGamal ciphertext and homomorphic properties
