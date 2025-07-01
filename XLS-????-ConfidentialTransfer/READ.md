@@ -26,19 +26,35 @@ This proposal aims to:
 
 ## Terminology
 
-| Term               | Definition                                                                                                                   |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------|
-| **ConfidentialMint** | Transaction that converts public XRP into an encrypted confidential balance.                                                 |
-| **ConfidentialSend** | Transaction that transfers encrypted value between users using zero-knowledge proofs.                                        |
-| **EC-ElGamal**      | Elliptic curve–based public-key encryption scheme supporting additive homomorphism.                                          |
-| **EncryptedBalance**| An EC-ElGamal ciphertext stored on-ledger that represents a confidential amount.                                             |
-| **EqualityProof**   | ZKP that a ciphertext encrypts a known plaintext value.                                                                      |
-| **RangeProof**      | ZKP that an encrypted value lies within a valid numeric range.                                                               |
-| **PublicKey**       | EC-ElGamal encryption public key used to encrypt confidential amounts; distinct from the signing key.                        |
-| **SigningPubKey**   | Standard XRPL public key used to authorize transactions.                                                                     |
-| **StealthAddress**  | One-time public key derived from recipient’s view and spend keys; hides recipient identity.                                  |
-| **Note**            | A cryptographic commitment representing a confidential amount in the full anonymity mode.                                    |
-| **KeyImage**        | A unique elliptic curve point derived from a private key, used to prevent double-spending in ring signature–based transfers. |
+| Term                | Definition                                                                                                                             |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| **Account**          | XRPL classic address (e.g., `rEXAMPLE...`) that authorizes the transaction and provides public XRP for minting.                      |
+| **PublicKey**        | EC-ElGamal public key used to encrypt confidential balances; not necessarily the public key of the XRPL account owner.               |
+| **SigningPubKey**    | XRPL signing key used to authorize the transaction; corresponds to the `Account` and verified via `TxnSignature`.                   |
+| **EncryptedBalance** | An EC-ElGamal ciphertext representing an encrypted XRP amount, stored in the ledger.                                                  |
+| **EqualityProof**    | Zero-knowledge proof that the plaintext `Amount` matches the EC-ElGamal ciphertext (`EncryptedBalance`).                             |
+| **RangeProof**       | Zero-knowledge proof that an encrypted amount is within a valid range (e.g., non-negative).                                           |
+| **ConfidentialMint** | Transaction that deducts public XRP from the `Account` and creates an encrypted confidential balance.                                |
+| **ConfidentialSend** | Transaction that transfers encrypted funds between users using dual encryption and zero-knowledge proofs.                            |
+| **StealthAddress**   | One-time encryption key derived from a recipient’s viewing and spending keys; hides recipient identity on-chain.                     |
+| **Note**             | A cryptographic commitment to a confidential amount; used in the full anonymity mode for balance ownership and spending.             |
+| **KeyImage**         | Unique elliptic curve point derived from a private key; used in ring signature–based schemes to prevent double spending.             |
+
+---
+## Notation and Curve Parameters
+
+| Symbol     | Meaning                                                                                   |
+|------------|--------------------------------------------------------------------------------------------|
+| `G`        | Generator point of the elliptic curve group (e.g., for secp256k1).                         |
+| `H`        | Independent generator used for Pedersen commitments (must be chosen so log_G(H) is unknown). |
+| `r`        | Random scalar in the finite field 𝑍ₚ, used as a blinding factor for encryption.           |
+| `m`        | Plaintext amount to be encrypted (e.g., XRP value).                                        |
+| `pk`       | EC-ElGamal public key used to encrypt the plaintext value.                                |
+| `sk`       | EC-ElGamal private key corresponding to `pk`; used to decrypt ciphertexts.                |
+| `A`        | First component of ciphertext: `A = r · G`.                                                |
+| `B`        | Second component of ciphertext: `B = m · G + r · pk`.                                      |
+| `(A, B)`   | EC-ElGamal ciphertext tuple representing the encrypted value `m`.                          |
+
 ---
 ## Specification
 
@@ -132,9 +148,6 @@ This section describes how the `ConfidentialMint` transaction is constructed, su
 
 6. **Ledger Update**
     - The account state is updated with the new encrypted balance, allowing the user to participate in confidential transfers.
-
-
-
 
 ---
 ### EC-ElGamal ciphertext and homomorphic properties
