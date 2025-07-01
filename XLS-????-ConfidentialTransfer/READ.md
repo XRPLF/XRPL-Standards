@@ -48,34 +48,93 @@ This proposal aims to:
 - **ConfidentialSend**: Transfers confidential amounts between users using dual encryption and zero-knowledge proofs.
 
 ---
+### ConfidentialMint Transaction
 
-### ConfidentialMint Transaction Format
+The `ConfidentialMint` transaction converts a known amount of XRP from a user’s public balance into an encrypted confidential balance using **Elliptic Curve ElGamal (EC-ElGamal)** encryption. This serves as the entry point for participating in the confidential transfer system.
 
-| Field              | Type       | Required | Description                                                                 |
-|-------------------|------------|----------|-----------------------------------------------------------------------------|
-| TransactionType    | UInt16     | Yes      | Must be set to `ConfidentialMint`                                           |
-| Account            | AccountID  | Yes      | XRPL account initiating the mint and funding the confidential balance       |
-| Amount             | UInt64     | Yes      | Public XRP amount to be converted into a confidential balance               |
-| EncryptedBalance   | Blob       | Yes      | EC-ElGamal ciphertext of `Amount`                                           |
-| EqualityProof      | Blob       | Yes      | ZK proof that `EncryptedBalance` encrypts `Amount`                          |
-| PublicKey          | Blob       | Yes      | EC-ElGamal public key used for encryption                                   |
-| Fee                | UInt64     | Yes      | XRP fee for processing the transaction                                      |
-| Sequence           | UInt32     | Yes      | Current sequence number of the sending account                              |
-| SigningPubKey      | Blob       | Yes      | Public key used to authorize the transaction                                |
-| TxnSignature       | Blob       | Yes      | Signature over the transaction blob                                         |
+This transaction:
+- Deducts a plaintext `Amount` from the sender’s public XRP balance
+- Initializes an encrypted balance using `EncryptedBalance`
+- Includes a zero-knowledge proof (`EqualityProof`) verifying that the encrypted value matches the stated `Amount`
 
-    {
-    "TransactionType": "ConfidentialMint",
-    "Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
-    "Amount": "1000000",
-    "EncryptedBalance": "028f12...e9b3",  
-    "EqualityProof": "03ab45...cc11",
-    "PublicKey": "0381c5...af12",  
-    "Fee": "10",
-    "Sequence": 100,
-    "SigningPubKey": "EDD6C5...A12F",
-    "TxnSignature": "3044...0220"
-    }
+---
+
+#### Format
+
+| Field             | Type       | Required | Description                                                                 |
+|------------------|------------|----------|-----------------------------------------------------------------------------|
+| TransactionType   | UInt16     | Yes      | Must be set to `ConfidentialMint`                                          |
+| Account           | AccountID  | Yes      | XRPL account initiating the mint and funding the confidential balance       |
+| Amount            | UInt64     | Yes      | XRP amount to be converted to a confidential balance                       |
+| EncryptedBalance  | Blob       | Yes      | EC-ElGamal ciphertext of `Amount`                                          |
+| EqualityProof     | Blob       | Yes      | Zero-knowledge proof that the ciphertext matches the plaintext `Amount`    |
+| PublicKey         | Blob       | Yes      | EC-ElGamal public key used for encryption (distinct from signing key)      |
+| Fee               | UInt64     | Yes      | XRP fee for processing the transaction                                     |
+| Sequence          | UInt32     | Yes      | Sequence number of the sending account                                     |
+| SigningPubKey     | Blob       | Yes      | Standard XRPL public key used to sign the transaction                      |
+| TxnSignature      | Blob       | Yes      | Signature authorizing the transaction                                      |
+
+---
+
+#### JSON Example
+
+```json
+{
+  "TransactionType": "ConfidentialMint",
+  "Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
+  "Amount": "1000000",
+  "EncryptedBalance": "028f12...e9b3",
+  "EqualityProof": "03ab45...cc11",
+  "PublicKey": "0381c5...af12",
+  "Fee": "10",
+  "Sequence": 100,
+  "SigningPubKey": "EDD6C5...A12F",
+  "TxnSignature": "3044...0220"
+}
+```
+#### Transaction Flow
+
+This section describes how the `ConfidentialMint` transaction is constructed, submitted, and validated.
+
+1. **User Prepares the Transaction**
+    - Select a public `Amount` of XRP to convert.
+    - Generate a random scalar `r`.
+    - Compute EC-ElGamal ciphertext:
+      ```
+      A = r · G
+      B = Amount · G + r · PublicKey
+      EncryptedBalance = (A, B)
+      ```
+
+2. **Generate Zero-Knowledge Proof**
+    - Construct a Chaum–Pedersen proof to show:
+      ```
+      A = r · G
+      B - Amount · G = r · PublicKey
+      ```
+    - The result is stored in `EqualityProof`.
+
+3. **Create the Transaction**
+    - Populate required fields:
+        - `TransactionType`, `Account`, `Amount`, `EncryptedBalance`
+        - `EqualityProof`, `PublicKey`, `Fee`, `Sequence`, `SigningPubKey`, `TxnSignature`
+
+4. **Submit to XRPL Network**
+    - The transaction is submitted via standard XRPL submission flow.
+
+5. **Validation by XRPL Validators**
+    - Check signature validity.
+    - Verify `EncryptedBalance` structure and curve points.
+    - Verify `EqualityProof` with respect to `Amount`, `PublicKey`, and `EncryptedBalance`.
+    - Confirm sufficient public XRP funds.
+    - Subtract `Amount` from `Account`'s public balance.
+    - Store the new `EncryptedBalance` under the sender’s `PublicKey`.
+
+6. **Ledger Update**
+    - The account state is updated with the new encrypted balance, allowing the user to participate in confidential transfers.
+
+
+
 
 ---
 ### EC-ElGamal ciphertext and homomorphic properties
