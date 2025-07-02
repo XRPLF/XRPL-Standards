@@ -379,12 +379,13 @@ On successful validation of a `ConfidentialSend` transaction:
 ---
 #### Privacy and Isolation
 
-- Encrypted balances are maintained separately from public XRP balances and do not affect existing XRPL operations or data structures.
+- Encrypted balances are maintained separately from public XRP balances and do not interfere with existing XRPL operations.
 - Validators cannot infer:
-    - The transaction amount,
-    - The identity of the confidential receiver (unless linked through account metadata),
-    - The relationship between EC-ElGamal keys and XRPL signing keys.
-- No on-ledger link exists between the `ElGamalPublicKey` and the XRPL signing key unless such linkage is explicitly registered or disclosed.
+    - The confidential transaction amount (due to encryption and ZKPs),
+    - The contents or value of any encrypted balance,
+    - Any off-chain relationship between an ElGamal key and other XRPL accounts.
+- However, in the account-based model, the recipient's XRPL account is explicitly included in the transaction, and the `ElGamalPublicKey` is stored in the account’s `AccountRoot`. This creates an on-ledger association between the recipient's XRPL identity and their confidential balance key.
+- This design trades off full anonymity for balance encryption and protocol simplicity, while still supporting optional privacy extensions such as stealth addresses or note-based models.
 
 ---
 
