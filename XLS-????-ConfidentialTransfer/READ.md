@@ -47,7 +47,7 @@ This proposal aims to:
 |------------|--------------------------------------------------------------------------------------------|
 | `G`        | Generator point of the elliptic curve group (e.g., for secp256k1).                         |
 | `H`        | Independent generator used for Pedersen commitments (must be chosen so log_G(H) is unknown). |
-| `r`        | Random scalar in the finite field 𝑍ₚ, used as a blinding factor for encryption.           |
+| `r`        | Random scalar in the finite field `Z_p`, used as a blinding factor for encryption.           |
 | `m`        | Plaintext amount to be encrypted (e.g., XRP value).                                        |
 | `pk`       | EC-ElGamal public key used to encrypt the plaintext value.                                |
 | `sk`       | EC-ElGamal private key corresponding to `pk`; used to decrypt ciphertexts.                |
