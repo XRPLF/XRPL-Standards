@@ -433,15 +433,16 @@ On successful validation of a `ConfidentialSend` transaction:
 - Future upgrades may include selective decryption support.
 
 ---
-
 ### Ledger Changes
 
-The ConfidentialSend transaction modifies the XRPL ledger by homomorphically updating the encrypted balances of both the sender and the receiver. No plaintext values are revealed or stored during this process. These changes are isolated to confidential balance fields associated with EC-ElGamal public keys, leaving standard XRP balances unaffected.
+This proposal introduces new ledger-level structures to support confidential transactions:
 
-- Key ledger-level changes introduced by this proposal:
-- Addition of encrypted balance fields in the AccountRoot object. 
-- Introduction of new transaction types: ConfidentialMint and ConfidentialSend. 
-- Optional support for auditor ciphertexts and note-based extensions.
+- Addition of `ConfidentialBalance` and `ElGamalPublicKey` fields to the `AccountRoot` object.
+- Introduction of new transaction types: `ConfidentialMint` and `ConfidentialSend`.
+- Optional support for auditor ciphertexts and note-based confidential transfer extensions.
+
+These changes enable encrypted fund transfers while preserving compatibility with XRPL’s account-based ledger model.
+
 
 ---
 ### Compliance Extension
