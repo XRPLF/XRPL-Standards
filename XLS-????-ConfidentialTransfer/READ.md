@@ -427,10 +427,12 @@ On successful validation of a `ConfidentialSend` transaction:
 
 ---
 
-#### Compliance Support
+### Compliance Support
 
-- Ledger changes accommodate optional auditor extensions by allowing encrypted amount disclosure under separate auditor public keys.
-- Future upgrades may include selective decryption support.
+The protocol supports optional compliance features for regulatory or auditing purposes. Two disclosure mechanisms are available:
+
+- **Auditor Encryption**: An additional ciphertext is included in the transaction, encrypted with an auditor’s public key and accompanied by an equality proof showing it matches the transferred amount.
+- **On-Demand Disclosure**: Users may optionally share the decryption key or plaintext amount with authorized third parties when required.
 
 ---
 ### Ledger Changes
@@ -442,14 +444,6 @@ This proposal introduces new ledger-level structures to support confidential tra
 - Optional support for auditor ciphertexts and note-based confidential transfer extensions.
 
 These changes enable encrypted fund transfers while preserving compatibility with XRPL’s account-based ledger model.
-
-
----
-### Compliance Extension
-
-Two supported methods:
-- **Auditor Encryption**: Encrypted output for auditor + equality proof
-- **On-Demand Disclosure**: Users may share decryption key/amount when required
 
 ---
 
