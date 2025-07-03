@@ -190,7 +190,7 @@ This design supports future extensions (e.g., multiple balances per account or s
 ---
 ### ConfidentialSend Transaction
 
-The ConfidentialSend transaction enables private transfer of encrypted balances between accounts on the XRPL using EC-ElGamal encryption, zero-knowledge proofs (ZKPs), and additive homomorphism. The protocol ensures:
+The ConfidentialSend transaction enables private transfer of encrypted balances between accounts on the XRPL using EC-ElGamal encryption, ZKPs, and additive homomorphism. The protocol ensures:
 - The transaction amount remains hidden from the public. 
 - The sender’s and receiver’s encrypted balances are updated directly, without decryption. 
 - Optional compliance mechanisms are supported via selective disclosure. 
