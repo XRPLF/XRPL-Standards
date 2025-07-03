@@ -225,7 +225,7 @@ This transaction involves two independent key types, each serving distinct roles
 | Confidential Balance Control| EC-ElGamal public key       | Defines who can decrypt or control the encrypted balances             |
 
 - The XRPL signing key must be authorized for the XRPL `Account` and is verified using existing XRPL rules (master key, regular key, or multi-sign).
-- The EC-ElGamal public keys are not required to be linked to an XRPL account. They are used exclusively for encrypting values and verifying ZKPs. This decouples confidentiality from account identity and enables flexible, privacy-preserving ownership of funds.
+- The EC-ElGamal public keys are used exclusively for encrypting values and verifying ZKPs. In this design, they are registered under XRPL accounts to support balance tracking and validation, but they are not used for transaction signing. This enables private control of funds while preserving a clear separation from the XRPL signing key.
 
 ---
 
