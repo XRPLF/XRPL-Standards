@@ -781,17 +781,14 @@ The `ReceiverPrivacyConfidentialSend` transaction introduces confidential ledger
 
 ---
 
-## Appendix B: Full Confidential and Private Transfers (WIP)
+## Appendix B: Full Confidential and Private Transfers
+The Full Confidential and Private Transfer system introduces a powerful privacy-preserving mechanism for XRP by combining confidential amounts, receiver anonymity, and sender anonymity. To this end,  Pedersen commitments (for encrypted balances), stealth addresses (to hide recipient identities), and one-time ring signatures (to anonymize senders) are used. Instead of updating account-based balances, value is held and transferred via confidential notes, which are independently verifiable, unlinkable, and transferable.
+This mode enables the highest level of privacy by combining:
+- Confidential balances and amounts 
+- Receiver anonymity using stealth addresses 
+- Sender anonymity via ring signatures
 
-Combines:
-- Confidential balances and amounts
-- Receiver anonymity (stealth addresses)
-- Sender anonymity (ring signatures)
-
----
-
-### Transaction Types
-
+### Transaction types
 | Transaction Type          | Description                                           |
 |---------------------------|-------------------------------------------------------|
 | NoteMintFromPublic        | Creates a confidential note from public XRP           |
@@ -799,169 +796,101 @@ Combines:
 | ConfidentialTransfer      | Spends a note with ring signature and stealth address |
 | ConfidentialBurn          | Converts a note back into public XRP                  |
 
----
-
-### NoteMintFromPublic Transaction Format
+### NoteMintFromPublic Transaction
+This transaction generates a confidential note from a public XRP balance.
 
 | Field         | Type   | Required | Description                         |
 |---------------|--------|----------|-------------------------------------|
-| Amount        | UInt64 | Yes      | Plain XRP amount                    |
+| Amount        | UInt64 | Yes      | Public XRP amount                   |
 | Commitment    | Blob   | Yes      | Pedersen commitment `C = r·G + m·H` |
-| OwnerKey      | Blob   | Yes      | `P = s·G + B_spend`                 |
+| OwnerKey      | Blob   | Yes      | `P = s·G + B_spend` (stealth address)|
 | EphemeralKey  | Blob   | Yes      | One-time key `R = k·G`              |
-| EqualityProof | Blob   | Yes      | ZKP `C` encodes `Amount`            |
+| EqualityProof | Blob   | Yes      | ZKP proving commitment encodes amount |
 
-**Validator Actions:**
-- Verify `EqualityProof`
-- Deduct `Amount` from public balance
-- Store Note: `(Commitment, OwnerKey, EphemeralKey, Spent = false)`
+#### Validator Actions
+- Verify EqualityProof
+- Deduct Amount from sender’s public XRP balance 
+- Store note with:
+  - Commitment 
+  - OwnerKey (stealth address)
+  - EphemeralKey 
+  - Spent = false
 
----
-
-### NoteMint Transaction Format
+### NoteMint Transaction
+This transaction generates  a confidential note from the sender’s confidential balance.
 
 | Field         | Type | Required | Description                         |
 |---------------|------|----------|-------------------------------------|
 | Commitment    | Blob | Yes      | Pedersen commitment `C = r·G + m·H` |
 | OwnerKey      | Blob | Yes      | One-time key for note ownership     |
 | EphemeralKey  | Blob | Yes      | For stealth detection               |
-| RangeProof    | Blob | Yes      | ZKP: balance covers note amount     |
+| RangeProof    | Blob | Yes      | ZKP that balance ≥ note amount      |
 
-**Validator Actions:**
-- Verify `RangeProof`
-- Deduct note amount homomorphically
-- Store Note with `Spent = false`
+#### Validator Actions
+- Verify RangeProof 
+- Deduct note amount from confidential balance homomorphically 
+- Store note with Spent = false
 
----
-
-### ConfidentialTransfer Transaction Format
+### ConfidentialTransfer Transaction
+Transfers value by spending one or more notes using ring signatures and generating new notes.
 
 | Field          | Type | Required | Description                                         |
 |----------------|------|----------|-----------------------------------------------------|
 | Ring           | Blob | Yes      | Ring of public keys                                 |
-| KeyImage       | Blob | Yes      | Unique tag for double-spend prevention              |
-| RingSignature  | Blob | Yes      | Proof of signer ownership                           |
-| NewNotes       | List | Yes      | New notes with (Commitment, OwnerKey, EphemeralKey) |
-| RangeProofs    | Blob | Yes      | ZK range proofs on outputs                          |
-| BalanceProof   | Blob | Yes      | ZKP: input = sum(output)                            |
+| KeyImage       | Blob | Yes      | Unique key image for double-spend prevention        |
+| RingSignature  | Blob | Yes      | Signature proving control over one ring key         |
+| NewNotes       | List | Yes      | New notes (Commitment, OwnerKey, EphemeralKey)      |
+| RangeProofs    | Blob | Yes      | ZK range proofs on new notes                        |
+| BalanceProof   | Blob | Yes      | ZKP: input commitment = sum of output commitments   |
 
-### One-Time Ring Signatures and Key Images
+#### Transaction flow
+1. **Sender Note Selection**:
+    - Sender selects a previously received note (unspent) and builds a ring of public keys.
+    - Computes key image `I = x * Hp(P)` to prevent reuse.
 
-This section describes a cryptographic scheme that allows a sender to prove, in ZK, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
+2. **Stealth Address Generation**:
+    - For each output note, derive a new stealth address:
+        - `EphemeralKey = r·G`
+        - `s = H(r·B_view)`
+        - `OwnerKey = s·G + B_spend`
 
-#### Key Definitions
+3. **Proof Construction**:
+    - Build:
+        - `RingSignature` to prove control over one input
+        - `RangeProofs` for outputs
+        - `BalanceProof` for value preservation
 
-Let `G` be the elliptic curve generator (e.g., Ed25519 or secp256k1). Let:
+4. **Transaction Submission**:
+    - Submit `ConfidentialTransfer` with all fields and standard signature.
+#### Validator action
+- Verify `RingSignature` and `KeyImage`
+- Reject transaction if `KeyImage` is already recorded
+- Verify `RangeProofs` and `BalanceProof`
+- Mark input note as `Spent`
+- Store all `NewNotes` with `Spent = false`
+- Add `KeyImage` to spent set
 
-- `x ∈ Z_l` be the sender’s private key
-- `P = x * G` be the corresponding public key
-- `Hp(P)` be a hash-to-curve function that maps `P` deterministically to a curve point
-- The **key image** is defined as:
+### ConfidentialBurn Transaction
+Burns a note and redeems it into public XRP.
 
-      I = x * Hp(P)
+| Field         | Type | Required | Description                         |
+|---------------|------|----------|-------------------------------------|
+| Commitment    | Blob | Yes      | Note commitment to burn             |
+| EqualityProof | Blob | Yes      | ZKP: commitment encodes amount      |
 
-This `I` is unlinkable to `x` but uniquely identifies a spent key.
+#### Validator Actions
+- Verify EqualityProof 
+- Mark note as Spent 
+- Credit amount to sender’s public XRP balance
 
----
+### Ledger State and Validation
+- All notes are stored as (Commitment, OwnerKey, EphemeralKey, Spent)
+- Validators must:
+    - Maintain a list of key images to detect double spends
+    - Verify all ZKPs (equality, range, balance)
+    - Enforce correct spend-to-output commitment matching
+    - Enforce one-time stealth address unlinkability
 
-### Signature Construction
-
-Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of public keys (the ring). The signer is at index `s` with private key `x_s`.
-
-1. **Generate randomness:**
-  - Choose random scalars `q_i ∈ Z_l` for all `i ∈ [0, n]`
-  - Choose random responses `w_i ∈ Z_l` for all `i ≠ s`
-
-2. **Compute commitments:**
-
-   For all `i ∈ [0, n]`:
-
-  - If `i == s`:
-
-        L_i = q_i * G  
-        R_i = q_i * Hp(P_i)
-
-  - If `i ≠ s`:
-
-        L_i = q_i * G + w_i * P_i  
-        R_i = q_i * Hp(P_i) + w_i * I
-
-3. **Compute challenge:**
-
-   c = H(m || L_0 || ... || L_n || R_0 || ... || R_n)
-
-4. **Compute responses for signer’s index `s`:**
-
-   c_s = c - Σ_{i ≠ s} c_i mod l  
-   r_s = q_s - c_s * x_s mod l
-
-5. **The final ring signature is:**
-
-   σ = (I, {c_i}, {r_i}) for i = 0 to n
-
----
-
-### Signature Verification
-
-Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = {P_0, ..., P_n}`:
-
-1. **Recompute commitments:**
-
-   For each `i`:
-
-       L_i' = r_i * G + c_i * P_i  
-       R_i' = r_i * Hp(P_i) + c_i * I
-
-2. **Recompute challenge:**
-
-       c' = H(m || L_0' || ... || L_n' || R_0' || ... || R_n')
-
-3. **Accept the signature if:**
-
-       c' = Σ_{i=0 to n} c_i mod l
-
----
-
-### Key Image Linkability
-
-To prevent double-spending:
-
-- Validators maintain a global set of used key images.
-- If the key image `I` has already been recorded, the transaction is rejected.
-- Otherwise, the key image `I` is added to the ledger as spent.
-
-Since the key image is deterministically derived from the signer’s private key (`I = x * Hp(P)`), it uniquely identifies a spent note without revealing which ring member signed the transaction.
-
-
-
-**Validator Actions:**
-- Verify `RingSignature`, `KeyImage`, `RangeProofs`, `BalanceProof`
-- Reject reused `KeyImage`
-- Mark input note as spent
-- Store new output notes
-
----
-
-### ConfidentialBurn Transaction Format
-
-| Field         | Type | Required | Description                    |
-|---------------|------|----------|--------------------------------|
-| Commitment    | Blob | Yes      | Note commitment to burn        |
-| EqualityProof | Blob | Yes      | ZKP: commitment encodes amount |
-
-**Validator Actions:**
-- Verify `EqualityProof`
-- Mark note as spent
-- Credit XRP to public balance
-
----
-
-## Security Considerations
-
-- ZKPs must be sound
-- EC-ElGamal ciphertexts must be randomized
-- Key images must be collision-resistant
-- Auditing metadata must not leak confidential values
 
 ---
 ## Appendix C: Technical Details
@@ -1306,4 +1235,91 @@ A Bulletproof-based range proof includes:
 
 Bulletproofs are well-suited for high-performance applications where minimizing proof size and
 verification cost is critical, while preserving strong ZK guarantees.
+
+### One-Time Ring Signatures and Key Images
+
+This section describes a cryptographic scheme that allows a sender to prove, in ZK, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
+
+#### Key Definitions
+
+Let `G` be the elliptic curve generator (e.g., Ed25519 or secp256k1). Let:
+
+- `x ∈ Z_l` be the sender’s private key
+- `P = x * G` be the corresponding public key
+- `Hp(P)` be a hash-to-curve function that maps `P` deterministically to a curve point
+- The **key image** is defined as:
+
+      I = x * Hp(P)
+
+This `I` is unlinkable to `x` but uniquely identifies a spent key.
+
+---
+
+### Signature Construction
+
+Let `m` be the message to sign, and `S = {P_0, P_1, ..., P_n}` be a set of public keys (the ring). The signer is at index `s` with private key `x_s`.
+
+1. **Generate randomness:**
+- Choose random scalars `q_i ∈ Z_l` for all `i ∈ [0, n]`
+- Choose random responses `w_i ∈ Z_l` for all `i ≠ s`
+
+2. **Compute commitments:**
+
+   For all `i ∈ [0, n]`:
+
+- If `i == s`:
+
+      L_i = q_i * G  
+      R_i = q_i * Hp(P_i)
+
+- If `i ≠ s`:
+
+      L_i = q_i * G + w_i * P_i  
+      R_i = q_i * Hp(P_i) + w_i * I
+
+3. **Compute challenge:**
+
+   c = H(m || L_0 || ... || L_n || R_0 || ... || R_n)
+
+4. **Compute responses for signer’s index `s`:**
+
+   c_s = c - Σ_{i ≠ s} c_i mod l  
+   r_s = q_s - c_s * x_s mod l
+
+5. **The final ring signature is:**
+
+   σ = (I, {c_i}, {r_i}) for i = 0 to n
+
+---
+
+### Signature Verification
+
+Given message `m`, signature `σ = (I, {c_i}, {r_i})`, and public key ring `S = {P_0, ..., P_n}`:
+
+1. **Recompute commitments:**
+
+   For each `i`:
+
+       L_i' = r_i * G + c_i * P_i  
+       R_i' = r_i * Hp(P_i) + c_i * I
+
+2. **Recompute challenge:**
+
+       c' = H(m || L_0' || ... || L_n' || R_0' || ... || R_n')
+
+3. **Accept the signature if:**
+
+       c' = Σ_{i=0 to n} c_i mod l
+
+---
+
+### Key Image Linkability
+
+To prevent double-spending:
+
+- Validators maintain a global set of used key images.
+- If the key image `I` has already been recorded, the transaction is rejected.
+- Otherwise, the key image `I` is added to the ledger as spent.
+
+---
 
