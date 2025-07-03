@@ -26,19 +26,19 @@ This proposal aims to:
 
 ## Terminology
 
-| Term                | Definition                                                                                                                             |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| **Account**          | XRPL classic address (e.g., `rEXAMPLE...`) that authorizes the transaction and provides public XRP for minting.                      |
-| **PublicKey**        | EC-ElGamal public key used to encrypt confidential balances; not necessarily the public key of the XRPL account owner.               |
-| **SigningPubKey**    | XRPL signing key used to authorize the transaction; corresponds to the `Account` and verified via `TxnSignature`.                   |
-| **EncryptedBalance** | An EC-ElGamal ciphertext representing an encrypted XRP amount, stored in the ledger.                                                  |
-| **EqualityProof**    | Zero-knowledge proof that the plaintext `Amount` matches the EC-ElGamal ciphertext (`EncryptedBalance`).                             |
-| **RangeProof**       | Zero-knowledge proof that an encrypted amount is within a valid range (e.g., non-negative).                                           |
-| **ConfidentialMint** | Transaction that deducts public XRP from the `Account` and creates an encrypted confidential balance.                                |
-| **ConfidentialSend** | Transaction that transfers encrypted funds between users using dual encryption and zero-knowledge proofs.                            |
-| **StealthAddress**   | One-time encryption key derived from a recipient’s viewing and spending keys; hides recipient identity on-chain.                     |
-| **Note**             | A cryptographic commitment to a confidential amount; used in the full anonymity mode for balance ownership and spending.             |
-| **KeyImage**         | Unique elliptic curve point derived from a private key; used in ring signature–based schemes to prevent double spending.             |
+| Term                | Definition                                                                                                               |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------|
+| **Account**          | XRPL classic address (e.g., `rEXAMPLE...`) that authorizes the transaction and provides public XRP for minting.          |
+| **PublicKey**        | EC-ElGamal public key used to encrypt confidential balances; not necessarily the public key of the XRPL account owner.   |
+| **SigningPubKey**    | XRPL signing key used to authorize the transaction; corresponds to the `Account` and verified via `TxnSignature`.        |
+| **EncryptedBalance** | An EC-ElGamal ciphertext representing an encrypted XRP amount, stored in the ledger.                                     |
+| **EqualityProof**    | ZKP that the plaintext `Amount` matches the EC-ElGamal ciphertext (`EncryptedBalance`).                                  |
+| **RangeProof**       | ZKP that an encrypted amount is within a valid range (e.g., non-negative).                                               |
+| **ConfidentialMint** | Transaction that deducts public XRP from the `Account` and creates an encrypted confidential balance.                    |
+| **ConfidentialSend** | Transaction that transfers encrypted funds between users using dual encryption and ZKPs.                |
+| **StealthAddress**   | One-time encryption key derived from a recipient’s viewing and spending keys; hides recipient identity on-chain.         |
+| **Note**             | A cryptographic commitment to a confidential amount; used in the full anonymity mode for balance ownership and spending. |
+| **KeyImage**         | Unique elliptic curve point derived from a private key; used in ring signature–based schemes to prevent double spending. |
 
 ---
 ## Notation and Curve Parameters
@@ -61,35 +61,45 @@ This proposal aims to:
 ### Transaction Types
 
 - **ConfidentialMint**: Converts a public XRP balance into an encrypted confidential balance.
-- **ConfidentialSend**: Transfers confidential amounts between users using dual encryption and zero-knowledge proofs.
+- **ConfidentialSend**: Transfers confidential amounts between users using dual encryption and ZKPs.
 
 ---
 ### ConfidentialMint Transaction
 
-The `ConfidentialMint` transaction converts a known amount of XRP from a user’s public balance into an encrypted confidential balance using **Elliptic Curve ElGamal (EC-ElGamal)** encryption. This serves as the entry point for participating in the confidential transfer system.
+The `ConfidentialMint` transaction converts a known amount of XRP from a user’s public balance into an 
+encrypted confidential balance using EC-ElGamal encryption. This serves as 
+the entry point for participating in the confidential transfer system. When a ConfidentialMint transaction 
+is processed, the XRP amount specified in the Amount field is deducted from the sender’s standard XRP balance. 
+This sender is identified by the Account field, which corresponds to a classic XRPL account 
+(i.e., the account paying the fee and authorizing the transaction). 
+The encrypted version of the same amount, provided in the EncryptedBalance field, 
+is then recorded as a confidential balance. The encrypted balance is stored under the sender’s AccountRoot, but each encrypted value is associated with the corresponding EC-ElGamal PublicKey. 
+This allows multiple confidential balances, potentially with different ownership keys, to coexist under a single XRPL account. Although the encrypted balance is attached to the account that initiated the mint, 
+only the holder of the private key corresponding to the PublicKey can decrypt or spend the confidential funds. 
+This design enables private ownership of encrypted funds while preserving account-level structure and compatibility 
+with XRPL’s existing ledger model.
 
 This transaction:
 - Deducts a plaintext `Amount` from the sender’s public XRP balance
 - Initializes an encrypted balance using `EncryptedBalance`
-- Includes a zero-knowledge proof (`EqualityProof`) verifying that the encrypted value matches the stated `Amount`
+- Includes a ZKP (`EqualityProof`) verifying that the encrypted value matches the stated `Amount`
 
 ---
 
 #### Format
 
-| Field               | Type       | Required | Description                                                                 |
-|--------------------|------------|----------|-----------------------------------------------------------------------------|
-| `TransactionType`   | UInt16     | Yes      | Must be set to `ConfidentialMint`                                          |
-| `Account`           | AccountID  | Yes      | XRPL account funding the mint and authorizing the transaction              |
-| `RecipientAccount`  | AccountID  | Yes      | XRPL account to receive the encrypted balance (must have registered `PublicKey`) |
-| `Amount`            | UInt64     | Yes      | XRP amount to be converted to a confidential balance                       |
-| `EncryptedBalance`  | Blob       | Yes      | EC-ElGamal ciphertext of `Amount`                                          |
-| `EqualityProof`     | Blob       | Yes      | Zero-knowledge proof that the ciphertext matches the plaintext `Amount`    |
-| `PublicKey`         | Blob       | Yes      | EC-ElGamal public key used for encryption (must match `RecipientAccount`)  |
-| `Fee`               | UInt64     | Yes      | XRP fee for processing the transaction                                     |
-| `Sequence`          | UInt32     | Yes      | Sequence number of the sender’s account                                    |
-| `SigningPubKey`     | Blob       | Yes      | Standard XRPL public key used to sign the transaction                      |
-| `TxnSignature`      | Blob       | Yes      | Signature authorizing the transaction                                      |
+| Field               | Type       | Required | Description                                                                   |
+|--------------------|------------|----------|-------------------------------------------------------------------------------|
+| `TransactionType`   | UInt16     | Yes      | Must be set to `ConfidentialMint`                                             |
+| `Account`           | AccountID  | Yes      | XRPL account funding the mint and authorizing the transaction                 |
+| `Amount`            | UInt64     | Yes      | XRP amount to be converted to a confidential balance                          |
+| `EncryptedBalance`  | Blob       | Yes      | EC-ElGamal ciphertext of `Amount`                                             |
+| `EqualityProof`     | Blob       | Yes      | ZKP that the ciphertext matches the plaintext `Amount`    |
+| `PublicKey`         | Blob       | Yes      | EC-ElGamal public key used for encryption        |
+| `Fee`               | UInt64     | Yes      | XRP fee for processing the transaction                                        |
+| `Sequence`          | UInt32     | Yes      | Sequence number of the sender’s account                                       |
+| `SigningPubKey`     | Blob       | Yes      | Standard XRPL public key used to sign the transaction                         |
+| `TxnSignature`      | Blob       | Yes      | Signature authorizing the transaction                                         |
 
 ---
 
@@ -99,7 +109,6 @@ This transaction:
 {
   "TransactionType": "ConfidentialMint",
   "Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
-  "RecipientAccount": "rPEGGYs9Yzr1CdsjGrMVZr52bKa3L7r5vb",
   "Amount": "1000000",
   "EncryptedBalance": "028f12...e9b3",
   "EqualityProof": "03ab45...cc11",
@@ -125,7 +134,7 @@ This section describes how the `ConfidentialMint` transaction is constructed, su
       EncryptedBalance = (A, B)
       ```
 
-2. **Generate Zero-Knowledge Proof**
+2. **Generate ZKP**
     - Construct a Chaum–Pedersen proof to show:
       ```
       A = r · G
@@ -147,22 +156,46 @@ This section describes how the `ConfidentialMint` transaction is constructed, su
     - Verify `EqualityProof` with respect to `Amount`, `PublicKey`, and `EncryptedBalance`.
     - Confirm sufficient public XRP funds.
     - Subtract `Amount` from `Account`'s public balance.
-    - Store the new EncryptedBalance under the PublicKey provided in the transaction (the recipient’s ElGamal public key).
+    - The new EncryptedBalance is stored under the EncryptedBalances field in the sender’s AccountRoot, indexed by the provided EC-ElGamal PublicKey.
 
 6. **Ledger Update**
     - The account state is updated with the new encrypted balance, allowing the user to participate in confidential transfers.
 
+### Ledger Modifications
 
+The `ConfidentialMint` transaction updates the sender’s `AccountRoot` object by attaching an `EncryptedBalances` field. This field holds one or more encrypted balance entries, each associated with an EC-ElGamal `PublicKey`. The confidential funds are stored in EC-ElGamal ciphertext form and can only be spent by the holder of the corresponding private key.
 
+Each entry consists of:
+- `PublicKey`: the EC-ElGamal public key used during minting
+- `EncryptedBalance`: a ciphertext containing `(A, B)` curve points
+
+This design supports future extensions (e.g., multiple balances per account or stealth addresses) and preserves compatibility with XRPL’s ledger format.
+
+#### Example
+
+```json
+{
+  "Account": "rAlice...",
+  "EncryptedBalances": [
+    {
+      "PublicKey": "03abcd...",
+      "EncryptedBalance": {
+        "A": "028f12...",
+        "B": "03a7e4..."
+      }
+    }
+  ]
+}
+```
 ---
 ### ConfidentialSend Transaction
 
-The `ConfidentialSend` transaction enables private transfer of encrypted balances between accounts on the XRPL using EC-ElGamal encryption, ZKPs, and additive homomorphism. The protocol ensures:
-
-- The transaction amount remains hidden from the public.
-- The sender’s and receiver’s encrypted balances are updated directly, without decryption.
-- Optional compliance mechanisms are supported via selective disclosure.
-- Transaction correctness is enforced cryptographically, without linking the encrypted input/output to specific XRPL identities.
+The ConfidentialSend transaction enables private transfer of encrypted balances between accounts on the XRPL using EC-ElGamal encryption, zero-knowledge proofs (ZKPs), and additive homomorphism. The protocol ensures:
+- The transaction amount remains hidden from the public. 
+- The sender’s and receiver’s encrypted balances are updated directly, without decryption. 
+- Optional compliance mechanisms are supported via selective disclosure. 
+- Transaction correctness is enforced cryptographically, without linking the encrypted input/output to specific XRPL identities. 
+- Anyone can construct and submit the transaction on behalf of the sender, as long as it is signed with a valid XRPL SigningPubKey corresponding to the Account.
 
 This transaction:
 - Deducts the encrypted amount from the sender’s encrypted balance (`C_send`) using homomorphic subtraction.
@@ -183,26 +216,27 @@ This transaction involves two independent key types, each serving distinct roles
 | Confidential Balance Control| EC-ElGamal public key       | Defines who can decrypt or control the encrypted balances             |
 
 - The XRPL signing key must be authorized for the XRPL `Account` and is verified using existing XRPL rules (master key, regular key, or multi-sign).
-- The EC-ElGamal public keys are used only for encryption and ZKP verification. They serve as the "addresses" of confidential balances and are **not required to be linked** to any XRPL account. This enables privacy-preserving and flexible ownership of encrypted funds.
+- The EC-ElGamal public keys are not required to be linked to an XRPL account. They are used exclusively for encrypting values and verifying zero-knowledge proofs. This decouples confidentiality from account identity and enables flexible, privacy-preserving ownership of funds.
 
 ---
 
 #### Format
 
-| Field           | Type      | Required | Description                                                                 |
-|-----------------|-----------|----------|-----------------------------------------------------------------------------|
-| `TransactionType` | UInt16    | Yes      | Must be set to `ConfidentialSend`                                          |
-| `Account`         | AccountID | Yes      | XRPL account initiating the confidential transfer                          |
-| `C_send`          | Blob      | Yes      | Ciphertext encrypted with sender’s EC-ElGamal public key                   |
-| `C_receive`       | Blob      | Yes      | Ciphertext encrypted with receiver’s EC-ElGamal public key                 |
-| `EqualityProof`   | Blob      | Yes      | ZK proof that `C_send` and `C_receive` encrypt the same value              |
-| `RangeProof`      | Blob      | Yes      | ZK proof that sender’s encrypted balance minus `C_send` is non-negative    |
-| `PublicKeys`      | Object    | Yes      | EC-ElGamal public keys of sender and receiver used in encryption/proofs    |
-| `AuditorField`    | Blob      | Optional | Encrypted copy of amount for auditor compliance + ZK equality proof        |
-| `Fee`             | UInt64    | Yes      | XRP fee for processing the transaction                                     |
-| `Sequence`        | UInt32    | Yes      | Sequence number of the sending account                                     |
-| `SigningPubKey`   | Blob      | Yes      | XRPL public key used to authorize the transaction                          |
-| `TxnSignature`    | Blob      | Yes      | Signature over the transaction blob                                        |
+| Field               | Type      | Required | Description                                                                 |
+|--------------------|-----------|----------|-----------------------------------------------------------------------------|
+| `TransactionType`   | UInt16    | Yes      | Must be set to `ConfidentialSend`                                           |
+| `Account`           | AccountID | Yes      | XRPL account authorizing and funding the transaction                        |
+| `RecipientAccount`  | AccountID | Yes      | XRPL account receiving the confidential funds                               |
+| `C_send`            | Blob      | Yes      | Ciphertext encrypted with sender’s EC-ElGamal public key                    |
+| `C_receive`         | Blob      | Yes      | Ciphertext encrypted with receiver’s EC-ElGamal public key                  |
+| `EqualityProof`     | Blob      | Yes      | ZKP that `C_send` and `C_receive` encrypt the same value                    |
+| `RangeProof`        | Blob      | Yes      | ZKP that sender’s encrypted balance minus `C_send` is non-negative          |
+| `PublicKeys`        | Object    | Yes      | EC-ElGamal public keys used for encryption/proofs                           |
+| `AuditorField`      | Blob      | Optional | Encrypted copy of amount for auditor compliance + ZK equality proof         |
+| `Fee`               | UInt64    | Yes      | XRP fee for processing the transaction                                      |
+| `Sequence`          | UInt32    | Yes      | Sequence number of the sender’s account                                     |
+| `SigningPubKey`     | Blob      | Yes      | XRPL public key used to authorize the transaction                           |
+| `TxnSignature`      | Blob      | Yes      | Signature over the transaction blob                                         |
 
 ---
 
@@ -210,21 +244,22 @@ This transaction involves two independent key types, each serving distinct roles
 
 ```json
 {
-  "TransactionType": "ConfidentialSend",
-  "Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
-  "C_send": "02ff33...ab12",
-  "C_receive": "035c22...cd45",
-  "EqualityProof": "0211cc...dead",
-  "RangeProof": "04aa88...beef",
-  "PublicKeys": {
-    "Sender": "03abc1...dd11",
-    "Receiver": "02fe11...bb44"
-  },
-  "AuditorField": "03e77...555a",
-  "Fee": "10",
-  "Sequence": 101,
-  "SigningPubKey": "EDD6C5...A12F",
-  "TxnSignature": "3045...0210"
+"TransactionType": "ConfidentialSend",
+"Account": "rEXAMPLEsQp3cAZ1nE7j2YZQ1fHGsmqQLYg",
+"RecipientAccount": "rRecipientAccount1234567890abcd",
+"C_send": "02ff33...ab12",
+"C_receive": "035c22...cd45",
+"EqualityProof": "0211cc...dead",
+"RangeProof": "04aa88...beef",
+"PublicKeys": {
+"Sender": "03abc1...dd11",
+"Receiver": "02fe11...bb44"
+},
+"AuditorField": "03e77...555a",
+"Fee": "10",
+"Sequence": 101,
+"SigningPubKey": "EDD6C5...A12F",
+"TxnSignature": "3045...0210"
 }
 ```
 ---
@@ -250,7 +285,7 @@ The following steps describe how a `ConfidentialSend` transaction is constructed
 
 ##### Step 2: Generate Equality Proof
 
-- A zero-knowledge equality proof is generated to prove that both ciphertexts encrypt the same value `m`:
+- A ZK equality proof is generated to prove that both ciphertexts encrypt the same value `m`:
   ```
   Dec(pk_sender, C_send) = Dec(pk_receiver, C_receive) = m
   ```
@@ -281,7 +316,7 @@ The following steps describe how a `ConfidentialSend` transaction is constructed
 ##### Step 5: Construct the Transaction
 
 - Construct the transaction with the following fields:
-    - `TransactionType`, `Account`, `Fee`, `Sequence`
+    - `TransactionType`, `Account`, `RecipientAccount`, `Fee`, `Sequence`
     - `C_send`, `C_receive`, `EqualityProof`, `RangeProof`, `PublicKeys`
     - Optional `AuditorField`
     - `SigningPubKey`, `TxnSignature`
@@ -308,7 +343,7 @@ Validators perform the following checks:
 
 If valid:
 
-- Update the sender’s encrypted balance:
+- Locate the AccountRoot of the RecipientAccount and update its ConfidentialBalance field using homomorphic addition with C_receive. Reject if the ElGamalPublicKey in PublicKeys. Receiver does not match the one registered under RecipientAccount.
   ```
   EncryptedBalance_sender' = EncryptedBalance_sender − C_send
   ```
@@ -330,14 +365,6 @@ All balance updates are performed using EC-ElGamal's additive homomorphism.
 - The plaintext amount is revealed only to the recipient, ensuring transaction confidentiality.
 
 
-
-
----
-
-### Ledger Changes
-
-The `ConfidentialSend` transaction modifies the XRPL ledger by homomorphically updating the encrypted balances of both the sender and the receiver. No plaintext values are revealed or stored. The changes are limited to confidential balance fields associated with EC-ElGamal public keys, and standard XRP balances remain unaffected.
-
 ---
 
 #### Confidential Ledger State Fields
@@ -346,7 +373,7 @@ Each XRPL account that participates in confidential transfers is associated with
 
 | Field Name           | Type     | Description                                                                 |
 |----------------------|----------|-----------------------------------------------------------------------------|
-| `ConfidentialBalance`| Blob     | EC-ElGamal–encrypted aggregate balance associated with the registered ElGamal public key |
+| `ConfidentialBalance`| Blob     | EC-ElGamal–encrypted balance associated with a specific ElGamal public key registered under the XRPL account.|
 | `ElGamalPublicKey`   | Blob     | The EC-ElGamal public key registered under this XRPL account for receiving encrypted funds |
 | `AuditorKeys`        | Blob     | (Optional) Auditor public keys for selective disclosure (if applicable)    |
 
@@ -363,9 +390,11 @@ On successful validation of a `ConfidentialSend` transaction:
     - The range proof is verified to ensure that the resulting encrypted balance remains non-negative.
 
 2. **Receiver Account:**
-    - `ConfidentialBalance` is increased homomorphically by the encrypted amount `C_receive`.
-    - The receiver’s `ElGamalPublicKey` must already be registered in their `AccountRoot` entry.
-    > If not registered, the transaction is rejected or requires a registration step.
+    - `RecipientAccount` is used to locate the XRPL account of the receiver.
+    - The receiver’s `AccountRoot` is retrieved using this `RecipientAccount`.
+    - The `ElGamalPublicKey` field of the receiver’s `AccountRoot` must exactly match the `PublicKeys.Receiver` provided in the transaction.
+    - If no match is found or if the field is missing, the transaction is rejected.
+    - Upon success, the receiver’s `ConfidentialBalance` is increased homomorphically by `C_receive`.
 
 3. **AuditorField (Optional):**
     - If provided, the encrypted copy of the transferred amount is either:
@@ -384,7 +413,7 @@ On successful validation of a `ConfidentialSend` transaction:
     - The confidential transaction amount (due to encryption and ZKPs),
     - The contents or value of any encrypted balance,
     - Any off-chain relationship between an ElGamal key and other XRPL accounts.
-- However, in the account-based model, the recipient's XRPL account is explicitly included in the transaction, and the `ElGamalPublicKey` is stored in the account’s `AccountRoot`. This creates an on-ledger association between the recipient's XRPL identity and their confidential balance key.
+- Because the RecipientAccount is explicitly included in the transaction and used to locate the receiver’s AccountRoot, this creates an on-ledger association between the XRPL identity and their confidential balance key.
 - This design trades off full anonymity for balance encryption and protocol simplicity, while still supporting optional privacy extensions such as stealth addresses or note-based models.
 
 ---
@@ -398,17 +427,21 @@ On successful validation of a `ConfidentialSend` transaction:
 
 ### Ledger Changes
 
-- New encrypted balance field in AccountRoot object
-- New transaction types: `ConfidentialMint` and `ConfidentialSend`
-- Optional support for auditor ciphertexts and note objects
+The ConfidentialSend transaction modifies the XRPL ledger by homomorphically updating the encrypted balances of both the sender and the receiver. No plaintext values are revealed or stored during this process. These changes are isolated to confidential balance fields associated with EC-ElGamal public keys, leaving standard XRP balances unaffected.
+
+- Key ledger-level changes introduced by this proposal:
+- Addition of encrypted balance fields in the AccountRoot object. 
+- Introduction of new transaction types: ConfidentialMint and ConfidentialSend. 
+- Optional support for auditor ciphertexts and note-based extensions.
+
 ---
-### Compliance: Selective Disclosure
+### Compliance Extension
 
 Two supported methods:
 - **Auditor Encryption**: Encrypted output for auditor + equality proof
 - **On-Demand Disclosure**: Users may share decryption key/amount when required
 
-
+---
 
 
 
@@ -496,15 +529,15 @@ Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bo
 
 **Transaction Type:** `ReceiverPrivacyConfidentialSend`
 
-| Field          | Type   | Required | Description                                 |
-|----------------|--------|----------|---------------------------------------------|
-| C_send         | Blob   | Yes      | Ciphertext encrypted with sender’s key      |
-| C_receive      | Blob   | Yes      | Ciphertext encrypted to stealth recipient   |
-| EqualityProof  | Blob   | Yes      | ZK proof that both ciphertexts match        |
-| RangeProof     | Blob   | Yes      | ZK proof of sender balance sufficiency      |
-| EphemeralKey   | Blob   | Yes      | Sender’s one-time key                       |
-| StealthAddress | Blob   | Yes      | Receiver’s computed address                 |
-| AuditorField   | Blob   | Optional | Encrypted payload for auditor               |
+| Field          | Type   | Required | Description                               |
+|----------------|--------|----------|-------------------------------------------|
+| C_send         | Blob   | Yes      | Ciphertext encrypted with sender’s key    |
+| C_receive      | Blob   | Yes      | Ciphertext encrypted to stealth recipient |
+| EqualityProof  | Blob   | Yes      | ZKP that both ciphertexts match           |
+| RangeProof     | Blob   | Yes      | ZKP of sender balance sufficiency         |
+| EphemeralKey   | Blob   | Yes      | Sender’s one-time key                     |
+| StealthAddress | Blob   | Yes      | Receiver’s computed address               |
+| AuditorField   | Blob   | Optional | Encrypted payload for auditor             |
 
 - Validation same as `ConfidentialSend`
 - No additional ledger change
@@ -533,13 +566,13 @@ Combines:
 
 ### NoteMintFromPublic Transaction Format
 
-| Field         | Type   | Required | Description                                  |
-|---------------|--------|----------|----------------------------------------------|
-| Amount        | UInt64 | Yes      | Plain XRP amount                             |
-| Commitment    | Blob   | Yes      | Pedersen commitment `C = r·G + m·H`          |
-| OwnerKey      | Blob   | Yes      | `P = s·G + B_spend`                          |
-| EphemeralKey  | Blob   | Yes      | One-time key `R = k·G`                        |
-| EqualityProof | Blob   | Yes      | ZK proof `C` encodes `Amount`                |
+| Field         | Type   | Required | Description                         |
+|---------------|--------|----------|-------------------------------------|
+| Amount        | UInt64 | Yes      | Plain XRP amount                    |
+| Commitment    | Blob   | Yes      | Pedersen commitment `C = r·G + m·H` |
+| OwnerKey      | Blob   | Yes      | `P = s·G + B_spend`                 |
+| EphemeralKey  | Blob   | Yes      | One-time key `R = k·G`              |
+| EqualityProof | Blob   | Yes      | ZKP `C` encodes `Amount`            |
 
 **Validator Actions:**
 - Verify `EqualityProof`
@@ -550,12 +583,12 @@ Combines:
 
 ### NoteMint Transaction Format
 
-| Field         | Type | Required | Description                              |
-|---------------|------|----------|------------------------------------------|
-| Commitment    | Blob | Yes      | Pedersen commitment `C = r·G + m·H`      |
-| OwnerKey      | Blob | Yes      | One-time key for note ownership          |
-| EphemeralKey  | Blob | Yes      | For stealth detection                    |
-| RangeProof    | Blob | Yes      | ZK proof: balance covers note amount     |
+| Field         | Type | Required | Description                         |
+|---------------|------|----------|-------------------------------------|
+| Commitment    | Blob | Yes      | Pedersen commitment `C = r·G + m·H` |
+| OwnerKey      | Blob | Yes      | One-time key for note ownership     |
+| EphemeralKey  | Blob | Yes      | For stealth detection               |
+| RangeProof    | Blob | Yes      | ZKP: balance covers note amount     |
 
 **Validator Actions:**
 - Verify `RangeProof`
@@ -566,18 +599,18 @@ Combines:
 
 ### ConfidentialTransfer Transaction Format
 
-| Field          | Type | Required | Description                                   |
-|----------------|------|----------|-----------------------------------------------|
-| Ring           | Blob | Yes      | Ring of public keys                           |
-| KeyImage       | Blob | Yes      | Unique tag for double-spend prevention        |
-| RingSignature  | Blob | Yes      | Proof of signer ownership                     |
+| Field          | Type | Required | Description                                         |
+|----------------|------|----------|-----------------------------------------------------|
+| Ring           | Blob | Yes      | Ring of public keys                                 |
+| KeyImage       | Blob | Yes      | Unique tag for double-spend prevention              |
+| RingSignature  | Blob | Yes      | Proof of signer ownership                           |
 | NewNotes       | List | Yes      | New notes with (Commitment, OwnerKey, EphemeralKey) |
-| RangeProofs    | Blob | Yes      | ZK range proofs on outputs                    |
-| BalanceProof   | Blob | Yes      | ZK proof: input = sum(output)                 |
+| RangeProofs    | Blob | Yes      | ZK range proofs on outputs                          |
+| BalanceProof   | Blob | Yes      | ZKP: input = sum(output)                            |
 
 ### One-Time Ring Signatures and Key Images
 
-This section describes a cryptographic scheme that allows a sender to prove, in zero knowledge, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
+This section describes a cryptographic scheme that allows a sender to prove, in ZK, that they control one of a set of public keys without revealing which one. It preserves sender anonymity while preventing double-spending via key images.
 
 #### Key Definitions
 
@@ -674,10 +707,10 @@ Since the key image is deterministically derived from the signer’s private key
 
 ### ConfidentialBurn Transaction Format
 
-| Field         | Type | Required | Description                              |
-|---------------|------|----------|------------------------------------------|
-| Commitment    | Blob | Yes      | Note commitment to burn                  |
-| EqualityProof | Blob | Yes      | ZK proof: commitment encodes amount      |
+| Field         | Type | Required | Description                    |
+|---------------|------|----------|--------------------------------|
+| Commitment    | Blob | Yes      | Note commitment to burn        |
+| EqualityProof | Blob | Yes      | ZKP: commitment encodes amount |
 
 **Validator Actions:**
 - Verify `EqualityProof`
@@ -719,7 +752,7 @@ produces a ciphertext encrypting (m1 - m2). These homomorphic properties enable 
 ---
 ### Equality Proof Between Plaintext and Ciphertext
 
-In the `ConfidentialMint` transaction, the `EqualityProof` is a zero-knowledge proof showing that a given plaintext amount `m` matches the encrypted value in the EC-ElGamal ciphertext `C = (A, B)`.
+In the `ConfidentialMint` transaction, the `EqualityProof` is a ZKP showing that a given plaintext amount `m` matches the encrypted value in the EC-ElGamal ciphertext `C = (A, B)`.
 
 The encryption is defined as:
 
@@ -866,7 +899,7 @@ This `C` serves as the link between the bitwise decomposition and the encrypted 
 
 #### Bit Validity Proofs (b_i ∈ {0,1})
 
-For each bit commitment `C_i`, the prover constructs a zero-knowledge OR-proof
+For each bit commitment `C_i`, the prover constructs a ZK OR-proof
 demonstrating that:
 
     C_i = 0 * G + r_0 * H    or    C_i = 1 * G + r_1 * H
@@ -896,7 +929,7 @@ The complete bitwise range proof includes:
 - An EqualityProof that C and the ciphertext represent the same `m`
 
 This ensures that `m` is a valid non-negative amount encrypted under EC-ElGamal
-while maintaining zero knowledge.
+while maintaining ZK.
 
 ---
 ### Base-3 Range Proof
@@ -937,7 +970,7 @@ This `C` links the ternary digit commitments to the encrypted value `m`.
 
 #### Digit Validity Proofs (d_i ∈ {0,1,2})
 
-To ensure each committed digit `d_i` is in `{0,1,2}`, the prover uses a **zero-knowledge OR-proof** over three cases:
+To ensure each committed digit `d_i` is in `{0,1,2}`, the prover uses a ZK OR-proof over three cases:
 
     C_i = 0 * G + r_0 * H
     C_i = 1 * G + r_1 * H
@@ -971,7 +1004,7 @@ trading off slightly more complex per-digit proofs for fewer total commitments.
 ### Bulletproof Range Proof
 
 As an alternative to bitwise or base-3 decompositions, the `RangeProof` may use **Bulletproofs** by Bünz, Bootle, Boneh, Poelstra, Wuille, and Maxwell that is
-a logarithmic-size zero-knowledge proof system efficiently proving that a committed value lies
+a logarithmic-size ZKP system efficiently proving that a committed value lies
 within a certain range without revealing it.
 
 This approach significantly reduces proof size and verification time for typical 64-bit confidential
@@ -990,7 +1023,7 @@ Where:
 
 #### Range Statement
 
-The prover proves in zero knowledge that:
+The prover proves in ZK that:
 
     0 ≤ m < 2^n
 
@@ -1031,11 +1064,11 @@ This linkage is proven using the standard `EqualityProof` described earlier:
 
 A Bulletproof-based range proof includes:
 - A single Pedersen commitment `C = m * G + r * H`
-- A compact logarithmic-size ZK proof that `m ∈ [0, 2^n)`
+- A compact logarithmic-size ZKP that `m ∈ [0, 2^n)`
 - An `EqualityProof` linking `C` and the EC-ElGamal ciphertext
 
 Bulletproofs are well-suited for high-performance applications where minimizing proof size and
-verification cost is critical, while preserving strong zero-knowledge guarantees.
+verification cost is critical, while preserving strong ZK guarantees.
 ## References
 
 [1] Bulletproofs: Short Proofs for Confidential Transactions  
