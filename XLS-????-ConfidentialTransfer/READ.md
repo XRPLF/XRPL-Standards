@@ -203,7 +203,7 @@ The ConfidentialSend transaction enables private transfer of encrypted balances 
 - The transaction amount remains hidden from the public. 
 - The sender’s and receiver’s encrypted balances are updated directly, without decryption. 
 - Optional compliance mechanisms are supported via selective disclosure. 
-- Transaction correctness is enforced cryptographically, without linking the encrypted input/output to specific XRPL identities. 
+- Transaction correctness is enforced cryptographically. 
 - Anyone can construct and submit the transaction on behalf of the sender, as long as it is signed with a valid XRPL SigningPubKey corresponding to the Account.
 
 This transaction:
