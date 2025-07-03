@@ -426,7 +426,6 @@ On successful validation of a `ConfidentialSend` transaction:
 - This design trades off full anonymity for balance encryption and protocol simplicity, while still supporting optional privacy extensions such as stealth addresses or note-based models.
 
 ---
-
 ### Compliance Support
 
 The protocol supports optional compliance features for regulatory or auditing purposes. Two disclosure mechanisms are available:
@@ -434,7 +433,10 @@ The protocol supports optional compliance features for regulatory or auditing pu
 - **Auditor Encryption**: An additional ciphertext is included in the transaction, encrypted with an auditor’s public key and accompanied by an equality proof showing it matches the transferred amount.
 - **On-Demand Disclosure**: Users may optionally share the decryption key or plaintext amount with authorized third parties when required.
 
+These features are enabled by ledger-level support for auditor keys and may be extended in the future to include selective decryption mechanisms.
+
 ---
+
 ### Ledger Changes
 
 This proposal introduces new ledger-level structures to support confidential transactions:
@@ -445,106 +447,337 @@ This proposal introduces new ledger-level structures to support confidential tra
 
 These changes enable encrypted fund transfers while preserving compatibility with XRPL’s account-based ledger model.
 
+
 ---
+
 
 
 
 ## Appendix A: Receiver Privacy Extensions
 
 ### A.1 Use Case 1: Receiver Anonymity Only (No Amount Confidentiality)
+The ReceiverPrivacySend transaction allows the sender to transfer XRP to a recipient while preserving the receiver’s on-chain anonymity. This is achieved using a stealth address scheme based on elliptic curve Diffie-Hellman (ECDH), where the destination address (StealthAddress) is derived using the receiver’s viewing and spending keys and a one-time public key from the sender (EphemeralKey).
 
-**Transaction Type:** `ReceiverPrivacySend`
+The transferred amount is public, and there is no encryption or ZKP involved for the value itself. However, the receiver’s identity is not linkable to their long-term XRPL account or public keys.
 
-| Field          | Type   | Required | Description                                |
-|----------------|--------|----------|--------------------------------------------|
-| Amount         | UInt64 | Yes      | Public amount of XRP being sent            |
-| EphemeralKey   | Blob   | Yes      | One-time public key `R = r·G`              |
-| StealthAddress | Blob   | Yes      | `P = H(r·B_view) + B_spend`                |
-| Metadata       | Blob   | Optional | Encrypted memo or payload                  |
+This transaction:
 
-### Stealth Protocol
+- Sends a public amount to a stealth address (StealthAddress)
+- Includes an ephemeral public key (EphemeralKey) used to derive the stealth address
 
-This section describes how sender and receiver generate unlinkable, one-time addresses using elliptic curve Diffie-Hellman and hashing. The goal is to enable recipient privacy by ensuring that only the receiver can detect and spend funds sent to a stealth address.
+#### Transaction Type `ReceiverPrivacySend`
 
-#### Participants
+| Field             | Type      | Required | Description                                                                 |
+|------------------|-----------|----------|-----------------------------------------------------------------------------|
+| `TransactionType` | UInt16    | Yes      | Must be set to `ReceiverPrivacySend`                                        |
+| `Account`         | AccountID | Yes      | XRPL account sending the funds and authorizing the transaction              |
+| `Amount`          | UInt64    | Yes      | Public XRP amount being sent                                                |
+| `StealthAddress`  | Blob      | Yes      | One-time destination address derived from receiver’s viewing and spending keys |
+| `EphemeralKey`    | Blob      | Yes      | One-time public key `R = r·G` used to derive the stealth address            |
+| `Fee`             | UInt64    | Yes      | XRP fee for processing the transaction                                      |
+| `Sequence`        | UInt32    | Yes      | Sequence number of the sender’s XRPL account                                |
+| `SigningPubKey`   | Blob      | Yes      | XRPL public key used to authorize the transaction                           |
+| `TxnSignature`    | Blob      | Yes      | Signature over the transaction blob                                         |
 
-- **Alice (Sender)**:
-  - Holds keypair: private key `a`, public key `A = a * G`
-- **Bob (Receiver)**:
-  - Holds keypair: private key `b`, public key `B = b * G`
+#### JSON Example
 
-Here, `G` is the generator point of the elliptic curve group.
+```json
+{
+"TransactionType": "ReceiverPrivacySend",
+"Account": "rSenderExampleABC123...",
+"Amount": "1000000",
+"StealthAddress": "029c4a...b812",
+"EphemeralKey": "03ddfe...a73d",
+"Fee": "10",
+"Sequence": 55,
+"SigningPubKey": "EDD6C5...A12F",
+"TxnSignature": "30450221...022100"
+}
+```
 
-#### Step 1: Receiver Key Generation (Bob)
+### Stealth Key Types
 
-- Bob generates a static keypair:
-  - Private key: `b ∈ Z_q`
-  - Public key: `B = b * G`
+To support receiver anonymity, each recipient uses two independent elliptic curve keypairs:
 
-This keypair is used for deriving stealth addresses and later recovering received notes.
+| Key Type       | Description                                                                 |
+|----------------|-----------------------------------------------------------------------------|
+| **Viewing Key** (`b_view`)   | Used to detect incoming payments by scanning the ledger. The sender uses the corresponding public key (`B_view`) to derive a shared secret and construct a stealth address. |
+| **Spending Key** (`b_spend`) | Used to spend funds sent to the stealth address. Only the recipient can compute the private key corresponding to the one-time stealth address. |
 
-#### Step 2: Stealth Address Generation (Alice)
+These keys are based on the same elliptic curve (e.g., `secp256k1`) and can be generated using standard EC key generation tools. They enable unlinkable, one-time addresses and ensure that only the intended recipient can detect and spend the funds.
 
-- Alice generates a fresh ephemeral scalar `r ∈ Z_q`
-- Computes the temporary public key `R = r * G`
+### Transaction Flow: ReceiverPrivacySend
 
-This `R` is published with the transaction.
+This section outlines how the `ReceiverPrivacySend` transaction is constructed, submitted, and validated.
 
-- Computes the shared secret:
+#### Step 1: Receiver Key Setup
 
-      s = H(r * B)
+- The receiver generates two EC keypairs:
+    - **Viewing keypair:** (`b_view`, `B_view`)
+    - **Spending keypair:** (`b_spend`, `B_spend`)
 
-  where `H` is a cryptographic hash function mapping to `Z_q`.
-
-- Derives the one-time public key for the recipient:
-
-      P = s * G + B
-
-This `P` is the stealth address used in the note or output.
-
-#### Step 3: Recipient Detection and Key Recovery (Bob)
-
-- Bob monitors the ledger for transactions containing `R`.
-- For each detected `R`, Bob computes:
-
-      s = H(b * R)
-
-- Reconstructs the one-time public key:
-
-      P = s * G + B
-
-- Computes the corresponding one-time private key:
-
-      a' = s + b  ∈ Z_q
-
-This ensures:
-
-      a' * G = (s + b) * G = s * G + B = P
-
-Bob can now use `a'` to spend the funds sent to stealth address `P`, and only Bob can compute this key.
-
-#### Validation
-- Sender transfers public XRP to stealth address.
-- Receiver scans ledger with `b_view` key.
+These keys are used to derive stealth addresses and spend received funds.
 
 ---
 
+#### Step 2: Sender Constructs the Stealth Address
+The stealth address is computed by the sender prior to transaction submission using the recipient's public viewing and spending keys. This ensures that only the recipient can later identify and spend the funds sent to this address. Note that  the address itself remains unlinkable to the recipient’s known identity.
+- The sender:
+    - Selects the recipient’s viewing and spending public keys: `B_view` and `B_spend`
+    - Samples a random ephemeral scalar `r ∈ Z_q`
+    - Computes the ephemeral public key: `EphemeralKey = R = r · G`
+    - Computes the shared secret: `s = H(r · B_view)`
+    - Derives the stealth address: `StealthAddress = s · G + B_spend`
+
+---
+
+#### Step 3: Build the Transaction
+
+- Construct the `ReceiverPrivacySend` transaction with:
+    - `Amount`: public XRP amount to send
+    - `EphemeralKey`: `R = r · G`
+    - `StealthAddress`: derived one-time public key
+    - (Optional) `Metadata`: encrypted payload or memo
+
+---
+
+#### Step 4: Submit Transaction
+
+- The sender signs the transaction with their XRPL `SigningPubKey`.
+- The transaction is submitted using the standard XRPL submission process.
+
+---
+
+#### Step 5: Validation by XRPL Validators
+
+- Standard XRPL validation applies:
+    - Signature is verified using `SigningPubKey`
+    - `Account` has sufficient public XRP to cover `Amount + Fee`
+    - `Amount` is deducted from the sender’s public balance
+    - `Fee` is deducted from the sender’s public balance
+    - `Sequence` number is incremented
+
+> **Note:** Since the stealth address is indistinguishable from a standard address, validators treat `StealthAddress` as a regular XRPL destination.
+
+---
+
+#### Step 6: Receiver Detects and Spends
+
+- The receiver scans incoming transactions using `b_view`:
+    - For each observed `EphemeralKey = R`, compute `s = H(b_view · R)`
+    - Reconstruct the stealth address: `P = s · G + B_spend`
+- If a match is found, the receiver knows they are the intended recipient.
+- The receiver computes the corresponding one-time private key: `sk = s + b_spend`
+- This private key allows the recipient to control and spend the received funds.
+
+---
+### Ledger Modifications: ReceiverPrivacySend
+
+The `ReceiverPrivacySend` transaction modifies the XRPL ledger similarly to a standard XRP transfer, with one important distinction: the destination is a stealth address derived using ECDH, not a known XRPL `Account`.
+
+---
+
+#### Key Characteristics
+
+- **Stealth Address as Recipient**: The `StealthAddress` is treated as a regular destination address by the ledger, but it is unlinkable to any known XRPL identity.
+- Link to AccountRoot Upon First Use: Although stealth addresses are not pre-registered, once funds are sent to a stealth address, it behaves as a standard XRPL account, and an AccountRoot entry is created to track its balance.
+- **Public Transfer Amount**: The `Amount` field is not encrypted and is visible on-chain.
+
+---
+
+#### Ledger Updates on Success
+
+1. **Sender Account**
+    - `Amount` is deducted from the public XRP balance of the `Account` specified in the transaction.
+    - `Fee` is also deducted from the same account.
+    - The `Sequence` number is incremented.
+
+2. **Destination (Stealth Address)**
+    - The XRP `Amount` is credited to the destination `StealthAddress`, treated as a standard ledger address.
+    - No assumptions are made about the ownership or linkability of this address.
+
+
+---
+
+
 ### A.2 Use Case 2: Receiver Anonymity with Confidential Amounts
+The ReceiverPrivacyConfidentialSend transaction enables private transfers on XRPL, hiding both the transaction amount and the recipient identity. This is achieved by combining:
 
-**Transaction Type:** `ReceiverPrivacyConfidentialSend`
+- EC-ElGamal encryption for amount confidentiality, 
+- ZKPs for correctness, and 
+- Stealth address derivation for unlinkable recipient keys.
 
-| Field          | Type   | Required | Description                               |
-|----------------|--------|----------|-------------------------------------------|
-| C_send         | Blob   | Yes      | Ciphertext encrypted with sender’s key    |
-| C_receive      | Blob   | Yes      | Ciphertext encrypted to stealth recipient |
-| EqualityProof  | Blob   | Yes      | ZKP that both ciphertexts match           |
-| RangeProof     | Blob   | Yes      | ZKP of sender balance sufficiency         |
-| EphemeralKey   | Blob   | Yes      | Sender’s one-time key                     |
-| StealthAddress | Blob   | Yes      | Receiver’s computed address               |
-| AuditorField   | Blob   | Optional | Encrypted payload for auditor             |
+This transaction:
 
-- Validation same as `ConfidentialSend`
-- No additional ledger change
+- Transfers an encrypted amount to a stealth-derived address 
+- Hides the recipient identity from the ledger 
+- Proves correctness using ZKPs (equality and range)
+- Optionally includes encrypted audit support via AuditorField
+
+#### Transaction Type `ReceiverPrivacyConfidentialSend`
+
+| Field               | Type      | Required | Description                                                                 |
+|--------------------|-----------|----------|-----------------------------------------------------------------------------|
+| `TransactionType`   | UInt16    | Yes      | Must be set to `ReceiverPrivacyConfidentialSend`                           |
+| `Account`           | AccountID | Yes      | XRPL account authorizing and funding the transaction                        |
+| `C_send`            | Blob      | Yes      | Ciphertext encrypted with sender’s EC-ElGamal public key                    |
+| `C_receive`         | Blob      | Yes      | Ciphertext encrypted to the stealth recipient’s public key                 |
+| `EqualityProof`     | Blob      | Yes      | ZKP that `C_send` and `C_receive` encrypt the same value                    |
+| `RangeProof`        | Blob      | Yes      | ZKP that sender’s encrypted balance minus `C_send` is non-negative          |
+| `StealthAddress`    | Blob      | Yes      | One-time destination public key (derived via stealth key protocol)         |
+| `EphemeralKey`      | Blob      | Yes      | One-time public key `R = r·G` used in stealth address derivation           |
+| `AuditorField`      | Blob      | Optional | Encrypted copy of the amount for auditor verification                      |
+| `Fee`               | UInt64    | Yes      | XRP fee for processing the transaction                                      |
+| `Sequence`          | UInt32    | Yes      | Sequence number of the sender’s XRPL account                                |
+| `SigningPubKey`     | Blob      | Yes      | XRPL public key used to authorize the transaction                           |
+| `TxnSignature`      | Blob      | Yes      | Signature over the transaction blob                                         |
+
+#### JSON Example
+```json 
+{
+"TransactionType": "ReceiverPrivacyConfidentialSend",
+"Account": "rSenderExampleABC123...",
+"C_send": "02ff33...ab12",
+"C_receive": "035c22...cd45",
+"EqualityProof": "0211cc...dead",
+"RangeProof": "04aa88...beef",
+"StealthAddress": "039f...993a",
+"EphemeralKey": "03ddfe...a73d",
+"AuditorField": "03e77...555a",
+"Fee": "10",
+"Sequence": 55,
+"SigningPubKey": "EDD6C5...A12F",
+"TxnSignature": "30450221...022100"
+}
+```
+### Transaction Flow: ReceiverPrivacyConfidentialSend
+
+This section outlines how the `ReceiverPrivacyConfidentialSend` transaction is constructed, submitted, and validated. It combines confidential amount transfer with stealth addressing to ensure both value privacy and receiver anonymity.
+
+---
+
+#### Step 1: Receiver Key Setup
+
+- The receiver generates two EC keypairs:
+    - **Viewing keypair**: (`b_view`, `B_view`)
+    - **Spending keypair**: (`b_spend`, `B_spend`)
+
+These are used to detect and recover funds sent to stealth addresses.
+
+---
+
+#### Step 2: Sender Prepares Transfer
+
+- Chooses the transfer amount `m`.
+- Generates random scalars `r1`, `r2`, and `r3`.
+- Constructs:
+    - `C_send = (r1 · G, m · G + r1 · pk_sender)`
+    - `C_receive = (r2 · G, m · G + r2 · StealthAddress)`
+
+- Constructs the **stealth address**:
+    - Picks random `r`
+    - Computes `EphemeralKey = R = r · G`
+    - Computes shared secret: `s = H(r · B_view)`
+    - Derives stealth address: `StealthAddress = s · G + B_spend`
+
+---
+
+#### Step 3: Construct ZK Proofs
+
+- Creates an **equality proof** to show `C_send` and `C_receive` encrypt the same `m`.
+- Creates a **range proof** to prove:
+  ```
+  EncryptedBalance_sender − C_send ≥ 0
+  ```
+
+---
+
+#### Step 4: Construct and Sign Transaction
+
+- Includes fields:
+    - `C_send`, `C_receive`, `EqualityProof`, `RangeProof`
+    - `StealthAddress`, `EphemeralKey`
+    - Optional `AuditorField`
+- Signs with XRPL `SigningPubKey`.
+
+---
+
+#### Step 5: Submit Transaction
+
+- Submitted to XRPL using standard APIs.
+- Appears similar to `ConfidentialSend`, but destination is a stealth address.
+
+---
+
+#### Step 6: Validation by XRPL Validators
+
+Validators perform the following checks:
+
+- **Signature Check**:
+    - Verify `TxnSignature` using `SigningPubKey`.
+- **Account and Balance Checks**:
+    - Confirm `Account` has sufficient public XRP for `Fee`.
+- **ZKP Validation**:
+    - Verify `EqualityProof`: ensures both ciphertexts encrypt the same value.
+    - Verify `RangeProof`: ensures no overspending.
+- **Ledger Update**:
+    - Subtract `C_send` from sender's `ConfidentialBalance`.
+    - Credit `C_receive` to a new or existing entry under `StealthAddress`:
+        - Stored in a mapping like `ConfidentialBalances[StealthAddress]`.
+        - Treated as a standalone recipient without identity linkage.
+
+> **Note**: Validators treat `StealthAddress` like any other EC-ElGamal key with no knowledge of the true recipient.
+
+---
+
+#### Step 7: Receiver Detection and Spend
+
+- The recipient scans transactions with `b_view`:
+    - For each `EphemeralKey = R`, compute `s = H(b_view · R)`
+    - Derive `P = s · G + B_spend`
+    - Match against `StealthAddress`
+- If match:
+    - Reconstruct private key `sk = s + b_spend`
+    - Decrypt `C_receive` and control the funds
+
+---
+### Ledger Modifications: ReceiverPrivacyConfidentialSend
+
+The `ReceiverPrivacyConfidentialSend` transaction introduces confidential ledger changes while preserving the anonymity of the recipient through stealth addressing. Unlike `ConfidentialSend`, the receiver is not directly identified by an XRPL `Account`. Instead, encrypted balances are stored under unlinkable stealth addresses derived from the receiver’s viewing and spending keys.
+
+---
+
+#### Key Characteristics
+- Stealth Address as Recipient: The StealthAddress is a valid XRPL address derived from the recipient’s viewing and spending keys. It appears on-chain only when used, and remains unlinkable to the recipient’s identity.
+- AccountRoot Creation on First Use: When the stealth address receives funds, a new AccountRoot entry is created automatically, as with any XRPL account. No prior registration is required.
+- Balance Isolation: Each stealth address maintains its own ConfidentialBalance, separate from any known account, enabling unlinkable, private fund control.
+---
+
+#### Ledger Updates on Success
+
+1. **Sender Account**
+    - `ConfidentialBalance` is decreased homomorphically by the ciphertext `C_send`.
+    - The `RangeProof` ensures that the sender’s remaining encrypted balance is non-negative.
+
+2. **Receiver Stealth Address**
+    - A new entry is created (if not already present) under the `StealthAddress`, representing a confidential balance entry.
+    - The ciphertext `C_receive` is added as the encrypted amount.
+    - This entry is stored without linking to a registered XRPL account.
+
+3. **AuditorField (Optional)**
+    - If provided, an encrypted copy of the transferred amount is stored or verified against an auditor’s public key using a ZK equality proof.
+
+4. **Standard Fields**
+    - The `Fee` is deducted from the sender’s public XRP balance.
+    - The `Sequence` of the sender’s XRPL account is incremented.
+
+---
+
+#### Notes on Ledger Design
+
+- Stealth balances may be stored in a separate **StealthLedger** table or indexed under the sender’s account for consistency.
+- Since stealth addresses do not correspond to standard XRPL accounts, these entries may be pruned, expired, or garbage-collected using custom ledger rules in future revisions.
+- The stealth entry acts as a note-style commitment: only the true recipient can scan, identify, and spend it using their private key.
 
 ---
 
