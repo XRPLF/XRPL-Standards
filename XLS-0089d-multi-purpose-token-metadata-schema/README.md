@@ -82,7 +82,7 @@ MPTs include a 1024-byte field for arbitrary metadata. The metadata field is par
 | Field   | Description                           | Example                       | Allowed Values                    | Required |
 | ------- | ------------------------------------- | ----------------------------- | --------------------------------- | -------- |
 | `url`   | The full link to the related resource | https://exampleyield.co/tbill | A valid HTTPS URL                 | ✔️       |
-| `type`  | The category of the link              | website                       | website, socialmedia, docs, other | ✔️       |
+| `type`  | The category of the link              | website                       | website, social, document, other | ✔️       |
 | `title` | A human-readable label for the link   | Product Page                  | Any UTF-8 string                  | ✔️       |
 
 ---
