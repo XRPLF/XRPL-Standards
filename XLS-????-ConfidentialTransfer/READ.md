@@ -55,6 +55,7 @@ This proposal aims to:
 | `B`        | Second component of ciphertext: `B = m · G + r · pk`.                                        |
 | `(A, B)`   | EC-ElGamal ciphertext tuple representing the encrypted value `m`.                            |
 
+For detailed technical explanations including encryption formulas, proof constructions, and protocol logic, we refer to the Technical Details section in the appendix.
 ---
 ## Specification
 
@@ -727,7 +728,7 @@ Since the key image is deterministically derived from the signer’s private key
 - Auditing metadata must not leak confidential values
 
 ---
-## Appendix C: Technical Explanation
+## Appendix C: Technical Details
 ### EC-ElGamal ciphertext and homomorphic properties
 
 Let G be the generator of the elliptic curve group, and let pk = x * G denote the user’s EC-ElGamal public key for a private scalar x in Z_q. To encrypt a known plaintext amount m in Z_q, the user samples a random blinding scalar r in Z_q and computes the ciphertext:
