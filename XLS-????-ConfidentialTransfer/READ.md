@@ -88,7 +88,7 @@ This transaction:
 
 ---
 
-### EC-ElGamal Key Generation
+#### EC-ElGamal Key Generation
 
 To participate in confidential transactions, users must generate a separate EC-ElGamal key pair. This uses the same secp256k1 elliptic curve as standard XRPL signing keys. The public key is used for encrypting confidential balances and must be included in `ConfidentialMint` and `ConfidentialSend` transactions.
 Key generation follows the same process as XRPL signature keys: generate a random 256-bit private scalar and derive the corresponding public key as `pk = sk · G`. Most cryptographic libraries that support secp256k1 can be used to create these keys.
