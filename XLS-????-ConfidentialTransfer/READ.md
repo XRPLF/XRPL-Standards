@@ -56,6 +56,7 @@ This proposal aims to:
 | `(A, B)`   | EC-ElGamal ciphertext tuple representing the encrypted value `m`.                            |
 
 For detailed technical explanations including encryption formulas, proof constructions, and protocol logic, we refer to the Technical Details section in the appendix.
+
 ---
 ## Specification
 
