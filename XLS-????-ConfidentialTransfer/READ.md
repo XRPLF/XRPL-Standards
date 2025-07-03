@@ -781,7 +781,7 @@ The `ReceiverPrivacyConfidentialSend` transaction introduces confidential ledger
 
 ---
 
-## Appendix B: Full Confidential and Private Transfers
+## Appendix B: Full Confidential and Private Transfers (WIP)
 
 Combines:
 - Confidential balances and amounts
@@ -1306,9 +1306,4 @@ A Bulletproof-based range proof includes:
 
 Bulletproofs are well-suited for high-performance applications where minimizing proof size and
 verification cost is critical, while preserving strong ZK guarantees.
-## References
 
-[1] Bulletproofs: Short Proofs for Confidential Transactions  
-[2] EC-ElGamal Encryption  
-[3] Schnorr-based Ring Signatures  
-[4] XRPLF XLS-9d: Blinded Tags
