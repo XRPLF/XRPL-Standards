@@ -296,7 +296,7 @@ The following steps describe how a `ConfidentialSend` transaction is constructed
 
 - A ZK equality proof is generated to prove that both ciphertexts encrypt the same value `m`:
   ```
-  Dec(pk_sender, C_send) = Dec(pk_receiver, C_receive) = m
+  Dec(sk_sender, C_send) = Dec(sk_receiver, C_receive) = m·G
   ```
 - This proof ensures validators can verify the transfer is amount-consistent without learning `m`.
 
