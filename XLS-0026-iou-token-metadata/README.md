@@ -43,11 +43,11 @@ Defines an issued currency on the XRPL. Currency code and issuing address must b
 |--|--|--|--|
 | `currency` 	| `string` | The currency code of the token. This can be a three-digit code, a 40-character hex code, or a custom format. | Yes
 | `issuer` 		| `string` | The public address of the issuer, encoded in the base58 format. | Yes
-| `name` 		| `string` | A display name for the token.. | No
-| `desc` 		| `string` | A description of the token and the project associated with it.. | No
-| `icon` 		| `string` | A URL pointing to an icon image representing the token. Must start with the protocol, generally _https://_ or _ipfs://_.. | No
-| `asset_class` | `string` | Top-level classification of token purpose. See the **Asset Class Definitions** table below.. | No
-| `asset_subclass` | `string` | Optional subcategory. See the **Asset Class Definitions** table below.. | If `rwa`
+| `name` 		| `string` | A display name for the token. | No
+| `desc` 		| `string` | A description of the token and the project associated with it. | No
+| `icon` 		| `string` | A URL pointing to an icon image representing the token. Must start with the protocol, generally _https://_ or _ipfs://_. | No
+| `asset_class` | `string` | Top-level classification of token purpose. See the **Asset Class Definitions** table below. | No
+| `asset_subclass` | `string` | Optional subcategory. See the **Asset Class Definitions** table below. | If `rwa`
 
 
 ###  `[[TOKENS.URLS]]`
