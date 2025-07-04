@@ -20,6 +20,8 @@ Multipurpose Tokens (MPTs) on the XRP Ledger allow issuers to attach arbitrary m
 
 This document proposes a minimally standardized metadata format for MPTs to address those challenges. The goal is not to restrict expressiveness, but to define a baseline set of fields that support reliable parsing and integration across services like block explorers, indexers, wallets, and cross-chain applications. These common fields will make it easier to surface and compare MPTs, enabling better user experiences and broader ecosystem support.
 
+This proposal is complementary to [PR #290](https://github.com/XRPLF/XRPL-Standards/pull/290), which defines metadata for IOUs on XRPL. While some elements differ to accommodate token-specific needs, both efforts aim to promote consistency and interoperability across the ecosystem.
+
 This standard is optional, but MPTs that follow it will be more readily integrated into the XRPL ecosystem.
 
 ---
@@ -36,17 +38,17 @@ MPTs include a 1024-byte field for arbitrary metadata. The metadata field is par
 
 ## 2. Base Metadata Schema
 
-| Field             | Description                                                                                          | Example                                                                                                   | Allowed Values                                       | Type                  | Required? |
-| ----------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------- | --------- |
-| `ticker`          | Ticker symbol used to represent the token                                                            | EXMPL                                                                                                     | Any uppercase ASCII string (max 6 chars recommended) | string                | ✔️        |
-| `name`            | Display name of the token                                                                            | Example Token                                                                                             | Any UTF-8 string                                     | string                | ✔️        |
-| `desc`            | Short description of the token                                                                       | A sample token used for demonstration                                                                     | Any UTF-8 string                                     | string                | ✔️        |
-| `icon`            | URL to the token icon                                                                                | https://example.org/token-icon.png                                                                        | HTTPS URL ending in `.png`, `.jpg`, or `.svg`        | string                | ✔️        |
-| `asset_class`     | Top-level classification of token purpose                                                            | rwa                                                                                                       | rwa, memes, wrapped, gaming, defi, other             | string                | ✔️        |
-| `asset_subclass`  | Optional subcategory, required if `asset_class = rwa`                                                | See 2.2 _asset_subclass_                                                                                  | See 2.2 _asset_subclass_                             | string                |           |
-| `issuer_name`     | The name of the issuer account                                                                       | Example Issuer                                                                                            | Any UTF-8 string                                     | string                | ✔️        |
-| `urls`            | List of related URLs (site, dashboard, social media, etc.)                                           | See 2.3 _urls_                                                                                            | See 2.3 _urls_                                       | array                 |           |
-| `additional_info` | Freeform field for key token details like interest rate, maturity date, term, or other relevant info | `{ "interest_rate": "4.75%", "maturity_date": "2030-06-30", "term": "10Y", "issuer_type": "government" }` | Any valid JSON object or UTF-8 string                | JSON object or string |           |
+| Field             | Description                                                                                          | Example                                                                                                   | Allowed Values                                                              | Type                  | Required? |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------- | --------- |
+| `ticker`          | Ticker symbol used to represent the token                                                            | EXMPL                                                                                                     | Uppercase letters (A-Z) and digits (0-9) only. Max 6 characters recommended | string                | ✔️        |
+| `name`            | Display name of the token                                                                            | Example Token                                                                                             | Any UTF-8 string                                                            | string                | ✔️        |
+| `desc`            | Short description of the token                                                                       | A sample token used for demonstration                                                                     | Any UTF-8 string                                                            | string                | ✔️        |
+| `icon`            | URL to the token icon                                                                                | https://example.org/token-icon.png                                                                        | HTTPS URL ending in `.png`, `.jpg`, or `.svg`                               | string                | ✔️        |
+| `asset_class`     | Top-level classification of token purpose                                                            | rwa                                                                                                       | rwa, memes, wrapped, gaming, defi, other                                    | string                | ✔️        |
+| `asset_subclass`  | Optional subcategory, required if `asset_class = rwa`                                                | See 2.2 _asset_subclass_                                                                                  | See 2.2 _asset_subclass_                                                    | string                |           |
+| `issuer_name`     | The name of the issuer account                                                                       | Example Issuer                                                                                            | Any UTF-8 string                                                            | string                | ✔️        |
+| `urls`            | List of related URLs (site, dashboard, social media, etc.)                                           | See 2.3 _urls_                                                                                            | See 2.3 _urls_                                                              | array                 |           |
+| `additional_info` | Freeform field for key token details like interest rate, maturity date, term, or other relevant info | `{ "interest_rate": "4.75%", "maturity_date": "2030-06-30", "term": "10Y", "issuer_type": "government" }` | Any valid JSON object or UTF-8 string                                       | JSON object or string |           |
 
 ---
 
@@ -79,11 +81,11 @@ MPTs include a 1024-byte field for arbitrary metadata. The metadata field is par
 
 ### 2.3 urls
 
-| Field   | Description                           | Example                       | Allowed Values                    | Required |
-| ------- | ------------------------------------- | ----------------------------- | --------------------------------- | -------- |
-| `url`   | The full link to the related resource | https://exampleyield.co/tbill | A valid HTTPS URL                 | ✔️       |
+| Field   | Description                           | Example                       | Allowed Values                   | Required |
+| ------- | ------------------------------------- | ----------------------------- | -------------------------------- | -------- |
+| `url`   | The full link to the related resource | https://exampleyield.co/tbill | A valid HTTPS URL                | ✔️       |
 | `type`  | The category of the link              | website                       | website, social, document, other | ✔️       |
-| `title` | A human-readable label for the link   | Product Page                  | Any UTF-8 string                  | ✔️       |
+| `title` | A human-readable label for the link   | Product Page                  | Any UTF-8 string                 | ✔️       |
 
 ---
 
