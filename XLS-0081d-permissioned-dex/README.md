@@ -269,7 +269,9 @@ The following will be added:
 
 The existing set of state changes for `OfferCreate` will continue to exist.
 
-If the `DomainID` is included in the `OfferCreate` transaction, the DEX will use the domain-specific orderbook to process the offer - this applies to hybrid offers as well. Hybrid offers will use domain-specific order book by default for offer crossing.
+If the `DomainID` is included in the `OfferCreate` transaction, the DEX will use the domain-specific orderbook to process the offer. This applies to hybrid offers as well - hybrid offers will only use the domain-specific order book by default for offer crossing in the execution of that transaction (it can be crossed by open offers later).
+
+If the offer owner is no longer part of the domain, the offer will be treated as "unfunded" whenever it is attempted to be crossed. Like existing unfunded offers, it will be automatically removed.
 
 ## 5. Transaction: `Payment`
 
