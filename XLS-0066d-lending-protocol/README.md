@@ -225,7 +225,7 @@ The `LoanBroker` object has the following fields:
 | `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
 | `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
-#### 2.1.3 `LoanBroker`_pseudo-account_`
+#### 2.1.3 `LoanBroker` _pseudo-account_
 
 The `LoanBroker` _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker, as well as Loan funds. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
@@ -1137,6 +1137,7 @@ The transaction deletes an existing `Loan` object.
 
     - Update the `Loan` object:
 
+    - `Loan(LoanID).Flags &= ~lsfLoanImpaired`
     - `CandidateDueDate = max(Loan.PreviousPaymentDate, Loan.StartDate) + Loan.PaymentInterval`
 
     - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
@@ -1619,19 +1620,26 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
     - `feeManagement = interest_paid x LoanBroker.ManagementFeeRate`
 
-  - Decrease the management fee from totalPaid amount:
+  - Total paid, and what portion goes to the vault:
+  
+    - `totalPaid = principal_paid + interest_paid + fee_paid`
+    - `totalPaidToVault = principal_paid + interest_paid`
+    - `totalPaidToBroker = fee_paid`
+    
+  - Adjust the totals for the management fee:
 
-    - `totalPaid = totalPaid - feeManagement`
+    - `totalPaidToVault = totalPaidToVault - feeManagement`
+    - `totalPaidToBroker = totalPaidToBroker + feeManagement`
 
   - If there is **not enough** first-loss capital: `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Add the fee to to First Loss Cover Pool:
 
-      - `LoanBroker.CoverAvailable = LoanBroker.CoverAvailable + (feeManagement + fee_paid)`
+      - `LoanBroker.CoverAvailable = LoanBroker.CoverAvailable + (totalPaidToBroker)`
 
   - Decrease LoanBroker Debt by the amount paid:
 
-    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - totalPaid`
+    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - (totalPaid - fee_paid)`
 
   - Update the LoanBroker Debt by the Loan value change:
 
@@ -1645,7 +1653,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Increase available assets in the Vault by the amount paid:
 
-    - `Vault.AssetsAvailable = Vault.AssetsAvailable + totalPaid`
+    - `Vault.AssetsAvailable = Vault.AssetsAvailable + totalPaidToVault`
 
   - Update the Vault total value by the change in the Loan total value:
 
