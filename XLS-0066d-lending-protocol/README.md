@@ -99,7 +99,7 @@ The flow of the lending protocol is as follows:
 
 ### 1.2.1 Clawback
 
-Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws back the funds. It can be performed on the Vault, not the Lending Protocol.
+Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws back the funds. The Issuer may clawback funds from the First-Loss Capital.
 
 ### 1.2.2 Freeze
 
@@ -636,7 +636,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
   - The `RippleState` object `Balance` < `Amount` (Depositor has insufficient funds).
 
@@ -695,9 +695,10 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - If the `Destination` field is not specified:
-    - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+    - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
   
   - If the `Destination` field is specified:
+    - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
     - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
@@ -709,8 +710,9 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
 
   - If the `Destination` field specified:
+    - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
     - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
-  
+
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set and `Destination` is not the `Issuer` of the asset.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set and `Destination` is not the `Issuer` of the asset (the asset is not transferable).
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
@@ -737,7 +739,6 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
   - If `Destination` field is specified:
-    - Create a  `RippleState` object if it does not exist between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot`.
     - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
@@ -747,7 +748,6 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
   - If `Destination` field is specified:
-    - Create a  `MPToken` object for the `Destination` `AccountRoot` if it does not exist.
     - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
 
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
@@ -767,7 +767,6 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 ##### 3.1.5.1 Failure conditions
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
 
@@ -868,8 +867,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 - `Borrower` initiates the transaction:
 
   1. The `Borrower` creates the transaction from their account, setting the pre-agreed terms.
-
-  - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
+      - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
 
   2. The `Borrower` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
   3. The `Borrower` sends the transaction to the `Loan Issuer`.
@@ -881,7 +879,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 
   1. The `Loan Issuer` creates the transaction from their account setting the pre-agreed terms.
 
-  - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
+      - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
 
   2. The `Loan Issuer` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
   3. The `Loan Issuer` sends the transaction to the `Borrower`.
@@ -903,7 +901,9 @@ The account specified in the `Account` field pays the transaction fee.
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+
+  - The `RippleState` between the `Vault(LoanBroker(LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
@@ -1177,7 +1177,7 @@ The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
@@ -1510,7 +1510,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
 
     let periodic_payment = loan.compute_periodic_payment()
 
-    let full_periodic_payments = floor(amount / periodic_payment)
+    let full_periodic_payments = floor(amount / (periodic_payment + loan.service_fee))
     if full_periodic_payments < 1 {
         return "insufficient amount paid" error
     }
@@ -1583,8 +1583,8 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-  - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
+  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+  - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Vault _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
