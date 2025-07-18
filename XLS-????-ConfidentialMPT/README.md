@@ -43,7 +43,7 @@ This XLS defines:
 
 **Confidential MPT:**  An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via ZKPs.
 
-**ConfidentialMPTBalance (Object):**  A new ledger object that stores an encrypted balance for a specific `(Issuer, Currency)` pair and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
+**ConfidentialMPTBalance (Object):**  A new ledger object that stores an encrypted balance and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
 
 **ConfidentialOutstandingAmount (Field):**  An optional field in the `MPTokenIssuance` object that stores the homomorphically accumulated ciphertext representing total confidential supply in circulation (i.e., transferred from issuer to non-issuers). It is an EC-ElGamal ciphertext under the issuer’s key.
 
