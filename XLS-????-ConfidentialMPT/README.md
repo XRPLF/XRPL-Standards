@@ -167,7 +167,6 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 | `SenderPublicKey`         | Binary    | ElGamal public key of the sender |
 | `ZKProof`                 | Object    | Zero-knowledge proof of correctness, including:  <br> (1)  Well-formed encryption  <br> (2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  <br> (3) `Amount` ≤ sender’s public balance  <br> (4) `Amount` ≤ `MaxAmount` |
 
----
 
 #### Encryption Behavior
 - The transaction generates two ciphertexts for the `Amount`:
@@ -175,7 +174,6 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
   - One encrypted under the **issuer’s** ElGamal public key → used to update `ConfidentialOutstandingAmount`.
 - For the **issuer converting internally**, the second ciphertext may be omitted (no change to `ConfidentialOutstandingAmount`), and no equality proof is required.
 
----
 
 #### Ledger Changes
 - Deduct `Amount` from the sender’s **public** MPToken balance.
@@ -183,8 +181,6 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
   - Add `EncryptedAmountForSender` to their encrypted balance.
 - For non-issuer accounts:
   - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
-
----
 
 #### Validator Checks
 - Verify:
@@ -197,8 +193,6 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
   - Enforce homomorphic update to `ConfidentialOutstandingAmount`.
 - If the sender is the issuer:
   - Skip updating `ConfidentialOutstandingAmount`.
-
----
 
 #### Example JSON
 
