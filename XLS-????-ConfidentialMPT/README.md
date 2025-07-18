@@ -37,24 +37,34 @@ This XLS defines:
 
 ## Definitions
 
-- **MPToken**: A Multi-Purpose Token defined by [XLS-33](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens), representing a fungible asset issued on XRPL with associated issuance metadata and ledger tracking.
+**MPTokenIssuance (Object):**  
+A ledger object defined by XLS-33 that records metadata about a Multi-Purpose Token (MPT), including `Currency`, `Issuer`, `MaxAmount`, `OutstandingAmount`, and optionally `ConfidentialOutstandingAmount`. It resides under the issuer’s Owner Directory.
 
-- **Confidential MPT**: An MPT whose balance and transfer amounts are encrypted using EC-ElGamal encryption.
+**MPToken (Object):**  
+A ledger object representing a user's public balance of a specific MPT. It is created when a non-issuer holds the token and is stored under the holder’s Owner Directory.
 
-- **ConfidentialMPTBalance**: A ledger object representing an encrypted balance for a specific `(Currency, Issuer)` pair, associated with a holder's ElGamal public key. These are stored under the account's **Owner Directory**.
+**Confidential MPT:**  
+An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via zero-knowledge proofs.
 
-- **ConfidentialOutstandingAmount**: An encrypted field in the `MPTokenIssuance` object that tracks the total amount of confidential tokens in circulation. It is updated homomorphically with each confidential transfer leaving the issuer.
+**ConfidentialMPTBalance (Object):**  
+A new ledger object that stores an encrypted balance for a specific `(Issuer, Currency)` pair and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
 
-- **EC-ElGamal Encryption**: A public key encryption scheme used to encrypt balances and transfer amounts. It supports additive homomorphism, enabling encrypted values to be added without decryption.
+**ConfidentialOutstandingAmount (Field):**  
+An optional field in the `MPTokenIssuance` object that stores the homomorphically accumulated ciphertext representing total confidential supply in circulation (i.e., transferred from issuer to non-issuers). It is an EC-ElGamal ciphertext under the issuer’s key.
 
-- **Zero-Knowledge Proof (ZKP)**: A cryptographic proof that validates correctness of a confidential operation (e.g., that a transfer amount is non-negative and ≤ MaxAmount) without revealing any private information.
+**EC-ElGamal Encryption:**  
+A public-key encryption scheme supporting additive homomorphism. Used to encrypt balances and transfer amounts while allowing encrypted arithmetic and public audit of aggregate supply.
 
-- **Dual Encryption**: Confidential token amounts are encrypted using both the **holder’s** and the **issuer’s** ElGamal public keys:
-    - Holder encryption allows local balance updates.
-    - Issuer encryption allows validation and audit of circulating supply.
+**Zero-Knowledge Proof (ZKP):**  
+A cryptographic mechanism proving the correctness of confidential operations (e.g., amount validity, consistency of dual encryptions) without revealing sensitive values.
 
-- **Owner Directory**: A ledger structure used to index and store objects owned by an account, such as `MPToken`, `Offer`, and now `ConfidentialMPTBalance` objects.
+**Dual Encryption:**  
+A mechanism where confidential token amounts are encrypted under two public keys:
+- **Issuer’s ElGamal key:** enables validation and audit of circulating supply.
+- **Holder’s ElGamal key:** enables the holder to track and update their encrypted balance.
 
+**Owner Directory:**  
+A ledger-maintained directory that indexes all objects owned by an account, including `MPToken`, `MPTokenIssuance`, `Offer`, `Check`, and now `ConfidentialMPTBalance`.
 ## Ledger Format Changes
 
 To support confidential MPTs, we introduce new fields and objects in the XRPL, while preserving compatibility with existing MPT infrastructure as defined in [XLS-33](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
