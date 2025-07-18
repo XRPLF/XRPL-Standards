@@ -82,32 +82,41 @@ The `MPTokenIssuance` object is extended to include two new fields:
     }
   }
 ```
-
-
 ### ConfidentialMPTBalance Object (New)
 
 This is a new ledger object used to store encrypted token balances.
 
-- Stored under: The token holder’s Owner Directory
+**Stored under:** Token holder’s Owner Directory
 
-- Fields:
+#### Fields
 
-    - Issuer: The MPT issuer account 
-    - Currency: The token code (e.g., "USD")
-    - PublicKey: ElGamal public key of the balance owner 
-    - EncryptedBalance: EC-ElGamal ciphertext representing the balance
+- `LedgerEntryType`: `"ConfidentialMPTBalance"`
+- `Issuer`: The MPT issuer account (e.g., `"rAlice"`)
+- `Currency`: The token code (e.g., `"USD"`)
+- `HolderPublicKey`: The ElGamal public key of the balance owner
+- `EncryptedBalanceHolder`: EC-ElGamal ciphertext encrypted under the holder’s key
+- `EncryptedBalanceIssuer`: EC-ElGamal ciphertext encrypted under the issuer’s key  
+  *(used for validating confidential supply; may be omitted if holder is issuer)*
+
+#### Example: Non-Issuer Holding Confidential Balance
+
 ```json
 {
   "LedgerEntryType": "ConfidentialMPTBalance",
   "Issuer": "rAlice",
   "Currency": "USD",
-  "PublicKey": "pkBob",
-  "EncryptedBalance": {
+  "HolderPublicKey": "pkBob",
+  "EncryptedBalanceHolder": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedBalanceIssuer": {
     "A": "...",
     "B": "..."
   }
 }
 ```
+
 ### Ledger Constraints
 - ConfidentialOutstandingAmount must always remain ≤ MaxAmount, enforced by ZKPs in transactions. 
 - Encrypted balances must be non-negative and valid under both the holder’s and the issuer’s keys, enforced via dual encryption and equality proofs. 
