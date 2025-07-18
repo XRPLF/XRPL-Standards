@@ -64,7 +64,7 @@ To support confidential MPTs, we introduce new fields and objects in the XRPL, w
 
 The `MPTokenIssuance` object is extended to include a new field:
 
-- **ConfidentialOutstandingAmount**:An EC-ElGamal ciphertext (under the issuer’s public key) that represents the total amount of confidential tokens in circulation. This field is only created and updated after the first confidential transfer from the issuer. Homomorphic addition updates this field and ensure it never exceeds MaxAmount, with accompanying zero-knowledge proofs for correctness.
+- **ConfidentialOutstandingAmount**:An EC-ElGamal ciphertext (under the issuer’s public key) that represents the total amount of confidential tokens in circulation. This field is only created and updated after the first confidential transfer from the issuer. Homomorphic addition updates this field and ensure it never exceeds MaxAmount, with accompanying ZKPs for correctness.
 
 
 ```json
