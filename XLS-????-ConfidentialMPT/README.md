@@ -37,34 +37,25 @@ This XLS defines:
 
 ## Definitions
 
-**MPTokenIssuance (Object):**  
-A ledger object defined by XLS-33 that records metadata about a Multi-Purpose Token (MPT), including `Currency`, `Issuer`, `MaxAmount`, `OutstandingAmount`, and optionally `ConfidentialOutstandingAmount`. It resides under the issuer’s Owner Directory.
+**MPTokenIssuance (Object):**  A ledger object defined by XLS-33 that records metadata about a Multi-Purpose Token (MPT), including `Currency`, `Issuer`, `MaxAmount`, `OutstandingAmount`, and optionally `ConfidentialOutstandingAmount`. It resides under the issuer’s Owner Directory.
 
-**MPToken (Object):**  
-A ledger object representing a user's public balance of a specific MPT. It is created when a non-issuer holds the token and is stored under the holder’s Owner Directory.
+**MPToken (Object):**  A ledger object representing a user's public balance of a specific MPT. It is created when a non-issuer holds the token and is stored under the holder’s Owner Directory.
 
-**Confidential MPT:**  
-An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via zero-knowledge proofs.
+**Confidential MPT:**  An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via zero-knowledge proofs.
 
-**ConfidentialMPTBalance (Object):**  
-A new ledger object that stores an encrypted balance for a specific `(Issuer, Currency)` pair and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
+**ConfidentialMPTBalance (Object):**  A new ledger object that stores an encrypted balance for a specific `(Issuer, Currency)` pair and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
 
-**ConfidentialOutstandingAmount (Field):**  
-An optional field in the `MPTokenIssuance` object that stores the homomorphically accumulated ciphertext representing total confidential supply in circulation (i.e., transferred from issuer to non-issuers). It is an EC-ElGamal ciphertext under the issuer’s key.
+**ConfidentialOutstandingAmount (Field):**  An optional field in the `MPTokenIssuance` object that stores the homomorphically accumulated ciphertext representing total confidential supply in circulation (i.e., transferred from issuer to non-issuers). It is an EC-ElGamal ciphertext under the issuer’s key.
 
-**EC-ElGamal Encryption:**  
-A public-key encryption scheme supporting additive homomorphism. Used to encrypt balances and transfer amounts while allowing encrypted arithmetic and public audit of aggregate supply.
+**EC-ElGamal Encryption:**  A public-key encryption scheme supporting additive homomorphism. Used to encrypt balances and transfer amounts while allowing encrypted arithmetic and public audit of aggregate supply.
 
-**Zero-Knowledge Proof (ZKP):**  
-A cryptographic mechanism proving the correctness of confidential operations (e.g., amount validity, consistency of dual encryptions) without revealing sensitive values.
+**Zero-Knowledge Proof (ZKP):**  A cryptographic mechanism proving the correctness of confidential operations (e.g., amount validity, consistency of dual encryptions) without revealing sensitive values.
 
-**Dual Encryption:**  
-A mechanism where confidential token amounts are encrypted under two public keys:
+**Dual Encryption:**  A mechanism where confidential token amounts are encrypted under two public keys:
 - **Issuer’s ElGamal key:** enables validation and audit of circulating supply.
 - **Holder’s ElGamal key:** enables the holder to track and update their encrypted balance.
 
-**Owner Directory:**  
-A ledger-maintained directory that indexes all objects owned by an account, including `MPToken`, `MPTokenIssuance`, `Offer`, `Check`, and now `ConfidentialMPTBalance`.
+**Owner Directory:**  A ledger-maintained directory that indexes all objects owned by an account, including `MPToken`, `MPTokenIssuance`, `Offer`, `Check`, and now `ConfidentialMPTBalance`.
 ## Ledger Format Changes
 
 To support confidential MPTs, we introduce new fields and objects in the XRPL, while preserving compatibility with existing MPT infrastructure as defined in [XLS-33](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
