@@ -138,46 +138,74 @@ To enable confidential transfers of MPTs, we introduce new transaction types tha
 
 ---
 
-### `ConfidentialMPTConvert`
+### Transaction: ConfidentialMPTConvert
 
-**Purpose**:  
-Converts publicly held MPT tokens into confidential form, moving them from a visible balance to an encrypted balance.
+#### Purpose
+Converts publicly held MPT tokens into confidential form by replacing visible balances with encrypted equivalents. Supports privacy-preserving interaction with MPToken assets.
 
-**Use Cases**:
-- A token holder wants to hide part or all of their publicly visible MPT balance.
-- Supports transitioning between public and confidential ecosystems.
+---
 
-**Transaction Fields**:
+#### Use Cases
+- A token holder (issuer or non-issuer) wants to convert part or all of their visible MPToken balance to confidential form.
+- Enables gradual migration from transparent to confidential token ecosystems.
+- For non-issuers: ensures confidential supply is auditable via issuer-key encrypted balances.
+- For issuers: internal conversions remain private and do not affect `ConfidentialOutstandingAmount`.
 
-| Field                     | Type     | Description |
-|--------------------------|----------|-------------|
-| `TransactionType`        | String   | `"ConfidentialMPTConvert"` |
-| `Account`                | Account  | Sender’s XRPL address |
-| `Issuer`                 | Account  | Issuer of the MPT |
-| `Currency`               | String   | Token code (e.g., "USD") |
-| `Amount`                 | String   | Amount to convert (plain integer) |
-| `EncryptedAmountForSender` | Object | EC-ElGamal ciphertext under sender's public key |
-| `EncryptedAmountForIssuer` | Object | EC-ElGamal ciphertext under issuer's public key |
-| `SenderPublicKey`        | Binary   | Sender’s ElGamal public key |
-| `ZKProof`                | Object   | Zero-knowledge proof proving: <br> (1) the encryption is well-formed, <br> (2) `EncryptedAmountForSender == EncryptedAmountForIssuer`, <br> (3) amount ≤ public balance, <br> (4) amount ≤ `MaxAmount` |
+---
 
-**Encryption Behavior**:
-- Converts a plain `Amount` into two ciphertexts:
-    - One under the sender’s ElGamal key (used for their encrypted balance).
-    - One under the issuer’s ElGamal key (used for tracking `ConfidentialOutstandingAmount`).
-- Encrypted balances are created or updated for both.
+#### Transaction Fields
 
-**Ledger Changes**:
-- Deduct `Amount` from sender’s public MPToken balance.
-- Add `EncryptedAmountForSender` to sender’s `ConfidentialMPTBalance`.
-- Add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount` (homomorphically).
+| Field                      | Type      | Description |
+|---------------------------|-----------|-------------|
+| `TransactionType`         | String    | `"ConfidentialMPTConvert"` |
+| `Account`                 | Account   | XRPL address of the converter (sender) |
+| `Issuer`                  | Account   | Issuer of the MPToken |
+| `Currency`                | String    | Token code (e.g., `"USD"`) |
+| `Amount`                  | String    | Plain-text amount to convert |
+| `EncryptedAmountForSender` | Object   | EC-ElGamal ciphertext (under sender's ElGamal public key) |
+| `EncryptedAmountForIssuer` | Object   | EC-ElGamal ciphertext (under issuer's ElGamal public key); optional if sender **is** the issuer |
+| `SenderPublicKey`         | Binary    | ElGamal public key of the sender |
+| `ZKProof`                 | Object    | Zero-knowledge proof of correctness, including:  
+&emsp;(1) Well-formed encryption  
+&emsp;(2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  
+&emsp;(3) `Amount` ≤ sender’s public balance  
+&emsp;(4) `Amount` ≤ `MaxAmount` |
 
-**Validator Checks**:
-- Verify sender has enough public MPT balance.
-- Verify correctness of all encryptions and equality via `ZKProof`.
-- Ensure total confidential supply remains ≤ `MaxAmount`.
+---
 
-**Example JSON**:
+#### Encryption Behavior
+- The transaction generates two ciphertexts for the `Amount`:
+  - One encrypted under the **sender’s** ElGamal public key → used for the sender’s `ConfidentialMPTBalance`.
+  - One encrypted under the **issuer’s** ElGamal public key → used to update `ConfidentialOutstandingAmount`.
+- For the **issuer converting internally**, the second ciphertext may be omitted (no change to `ConfidentialOutstandingAmount`), and no equality proof is required.
+
+---
+
+#### Ledger Changes
+- Deduct `Amount` from the sender’s **public** MPToken balance.
+- Update or create a `ConfidentialMPTBalance` object under the sender’s Owner Directory:
+  - Add `EncryptedAmountForSender` to their encrypted balance.
+- For non-issuer accounts:
+  - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+
+---
+
+#### Validator Checks
+- Verify:
+  - The sender has enough public MPToken balance.
+  - `Amount` ≤ `MaxAmount`.
+  - The `ZKProof` proves:
+    - Both ciphertexts are well-formed and encrypt the same value.
+    - Encrypted amount is within valid range.
+- If the sender is not the issuer:
+  - Enforce homomorphic update to `ConfidentialOutstandingAmount`.
+- If the sender is the issuer:
+  - Skip updating `ConfidentialOutstandingAmount`.
+
+---
+
+#### Example JSON
+
 ```json
 {
   "TransactionType": "ConfidentialMPTConvert",
