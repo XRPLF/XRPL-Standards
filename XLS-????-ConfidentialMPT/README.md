@@ -134,7 +134,7 @@ This is a new ledger object used to store encrypted token balances.
 
 ## Transaction Types
 
-To enable confidential transfers of Multi-Purpose Tokens (MPTs), we introduce new transaction types that extend XLS-33 with privacy-preserving features. These transactions support internal conversion, confidential sends, and audit-friendly ledger updates using encryption and zero-knowledge proofs.
+To enable confidential transfers of MPTs, we introduce new transaction types that extend XLS-33 with confidentiality. These transactions support internal conversion, confidential sends, and audit-friendly ledger updates using encryption and ZKPs
 
 ---
 
