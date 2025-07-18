@@ -297,68 +297,76 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 }
 ```
 
-## Public Audit of `ConfidentialOutstandingAmount`
+### Public Audit of ConfidentialOutstandingAmount
 
-This section describes how any observer—validators, auditors, or users—can verify the encrypted confidential supply (`ConfidentialOutstandingAmount`) at a given ledger index **without revealing individual balances**.
+This mechanism allows any observer — including validators, auditors, or third-party users — to **cryptographically verify** the total circulating supply of confidential tokens at any ledger index **without revealing individual balances**.
 
-### Assumptions
+#### Assumptions
 
 - Each token holder stores their `ConfidentialMPTBalance` encrypted under:
-  - Their own ElGamal public key (e.g., `pkBob`)
-  - The issuer's ElGamal public key (e.g., `pkAlice`)
-- The issuer maintains `ConfidentialOutstandingAmount` as an ElGamal ciphertext under `pkAlice`, homomorphically updated.
-- Every confidential operation (`ConfidentialMPTSend`, `ConfidentialMPTConvert`) includes a ZKP that ensures:
-  - The transferred amount is valid (non-negative and ≤ MaxAmount)
-  - The dual encryptions (user and issuer) represent the same amount (via equality proof)
+  - Their own public key (e.g., `pkBob`)
+  - The issuer’s public key (e.g., `pkAlice`)
+- The issuer maintains a `ConfidentialOutstandingAmount` field, which is an **EC-ElGamal ciphertext under `pkAlice`**, updated homomorphically whenever confidential tokens leave the issuer.
+- For each confidential transfer (e.g., `ConfidentialMPTSend`, `ConfidentialMPTConvert`), a **Zero-Knowledge Proof (ZKP)** is included to:
+  - Prove that the transferred amount is valid (non-negative and ≤ MaxAmount)
+  - Ensure consistency between the dual encryptions (under issuer and holder keys)
+- The issuer includes a **mandatory ZKP** (`ConfidentialSupplyZKP`) with every update to `ConfidentialOutstandingAmount`, proving that the encrypted total is **well-formed and ≤ MaxAmount**.
 
-### Ledger Storage
+---
 
-#### `ConfidentialOutstandingAmount`
+#### Ledger Storage
 
-- Stored in the `MPTokenIssuance` object (under the issuer’s Owner Directory)
-- Format: EC-ElGamal ciphertext `{ A, B }` under `pkAlice`
-
-#### `ConfidentialMPTBalances`
-
-- Stored in each account’s `Owner Directory`
-- Includes:
+- **`MPTokenIssuance` object (under issuer’s Owner Directory)**:
   ```json
+  {
+    "Issuer": "rAlice",
+    "Currency": "USD",
+    "MaxAmount": "1000",
+    "OutstandingAmount": "0",
+    "ConfidentialOutstandingAmount": {
+      "A": "...",  // EC-ElGamal component
+      "B": "..."
+    },
+    "ConfidentialSupplyZKP": {
+      "Proof": "zkp_bytes_here"  // ZKP: Enc(x) ≤ MaxAmount
+    }
+  }
+
+- **`ConfidentialMPTBalance`** objects (under each account’s Owner Directory):
+```json
   {
     "LedgerEntryType": "ConfidentialMPTBalance",
     "Issuer": "rAlice",
     "Currency": "USD",
     "PublicKey": "pkAlice",
     "EncryptedBalance": {
-      "A": "...",
-      "B": "..."
+    "A": "...",
+    "B": "..."
     }
   }
-  ```
+```
 
-### Audit Procedure for Observers
+#### Audit Procedure
+To verify the confidential supply:
 
-1. **Scan the ledger** at a specific ledger index.
-2. **Collect all `ConfidentialMPTBalance` entries** for the given token (e.g., `USD.Alice`) encrypted under `pkAlice`.
-3. **Extract each ciphertext**:
-   ```json
-   {
-     "Issuer": "rAlice",
-     "Currency": "USD",
-     "PublicKey": "pkAlice",
-     "EncryptedBalance": Enc_issuer(X)
-   }
-   ```
-4. **Homomorphically add** all ciphertexts `Enc_issuer(X)` to compute the aggregate encrypted supply.
-5. **Compare** the aggregated ciphertext with `ConfidentialOutstandingAmount` from `MPTokenIssuance`.
+- Scan the ledger at a specific index. 
+- Collect all ConfidentialMPTBalance objects for a specific (Currency, Issuer) pair encrypted under the issuer's key (pkAlice). 
+- Extract each:
 
-If equal: audit passes — encrypted circulation is consistent.  
-If not: inconsistency detected — potential bug or violation.
+```json
+{
+  "Issuer": "rAlice",
+  "Currency": "USD",
+  "PublicKey": "pkAlice",
+  "EncryptedBalance": Enc_issuer(X)
+}
+```
+- Sum all ciphertexts homomorphically:
+- Enc_total = + Enc_issuer(X1) + Enc_issuer(X2) + ... 
+- Compare Enc_total with ConfidentialOutstandingAmount in MPTokenIssuance.
 
-### Optional: Issuer-Provided ZKPs
-
-To improve audit efficiency and trust:
-- The issuer may periodically include a **zero-knowledge proof** attesting:
-  - `ConfidentialOutstandingAmount ≤ MaxAmount`
-- This ZKP can be:
-  - Stored directly in the `MPTokenIssuance` object, or
-  - Published off-chain with a cryptographic commitment recorded on-chain.
+#### Audit Result
+If Enc_total == ConfidentialOutstandingAmount, and the accompanying ConfidentialSupplyZKP verifies that Enc_total ≤ MaxAmount, then:
+- The confidential circulating supply is correct
+- No over-issuance has occurred 
+- Privacy of individual balances is preserved
