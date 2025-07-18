@@ -296,3 +296,69 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
   }
 }
 ```
+
+## Public Audit of `ConfidentialOutstandingAmount`
+
+This section describes how any observer—validators, auditors, or users—can verify the encrypted confidential supply (`ConfidentialOutstandingAmount`) at a given ledger index **without revealing individual balances**.
+
+### Assumptions
+
+- Each token holder stores their `ConfidentialMPTBalance` encrypted under:
+  - Their own ElGamal public key (e.g., `pkBob`)
+  - The issuer's ElGamal public key (e.g., `pkAlice`)
+- The issuer maintains `ConfidentialOutstandingAmount` as an ElGamal ciphertext under `pkAlice`, homomorphically updated.
+- Every confidential operation (`ConfidentialMPTSend`, `ConfidentialMPTConvert`) includes a ZKP that ensures:
+  - The transferred amount is valid (non-negative and ≤ MaxAmount)
+  - The dual encryptions (user and issuer) represent the same amount (via equality proof)
+
+### Ledger Storage
+
+#### `ConfidentialOutstandingAmount`
+
+- Stored in the `MPTokenIssuance` object (under the issuer’s Owner Directory)
+- Format: EC-ElGamal ciphertext `{ A, B }` under `pkAlice`
+
+#### `ConfidentialMPTBalances`
+
+- Stored in each account’s `Owner Directory`
+- Includes:
+  ```json
+  {
+    "LedgerEntryType": "ConfidentialMPTBalance",
+    "Issuer": "rAlice",
+    "Currency": "USD",
+    "PublicKey": "pkAlice",
+    "EncryptedBalance": {
+      "A": "...",
+      "B": "..."
+    }
+  }
+  ```
+
+### Audit Procedure for Observers
+
+1. **Scan the ledger** at a specific ledger index.
+2. **Collect all `ConfidentialMPTBalance` entries** for the given token (e.g., `USD.Alice`) encrypted under `pkAlice`.
+3. **Extract each ciphertext**:
+   ```json
+   {
+     "Issuer": "rAlice",
+     "Currency": "USD",
+     "PublicKey": "pkAlice",
+     "EncryptedBalance": Enc_issuer(X)
+   }
+   ```
+4. **Homomorphically add** all ciphertexts `Enc_issuer(X)` to compute the aggregate encrypted supply.
+5. **Compare** the aggregated ciphertext with `ConfidentialOutstandingAmount` from `MPTokenIssuance`.
+
+If equal: audit passes — encrypted circulation is consistent.  
+If not: inconsistency detected — potential bug or violation.
+
+### Optional: Issuer-Provided ZKPs
+
+To improve audit efficiency and trust:
+- The issuer may periodically include a **zero-knowledge proof** attesting:
+  - `ConfidentialOutstandingAmount ≤ MaxAmount`
+- This ZKP can be:
+  - Stored directly in the `MPTokenIssuance` object, or
+  - Published off-chain with a cryptographic commitment recorded on-chain.
