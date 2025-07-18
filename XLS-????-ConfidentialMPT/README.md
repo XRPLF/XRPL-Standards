@@ -249,7 +249,7 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
   - The encrypted value is valid and ≤ MaxAmount.
 
 
-### Ledger Changes
+#### Ledger Changes
 
 #### If Sender is Issuer
 
@@ -267,14 +267,9 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 
 #### Validator Checks
 
-- If `Account == Issuer`:
-  - No balance check on sender
-  - Validate encryption and ZKP
-  - Ensure new `ConfidentialOutstandingAmount ≤ MaxAmount`
+- Check that sender has sufficient confidential balance
+- Validate encryption and ZKP correctness
 
-- If `Account ≠ Issuer`:
-  - Validate sender has sufficient encrypted balance
-  - Validate dual encryption equality and amount range via ZKP
 
 #### Example JSON (Issuer Sends)
 
