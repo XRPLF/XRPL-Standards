@@ -131,10 +131,6 @@ This is a new ledger object used to store encrypted token balances.
 
 - The structure of `AccountRoot` remains unchanged.  
   - `ConfidentialMPTBalance` objects are stored in the account’s Owner Directory for modularity and scalability.
-### Ledger Constraints
-- ConfidentialOutstandingAmount must always remain ≤ MaxAmount, enforced by ZKPs in transactions. 
-- Encrypted balances must be non-negative and valid under both the holder’s and the issuer’s keys, enforced via dual encryption and equality proofs. 
-- The structure of AccountRoot remains unchanged to preserve XRPL performance and compatibility.
 
 ## Transaction Types
 
