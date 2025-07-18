@@ -116,7 +116,21 @@ This is a new ledger object used to store encrypted token balances.
   }
 }
 ```
+### Ledger Constraints
 
+- `ConfidentialOutstandingAmount` must always remain ≤ `MaxAmount`.  
+  - This is enforced by ZKPs included with any confidential minting or conversion that increases circulating confidential supply.
+  - The ZKP is stored in the `MPTokenIssuance` object to enable public auditability.
+
+- Encrypted balances must be well-formed and non-negative.  
+  - For non-issuer holders, each `ConfidentialMPTBalance` must include both:
+    - `EncryptedBalanceHolder` (encrypted with holder’s public key)
+    - `EncryptedBalanceIssuer` (encrypted with issuer’s public key)  
+  - A ZKP must be included to prove equality of the two encryptions, ensuring dual encryption consistency.
+  - For issuer-held balances, the issuer may omit `EncryptedBalanceIssuer`, and no equality proof is required.
+
+- The structure of `AccountRoot` remains unchanged.  
+  - `ConfidentialMPTBalance` objects are stored in the account’s Owner Directory for modularity and scalability.
 ### Ledger Constraints
 - ConfidentialOutstandingAmount must always remain ≤ MaxAmount, enforced by ZKPs in transactions. 
 - Encrypted balances must be non-negative and valid under both the holder’s and the issuer’s keys, enforced via dual encryption and equality proofs. 
