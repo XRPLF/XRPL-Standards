@@ -143,7 +143,6 @@ To enable confidential transfers of MPTs, we introduce new transaction types tha
 #### Purpose
 Converts publicly held MPT tokens into confidential form by replacing visible balances with encrypted equivalents. Supports privacy-preserving interaction with MPToken assets.
 
----
 
 #### Use Cases
 - A token holder (issuer or non-issuer) wants to convert part or all of their visible MPToken balance to confidential form.
@@ -151,7 +150,6 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 - For non-issuers: ensures confidential supply is auditable via issuer-key encrypted balances.
 - For issuers: internal conversions remain private and do not affect `ConfidentialOutstandingAmount`.
 
----
 
 #### Transaction Fields
 
