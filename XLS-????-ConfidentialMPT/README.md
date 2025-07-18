@@ -410,3 +410,87 @@ If Enc_total == ConfidentialOutstandingAmount, and the accompanying Confidential
 - The confidential circulating supply is correct
 - No over-issuance has occurred 
 - Privacy of individual balances is preserved
+
+## Appendix A: Receiver Privacy Extensions for Confidential MPTs
+
+### A.1 Use Case: Receiver Anonymity with Confidential MPT Transfers
+
+This extension introduces **receiver anonymity** to Confidential MPT transfers by allowing the sender to deliver encrypted MPT tokens to a stealth address derived from the recipient’s public viewing and spending keys.
+
+The amount remains confidential (encrypted via EC-ElGamal), and the recipient’s identity is protected via a stealth address scheme similar to [A.2 in Confidential Payments].
+
+This transaction:
+
+- Hides both the **recipient’s identity** and the **transferred amount**
+- Supports **issuer and non-issuer** senders
+- Proves encrypted amount correctness and consistency using **ZKPs**
+- Is compatible with `ConfidentialOutstandingAmount` tracking
+
+---
+
+### Transaction Type `ConfidentialMPTStealthSend`
+
+| Field                      | Type      | Required | Description                                                            |
+|---------------------------|-----------|----------|------------------------------------------------------------------------|
+| `TransactionType`         | String    | Yes      | Must be set to `ConfidentialMPTStealthSend`                           |
+| `Account`                 | Account   | Yes      | Sender’s XRPL account                                                  |
+| `Issuer`                  | Account   | Yes      | MPT issuer                                                             |
+| `Currency`                | String    | Yes      | MPT currency code                                                      |
+| `EncryptedAmountReceiver` | Object    | Yes      | EC-ElGamal ciphertext under stealth receiver’s key                     |
+| `EncryptedAmountIssuer`   | Object    | Yes      | EC-ElGamal ciphertext under issuer’s key                               |
+| `StealthAddress`          | Blob      | Yes      | One-time public key: `P = s·G + B_spend`                               |
+| `EphemeralKey`            | Blob      | Yes      | One-time key: `R = r·G`, used in stealth derivation                    |
+| `ZKProof`                 | Object    | Yes      | ZKP proving ciphertext equality and range validity                     |
+
+---
+
+### Stealth Key Model
+
+Recipients use two EC keypairs:
+
+| Key Type       | Description                                                                  |
+|----------------|------------------------------------------------------------------------------|
+| `ViewingKey`   | Detects stealth payments: shared secret is `H(r · B_view)`                   |
+| `SpendingKey`  | Spends funds sent to `P = s·G + B_spend`                                     |
+
+---
+
+### Validation and Ledger Behavior
+
+#### Preconditions
+
+- Sender may be issuer or non-issuer.
+- `EncryptedAmountReceiver` and `EncryptedAmountIssuer` must be valid EC-ElGamal ciphertexts.
+- `ZKProof` must validate:
+  - Both ciphertexts encrypt the same value
+  - Value is in range: `0 ≤ Amount ≤ MaxAmount`
+
+#### Ledger Updates
+
+- Subtract `EncryptedAmountReceiver` from sender's confidential MPT balance (if not issuer)
+- Add `EncryptedAmountReceiver` to a new `ConfidentialMPTBalance` under `StealthAddress`
+- Add `EncryptedAmountIssuer` to `ConfidentialOutstandingAmount`
+- Update `ConfidentialSupplyZKP` for total encrypted supply
+
+> **Note:** If the recipient is a stealth address, a new AccountRoot entry is created automatically upon receiving the payment.
+
+---
+
+### JSON Example
+
+```json
+{
+  "TransactionType": "ConfidentialMPTStealthSend",
+  "Account": "rSenderABC123...",
+  "Issuer": "rAlice...",
+  "Currency": "USD",
+  "EncryptedAmountReceiver": { "A": "...", "B": "..." },
+  "EncryptedAmountIssuer": { "A": "...", "B": "..." },
+  "StealthAddress": "03fcb9...9d4a",
+  "EphemeralKey": "028a17...e5bf",
+  "ZKProof": {
+    "type": "DualEncEqualityAndRangeProof",
+    "proof": "..."
+  }
+}
+```
