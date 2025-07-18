@@ -74,7 +74,7 @@ The `MPTokenIssuance` object is extended to include a new field:
   "MaxAmount": "1000",
   "OutstandingAmount": "0",
   "ConfidentialOutstandingAmount": {
-    "A": "...",  // EC-ElGamal ciphertext component
+    "A": "...",  / EC-ElGamal ciphertext component
     "B": "..."
   }
 }
