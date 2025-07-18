@@ -327,7 +327,7 @@ The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially he
 
 #### Ledger Changes
 
-- Subtract `EncryptedAmount` from the sender’s `ConfidentialMPTBalance`.
+- Homomorphically subtract `EncryptedAmount` from the sender’s `ConfidentialMPTBalance`.
 
 - Homomorphically subtract `EncryptedAmount` from `MPTokenIssuance.ConfidentialOutstandingAmount`.
 
