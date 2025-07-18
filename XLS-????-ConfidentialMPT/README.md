@@ -131,8 +131,6 @@ This is a new ledger object used to store encrypted token balances.
   - A ZKP must be included to prove equality of the two encryptions, ensuring dual encryption consistency.
   - For issuer-held balances, the issuer may omit `EncryptedBalanceIssuer`, and no equality proof is required.
 
-- The structure of `AccountRoot` remains unchanged.  
-  - `ConfidentialMPTBalance` objects are stored in the account’s Owner Directory for modularity and scalability.
 
 ## Transaction Types
 
