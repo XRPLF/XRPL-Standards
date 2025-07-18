@@ -37,7 +37,7 @@ This XLS defines:
 
 ## Definitions
 
-**MPTokenIssuance (Object):**  A ledger object defined by XLS-33 that records metadata about a Multi-Purpose Token (MPT), including `Currency`, `Issuer`, `MaxAmount`, `OutstandingAmount`, and optionally `ConfidentialOutstandingAmount`. It resides under the issuer’s Owner Directory.
+**MPTokenIssuance (Object):**  A ledger object defined by XLS-33 that records metadata about a MPT, including `Currency`, `Issuer`, `MaxAmount`, `OutstandingAmount`, and optionally `ConfidentialOutstandingAmount`. It resides under the issuer’s Owner Directory.
 
 **MPToken (Object):**  A ledger object representing a user's public balance of a specific MPT. It is created when a non-issuer holds the token and is stored under the holder’s Owner Directory.
 
