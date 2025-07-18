@@ -80,7 +80,6 @@ The `MPTokenIssuance` object is extended to include a new field:
     "Proof": "zkp_bytes_here",  // ZKP that proves Enc(x) ≤ MaxAmount
     }
   }
-}
 ```
 
 
