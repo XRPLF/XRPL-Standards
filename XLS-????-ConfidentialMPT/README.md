@@ -312,7 +312,6 @@ This mechanism allows any observer — including validators, auditors, or third-
   - Ensure consistency between the dual encryptions (under issuer and holder keys)
 - The issuer includes a **mandatory ZKP** (`ConfidentialSupplyZKP`) with every update to `ConfidentialOutstandingAmount`, proving that the encrypted total is **well-formed and ≤ MaxAmount**.
 
----
 
 #### Ledger Storage
 
