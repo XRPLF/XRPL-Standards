@@ -223,7 +223,7 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 
 #### Use Cases
 - **Issuer** sends confidential tokens to a recipient, initiating confidential circulation.
-- **Non-issuer** sends confidential tokens to another party, preserving privacy across hops.
+- **Non-issuer** sends confidential tokens to another party, preserving privacy across transfers.
 
 #### Transaction Fields
 
