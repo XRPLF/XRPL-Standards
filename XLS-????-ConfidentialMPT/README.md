@@ -117,38 +117,41 @@ To enable confidential transfers of Multi-Purpose Tokens (MPTs), we introduce ne
 ### `ConfidentialMPTConvert`
 
 **Purpose**:  
-Converts publicly held MPT tokens into encrypted confidential form within the token holder's account.
+Converts publicly held MPT tokens into confidential form, moving them from a visible balance to an encrypted balance.
 
 **Use Cases**:
-- An issuer converts their own tokens before distribution.
-- A non-issuer (e.g., Bob) converts public tokens they received into confidential form.
+- A token holder wants to hide part or all of their publicly visible MPT balance.
+- Supports transitioning between public and confidential ecosystems.
 
 **Transaction Fields**:
 
 | Field                     | Type     | Description |
 |--------------------------|----------|-------------|
 | `TransactionType`        | String   | `"ConfidentialMPTConvert"` |
-| `Account`                | Account  | The address initiating the conversion |
-| `Issuer`                 | Account  | The MPT issuer |
-| `Currency`               | String   | The token code (e.g., "USD") |
-| `Amount`                 | UInt64   | Amount to convert (plaintext) |
-| `PublicKey`              | Binary   | ElGamal public key of the converter (used to generate encrypted balance) |
-| `ZKProof`                | Object   | Zero-knowledge proof of correct dual encryption (issuer & holder) |
+| `Account`                | Account  | Sender’s XRPL address |
+| `Issuer`                 | Account  | Issuer of the MPT |
+| `Currency`               | String   | Token code (e.g., "USD") |
+| `Amount`                 | String   | Amount to convert (plain integer) |
+| `EncryptedAmountForSender` | Object | EC-ElGamal ciphertext under sender's public key |
+| `EncryptedAmountForIssuer` | Object | EC-ElGamal ciphertext under issuer's public key |
+| `SenderPublicKey`        | Binary   | Sender’s ElGamal public key |
+| `ZKProof`                | Object   | Zero-knowledge proof proving: <br> (1) the encryption is well-formed, <br> (2) `EncryptedAmountForSender == EncryptedAmountForIssuer`, <br> (3) amount ≤ public balance, <br> (4) amount ≤ `MaxAmount` |
 
 **Encryption Behavior**:
-- The `Amount` is encrypted twice using EC-ElGamal:
-    - Under the token holder’s public key → to form the `ConfidentialMPTBalance`
-    - Under the issuer’s public key → to increment the `ConfidentialOutstandingAmount`
+- Converts a plain `Amount` into two ciphertexts:
+    - One under the sender’s ElGamal key (used for their encrypted balance).
+    - One under the issuer’s ElGamal key (used for tracking `ConfidentialOutstandingAmount`).
+- Encrypted balances are created or updated for both.
 
 **Ledger Changes**:
-- Subtract `Amount` from the sender’s public MPToken balance.
-- Create or update a `ConfidentialMPTBalance` object for the sender.
-- Increment `MPTokenIssuance.ConfidentialOutstandingAmount` homomorphically.
+- Deduct `Amount` from sender’s public MPToken balance.
+- Add `EncryptedAmountForSender` to sender’s `ConfidentialMPTBalance`.
+- Add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount` (homomorphically).
 
 **Validator Checks**:
-- Ensure the sender has at least `Amount` in public MPToken balance.
-- Verify zero-knowledge proof (ZKP) showing equality of both ciphertexts.
-- Ensure updated `ConfidentialOutstandingAmount` does not exceed `MaxAmount`.
+- Verify sender has enough public MPT balance.
+- Verify correctness of all encryptions and equality via `ZKProof`.
+- Ensure total confidential supply remains ≤ `MaxAmount`.
 
 **Example JSON**:
 ```json
@@ -158,9 +161,17 @@ Converts publicly held MPT tokens into encrypted confidential form within the to
   "Issuer": "rAlice...",
   "Currency": "USD",
   "Amount": "150",
-  "PublicKey": "pkBob...",
+  "EncryptedAmountForSender": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForIssuer": {
+    "A": "...",
+    "B": "..."
+  },
+  "SenderPublicKey": "pkBob...",
   "ZKProof": {
-    "type": "EqualityProof",
+    "type": "DualEncEqualityAndRangeProof",
     "proof": "..."
   }
 }
