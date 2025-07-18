@@ -467,12 +467,12 @@ Recipients use two EC keypairs:
 
 #### Ledger Updates
 
-- Subtract `EncryptedAmountReceiver` from sender's confidential MPT balance (if not issuer)
-- Add `EncryptedAmountReceiver` to a new `ConfidentialMPTBalance` under `StealthAddress`
-- Add `EncryptedAmountIssuer` to `ConfidentialOutstandingAmount`
-- Update `ConfidentialSupplyZKP` for total encrypted supply
+#### Ledger Updates
 
-> **Note:** If the recipient is a stealth address, a new AccountRoot entry is created automatically upon receiving the payment.
+- Subtract `EncryptedAmountReceiver` from the sender’s `ConfidentialMPTBalance`
+- Add `EncryptedAmountReceiver` to a new `ConfidentialMPTBalance` under `StealthAddress`
+- Add `EncryptedAmountIssuer` to `ConfidentialOutstandingAmount` (only if the sender is the issuer)
+- Replace `ConfidentialSupplyZKP` with an updated proof validating the new encrypted total is still `≤ MaxAmount` (must be provided by the sender if supply is updated)
 
 ---
 
