@@ -216,3 +216,83 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
   }
 }
 ```
+---
+### Transaction: ConfidentialMPTSend
+
+#### Purpose
+Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
+
+#### Use Cases
+- **Issuer** sends confidential tokens to a recipient, initiating confidential circulation.
+- **Non-issuer** sends confidential tokens to another party, preserving privacy across hops.
+
+#### Transaction Fields
+
+| Field                      | Type     | Description                                                                 |
+|---------------------------|----------|-----------------------------------------------------------------------------|
+| `TransactionType`         | String   | `"ConfidentialMPTSend"`                                                    |
+| `Account`                 | Account  | Sender’s XRPL address                                                       |
+| `Destination`             | Account  | Receiver’s XRPL address                                                     |
+| `Issuer`                  | Account  | Issuer of the token                                                         |
+| `Currency`                | String   | Token code (e.g., `"USD"`)                                                  |
+| `EncryptedAmountForReceiver` | Object   | EC-ElGamal ciphertext under receiver’s public key                           |
+| `EncryptedAmountForIssuer`   | Object   | EC-ElGamal ciphertext under issuer’s public key (for supply tracking)       |
+| `ReceiverPublicKey`       | Binary   | Receiver’s ElGamal public key                                               |
+| `ZKProof`                 | Object   | ZKP proving: (1) well-formed encryption, (2) ciphertext equality, (3) amount ≤ MaxAmount |
+
+#### Encryption Behavior
+
+- The transfer amount is encrypted twice:
+  - Under the receiver’s ElGamal public key → to update their confidential balance.
+  - Under the issuer’s ElGamal public key → to update `ConfidentialOutstandingAmount`.
+- A zero-knowledge proof ensures:
+  - Both encryptions represent the same amount.
+  - The encrypted value is valid and ≤ MaxAmount.
+
+#### Ledger Changes
+
+#### If Sender is **Issuer**
+- `MPTokenIssuance.ConfidentialOutstandingAmount += EncryptedAmountForIssuer`
+- `Destination.ConfidentialMPTBalance += EncryptedAmountForReceiver`
+- No change to issuer’s confidential balance
+
+#### If Sender is **Non-Issuer**
+- Deduct amount from sender’s `ConfidentialMPTBalance` (under `pkSender`)
+- Add to receiver’s `ConfidentialMPTBalance` (under `pkReceiver`)
+- `ConfidentialOutstandingAmount` remains unchanged
+
+#### Validator Checks
+
+- If `Account == Issuer`:
+  - No balance check on sender
+  - Validate encryption and ZKP
+  - Ensure new `ConfidentialOutstandingAmount ≤ MaxAmount`
+
+- If `Account ≠ Issuer`:
+  - Validate sender has sufficient encrypted balance
+  - Validate dual encryption equality and amount range via ZKP
+
+#### Example JSON (Issuer Sends)
+
+```json
+{
+  "TransactionType": "ConfidentialMPTSend",
+  "Account": "rAlice",
+  "Destination": "rBob",
+  "Issuer": "rAlice",
+  "Currency": "USD",
+  "EncryptedAmountForReceiver": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForIssuer": {
+    "A": "...",
+    "B": "..."
+  },
+  "ReceiverPublicKey": "pkBob...",
+  "ZKProof": {
+    "type": "DualEncEqualityAndRangeProof",
+    "proof": "..."
+  }
+}
+```
