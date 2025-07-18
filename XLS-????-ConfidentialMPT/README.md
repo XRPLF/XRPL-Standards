@@ -321,7 +321,7 @@ The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially he
 
 - Confirm the sender has sufficient confidential balance to cover the burn:
   - Locate `ConfidentialMPTBalance` encrypted under sender’s public key
-  - Check that the balance is sufficient (range proof may be embedded or deferred to holder logic)
+  - Check that the balance is sufficient
 
 
 
