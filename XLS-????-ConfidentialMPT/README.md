@@ -37,7 +37,7 @@ This XLS defines:
 
 ## Definitions
 
-- **MPToken**: A Multi-Purpose Token defined by [XLS-33d](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens), representing a fungible asset issued on XRPL with associated issuance metadata and ledger tracking.
+- **MPToken**: A Multi-Purpose Token defined by [XLS-33](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens), representing a fungible asset issued on XRPL with associated issuance metadata and ledger tracking.
 
 - **Confidential MPT**: An MPT whose balance and transfer amounts are encrypted using EC-ElGamal encryption.
 
@@ -57,7 +57,7 @@ This XLS defines:
 
 ## Ledger Format Changes
 
-To support confidential MPTs, we introduce new fields and objects in the XRPL, while preserving compatibility with existing MPT infrastructure as defined in [XLS-33d](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
+To support confidential MPTs, we introduce new fields and objects in the XRPL, while preserving compatibility with existing MPT infrastructure as defined in [XLS-33](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
 
 ### MPTokenIssuance Object
 
