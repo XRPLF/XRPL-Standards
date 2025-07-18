@@ -8,7 +8,7 @@ This specification introduces **confidential transaction capabilities** to Multi
 
 ## Motivation
 
-While XLS-33 enables powerful tokenization primitives (e.g., for CBDCs, reward points, stablecoins), all transfers and balances are publicly visible. This proposal addresses:
+XLS-33 enables powerful tokenization primitives and all transfers and balances are publicly visible. This proposal addresses:
 
 - **Confidentiality**: Hiding the transferred amount
 - **Auditability**: Ensuring total encrypted supply remains verifiable without compromising privacy
