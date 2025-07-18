@@ -307,7 +307,7 @@ This mechanism allows any observer — including validators, auditors, or third-
   - Their own public key (e.g., `pkBob`)
   - The issuer’s public key (e.g., `pkAlice`)
 - The issuer maintains a `ConfidentialOutstandingAmount` field, which is an **EC-ElGamal ciphertext under `pkAlice`**, updated homomorphically whenever confidential tokens leave the issuer.
-- For each confidential transfer (e.g., `ConfidentialMPTSend`, `ConfidentialMPTConvert`), a **Zero-Knowledge Proof (ZKP)** is included to:
+- For each confidential transfer (e.g., `ConfidentialMPTSend`, `ConfidentialMPTConvert`), a ZKP is included to:
   - Prove that the transferred amount is valid (non-negative and ≤ MaxAmount)
   - Ensure consistency between the dual encryptions (under issuer and holder keys)
 - The issuer includes a **mandatory ZKP** (`ConfidentialSupplyZKP`) with every update to `ConfidentialOutstandingAmount`, proving that the encrypted total is **well-formed and ≤ MaxAmount**.
