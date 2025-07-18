@@ -297,7 +297,7 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 ```
 ### Transaction: ConfidentialMPTBurn
 
-The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially held MPTs. This reduces the encrypted supply tracked in `ConfidentialOutstandingAmount` and updates the corresponding zero-knowledge proof.
+The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially held MPTs. This reduces the encrypted supply tracked in `ConfidentialOutstandingAmount` and updates the corresponding ZKP.
 
 
 
