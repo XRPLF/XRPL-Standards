@@ -417,7 +417,7 @@ If Enc_total == ConfidentialOutstandingAmount, and the accompanying Confidential
 
 This extension introduces **receiver anonymity** to Confidential MPT transfers by allowing the sender to deliver encrypted MPT tokens to a stealth address derived from the recipient’s public viewing and spending keys.
 
-The amount remains confidential (encrypted via EC-ElGamal), and the recipient’s identity is protected via a stealth address scheme similar to [A.2 in Confidential Payments].
+The amount remains confidential (encrypted via EC-ElGamal), and the recipient’s identity is protected via a stealth address scheme.
 
 This transaction:
 
