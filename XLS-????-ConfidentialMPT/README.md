@@ -41,7 +41,7 @@ This XLS defines:
 
 **MPToken (Object):**  A ledger object representing a user's public balance of a specific MPT. It is created when a non-issuer holds the token and is stored under the holder’s Owner Directory.
 
-**Confidential MPT:**  An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via zero-knowledge proofs.
+**Confidential MPT:**  An MPT balance that is encrypted using EC-ElGamal encryption. Both balances and transfers are private, and operations are verified via ZKPs.
 
 **ConfidentialMPTBalance (Object):**  A new ledger object that stores an encrypted balance for a specific `(Issuer, Currency)` pair and ElGamal `PublicKey`. It is stored in the token holder’s Owner Directory.
 
