@@ -296,6 +296,46 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
   }
 }
 ```
+### Transaction: ConfidentialMPTBurn
+
+The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially held MPTs. This reduces the encrypted supply tracked in `ConfidentialOutstandingAmount` and updates the corresponding zero-knowledge proof.
+
+---
+
+#### Preconditions
+
+- `TransactionType` MUST be `"ConfidentialMPTBurn"`
+- Required fields:
+  - `Account`, `Issuer`, `Currency`
+  - `EncryptedAmount` (ciphertext under issuer’s ElGamal key)
+  - `ZKProof` (range proof for `0 ≤ Amount ≤ ConfidentialOutstandingAmount`)
+
+---
+
+#### Validation Steps
+
+- Confirm `EncryptedAmount` is a valid EC-ElGamal ciphertext.
+
+- Verify `ZKProof` proves:
+  - `EncryptedAmount` is well-formed
+  - `0 ≤ Amount ≤ ConfidentialOutstandingAmount`
+
+- Confirm the sender has sufficient confidential balance to cover the burn:
+  - Locate `ConfidentialMPTBalance` encrypted under sender’s public key
+  - Check that the balance is sufficient (range proof may be embedded or deferred to holder logic)
+
+---
+
+#### Ledger Changes
+
+- Subtract `EncryptedAmount` from the sender’s `ConfidentialMPTBalance`.
+
+- Homomorphically subtract `EncryptedAmount` from `MPTokenIssuance.ConfidentialOutstandingAmount`.
+
+- Replace `ConfidentialSupplyZKP` with a new proof showing:
+
+  ```text
+  Updated ConfidentialOutstandingAmount ≤ MaxAmount
 
 ### Public Audit of ConfidentialOutstandingAmount
 
