@@ -248,17 +248,22 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
   - Both encryptions represent the same amount.
   - The encrypted value is valid and ≤ MaxAmount.
 
-#### Ledger Changes
 
-#### If Sender is **Issuer**
+### Ledger Changes
+
+#### If Sender is Issuer
+
 - `MPTokenIssuance.ConfidentialOutstandingAmount += EncryptedAmountForIssuer`
-- `Destination.ConfidentialMPTBalance += EncryptedAmountForReceiver`
-- No change to issuer’s confidential balance
+- Create or update `ConfidentialMPTBalance` for the recipient:
+  - `Destination.ConfidentialMPTBalance += EncryptedAmountForReceiver`
+- Deduct the amount from the issuer’s `ConfidentialMPTBalance` if the issuer holds converted confidential tokens  
+  
 
-#### If Sender is **Non-Issuer**
-- Deduct amount from sender’s `ConfidentialMPTBalance` (under `pkSender`)
-- Add to receiver’s `ConfidentialMPTBalance` (under `pkReceiver`)
-- `ConfidentialOutstandingAmount` remains unchanged
+#### If Sender is Non-Issuer
+
+- Subtract amount from sender’s `ConfidentialMPTBalance` (under `pkSender`)
+- Add amount to recipient’s `ConfidentialMPTBalance` (under `pkReceiver`)
+- `MPTokenIssuance.ConfidentialOutstandingAmount` remains unchanged
 
 #### Validator Checks
 
