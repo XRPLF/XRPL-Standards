@@ -585,5 +585,3 @@ Transfers one or more `ConfidentialMPTNote` objects using **ring signatures** an
 - **Receiver Anonymity**: Provided by stealth address construction (`P = s·G + B_spend`), unlinkable to the recipient’s identity.
 - **Confidential Amounts**: All values are encrypted; only the recipient can decrypt.
 - **Auditability**: Public audit is disabled in this mode — the total confidential supply cannot be verified unless additional mechanisms are added.
-
-> **Note:** This mode prioritizes privacy over auditability. Use cases include peer-to-peer private transfers, non-custodial wallets, and privacy-preserving token applications.
