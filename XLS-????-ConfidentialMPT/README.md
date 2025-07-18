@@ -27,7 +27,9 @@ This XLS defines:
 
 - **New ledger fields**:
     - `ConfidentialOutstandingAmount` in the `MPTokenIssuance` object
+    - `ConfidentialSupplyZKP` accompanying ConfidentialOutstandingAmount.
     - `ConfidentialMPTBalance` objects stored under Owner Directory
+    
 
 - **Encryption mechanisms**:
     - EC-ElGamal with dual-key encryption (issuer + holder)
@@ -65,7 +67,7 @@ To support confidential MPTs, we introduce new fields and objects in the XRPL, w
 The `MPTokenIssuance` object is extended to include two new fields:
 
 - **ConfidentialOutstandingAmount**: An EC-ElGamal ciphertext (under the issuer’s public key) that represents the total amount of confidential tokens in circulation. This field is created upon the first confidential transfer from the issuer and is updated homomorphically as new confidential tokens are sent to non-issuers.
-- **ConfidentialSupplyZKP**: A zero-knowledge proof accompanying ConfidentialOutstandingAmount that proves the encrypted total is a well-formed non-negative value and does not exceed MaxAmount. This ZKP is updated in each confidential transfer and enables public auditors to verify supply compliance without decrypting the underlying values.
+- **ConfidentialSupplyZKP**: A ZKP accompanying ConfidentialOutstandingAmount that proves the encrypted total is a well-formed non-negative value and does not exceed MaxAmount. This ZKP is updated in each confidential transfer and enables public auditors to verify supply compliance without decrypting the underlying values.
 
 ```json
 {
