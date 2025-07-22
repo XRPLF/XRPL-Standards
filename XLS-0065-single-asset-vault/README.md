@@ -110,7 +110,7 @@ The **`Vault`** ledger entry describes the state of the tokenized vault.
 The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
 - The `Vault` space key `0x0056` (capital V)
-- The `AccountID`(<https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields>) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
+- The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
 #### 2.1.2 Fields
