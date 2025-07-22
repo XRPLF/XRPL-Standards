@@ -1,8 +1,8 @@
-<pre>    
+<pre>
 Title:        <b>Single Asset Tokenized Vault</b>
 Revision:     <b>1</b> (2025-02-05)
 
-<hr>Authors:    
+<hr>Authors:
   <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
   <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
 
@@ -110,7 +110,7 @@ The **`Vault`** ledger entry describes the state of the tokenized vault.
 The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
 - The `Vault` space key `0x0056` (capital V)
-- The `AccountID`(https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
+- The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
 #### 2.1.2 Fields
@@ -136,6 +136,7 @@ A vault has the following fields:
 | `AssetMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
+| `AssetScale` | `No` | :heavy_check_mark: | `number` | `UINT8` | 6 | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 2.1.2.1 Flags
 
@@ -164,11 +165,19 @@ The `Vault` object costs one reserve fee per object created:
 
 Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
 
-##### 2.1.6.1 `MPTokenIssuance`
+##### 2.1.6.1 `AssetScale`
+
+Because vault shares are represented by MPTs, which must be whole numbers, any fractional part of a deposit gets truncated. For example, a deposit of 20.3 assets would be incorrectly credited as only 20 shares.
+
+The `AssetScale` field solves this by enabling the precise representation of fractional assets. It acts as an exponent for a power-of-10 multiplier, converting a decimal asset value into a corresponding integer share value. For instance, with an `AssetScale` of 6, a deposit of 20.3 assets is multiplied by 1,000,000 ($10^6$) and correctly stored as **20,300,000** shares.
+
+A direct consequence is that `AssetScale` also defines the minimum deposit amount, which is $10^{-\text{scale}}$. Therefore, a scale of 6 allows deposits as small as 0.000001 assets, while a scale of 0 restricts deposits to whole numbers.
+
+##### 2.1.6.2 `MPTokenIssuance`
 
 The `MPTokenIssuance` object represents the share on the ledger. It is created and deleted together with the `Vault` object.
 
-###### 2.1.6.1.1 `MPTokenIssuance` Values
+###### 2.1.6.2.1 `MPTokenIssuance` Values
 
 Here’s the table with the headings "Field," "Description," and "Value":
 
@@ -178,20 +187,22 @@ Here’s the table with the headings "Field," "Description," and "Value":
 | `MaximumAmount`   | No limit to the number of shares that can be issued.   | `0xFFFFFFFFFFFFFFFF` |
 | `TransferFee`     | The fee paid to transfer the shares.                   | 0                    |
 | `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format. | -                    |
+| `AssetScale`      | Represents the number of orders of magnitude between a standard unit and an MPT unit | `Vault.AssetScale` |
 
-**Flags**
+###### Flags
 
 The following flags are set based on whether the shares are transferable and if the vault is public or private.
+
 | **Condition** | **Transferable** | **Non-Transferable** |
 | ----------------- | -------------------------------------------------------------------------------------- | ------------------- |
 | **Public Vault** | `lsfMPTCanEscrow` <br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer` | No Flags |
 | **Private Vault** | `lsfMPTCanEscrow`<br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer`<br> `lsfMPTRequireAuth` | `lsfMPTRequireAuth` |
 
-##### 2.1.6.2 `MPToken`
+##### 2.1.6.3 `MPToken`
 
 The `MPToken` object represents the amount of shares held by a depositor. It is created when the account deposits liquidity into the vault and is deleted when a depositor redeems (or transfers) all shares.
 
-###### 2.1.6.2.1 `MPToken` Values
+###### 2.1.6.3.1 `MPToken` Values
 
 The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens#2122-fields).
 
@@ -234,52 +245,83 @@ A depositor could deposit $100k assets at a 0.1 exchange rate and get 1.0m share
 
 To account for this problem, the Vault must use two different exchange rate models: one for depositing assets and one for withdrawing them.
 
-##### 2.1.7.2 Exchange Rate Algorithms
+### 2.1.7.2 Exchange Rate Algorithms
 
-**Variables**
+This section details the algorithms used to calculate the exchange between assets and shares for deposits, redemptions, and withdrawals.
 
-The following variables define the Vault balance:
+#### Key Variables
 
-- $\Gamma_{share}$ - the total number of shares issued by the vault.
-- $\Gamma_{asset}$ - the total assets in the vault, including any future yield.
+- **$\Gamma_{assets}$**: The total balance of assets held within the vault.
+- **$\Gamma_{shares}$**: The total number of shares currently issued by the vault.
+- **$\Delta_{assets}$**: The amount of assets being deposited, withdrawn, or redeemed.
+- **$\Delta_{shares}$**: The number of shares being issued or burned.
+- **$\iota$**: The vault's total **unrealized loss**.
+- **$\sigma$**: The scaling factor derived from `AssetScale`, used to convert fractional assets into integer shares.
 
-- $\Delta_{asset}$ - the change in the total amount of assets after a deposit, withdrawal, or redemption.
-- $\Delta_{share}$ - che change in the total amount of shares after a deposit, withdrawal, or redemption.
+### 2.1.7.2.1 Deposit
 
-- $\iota$ - the unrealized loss of the vault.
+The deposit function calculates the number of shares a user receives for their assets.
 
-###### 2.1.7.2.1 **Deposit**
+**Calculation Logic**
 
-We compute the number of shares ($\Delta_{share}$) a depositor will receive as follows:
+The calculation depends on whether the vault is empty.
 
-$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} + 0^{\Gamma_{asset}}} $$
+- **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{AssetScale}}$, to properly represent fractional assets as whole numbers.
+    $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
-The following equations govern the updated vault composition after a successful deposit:
+- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
+    $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets}}$$
 
-- $\Gamma_{asset} = \Gamma_{asset} + \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} + \Delta_{share}$ New share balance in the vault.
+Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated. This step ensures the user isn't overcharged and that the new shares are valued against the vault's real assets, accounting for any unrealized loss ($\iota$).
 
-###### 2.1.7.2.2 **Redeem**
+$$\Delta_{assets'} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
 
-We compute the number of assets ($\Delta_{asset}$) returned by burning $\Delta_{share}$ as follows:
+#### Vault State Update
 
-$$\Delta_{asset} = \Delta_{share} \times \frac{\Gamma_{asset} - \iota}{\Gamma_{share} + 0^{\Gamma_{share}}} $$
+The vault's totals are updated with the final calculated amounts.
 
-The following equations govern the updated vault composition after a successful redemption:
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} + \Delta_{assets'}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} + \Delta_{shares}$
 
-- $\Gamma_{asset} = \Gamma_{asset} - \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} - \Delta_{share}$ New share balance in the vault.
+### 2.1.7.2.2 Redeem
 
-###### 2.1.7.2.3 **Withdraw**
+The redeem function calculates the asset payout for a user burning a specific number of shares.
 
-We compute the number of shares to burn to withdraw $\Delta_{asset}$ as follows:
+**Calculation Logic**
 
-$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} - \iota + 0^{\Gamma_{asset}}} $$
+The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's total holdings, accounting for any unrealized loss ($\iota$).
 
-The following equations govern the updated vault composition after a successful withdrawal:
+$$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
 
-- $\Gamma_{asset} = \Gamma_{asset} - \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} - \Delta_{share}$ New share balance in the vault.
+**Vault State Update**
+
+The vault's totals are reduced after the redemption.
+
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} - \Delta_{shares}$
+
+### 2.1.7.2.3 Withdraw
+
+The withdraw function handles a request for a specific amount of assets, which involves a two-step process to determine the final payout.
+
+First, the requested asset amount ($\Delta_{assets\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's real value.
+
+$$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \iota)}$$
+
+This calculated $\Delta_{shares}$ amount is **rounded to the nearest whole number**.
+
+Next, the rounded number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
+
+$$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+
+Due to the rounding in Step 1, this final payout may differ slightly from the user's requested amount.
+
+**Vault State Update**
+
+The vault's totals are reduced by the final calculated amounts.
+
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets\_out}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} - \Delta_{shares}$
 
 ##### 2.1.7.3 Withdrawal Policy
 
@@ -321,6 +363,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `MPTokenMetadata`  |                    |      `string`      |    `Blob`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
 | `WithdrawalPolicy` |                    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
 | `DomainID`         |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
+| `AssetScale` | | `number` | `UINT8` | 6 | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 3.1.1.1 Flags
 
@@ -731,6 +774,7 @@ We propose adding the following fields to the `ledger_entry` method:
 | `AssetMaximum`      | :heavy_check_mark: |      `number`      | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `Share`             | :heavy_check_mark: |      `object`      | The `MPT` object of the vault share. |
 | `WithdrawalPolicy`  | :heavy_check_mark: |      `string`      | Indicates the withdrawal strategy used by the Vault.                                              |
+| `AssetScale` | :heavy_check_mark: | `number` | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 4.1.2.1 Example
 
@@ -760,7 +804,8 @@ We propose adding the following fields to the `ledger_entry` method:
     "value": "1", 
   },
   "ShareTotal": 5000,
-  "WithdrawalPolicy": "0x0001"
+  "WithdrawalPolicy": "0x0001",
+  "AssetScale": 6
 }
 ```
 
