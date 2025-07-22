@@ -796,7 +796,8 @@ Vault holding an `IOU`:
     "Sequence" : 1,
     "index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
     "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
-   }
+   },
+   "AssetScale": 6,
   }
  }
 ```
@@ -831,6 +832,56 @@ Vault holding an `MPT`:
   "ShareTotal": 5000,
   "WithdrawalPolicy": "0x0001",
   "AssetScale": 6
+}
+```
+
+Vault holding `XRP`:
+
+```type-script
+{
+ "result" :
+ {
+  "ledger_hash" : "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+  "ledger_index" : 6,
+  "status" : "success",
+  "validated" : true,
+  "vault" :
+  {
+   "Account" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+   "Asset" :
+   {
+    "currency" : "XRP"
+   },
+   "AssetsAvailable" : "0",
+   "AssetsTotal" : "0",
+   "Flags" : 0,
+   "LedgerEntryType" : "Vault",
+   "LossUnrealized" : "0",
+   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+   "OwnerNode" : "0",
+   "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+   "PreviousTxnLgrSeq" : 5,
+   "Sequence" : 4,
+   "ShareMPTID" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
+   "WithdrawalPolicy" : 1,
+   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+   "shares" :
+   {
+    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
+    "Flags" : 56,
+    "Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+    "LedgerEntryType" : "MPTokenIssuance",
+    "OutstandingAmount" : "0",
+    "OwnerNode" : "0",
+    "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+    "PreviousTxnLgrSeq" : 5,
+    "Sequence" : 1,
+    "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
+    "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
+   },
+   "AssetScale": 6
+  }
+ }
 }
 ```
 
