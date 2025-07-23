@@ -133,7 +133,7 @@ A vault has the following fields:
 | `AssetTotal`        |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                     |
 | `AssetAvailable`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                  |
 | `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
-| `AssetMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
+| `AssetsMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
 | `AssetScale` | `No` | :heavy_check_mark: | `number` | `UINT8` | 6 | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
@@ -355,12 +355,12 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 | Field Name         |     Required?      |     JSON Type      | Internal Type |      Default Value       | Description                                                                     |
 | ------------------ | :----------------: | :----------------: | :-----------: | :----------------------: | :------------------------------------------------------------------------------ |
-| `TransactionType`  | :heavy_check_mark: |      `string`      |   `Uint16`    |           `58`           | The transaction type.                                                           |
-| `Flags`            | :heavy_check_mark: |      `number`      |   `Uint32`    |            0             | Specifies the flags for the Vault.                                              |
-| `Data`             |                    |      `string`      |    `Blob`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                 |
-| `Asset`            | :heavy_check_mark: | `string or object` |    `Issue`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
-| `AssetMaximum`     |                    |      `number`      |   `Uint64`    |            0             | The maximum asset amount that can be held in a vault.                           |
-| `MPTokenMetadata`  |                    |      `string`      |    `Blob`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
+| `TransactionType`  | :heavy_check_mark: |      `string`      |   `UINT16`    |           `58`           | The transaction type.                                                           |
+| `Flags`            | :heavy_check_mark: |      `number`      |   `UINT32`    |            0             | Specifies the flags for the Vault.                                              |
+| `Data`             |                    |      `string`      |    `BLOB`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                 |
+| `Asset`            | :heavy_check_mark: | `string or object` |    `ISSUE`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
+| `AssetsMaximum`     |                    |      `number`      |   `NUMBER`    |            0             | The maximum asset amount that can be held in a vault.                           |
+| `MPTokenMetadata`  |                    |      `string`      |    `BLOB`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
 | `WithdrawalPolicy` |                    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
 | `DomainID`         |                    |      `string`      |   `Hash256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
 | `AssetScale` | | `number` | `UINT8` | 6 | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
@@ -429,7 +429,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `59`      | The transaction type.                                                                                                                   |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
-| `AssetsMaximum`   |                    | `number`  |   `Uint64`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
+| `AssetsMaximum`   |                    | `number`  |   `Number`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
 | `DomainID`        |                    | `string`  |   `Hash256`   |               | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                            |
 
 ##### 3.1.2.1 Failure Conditions
@@ -824,7 +824,7 @@ Vault holding an `MPT`:
   "AssetTotal": 1000000,
   "AssetAvailable": 800000,
   "LossUnrealized": 200000,
-  "AssetMaximum": 0,
+  "AssetsMaximum": 0,
   "Share": {
     "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
     "value": "1", 
