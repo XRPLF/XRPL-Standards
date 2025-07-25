@@ -167,11 +167,13 @@ Shares represent the portion of the Vault assets a depositor owns. Vault Owners 
 
 ##### 2.1.6.1 `AssetScale`
 
-Because vault shares are represented by MPTs, which must be whole numbers, any fractional part of a deposit gets truncated. For example, a deposit of 20.3 assets would be incorrectly credited as only 20 shares.
+The `AssetScale` field enables the vault to represent fractional asset values with high precision using integer-only MPT shares, preventing value loss from truncation.
 
-The `AssetScale` field solves this by enabling the precise representation of fractional assets. It acts as an exponent for a power-of-10 multiplier, converting a decimal asset value into a corresponding integer share value. For instance, with an `AssetScale` of 6, a deposit of 20.3 assets is multiplied by 1,000,000 ($10^6$) and correctly stored as **20,300,000** shares.
+It defines a scaling factor, calculated as $10^{\text{AssetScale}}$, which converts a decimal asset amount into a corresponding whole number of shares.
 
-A direct consequence is that `AssetScale` also defines the minimum deposit amount, which is $10^{-\text{scale}}$. Therefore, a scale of 6 allows deposits as small as 0.000001 assets, while a scale of 0 restricts deposits to whole numbers.
+For example, with an `AssetScale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
+
+The `AssetScale` value can range from **0** to **18**, with a default of **6**.
 
 ##### 2.1.6.2 `MPTokenIssuance`
 
