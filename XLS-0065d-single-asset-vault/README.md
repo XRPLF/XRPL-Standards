@@ -367,7 +367,6 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `DomainID`         |                    |      `string`      |   `HASH256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
 | `AssetScale`       |                    |      `number`      |    `UINT8`    |            6             | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
-
 ##### 3.1.1.1 Flags
 
 | Flag Name                     |  Flag Value  | Description                                                                              |
@@ -563,12 +562,13 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 The `VaultWithdraw` transaction withdraws assets in exchange for the vault's shares.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                       |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                    |
-| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                            |
-| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                          |
+| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                       |
+| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                               |
+| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.    |
+| `DestinationTag`  |                    | `number`  |    `UINT32`   |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination.|
 
 - If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
 - If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21722-redeem).
