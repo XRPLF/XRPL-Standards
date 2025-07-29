@@ -222,21 +222,16 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 
 Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
 
----
-
 ### Purpose
 
 - Enables private token transfers using EC-ElGamal encryption and zero-knowledge proofs.
 - Supports both issuer-initiated issuance and confidential transfers among non-issuers.
 
----
 
 ### Use Cases
 
 - **Issuer → Recipient**: Begin confidential circulation of tokens.
 - **User → User**: Preserve privacy while transferring confidential tokens.
-
----
 
 ### Transaction Fields
 
@@ -253,7 +248,6 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 | `ReceiverPublicKey`         | Binary   | Receiver’s ElGamal public key                                                                     |
 | `ZKProof`                   | Object   | Proves correctness of encryption and amount constraints (see below)                              |
 
----
 
 ### ZKProof Requirements
 
@@ -271,7 +265,6 @@ The zero-knowledge proof MUST attest to the following:
    - If the sender is a **non-issuer**:  
      amount ≤ sender’s `ConfidentialMPTBalance`
 
----
 
 ### Encryption Behavior
 
@@ -281,24 +274,24 @@ The zero-knowledge proof MUST attest to the following:
   - **Sender’s key** → to deduct from `ConfidentialMPTBalance[sender]`
 - The ZKP ensures these encryptions are consistent and the amount is valid.
 
----
+
 
 ### Ledger Changes
 
-#### 🔹 If Sender is **Issuer**
+#### If Sender is **Issuer**
 
 - **No deduction** from issuer’s encrypted balance (unless holding internal confidential funds).
 - **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 - **Update or create** `ConfidentialMPTBalance` for receiver:
   - `+ EncryptedAmountForReceiver` under `ReceiverPublicKey`.
 
-#### 🔹 If Sender is **Non-Issuer**
+#### If Sender is **Non-Issuer**
 
 - **Homomorphically subtract** `EncryptedAmountForSender` from sender’s on-ledger `ConfidentialMPTBalance`.
 - **Homomorphically add** `EncryptedAmountForReceiver` to receiver’s `ConfidentialMPTBalance`.
 - `ConfidentialOutstandingAmount` remains unchanged.
 
----
+
 
 ### Validator Checks
 
@@ -307,7 +300,7 @@ The zero-knowledge proof MUST attest to the following:
 - Perform homomorphic updates using submitted ciphertexts.
 - Ensure ledger entries are updated consistently.
 
----
+
 
 ### Example (Issuer Sends Confidential Tokens to Bob)
 
