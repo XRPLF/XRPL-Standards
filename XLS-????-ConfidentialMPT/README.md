@@ -162,7 +162,7 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 | `EncryptedAmountForSender` | Object   | EC-ElGamal ciphertext (under sender's ElGamal public key) |
 | `EncryptedAmountForIssuer` | Object   | EC-ElGamal ciphertext (under issuer's ElGamal public key); optional if sender **is** the issuer |
 | `SenderPublicKey`         | Binary    | ElGamal public key of the sender |
-| `ZKProof`                 | Object    | Zero-knowledge proof of correctness, including:  <br> (1)  Well-formed encryption  <br> (2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  <br> (3) `Amount` ≤ sender’s public balance  <br> (4) `Amount` ≤ `MaxAmount` |
+| `ZKProof`                 | Object    | ZKP of correctness, including:  <br> (1)  Well-formed encryption  <br> (2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  <br> (3) `Amount` ≤ sender’s public balance  <br> (4) `Amount` ≤ `MaxAmount` |
 
 
 #### Encryption Behavior
@@ -239,7 +239,10 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 | `EncryptedAmountForReceiver` | Object   | EC-ElGamal ciphertext under receiver’s public key                           |
 | `EncryptedAmountForIssuer`   | Object   | EC-ElGamal ciphertext under issuer’s public key (for supply tracking)       |
 | `ReceiverPublicKey`       | Binary   | Receiver’s ElGamal public key                                               |
-| `ZKProof`                 | Object   | ZKProof: Proves the following properties: (1) Both ciphertexts are well-formed EC-ElGamal     encryptions, (2) Both ciphertexts encrypt the same amount, (3) If sender is the issuer: amount ≤ (MaxAmount − OutstandingAmount), (4) If sender is a non-issuer: amount ≤ sender’s ConfidentialMPTBalance|
+| `ZKProof`                 | Object   | ZKProof: Proves the following properties: (1) Both ciphertexts are well-formed EC-ElGamal     encryptions,
+(2) Both ciphertexts encrypt the same amount,
+(3) If sender is the issuer: amount ≤ (MaxAmount − OutstandingAmount),
+(4) If sender is a non-issuer: amount ≤ sender’s ConfidentialMPTBalance|
 
 #### Encryption Behavior
 
