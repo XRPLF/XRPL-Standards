@@ -237,7 +237,7 @@ Transfers encrypted MPTs confidentially between two parties. Supports both issue
 
 #### Purpose
 
-- Enables private token transfers using EC-ElGamal encryption and zero-knowledge proofs.
+- Enables private token transfers using EC-ElGamal encryption and ZKPs.
 - Supports both issuer-initiated issuance and confidential transfers among non-issuers.
 
 
@@ -264,7 +264,7 @@ Transfers encrypted MPTs confidentially between two parties. Supports both issue
 
 #### ZKProof Requirements
 
-The zero-knowledge proof MUST attest to the following:
+The ZKP MUST attest to the following:
 
 1. **Well-formed ciphertexts**:  
    `EncryptedAmountForReceiver`, `EncryptedAmountForIssuer`, and `EncryptedAmountForSender` are valid EC-ElGamal encryptions.
