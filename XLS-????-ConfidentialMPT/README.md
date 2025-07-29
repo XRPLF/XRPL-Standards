@@ -233,7 +233,7 @@ This example shows `rBob` (a non-issuer) converting 150 publicly held `USD` toke
 ---
 ### Transaction: `ConfidentialMPTSend`
 
-Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
+Transfers encrypted MPTs confidentially between two parties. Supports both issuer and non-issuer senders.
 
 #### Purpose
 
