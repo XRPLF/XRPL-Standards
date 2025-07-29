@@ -328,16 +328,7 @@ The transferred amount is encrypted under three different public keys:
   - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
 
 - **Ensure ledger consistency**:  
-  Confirm all affected ledger entries (balances and MPTokenIssuance object) are updated atomically and validly.
-
-
-
-#### Validator Checks
-
-- Validate `ZKProof` for encryption correctness and value constraints.
-- Verify that sender has sufficient encrypted balance (non-issuer).
-- Perform homomorphic updates using submitted ciphertexts.
-- Ensure ledger entries are updated consistently.
+  Confirm all affected ledger entries (balances and MPTokenIssuance object) are updated consistently.
 
 
 
