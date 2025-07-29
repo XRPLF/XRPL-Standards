@@ -162,7 +162,7 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 | `EncryptedAmountForSender` | Object   | EC-ElGamal ciphertext (under sender's ElGamal public key) |
 | `EncryptedAmountForIssuer` | Object   | EC-ElGamal ciphertext (under issuer's ElGamal public key); optional if sender **is** the issuer |
 | `SenderPublicKey`         | Binary    | ElGamal public key of the sender |
-| `ZKProof`                 | Object    | ZKP of correctness, including:  <br> (1)  Well-formed encryption  <br> (2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  <br> (3) `Amount` ≤ sender’s public balance  <br> (4) `Amount` ≤ `MaxAmount` |
+| `ZKProof`                 | Object    | ZKP of correctness, including:  <br> (1)  Well-formed encryption  <br> (2) Equality of `EncryptedAmountForSender` and `EncryptedAmountForIssuer`  |
 
 
 #### Encryption Behavior
