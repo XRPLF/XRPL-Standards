@@ -292,32 +292,43 @@ The transferred amount is encrypted under three different public keys:
     - Each ciphertext is a **well-formed EC-ElGamal encryption**
     - The encrypted amount satisfies:
       - `amount ≤ MaxAmount − OutstandingAmount` (if issuer is sender)
-      - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer)
-
-#### Encryption Behavior
-
-- The same amount is encrypted under three keys:
-  - **Receiver’s key** → to update `ConfidentialMPTBalance[receiver]`
-  - **Issuer’s key** → to update `ConfidentialOutstandingAmount`
-  - **Sender’s key** → to deduct from `ConfidentialMPTBalance[sender]`
-- The ZKP ensures these encryptions are consistent and the amount is valid.
-
-
+      - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer
 
 #### Ledger Changes
 
 #### If Sender is **Issuer**
 
-- **No deduction** from issuer’s encrypted balance (unless holding internal confidential funds).
+- **Do not deduct** from issuer’s `ConfidentialMPTBalance` (unless issuer maintains internal confidential holdings).
 - **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
-- **Update or create** `ConfidentialMPTBalance` for receiver:
-  - `+ EncryptedAmountForReceiver` under `ReceiverPublicKey`.
+- **Create or update** the receiver’s `ConfidentialMPTBalance` object:
+  - Add `EncryptedAmountForReceiver` under `ReceiverPublicKey`.
 
 #### If Sender is **Non-Issuer**
 
 - **Homomorphically subtract** `EncryptedAmountForSender` from sender’s on-ledger `ConfidentialMPTBalance`.
 - **Homomorphically add** `EncryptedAmountForReceiver` to receiver’s `ConfidentialMPTBalance`.
 - `ConfidentialOutstandingAmount` remains unchanged.
+
+#### Validator Checks
+
+- **Validate `ZKProof`**:  
+  Ensure that all three ciphertexts (for sender, receiver, and issuer) are:
+  - Well-formed EC-ElGamal encryptions.
+  - Encrypt the same amount.
+  - Satisfy the amount constraint:
+    - If sender is **issuer**: amount ≤ MaxAmount − OutstandingAmount
+    - If sender is **non-issuer**: amount ≤ sender’s `ConfidentialMPTBalance`
+
+- **Verify sender balance** (if non-issuer):  
+  Ensure the sender’s encrypted balance is sufficient for the transfer.
+
+- **Apply homomorphic updates**:
+  - Subtract `EncryptedAmountForSender` from sender’s confidential balance (if non-issuer).
+  - Add `EncryptedAmountForReceiver` to receiver’s confidential balance.
+  - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
+
+- **Ensure ledger consistency**:  
+  Confirm all affected ledger entries (balances and MPTokenIssuance object) are updated atomically and validly.
 
 
 
