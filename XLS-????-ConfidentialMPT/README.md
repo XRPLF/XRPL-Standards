@@ -222,18 +222,18 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 
 Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
 
-### Purpose
+#### Purpose
 
 - Enables private token transfers using EC-ElGamal encryption and zero-knowledge proofs.
 - Supports both issuer-initiated issuance and confidential transfers among non-issuers.
 
 
-### Use Cases
+#### Use Cases
 
 - **Issuer → Recipient**: Begin confidential circulation of tokens.
 - **User → User**: Preserve privacy while transferring confidential tokens.
 
-### Transaction Fields
+#### Transaction Fields
 
 | Field                         | Type     | Description                                                                                      |
 |------------------------------|----------|--------------------------------------------------------------------------------------------------|
@@ -249,7 +249,7 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 | `ZKProof`                   | Object   | Proves correctness of encryption and amount constraints (see below)                              |
 
 
-### ZKProof Requirements
+#### ZKProof Requirements
 
 The zero-knowledge proof MUST attest to the following:
 
@@ -266,7 +266,7 @@ The zero-knowledge proof MUST attest to the following:
      amount ≤ sender’s `ConfidentialMPTBalance`
 
 
-### Encryption Behavior
+#### Encryption Behavior
 
 - The same amount is encrypted under three keys:
   - **Receiver’s key** → to update `ConfidentialMPTBalance[receiver]`
@@ -276,7 +276,7 @@ The zero-knowledge proof MUST attest to the following:
 
 
 
-### Ledger Changes
+#### Ledger Changes
 
 #### If Sender is **Issuer**
 
@@ -293,7 +293,7 @@ The zero-knowledge proof MUST attest to the following:
 
 
 
-### Validator Checks
+#### Validator Checks
 
 - Validate `ZKProof` for encryption correctness and value constraints.
 - Verify that sender has sufficient encrypted balance (non-issuer).
@@ -302,7 +302,7 @@ The zero-knowledge proof MUST attest to the following:
 
 
 
-### Example (Issuer Sends Confidential Tokens to Bob)
+#### Example (Issuer Sends Confidential Tokens to Bob)
 
 ```json
 {
@@ -331,85 +331,6 @@ The zero-knowledge proof MUST attest to the following:
 }
 ```
 
-### Transaction: ConfidentialMPTSend
-
-#### Purpose
-Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
-
-#### Use Cases
-- **Issuer** sends confidential tokens to a recipient, initiating confidential circulation.
-- **Non-issuer** sends confidential tokens to another party, preserving privacy across transfers.
-
-#### Transaction Fields
-
-| Field                      | Type     | Description                                                                 |
-|---------------------------|----------|-----------------------------------------------------------------------------|
-| `TransactionType`         | String   | `"ConfidentialMPTSend"`                                                    |
-| `Account`                 | Account  | Sender’s XRPL address                                                       |
-| `Destination`             | Account  | Receiver’s XRPL address                                                     |
-| `Issuer`                  | Account  | Issuer of the token                                                         |
-| `Currency`                | String   | Token code (e.g., `"USD"`)                                                  |
-| `EncryptedAmountForReceiver` | Object   | EC-ElGamal ciphertext under receiver’s public key                           |
-| `EncryptedAmountForIssuer`   | Object   | EC-ElGamal ciphertext under issuer’s public key (for supply tracking)       |
-| `ReceiverPublicKey`       | Binary   | Receiver’s ElGamal public key                                               |
-| `ZKProof`                 | Object   | ZKProof: Proves the following properties: (1) Both ciphertexts are well-formed EC-ElGamal     encryptions,  <br> (2) Both ciphertexts encrypt the same amount,  <br> (3) If sender is the issuer: amount ≤ (MaxAmount − OutstandingAmount),  <br> (4) If sender is a non-issuer: amount ≤ sender’s ConfidentialMPTBalance|
-
-#### Encryption Behavior
-
-- The transfer amount is encrypted twice:
-  - Under the receiver’s ElGamal public key → to update their confidential balance.
-  - Under the issuer’s ElGamal public key → to update `ConfidentialOutstandingAmount`.
-- A zero-knowledge proof ensures:
-  - Both encryptions represent the same amount.
-  - The encrypted value is valid and ≤ MaxAmount.
-
-
-#### Ledger Changes
-
-#### If Sender is Issuer
-
-- `MPTokenIssuance.ConfidentialOutstandingAmount += EncryptedAmountForIssuer`
-- Create or update `ConfidentialMPTBalance` for the recipient:
-  - `Destination.ConfidentialMPTBalance += EncryptedAmountForReceiver`
-- Deduct the amount from the issuer’s `ConfidentialMPTBalance` if the issuer holds converted confidential tokens  
-  
-
-#### If Sender is Non-Issuer
-
-- Subtract amount from sender’s `ConfidentialMPTBalance` (under `pkSender`)
-- Add amount to recipient’s `ConfidentialMPTBalance` (under `pkReceiver`)
-- `MPTokenIssuance.ConfidentialOutstandingAmount` remains unchanged
-
-#### Validator Checks
-
-- Check that sender has sufficient confidential balance
-- Validate encryption and ZKP correctness
-
-
-#### Example JSON (Issuer Sends)
-
-```json
-{
-  "TransactionType": "ConfidentialMPTSend",
-  "Account": "rAlice",
-  "Destination": "rBob",
-  "Issuer": "rAlice",
-  "Currency": "USD",
-  "EncryptedAmountForReceiver": {
-    "A": "...",
-    "B": "..."
-  },
-  "EncryptedAmountForIssuer": {
-    "A": "...",
-    "B": "..."
-  },
-  "ReceiverPublicKey": "pkBob...",
-  "ZKProof": {
-    "type": "DualEncEqualityAndRangeProof",
-    "proof": "..."
-  }
-}
-```
 ### Transaction: ConfidentialMPTBurn
 
 The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially held MPTs. This reduces the encrypted supply tracked in `ConfidentialOutstandingAmount` and updates the corresponding ZKP.
