@@ -172,11 +172,13 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 - For the **issuer converting internally**, the second ciphertext may be omitted (no change to `ConfidentialOutstandingAmount`), and no equality proof is required.
 
 
-#### Ledger Changes
-- Deduct `Amount` from the sender’s **public** MPToken balance.
-- Update or create a `ConfidentialMPTBalance` object under the sender’s Owner Directory:
+ ### Ledger Changes
+
+- Deduct `Amount` from the sender’s public `MPToken` balance.
+- Update or create a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
   - Add `EncryptedAmountForSender` to their encrypted balance.
-- For non-issuer accounts:
+- If the sender is a non-issuer:
+  - Subtract `Amount` from `MPTokenIssuance.OutstandingAmount`.
   - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 
 #### Validator Checks
