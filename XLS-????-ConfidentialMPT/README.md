@@ -203,7 +203,32 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
   - Both ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForIssuer`) are **well-formed EC-ElGamal encryptions**.
   - Both ciphertexts encrypt the **same plaintext value** (`Amount`).
 
+#### Example: Non-Issuer Converts Public MPT to Confidential Form
 
+This example shows `rBob` (a non-issuer) converting 150 publicly held `USD` tokens (issued by `rAlice`) into a confidential balance using the `ConfidentialMPTConvert` transaction.
+
+```json
+{
+  "TransactionType": "ConfidentialMPTConvert",
+  "Account": "rBob...",
+  "Issuer": "rAlice...",
+  "Currency": "USD",
+  "Amount": "150",
+  "EncryptedAmountForSender": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForIssuer": {
+    "A": "...",
+    "B": "..."
+  },
+  "SenderPublicKey": "pkBob...",
+  "ZKProof": {
+    "type": "DualEncEqualityAndRangeProof",
+    "proof": "..."
+  }
+}
+```
 #### Example: Non-Issuer Converts Public MPT to Confidential Form
 
 This example shows `rBob` (a non-issuer) converting 150 publicly held `USD` tokens (issued by `rAlice`) into a confidential balance using the `ConfidentialMPTConvert` transaction.
