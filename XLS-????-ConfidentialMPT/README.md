@@ -174,6 +174,21 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 
  ### Ledger Changes
 
+- If the sender is a **non-issuer**:
+  - **Deduct** `Amount` from the sender’s public `MPToken` balance.
+  - **Subtract** `Amount` from `MPTokenIssuance.OutstandingAmount`.
+  - **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+
+- For **all senders (issuer or non-issuer)**:
+  - **Update or create** a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
+    - Add `EncryptedAmountForSender` to the encrypted balance.
+
+- If the sender is the **issuer**:
+  - No change to `OutstandingAmount` or `ConfidentialOutstandingAmount`.
+
+ 
+ ### Ledger Changes
+
 - Deduct `Amount` from the sender’s public `MPToken` balance.
 - Update or create a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
   - Add `EncryptedAmountForSender` to their encrypted balance.
