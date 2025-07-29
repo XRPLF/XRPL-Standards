@@ -239,7 +239,7 @@ Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parti
 | `EncryptedAmountForReceiver` | Object   | EC-ElGamal ciphertext under receiver’s public key                           |
 | `EncryptedAmountForIssuer`   | Object   | EC-ElGamal ciphertext under issuer’s public key (for supply tracking)       |
 | `ReceiverPublicKey`       | Binary   | Receiver’s ElGamal public key                                               |
-| `ZKProof`                 | Object   | ZKP proving: (1) well-formed encryption, (2) ciphertext equality, (3) amount ≤ MaxAmount |
+| `ZKProof`                 | Object   | ZKProof: Proves the following properties: (1) Both ciphertexts are well-formed EC-ElGamal     encryptions, (2) Both ciphertexts encrypt the same amount, (3) If sender is the issuer: amount ≤ (MaxAmount − OutstandingAmount), (4) If sender is a non-issuer: amount ≤ sender’s ConfidentialMPTBalance|
 
 #### Encryption Behavior
 
