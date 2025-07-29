@@ -172,31 +172,37 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 - For the **issuer converting internally**, the second ciphertext may be omitted (no change to `ConfidentialOutstandingAmount`), and no equality proof is required.
 
 
- ### Ledger Changes
+ #### Ledger Changes
 
 - If the sender is a **non-issuer**:
-  - **Deduct** `Amount` from the sender’s public `MPToken` balance.
-  - **Subtract** `Amount` from `MPTokenIssuance.OutstandingAmount`.
-  - **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+  - Deduct `Amount` from the sender’s public `MPToken` balance.
+  - Subtract `Amount` from `MPTokenIssuance.OutstandingAmount`.
+  - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 
-- For **all senders (issuer or non-issuer)**:
-  - **Update or create** a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
+- For all senders (issuer or non-issuer):
+  - Update or create a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
     - Add `EncryptedAmountForSender` to the encrypted balance.
 
-- If the sender is the **issuer**:
+- If the sender is the issuer:
   - No change to `OutstandingAmount` or `ConfidentialOutstandingAmount`.
 
 #### Validator Checks
-- Verify:
-  - The sender has enough public MPToken balance.
-  - `Amount` ≤ `MaxAmount`.
-  - The `ZKProof` proves:
-    - Both ciphertexts are well-formed and encrypt the same value.
-    - Encrypted amount is within valid range.
-- If the sender is not the issuer:
-  - Enforce homomorphic update to `ConfidentialOutstandingAmount`.
+
+- If the sender is a non-issuer:
+  - Verify the sender has sufficient public `MPToken` balance.
+  - Ensure `Amount ≤ MaxAmount`.
+  - Enforce:
+    - Subtraction from `OutstandingAmount`.
+    - Homomorphic addition to `ConfidentialOutstandingAmount`.
+
 - If the sender is the issuer:
-  - Skip updating `ConfidentialOutstandingAmount`.
+  - Ensure `Amount ≤ MaxAmount`.
+  - Skip updates to `OutstandingAmount` and `ConfidentialOutstandingAmount`.
+
+- Verify the ZKProof confirms:
+  - Both ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForIssuer`) are **well-formed EC-ElGamal encryptions**.
+  - Both ciphertexts encrypt the **same plaintext value** (`Amount`).
+
 
 #### Example JSON
 
