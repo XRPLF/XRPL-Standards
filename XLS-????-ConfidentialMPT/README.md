@@ -218,6 +218,126 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 }
 ```
 ---
+### Transaction: `ConfidentialMPTSend`
+
+Transfers encrypted Multi-Purpose Tokens (MPTs) confidentially between two parties. Supports both issuer and non-issuer senders.
+
+---
+
+### Purpose
+
+- Enables private token transfers using EC-ElGamal encryption and zero-knowledge proofs.
+- Supports both issuer-initiated issuance and confidential transfers among non-issuers.
+
+---
+
+### Use Cases
+
+- **Issuer → Recipient**: Begin confidential circulation of tokens.
+- **User → User**: Preserve privacy while transferring confidential tokens.
+
+---
+
+### Transaction Fields
+
+| Field                         | Type     | Description                                                                                      |
+|------------------------------|----------|--------------------------------------------------------------------------------------------------|
+| `TransactionType`            | String   | `"ConfidentialMPTSend"`                                                                          |
+| `Account`                    | Account  | Sender’s XRPL address                                                                             |
+| `Destination`                | Account  | Receiver’s XRPL address                                                                           |
+| `Issuer`                     | Account  | Issuer of the token                                                                               |
+| `Currency`                   | String   | Token code (e.g., `"USD"`)                                                                        |
+| `EncryptedAmountForReceiver`| Object   | EC-ElGamal ciphertext under receiver’s public key                                                 |
+| `EncryptedAmountForIssuer`  | Object   | EC-ElGamal ciphertext under issuer’s public key (for supply tracking)                            |
+| `EncryptedAmountForSender`  | Object   | EC-ElGamal ciphertext under sender’s public key (used for balance subtraction)                   |
+| `ReceiverPublicKey`         | Binary   | Receiver’s ElGamal public key                                                                     |
+| `ZKProof`                   | Object   | Proves correctness of encryption and amount constraints (see below)                              |
+
+---
+
+### ZKProof Requirements
+
+The zero-knowledge proof MUST attest to the following:
+
+1. **Well-formed ciphertexts**:  
+   `EncryptedAmountForReceiver`, `EncryptedAmountForIssuer`, and `EncryptedAmountForSender` are valid EC-ElGamal encryptions.
+
+2. **Amount equality**:  
+   All three ciphertexts encrypt the **same value**.
+
+3. **Validity constraint**:  
+   - If the sender is the **issuer**:  
+     amount ≤ `MaxAmount − OutstandingAmount`
+   - If the sender is a **non-issuer**:  
+     amount ≤ sender’s `ConfidentialMPTBalance`
+
+---
+
+### Encryption Behavior
+
+- The same amount is encrypted under three keys:
+  - **Receiver’s key** → to update `ConfidentialMPTBalance[receiver]`
+  - **Issuer’s key** → to update `ConfidentialOutstandingAmount`
+  - **Sender’s key** → to deduct from `ConfidentialMPTBalance[sender]`
+- The ZKP ensures these encryptions are consistent and the amount is valid.
+
+---
+
+### Ledger Changes
+
+#### 🔹 If Sender is **Issuer**
+
+- **No deduction** from issuer’s encrypted balance (unless holding internal confidential funds).
+- **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+- **Update or create** `ConfidentialMPTBalance` for receiver:
+  - `+ EncryptedAmountForReceiver` under `ReceiverPublicKey`.
+
+#### 🔹 If Sender is **Non-Issuer**
+
+- **Homomorphically subtract** `EncryptedAmountForSender` from sender’s on-ledger `ConfidentialMPTBalance`.
+- **Homomorphically add** `EncryptedAmountForReceiver` to receiver’s `ConfidentialMPTBalance`.
+- `ConfidentialOutstandingAmount` remains unchanged.
+
+---
+
+### Validator Checks
+
+- Validate `ZKProof` for encryption correctness and value constraints.
+- Verify that sender has sufficient encrypted balance (non-issuer).
+- Perform homomorphic updates using submitted ciphertexts.
+- Ensure ledger entries are updated consistently.
+
+---
+
+### Example (Issuer Sends Confidential Tokens to Bob)
+
+```json
+{
+  "TransactionType": "ConfidentialMPTSend",
+  "Account": "rAlice",
+  "Destination": "rBob",
+  "Issuer": "rAlice",
+  "Currency": "USD",
+  "EncryptedAmountForReceiver": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForIssuer": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForSender": {
+    "A": "...",
+    "B": "..."
+  },
+  "ReceiverPublicKey": "pkBob...",
+  "ZKProof": {
+    "type": "DualEncEqualityAndRangeProof",
+    "proof": "..."
+  }
+}
+```
+
 ### Transaction: ConfidentialMPTSend
 
 #### Purpose
