@@ -274,7 +274,7 @@ The ZKP MUST attest to the following:
 
 3. **Validity constraint**:  
    - If the sender is the **issuer**:  
-     amount ≤ `MaxAmount − OutstandingAmount`
+     amount ≤ `MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
    - If the sender is a **non-issuer**:  
      amount ≤ sender’s `ConfidentialMPTBalance`
 
