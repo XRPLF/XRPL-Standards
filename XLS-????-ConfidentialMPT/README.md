@@ -298,6 +298,10 @@ The transferred amount is encrypted under three different public keys:
 
 ##### If Sender is **Issuer**
 
+- **Homomorphically subtract** `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`.
+> **Note**: In this case, `EncryptedAmountForSender` is equal to `EncryptedAmountForIssuer`.  
+> To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
+
 - **Homomorphically subtract** `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`. Note: In this case, EncryptedAmountForSender is equal to EncryptedAmountForIssuer. To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
 - **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 - **Create or update** the receiver’s `ConfidentialMPTBalance` object:
@@ -309,7 +313,6 @@ The transferred amount is encrypted under three different public keys:
 - **Homomorphically add** `EncryptedAmountForReceiver` to the receiver’s `ConfidentialMPTBalance`.
 - `ConfidentialOutstandingAmount` remains unchanged.
 
----
 
 #### Validator Checks
 
