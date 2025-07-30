@@ -298,13 +298,12 @@ The transferred amount is encrypted under three different public keys:
 
 ##### If Sender is **Issuer**
 
-- **Homomorphically subtract** `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`.
-> **Note**: In this case, `EncryptedAmountForSender` is equal to `EncryptedAmountForIssuer`.  
-> To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
+- Homomorphically subtract `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`.
+> Note: In this case, `EncryptedAmountForSender` is equal to `EncryptedAmountForIssuer`. To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
 
-- **Homomorphically subtract** `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`. Note: In this case, EncryptedAmountForSender is equal to EncryptedAmountForIssuer. To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
-- **Homomorphically add** `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
-- **Create or update** the receiver’s `ConfidentialMPTBalance` object:
+- Homomorphically subtract `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`. Note: In this case, EncryptedAmountForSender is equal to EncryptedAmountForIssuer. To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
+- Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+- Create or update the receiver’s `ConfidentialMPTBalance` object:
   - Add `EncryptedAmountForReceiver` under `ReceiverPublicKey`.
 
 ##### If Sender is **Non-Issuer**
@@ -316,23 +315,23 @@ The transferred amount is encrypted under three different public keys:
 
 #### Validator Checks
 
-- **Validate `ZKProof`**:  
+- Validate `ZKProof`:  
   Confirm that all three ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForReceiver`, and `EncryptedAmountForIssuer`) are:
   - Well-formed EC-ElGamal encryptions.
   - Encrypt the same amount.
   - Satisfy the correct constraint:
-    - If sender is **issuer**: `amount ≤ MaxAmount − OutstandingAmount`
+    - If sender is **issuer**: `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
     - If sender is **non-issuer**: `amount ≤ sender’s ConfidentialMPTBalance`
 
-- **Verify sender balance**:  
+- Verify sender balance:  
   Ensure the sender’s encrypted balance is sufficient for the transfer (issuer or non-issuer).
 
-- **Apply homomorphic updates**:
+- Apply homomorphic updates:
   - Subtract `EncryptedAmountForSender` from sender’s confidential balance.
   - Add `EncryptedAmountForReceiver` to receiver’s confidential balance.
   - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
 
-- **Ensure ledger consistency**:  
+- Ensure ledger consistency:  
   Validate atomic updates to all affected ledger entries.
 
 
