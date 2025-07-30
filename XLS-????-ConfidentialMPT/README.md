@@ -329,9 +329,6 @@ The transferred amount is encrypted under three different public keys:
   - Add `EncryptedAmountForReceiver` to receiver’s confidential balance.
   - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
 
-- Ensure ledger consistency:  
-  Validate atomic updates to all affected ledger entries.
-
 
 
 
