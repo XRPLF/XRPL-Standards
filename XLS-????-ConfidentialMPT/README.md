@@ -196,7 +196,7 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
     - Homomorphic addition to `ConfidentialOutstandingAmount`.
 
 - If the sender is the issuer:
-  - Ensure `Amount ≤ MaxAmount`.
+  - Ensure `Amount ≤ MaxAmount - OutstandingAmount`.
   - Skip updates to `OutstandingAmount` and `ConfidentialOutstandingAmount`.
 
 - Verify the ZKProof confirms:
