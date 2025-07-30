@@ -278,7 +278,7 @@ The ZKP MUST attest to the following:
    - If the sender is a **non-issuer**:  
      amount ≤ sender’s `ConfidentialMPTBalance`
 
-### Encryption Behavior
+#### Encryption Behavior
 
 The transferred amount is encrypted under three different public keys:
 
@@ -291,8 +291,8 @@ The transferred amount is encrypted under three different public keys:
     - All three ciphertexts encrypt the **same amount**
     - Each ciphertext is a **well-formed EC-ElGamal encryption**
     - The encrypted amount satisfies:
-      - `amount ≤ MaxAmount − OutstandingAmount` (if issuer is sender)
-      - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer
+      - `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount` (if issuer is sender)
+      - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer is sender)
 
 #### Ledger Changes
 
