@@ -442,7 +442,7 @@ This mechanism allows any observer — including validators, auditors, or third-
     "LedgerEntryType": "ConfidentialMPTBalance",
     "Issuer": "rAlice",
     "Currency": "USD",
-    "PublicKey": "pkAlice",
+    "PublicKey": "pkAlice", // This balance is encrypted under the issuer’s public key for auditability
     "EncryptedBalance": {
     "A": "...",
     "B": "..."
