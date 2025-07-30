@@ -322,6 +322,7 @@ The transferred amount is encrypted under three different public keys:
   - Satisfy the correct constraint:
     - If sender is **issuer**: `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
     - If sender is **non-issuer**: `amount ≤ sender’s ConfidentialMPTBalance`
+      *(This ensures the sender’s encrypted balance is sufficient for the transfer.)*
 
 - Apply homomorphic updates:
   - Subtract `EncryptedAmountForSender` from sender’s confidential balance.
