@@ -418,11 +418,12 @@ The submitted proof must:
 - Replace the `ConfidentialSupplyZKP` field in the corresponding `MPTokenIssuance` object with the new ZKP provided in the transaction.
 
 #### Example Format:
-````json
+```json
 "ConfidentialSupplyZKP": {
 "Proof": "zkp_bytes_here",
 "LedgerIndex": 12345678
-````
+}
+```
 
 #### Validator Checks
 
