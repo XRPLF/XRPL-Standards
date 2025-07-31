@@ -23,13 +23,14 @@ This XLS defines:
 - **New transaction types**:
     - `ConfidentialMPTConvert`
     - `ConfidentialMPTSend`
-    - `ConfidentialMPTBurn`
+    - `UpdateConfidentialSupplyZKP`
+
 
 - **New ledger fields**:
     - `ConfidentialOutstandingAmount` in the `MPTokenIssuance` object
     - `ConfidentialSupplyZKP` accompanying ConfidentialOutstandingAmount.
     - `ConfidentialMPTBalance` objects stored under Owner Directory
-    
+
 
 - **Encryption mechanisms**:
     - EC-ElGamal with dual-key encryption (issuer + holder)
@@ -120,16 +121,16 @@ This is a new ledger object used to store encrypted token balances.
 ```
 ### Ledger Constraints
 
-- `ConfidentialOutstandingAmount` must always remain ≤ `MaxAmount`.  
-  - This is enforced by ZKPs included with any confidential minting or conversion that increases circulating confidential supply.
-  - The ZKP is stored in the `MPTokenIssuance` object to enable public auditability.
+- `ConfidentialOutstandingAmount` must always remain ≤ `MaxAmount`.
+    - This is enforced by ZKPs included with any confidential minting or conversion that increases circulating confidential supply.
+    - The ZKP is stored in the `MPTokenIssuance` object to enable public auditability.
 
-- Encrypted balances must be well-formed and non-negative.  
-  - For non-issuer holders, each `ConfidentialMPTBalance` must include both:
-    - `EncryptedBalanceHolder` (encrypted with holder’s public key)
-    - `EncryptedBalanceIssuer` (encrypted with issuer’s public key)  
-  - A ZKP must be included to prove equality of the two encryptions, ensuring dual encryption consistency.
-  - For issuer-held balances, the issuer may omit `EncryptedBalanceIssuer`, and no equality proof is required.
+- Encrypted balances must be well-formed and non-negative.
+    - For non-issuer holders, each `ConfidentialMPTBalance` must include both:
+        - `EncryptedBalanceHolder` (encrypted with holder’s public key)
+        - `EncryptedBalanceIssuer` (encrypted with issuer’s public key)
+    - A ZKP must be included to prove equality of the two encryptions, ensuring dual encryption consistency.
+    - For issuer-held balances, the issuer may omit `EncryptedBalanceIssuer`, and no equality proof is required.
 
 
 ## Transaction Types
@@ -167,41 +168,41 @@ Converts publicly held MPT tokens into confidential form by replacing visible ba
 
 #### Encryption Behavior
 - The transaction generates two ciphertexts for the `Amount`:
-  - One encrypted under the **sender’s** ElGamal public key → used for the sender’s `ConfidentialMPTBalance`.
-  - One encrypted under the **issuer’s** ElGamal public key → used to update `ConfidentialOutstandingAmount`.
+    - One encrypted under the **sender’s** ElGamal public key → used for the sender’s `ConfidentialMPTBalance`.
+    - One encrypted under the **issuer’s** ElGamal public key → used to update `ConfidentialOutstandingAmount`.
 - For the **issuer converting internally**, the second ciphertext may be omitted (no change to `ConfidentialOutstandingAmount`), and no equality proof is required.
 
 
- #### Ledger Changes
+#### Ledger Changes
 
 - If the sender is a **non-issuer**:
-  - Deduct `Amount` from the sender’s public `MPToken` balance.
-  - Subtract `Amount` from `MPTokenIssuance.OutstandingAmount`.
-  - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
+    - Deduct `Amount` from the sender’s public `MPToken` balance.
+    - Subtract `Amount` from `MPTokenIssuance.OutstandingAmount`.
+    - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 
 - For all senders (issuer or non-issuer):
-  - Update or create a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
-    - Add `EncryptedAmountForSender` to the encrypted balance.
+    - Update or create a `ConfidentialMPTBalance` object under the sender’s `Owner Directory`:
+        - Add `EncryptedAmountForSender` to the encrypted balance.
 
 - If the sender is the issuer:
-  - No change to `OutstandingAmount` or `ConfidentialOutstandingAmount`.
+    - No change to `OutstandingAmount` or `ConfidentialOutstandingAmount`.
 
 #### Validator Checks
 
 - If the sender is a non-issuer:
-  - Verify the sender has sufficient public `MPToken` balance.
-  - Ensure `Amount ≤ MaxAmount`.
-  - Enforce:
-    - Subtraction from `OutstandingAmount`.
-    - Homomorphic addition to `ConfidentialOutstandingAmount`.
+    - Verify the sender has sufficient public `MPToken` balance.
+    - Ensure `Amount ≤ MaxAmount`.
+    - Enforce:
+        - Subtraction from `OutstandingAmount`.
+        - Homomorphic addition to `ConfidentialOutstandingAmount`.
 
 - If the sender is the issuer:
-  - Ensure `Amount ≤ MaxAmount - OutstandingAmount`.
-  - Skip updates to `OutstandingAmount` and `ConfidentialOutstandingAmount`.
+    - Ensure `Amount ≤ MaxAmount - OutstandingAmount`.
+    - Skip updates to `OutstandingAmount` and `ConfidentialOutstandingAmount`.
 
 - Verify the ZKProof confirms:
-  - Both ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForIssuer`) are **well-formed EC-ElGamal encryptions**.
-  - Both ciphertexts encrypt the **same plaintext value** (`Amount`).
+    - Both ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForIssuer`) are **well-formed EC-ElGamal encryptions**.
+    - Both ciphertexts encrypt the **same plaintext value** (`Amount`).
 
 #### Example: Non-Issuer Converts Public MPT to Confidential Form
 
@@ -272,11 +273,11 @@ The ZKP MUST attest to the following:
 2. **Amount equality**:  
    All three ciphertexts encrypt the **same value**.
 
-3. **Validity constraint**:  
-   - If the sender is the **issuer**:  
-     amount ≤ `MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
-   - If the sender is a **non-issuer**:  
-     amount ≤ sender’s `ConfidentialMPTBalance`
+3. **Validity constraint**:
+    - If the sender is the **issuer**:  
+      amount ≤ `MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
+    - If the sender is a **non-issuer**:  
+      amount ≤ sender’s `ConfidentialMPTBalance`
 
 #### Encryption Behavior
 
@@ -284,15 +285,15 @@ The transferred amount is encrypted under three different public keys:
 
 - **Receiver’s key** → Used to update `ConfidentialMPTBalance[receiver]`.
 - **Sender’s key** → Used to subtract from `ConfidentialMPTBalance[sender]`.
-- **Issuer’s key** → 
-  - If the sender **is the issuer**: used to homomorphically update `ConfidentialOutstandingAmount`.
-  - If the sender **is not the issuer**: still included for auditability. All issuer-key ciphertexts across the ledger are used to verify the confidential supply.
+- **Issuer’s key** →
+    - If the sender **is the issuer**: used to homomorphically update `ConfidentialOutstandingAmount`.
+    - If the sender **is not the issuer**: still included for auditability. All issuer-key ciphertexts across the ledger are used to verify the confidential supply.
 - A ZKP ensures:
     - All three ciphertexts encrypt the **same amount**
     - Each ciphertext is a **well-formed EC-ElGamal encryption**
     - The encrypted amount satisfies:
-      - `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount` (if issuer is sender)
-      - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer is sender)
+        - `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount` (if issuer is sender)
+        - `amount ≤ ConfidentialMPTBalance[sender]` (if non-issuer is sender)
 
 #### Ledger Changes
 
@@ -304,7 +305,7 @@ The transferred amount is encrypted under three different public keys:
 - Homomorphically subtract `EncryptedAmountForSender` from the issuer’s `ConfidentialMPTBalance`. Note: In this case, EncryptedAmountForSender is equal to EncryptedAmountForIssuer. To optimize performance and reduce redundancy, implementations should take advantage of this equality during processing.
 - Homomorphically add `EncryptedAmountForIssuer` to `MPTokenIssuance.ConfidentialOutstandingAmount`.
 - Create or update the receiver’s `ConfidentialMPTBalance` object:
-  - Add `EncryptedAmountForReceiver` under `ReceiverPublicKey`.
+    - Add `EncryptedAmountForReceiver` under `ReceiverPublicKey`.
 
 ##### If Sender is **Non-Issuer**
 
@@ -317,17 +318,17 @@ The transferred amount is encrypted under three different public keys:
 
 - Validate `ZKProof`:  
   Confirm that all three ciphertexts (`EncryptedAmountForSender`, `EncryptedAmountForReceiver`, and `EncryptedAmountForIssuer`) are:
-  - Well-formed EC-ElGamal encryptions.
-  - Encrypt the same amount.
-  - Satisfy the correct constraint:
-    - If sender is **issuer**: `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
-    - If sender is **non-issuer**: `amount ≤ sender’s ConfidentialMPTBalance`
-    *(This ensures the sender’s encrypted balance is sufficient for the transfer.)*
+    - Well-formed EC-ElGamal encryptions.
+    - Encrypt the same amount.
+    - Satisfy the correct constraint:
+        - If sender is **issuer**: `amount ≤ MaxAmount − OutstandingAmount - ConfidentialOutstandingAmount`
+        - If sender is **non-issuer**: `amount ≤ sender’s ConfidentialMPTBalance`
+          *(This ensures the sender’s encrypted balance is sufficient for the transfer.)*
 
 - Apply homomorphic updates:
-  - Subtract `EncryptedAmountForSender` from sender’s confidential balance.
-  - Add `EncryptedAmountForReceiver` to receiver’s confidential balance.
-  - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
+    - Subtract `EncryptedAmountForSender` from sender’s confidential balance.
+    - Add `EncryptedAmountForReceiver` to receiver’s confidential balance.
+    - If sender is issuer: add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
 
 
 
@@ -360,46 +361,105 @@ The transferred amount is encrypted under three different public keys:
   }
 }
 ```
+---
+### Transaction: `UpdateConfidentialSupplyZKP`
 
-### Transaction: ConfidentialMPTBurn
+The `UpdateConfidentialSupplyZKP` transaction allows the issuer of a MPT to update the audit proof (`ConfidentialSupplyZKP`) associated with the encrypted confidential supply (`ConfidentialOutstandingAmount`).
 
-The `ConfidentialMPTBurn` transaction enables a holder to burn confidentially held MPTs. This reduces the encrypted supply tracked in `ConfidentialOutstandingAmount` and updates the corresponding ZKP.
+This enables public verification that the encrypted supply remains within the bounds of `MaxAmount`, without revealing individual balances.
+
+
+
+#### Purpose
+
+- Maintain auditability of the encrypted confidential token supply.
+- Ensure the latest `ConfidentialOutstandingAmount` is provably ≤ `MaxAmount`.
+- Enable stateless public auditors to verify supply correctness using only on-ledger data.
+
 
 
 #### Preconditions
 
-- `TransactionType` MUST be `"ConfidentialMPTBurn"`
+- `TransactionType` must be `"UpdateConfidentialSupplyZKP"`.
+- The submitting account must be the issuer of the specified MPToken. 
 - Required fields:
-  - `Account`, `Issuer`, `Currency`
-  - `EncryptedAmount` (ciphertext under issuer’s ElGamal key)
-  - `ZKProof` (range proof for `0 ≤ Amount ≤ ConfidentialOutstandingAmount`)
+  - `Issuer`: Address of the token issuer (same as `Account`)
+  - `Currency`: Token code (e.g., `"USD"`)
+  - `ZKP`: A zero-knowledge proof that `ConfidentialOutstandingAmount ≤ MaxAmount`
+  - `LedgerIndex`: Indicates the ledger index at which the ZKP was generated (for auditor traceability)
 
 
 
-#### Validation Steps
 
-- Confirm `EncryptedAmount` is a valid EC-ElGamal ciphertext.
+#### Transaction Fields
 
-- Verify `ZKProof` proves:
-  - `EncryptedAmount` is well-formed
-  - `0 ≤ Amount ≤ ConfidentialOutstandingAmount`
+| Field          | Type     | Description                                                |
+|----------------|----------|------------------------------------------------------------|
+| `TransactionType` | String   | `"UpdateConfidentialSupplyZKP"`                            |
+| `Account`      | Account  | Must match the `Issuer`                                    |
+| `Issuer`       | Account  | Address of the MPToken issuer                              |
+| `Currency`     | String   | Token code (e.g., `"USD"`)                                 |
+| `ZKP`          | Object   | A ZKP that `ConfidentialOutstandingAmount ≤ MaxAmount`     |
+| `LedgerIndex`  | UInt32   | Ledger index where the proof was generated (for audit use) |
 
-- Confirm the sender has sufficient confidential balance to cover the burn:
-  - Locate `ConfidentialMPTBalance` encrypted under sender’s public key
-  - Check that the balance is sufficient
+
+
+#### ZKP Requirements
+
+The submitted proof must:
+- Prove that the ciphertext in `ConfidentialOutstandingAmount` is a valid EC-ElGamal encryption.
+- Prove that the underlying plaintext value is ≤ `MaxAmount`.
+- Be generated using the issuer’s ElGamal private key (only the issuer can produce this proof).
 
 
 
 #### Ledger Changes
 
-- Homomorphically subtract `EncryptedAmount` from the sender’s `ConfidentialMPTBalance`.
+- Replace the `ConfidentialSupplyZKP` field in the corresponding `MPTokenIssuance` object with the new ZKP provided in the transaction.
 
-- Homomorphically subtract `EncryptedAmount` from `MPTokenIssuance.ConfidentialOutstandingAmount`.
+#### Example Format:
+````json
+"ConfidentialSupplyZKP": {
+"Proof": "zkp_bytes_here",
+"LedgerIndex": 12345678
+````
 
-- Replace `ConfidentialSupplyZKP` with a new proof showing:
+#### Validator Checks
 
-  ```text
-  Updated ConfidentialOutstandingAmount ≤ MaxAmount
+- Confirm the submitting account is the issuer of the specified `(Issuer, Currency)` pair.
+- Verify that the submitted `ZKP` is valid and applies to the current `ConfidentialOutstandingAmount`.
+- Update the `MPTokenIssuance.ConfidentialSupplyZKP` field with the new proof.
+- Accept the optional LedgerIndex but do not validate its correctness.
+
+
+#### Submission Timing Notes
+
+- The issuer must track changes to `ConfidentialOutstandingAmount`, especially when updated by:
+    - `ConfidentialMPTConvert` (when the sender is a non-issuer)
+    - `ConfidentialMPTSend` (when the issuer initiates the transfer)
+
+- The issuer can track these changes by:
+    - Monitoring the ledger for transactions that affect `ConfidentialOutstandingAmount`.
+    - Subscribing to ledger notifications or scanning validated transactions involving their issued currency.
+
+- The issuer should submit an UpdateConfidentialSupplyZKP transaction periodically or immediately after state changes to keep the audit record up to date. 
+- Delayed updates will cause auditors to see a stale ZKP, which may temporarily reduce system transparency.
+
+
+#### Example
+
+```json
+{
+  "TransactionType": "UpdateConfidentialSupplyZKP",
+  "Account": "rAlice",
+  "Issuer": "rAlice",
+  "Currency": "USD",
+  "ZKP": {
+    "type": "RangeProofMaxAmount",
+    "proof": "zkp_bytes_here"
+  }
+}
+```
 
 ---
 ### Public Audit of ConfidentialOutstandingAmount
@@ -409,12 +469,12 @@ This mechanism allows any observer — including validators, auditors, or third-
 #### Assumptions
 
 - Each token holder stores their `ConfidentialMPTBalance` encrypted under:
-  - Their own public key (e.g., `pkBob`)
-  - The issuer’s public key (e.g., `pkAlice`)
+    - Their own public key (e.g., `pkBob`)
+    - The issuer’s public key (e.g., `pkAlice`)
 - The issuer maintains a `ConfidentialOutstandingAmount` field, which is an **EC-ElGamal ciphertext under `pkAlice`**, updated homomorphically whenever confidential tokens leave the issuer.
 - For each confidential transfer (e.g., `ConfidentialMPTSend`, `ConfidentialMPTConvert`), a ZKP is included to:
-  - Prove that the transferred amount is valid (non-negative and ≤ MaxAmount)
-  - Ensure consistency between the dual encryptions (under issuer and holder keys)
+    - Prove that the transferred amount is valid (non-negative and ≤ MaxAmount)
+    - Ensure consistency between the dual encryptions (under issuer and holder keys)
 - The issuer includes a **mandatory ZKP** (`ConfidentialSupplyZKP`) with every update to `ConfidentialOutstandingAmount`, proving that the encrypted total is **well-formed and ≤ MaxAmount**.
 
 
@@ -453,8 +513,8 @@ This mechanism allows any observer — including validators, auditors, or third-
 #### Audit Procedure
 To verify the confidential supply:
 
-- Scan the ledger at a specific index. 
-- Collect all ConfidentialMPTBalance objects for a specific (Currency, Issuer) pair encrypted under the issuer's key (pkAlice). 
+- Scan the ledger at a specific index.
+- Collect all ConfidentialMPTBalance objects for a specific (Currency, Issuer) pair encrypted under the issuer's key (pkAlice).
 - Extract each:
 
 ```json
@@ -466,111 +526,12 @@ To verify the confidential supply:
 }
 ```
 - Sum all ciphertexts homomorphically:
-- Enc_total = + Enc_issuer(X1) + Enc_issuer(X2) + ... 
+- Enc_total = + Enc_issuer(X1) + Enc_issuer(X2) + ...
 - Compare Enc_total with ConfidentialOutstandingAmount in MPTokenIssuance.
 
 #### Audit Result
 If Enc_total == ConfidentialOutstandingAmount, and the accompanying ConfidentialSupplyZKP verifies that Enc_total ≤ MaxAmount, then:
 - The confidential circulating supply is correct
-- No over-issuance has occurred 
+- No over-issuance has occurred
 - Privacy of individual balances is preserved
-
-## Appendix A: Receiver Privacy Extensions for Confidential MPTs
-
-### A.1 Use Case: Receiver Anonymity with Confidential MPT Transfers
-
-This extension introduces **receiver anonymity** to Confidential MPT transfers by allowing the sender to deliver encrypted MPT tokens to a stealth address derived from the recipient’s public viewing and spending keys.
-
-The amount remains confidential (encrypted via EC-ElGamal), and the recipient’s identity is protected via a stealth address scheme.
-
-This transaction:
-
-- Hides both the **recipient’s identity** and the **transferred amount**
-- Supports **issuer and non-issuer** senders
-- Proves encrypted amount correctness and consistency using **ZKPs**
-- Is compatible with `ConfidentialOutstandingAmount` tracking
-
----
-
-### Transaction Type `ConfidentialMPTStealthSend`
-
-| Field                      | Type      | Required | Description                                                            |
-|---------------------------|-----------|----------|------------------------------------------------------------------------|
-| `TransactionType`         | String    | Yes      | Must be set to `ConfidentialMPTStealthSend`                           |
-| `Account`                 | Account   | Yes      | Sender’s XRPL account                                                  |
-| `Issuer`                  | Account   | Yes      | MPT issuer                                                             |
-| `Currency`                | String    | Yes      | MPT currency code                                                      |
-| `EncryptedAmountReceiver` | Object    | Yes      | EC-ElGamal ciphertext under stealth receiver’s key                     |
-| `EncryptedAmountIssuer`   | Object    | Yes      | EC-ElGamal ciphertext under issuer’s key                               |
-| `StealthAddress`          | Blob      | Yes      | One-time public key: `P = s·G + B_spend`                               |
-| `EphemeralKey`            | Blob      | Yes      | One-time key: `R = r·G`, used in stealth derivation                    |
-| `ZKProof`                 | Object    | Yes      | ZKP proving ciphertext equality and range validity                     |
-
----
-
-### Stealth Key Model
-
-Recipients use two EC keypairs:
-
-| Key Type       | Description                                                                  |
-|----------------|------------------------------------------------------------------------------|
-| `ViewingKey`   | Detects stealth payments: shared secret is `H(r · B_view)`                   |
-| `SpendingKey`  | Spends funds sent to `P = s·G + B_spend`                                     |
-
----
-
-### Validation and Ledger Behavior
-
-#### Preconditions
-
-- Sender may be issuer or non-issuer.
-- `EncryptedAmountReceiver` and `EncryptedAmountIssuer` must be valid EC-ElGamal ciphertexts.
-- `ZKProof` must validate:
-  - Both ciphertexts encrypt the same value
-  - Value is in range: `0 ≤ Amount ≤ MaxAmount`
-
-#### Ledger Updates
-
-#### Ledger Updates
-
-- Subtract `EncryptedAmountReceiver` from the sender’s `ConfidentialMPTBalance`
-- Add `EncryptedAmountReceiver` to a new `ConfidentialMPTBalance` under `StealthAddress`
-- Add `EncryptedAmountIssuer` to `ConfidentialOutstandingAmount` (only if the sender is the issuer)
-- Replace `ConfidentialSupplyZKP` with an updated proof validating the new encrypted total is still `≤ MaxAmount` (must be provided by the sender if supply is updated)
-
----
-
-### JSON Example
-
-```json
-{
-  "TransactionType": "ConfidentialMPTStealthSend",
-  "Account": "rSenderABC123...",
-  "Issuer": "rAlice...",
-  "Currency": "USD",
-  "EncryptedAmountReceiver": { "A": "...", "B": "..." },
-  "EncryptedAmountIssuer": { "A": "...", "B": "..." },
-  "StealthAddress": "03fcb9...9d4a",
-  "EphemeralKey": "028a17...e5bf",
-  "ZKProof": {
-    "type": "DualEncEqualityAndRangeProof",
-    "proof": "..."
-  }
-}
-```
-## Appendix B: Full Privacy Extension for Confidential MPTs
-
-### B.1 Use Case: Full Sender and Receiver Privacy with Ring Signatures
-
-This extension introduces **maximum privacy** for Confidential MPT transfers by combining:
-
-- **Confidential amounts** (via EC-ElGamal encryption)
-- **Receiver anonymity** (via stealth addresses)
-- **Sender anonymity** (via linkable ring signatures)
-
-In this model, tokens are stored and moved as **confidential notes**, rather than account-based balances. Each note is an encrypted commitment to a value, and transfers occur by spending and creating new notes without linking them to XRPL accounts.
-
----
-
-### Ledger Object: `ConfidentialMPTNote`
 
