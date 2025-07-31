@@ -418,12 +418,11 @@ The submitted proof must:
 - Replace the `ConfidentialSupplyZKP` field in the corresponding `MPTokenIssuance` object with the new ZKP provided in the transaction.
 
 #### Example Format:
-```json
+````json
 "ConfidentialSupplyZKP": {
 "Proof": "zkp_bytes_here",
 "LedgerIndex": 12345678
-}
-```
+````
 
 #### Validator Checks
 
@@ -530,9 +529,56 @@ To verify the confidential supply:
 - Enc_total = + Enc_issuer(X1) + Enc_issuer(X2) + ...
 - Compare Enc_total with ConfidentialOutstandingAmount in MPTokenIssuance.
 
+---
 #### Audit Result
 If Enc_total == ConfidentialOutstandingAmount, and the accompanying ConfidentialSupplyZKP verifies that Enc_total ≤ MaxAmount, then:
 - The confidential circulating supply is correct
 - No over-issuance has occurred
 - Privacy of individual balances is preserved
 
+### Auditor View Key Support
+
+This feature enables auditor-specific selective disclosure by encrypting confidential amounts under an auditor’s view key. It allows third-party auditors to verify confidential transfers **without revealing balances to the public or validators**.
+
+#### Purpose
+
+- Enable regulatory or institutional auditors to inspect encrypted amounts privately.
+- Maintain full privacy for non-auditing participants.
+- Ensure consistency through zero-knowledge proofs without revealing amounts publicly.
+
+
+#### Design Overview
+
+- The issuer or sender optionally includes a ciphertext encrypted under the auditor’s ElGamal public key.
+- A zero-knowledge proof of equality confirms that the auditor ciphertext encrypts the same amount as the primary ciphertexts (e.g., under sender, receiver, or issuer key).
+
+
+#### Protocol Elements
+
+| Field                   | Type    | Description                                                  |
+|-------------------------|---------|--------------------------------------------------------------|
+| `EncryptedAmountForAuditor` | Object  | EC-ElGamal ciphertext under auditor's public key             |
+| `AuditorPublicKey`      | Binary  | Public ElGamal view key of the auditor                       |
+| `ZKProof`               | Object  | Zero-knowledge proof that auditor ciphertext matches others  |
+
+**ZKProof Requirements:**
+
+- `EncryptedAmountForAuditor` must be a well-formed EC-ElGamal ciphertext.
+- It must encrypt the same value as the sender/receiver/issuer ciphertexts.
+
+
+#### Example Transaction Snippet
+
+```json
+{
+  "EncryptedAmountForAuditor": {
+    "A": "...",
+    "B": "..."
+  },
+  "AuditorPublicKey": "pkAuditor...",
+  "ZKProof": {
+    "type": "TripleEncEqualityProof",
+    "proof": "..."
+  }
+}
+```
