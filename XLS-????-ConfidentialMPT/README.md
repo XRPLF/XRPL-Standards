@@ -136,7 +136,7 @@ A new ledger object used to store encrypted token balances for a specific `(Issu
 
 The following constraints ensure the integrity and verifiability of confidential MPT balances and supply:
 
-- `ConfidentialOutstandingAmount` must always satisfy: `ConfidentialOutstandingAmount ≤ MaxAmount`
+- `ConfidentialOutstandingAmount` must always satisfy: `ConfidentialOutstandingAmount ≤ MaxAmount - OutstandingAmount`
 - This constraint is enforced via ZKPs included in transactions that increase the encrypted supply (e.g., `ConfidentialMPTConvert`, `ConfidentialMPTSend` from issuer).
 - The latest proof is stored in the `ConfidentialSupplyZKP` field of the `MPTokenIssuance` object to enable public auditability.
 
@@ -390,7 +390,7 @@ Enables the issuer of a MPT to update the ZKP (`ConfidentialSupplyZKP`) associat
 | `Account`        | Yes      | String    | AccountID      | Must match the `Issuer` field                                               |
 | `Issuer`         | Yes      | String    | AccountID      | Address of the token issuer                                                 |
 | `Currency`       | Yes      | String    | Currency       | Token code (e.g., `"USD"`)                                                  |
-| `ZKP`            | Yes      | Object    | Blob           | ZKP that `ConfidentialOutstandingAmount ≤ MaxAmount`                        |
+| `ZKP`            | Yes      | Object    | Blob           | ZKP that `ConfidentialOutstandingAmount ≤ MaxAmount- OutstandingAmount`     |
 | `LedgerIndex`    | Yes      | Number    | UInt32         | Ledger index at which the proof was generated (used for audit traceability) |
 
 ---
