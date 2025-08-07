@@ -102,6 +102,24 @@ Example:
   }
 }
 ```
+
+### Protocol Rule Enforcement
+
+To preserve the integrity of confidentiality controls, the following validation rules apply when processing confidential MPT transactions:
+
+#### `ConfidentialTransfersEnabled`
+
+- For a given `(Issuer, Currency)` pair, if `ConfidentialTransfersEnabled` is not `true` in the corresponding `MPTokenIssuance` object, then the following transactions must be rejected:
+  - `ConfidentialMPTConvert`
+  - `ConfidentialMPTSend`
+- Validators must return no-permission if these transactions are submitted while confidentiality is disabled.
+
+#### `ConfidentialityConfigImmutable`
+
+- If `ConfidentialityConfigImmutable == true`, any transaction or mechanism that attempts to modify the value of `ConfidentialTransfersEnabled` must be rejected.
+- This ensures that once a token’s confidentiality policy is set and locked and it cannot be changed for providing guarantees for regulatory.
+
+
 ### ConfidentialMPTBalance Object (New)
 
 A new ledger object used to store encrypted token balances for a specific `(Issuer, Currency)` pair. Stored in the token holder’s Owner Directory.
