@@ -93,6 +93,8 @@ Example:
   "Currency": "USD",
   "MaxAmount": "1000",
   "OutstandingAmount": "0",
+  "ConfidentialTransfersEnabled": true,
+  "ConfidentialityConfigImmutable": true,
   "ConfidentialOutstandingAmount": {
     "A": "...",
     "B": "..."
