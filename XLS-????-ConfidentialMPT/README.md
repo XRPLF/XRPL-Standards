@@ -18,7 +18,7 @@ This capability is especially valuable for regulated institutions, tokenized fin
 
 This XLS introduces confidential functionality to MPTs by specifying the following components:
 
-### New Transaction Types
+### New Transaction Types 
 
 - `ConfidentialMPTConvert`: Converts public MPT balances into encrypted form.
 - `ConfidentialMPTSend`: Enables confidential token transfers between accounts.
