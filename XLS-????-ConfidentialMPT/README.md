@@ -68,12 +68,15 @@ To support confidential MPTs, this XLS introduces new fields and ledger objects 
 
 ### MPTokenIssuance Object
 
-The `MPTokenIssuance` object is extended to include the following optional fields to support confidential supply tracking:
+The `MPTokenIssuance` object is extended to include the following optional fields to support confidential supply tracking and configurability:
 
-| Field                          | Required | JSON Type | Internal Type            | Description |
-|-------------------------------|----------|-----------|---------------------------|-------------|
-| `ConfidentialOutstandingAmount` | No       | Object    | Struct (EC Point Pair)    | EC-ElGamal ciphertext representing the total confidential supply in circulation, encrypted under the issuer’s public key. Updated homomorphically as confidential tokens are issued. |
-| `ConfidentialSupplyZKP`          | No       | Object    | Struct                    | A ZKP object proving that `ConfidentialOutstandingAmount` is well-formed and less than or equal to `MaxAmount`. Includes the ledger index at which the proof was generated. Enables stateless public auditability. |
+| Field                             | Required | JSON Type | Internal Type         | Description                                                                                                                                                                                                                            |
+|----------------------------------|----------|-----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ConfidentialOutstandingAmount`  | No       | Object    | Struct (EC Point Pair) | EC-ElGamal ciphertext representing the total confidential supply in circulation, encrypted under the issuer’s public key. Updated homomorphically as confidential tokens are issued.                                                   |
+| `ConfidentialSupplyZKP`          | No       | Object    | Struct                 | A ZKP object proving that `ConfidentialOutstandingAmount` is well-formed and less than or equal to `MaxAmount - OutstandingAmount`. Includes the ledger index at which the proof was generated. Enables stateless public auditability. |
+| `ConfidentialTransfersEnabled`   | No       | Boolean   | Bool                   | Flag indicating whether confidential transfers are enabled for this token.                                                                                                                                                             |
+| `ConfidentialityConfigImmutable` | No       | Boolean   | Bool                   | If set to `true`, the `ConfidentialTransfersEnabled` flag cannot be changed after token issuance. Ensures regulatory compliance in certain regions.                                                                                    |
+
 
 #### ConfidentialSupplyZKP Structure
 
