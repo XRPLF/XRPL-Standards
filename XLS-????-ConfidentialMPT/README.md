@@ -76,7 +76,7 @@ The `MPTokenIssuance` object is extended to include the following optional field
 | `ConfidentialSupplyZKP`          | No       | Object    | Struct                 | A ZKP object proving that `ConfidentialOutstandingAmount` is well-formed and less than or equal to `MaxAmount - OutstandingAmount`. Includes the ledger index at which the proof was generated. Enables stateless public auditability. |
 | `ConfidentialTransfersEnabled`   | No       | Boolean   | Bool                   | Flag indicating whether confidential transfers are enabled for this token.                                                                                                                                                             |
 | `ConfidentialityConfigImmutable` | No       | Boolean   | Bool                   | If set to `true`, the `ConfidentialTransfersEnabled` flag cannot be changed after token issuance. Ensures regulatory compliance in certain regions.                                                                                    |
-| `IssuerConvertedAmount`| No       | String    | Amount         | Cumulative total amount of tokens that the issuer has converted to confidential form using `ConfidentialMPTConvert`. Used to enforce total supply cap and prevent over-conversion. Expressed in the same units as `Amount`. |
+| `IssuerConvertedAmount`| No       | String    | Amount         | Cumulative total amount of tokens that the issuer has converted to confidential form using `ConfidentialMPTConvert`. Used to enforce total supply cap and prevent over-conversion. |
 
 
 
