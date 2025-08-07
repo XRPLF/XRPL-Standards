@@ -106,18 +106,6 @@ Example:
 }
 ```
 
-
-### Protocol Rule Enforcement
-
-To preserve the integrity of confidentiality controls, the following validation rules apply when processing confidential MPT transactions:
-
-#### `ConfidentialTransfersEnabled`
-
-- For a given `(Issuer, Currency)` pair, if `ConfidentialTransfersEnabled` is not `true` in the corresponding `MPTokenIssuance` object, then the following transactions must be rejected:
-  - `ConfidentialMPTConvert`
-  - `ConfidentialMPTSend`
-- Validators must return no-permission if these transactions are submitted while confidentiality is disabled.
-
 #### `ConfidentialityConfigImmutable`
 
 - If `ConfidentialityConfigImmutable == true`, any transaction or mechanism that attempts to modify the value of `ConfidentialTransfersEnabled` must be rejected.
@@ -157,25 +145,36 @@ A new ledger object used to store encrypted token balances for a specific `(Issu
   }
 }
 ```
-
 ### Ledger Constraints
 
-The following constraints ensure the integrity and verifiability of confidential MPT balances and supply:
+The following constraints ensure the integrity, verifiability, and correct policy enforcement of confidential MPT balances and supply.
 
-- `ConfidentialOutstandingAmount` must always satisfy: `ConfidentialOutstandingAmount ≤ MaxAmount - OutstandingAmount`
-- This constraint is enforced via ZKPs included in transactions that increase the encrypted supply (e.g., `ConfidentialMPTConvert`, `ConfidentialMPTSend` from issuer).
-- The latest proof is stored in the `ConfidentialSupplyZKP` field of the `MPTokenIssuance` object to enable public auditability.
+#### Encrypted Supply Bound
 
-- Encrypted balances must be well-formed and non-negative.
+- `ConfidentialOutstandingAmount` must always satisfy: `ConfidentialOutstandingAmount ≤ MaxAmount − OutstandingAmount`
+
+- This constraint is enforced via zero-knowledge proofs (ZKPs) included in transactions that increase the encrypted supply:
+  - `ConfidentialMPTConvert` (when the sender is a non-issuer)
+  - `ConfidentialMPTSend` (when the sender is the issuer)
+
+- The latest ZKP is stored in the `ConfidentialSupplyZKP` field of the `MPTokenIssuance` object to enable public auditability.
+
+#### Encrypted Balance Validity
+
+- Encrypted balances must be **well-formed** and **non-negative**.
+
 - For non-issuer accounts, each `ConfidentialMPTBalance` must include both:
-  - `EncryptedBalanceHolder` — ciphertext under the holder’s public key
-  - `EncryptedBalanceIssuer` — ciphertext under the issuer’s public key
+  - `EncryptedBalanceHolder`: ciphertext under the holder’s public key
+  - `EncryptedBalanceIssuer`: ciphertext under the issuer’s public key
+
 - Transactions that create or update these balances must include a ZKP proving:
   - Both ciphertexts are valid EC-ElGamal encryptions.
   - Both encrypt the same plaintext value (equality proof).
+
 - For issuer-held balances:
   - The issuer may omit `EncryptedBalanceIssuer`.
   - No equality proof is required in this case.
+
 
 ## Transaction Types
 
