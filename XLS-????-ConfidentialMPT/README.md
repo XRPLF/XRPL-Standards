@@ -78,6 +78,7 @@ The `MPTokenIssuance` object is extended to include the following optional field
 | `ConfidentialityConfigImmutable` | No       | Boolean   | Bool                   | If set to `true`, the `ConfidentialTransfersEnabled` flag cannot be changed after token issuance. Ensures regulatory compliance in certain regions.                                                                                    |
 
 
+
 #### ConfidentialSupplyZKP Structure
 
 | Field         | Required | JSON Type | Internal Type | Description |
@@ -102,6 +103,7 @@ Example:
   }
 }
 ```
+
 
 ### Protocol Rule Enforcement
 
@@ -153,6 +155,7 @@ A new ledger object used to store encrypted token balances for a specific `(Issu
   }
 }
 ```
+
 ### Ledger Constraints
 
 The following constraints ensure the integrity and verifiability of confidential MPT balances and supply:
