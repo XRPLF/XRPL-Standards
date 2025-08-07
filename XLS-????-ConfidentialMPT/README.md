@@ -242,7 +242,7 @@ Converts a visible (public) MPT balance into encrypted form by creating a `Confi
     - Confirm: `EncryptedAmountForSender` is present.
     - Confirm: `EncryptedAmountForIssuer` is omitted.
     - Verify the ZKP proves that `EncryptedAmountForSender` is a valid EC-ElGamal encryption of `Amount`.
-    - Check ` Amount ≤ MaxAmount − OutstandingAmount - IssuerConvertedAmount` to ensure the issuer does not exceed total supply during confidential conversion. On success, Add `Amount` to `IssuerConvertedAmount` and update issuer’s `ConfidentialMPTBalance` with `EncryptedAmountForSender`.
+    - Check ` Amount ≤ MaxAmount − OutstandingAmount - IssuerConvertedAmount` to ensure the issuer does not exceed total supply during confidential conversion. On success, Add `Amount` to `IssuerConvertedAmount` and update issuer’s `ConfidentialMPTBalance` with `EncryptedAmountForSender`. 
 - ZKP must validate:
   - Both ciphertexts (if present) are valid EC-ElGamal encryptions.
   - Both ciphertexts encrypt the same `Amount`.
