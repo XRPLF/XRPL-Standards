@@ -227,25 +227,40 @@ Converts a visible (public) MPT balance into encrypted form by creating a `Confi
   - `OutstandingAmount` and `ConfidentialOutstandingAmount` remain unchanged.
   - `EncryptedAmountForIssuer` may be omitted.
 
-
 #### Validator Checks
 
-- Confirm that `Account` has sufficient `MPToken` balance.
-- If sender is a non-issuer:
-  - Enforce `ConfidentialOutstandingAmount + Amount ≤ MaxAmount`.
-  - Require both ciphertexts and verify their ZKP.
-- If sender is the issuer:
-  - `EncryptedAmountForIssuer` may be omitted.
-  - ZKP must still prove `EncryptedAmountForSender` is well-formed.
-  - - Confirm: `Account == Issuer` for the given `(Issuer, Currency)` pair.
-    - Confirm: `Amount` is a valid positive value.
-    - Confirm: `EncryptedAmountForSender` is present.
-    - Confirm: `EncryptedAmountForIssuer` is omitted.
-    - Verify the ZKP proves that `EncryptedAmountForSender` is a valid EC-ElGamal encryption of `Amount`.
-    - Check ` Amount ≤ MaxAmount − OutstandingAmount - IssuerConvertedAmount` to ensure the issuer does not exceed total supply during confidential conversion. On success, Add `Amount` to `IssuerConvertedAmount` and update issuer’s `ConfidentialMPTBalance` with `EncryptedAmountForSender`. 
-- ZKP must validate:
-  - Both ciphertexts (if present) are valid EC-ElGamal encryptions.
-  - Both ciphertexts encrypt the same `Amount`.
+Validators must perform the following checks based on whether the sender is the issuer or a non-issuer:
+
+#### Common Checks
+
+- Confirm: `Amount` is a valid, positive value.
+- Confirm: `EncryptedAmountForSender` is present.
+- Verify: The ZKP proves that `EncryptedAmountForSender` is a valid EC-ElGamal encryption of `Amount`.
+
+
+#### If the sender is a non-issuer:
+
+- Confirm: The `Account` has sufficient public `MPToken` balance to cover `Amount`.
+- Confirm: Both `EncryptedAmountForSender` and `EncryptedAmountForIssuer` are present.
+- Verify: The ZKP proves that:
+  - Both ciphertexts are well-formed EC-ElGamal encryptions.
+  - Both encrypt the same plaintext value (`Amount`).
+- Update:
+  - Subtract `Amount` from `OutstandingAmount`.
+  - Homomorphically add `EncryptedAmountForIssuer` to `ConfidentialOutstandingAmount`.
+  - Update the sender’s `ConfidentialMPTBalance`.
+
+
+#### If the sender is the issuer:
+
+- Confirm: `Account == Issuer` for the specified `(Issuer, Currency)` pair.
+- Confirm: `EncryptedAmountForIssuer` is omitted.
+- Verify: The ZKP proves that `EncryptedAmountForSender` is a valid EC-ElGamal encryption of `Amount`.
+- Confirm that the issuer has sufficient remaining public balance: `Amount ≤ MaxAmount − OutstandingAmount − IssuerConvertedAmount`
+    - Add `Amount` to `IssuerConvertedAmount`.
+    - Update the issuer’s `ConfidentialMPTBalance` with `EncryptedAmountForSender`.
+
+
 
 #### Encryption Behavior
 
