@@ -106,11 +106,6 @@ Example:
 }
 ```
 
-#### `ConfidentialityConfigImmutable`
-
-- If `ConfidentialityConfigImmutable == true`, any transaction or mechanism that attempts to modify the value of `ConfidentialTransfersEnabled` must be rejected.
-- This ensures that once a token’s confidentiality policy is set and locked and it cannot be changed for providing guarantees for regulatory.
-
 
 ### ConfidentialMPTBalance Object (New)
 
@@ -174,6 +169,17 @@ The following constraints ensure the integrity, verifiability, and correct polic
 - For issuer-held balances:
   - The issuer may omit `EncryptedBalanceIssuer`.
   - No equality proof is required in this case.
+
+#### Confidential Transfer Policy Enforcement
+
+- If `ConfidentialTransfersEnabled` is not `true` in the `MPTokenIssuance` object for the relevant `(Issuer, Currency)` pair, the following transactions **must be rejected**:
+  - `ConfidentialMPTConvert`
+  - `ConfidentialMPTSend`
+
+- If `ConfidentialityConfigImmutable == true`, any attempt to modify the value of `ConfidentialTransfersEnabled` **must be rejected**.
+
+These protocol constraints ensure the confidentiality policy is strictly enforced and cryptographic integrity is preserved across all confidential transactions.
+
 
 
 ## Transaction Types
