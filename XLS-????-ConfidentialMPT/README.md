@@ -260,7 +260,50 @@ Validators must perform the following checks based on whether the sender is the 
     - Add `Amount` to `IssuerConvertedAmount`.
     - Update the issuer’s `ConfidentialMPTBalance` with `EncryptedAmountForSender`.
 
+#### Encryption Behavior
 
+This transaction includes EC-ElGamal ciphertext(s) representing the specified `Amount`, used to initialize or update the sender's confidential balance. The encryption behavior depends on whether the sender is the issuer.
+
+#### If the sender is a non-issuer:
+
+- Two ciphertexts are required:
+  - `EncryptedAmountForSender`: encrypted under the sender’s ElGamal public key; used to update their `ConfidentialMPTBalance`.
+  - `EncryptedAmountForIssuer`: encrypted under the issuer’s ElGamal public key; homomorphically added to `ConfidentialOutstandingAmount`.
+- A ZKP is required to prove both ciphertexts are valid and encrypt the same plaintext `Amount`.
+
+#### If the sender is the issuer:
+
+- Only one ciphertext is required:
+  - `EncryptedAmountForSender`: encrypted under the issuer’s own ElGamal public key; used to update their `ConfidentialMPTBalance`.
+- `EncryptedAmountForIssuer` is omitted, and `ConfidentialOutstandingAmount` remains unchanged.
+- A ZKP is still required to prove that `EncryptedAmountForSender` is a well-formed encryption of the declared `Amount`.
+
+---
+
+### Example: Non-Issuer Converts Public MPT to Confidential Form
+
+```json
+{
+  "TransactionType": "ConfidentialMPTConvert",
+  "Account": "rBob",
+  "Issuer": "rAlice",
+  "Currency": "USD",
+  "Amount": "150",
+  "EncryptedAmountForSender": {
+    "A": "...",
+    "B": "..."
+  },
+  "EncryptedAmountForIssuer": {
+    "A": "...",
+    "B": "..."
+  },
+  "SenderPublicKey": "pkBob...",
+  "ZKProof": {
+    "type": "DualEncEqualityProof",
+    "proof": "..."
+  }
+}
+```
 
 #### Encryption Behavior
 
