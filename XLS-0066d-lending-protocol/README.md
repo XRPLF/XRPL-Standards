@@ -761,33 +761,49 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                                       |
-| `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to clawback. If the amount is `0` clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum` |
+| `LoanBrokerID`    |  | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction.          |
+| `Amount`          |   | `object`  |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. |
 
 ##### 3.1.5.1 Failure conditions
 
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+- Neither `LoanBrokerID` nor `Amount` are specified.
+- `Amount` is specified and `Amount < 0`
+- `Amount` specifies an XRP amount.
+- If the `LoanBrokerID` is specified, the `LoanBroker` object with that ID does not exist on the ledger.
+- If the `LoanBrokerID` is not specified, and can not be determined from `Amount`.
+  - `Amount` specifies an MPT.
+  - `Amount` specifies an IOU, and the `issuer` value is *not* a pseudo-account with `Account(Amount.issuer).LoanBrokerID` set. If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
+- If both the `LoanBrokerID` and `Amount` are specified, and:
+
+    - The `Amount.issuer` value does not match the submitter `Account` of the transaction or `LoanBroker(LoanBrokerID).Account` (the pseudo-account of the LoanBroker).
+  - The `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is not the same asset type as `Amount`, allowing for an IOU `Amount.issuer` to specify `LoanBroker(LoanBrokerID).Account` instead of `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
 
 - If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU` and:
 
   - The Issuer account is not the submitter of the transaction.
+  - `Amount.issuer` value is not one of
+    - The submitter of the transaction
+    - `LoanBroker(LoanBrokerID).Account`
   - If the `AccountRoot(Issuer)` object does not have lsfAllowTrustLineClawback flag set (the asset does not support clawback).
   - If the `AccountRoot(Issuer)` has the lsfNoFreeze flag set (the asset cannot be frozen).
 
 - If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT` and:
 
   - MPTokenIssuance.Issuer is not the submitter of the transaction.
+  - If the `LoanBrokerID` is not specified.
   - MPTokenIssuance.lsfMPTCanClawback flag is not set (the asset does not support clawback).
   - If the MPTokenIssuance.lsfMPTCanLock flag is NOT set (the asset cannot be locked).
 
-- The `Amount` > `0` and `LoanBroker.CoverAvailable` < `Amount`.
-
-- `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+- `LoanBroker.CoverAvailable` <= `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
 
 ##### 3.1.5.2 State Changes
   
+- If `Amount` is 0 or unset, set `Amount` to `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
+- Otherwise set `Amount` to `min(Amount, `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`).
+
+
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
@@ -835,7 +851,7 @@ The transaction creates a new `Loan` object.
 
 | Flag Name           |  Flag Value  | Description                                     |
 | ------------------- | :----------: | :---------------------------------------------- |
-| `tfLoanOverpayment` | `0x00010000` | Indicates that the vault supports overpayments. |
+| `tfLoanOverpayment` | `0x00010000` | Indicates that the loan supports overpayments. |
 
 ##### 3.2.1.2 `CounterpartySignature`
 
