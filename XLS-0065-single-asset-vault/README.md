@@ -167,13 +167,21 @@ Shares represent the portion of the Vault assets a depositor owns. Vault Owners 
 
 ##### 2.1.6.1 `AssetScale`
 
-The `AssetScale` field enables the vault to represent fractional asset values with high precision using integer-only MPT shares, preventing value loss from truncation.
-
-It defines a scaling factor, calculated as $10^{\text{AssetScale}}$, which converts a decimal asset amount into a corresponding whole number of shares.
+The **`AssetScale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{AssetScale}}$, that converts a decimal asset amount into a corresponding whole number of shares.
 
 For example, with an `AssetScale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
 
-The `AssetScale` value can range from **0** to **18**, with a default of **6**.
+##### 2.1.6.1.1 `XRP`
+
+When a vault holds **`XRP`**, the `AssetScale` is fixed at **6**. This aligns with XRP's native structure, where one share represents one "drop" (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
+
+##### 2.1.6.1.2 `IOU`
+
+When a vault holds an **`IOU`**, the `AssetScale` is configurable by the Vault Owner at the time of the vault's creation. The value can range from **0** to a maximum of **18**, with a proposed default of **6**. This flexibility allows issuers to set a level of precision appropriate for their specific token.
+
+##### 2.1.6.1.3 `MPT`
+
+To be determined.
 
 ##### 2.1.6.2 `MPTokenIssuance`
 
@@ -388,12 +396,17 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.1.1.4 Failure Conditions
 
+- The `Asset` is `XRP`:
+
+  The `AssetScale` parameter is provided, and not equal to **6**. (`AssetScale` must be **6** for XRP.)
+
 - The `Asset` is `MPT`:
   - The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
   - The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
 
 - The `Asset` is an `IOU`:
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+    The `AssetScale` parameter is provided, and is less than **0** or greater than **18**.
 
 - The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
