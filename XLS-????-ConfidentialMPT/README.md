@@ -76,7 +76,6 @@ The `MPTokenIssuance` object is extended to include the following optional field
 | `ConfidentialSupplyZKP`            | No       | Object    | Struct                 | A ZKP object proving that `ConfidentialOutstandingAmount` is well-formed and `ConfidentialOutstandingAmount + IssuerConfidentialBalance = Enc(pk_issuer, MaxAmount − OutstandingAmount − IssuerPublicBalance)`. Includes the ledger index where the proof was generated. Enables stateless public auditability.                        |
 | `ConfidentialTransfersEnabled`     | No       | Boolean   | Bool                   | Flag indicating whether confidential transfers are enabled for this token.                                                                                                                                                              |
 | `ConfidentialityConfigImmutable`   | No       | Boolean   | Bool                   | If `true`, the `ConfidentialTransfersEnabled` flag cannot be changed after issuance. Ensures regulatory compliance in certain jurisdictions.                                                                                            |
-| `IssuerConvertedAmount`            | No       | String    | Amount                 | Cumulative total amount the issuer has converted to confidential form via `ConfidentialMPTConvert`. Prevents over-conversion.                                                                                                          |
 | `IssuerPublicBalance`              | No       | String    | Amount                 | (Optional) The issuer’s current public balance for this token. Useful for monitoring remaining issuance capacity in transparent form.                                                                                                   |
 | `IssuerConfidentialBalance`        | No       | Object    | Struct (EC Point Pair) | (Optional) EC-ElGamal ciphertext representing the issuer’s confidential holdings. Used for audits and tracking confidential issuance reserves.                                                                                         |
 
@@ -207,7 +206,7 @@ To enable confidential transfers of MPTs, this XLS introduces new transaction ty
 
 #### Purpose
 
-Converts a visible (public) MPT balance into encrypted form by updating the sender’s `MPToken` object with encrypted balance fields. If the sender is the issuer, related supply-tracking fields in the `MPTokenIssuance` object—such as `IssuerConvertedAmount` and `IssuerConfidentialBalance`—are also updated.
+Converts a visible (public) MPT balance into encrypted form by updating the sender’s `MPToken` object with encrypted balance fields. If the sender is the issuer, related supply-tracking fields in the `MPTokenIssuance` object such as `IssuerConfidentialBalance` is also updated.
 
 #### Use Cases
 
@@ -244,7 +243,6 @@ Converts a visible (public) MPT balance into encrypted form by updating the send
 
 - If the sender is the **issuer**:
   - Subtract `Amount` from `IssuerPublicBalance` in the `MPTokenIssuance` object.
-  - Add `Amount` to `IssuerConvertedAmount`.
   - Homomorphically add `EncryptedAmountForSender` to `IssuerConfidentialBalance`.
 
 
@@ -279,7 +277,6 @@ The following validation logic applies to all `ConfidentialMPTConvert` transacti
 - Confirm the issuer has sufficient remaining public balance:
   - `Amount ≤ IssuerPublicBalance`
 - Ledger updates:
-  - Add `Amount` to `IssuerConvertedAmount` in the `MPTokenIssuance` object.
   - Homomorphically add `EncryptedAmountForSender` to `IssuerConfidentialBalance` in the `MPTokenIssuance` object.
 
   
