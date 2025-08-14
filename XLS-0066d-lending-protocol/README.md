@@ -103,12 +103,14 @@ Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws bac
 
 ### 1.2.2 Freeze
 
-Freeze is a mechanism by which an asset Issuer (IOUT or MPT, not XRP) freezes an `Account`, preventing that account from sending or receiving the Asset. Furthermore, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
+Freeze is a mechanism by which an asset Issuer (IOUT or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents and `Account` from both sending and receiving and Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
 
-If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments or draw down funds. A frozen account does not lift the obligation to repay a Loan.
-If a Loan Broker's account is frozen, the Broker will not receive any Loan fees. They will be able to create new loans, and existing loans will not be affected. However, the Loan Broker cannot deposit or withdraw First-Loss Capital.
+If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Brrower cannot make loan payments and they cannot draw down Loan funds.
 
-Finally, the exact behaviour has yet to be defined in a global freeze. **TBD**
+A Deep Freeze does not affect the Loan Broker's functions. However, a Deep Freeze will prevent the Loan Broker from receing any Lending Protocol Fees.
+
+The Issuer may also Freeze of Deep Freeze the `_pseudo-account_` of the Loan Broker. A Freeze on the `_pseudo-account_` will prevent the Loan Broker from creating new Loans as well as prevent Borrowers from drawing down their Loans. However existing Loans will not be affected. In contrast, a Deep Freeze, will also prevent the Loans from being paid.
+
 
 ### 1.3 Risk Management
 
