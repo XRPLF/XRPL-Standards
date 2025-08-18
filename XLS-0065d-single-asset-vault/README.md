@@ -136,7 +136,7 @@ A vault has the following fields:
 | `AssetsMaximum`      |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
 | `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                               |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
-| `AssetScale` | `No` | :heavy_check_mark: | `number` | `UINT8` | 6 | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `Scale` | `No` | :heavy_check_mark: | `number` | `UINT8` | 6 | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 2.1.2.1 Flags
 
@@ -165,23 +165,21 @@ The `Vault` object costs one reserve fee per object created:
 
 Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
 
-##### 2.1.6.1 `AssetScale`
+##### 2.1.6.1 `Scale`
 
-The **`AssetScale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{AssetScale}}$, that converts a decimal asset amount into a corresponding whole number of shares.
+The **`Scale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{Scale}}$, that converts a decimal asset amount into a corresponding whole number of shares. For example, with an `Scale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
 
-For example, with an `AssetScale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
+##### 2.1.6.1.1 `IOU`
 
-##### 2.1.6.1.1 `XRP`
+When a vault holds an **`IOU`**, the `Scale` is configurable by the Vault Owner at the time of the vault's creation. The value can range from **0** to a maximum of **18**, with a default of **6**. This flexibility allows issuers to set a level of precision appropriate for their specific token.
 
-When a vault holds **`XRP`**, the `AssetScale` is fixed at **6**. This aligns with XRP's native structure, where one share represents one "drop" (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
+##### 2.1.6.1.2 `XRP`
 
-##### 2.1.6.1.2 `IOU`
-
-When a vault holds an **`IOU`**, the `AssetScale` is configurable by the Vault Owner at the time of the vault's creation. The value can range from **0** to a maximum of **18**, with a proposed default of **6**. This flexibility allows issuers to set a level of precision appropriate for their specific token.
+When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XRP's native structure, where one share represents one "drop" (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
 
 ##### 2.1.6.1.3 `MPT`
 
-To be determined.
+When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XRP's native structure, where one share represents one "drop" (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
 
 ##### 2.1.6.2 `MPTokenIssuance`
 
@@ -197,7 +195,7 @@ Here’s the table with the headings "Field," "Description," and "Value":
 | `MaximumAmount`   | No limit to the number of shares that can be issued.   | `0xFFFFFFFFFFFFFFFF` |
 | `TransferFee`     | The fee paid to transfer the shares.                   | 0                    |
 | `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format. | -                    |
-| `AssetScale`      | Represents the number of orders of magnitude between a standard unit and an MPT unit | `Vault.AssetScale` |
+| `Scale`      | Represents the number of orders of magnitude between a standard unit and an MPT unit | `Vault.Scale` |
 
 ###### Flags
 
@@ -266,7 +264,7 @@ This section details the algorithms used to calculate the exchange between asset
 - **$\Delta_{assets}$**: The amount of assets being deposited, withdrawn, or redeemed.
 - **$\Delta_{shares}$**: The number of shares being issued or burned.
 - **$\iota$**: The vault's total **unrealized loss**.
-- **$\sigma$**: The scaling factor derived from `AssetScale`, used to convert fractional assets into integer shares.
+- **$\sigma$**: The scaling factor derived from `Scale`, used to convert fractional assets into integer shares.
 
 ### 2.1.7.2.1 Deposit
 
@@ -276,7 +274,7 @@ The deposit function calculates the number of shares a user receives for their a
 
 The calculation depends on whether the vault is empty.
 
-- **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{AssetScale}}$, to properly represent fractional assets as whole numbers.
+- **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{Scale}}$, to properly represent fractional assets as whole numbers.
     $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
 - **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
@@ -373,7 +371,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `MPTokenMetadata`  |                    |      `string`      |    `BLOB`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
 | `WithdrawalPolicy` |                    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
 | `DomainID`         |                    |      `string`      |   `HASH256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
-| `AssetScale`       |                    |      `number`      |    `UINT8`    |            6             | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `Scale`       |                    |      `number`      |    `UINT8`    |            6             | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 3.1.1.1 Flags
 
@@ -398,7 +396,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 - The `Asset` is `XRP`:
 
-  The `AssetScale` parameter is provided, and not equal to **6**. (`AssetScale` must be **6** for XRP.)
+  The `Scale` parameter is provided, and not equal to **6**. (`Scale` must be **6** for XRP.)
 
 - The `Asset` is `MPT`:
 
@@ -408,7 +406,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 - The `Asset` is an `IOU`:
 
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-    The `AssetScale` parameter is provided, and is less than **0** or greater than **18**.
+    The `Scale` parameter is provided, and is less than **0** or greater than **18**.
 
 - The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
@@ -806,7 +804,7 @@ We propose adding the following fields to the `ledger_entry` method:
 | `vault.shares.Sequence`          | `yes`     | `number`  | Sequence number of the shares issuance entry.                                          |
 | `vault.shares.index`             | `yes`     | `string`  | Unique index of the shares ledger entry.                                               |
 | `vault.shares.mpt_issuance_id`   | `no`      | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`. |
-| `vault.AssetScale`               | `yes`     | `number` | The `AssetScale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `vault.Scale`               | `yes`     | `number` | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 4.1.2.1 Example
 
@@ -853,7 +851,7 @@ Vault holding an `IOU`:
     "index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
     "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
    },
-   "AssetScale": 6,
+   "Scale": 6,
   }
  }
 ```
@@ -887,7 +885,7 @@ Vault holding an `MPT`:
   },
   "ShareTotal": 5000,
   "WithdrawalPolicy": "0x0001",
-  "AssetScale": 6
+  "Scale": 0
 }
 ```
 
@@ -935,7 +933,7 @@ Vault holding `XRP`:
     "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
     "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
    },
-   "AssetScale": 6
+   "Scale": 0
   }
  }
 }
