@@ -1,11 +1,10 @@
-<pre>
-Title:       <b>Permissioned DEXes</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-             <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Permissioned DEXes
+type: draft
+description: A permissioned DEX system for the XRPL to enable regulated financial institutions to participate while adhering to compliance requirements
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Shawn Xie, Ripple <shawnxie@ripple.com>
+core_protocol_changes_required: true
+---
 
 # Permissioned DEXes
 

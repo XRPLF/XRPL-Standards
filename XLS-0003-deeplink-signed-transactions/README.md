@@ -1,4 +1,10 @@
-# 0003 XLS-3d Standard for (sharing / deeplinking) signed transactions
+---
+title: Sharing and deeplinking signed transactions
+type: draft
+description: A standard for encoding HEX signed transactions for air-gapped submissions with deep link support
+author: Community Contributors
+core_protocol_changes_required: false
+---
 
 Currently several apps are using a variety of methods to encode HEX signed transactions (to be submitted air gapped);
 

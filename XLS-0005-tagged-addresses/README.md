@@ -1,13 +1,10 @@
-<pre>
-  XLS-5 - XRP Ledger Proposed Standard #5
-
-  Title:        Tagged Addresses
-  Author:       Nikolaos D. Bougalis <nikb@bougalis.net>
-  Affiliation:  Ripple
-  Created:      2019-05-15
-
-  Original: https://github.com/xrp-community/standards-drafts/issues/6
-</pre>
+---
+title: Tagged Addresses
+type: draft
+description: A standard for addresses that contain both the target wallet and destination tag as a single unit
+author: Nikolaos D. Bougalis, Ripple <nikb@bougalis.net>
+core_protocol_changes_required: false
+---
 
 # Abstract
 

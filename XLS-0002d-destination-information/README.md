@@ -1,4 +1,10 @@
-# 0002 XLS-2d Standard for XRPL destination information
+---
+title: XRPL destination information
+type: draft
+description: A standard for encoding destination information with backwards compatibility for web browsers
+author: Community Contributors
+core_protocol_changes_required: false
+---
 
 Currently several apps are using a variety of methods to encode destination information;
 

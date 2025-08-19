@@ -1,4 +1,10 @@
-# 0004 XLS-4d Standard URI instructing a wallet to add a trustline
+---
+title: Standard URI instructing a wallet to add a trustline
+type: draft
+description: A URI standard for instructing wallets to add trustlines following the design of XLS-2d
+author: Community Contributors
+core_protocol_changes_required: false
+---
 
 I suggest we follow on closely from the design of XLS-2d
 

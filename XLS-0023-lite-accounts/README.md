@@ -1,11 +1,10 @@
-<pre>
-    XLS: XLS-23d
-    Title: 0023 XLS-23d: Lite Accounts (lower reserve, less features)
-    Author: Wietse Wind (WietseWind)
-    Created: 2021-08-27
-    Status: Stagnant
-    Category: Amendment
-</pre>
+---
+title: Lite Accounts (lower reserve, less features)
+type: stagnant
+description: A proposal for lite accounts with reduced account reserves but limited features
+author: Wietse Wind (WietseWind), Richard Holland
+core_protocol_changes_required: true
+---
 # LiteAccounts Amendment
 
 By @RichardAH, @WietseWind

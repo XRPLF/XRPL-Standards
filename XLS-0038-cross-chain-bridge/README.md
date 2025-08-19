@@ -1,13 +1,10 @@
-<pre>
-Title:        <b>Cross-Chain Bridge</b>
-Description:  Enabling transfer of value between sidechains
-Type:         Draft
-
-Author:       <a href="mailto:mvadari@ripple.com">Mayukha Vadari (Ripple)</a>
-              <a href="mailto:scott.determan@ripple.com">Scott Determan (Ripple)</a>
-
-<hr>  core_protocol_changes_required:     true
-</pre>
+---
+title: Cross-Chain Bridge
+type: draft
+description: Enabling transfer of value between sidechains through locking and issuing mechanisms
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Scott Determan, Ripple <scott.determan@ripple.com>
+core_protocol_changes_required: true
+---
 
 # Cross-Chain Bridge
 

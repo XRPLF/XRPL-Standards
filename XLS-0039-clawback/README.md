@@ -1,12 +1,10 @@
-<pre>
-  Title:        <b>Clawback Support</b>
-  Description:  Enabling clawback for IOUs
-  Type:         Draft
-  
-<hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
-                <a href="mailto:shawnxie@ripple.com">Shawn Xie (Ripple)</a>
-<hr>  core_protocol_changes_required:     true
-</pre>
+---
+title: Clawback Support
+type: draft
+description: Enabling clawback for IOUs to meet regulatory requirements
+author: Nikolaos D. Bougalis <nikb@bougalis.net>, Shawn Xie, Ripple <shawnxie@ripple.com>
+core_protocol_changes_required: true
+---
 
 ## 1. Abstract
 

@@ -1,13 +1,10 @@
-<pre>
-  Title:        <b>Non-Fungible Token Support</b>
-  Revision:     <b>10</b> (2023-03-27)
-
-<hr>  Author:       <a href="mailto:david@ripple.com">David J. Schwartz</a>
-                <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-                <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
-  Editor:       <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-  Affiliation:  <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Non-Fungible Token Support
+type: draft
+description: Extensions to the XRP Ledger that support a native non-fungible token type with operations to enumerate, purchase, sell and hold such tokens
+author: David J. Schwartz, Ripple <david@ripple.com>, Aanchal Malhotra, Ripple <amalhotra@ripple.com>, Nikolaos D. Bougalis <nikb@bougalis.net>
+core_protocol_changes_required: true
+---
 
 # 1. Non-Fungible Token Support
 

@@ -1,12 +1,10 @@
-<pre>
-Title:       <b>Simulating Transaction Execution</b>
-Revision:    <b>2</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-             <a href="mailto:xrpl-standards-draft@ripple.com">Elliot Lee</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Simulating Transaction Execution
+type: draft
+description: A new API method for executing dry runs of transactions without submitting them to the network
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Elliot Lee, Ripple <xrpl-standards-draft@ripple.com>
+core_protocol_changes_required: false
+---
 
 # Simulating Transaction Execution
 

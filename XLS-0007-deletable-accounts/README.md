@@ -1,13 +1,10 @@
-<pre>
-  XLS-7 - XRP Ledger Proposed Standard #7
-
-  Title:        Deletable Accounts on the XRP Ledger
-  Author:       Scott Schurr &lt;scott@ripple.com&gt;
-                Nik Bougalis &lt;nikb@bougalis.net&gt;
-  Affiliation:  Ripple
-  Created:      2019-10-01
-  Issue:        https://github.com/xrp-community/standards-drafts/issues/8
-</pre>
+---
+title: Deletable Accounts on the XRP Ledger
+type: draft
+description: A feature for completely removing accounts from the ledger and recovering the reserve from those accounts
+author: Scott Schurr, Ripple <scott@ripple.com>, Nik Bougalis <nikb@bougalis.net>
+core_protocol_changes_required: true
+---
 
 # Abstract
 
