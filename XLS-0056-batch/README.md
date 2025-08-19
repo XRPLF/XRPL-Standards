@@ -1,9 +1,10 @@
 ---
 title: Atomic/Batch Transactions
-type: draft
 description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Protocol
+created: 2021-01-01
 ---
 
 # Atomic/Batch Transactions

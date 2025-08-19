@@ -1,9 +1,10 @@
 ---
 title: Cross-Chain Bridge
-type: draft
 description: Enabling transfer of value between sidechains through locking and issuing mechanisms
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Scott Determan, Ripple <scott.determan@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+created: 2021-01-01
 ---
 
 # Cross-Chain Bridge

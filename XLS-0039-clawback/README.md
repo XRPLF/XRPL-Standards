@@ -1,9 +1,10 @@
 ---
 title: Clawback Support
-type: draft
 description: Enabling clawback for IOUs to meet regulatory requirements
 author: Nikolaos D. Bougalis <nikb@bougalis.net>, Shawn Xie, Ripple <shawnxie@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+created: 2021-01-01
 ---
 
 ## 1. Abstract

@@ -1,9 +1,10 @@
 ---
 title: Price Oracles on XRP Ledger
-type: draft
 description: On-chain PriceOracle object to bridge blockchain and external world data for decentralized applications
 author: Gregory Tsipenyuk, Ripple <gtsipenyuk@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+created: 2021-01-01
 ---
  
  # Price Oracles on XRP Ledger

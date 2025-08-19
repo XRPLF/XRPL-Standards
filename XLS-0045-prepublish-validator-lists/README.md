@@ -1,9 +1,10 @@
 ---
 title: Prepublish Validator Lists
-type: released in rippled 1.7.0
 description: Future activation date and improved expiration handling of UNLs
 author: Ed Hennis, Ripple <ed@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Protocol
+created: 2021-01-01
 ---
 
 

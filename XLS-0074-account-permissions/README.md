@@ -1,9 +1,10 @@
 ---
 title: Account Permissions
-type: draft
 description: Formalization of different types of transaction-based account permissions for subset capabilities
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+created: 2021-01-01
 ---
 
 # Account Permissions

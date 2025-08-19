@@ -1,9 +1,10 @@
 ---
 title: IOU Token Metadata via xrp-ledger.toml
-type: draft
 description: A unified solution for IOU token metadata by adding optional fields to the existing xrp-ledger.toml standard
 author: Marc-Emanuel Otto (@Mwni), Ripple Contributors
-core_protocol_changes_required: false
+status: Draft
+category: Community
+created: 2021-01-01
 ---
 
 

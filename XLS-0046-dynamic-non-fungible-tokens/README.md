@@ -1,9 +1,10 @@
 ---
 title: Dynamic Non Fungible Tokens (dNFTs)
-type: draft
 description: Support for XLS-20 NFTs to modify and upgrade token properties as mutable NFTs
 author: Vet, Mayukha Vadari, TeQu
-core_protocol_changes_required: true
+status: Draft
+category: Community
+created: 2021-01-01
 ---
 
 ## Abstract

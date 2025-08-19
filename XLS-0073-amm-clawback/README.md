@@ -1,10 +1,11 @@
 ---
 title: AMMClawback
-type: draft
 description: Amendment to enable token issuers to claw back tokens from AMM pools for regulatory compliance
 author: Shawn Xie, Ripple <shawnxie@ripple.com>, Yinyi Qian, Ripple <yqian@ripple.com>
-requires: XLS-39, XLS-30
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+required: XLS-39, XLS-30
+created: 2021-01-01
 ---
 
 #  AMMClawback

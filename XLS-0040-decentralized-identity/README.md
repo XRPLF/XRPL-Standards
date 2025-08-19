@@ -1,9 +1,10 @@
 ---
 title: Decentralized Identity on XRP Ledger
-type: draft
 description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
 author: Aanchal Malhotra, Ripple <amalhotra@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Community
+created: 2021-01-01
 ---
 
 # 1. Abstract

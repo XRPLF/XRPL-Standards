@@ -1,9 +1,10 @@
 ---
 title: Lite Accounts (lower reserve, less features)
-type: stagnant
 description: A proposal for lite accounts with reduced account reserves but limited features
 author: Wietse Wind (WietseWind), Richard Holland
-core_protocol_changes_required: true
+status: Stagnant
+category: Community
+created: 2021-01-01
 ---
 # LiteAccounts Amendment
 

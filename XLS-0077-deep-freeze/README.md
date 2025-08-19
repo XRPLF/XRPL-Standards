@@ -1,9 +1,10 @@
 ---
 title: Deep-freeze
-type: draft
 description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
 author: Shawn Xie, Ripple <shawnxie@ripple.com>
-core_protocol_changes_required: true
+status: Draft
+category: Amendment
+created: 2021-01-01
 ---
 
 # Deep-freeze
