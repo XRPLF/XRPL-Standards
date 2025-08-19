@@ -1,10 +1,10 @@
-<pre> 
-   Title:        <b>Price Oracles on XRP Ledger</b>
-   Revision:     <b>6</b> (2023-12-21)
- <hr>  Author: <a href="mailto:gtsipenyuk@ripple.com">Gregory Tsipenyuk</a>
-   Affiliation:  <a href="https://ripple.com">Ripple</a>
- 
- </pre>
+---
+title: Price Oracles on XRP Ledger
+type: draft
+description: On-chain PriceOracle object to bridge blockchain and external world data for decentralized applications
+author: Gregory Tsipenyuk, Ripple <gtsipenyuk@ripple.com>
+core_protocol_changes_required: true
+---
  
  # Price Oracles on XRP Ledger
  

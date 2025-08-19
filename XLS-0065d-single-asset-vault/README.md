@@ -1,14 +1,11 @@
-<pre>
-Title:        <b>Single Asset Tokenized Vault</b>
-Revision:     <b>2</b> (2025-03-13)
-
-<hr>Authors:
-  <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
-  <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-
-Affiliation:
-  <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Single Asset Tokenized Vault
+type: draft
+description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
+author: Vytautas Vito Tumas, Ripple <vtumas@ripple.com>, Aanchal Malhotra, Ripple <amalhotra@ripple.com>
+requires: XLS-33
+core_protocol_changes_required: true
+---
 
 # Single Asset Vault
 

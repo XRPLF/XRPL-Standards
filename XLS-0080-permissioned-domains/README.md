@@ -1,11 +1,11 @@
-<pre>
-Title:       <b>Permissioned Domains</b>
-Revision:    <b>2</b> (2024-09-25)
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Permissioned Domains
+type: draft
+description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>
+requires: XLS-70
+core_protocol_changes_required: true
+---
 
 # Permissioned Domains
 

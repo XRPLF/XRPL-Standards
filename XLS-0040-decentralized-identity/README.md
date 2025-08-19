@@ -1,11 +1,10 @@
-<pre>    
-Title:        <b>Decentralized Identity on XRP Ledger</b>
-Revision:     <b>4</b> (2023-09-28)
-
-<hr>Author: <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
-
-</pre>
+---
+title: Decentralized Identity on XRP Ledger
+type: draft
+description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
+author: Aanchal Malhotra, Ripple <amalhotra@ripple.com>
+core_protocol_changes_required: true
+---
 
 # 1. Abstract
 Self-sovereign identity, defined as a lifetime portable digital identity that does not depend on any centralized authority, requires a new class of identifier that fulfills the following four requirements: persistence, global resolvability, cryptographic verifiability, and decentralization. [World Wide Web Consortium](https://www.w3.org/2022/07/pressrelease-did-rec.html.en) (W3C) standardized Decentralized Identifiers (DIDs) are a new type of identifier that enable verifiable, self-sovereign digital identity and are designed to be compatible with any distributed ledger or network. In the context of digital identities, W3C's standards for DIDs and Verifiable Credentials (VCs) are rapidly gaining traction, especially in blockchain-related domains. In this document we propose to implement native support for W3C DIDs on XRP Ledger. 

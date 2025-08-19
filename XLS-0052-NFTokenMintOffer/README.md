@@ -1,8 +1,10 @@
-<pre>
+---
 title: NFTokenMintOffer
-type: Spec
+type: draft
+description: Extension to NFTokenMint transaction to allow NFToken Sell Offer creation at the same time as minting
 author: tequ
-</pre>
+core_protocol_changes_required: true
+---
 
 ## Abstract
 

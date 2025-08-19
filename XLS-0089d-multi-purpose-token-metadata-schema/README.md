@@ -1,14 +1,11 @@
-<pre>
-Title:       <b>Multi-Purpose Token Metadata Schema</b>
-Revision:    <b>Draft</b> (2025-06-27)
-
-Authors:     <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-             <a href="mailto:gtsipenyuk@ripple.com">Greg Tsipenyuk</a>
-             <a href="mailto:smittal@ripple.com">Shashwat Mittal</a>
-             <a href="mailto:jberridi@ripple.com">Julian Berridi</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Multi-Purpose Token Metadata Schema
+type: draft
+description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
+author: Shawn Xie, Ripple <shawnxie@ripple.com>, Greg Tsipenyuk, Ripple <gtsipenyuk@ripple.com>, Shashwat Mittal, Ripple <smittal@ripple.com>, Julian Berridi, Ripple <jberridi@ripple.com>
+requires: XLS-33
+core_protocol_changes_required: false
+---
 
 ---
 

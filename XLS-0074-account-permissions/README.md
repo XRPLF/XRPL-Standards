@@ -1,10 +1,10 @@
-<pre>
-Title:       <b>Account Permissions</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Account Permissions
+type: draft
+description: Formalization of different types of transaction-based account permissions for subset capabilities
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>
+core_protocol_changes_required: true
+---
 
 # Account Permissions
 

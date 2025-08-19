@@ -1,10 +1,10 @@
-<pre>
-Title:       <b>Atomic/Batch Transactions</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Atomic/Batch Transactions
+type: draft
+description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>
+core_protocol_changes_required: true
+---
 
 # Atomic/Batch Transactions
 

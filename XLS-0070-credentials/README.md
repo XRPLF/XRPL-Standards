@@ -1,11 +1,11 @@
-<pre>
-Title:       <b>On-Chain Credentials</b>
-Revision:    <b>4</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: On-Chain Credentials
+type: draft
+description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
+author: Mayukha Vadari, Ripple <mvadari@ripple.com>
+requires: XLS-40
+core_protocol_changes_required: true
+---
 
 # On-Chain Credentials
 

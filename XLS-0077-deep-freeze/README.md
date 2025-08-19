@@ -1,10 +1,10 @@
-<pre>
-Title:       <b>XLS-77d Deep-freeze</b>
-Type:        <b>draft</b>
-Revision:    <b>3</b> (2024-10-25)
-Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
-</pre>
+---
+title: Deep-freeze
+type: draft
+description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
+author: Shawn Xie, Ripple <shawnxie@ripple.com>
+core_protocol_changes_required: true
+---
 
 # Deep-freeze
 

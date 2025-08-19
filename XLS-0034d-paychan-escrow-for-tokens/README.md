@@ -1,11 +1,10 @@
-<pre class="notranslate">
-Title:       <b>Token-Enabled Escrows and Payment Channels</b>
-Type:        Draft
-PR:          <a href="https://github.com/XRPLF/rippled/pull/4396">4396</a>
-Author:      Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
-             Denis Angell, Transia <a href="https://github.com/dangell7/">(dangell7)</a>
-Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPLF</a>
-</pre>
+---
+title: Token-Enabled Escrows and Payment Channels
+type: draft
+description: Amendment to enable Escrows and PayChannels to use Trustline balances in addition to XRP
+author: Richard Holland, Xaman (@RichardAH), Denis Angell, Transia (@dangell7)
+core_protocol_changes_required: true
+---
 
 > This proposal, XLS34d, replaces [XLS27d](https://github.com/XRPLF/XRPL-Standards/discussions/72)
 
