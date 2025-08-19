@@ -1,7 +1,7 @@
 <pre>
     XLS: XLS-6d
     Title: 0006 XLS-6d Standard for Visual Account Icons
-    Author: None (RichardAH)
+    Author: Richard Holland (RichardAH)
     Created: 2019-09-22
     Status: Final
     Category: Community
@@ -20,4 +20,5 @@ It's recommended that these icons are displayed alongside addresses to help redu
 Figure 1
 
 ![image](https://user-images.githubusercontent.com/19866478/65387078-dc20bd00-dd86-11e9-90af-126edf511060.png)
+
 Figure 2
