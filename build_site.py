@@ -26,6 +26,7 @@ class XLSDocument:
     folder: str
     filename: str
     status: str  # draft, candidate, released, etc.
+    created_date: str = ""  # Creation date
     
     def to_dict(self):
         return asdict(self)
@@ -38,7 +39,8 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         'title': 'Unknown Title',
         'type': 'unknown',
         'description': '',
-        'author': 'Unknown Author'
+        'author': 'Unknown Author',
+        'created': ''
     }
     
     # Parse HTML pre block for metadata
@@ -67,6 +69,12 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
             'author': [
                 r'author:\s*(.*?)(?:\n|$)',
                 r'Author:\s*(.*?)(?:\n|$)'
+            ],
+            'created': [
+                r'created:\s*(.*?)(?:\n|$)',
+                r'Created:\s*(.*?)(?:\n|$)',
+                r'date:\s*(.*?)(?:\n|$)',
+                r'Date:\s*(.*?)(?:\n|$)'
             ]
         }
         
@@ -118,7 +126,8 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         author=metadata['author'],
         folder=folder_name,
         filename='README.md',
-        status=status
+        status=status,
+        created_date=metadata['created']
     )
 
 def convert_markdown_to_html(content: str) -> str:
@@ -148,6 +157,9 @@ def build_site():
     root_dir = Path('.')
     site_dir = root_dir / '_site'
     
+    # Set base URL for GitHub Pages (can be overridden with env var)
+    base_url = os.environ.get('GITHUB_PAGES_BASE_URL', '/XRPL-Standards')
+    
     # Clean and create site directory
     if site_dir.exists():
         shutil.rmtree(site_dir)
@@ -163,7 +175,7 @@ def build_site():
         template_dir.mkdir()
         
     # Create templates if they don't exist
-    create_templates(template_dir)
+    create_templates(template_dir, base_url)
     
     env = Environment(loader=FileSystemLoader(template_dir))
     
@@ -191,7 +203,8 @@ def build_site():
                     rendered_html = xls_template.render(
                         doc=doc,
                         content=html_content,
-                        title=f"XLS-{doc.number}: {doc.title}"
+                        title=f"XLS-{doc.number}: {doc.title}",
+                        base_url=base_url
                     )
                     
                     # Write XLS HTML file
@@ -221,7 +234,8 @@ def build_site():
         drafts=drafts,
         candidates=candidates,
         released=released,
-        others=others
+        others=others,
+        base_url=base_url
     )
     
     # Write index file
@@ -229,7 +243,7 @@ def build_site():
         f.write(index_html)
     
     # Create CSS file
-    create_css(site_dir / 'assets')
+    create_css(site_dir / 'assets', base_url)
     
     print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
     print(f"- Released: {len(released)}")
@@ -237,31 +251,31 @@ def build_site():
     print(f"- Drafts: {len(drafts)}")
     print(f"- Others: {len(others)}")
 
-def create_templates(template_dir: Path):
+def create_templates(template_dir: Path, base_url: str = "/XRPL-Standards"):
     """Create HTML templates."""
     
     # Base template
-    base_template = """<!DOCTYPE html>
+    base_template = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ title }}{% endblock %}</title>
-    <link rel="stylesheet" href="/assets/style.css">
+    <title>{{% block title %}}{{{{ title }}}}{{% endblock %}}</title>
+    <link rel="stylesheet" href="{base_url}/assets/style.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1><a href="/">XRP Ledger Standards</a></h1>
+            <h1><a href="{base_url}/">XRP Ledger Standards</a></h1>
             <nav>
-                <a href="/">All Standards</a>
+                <a href="{base_url}/">All Standards</a>
                 <a href="https://github.com/XRPLF/XRPL-Standards">GitHub</a>
             </nav>
         </div>
     </header>
     
     <main class="container">
-        {% block content %}{% endblock %}
+        {{% block content %}}{{% endblock %}}
     </main>
     
     <footer>
@@ -273,112 +287,120 @@ def create_templates(template_dir: Path):
 </html>"""
     
     # Index template
-    index_template = """{% extends "base.html" %}
+    index_template = f"""{{% extends "base.html" %}}
 
-{% block content %}
+{{% block content %}}
 <div class="intro">
     <h2>XRP Ledger Standards (XLS)</h2>
     <p>XRP Ledger Standards (XLSs) describe standards and specifications relating to the XRP Ledger ecosystem that help achieve interoperability, compatibility, and excellent user experience.</p>
-    <p>Total standards: <strong>{{ total_count }}</strong></p>
+    <p>Total standards: <strong>{{{{ total_count }}}}</strong></p>
 </div>
 
-{% if released %}
-<section class="xls-section">
-    <h3>Released Standards</h3>
-    <div class="xls-grid">
-        {% for doc in released %}
-        <div class="xls-card released">
-            <div class="xls-header">
-                <span class="xls-number">XLS-{{ doc.number }}</span>
-                <span class="xls-status">{{ doc.status }}</span>
-            </div>
-            <h4><a href="/xls/{{ doc.folder }}.html">{{ doc.title }}</a></h4>
-            <p class="xls-description">{{ doc.description }}</p>
-            <p class="xls-author">{{ doc.author }}</p>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-{% if candidates %}
-<section class="xls-section">
-    <h3>Candidate Standards</h3>
-    <div class="xls-grid">
-        {% for doc in candidates %}
-        <div class="xls-card candidate">
-            <div class="xls-header">
-                <span class="xls-number">XLS-{{ doc.number }}</span>
-                <span class="xls-status">{{ doc.status }}</span>
-            </div>
-            <h4><a href="/xls/{{ doc.folder }}.html">{{ doc.title }}</a></h4>
-            <p class="xls-description">{{ doc.description }}</p>
-            <p class="xls-author">{{ doc.author }}</p>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-{% if drafts %}
-<section class="xls-section">
-    <h3>Draft Standards</h3>
-    <div class="xls-grid">
-        {% for doc in drafts %}
-        <div class="xls-card draft">
-            <div class="xls-header">
-                <span class="xls-number">XLS-{{ doc.number }}</span>
-                <span class="xls-status">{{ doc.status }}</span>
-            </div>
-            <h4><a href="/xls/{{ doc.folder }}.html">{{ doc.title }}</a></h4>
-            <p class="xls-description">{{ doc.description }}</p>
-            <p class="xls-author">{{ doc.author }}</p>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-{% if others %}
-<section class="xls-section">
-    <h3>Other Standards</h3>
-    <div class="xls-grid">
-        {% for doc in others %}
-        <div class="xls-card other">
-            <div class="xls-header">
-                <span class="xls-number">XLS-{{ doc.number }}</span>
-                <span class="xls-status">{{ doc.status }}</span>
-            </div>
-            <h4><a href="/xls/{{ doc.folder }}.html">{{ doc.title }}</a></h4>
-            <p class="xls-description">{{ doc.description }}</p>
-            <p class="xls-author">{{ doc.author }}</p>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-{% endblock %}"""
+<div class="standards-table-container">
+    <table class="standards-table">
+        <thead>
+            <tr>
+                <th>Number</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{% for doc in released %}}
+            <tr class="status-released">
+                <td class="number-col" data-label="Number">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html" class="xls-link">XLS-{{{{ doc.number }}}}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html">{{{{ doc.title }}}}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{{{ doc.author }}}}</td>
+                <td class="type-col" data-label="Type">{{{{ doc.type }}}}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge released">Released</span>
+                </td>
+                <td class="date-col" data-label="Created">{{{{ doc.created_date or '-' }}}}</td>
+            </tr>
+            {{% endfor %}}
+            
+            {{% for doc in candidates %}}
+            <tr class="status-candidate">
+                <td class="number-col" data-label="Number">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html" class="xls-link">XLS-{{{{ doc.number }}}}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html">{{{{ doc.title }}}}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{{{ doc.author }}}}</td>
+                <td class="type-col" data-label="Type">{{{{ doc.type }}}}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge candidate">Candidate</span>
+                </td>
+                <td class="date-col" data-label="Created">{{{{ doc.created_date or '-' }}}}</td>
+            </tr>
+            {{% endfor %}}
+            
+            {{% for doc in drafts %}}
+            <tr class="status-draft">
+                <td class="number-col" data-label="Number">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html" class="xls-link">XLS-{{{{ doc.number }}}}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html">{{{{ doc.title }}}}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{{{ doc.author }}}}</td>
+                <td class="type-col" data-label="Type">{{{{ doc.type }}}}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge draft">Draft</span>
+                </td>
+                <td class="date-col" data-label="Created">{{{{ doc.created_date or '-' }}}}</td>
+            </tr>
+            {{% endfor %}}
+            
+            {{% for doc in others %}}
+            <tr class="status-other">
+                <td class="number-col" data-label="Number">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html" class="xls-link">XLS-{{{{ doc.number }}}}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{base_url}/xls/{{{{ doc.folder }}}}.html">{{{{ doc.title }}}}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{{{ doc.author }}}}</td>
+                <td class="type-col" data-label="Type">{{{{ doc.type }}}}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge other">{{{{ doc.status.title() }}}}</span>
+                </td>
+                <td class="date-col" data-label="Created">{{{{ doc.created_date or '-' }}}}</td>
+            </tr>
+            {{% endfor %}}
+        </tbody>
+    </table>
+</div>
+{{% endblock %}}"""
     
     # XLS document template
-    xls_template = """{% extends "base.html" %}
+    xls_template = f"""{{% extends "base.html" %}}
 
-{% block content %}
+{{% block content %}}
 <div class="xls-document">
     <div class="xls-meta">
-        <div class="xls-number-large">XLS-{{ doc.number }}</div>
-        <div class="xls-status-badge {{ doc.status }}">{{ doc.status.title() }}</div>
+        <div class="xls-number-large">XLS-{{{{ doc.number }}}}</div>
+        <div class="xls-status-badge {{{{ doc.status }}}}">{{{{ doc.status.title() }}}}</div>
     </div>
     
     <div class="document-content">
-        {{ content|safe }}
+        {{{{ content|safe }}}}
     </div>
     
     <div class="document-nav">
-        <a href="/">&larr; Back to All Standards</a>
-        <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{ doc.folder }}">View on GitHub</a>
+        <a href="{base_url}/">&larr; Back to All Standards</a>
+        <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{{{ doc.folder }}}}">View on GitHub</a>
     </div>
 </div>
-{% endblock %}"""
+{{% endblock %}}"""
     
     # Write templates
     with open(template_dir / 'base.html', 'w') as f:
@@ -390,253 +412,329 @@ def create_templates(template_dir: Path):
     with open(template_dir / 'xls.html', 'w') as f:
         f.write(xls_template)
 
-def create_css(assets_dir: Path):
+def create_css(assets_dir: Path, base_url: str = "/XRPL-Standards"):
     """Create CSS styles."""
     
     css_content = """/* XLS Standards Site Styles */
 
+/* Reset and base styles */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
-    color: #333;
-    background-color: #f8f9fa;
+    line-height: 1.5;
+    color: #24292f;
+    background-color: #ffffff;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
 }
 
 /* Header */
 header {
-    background: #fff;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 0;
+    background: #ffffff;
+    border-bottom: 1px solid #d1d9e0;
+    padding: 16px 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    display: inline-block;
+    font-size: 20px;
+    font-weight: 600;
 }
 
 header h1 a {
     text-decoration: none;
-    color: #007bff;
+    color: #0969da;
 }
 
-header nav {
-    float: right;
-    margin-top: 0.5rem;
+header h1 a:hover {
+    text-decoration: underline;
 }
 
 header nav a {
-    margin-left: 1rem;
+    margin-left: 24px;
     text-decoration: none;
-    color: #6c757d;
+    color: #656d76;
     font-weight: 500;
 }
 
 header nav a:hover {
-    color: #007bff;
+    color: #0969da;
 }
 
 /* Main content */
 main {
-    padding: 2rem 0;
-    min-height: calc(100vh - 140px);
+    padding: 32px 0 64px;
+    min-height: calc(100vh - 120px);
 }
 
+/* Introduction section */
 .intro {
     text-align: center;
-    margin-bottom: 3rem;
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 48px;
+    padding: 48px 32px;
+    background: #f6f8fa;
+    border-radius: 12px;
+    border: 1px solid #d1d9e0;
 }
 
 .intro h2 {
-    margin-top: 0;
-    color: #007bff;
-}
-
-/* XLS sections */
-.xls-section {
-    margin-bottom: 3rem;
-}
-
-.xls-section h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: #495057;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 0.5rem;
-}
-
-.xls-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.xls-card {
-    background: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    border-left: 4px solid #e9ecef;
-}
-
-.xls-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.xls-card.released {
-    border-left-color: #28a745;
-}
-
-.xls-card.candidate {
-    border-left-color: #ffc107;
-}
-
-.xls-card.draft {
-    border-left-color: #6c757d;
-}
-
-.xls-card.other {
-    border-left-color: #17a2b8;
-}
-
-.xls-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.xls-number {
-    font-weight: bold;
-    color: #007bff;
-    font-size: 0.9rem;
-}
-
-.xls-status {
-    background: #e9ecef;
-    color: #495057;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    text-transform: uppercase;
+    font-size: 32px;
     font-weight: 600;
+    color: #24292f;
+    margin-bottom: 16px;
 }
 
-.xls-card.released .xls-status {
-    background: #d4edda;
-    color: #155724;
+.intro p {
+    font-size: 16px;
+    color: #656d76;
+    margin-bottom: 8px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.xls-card.candidate .xls-status {
-    background: #fff3cd;
-    color: #856404;
+/* Standards table */
+.standards-table-container {
+    background: #ffffff;
+    border: 1px solid #d1d9e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.xls-card.draft .xls-status {
-    background: #d1ecf1;
-    color: #0c5460;
+.standards-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
 }
 
-.xls-card h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
+.standards-table thead {
+    background: #f6f8fa;
+    border-bottom: 1px solid #d1d9e0;
 }
 
-.xls-card h4 a {
+.standards-table th {
+    padding: 16px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #24292f;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid #d1d9e0;
+}
+
+.standards-table th:last-child {
+    border-right: none;
+}
+
+.standards-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eaeef2;
+    border-right: 1px solid #eaeef2;
+    vertical-align: top;
+}
+
+.standards-table td:last-child {
+    border-right: none;
+}
+
+.standards-table tbody tr:hover {
+    background-color: #f6f8fa;
+}
+
+.standards-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Column styling */
+.number-col {
+    width: 120px;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.title-col {
+    width: auto;
+    min-width: 300px;
+}
+
+.author-col {
+    width: 200px;
+    color: #656d76;
+}
+
+.type-col {
+    width: 150px;
+    color: #656d76;
+    font-size: 13px;
+}
+
+.status-col {
+    width: 120px;
+    text-align: center;
+}
+
+.date-col {
+    width: 120px;
+    color: #656d76;
+    font-size: 13px;
+}
+
+/* Links */
+.xls-link {
+    font-weight: 600;
+    color: #0969da;
     text-decoration: none;
-    color: #333;
 }
 
-.xls-card h4 a:hover {
-    color: #007bff;
+.xls-link:hover {
+    text-decoration: underline;
 }
 
-.xls-description {
-    color: #6c757d;
-    margin: 0.5rem 0;
-    font-size: 0.9rem;
+.title-col a {
+    color: #0969da;
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    word-wrap: break-word;
 }
 
-.xls-author {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #868e96;
+.title-col a:hover {
+    text-decoration: underline;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 70px;
+}
+
+.status-badge.released {
+    background-color: #dcfdf7;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.status-badge.candidate {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.status-badge.draft {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+}
+
+.status-badge.other {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+/* Row status styling (subtle left border) */
+.status-released {
+    border-left: 3px solid #10b981;
+}
+
+.status-candidate {
+    border-left: 3px solid #f59e0b;
+}
+
+.status-draft {
+    border-left: 3px solid #6366f1;
+}
+
+.status-other {
+    border-left: 3px solid #6b7280;
 }
 
 /* XLS document page */
 .xls-document {
-    background: white;
-    border-radius: 8px;
-    padding: 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: #ffffff;
+    border: 1px solid #d1d9e0;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .xls-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #eaeef2;
 }
 
 .xls-number-large {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #007bff;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0969da;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 .xls-status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
     font-weight: 600;
+    font-size: 14px;
     text-transform: uppercase;
-    font-size: 0.9rem;
+    letter-spacing: 0.5px;
 }
 
 .xls-status-badge.released {
-    background: #d4edda;
-    color: #155724;
+    background-color: #dcfdf7;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
 }
 
 .xls-status-badge.candidate {
-    background: #fff3cd;
-    color: #856404;
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
 }
 
 .xls-status-badge.draft {
-    background: #d1ecf1;
-    color: #0c5460;
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
 }
 
 .xls-status-badge.other {
-    background: #e2e3e5;
-    color: #495057;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
+/* Document content styling */
 .document-content {
     max-width: none;
+    line-height: 1.6;
 }
 
 .document-content h1,
@@ -645,97 +743,136 @@ main {
 .document-content h4,
 .document-content h5,
 .document-content h6 {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: #333;
+    margin-top: 32px;
+    margin-bottom: 16px;
+    color: #24292f;
+    font-weight: 600;
 }
 
 .document-content h1 {
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 0.5rem;
+    font-size: 28px;
+    border-bottom: 1px solid #eaeef2;
+    padding-bottom: 16px;
 }
 
 .document-content h2 {
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 0.3rem;
+    font-size: 24px;
+    border-bottom: 1px solid #eaeef2;
+    padding-bottom: 8px;
+}
+
+.document-content h3 {
+    font-size: 20px;
+}
+
+.document-content p {
+    margin-bottom: 16px;
+    color: #24292f;
 }
 
 .document-content pre {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 1rem;
+    background: #f6f8fa;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    padding: 16px;
     overflow-x: auto;
-    margin: 1rem 0;
+    margin: 16px 0;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .document-content code {
-    background: #f8f9fa;
-    padding: 0.2rem 0.4rem;
+    background: #f6f8fa;
+    border: 1px solid #d1d9e0;
+    padding: 2px 6px;
     border-radius: 3px;
-    font-size: 0.9em;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 13px;
 }
 
 .document-content pre code {
     background: none;
+    border: none;
     padding: 0;
 }
 
 .document-content blockquote {
-    border-left: 4px solid #007bff;
-    margin: 1rem 0;
-    padding-left: 1rem;
-    color: #6c757d;
+    border-left: 4px solid #0969da;
+    margin: 16px 0;
+    padding: 8px 16px;
+    color: #656d76;
+    background: #f6f8fa;
 }
 
 .document-content table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1rem 0;
+    margin: 16px 0;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .document-content th,
 .document-content td {
-    border: 1px solid #e9ecef;
-    padding: 0.5rem;
+    border-bottom: 1px solid #eaeef2;
+    border-right: 1px solid #eaeef2;
+    padding: 12px;
     text-align: left;
 }
 
+.document-content th:last-child,
+.document-content td:last-child {
+    border-right: none;
+}
+
 .document-content th {
-    background: #f8f9fa;
+    background: #f6f8fa;
     font-weight: 600;
 }
 
+.document-content tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Document navigation */
 .document-nav {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid #e9ecef;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #eaeef2;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .document-nav a {
-    color: #007bff;
+    color: #0969da;
     text-decoration: none;
     font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #d1d9e0;
+    transition: all 0.2s;
 }
 
 .document-nav a:hover {
-    text-decoration: underline;
+    background: #f6f8fa;
+    text-decoration: none;
 }
 
 /* Footer */
 footer {
-    background: #fff;
-    border-top: 1px solid #e9ecef;
-    padding: 1.5rem 0;
-    margin-top: 3rem;
+    background: #f6f8fa;
+    border-top: 1px solid #d1d9e0;
+    padding: 24px 0;
     text-align: center;
-    color: #6c757d;
+    color: #656d76;
+    font-size: 14px;
 }
 
 footer a {
-    color: #007bff;
+    color: #0969da;
     text-decoration: none;
 }
 
@@ -743,26 +880,95 @@ footer a:hover {
     text-decoration: underline;
 }
 
-/* Responsive */
+/* Responsive design */
 @media (max-width: 768px) {
-    header nav {
-        float: none;
-        margin-top: 1rem;
+    .container {
+        padding: 0 16px;
+    }
+    
+    header .container {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    header nav a {
+        margin: 0 12px;
+    }
+    
+    .intro {
+        padding: 32px 24px;
+    }
+    
+    .intro h2 {
+        font-size: 24px;
     }
     
     .xls-meta {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
+        gap: 16px;
     }
     
     .document-nav {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 12px;
     }
     
-    .xls-grid {
-        grid-template-columns: 1fr;
+    .document-nav a {
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Make table responsive */
+    .standards-table-container {
+        overflow-x: auto;
+    }
+    
+    .standards-table {
+        min-width: 800px;
+    }
+    
+    /* Stack table cells on very small screens */
+    @media (max-width: 600px) {
+        .standards-table thead {
+            display: none;
+        }
+        
+        .standards-table,
+        .standards-table tbody,
+        .standards-table tr,
+        .standards-table td {
+            display: block;
+        }
+        
+        .standards-table {
+            min-width: auto;
+        }
+        
+        .standards-table tr {
+            border: 1px solid #d1d9e0;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            padding: 16px;
+            background: #ffffff;
+        }
+        
+        .standards-table td {
+            border: none;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .standards-table td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            color: #656d76;
+            margin-right: 16px;
+        }
     }
 }"""
     
