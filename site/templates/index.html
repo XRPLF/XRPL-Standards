@@ -8,26 +8,26 @@
 </div>
 
 <div class="standards-table-container">
-    <table class="standards-table">
+    <table class="standards-table" id="standardsTable">
         <thead>
             <tr>
-                <th>Number</th>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Status</th>
+                <th class="sortable" data-column="number">Number</th>
+                <th class="sortable" data-column="title">Title</th>
+                <th class="sortable" data-column="author">Author</th>
+                <th class="sortable" data-column="status">Status</th>
             </tr>
         </thead>
         <tbody>
             {% for doc in xls_docs %}
             <tr class="status-{{ doc.status }}">
-                <td class="number-col" data-label="Number">
+                <td class="number-col" data-label="Number" data-sort-value="{{ doc.number|int }}">
                     <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
                 </td>
-                <td class="title-col" data-label="Title">
+                <td class="title-col" data-label="Title" data-sort-value="{{ doc.title|lower }}">
                     <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
                 </td>
-                <td class="author-col" data-label="Author">{{ doc.author }}</td>
-                <td class="status-col" data-label="Status">
+                <td class="author-col" data-label="Author" data-sort-value="{{ doc.author|lower }}">{{ doc.author }}</td>
+                <td class="status-col" data-label="Status" data-sort-value="{{ doc.status|lower }}">
                     {% if doc.status == 'released' %}
                     <span class="status-badge released">Released</span>
                     {% elif doc.status == 'candidate' %}
@@ -43,4 +43,71 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('standardsTable');
+    const headers = table.querySelectorAll('th.sortable');
+    let currentSort = {column: 'number', direction: 'desc'}; // Default to reverse numerical order
+    
+    // Set initial sort indicator
+    const numberHeader = table.querySelector('th[data-column="number"]');
+    numberHeader.classList.add('sort-desc');
+    
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.dataset.column;
+            let direction = 'asc';
+            
+            // Toggle direction if clicking the same column
+            if (currentSort.column === column && currentSort.direction === 'asc') {
+                direction = 'desc';
+            }
+            
+            sortTable(column, direction);
+            updateSortIndicators(this, direction);
+            
+            currentSort = {column, direction};
+        });
+    });
+    
+    function sortTable(column, direction) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+            let aVal, bVal;
+            
+            if (column === 'number') {
+                aVal = parseInt(a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
+                bVal = parseInt(b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
+            } else {
+                aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
+                bVal = b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
+            }
+            
+            if (direction === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            } else {
+                return aVal < bVal ? 1 : -1;
+            }
+        });
+        
+        // Re-append sorted rows
+        rows.forEach(row => tbody.appendChild(row));
+    }
+    
+    function updateSortIndicators(activeHeader, direction) {
+        // Clear all sort indicators
+        headers.forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Add indicator to active header
+        activeHeader.classList.add(`sort-${direction}`);
+    }
+});
+</script>
 {% endblock %}

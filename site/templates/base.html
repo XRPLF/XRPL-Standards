@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ title }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ base_url }}/assets/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -26,5 +29,7 @@
             <p>&copy; 2024 XRP Ledger Foundation. Licensed under <a href="https://github.com/XRPLF/XRPL-Standards/blob/master/LICENSE">Apache License 2.0</a>.</p>
         </div>
     </footer>
+    
+    {% block scripts %}{% endblock %}
 </body>
 </html>
