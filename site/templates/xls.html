@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="xls-document">
+    <div class="xls-meta">
+        <div class="xls-number-large">XLS-{{ doc.number }}</div>
+        <div class="xls-status-badge {{ doc.status }}">{{ doc.status.title() }}</div>
+    </div>
+    
+    <div class="document-content">
+        {{ content|safe }}
+    </div>
+    
+    <div class="document-nav">
+        <a href="{{ base_url }}/">&larr; Back to All Standards</a>
+        <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{ doc.folder }}">View on GitHub</a>
+    </div>
+</div>
+{% endblock %}

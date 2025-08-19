@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="intro">
+    <h2>XRP Ledger Standards (XLS)</h2>
+    <p>XRP Ledger Standards (XLSs) describe standards and specifications relating to the XRP Ledger ecosystem that help achieve interoperability, compatibility, and excellent user experience.</p>
+    <p>Total standards: <strong>{{ total_count }}</strong></p>
+</div>
+
+<div class="standards-table-container">
+    <table class="standards-table">
+        <thead>
+            <tr>
+                <th>Number</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in released %}
+            <tr class="status-released">
+                <td class="number-col" data-label="Number">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{ doc.author }}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge released">Released</span>
+                </td>
+            </tr>
+            {% endfor %}
+            
+            {% for doc in candidates %}
+            <tr class="status-candidate">
+                <td class="number-col" data-label="Number">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{ doc.author }}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge candidate">Candidate</span>
+                </td>
+            </tr>
+            {% endfor %}
+            
+            {% for doc in drafts %}
+            <tr class="status-draft">
+                <td class="number-col" data-label="Number">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{ doc.author }}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge draft">Draft</span>
+                </td>
+            </tr>
+            {% endfor %}
+            
+            {% for doc in others %}
+            <tr class="status-other">
+                <td class="number-col" data-label="Number">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
+                </td>
+                <td class="title-col" data-label="Title">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+                </td>
+                <td class="author-col" data-label="Author">{{ doc.author }}</td>
+                <td class="status-col" data-label="Status">
+                    <span class="status-badge other">{{ doc.status.title() }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

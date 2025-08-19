@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ base_url }}/assets/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="{{ base_url }}/">XRP Ledger Standards</a></h1>
+            <nav>
+                <a href="{{ base_url }}/">All Standards</a>
+                <a href="https://github.com/XRPLF/XRPL-Standards">GitHub</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 XRP Ledger Foundation. Licensed under <a href="https://github.com/XRPLF/XRPL-Standards/blob/master/LICENSE">Apache License 2.0</a>.</p>
+        </div>
+    </footer>
+</body>
+</html>
