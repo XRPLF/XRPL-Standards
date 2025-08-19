@@ -191,24 +191,15 @@ def build_site():
             except Exception as e:
                 print(f"Error processing {folder.name}: {e}")
     
-    # Sort documents by number
-    xls_docs.sort(key=lambda x: int(x.number))
-    
-    # Group by status
-    drafts = [doc for doc in xls_docs if doc.status == 'draft']
-    candidates = [doc for doc in xls_docs if doc.status == 'candidate']
-    released = [doc for doc in xls_docs if doc.status == 'released']
-    others = [doc for doc in xls_docs if doc.status not in ['draft', 'candidate', 'released']]
+    # Sort documents by number in reverse order (later ones more relevant)
+    xls_docs.sort(key=lambda x: int(x.number), reverse=True)
     
     # Generate index page
     index_template = env.get_template('index.html')
     index_html = index_template.render(
         title="XRP Ledger Standards (XLS)",
         total_count=len(xls_docs),
-        drafts=drafts,
-        candidates=candidates,
-        released=released,
-        others=others,
+        xls_docs=xls_docs,
         base_url=base_url
     )
     
@@ -225,10 +216,17 @@ def build_site():
         raise FileNotFoundError(f"CSS file not found: {css_source}")
     
     print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
-    print(f"- Released: {len(released)}")
-    print(f"- Candidates: {len(candidates)}")
-    print(f"- Drafts: {len(drafts)}")
-    print(f"- Others: {len(others)}")
+    
+    # Count by status for reporting
+    released_count = len([doc for doc in xls_docs if doc.status == 'released'])
+    candidates_count = len([doc for doc in xls_docs if doc.status == 'candidate'])
+    drafts_count = len([doc for doc in xls_docs if doc.status == 'draft'])
+    others_count = len([doc for doc in xls_docs if doc.status not in ['draft', 'candidate', 'released']])
+    
+    print(f"- Released: {released_count}")
+    print(f"- Candidates: {candidates_count}")
+    print(f"- Drafts: {drafts_count}")
+    print(f"- Others: {others_count}")
 
 if __name__ == "__main__":
     build_site()

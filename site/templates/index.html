@@ -18,8 +18,8 @@
             </tr>
         </thead>
         <tbody>
-            {% for doc in released %}
-            <tr class="status-released">
+            {% for doc in xls_docs %}
+            <tr class="status-{{ doc.status }}">
                 <td class="number-col" data-label="Number">
                     <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
                 </td>
@@ -28,52 +28,15 @@
                 </td>
                 <td class="author-col" data-label="Author">{{ doc.author }}</td>
                 <td class="status-col" data-label="Status">
+                    {% if doc.status == 'released' %}
                     <span class="status-badge released">Released</span>
-                </td>
-            </tr>
-            {% endfor %}
-            
-            {% for doc in candidates %}
-            <tr class="status-candidate">
-                <td class="number-col" data-label="Number">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
-                </td>
-                <td class="title-col" data-label="Title">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
-                </td>
-                <td class="author-col" data-label="Author">{{ doc.author }}</td>
-                <td class="status-col" data-label="Status">
+                    {% elif doc.status == 'candidate' %}
                     <span class="status-badge candidate">Candidate</span>
-                </td>
-            </tr>
-            {% endfor %}
-            
-            {% for doc in drafts %}
-            <tr class="status-draft">
-                <td class="number-col" data-label="Number">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
-                </td>
-                <td class="title-col" data-label="Title">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
-                </td>
-                <td class="author-col" data-label="Author">{{ doc.author }}</td>
-                <td class="status-col" data-label="Status">
+                    {% elif doc.status == 'draft' %}
                     <span class="status-badge draft">Draft</span>
-                </td>
-            </tr>
-            {% endfor %}
-            
-            {% for doc in others %}
-            <tr class="status-other">
-                <td class="number-col" data-label="Number">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
-                </td>
-                <td class="title-col" data-label="Title">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
-                </td>
-                <td class="author-col" data-label="Author">{{ doc.author }}</td>
-                <td class="status-col" data-label="Status">
+                    {% else %}
                     <span class="status-badge other">{{ doc.status.title() }}</span>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
