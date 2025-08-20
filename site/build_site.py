@@ -148,6 +148,14 @@ def build_site():
     else:
         raise FileNotFoundError(f"CSS file not found: {css_source}")
 
+    # Copy favicon
+    favicon_source = assets_dir / "favicon.ico"
+    favicon_dest = site_dir / "assets" / "favicon.ico"
+    if favicon_source.exists():
+        shutil.copy2(favicon_source, favicon_dest)
+    else:
+        print(f"Warning: Favicon not found: {favicon_source}")
+
     print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
 
     # Count by status for reporting
