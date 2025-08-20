@@ -3,8 +3,6 @@ name: Deploy XLS Standards to GitHub Pages
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
   workflow_dispatch:
 
 permissions:
