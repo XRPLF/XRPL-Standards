@@ -49,15 +49,7 @@
                 
                 <!-- Status badge with conditional styling -->
                 <td class="status-col" data-label="Status" data-sort-value="{{ doc.status|lower }}">
-                    {% if doc.status == 'released' %}
-                    <span class="status-badge released">Released</span>
-                    {% elif doc.status == 'candidate' %}
-                    <span class="status-badge candidate">Candidate</span>
-                    {% elif doc.status == 'draft' %}
-                    <span class="status-badge draft">Draft</span>
-                    {% else %}
-                    <span class="status-badge other">{{ doc.status.title() }}</span>
-                    {% endif %}
+                    <span class="status-badge {{doc.status|lower}}">{{ doc.status.title() }}</span>
                 </td>
             </tr>
             {% endfor %}

@@ -12,7 +12,7 @@
     --color-gray-7: #343437;
     --color-gray-8: #232325;
     --color-gray-9: #111112;
-    --color-gray-10: var(--color-gray-9);
+    --color-gray-10: #111112;
     --color-blue-4: #4BB7FF;
     --color-purple-4: #9A52FF;
     --color-green-4: #5BEB9D;
@@ -195,16 +195,10 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
 .status-badge { min-width: 70px; padding: 6px 12px; font-size: 12px; }
 .xls-status-badge { padding: 8px 16px; font-size: 14px; }
 
-.status-badge.released, .xls-status-badge.released {
+.status-badge.final, .xls-status-badge.final {
     border: 1px solid var(--color-green-4);
     background-color: var(--color-green-10);
     color: var(--color-green-4);
-}
-
-.status-badge.candidate, .xls-status-badge.candidate {
-    border: 1px solid #FAFF19;
-    background-color: #4B4C00;
-    color: #FAFF19;
 }
 
 .status-badge.draft, .xls-status-badge.draft {
@@ -213,7 +207,13 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     color: var(--color-blue-4);
 }
 
-.status-badge.other, .xls-status-badge.other {
+.status-badge.stagnant, .xls-status-badge.stagnant {
+    border: 1px solid #FAFF19;
+    background-color: #4B4C00;
+    color: #FAFF19;
+}
+
+.status-badge.withdrawn, .xls-status-badge.withdrawn {
     border: 1px solid var(--text-color-secondary);
     background-color: var(--color-gray-7);
     color: var(--text-color-secondary);
