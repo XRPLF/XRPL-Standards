@@ -2,11 +2,12 @@
   xls: 81
   title: Permissioned DEXes
   description: A permissioned DEX system for the XRPL to enable regulated financial institutions to participate while adhering to compliance requirements
-  author: Mayukha Vadari <mvadari@ripple.com>
+  author: Denis Angell <dangell@ripple.com>, Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/229
-  status: Draft
-  category: Community
-  created: 2024-09-05
+  status: Final
+  category: Amendment
+  requires: [XLS-70](../XLS-0070-credentials/README.md), [XLS-80](../XLS-0080-permissioned-domains/README.md)
+  created: 2024-09-12
 </pre>
 
 # Permissioned DEXes

@@ -4,9 +4,9 @@
   description: Formalization of different types of transaction-based account permissions for subset capabilities
   author: Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
-  status: Draft
+  status: Final
   category: Amendment
-  created: 2024-06-10
+  created: 2024-08-21
 </pre>
 
 # Account Permissions

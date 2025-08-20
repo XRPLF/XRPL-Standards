@@ -4,9 +4,9 @@
   description: Authorization delegation mechanism to enhance flexibility and usability of XRPL accounts
   author: Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/218
-  status: Draft
-  category: Community
-  created: 2024-06-20
+  status: Final
+  category: Amendment
+  created: 2024-08-21
 </pre>
 
 # Permission Delegation

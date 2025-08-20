@@ -2,7 +2,7 @@
   xls: 89
   title: Multi-Purpose Token Metadata Schema
   description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
-  author: Shawn Xie <shawnxie@ripple.com>
+  author: Nathan Nichols <nnichols@ripple.com>, Shawn Xie <shawnxie@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
   status: Draft
   category: Community

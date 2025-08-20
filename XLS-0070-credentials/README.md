@@ -4,10 +4,9 @@
   description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
   author: Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/202
-  status: Draft
-  category: Community
-  requires: XLS-40
-  created: 2024-04-01
+  status: Final
+  category: Amendment
+  created: 2024-06-04
 </pre>
 
 # On-Chain Credentials

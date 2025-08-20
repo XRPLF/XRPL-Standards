@@ -4,10 +4,10 @@
   description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
   author: Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
-  status: Draft
-  category: Community
-  requires: XLS-70
-  created: 2024-08-26
+  status: Final
+  category: Amendment
+  requires: [XLS-70](../XLS-0070-credentials/README.md)
+  created: 2024-09-12
 </pre>
 
 # Permissioned Domains
