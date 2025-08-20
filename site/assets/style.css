@@ -376,6 +376,8 @@ footer {
     .intro h2 { font-size: 36px; }
     .standards-table-container { overflow-x: auto; }
     .standards-table { min-width: 700px; }
+    /* Document content tables also need horizontal scrolling */
+    .document-content { overflow-x: auto; }
 }
 @media (width <= 768px) {
     .container { padding: 0 16px; }
@@ -389,90 +391,40 @@ footer {
     .document-nav a { width: 100%; text-align: center; }
 }
 
-/* Mobile table view */
+/* Mobile - keep table layout but make horizontally scrollable */
 @media (width <= 600px) {
-    .standards-table-container { border: none; background: transparent; }
-    .standards-table thead { display: none; }
-    .standards-table, .standards-table tbody, .standards-table tr, .standards-table td { display: block; }
-    .standards-table { min-width: auto; }
-
-    .standards-table tr {
-        padding: 20px;
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        margin-bottom: 20px;
-        background: var(--bg-color-raised);
-        box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
-        transition: all 0.2s ease;
+    .standards-table-container { 
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
-
-    .standards-table tr:hover {
-        background-color: var(--color-gray-7);
-        box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
-        transform: translateY(-2px);
+    .standards-table { 
+        min-width: 600px; /* Ensure table doesn't compress too much */
     }
-
-    .standards-table td {
-        display: flex;
-        min-height: auto;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px 0;
-        border: none;
-        gap: 6px;
+    
+    /* Adjust font sizes for better mobile readability */
+    .standards-table th, .standards-table td {
+        padding: 12px 16px;
+        font-size: 13px;
     }
-    .standards-table td:first-child { padding-top: 0; border-top: none; }
-    .standards-table td:last-child { align-items: flex-start; padding-bottom: 0; border-bottom: none; }
-
-    .standards-table td:not(:last-child) {
-        padding-bottom: 16px;
-        border-bottom: 1px solid var(--border-color);
-        margin-bottom: 4px;
+    
+    .standards-table .number-col {
+        min-width: 80px;
     }
-
-    .standards-table td::before {
-        display: block;
-        margin-bottom: 4px;
-        color: var(--text-color-secondary);
-        content: attr(data-label);
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.8px;
-        opacity: 0.8;
-        text-transform: uppercase;
+    
+    .standards-table .title-col {
+        min-width: 200px;
     }
-
-    .standards-table .number-col a {
-        display: block;
-        padding: 8px 0;
-        color: var(--link-color);
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .standards-table .title-col a {
-        display: block;
-        padding: 4px 0;
-        color: var(--text-color);
-        font-size: 16px;
-        font-weight: 600;
-        hyphens: auto;
-        line-height: 1.4;
-        word-wrap: break-word;
-    }
-
+    
     .standards-table .author-col {
-        color: var(--text-color-secondary);
-        font-size: 14px;
-        line-height: 1.3;
+        min-width: 120px;
     }
-    .standards-table .status-col { align-items: flex-start; text-align: left; }
-
-    .standards-table .status-badge {
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-top: 2px;
-        font-size: 11px;
-        font-weight: 700;
+    
+    .standards-table .status-col {
+        min-width: 80px;
+    }
+    
+    /* Document content tables */
+    .document-content table {
+        min-width: 500px;
     }
 }
