@@ -2,11 +2,11 @@
   xls: 45
   title: Prepublish Validator Lists
   description: Future activation date and improved expiration handling of UNLs
-  author: Aanchal Malhotra <amalhotra@ripple.com>
+  author: Ed Hennis <ed@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/45
-  status: Draft
+  status: Final
   category: Protocol
-  created: 2021-11-01
+  created: 2020-06-17
 </pre>
 
 

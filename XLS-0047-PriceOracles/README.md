@@ -2,7 +2,7 @@
   xls: 47
   title: Price Oracles on XRP Ledger
   description: On-chain PriceOracle object to bridge blockchain and external world data for decentralized applications
-  author: Nathan Nichols <nnichols@ripple.com>
+  author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/129
   status: Draft
   category: Amendment

@@ -2,7 +2,7 @@
   xls: 85
   title: Token-Enabled Escrows
   description: Enhancement to existing Escrow functionality to support both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs)
-  author: Nathan Nichols <nnichols@ripple.com>
+  author: Denis Angell
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/248
   status: Draft
   category: Community

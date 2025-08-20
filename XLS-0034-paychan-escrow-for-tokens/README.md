@@ -2,9 +2,10 @@
   xls: 34
   title: Token-Enabled Escrows and Payment Channels
   description: Amendment to enable Escrows and Payment Channels to use IOU balances in addition to XRP
-  author: Richard Holland <richard@xahau.org>, Denis Angell <dangell@transia.co>
+  author: Richard Holland, Denis Angell
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/88
-  status: Withdrawn, replaced by XLS-85
+  status: Withdrawn
+  withdrawal-reason: Superseded by XLS-85
   category: Community
   created: 2023-01-23
 </pre>
