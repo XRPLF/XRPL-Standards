@@ -1,4 +1,5 @@
----
+<pre>
+xls: 0089d
 title: Multi-Purpose Token Metadata Schema
 description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
 author: Shawn Xie, Ripple <shawnxie@ripple.com>, Greg Tsipenyuk, Ripple <gtsipenyuk@ripple.com>, Shashwat Mittal, Ripple <smittal@ripple.com>, Julian Berridi, Ripple <jberridi@ripple.com>
@@ -6,7 +7,7 @@ status: Draft
 category: Community
 required: XLS-33
 created: 2021-01-01
----
+</pre>
 
 ---
 

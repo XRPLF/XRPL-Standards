@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0005
 title: Tagged Addresses
 description: A standard for addresses that contain both the target wallet and destination tag as a single unit
 author: Nikolaos D. Bougalis, Ripple <nikb@bougalis.net>
 status: Draft
 category: Community
 created: 2021-01-01
----
+</pre>
 
 # Abstract
 

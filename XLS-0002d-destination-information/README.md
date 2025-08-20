@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0002d
 title: XRPL destination information
 description: A standard for encoding destination information with backwards compatibility for web browsers
 author: Community Contributors
 status: Draft
 category: Community
 created: 2021-01-01
----
+</pre>
 
 Currently several apps are using a variety of methods to encode destination information;
 

@@ -1,4 +1,5 @@
----
+<pre>
+xls: 0070
 title: On-Chain Credentials
 description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
@@ -6,7 +7,7 @@ status: Draft
 category: Community
 required: XLS-40
 created: 2021-01-01
----
+</pre>
 
 # On-Chain Credentials
 

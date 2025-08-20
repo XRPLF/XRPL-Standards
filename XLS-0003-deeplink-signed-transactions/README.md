@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0003
 title: Sharing and deeplinking signed transactions
 description: A standard for encoding HEX signed transactions for air-gapped submissions with deep link support
 author: Community Contributors
 status: Draft
 category: Community
 created: 2021-01-01
----
+</pre>
 
 Currently several apps are using a variety of methods to encode HEX signed transactions (to be submitted air gapped);
 

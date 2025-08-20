@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0069
 title: Simulating Transaction Execution
 description: A new API method for executing dry runs of transactions without submitting them to the network
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Elliot Lee, Ripple <xrpl-standards-draft@ripple.com>
 status: Draft
 category: Amendment
 created: 2021-01-01
----
+</pre>
 
 # Simulating Transaction Execution
 

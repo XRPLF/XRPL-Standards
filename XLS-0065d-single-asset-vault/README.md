@@ -1,4 +1,5 @@
----
+<pre>
+xls: 0065d
 title: Single Asset Tokenized Vault
 description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
 author: Vytautas Vito Tumas, Ripple <vtumas@ripple.com>, Aanchal Malhotra, Ripple <amalhotra@ripple.com>
@@ -6,7 +7,7 @@ status: Draft
 category: Community
 required: XLS-33
 created: 2021-01-01
----
+</pre>
 
 # Single Asset Vault
 

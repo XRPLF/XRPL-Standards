@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0077
 title: Deep-freeze
 description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
 author: Shawn Xie, Ripple <shawnxie@ripple.com>
 status: Draft
 category: Amendment
 created: 2021-01-01
----
+</pre>
 
 # Deep-freeze
 

@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0037
 title: Concise Transaction Identifier (CTID)
 description: A way to locate validated transactions using ledger sequence number, transaction index, and network ID rather than transaction hash
 author: Richard Holland, Xaman (@RichardAH), Ryan Molley, Crossmark (@interc0der)
 status: Draft
 category: Protocol
 created: 2021-01-01
----
+</pre>
 
 > This proposal replaces the original proposal for Concise Transaction Identifiers XLS-15d
 

@@ -1,4 +1,5 @@
----
+<pre>
+xls: 0080
 title: Permissioned Domains
 description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
@@ -6,7 +7,7 @@ status: Draft
 category: Community
 required: XLS-70
 created: 2021-01-01
----
+</pre>
 
 # Permissioned Domains
 

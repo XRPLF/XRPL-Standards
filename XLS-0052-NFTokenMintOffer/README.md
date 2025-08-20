@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0052
 title: NFTokenMintOffer
 description: Extension to NFTokenMint transaction to allow NFToken Sell Offer creation at the same time as minting
 author: tequ
 status: Draft
 category: Amendment
 created: 2021-01-01
----
+</pre>
 
 ## Abstract
 

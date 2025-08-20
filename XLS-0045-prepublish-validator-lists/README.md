@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0045
 title: Prepublish Validator Lists
 description: Future activation date and improved expiration handling of UNLs
 author: Ed Hennis, Ripple <ed@ripple.com>
 status: Draft
 category: Protocol
 created: 2021-01-01
----
+</pre>
 
 
 ## Abstract

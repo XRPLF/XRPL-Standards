@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0023
 title: Lite Accounts (lower reserve, less features)
 description: A proposal for lite accounts with reduced account reserves but limited features
 author: Wietse Wind (WietseWind), Richard Holland
 status: Stagnant
 category: Community
 created: 2021-01-01
----
+</pre>
 # LiteAccounts Amendment
 
 By @RichardAH, @WietseWind

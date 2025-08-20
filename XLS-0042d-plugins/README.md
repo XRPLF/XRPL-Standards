@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0042d
 title: XRPL Plugins
 description: A plugin transactor API to make it easier for developers to modify rippled for sidechains without needing C++ knowledge
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
 status: Draft
 category: Community
 created: 2021-01-01
----
+</pre>
 
 # XRPL Plugins
 

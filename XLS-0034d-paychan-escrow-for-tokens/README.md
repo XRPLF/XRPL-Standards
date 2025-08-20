@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0034d
 title: Token-Enabled Escrows and Payment Channels
 description: Amendment to enable Escrows and PayChannels to use Trustline balances in addition to XRP
 author: Richard Holland, Xaman (@RichardAH), Denis Angell, Transia (@dangell7)
 status: Draft
 category: Community
 created: 2021-01-01
----
+</pre>
 
 > This proposal, XLS34d, replaces [XLS27d](https://github.com/XRPLF/XRPL-Standards/discussions/72)
 

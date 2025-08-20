@@ -1,11 +1,12 @@
----
+<pre>
+xls: 0074
 title: Account Permissions
 description: Formalization of different types of transaction-based account permissions for subset capabilities
 author: Mayukha Vadari, Ripple <mvadari@ripple.com>
 status: Draft
 category: Amendment
 created: 2021-01-01
----
+</pre>
 
 # Account Permissions
 

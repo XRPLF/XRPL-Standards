@@ -1,18 +1,14 @@
----
+<pre>
+xls: <XLS number>
 title: <The title is a few words, not a complete sentence>
 description: <Description is one full (short) sentence>
 author: <a comma separated list of the author(s)>
-# The format of each author should be one of the following:
-# - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
-# - Author's name, author's affiliation + email (in angle brackets)
-#
-# Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
 discussion-from: [link to XRPL-Standards discussion with the same XLS number]
-status: Discussion # Discussion, Draft, Final, Stagnant
-category: Meta # Amendment, Protocol, Community, Meta  
+status: Discussion
+category: Meta
 required: [optional, based on if it depends on other features]
 created: YYYY-MM-DD
----
+</pre>
 
 <!--
   This is the suggested template for new XLS specifications. After you have filled in the requisite fields, please delete these comments.
