@@ -13,7 +13,7 @@ created: 2021-01-01
 
 ## Abstract
 
-The XRPL DID (Digital Identifier) amendment ([XLS-40](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-40-decentralized-identity)) empowers users to manage their digital identities on the XRP Ledger. While this amendment adds support for on-chain identity management and simplifies off-chain credential usage, maximizing blockchain technology's full potential for credential handling requires on-chain solutions.
+The XRPL DID (Digital Identifier) amendment ([XLS-40](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0040-decentralized-identity)) empowers users to manage their digital identities on the XRP Ledger. While this amendment adds support for on-chain identity management and simplifies off-chain credential usage, maximizing blockchain technology's full potential for credential handling requires on-chain solutions.
 
 This document proposes a design to bridge this gap. It outlines the issuance, storage, and verification of credentials directly on the XRP Ledger, while still supporting the privacy needs of users.
 

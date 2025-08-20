@@ -13,7 +13,7 @@ created: 2021-01-01
 
 ## _Abstract_
 
-A Single Asset Vault is a new on-chain primitive for aggregating assets from one or more depositors, and making the assets available for other on-chain protocols. The Single Asset Vault uses [Multi-Purpose-Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens) to represent ownership shares of the Vault. The Vault serves diverse purposes, such as lending markets, aggregators, yield-bearing tokens, asset management, etc. The Single Asset Vault decouples the liquidity provision functionality from the specific protocol logic.
+A Single Asset Vault is a new on-chain primitive for aggregating assets from one or more depositors, and making the assets available for other on-chain protocols. The Single Asset Vault uses [Multi-Purpose-Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens) to represent ownership shares of the Vault. The Vault serves diverse purposes, such as lending markets, aggregators, yield-bearing tokens, asset management, etc. The Single Asset Vault decouples the liquidity provision functionality from the specific protocol logic.
 
 ## Index
 
@@ -75,17 +75,17 @@ A Single Asset Vault is owned and managed by an account called the **Vault Owner
 
 #### 1.1.2 Access Control
 
-A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/discussions/228), which use on-chain [Credentials](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-70-credentials) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
+A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/discussions/228), which use on-chain [Credentials](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0070-credentials) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
 
 #### 1.1.3 Yield Bearing Shares
 
-Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
+Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
 
 ### 1.2 Terminology
 
 - **Vault**: A ledger entry for aggregating liquidity and providing this liquidity to one or more accessors.
-- **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens).
-- **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens) created by the _pseudo-account_ of the vault.
+- **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens).
+- **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens) created by the _pseudo-account_ of the vault.
 
 ### 1.3 Actors
 
@@ -161,7 +161,7 @@ The `Vault` object costs one reserve fee per object created:
 
 #### 2.1.6 Vault Shares
 
-Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
+Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
 
 ##### 2.1.6.1 `MPTokenIssuance`
 
@@ -193,7 +193,7 @@ The `MPToken` object represents the amount of shares held by a depositor. It is 
 
 ###### 2.1.6.2.1 `MPToken` Values
 
-The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens#2112-fields).
+The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2112-fields).
 
 | **Condition**     | **Transferable**   | **Non-Transferable** |
 | ----------------- | ------------------ | -------------------- |
@@ -291,7 +291,7 @@ The First Come, First Serve strategy treats all requests equally, allowing a dep
 
 #### 2.1.8 Frozen Assets
 
-The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-33-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
+The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
 
 #### 2.1.9 Transfer Fees
 

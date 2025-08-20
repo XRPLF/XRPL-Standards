@@ -20,7 +20,7 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-80, Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-80-permissioned-domains), as Permissioned Domains are needed to handle the permissioning aspect.
+This proposal builds on top of [XLS-80, Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains), as Permissioned Domains are needed to handle the permissioning aspect.
 
 We propose:
 
@@ -591,7 +591,7 @@ No open offer will be filled by a permissioned offer.
 
 ## 13. Security
 
-The trust assumptions are the same as with [permissioned domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-80-permissioned-domains#7-security).
+The trust assumptions are the same as with [permissioned domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains#7-security).
 
 # Appendix
 

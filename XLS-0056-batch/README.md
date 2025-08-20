@@ -535,6 +535,6 @@ That is not supported. This also allows fee escalation to be calculated on the t
 
 Yes, as long as you use the master key of that account. Setting a regular key/signer list in the middle of the `Batch` won't work, since that key isn't valid at the time of processing the outer transaction (when the signatures are checked).
 
-### A.14: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-69-simulate) work with Batch?
+### A.14: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069-simulate) work with Batch?
 
 Some extra processing will be needed for that. As a result, Batch transactions likely won't be able to be simulated at first.
