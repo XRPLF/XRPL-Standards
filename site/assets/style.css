@@ -208,9 +208,9 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
 }
 
 .status-badge.stagnant, .xls-status-badge.stagnant {
-    border: 1px solid #FF4444;
-    background-color: #4C1A1A;
-    color: #FF4444;
+    border: 1px solid #CC6666;
+    background-color: #3D1F1F;
+    color: #CC6666;
 }
 
 .status-badge.withdrawn, .xls-status-badge.withdrawn {
