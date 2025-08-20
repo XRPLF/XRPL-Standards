@@ -27,6 +27,7 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "mvadari"
+      - "intelliot"
     commit-message:
       prefix: "ci"
       include: "scope"
