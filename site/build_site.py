@@ -140,6 +140,35 @@ def build_site():
     with open(site_dir / "index.html", "w", encoding="utf-8") as f:
         f.write(index_html)
 
+    # Generate contribute page from CONTRIBUTING.md
+    contributing_path = root_dir / "CONTRIBUTING.md"
+    if contributing_path.exists():
+        try:
+            with open(contributing_path, "r", encoding="utf-8") as f:
+                contributing_content = f.read()
+            
+            # Convert markdown to HTML
+            contributing_html_content = convert_markdown_to_html(contributing_content)
+            
+            # Render contribute page
+            contribute_template = env.get_template("contribute.html")
+            contribute_html = contribute_template.render(
+                title="Contributing to XLS Standards",
+                content=contributing_html_content,
+                base_url=base_url,
+            )
+            
+            # Write contribute file
+            with open(site_dir / "contribute.html", "w", encoding="utf-8") as f:
+                f.write(contribute_html)
+                
+            print(f"Generated contribute page from CONTRIBUTING.md")
+            
+        except Exception as e:
+            print(f"Error generating contribute page: {e}")
+    else:
+        print("Warning: CONTRIBUTING.md not found")
+
     # Copy CSS file
     css_source = assets_dir / "style.css"
     css_dest = site_dir / "assets" / "style.css"

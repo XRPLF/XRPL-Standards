@@ -547,3 +547,146 @@ footer {
         min-width: 500px;
     }
 }
+
+/* Contribute Page Styles */
+.contribute-page {
+    max-width: none;
+}
+
+.contribute-content {
+    line-height: 1.7;
+}
+
+.contribute-content h1 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin: 2rem 0 1rem 0;
+    font-size: 2rem;
+}
+
+.contribute-content h2 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin: 1.5rem 0 1rem 0;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.contribute-content h3 {
+    color: var(--text-color);
+    font-weight: 500;
+    margin: 1.25rem 0 0.75rem 0;
+    font-size: 1.25rem;
+}
+
+.contribute-content h4 {
+    color: var(--text-color);
+    font-weight: 500;
+    margin: 1rem 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.contribute-content h5 {
+    color: var(--text-color);
+    font-weight: 500;
+    margin: 0.75rem 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.contribute-content p {
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.contribute-content ul,
+.contribute-content ol {
+    margin: 0.5rem 0 1rem 2rem;
+    color: var(--text-color);
+}
+
+.contribute-content li {
+    margin-bottom: 0.5rem;
+}
+
+.contribute-content code {
+    background: var(--bg-color-raised);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--color-green-4);
+}
+
+.contribute-content pre {
+    background: var(--bg-color-raised);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.contribute-content pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+}
+
+.contribute-content blockquote {
+    border-left: 4px solid var(--color-blue-4);
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    background: var(--bg-color-raised);
+    color: var(--text-color-secondary);
+    font-style: italic;
+}
+
+.contribute-content a {
+    color: var(--link-color);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: all 0.2s;
+}
+
+.contribute-content a:hover {
+    color: var(--link-hover-color);
+    text-decoration-color: var(--link-hover-color);
+    background: none;
+}
+
+.contribute-content strong {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.contribute-content em {
+    color: var(--text-color-secondary);
+}
+
+/* Table styling for contribute page */
+.contribute-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background: var(--bg-color-raised);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.contribute-content th,
+.contribute-content td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.contribute-content th {
+    background: var(--color-gray-7);
+    font-weight: 600;
+}
+
+.contribute-content tr:last-child td {
+    border-bottom: none;
+}
