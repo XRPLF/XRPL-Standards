@@ -24,7 +24,7 @@ class XLSDocument:
     author: str
     folder: str
     filename: str
-    status: str  # draft, candidate, released, etc.
+    status: str  # draft, final, stagnant, withdrawn, etc.
 
     def to_dict(self):
         return asdict(self)
@@ -61,6 +61,7 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
                 r"[dD]escription:\s*(.*?)(?:\n|$)",
             ],
             "author": [r"[aA]uthor:\s*(.*?)(?:\n|$)"],
+            "status": [r"[sS]tatus:\s*(.*?)(?:\n|$)"],
         }
 
         for key, pattern_list in patterns.items():
@@ -69,7 +70,7 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
                 if match:
                     value = match.group(1).strip()
                     # Clean HTML tags from value
-                    value = BeautifulSoup(value, "html.parser").get_text()
+                    value = BeautifulSoup(value, "html.parser").get_text().replace(" ,", ",").strip()
                     metadata[key] = value
                     break
     else:
@@ -91,11 +92,8 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
     xls_match = re.match(r"XLS-(\d+)([d]?)", folder_name)
     if xls_match:
         number = xls_match.group(1)
-        is_draft = xls_match.group(2) == "d"
-        status = "draft" if is_draft else "released"
     else:
         number = "000"
-        status = "unknown"
 
     return XLSDocument(
         number=number,
@@ -104,7 +102,7 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         author=metadata["author"],
         folder=folder_name,
         filename="README.md",
-        status=status,
+        status=metadata["status"],
     )
 
 
