@@ -42,7 +42,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site"
+          path: "site/_site"
 
   deploy:
     environment:
