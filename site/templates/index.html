@@ -26,8 +26,10 @@
                 <!-- Sortable column headers with data attributes for JavaScript -->
                 <th class="sortable" data-column="number">Number</th>
                 <th class="sortable" data-column="title">Title</th>
+                <th class="sortable" data-column="category">Category</th>
                 <th class="sortable" data-column="author">Author(s)</th>
                 <th class="sortable" data-column="status">Status</th>
+                <th class="sortable" data-column="created">Created</th>
             </tr>
         </thead>
         <tbody>
@@ -44,6 +46,11 @@
                     <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
                 </td>
                 
+                <!-- Category column -->
+                <td class="category-col" data-label="Category" data-sort-value="{{ doc.category|lower }}">
+                    <span class="category-badge {{ doc.category|lower }}">{{ doc.category }}</span>
+                </td>
+                
                 <!-- Author information -->
                 <td class="author-col" data-label="Author" data-sort-value="{% for author in doc.authors %}{% if author %}{{ author[0]|lower }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}">
                 {% for author in doc.authors %}
@@ -54,6 +61,11 @@
                 <!-- Status badge with conditional styling -->
                 <td class="status-col" data-label="Status" data-sort-value="{{ doc.status|lower }}">
                     <span class="status-badge {{doc.status|lower}}">{{ doc.status.title() }}</span>
+                </td>
+                
+                <!-- Created date column -->
+                <td class="created-col" data-label="Created" data-sort-value="{{ doc.created }}">
+                    {{ doc.created }}
                 </td>
             </tr>
             {% endfor %}
@@ -108,10 +120,14 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.sort((a, b) => {
             let aVal, bVal;
             
-            // Special handling for numerical sorting of XLS numbers
+            // Special handling for numerical sorting of XLS numbers and dates
             if (column === 'number') {
                 aVal = parseInt(a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
                 bVal = parseInt(b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
+            } else if (column === 'created') {
+                // Sort by date - data is already in YYYY-MM-DD format which sorts correctly as strings
+                aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
+                bVal = b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
             } else {
                 // Text-based sorting for other columns
                 aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;

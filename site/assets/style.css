@@ -219,6 +219,37 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     color: var(--text-color-secondary);
 }
 
+/* Category badges */
+.category-badge {
+    display: inline-block;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+    text-transform: capitalize;
+    min-width: 80px;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.category-badge.amendment {
+    border: 1px solid #FF6B35;
+    background-color: #4A1E0E;
+    color: #FF6B35;
+}
+
+.category-badge.community {
+    border: 1px solid var(--color-purple-4);
+    background-color: #2E1A4C;
+    color: var(--color-purple-4);
+}
+
+.category-badge.protocol {
+    border: 1px solid #FFD700;
+    background-color: #4C4200;
+    color: #FFD700;
+}
+
 /* XLS document page */
 .xls-document {
     padding: 32px;

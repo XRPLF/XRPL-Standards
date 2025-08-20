@@ -26,6 +26,8 @@ class XLSDocument:
     folder: str
     filename: str
     status: str  # draft, final, stagnant, withdrawn, etc.
+    category: str  # amendment, community, protocol, etc.
+    created: str  # YYYY-MM-DD format
 
     def to_dict(self):
         return asdict(self)
@@ -54,53 +56,49 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         print("ERROR: No <pre> block found in content")
         sys.exit(1)
 
-    # Extract metadata using various patterns
+    # Extract metadata using standardized patterns (headers are now enforced by CI)
     patterns = {
-        "title": [
-            r"[tT]itle:\s*<b>(.*?)</b>",
-            r"[tT]itle:\s*(.*?)(?:\n|$)",
-        ],
-        "description": [
-            r"[dD]escription:\s*(.*?)(?:\n|$)",
-        ],
-        "authors": [r"[aA]uthor:\s*(.*?)(?:\n|$)"],
-        "status":  [r"[sS]tatus:\s*(.*?)(?:\n|$)"],
+        "title": r"[tT]itle:\s*(.*?)(?:\n|$)",
+        "description": r"[dD]escription:\s*(.*?)(?:\n|$)",
+        "authors": r"[aA]uthor:\s*(.*?)(?:\n|$)",
+        "status": r"[sS]tatus:\s*(.*?)(?:\n|$)",
+        "category": r"[cC]ategory:\s*(.*?)(?:\n|$)",
+        "created": r"[cC]reated:\s*(.*?)(?:\n|$)",
     }
 
-    for key, pattern_list in patterns.items():
-        for pattern in pattern_list:
-            match = re.search(pattern, pre_text, re.IGNORECASE | re.DOTALL)
-            if match:
-                value = match.group(1).strip()
-                # Clean HTML tags from value
-                if key == "authors":
-                    # Ensure authors are comma-separated
-                    # Convert author to mailto or GitHub link if possible
-                    def format_author(author):
-                        author = author.strip()
-                        # Email address
-                        email_match = re.match(r"^(.*?)\s*<\s*([^>]+)\s*>$", author)
-                        if email_match:
-                            name = email_match.group(1).strip()
-                            email = email_match.group(2).strip()
-                            return name, f'mailto:{email}'
-                        # GitHub username in parentheses
-                        gh_match = re.match(r"^(.*?)\s*\(@([^)]+)\)$", author)
-                        if gh_match:
-                            name = gh_match.group(1).strip()
-                            gh_user = gh_match.group(2).strip()
-                            return name, f'https://github.com/{gh_user}'
-                        # Just a name
-                        return author, ""
+    def format_author(author):
+        """Format author information into name and link tuple."""
+        author = author.strip()
+        # Email address
+        email_match = re.match(r"^(.*?)\s*<\s*([^>]+)\s*>$", author)
+        if email_match:
+            name = email_match.group(1).strip()
+            email = email_match.group(2).strip()
+            return name, f'mailto:{email}'
+        # GitHub username in parentheses
+        gh_match = re.match(r"^(.*?)\s*\(@([^)]+)\)$", author)
+        if gh_match:
+            name = gh_match.group(1).strip()
+            gh_user = gh_match.group(2).strip()
+            return name, f'https://github.com/{gh_user}'
+        # Just a name
+        return author, ""
 
-                    value = [
-                        format_author(author)
-                        for author in value.split(",")
-                    ]
-                else:
-                    value = BeautifulSoup(value, "html.parser").get_text().strip()
-                metadata[key] = value
-                break
+    for key, pattern in patterns.items():
+        match = re.search(pattern, pre_text, re.IGNORECASE | re.DOTALL)
+        if match:
+            value = match.group(1).strip()
+            # Clean HTML tags from value and process based on field type
+            if key == "authors":
+                # Process comma-separated authors
+                value = [
+                    format_author(author)
+                    for author in value.split(",")
+                ]
+            else:
+                # Clean HTML tags for other fields
+                value = BeautifulSoup(value, "html.parser").get_text().strip()
+            metadata[key] = value
 
     # Extract XLS number from folder name
     xls_match = re.match(r"XLS-(\d+)([d]?)", folder_name)
@@ -111,12 +109,14 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
 
     return XLSDocument(
         number=number,
-        title=metadata["title"],
-        description=metadata["description"],
-        authors=metadata["authors"],
+        title=metadata.get("title", "Unknown Title"),
+        description=metadata.get("description", "No description available"),
+        authors=metadata.get("authors", [("Unknown Author", "")]),
         folder=folder_name,
         filename="README.md",
-        status=metadata["status"],
+        status=metadata.get("status", "Unknown"),
+        category=metadata.get("category", "Unknown"),
+        created=metadata.get("created", "Unknown"),
     )
 
 
@@ -189,9 +189,21 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required title metadata"
                 )
-            if not doc.authors or doc.authors == "Unknown Author":
+            if not doc.authors or doc.authors == [("Unknown Author", "")]:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required authors metadata"
+                )
+            if not doc.status or doc.status == "Unknown":
+                validation_errors.append(
+                    f"Error: {doc.folder} is missing required status metadata"
+                )
+            if not doc.category or doc.category == "Unknown":
+                validation_errors.append(
+                    f"Error: {doc.folder} is missing required category metadata"
+                )
+            if not doc.created or doc.created == "Unknown":
+                validation_errors.append(
+                    f"Error: {doc.folder} is missing required created metadata"
                 )
 
         if validation_errors:
