@@ -859,4 +859,4 @@ Without this restriction, the following example demonstrates how a duplicate NFT
 
 ## History
 
-This spec, at revision 10, describes XLS-20 with [the `fixNFTokenRemint` amendment](https://xrpl.org/known-amendments.html#fixnftokenremint) active. For earlier versions of this spec, please see [the commit history](https://github.com/XRPLF/XRPL-Standards/commits/master/XLS-0020-non-fungible-tokens).
+This spec, at revision 10, describes XLS-20 with [the `fixNFTokenRemint` amendment](https://xrpl.org/known-amendments.html#fixnftokenremint) active. For earlier versions of this spec, please see [the commit history](https://github.com/XRPLF/XRPL-Standards/commits/master/XLS-0020-non-fungible-tokens/README.md).

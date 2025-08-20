@@ -1,6 +1,6 @@
 <pre>
 xls: 23
-title: Lite Accounts (lower reserve, less features)
+title: Lite Accounts
 description: A proposal for lite accounts with reduced account reserves but limited features
 author: Wietse Wind <w@xrpl-labs.com>, Richard Holland <richard@bitlocus.com>
 discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/23
