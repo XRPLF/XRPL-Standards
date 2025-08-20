@@ -3,7 +3,7 @@ xls: 77
 title: Deep-freeze
 description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
 author: Mayukha Vadari <mvadari@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/77
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/220
 status: Draft
 category: Amendment
 created: 2022-10-01

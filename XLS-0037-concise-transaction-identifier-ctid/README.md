@@ -3,7 +3,7 @@ xls: 37
 title: Concise Transaction Identifier (CTID)
 description: A way to locate validated transactions using ledger sequence number, transaction index, and network ID rather than transaction hash
 author: Scott Determan <sdeterman@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/37
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/91
 status: Draft
 category: Protocol
 created: 2021-06-01
