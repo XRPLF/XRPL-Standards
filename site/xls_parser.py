@@ -54,16 +54,13 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         # Extract metadata using various patterns
         patterns = {
             "title": [
-                r"title:\s*<b>(.*?)</b>",
-                r"Title:\s*<b>(.*?)</b>",
-                r"title:\s*(.*?)(?:\n|$)",
-                r"Title:\s*(.*?)(?:\n|$)",
+                r"[tT]itle:\s*<b>(.*?)</b>",
+                r"[tT]itle:\s*(.*?)(?:\n|$)",
             ],
             "description": [
-                r"description:\s*(.*?)(?:\n|$)",
-                r"Description:\s*(.*?)(?:\n|$)",
+                r"[dD]escription:\s*(.*?)(?:\n|$)",
             ],
-            "author": [r"author:\s*(.*?)(?:\n|$)", r"Author:\s*(.*?)(?:\n|$)"],
+            "author": [r"[aA]uthor:\s*(.*?)(?:\n|$)"],
         }
 
         for key, pattern_list in patterns.items():

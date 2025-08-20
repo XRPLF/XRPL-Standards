@@ -39,6 +39,15 @@
     padding: 0;
 }
 
+a {
+    color: var(--link-color);
+}
+
+a:hover {
+    background: var(--color-gray-7);
+    color: var(--link-hover-color);
+}
+
 body {
     font-family: var(--font-family-base);
     line-height: 1.6;
@@ -465,6 +474,7 @@ main {
 .document-content tbody tr:last-child td {
     border-bottom: none;
 }
+
 
 /* Document navigation */
 .document-nav {

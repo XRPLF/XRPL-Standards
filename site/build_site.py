@@ -6,14 +6,11 @@ Converts markdown XLS files to HTML and creates an index page.
 
 import os
 import shutil
-import sys
 from pathlib import Path
 
 import markdown
 from jinja2 import Environment, FileSystemLoader
 
-# Add site directory to Python path for imports
-sys.path.append("site")
 from xls_parser import find_xls_documents
 
 
@@ -33,13 +30,14 @@ def build_site():
     """Main function to build the static site."""
 
     # Setup directories
-    root_dir = Path(".")
-    site_dir = root_dir / "_site"
-    template_dir = root_dir / "site" / "templates"
-    assets_dir = root_dir / "site" / "assets"
+    source_dir = Path(__file__).parent.resolve()
+    root_dir = source_dir.parent
+    site_dir = source_dir / "_site"
+    template_dir = source_dir / "templates"
+    assets_dir = source_dir / "assets"
 
     # Set base URL for GitHub Pages (can be overridden with env var)
-    base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "/XRPL-Standards")
+    base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "/XRPL-Standards") if "GITHUB_REPOSITORY" in os.environ else os.environ.get("GITHUB_PAGES_BASE_URL", ".")
 
     # Clean and create site directory
     if site_dir.exists():
@@ -77,7 +75,7 @@ def build_site():
                 doc=doc,
                 content=html_content,
                 title=f"XLS-{doc.number}: {doc.title}",
-                base_url=base_url,
+                base_url=".." if base_url == "." else base_url,
             )
 
             # Write XLS HTML file
