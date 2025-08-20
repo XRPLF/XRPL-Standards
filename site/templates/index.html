@@ -1,0 +1,153 @@
+<!-- 
+    Index page template for XLS Standards website
+    
+    Displays all XLS standards in a sortable table format with:
+    - Introduction section with total count
+    - Interactive sortable table with 4 columns (Number, Title, Author, Status)
+    - Status badges with color coding (Released=green, Draft=blue, etc.)
+    - JavaScript-powered sorting functionality
+    - Mobile-responsive design with horizontal scrolling
+-->
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Introduction section -->
+<div class="intro">
+    <h2>XRP Ledger Standards (XLS)</h2>
+    <p>XRP Ledger Standards (XLSes) describe standards and specifications relating to the XRP Ledger ecosystem that help achieve interoperability, compatibility, and excellent user experience.</p>
+    <p>Total standards: <strong>{{ total_count }}</strong></p>
+</div>
+
+<!-- Main standards table with horizontal scrolling for mobile -->
+<div class="standards-table-container">
+    <table class="standards-table" id="standardsTable">
+        <thead>
+            <tr>
+                <!-- Sortable column headers with data attributes for JavaScript -->
+                <th class="sortable" data-column="number">Number</th>
+                <th class="sortable" data-column="title">Title</th>
+                <th class="sortable" data-column="author">Author</th>
+                <th class="sortable" data-column="status">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through all XLS documents -->
+            {% for doc in xls_docs %}
+            <tr class="status-{{ doc.status }}">
+                <!-- XLS number column with link to document -->
+                <td class="number-col" data-label="Number" data-sort-value="{{ doc.number|int }}">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
+                </td>
+                
+                <!-- Document title with link -->
+                <td class="title-col" data-label="Title" data-sort-value="{{ doc.title|lower }}">
+                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+                </td>
+                
+                <!-- Author information -->
+                <td class="author-col" data-label="Author" data-sort-value="{{ doc.author|lower }}">{{ doc.author }}</td>
+                
+                <!-- Status badge with conditional styling -->
+                <td class="status-col" data-label="Status" data-sort-value="{{ doc.status|lower }}">
+                    {% if doc.status == 'released' %}
+                    <span class="status-badge released">Released</span>
+                    {% elif doc.status == 'candidate' %}
+                    <span class="status-badge candidate">Candidate</span>
+                    {% elif doc.status == 'draft' %}
+                    <span class="status-badge draft">Draft</span>
+                    {% else %}
+                    <span class="status-badge other">{{ doc.status.title() }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- JavaScript for interactive table sorting functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('standardsTable');
+    const headers = table.querySelectorAll('th.sortable');
+    // Default sort: reverse numerical order (later standards more relevant)
+    let currentSort = {column: 'number', direction: 'desc'};
+    
+    // Set initial sort indicator on the Number column
+    const numberHeader = table.querySelector('th[data-column="number"]');
+    numberHeader.classList.add('sort-desc');
+    
+    // Add click event listeners to all sortable headers
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.dataset.column;
+            let direction = 'asc';
+            
+            // Toggle direction if clicking the same column
+            if (currentSort.column === column && currentSort.direction === 'asc') {
+                direction = 'desc';
+            }
+            
+            // Perform the sort and update UI indicators
+            sortTable(column, direction);
+            updateSortIndicators(this, direction);
+            
+            // Update current sort state
+            currentSort = {column, direction};
+        });
+    });
+    
+    /**
+     * Sort the table by the specified column and direction
+     * @param {string} column - Column identifier (number, title, author, status)
+     * @param {string} direction - Sort direction ('asc' or 'desc')
+     */
+    function sortTable(column, direction) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // Sort rows based on data-sort-value attributes
+        rows.sort((a, b) => {
+            let aVal, bVal;
+            
+            // Special handling for numerical sorting of XLS numbers
+            if (column === 'number') {
+                aVal = parseInt(a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
+                bVal = parseInt(b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
+            } else {
+                // Text-based sorting for other columns
+                aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
+                bVal = b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
+            }
+            
+            // Apply sort direction
+            if (direction === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            } else {
+                return aVal < bVal ? 1 : -1;
+            }
+        });
+        
+        // Re-append sorted rows to the table body
+        rows.forEach(row => tbody.appendChild(row));
+    }
+    
+    /**
+     * Update visual sort indicators in column headers
+     * @param {Element} activeHeader - The clicked header element
+     * @param {string} direction - Sort direction ('asc' or 'desc')
+     */
+    function updateSortIndicators(activeHeader, direction) {
+        // Clear all existing sort indicators
+        headers.forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Add indicator to the active header
+        activeHeader.classList.add(`sort-${direction}`);
+    }
+});
+</script>
+{% endblock %}
