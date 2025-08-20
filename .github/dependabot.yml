@@ -17,12 +17,12 @@ updates:
     commit-message:
       prefix: "deps"
       include: "scope"
-    
-  # GitHub Actions dependencies  
+
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly" 
+      interval: "weekly"
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
