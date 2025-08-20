@@ -176,11 +176,18 @@ def validate_xls_documents(root_dir: Path) -> bool:
             return False
             
         # Check for required fields
+        validation_errors = []
         for doc in docs:
             if not doc.title or doc.title == 'Unknown Title':
-                print(f"Warning: {doc.folder} has no title")
+                validation_errors.append(f"Error: {doc.folder} is missing required title metadata")
             if not doc.author or doc.author == 'Unknown Author':
-                print(f"Warning: {doc.folder} has no author")
+                validation_errors.append(f"Error: {doc.folder} is missing required author metadata")
+        
+        if validation_errors:
+            for error in validation_errors:
+                print(error)
+            print(f"Validation failed: {len(validation_errors)} document(s) missing required metadata")
+            return False
                 
         print(f"Successfully validated {len(docs)} XLS documents")
         return True
