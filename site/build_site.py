@@ -12,6 +12,7 @@ import markdown
 from jinja2 import Environment, FileSystemLoader
 
 from xls_parser import find_xls_documents
+from collections import Counter
 
 
 def convert_markdown_to_html(content: str) -> str:
@@ -116,21 +117,11 @@ def build_site():
     print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
 
     # Count by status for reporting
-    released_count = len([doc for doc in xls_docs if doc.status == "released"])
-    candidates_count = len([doc for doc in xls_docs if doc.status == "candidate"])
-    drafts_count = len([doc for doc in xls_docs if doc.status == "draft"])
-    others_count = len(
-        [
-            doc
-            for doc in xls_docs
-            if doc.status not in ["draft", "candidate", "released"]
-        ]
-    )
+    # Count documents by status (case-insensitive, no hardcoding)
+    status_counts = Counter(getattr(doc, "status", "").strip().lower() or "unknown" for doc in xls_docs)
 
-    print(f"- Released: {released_count}")
-    print(f"- Candidates: {candidates_count}")
-    print(f"- Drafts: {drafts_count}")
-    print(f"- Others: {others_count}")
+    for status, count in status_counts.items():
+        print(f"- {status.capitalize()}: {count}")
 
 
 if __name__ == "__main__":

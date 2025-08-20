@@ -1,10 +1,12 @@
 <pre>
-    XLS: XLS-23d
-    Title: 0023 XLS-23d: Lite Accounts (lower reserve, less features)
-    Author: Wietse Wind (WietseWind)
-    Created: 2021-08-27
-    Status: Stagnant
-    Category: Amendment
+  xls: 23
+  title: Lite Accounts
+  description: A proposal for lite accounts with reduced account reserves but limited features
+  author: Wietse Wind (@WietseWind)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/56
+  status: Stagnant
+  category: Amendment
+  created: 2021-08-27
 </pre>
 # LiteAccounts Amendment
 

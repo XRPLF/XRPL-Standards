@@ -9,7 +9,8 @@ and extract their metadata for use in documentation systems and validation.
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
+import sys
 
 from bs4 import BeautifulSoup
 
@@ -21,10 +22,10 @@ class XLSDocument:
     number: str
     title: str
     description: str
-    author: str
+    authors: List[Tuple[str, str]]  # Tuple of (author_name, author_link)
     folder: str
     filename: str
-    status: str  # draft, candidate, released, etc.
+    status: str  # draft, final, stagnant, withdrawn, etc.
 
     def to_dict(self):
         return asdict(self)
@@ -42,69 +43,80 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
     """
 
     # Initialize metadata with defaults
-    metadata = {"title": "Unknown Title", "description": "", "author": "Unknown Author"}
+    metadata = {}
 
     # Parse HTML pre block for metadata
-    soup = BeautifulSoup(content, "html.parser")
-    pre_block = soup.find("pre")
-
-    if pre_block:
-        pre_text = pre_block.get_text()
-
-        # Extract metadata using various patterns
-        patterns = {
-            "title": [
-                r"[tT]itle:\s*<b>(.*?)</b>",
-                r"[tT]itle:\s*(.*?)(?:\n|$)",
-            ],
-            "description": [
-                r"[dD]escription:\s*(.*?)(?:\n|$)",
-            ],
-            "author": [r"[aA]uthor:\s*(.*?)(?:\n|$)"],
-        }
-
-        for key, pattern_list in patterns.items():
-            for pattern in pattern_list:
-                match = re.search(pattern, pre_text, re.IGNORECASE | re.DOTALL)
-                if match:
-                    value = match.group(1).strip()
-                    # Clean HTML tags from value
-                    value = BeautifulSoup(value, "html.parser").get_text()
-                    metadata[key] = value
-                    break
+    pre_regex = r"<pre>(.*?)</pre>"
+    match = re.search(pre_regex, content, re.DOTALL)
+    if match:
+        pre_text = match.group(1)
     else:
-        # Try to extract from first heading and content
-        lines = content.split("\n")
-        first_line = lines[0].strip() if lines else ""
+        print("ERROR: No <pre> block found in content")
+        sys.exit(1)
 
-        # Try to extract title from first heading
-        heading_match = re.match(r"^#\s*(.*)", first_line)
-        if heading_match:
-            metadata["title"] = heading_match.group(1).strip()
+    # Extract metadata using various patterns
+    patterns = {
+        "title": [
+            r"[tT]itle:\s*<b>(.*?)</b>",
+            r"[tT]itle:\s*(.*?)(?:\n|$)",
+        ],
+        "description": [
+            r"[dD]escription:\s*(.*?)(?:\n|$)",
+        ],
+        "authors": [r"[aA]uthor:\s*(.*?)(?:\n|$)"],
+        "status":  [r"[sS]tatus:\s*(.*?)(?:\n|$)"],
+    }
 
-        # For files without pre blocks, try to infer some info
-        print(
-            f"Warning: No metadata pre block found in {folder_name}, using fallback extraction"
-        )
+    for key, pattern_list in patterns.items():
+        for pattern in pattern_list:
+            match = re.search(pattern, pre_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                value = match.group(1).strip()
+                # Clean HTML tags from value
+                if key == "authors":
+                    # Ensure authors are comma-separated
+                    # Convert author to mailto or GitHub link if possible
+                    def format_author(author):
+                        author = author.strip()
+                        # Email address
+                        email_match = re.match(r"^(.*?)\s*<\s*([^>]+)\s*>$", author)
+                        if email_match:
+                            name = email_match.group(1).strip()
+                            email = email_match.group(2).strip()
+                            return name, f'mailto:{email}'
+                        # GitHub username in parentheses
+                        gh_match = re.match(r"^(.*?)\s*\(@([^)]+)\)$", author)
+                        if gh_match:
+                            name = gh_match.group(1).strip()
+                            gh_user = gh_match.group(2).strip()
+                            return name, f'https://github.com/{gh_user}'
+                        # Just a name
+                        return author, ""
+
+                    value = [
+                        format_author(author)
+                        for author in value.split(",")
+                    ]
+                else:
+                    value = BeautifulSoup(value, "html.parser").get_text().strip()
+                metadata[key] = value
+                break
 
     # Extract XLS number from folder name
     xls_match = re.match(r"XLS-(\d+)([d]?)", folder_name)
     if xls_match:
         number = xls_match.group(1)
-        is_draft = xls_match.group(2) == "d"
-        status = "draft" if is_draft else "released"
     else:
         number = "000"
-        status = "unknown"
 
     return XLSDocument(
         number=number,
         title=metadata["title"],
         description=metadata["description"],
-        author=metadata["author"],
+        authors=metadata["authors"],
         folder=folder_name,
         filename="README.md",
-        status=status,
+        status=metadata["status"],
     )
 
 
@@ -177,9 +189,9 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required title metadata"
                 )
-            if not doc.author or doc.author == "Unknown Author":
+            if not doc.authors or doc.authors == "Unknown Author":
                 validation_errors.append(
-                    f"Error: {doc.folder} is missing required author metadata"
+                    f"Error: {doc.folder} is missing required authors metadata"
                 )
 
         if validation_errors:
