@@ -250,6 +250,91 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     color: #FFD700;
 }
 
+.category-badge.all {
+    border: 1px solid var(--color-gray-4);
+    background-color: var(--color-gray-7);
+    color: var(--color-gray-4);
+}
+
+/* Category navigation */
+.category-nav {
+    margin: 32px 0;
+    padding: 24px;
+    background: var(--bg-color-raised);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.category-nav h3 {
+    margin: 0 0 16px 0;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.category-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.category-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.category-link:hover {
+    background: var(--color-gray-7);
+    border-color: var(--color-gray-4);
+    transform: translateY(-1px);
+}
+
+.category-link.active {
+    background: var(--color-gray-7);
+    border-color: var(--link-color);
+}
+
+.category-link .count {
+    color: var(--text-color-secondary);
+    font-size: 12px;
+}
+
+/* Category header for individual category pages */
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.category-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.category-description {
+    margin: 16px 0 24px 0;
+    padding: 16px;
+    background: var(--color-gray-8);
+    border-left: 4px solid var(--link-color);
+    border-radius: 0 4px 4px 0;
+}
+
+.category-description p {
+    margin: 0;
+    color: var(--text-color-secondary);
+    line-height: 1.6;
+}
+
 /* XLS document page */
 .xls-document {
     padding: 32px;
