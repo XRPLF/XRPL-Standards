@@ -263,6 +263,7 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     background: var(--bg-color-raised);
     border: 1px solid var(--border-color);
     border-radius: 8px;
+    text-align: center;
 }
 
 .category-nav h3 {
