@@ -1,12 +1,12 @@
 <pre>
-xls: 30
-title: Automated Market Maker on XRPL
-description: Non-custodial automated market maker as a native feature to the XRPL DEX with unique auction mechanism for trading advantages
-author: Aanchal Malhotra <amalhotra@ripple.com>, Sean Kauffman <skauffman@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/30
-status: Draft
-category: Amendment
-created: 2021-03-01
+  xls: 30
+  title: Automated Market Maker on XRPL
+  description: Non-custodial automated market maker as a native feature to the XRPL DEX with unique auction mechanism for trading advantages
+  author: Aanchal Malhotra <amalhotra@ripple.com>, David J. Schwartz <david@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/78
+  status: Final
+  category: Amendment
+  created: 2021-03-01
 </pre>
 # Automated Market Maker on XRP Ledger
 

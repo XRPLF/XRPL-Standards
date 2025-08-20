@@ -1,12 +1,12 @@
 <pre>
-xls: 45
-title: Prepublish Validator Lists
-description: Future activation date and improved expiration handling of UNLs
-author: Aanchal Malhotra <amalhotra@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/45
-status: Draft
-category: Protocol
-created: 2021-11-01
+  xls: 45
+  title: Prepublish Validator Lists
+  description: Future activation date and improved expiration handling of UNLs
+  author: Aanchal Malhotra <amalhotra@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/45
+  status: Draft
+  category: Protocol
+  created: 2021-11-01
 </pre>
 
 

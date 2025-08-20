@@ -1,13 +1,13 @@
 <pre>
-xls: 70
-title: On-Chain Credentials
-description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
-author: Denis Angell <dangell@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/202
-status: Draft
-category: Community
-requires: XLS-40
-created: 2022-07-01
+  xls: 70
+  title: On-Chain Credentials
+  description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
+  author: Denis Angell <dangell@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/202
+  status: Draft
+  category: Community
+  requires: XLS-40
+  created: 2022-07-01
 </pre>
 
 # On-Chain Credentials

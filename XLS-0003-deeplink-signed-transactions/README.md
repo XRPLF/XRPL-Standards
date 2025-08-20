@@ -1,12 +1,12 @@
 <pre>
-xls: 3
-title: Sharing and deeplinking signed transactions
-description: A standard for encoding HEX signed transactions for air-gapped submissions with deep link support
-author: Wietse Wind <w@xrpl-labs.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/26
-status: Stagnant
-category: Community
-created: 2019-03-06
+  xls: 3
+  title: Sharing and deeplinking signed transactions
+  description: A standard for encoding HEX signed transactions for air-gapped submissions with deep link support
+  author: Wietse Wind <w@xrpl-labs.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/26
+  status: Stagnant
+  category: Community
+  created: 2019-03-06
 </pre>
 
 Currently several apps are using a variety of methods to encode HEX signed transactions (to be submitted air gapped);

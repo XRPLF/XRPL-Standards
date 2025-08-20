@@ -1,12 +1,12 @@
 <pre>
-xls: 74
-title: Account Permissions
-description: Formalization of different types of transaction-based account permissions for subset capabilities
-author: Mayukha Vadari <mvadari@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
-status: Draft
-category: Amendment
-created: 2022-08-01
+  xls: 74
+  title: Account Permissions
+  description: Formalization of different types of transaction-based account permissions for subset capabilities
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
+  status: Draft
+  category: Amendment
+  created: 2022-08-01
 </pre>
 
 # Account Permissions

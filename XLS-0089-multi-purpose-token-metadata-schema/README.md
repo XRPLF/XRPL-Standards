@@ -1,13 +1,13 @@
 <pre>
-xls: 89
-title: Multi-Purpose Token Metadata Schema
-description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
-author: Nathan Nichols <nnichols@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
-status: Draft
-category: Community
-requires: XLS-33
-created: 2023-03-01
+  xls: 89
+  title: Multi-Purpose Token Metadata Schema
+  description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
+  author: Nathan Nichols <nnichols@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
+  status: Draft
+  category: Community
+  requires: XLS-33
+  created: 2023-03-01
 </pre>
 
 ---

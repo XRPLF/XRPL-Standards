@@ -1,13 +1,13 @@
 <pre>
-xls: <XLS number>
-title: <The title is a few words, not a complete sentence>
-description: <Description is one full (short) sentence>
-author: <a comma separated list of the author(s) with email addresses>
-discussion-from: [link to XRPL-Standards discussion with the same XLS number]
-status: Discussion
-category: Meta
-requires: [optional, based on if it depends on other features]
-created: YYYY-MM-DD
+  xls: <XLS number>
+  title: <The title is a few words, not a complete sentence>
+  description: <Description is one full (short) sentence>
+  author: <a comma separated list of the author(s) with email addresses>
+  discussion-from: [link to XRPL-Standards discussion with the same XLS number]
+  status: Discussion
+  category: Meta
+  requires: [optional, based on if it depends on other features]
+  created: YYYY-MM-DD
 </pre>
 
 <!--

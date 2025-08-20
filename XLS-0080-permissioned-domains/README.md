@@ -1,13 +1,13 @@
 <pre>
-xls: 80
-title: Permissioned Domains
-description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
-author: Denis Angell <dangell@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
-status: Draft
-category: Community
-requires: XLS-70
-created: 2022-12-01
+  xls: 80
+  title: Permissioned Domains
+  description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
+  author: Denis Angell <dangell@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
+  status: Draft
+  category: Community
+  requires: XLS-70
+  created: 2022-12-01
 </pre>
 
 # Permissioned Domains

@@ -1,12 +1,12 @@
 <pre>
-xls: 46
-title: Dynamic Non Fungible Tokens (dNFTs)
-description: Support for XLS-20 NFTs to modify and upgrade token properties as mutable NFTs
-author: Nathan Nichols <nnichols@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/130
-status: Draft
-category: Community
-created: 2021-12-01
+  xls: 46
+  title: Dynamic Non Fungible Tokens (dNFTs)
+  description: Support for XLS-20 NFTs to modify and upgrade token properties as mutable NFTs
+  author: Nathan Nichols <nnichols@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/130
+  status: Draft
+  category: Community
+  created: 2021-12-01
 </pre>
 
 ## Abstract

@@ -1,12 +1,12 @@
 <pre>
-xls: 40
-title: Decentralized Identity on XRP Ledger
-description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
-author: Caleb Tutty <ctutty@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/100
-status: Draft
-category: Community
-created: 2021-09-01
+  xls: 40
+  title: Decentralized Identity on XRP Ledger
+  description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
+  author: Caleb Tutty <ctutty@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/100
+  status: Draft
+  category: Community
+  created: 2021-09-01
 </pre>
 
 # 1. Abstract

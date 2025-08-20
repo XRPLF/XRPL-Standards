@@ -1,12 +1,12 @@
 <pre>
-xls: 20
-title: Non-Fungible Token Support
-description: Extensions to the XRP Ledger that support a native non-fungible token type with operations to enumerate, purchase, sell and hold such tokens
-author: David J. Schwartz <david@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Nikolaos D. Bougalis <nikb@bougalis.net>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/46
-status: Final
-category: Amendment
-created: 2023-01-20
+  xls: 20
+  title: Non-Fungible Token Support
+  description: Extensions to the XRP Ledger that support a native non-fungible token type with operations to enumerate, purchase, sell and hold such tokens
+  author: David J. Schwartz <david@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Nikolaos D. Bougalis <nikb@bougalis.net>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/46
+  status: Final
+  category: Amendment
+  created: 2023-01-20
 </pre>
 
 # 1. Non-Fungible Token Support

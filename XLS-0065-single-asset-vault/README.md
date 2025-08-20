@@ -1,13 +1,13 @@
 <pre>
-xls: 65
-title: Single Asset Tokenized Vault
-description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
-author: Nathan Nichols <nnichols@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/65
-status: Draft
-category: Community
-requires: XLS-33
-created: 2022-05-01
+  xls: 65
+  title: Single Asset Tokenized Vault
+  description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
+  author: Nathan Nichols <nnichols@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/65
+  status: Draft
+  category: Community
+  requires: XLS-33
+  created: 2022-05-01
 </pre>
 
 # Single Asset Vault

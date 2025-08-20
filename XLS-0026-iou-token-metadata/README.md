@@ -1,12 +1,12 @@
 <pre>
-xls: 26
-title: IOU Token Metadata via xrp-ledger.toml
-description: A unified solution for IOU token metadata by adding optional fields to the existing xrp-ledger.toml standard
-author: Ed Hennis <ed@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/71
-status: Draft
-category: Community
-created: 2022-01-01
+  xls: 26
+  title: IOU Token Metadata via xrp-ledger.toml
+  description: A unified solution for IOU token metadata by adding optional fields to the existing xrp-ledger.toml standard
+  author: Marc-Emanuel Otto
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/71
+  status: Draft
+  category: Community
+  created: 2022-01-01
 </pre>
 
 

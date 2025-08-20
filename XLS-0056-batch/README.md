@@ -1,12 +1,12 @@
 <pre>
-xls: 56
-title: Atomic/Batch Transactions
-description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
-author: Peter Chen <pchen@ripple.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
-status: Draft
-category: Amendment
-created: 2022-04-01
+  xls: 56
+  title: Atomic/Batch Transactions
+  description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
+  author: Peter Chen <pchen@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
+  status: Draft
+  category: Amendment
+  created: 2022-04-01
 </pre>
 
 # Atomic/Batch Transactions

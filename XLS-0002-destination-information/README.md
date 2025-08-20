@@ -1,12 +1,12 @@
 <pre>
-xls: 2
-title: XRPL destination information
-description: A standard for encoding destination information with backwards compatibility for web browsers
-author: Wietse Wind <w@xrpl-labs.com>
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/27
-status: Stagnant
-category: Community
-created: 2019-02-25
+  xls: 2
+  title: XRPL destination information
+  description: A standard for encoding destination information with backwards compatibility for web browsers
+  author: Wietse Wind <w@xrpl-labs.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/27
+  status: Stagnant
+  category: Community
+  created: 2019-02-25
 </pre>
 
 Currently several apps are using a variety of methods to encode destination information;
