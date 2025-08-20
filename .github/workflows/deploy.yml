@@ -34,7 +34,7 @@ jobs:
           pip install markdown beautifulsoup4 jinja2 pyyaml
 
       - name: Build site
-        run: python build_site.py
+        run: python site/build_site.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
