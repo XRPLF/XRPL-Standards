@@ -2,10 +2,11 @@
 xls: 77
 title: Deep-freeze
 description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
-author: Shawn Xie, Ripple <shawnxie@ripple.com>
+author: Mayukha Vadari <mvadari@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/77
 status: Draft
 category: Amendment
-created: 2021-01-01
+created: 2022-10-01
 </pre>
 
 # Deep-freeze

@@ -2,10 +2,11 @@
 xls: 5
 title: Tagged Addresses
 description: A standard for addresses that contain both the target wallet and destination tag as a single unit
-author: Nikolaos D. Bougalis, Ripple <nikb@bougalis.net>
-status: Draft
+author: Nikolaos D. Bougalis <nikb@bougalis.net>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/6
+status: Final
 category: Community
-created: 2021-01-01
+created: 2019-06-04
 </pre>
 
 # Abstract

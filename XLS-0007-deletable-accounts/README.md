@@ -2,10 +2,11 @@
 xls: 7
 title: Deletable Accounts on the XRP Ledger
 description: A feature for completely removing accounts from the ledger and recovering the reserve from those accounts
-author: Scott Schurr, Ripple <scott@ripple.com>, Nik Bougalis <nikb@bougalis.net>
-status: Draft
-category: Community
-created: 2021-01-01
+author: Scott Schurr <scott@ripple.com>, Nik Bougalis <nikb@bougalis.net>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/8
+status: Final
+category: Amendment
+created: 2019-10-01
 </pre>
 
 # Abstract

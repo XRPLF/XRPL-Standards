@@ -2,10 +2,11 @@
 xls: 75
 title: Permission Delegation
 description: Authorization delegation mechanism to enhance flexibility and usability of XRPL accounts
-author: Mayukha Vadari, Ripple <mvadari@ripple.com>, Yinyi Qian, Ripple <yqian@ripple.com>, Ed Hennis, Ripple <ed@ripple.com>
+author: Mayukha Vadari <mvadari@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/75
 status: Draft
 category: Community
-created: 2021-01-01
+created: 2022-09-01
 </pre>
 
 # Permission Delegation

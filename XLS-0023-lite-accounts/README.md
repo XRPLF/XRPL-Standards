@@ -2,10 +2,11 @@
 xls: 23
 title: Lite Accounts (lower reserve, less features)
 description: A proposal for lite accounts with reduced account reserves but limited features
-author: Wietse Wind (WietseWind), Richard Holland
+author: Wietse Wind <w@xrpl-labs.com>, Richard Holland <richard@bitlocus.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/23
 status: Stagnant
-category: Community
-created: 2021-01-01
+category: Amendment
+created: 2020-12-01
 </pre>
 # LiteAccounts Amendment
 

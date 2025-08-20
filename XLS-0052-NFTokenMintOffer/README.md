@@ -2,10 +2,11 @@
 xls: 52
 title: NFTokenMintOffer
 description: Extension to NFTokenMint transaction to allow NFToken Sell Offer creation at the same time as minting
-author: tequ
+author: Denis Angell <dangell@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/52
 status: Draft
 category: Amendment
-created: 2021-01-01
+created: 2022-03-01
 </pre>
 
 ## Abstract

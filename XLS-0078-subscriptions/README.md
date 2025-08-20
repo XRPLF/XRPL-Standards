@@ -2,10 +2,11 @@
 xls: 78
 title: XLS-78d Subscriptions
 description: A subscription mechanism for recurring payments on the XRP Ledger
-author: Chris Dangerfield <xrpl365@gmail.com>, Denis Angell <dangell@transia.co>
+author: Denis Angell <dangell@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/78
 status: Draft
 category: Community
-created: 2021-01-01
+created: 2022-11-01
 </pre>
 
 # Subscriptions

@@ -2,11 +2,12 @@
 xls: 85
 title: Token-Enabled Escrows
 description: Enhancement to existing Escrow functionality to support both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs)
-author: Denis Angell, XRPL-Labs (@dangell7)
+author: Nathan Nichols <nnichols@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/85
 status: Draft
 category: Community
-required: XLS-33
-created: 2021-01-01
+requires: XLS-33
+created: 2023-02-01
 </pre>
 
 > This proposal, XLS85d, replaces [XLS34d](https://github.com/XRPLF/XRPL-Standards/discussions/88) and draws inspiration from https://github.com/XRPLF/XRPL-Standards/discussions/133

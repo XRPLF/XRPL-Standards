@@ -2,10 +2,11 @@
 xls: 33
 title: Multi-Purpose Tokens (MPTs)
 description: Extensions to the XRP Ledger to support a more multi-purpose token type as an alternative to trust lines
-author: David Fuelling, Ripple <fuelling@ripple.com>, Nikolaos Bougalis <nikb@bougalis.net>, Greg Weisbrod, Ripple <gweisbrod@ripple.com>
+author: Nathan Nichols <nnichols@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/33
 status: Draft
 category: Community
-created: 2021-01-01
+created: 2021-04-01
 </pre>
 
 #  Multi-Purpose Tokens (MPTs)

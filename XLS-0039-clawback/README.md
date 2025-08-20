@@ -2,10 +2,11 @@
 xls: 39
 title: Clawback Support
 description: Enabling clawback for IOUs to meet regulatory requirements
-author: Nikolaos D. Bougalis <nikb@bougalis.net>, Shawn Xie, Ripple <shawnxie@ripple.com>
+author: Aanchal Malhotra <amalhotra@ripple.com>, David Schwartz <david@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/39
 status: Draft
 category: Amendment
-created: 2021-01-01
+created: 2021-08-01
 </pre>
 
 ## 1. Abstract

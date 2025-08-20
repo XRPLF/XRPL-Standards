@@ -3,9 +3,10 @@ xls: 12
 title: Secret Numbers
 description: Derive XRPL account keypairs based on 8x 6 digits for user-friendly, language-agnostic account secrets
 author: Wietse Wind <w@xrpl-labs.com>
-status: Draft
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/15
+status: Final
 category: Community
-created: 2021-01-01
+created: 2020-05-13
 </pre>
 
 # XLS-12: Secret Numbers

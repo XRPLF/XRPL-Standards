@@ -2,11 +2,12 @@
 xls: 80
 title: Permissioned Domains
 description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
-author: Mayukha Vadari, Ripple <mvadari@ripple.com>
+author: Denis Angell <dangell@ripple.com>
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/80
 status: Draft
 category: Community
-required: XLS-70
-created: 2021-01-01
+requires: XLS-70
+created: 2022-12-01
 </pre>
 
 # Permissioned Domains
