@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/46
   status: Final
   category: Amendment
-  created: 2023-01-20
+  created: 2021-05-24
 </pre>
 
 # 1. Non-Fungible Token Support

@@ -7,7 +7,7 @@
   status: Draft
   category: Community
   requires: XLS-70
-  created: 2022-12-01
+  created: 2024-08-26
 </pre>
 
 # Permissioned Domains

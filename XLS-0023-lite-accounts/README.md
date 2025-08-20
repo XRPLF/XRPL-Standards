@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/56
   status: Stagnant
   category: Amendment
-  created: 2020-12-01
+  created: 2021-08-27
 </pre>
 # LiteAccounts Amendment
 

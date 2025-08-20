@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/82
   status: Final
   category: Amendment
-  created: 2021-04-01
+  created: 2022-08-05
 </pre>
 
 #  Multi-Purpose Tokens (MPTs)

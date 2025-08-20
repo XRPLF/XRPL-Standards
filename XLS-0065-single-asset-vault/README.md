@@ -7,7 +7,7 @@
   status: Draft
   category: Community
   requires: XLS-33
-  created: 2022-05-01
+  created: 2024-01-25
 </pre>
 
 # Single Asset Vault

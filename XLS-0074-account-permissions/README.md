@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
   status: Draft
   category: Amendment
-  created: 2022-08-01
+  created: 2024-06-10
 </pre>
 
 # Account Permissions

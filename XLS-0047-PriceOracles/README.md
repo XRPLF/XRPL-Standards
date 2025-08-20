@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/129
   status: Draft
   category: Amendment
-  created: 2022-02-01
+  created: 2023-08-18
 </pre>
  
  # Price Oracles on XRP Ledger

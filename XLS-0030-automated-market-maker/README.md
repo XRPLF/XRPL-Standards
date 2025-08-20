@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/78
   status: Final
   category: Amendment
-  created: 2021-03-01
+  created: 2022-06-30
 </pre>
 # Automated Market Maker on XRP Ledger
 

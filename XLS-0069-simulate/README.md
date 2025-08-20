@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/199
   status: Draft
   category: Amendment
-  created: 2022-06-01
+  created: 2024-03-22
 </pre>
 
 # Simulating Transaction Execution

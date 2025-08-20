@@ -7,7 +7,7 @@
   status: Draft
   category: Community
   requires: XLS-40
-  created: 2022-07-01
+  created: 2024-04-01
 </pre>
 
 # On-Chain Credentials

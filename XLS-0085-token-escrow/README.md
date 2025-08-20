@@ -7,7 +7,7 @@
   status: Draft
   category: Community
   requires: XLS-33
-  created: 2023-02-01
+  created: 2024-11-22
 </pre>
 
 > This proposal, XLS85d, replaces [XLS34d](https://github.com/XRPLF/XRPL-Standards/discussions/88) and draws inspiration from https://github.com/XRPLF/XRPL-Standards/discussions/133

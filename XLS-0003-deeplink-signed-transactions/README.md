@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/26
   status: Stagnant
   category: Community
-  created: 2019-03-06
+  created: 2019-02-25
 </pre>
 
 Currently several apps are using a variety of methods to encode HEX signed transactions (to be submitted air gapped);

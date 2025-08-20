@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/220
   status: Draft
   category: Amendment
-  created: 2022-10-01
+  created: 2024-07-08
 </pre>
 
 # Deep-freeze

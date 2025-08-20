@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/147
   status: Draft
   category: Amendment
-  created: 2022-03-01
+  created: 2023-11-21
 </pre>
 
 ## Abstract

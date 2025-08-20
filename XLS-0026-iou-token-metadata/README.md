@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/71
   status: Draft
   category: Community
-  created: 2022-01-01
+  created: 2022-04-04
 </pre>
 
 

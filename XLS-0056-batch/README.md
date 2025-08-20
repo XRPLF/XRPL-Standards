@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
   status: Draft
   category: Amendment
-  created: 2022-04-01
+  created: 2023-12-13
 </pre>
 
 # Atomic/Batch Transactions

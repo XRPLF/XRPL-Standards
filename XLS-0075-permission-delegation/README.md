@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/218
   status: Draft
   category: Community
-  created: 2022-09-01
+  created: 2024-06-20
 </pre>
 
 # Permission Delegation

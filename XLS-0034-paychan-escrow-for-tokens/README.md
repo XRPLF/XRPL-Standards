@@ -1,12 +1,12 @@
 <pre>
   xls: 34
   title: Token-Enabled Escrows and Payment Channels
-  description: Amendment to enable Escrows and PayChannels to use Trustline balances in addition to XRP
-  author: Richard Holland, Denis Angell
+  description: Amendment to enable Escrows and Payment Channels to use IOU balances in addition to XRP
+  author: Richard Holland <richard@xahau.org>, Denis Angell <dangell@transia.co>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/88
   status: Withdrawn, replaced by XLS-85
   category: Community
-  created: 2021-05-01
+  created: 2023-01-23
 </pre>
 
 > This proposal, XLS34d, replaces [XLS27d](https://github.com/XRPLF/XRPL-Standards/discussions/72)

@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/229
   status: Draft
   category: Community
-  created: 2023-01-01
+  created: 2024-09-05
 </pre>
 
 # Permissioned DEXes
