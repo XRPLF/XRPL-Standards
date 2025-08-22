@@ -1,9 +1,12 @@
 <pre>
-Title:       <b>Account Permissions</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 74
+  title: Account Permissions
+  description: Formalization of different types of transaction-based account permissions for subset capabilities
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
+  status: Final
+  category: Amendment
+  created: 2024-08-21
 </pre>
 
 # Account Permissions
