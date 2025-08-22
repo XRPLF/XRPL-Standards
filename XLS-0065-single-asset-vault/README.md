@@ -1,13 +1,13 @@
 <pre>
-Title:        <b>Single Asset Tokenized Vault</b>
-Revision:     <b>2</b> (2025-03-13)
-
-<hr>Authors:
-  <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
-  <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-
-Affiliation:
-  <a href="https://ripple.com">Ripple</a>
+  xls: 65
+  title: Single Asset Tokenized Vault
+  description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
+  author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
+  status: Draft
+  category: Amendment
+  requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
+  created: 2024-04-12
 </pre>
 
 # Single Asset Vault
@@ -76,7 +76,7 @@ A Single Asset Vault is owned and managed by an account called the **Vault Owner
 
 #### 1.1.2 Access Control
 
-A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/discussions/228), which use on-chain [Credentials](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0070d-credentials) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
+A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](../XLS-0080-permissioned-domains/README.md), which use on-chain [Credentials](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0070-credentials) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
 
 #### 1.1.3 Yield Bearing Shares
 
