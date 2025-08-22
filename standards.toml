@@ -27,3 +27,9 @@ name = "XLS-20"
 title = "Non-Fungible Token Support"
 draft = false
 implementation = "https://github.com/XRPLF/rippled/pull/4101"
+
+[[STANDARD]]
+name = "XLS-26"
+title = "TOML Token Metadata"
+draft = false
+implementation = "https://www.npmjs.com/package/@xrplkit/xls26"

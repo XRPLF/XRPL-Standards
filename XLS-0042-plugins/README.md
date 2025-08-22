@@ -1,10 +1,12 @@
 <pre>
-Title:       <b>XRPL Plugins</b>
-Revision:    <b>2</b> (2024-03-27)
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a> (mvadari)
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 42
+  title: XRPL Plugins
+  description: A plugin transactor API to make it easier for developers to modify rippled for sidechains without needing C++ knowledge
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/116
+  status: Stagnant
+  category: Protocol
+  created: 2023-06-26
 </pre>
 
 # XRPL Plugins

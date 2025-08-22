@@ -1,10 +1,12 @@
-<pre>    
-Title:        <b>Decentralized Identity on XRP Ledger</b>
-Revision:     <b>4</b> (2023-09-28)
-
-<hr>Author: <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
-
+<pre>
+  xls: 40
+  title: Decentralized Identity on XRP Ledger
+  description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
+  author: Aanchal Malhotra <amalhotra@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/100
+  status: Final
+  category: Amendment
+  created: 2023-03-30
 </pre>
 
 # 1. Abstract
