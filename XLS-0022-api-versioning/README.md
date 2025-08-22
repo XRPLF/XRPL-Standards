@@ -8,8 +8,7 @@
 </pre>
 **Title:** rippled API Versioning
 **Revision:** 2 (2022-07-01)
-**Authors/Contributors:** Elliot Lee (@intelliot), Peng Wang (@pwang200), CJ Cobb(@cjcobb23)
-**Client Implementers:** Nate Nichols (@natenichols), Mayukha Vadari (@mvadari)
+**Contributors:** Peng Wang (@pwang200), Mayukha Vadari (@mvadari)
 
 ----
 
