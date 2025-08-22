@@ -1,16 +1,16 @@
 <pre>
-    XLS: XLS-22d
-    Title: 0022 XLS-22d: rippled API Versioning
-    Author: Elliot. (intelliot)
-    Created: 2021-08-11
-    Status: Final
-    Category: Protocol
+  xls: 22
+  title: rippled API Versioning
+  description: The API version number allows for evolving the `rippled` API while maintaining backward compatibility
+  author: Elliot Lee (intelliot), Mayukha Vadari <mvadari@ripple.com>, Peng Wang (pwang200)
+  status: Final
+  category: Protocol
+  created: 2021-08-11
+  revised: 2022-07-01
 </pre>
-**Title:** rippled API Versioning
-**Revision:** 2 (2022-07-01)
-**Contributors:** Peng Wang (@pwang200), Mayukha Vadari (@mvadari)
 
-----
+# rippled API Versioning
+
 
 rippled offers an API (application programming interface) that apps use to integrate with the XRP Ledger. In order to evolve and improve this API over time, while providing consistency and ensuring backward compatibility for clients, the API shall be versioned with an `API version number`.
 
