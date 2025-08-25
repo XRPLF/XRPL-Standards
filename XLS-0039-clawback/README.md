@@ -1,11 +1,12 @@
 <pre>
-  Title:        <b>Clawback Support</b>
-  Description:  Enabling clawback for IOUs
-  Type:         Draft
-  
-<hr>  Author:       <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
-                <a href="mailto:shawnxie@ripple.com">Shawn Xie (Ripple)</a>
-<hr>  core_protocol_changes_required:     true
+  xls: 39
+  title: Clawback Support
+  description: Enabling clawback for IOUs to meet regulatory requirements
+  author: Nikolaos D. Bougalis <nikb@bougalis.net>, Shawn Xie <shawnxie@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/94
+  status: Final
+  category: Amendment
+  created: 2023-03-04
 </pre>
 
 ## 1. Abstract

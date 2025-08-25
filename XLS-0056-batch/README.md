@@ -1,9 +1,12 @@
 <pre>
-Title:       <b>Atomic/Batch Transactions</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 56
+  title: Atomic/Batch Transactions
+  description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
+  status: Final
+  category: Amendment
+  created: 2023-12-13
 </pre>
 
 # Atomic/Batch Transactions
@@ -533,6 +536,6 @@ That is not supported. This also allows fee escalation to be calculated on the t
 
 Yes, as long as you use the master key of that account. Setting a regular key/signer list in the middle of the `Batch` won't work, since that key isn't valid at the time of processing the outer transaction (when the signatures are checked).
 
-### A.14: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069d-simulate) work with Batch?
+### A.14: How will [transaction simulation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069-simulate) work with Batch?
 
 Some extra processing will be needed for that. As a result, Batch transactions likely won't be able to be simulated at first.

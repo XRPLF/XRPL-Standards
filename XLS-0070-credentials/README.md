@@ -1,17 +1,19 @@
 <pre>
-Title:       <b>On-Chain Credentials</b>
-Revision:    <b>4</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 70
+  title: On-Chain Credentials
+  description: Issuance, storage, and verification of credentials directly on the XRP Ledger while supporting privacy needs
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/202
+  status: Final
+  category: Amendment
+  created: 2024-06-04
 </pre>
 
 # On-Chain Credentials
 
 ## Abstract
 
-The XRPL DID (Digital Identifier) amendment ([XLS-40](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0040d-decentralized-identity)) empowers users to manage their digital identities on the XRP Ledger. While this amendment adds support for on-chain identity management and simplifies off-chain credential usage, maximizing blockchain technology's full potential for credential handling requires on-chain solutions.
+The XRPL DID (Digital Identifier) amendment ([XLS-40](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0040-decentralized-identity)) empowers users to manage their digital identities on the XRP Ledger. While this amendment adds support for on-chain identity management and simplifies off-chain credential usage, maximizing blockchain technology's full potential for credential handling requires on-chain solutions.
 
 This document proposes a design to bridge this gap. It outlines the issuance, storage, and verification of credentials directly on the XRP Ledger, while still supporting the privacy needs of users.
 
