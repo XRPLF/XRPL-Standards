@@ -47,6 +47,7 @@ def build_site():
 
     # Create subdirectories
     (site_dir / "xls").mkdir()
+    (site_dir / "category").mkdir()  # New directory for category pages
     (site_dir / "assets").mkdir()
 
     # Setup Jinja2 environment
@@ -93,18 +94,80 @@ def build_site():
     # Sort documents by number in reverse order (later ones more relevant)
     xls_docs.sort(key=lambda x: int(x.number), reverse=True)
 
-    # Generate index page
+    # Group documents by category for category pages and navigation
+    categories = {}
+    for doc in xls_docs:
+        category = doc.category
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(doc)
+    
+    # Generate category pages
+    category_template = env.get_template("category.html")
+    all_categories = [(cat, len(docs)) for cat, docs in sorted(categories.items())]
+    
+    for category, category_docs in categories.items():
+        # Sort category documents by number in reverse order
+        category_docs.sort(key=lambda x: int(x.number), reverse=True)
+        
+        category_html = category_template.render(
+            title=f"{category} XLS Standards",
+            category=category,
+            category_docs=category_docs,
+            all_categories=all_categories,
+            total_count=len(xls_docs),
+            base_url=".." if base_url == "." else base_url,
+        )
+        
+        # Write category HTML file
+        category_file = site_dir / "category" / f"{category.lower()}.html"
+        with open(category_file, "w", encoding="utf-8") as f:
+            f.write(category_html)
+            
+        print(f"Generated category page: {category_file}")
+
+    # Generate index page with category navigation
     index_template = env.get_template("index.html")
     index_html = index_template.render(
         title="XRP Ledger Standards (XLS)",
         total_count=len(xls_docs),
         xls_docs=xls_docs,
+        all_categories=all_categories,
         base_url=base_url,
     )
 
     # Write index file
     with open(site_dir / "index.html", "w", encoding="utf-8") as f:
         f.write(index_html)
+
+    # Generate contribute page from CONTRIBUTING.md
+    contributing_path = root_dir / "CONTRIBUTING.md"
+    if contributing_path.exists():
+        try:
+            with open(contributing_path, "r", encoding="utf-8") as f:
+                contributing_content = f.read()
+            
+            # Convert markdown to HTML
+            contributing_html_content = convert_markdown_to_html(contributing_content)
+            
+            # Render contribute page
+            contribute_template = env.get_template("contribute.html")
+            contribute_html = contribute_template.render(
+                title="Contributing to XLS Standards",
+                content=contributing_html_content,
+                base_url=base_url,
+            )
+            
+            # Write contribute file
+            with open(site_dir / "contribute.html", "w", encoding="utf-8") as f:
+                f.write(contribute_html)
+                
+            print(f"Generated contribute page from CONTRIBUTING.md")
+            
+        except Exception as e:
+            print(f"Error generating contribute page: {e}")
+    else:
+        print("Warning: CONTRIBUTING.md not found")
 
     # Copy CSS file
     css_source = assets_dir / "style.css"
@@ -113,6 +176,14 @@ def build_site():
         shutil.copy2(css_source, css_dest)
     else:
         raise FileNotFoundError(f"CSS file not found: {css_source}")
+
+    # Copy favicon
+    favicon_source = assets_dir / "favicon.ico"
+    favicon_dest = site_dir / "assets" / "favicon.ico"
+    if favicon_source.exists():
+        shutil.copy2(favicon_source, favicon_dest)
+    else:
+        print(f"Warning: Favicon not found: {favicon_source}")
 
     print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
 
