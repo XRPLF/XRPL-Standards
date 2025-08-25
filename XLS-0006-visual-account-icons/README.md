@@ -1,12 +1,15 @@
 <pre>
-    XLS: XLS-6d
-    Title: 0006 XLS-6d Standard for Visual Account Icons
-    Author: Richard Holland (RichardAH)
-    Created: 2019-09-22
-    Status: Final
-    Category: Community
+  xls: 6
+  title: Standard for Visual Account Icons
+  description: A standard for visually distinguishing XRPL accounts by generating unique icons for each account, regardless of address format.
+  author: Richard Holland (RichardAH)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/24
+  status: Final
+  category: Community
+  created: 2019-09-22
 </pre>
-Following from XLS-5d ( https://github.com/xrp-community/standards-drafts/issues/6 ) it has become necessary to provide XRPL users a way to identify their XRPL account, which effectively now has two different identifiers: an 'r-address' and an 'X-address'.
+
+Following from [XLS-5d](https://github.com/XRPLF/XLS-0005-standards-for-addressing), it has become necessary to provide XRPL users a way to identify their XRPL account, which effectively now has two different identifiers: an 'r-address' and an 'X-address'.
 
 To solve this problem XLS-6d provides for a standard way to visually identify accounts irrespective of which addressing system is used by the rest of the user interface.
 
@@ -20,5 +23,4 @@ It's recommended that these icons are displayed alongside addresses to help redu
 Figure 1
 
 ![image](https://user-images.githubusercontent.com/19866478/65387078-dc20bd00-dd86-11e9-90af-126edf511060.png)
-
 Figure 2
