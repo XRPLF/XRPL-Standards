@@ -2,15 +2,13 @@
   xls: 22
   title: rippled API Versioning
   description: The API version number allows for evolving the `rippled` API while maintaining backward compatibility
-  author: Elliot Lee (intelliot), Mayukha Vadari <mvadari@ripple.com>, Peng Wang (pwang200)
+  author: Elliot Lee (intelliot), Peng Wang (pwang200)
   status: Final
   category: Protocol
   created: 2021-08-11
-  revised: 2022-07-01
 </pre>
 
 # rippled API Versioning
-
 
 rippled offers an API (application programming interface) that apps use to integrate with the XRP Ledger. In order to evolve and improve this API over time, while providing consistency and ensuring backward compatibility for clients, the API shall be versioned with an `API version number`.
 
@@ -20,13 +18,13 @@ For JSON-RPC and WebSocket (the most commonly-used interfaces), the API version 
 
 ```json
 {
-    "method": "...",
-    "params": [
-        {
-            "api_version": 1,
-            "...": "..."
-        }
-    ]
+  "method": "...",
+  "params": [
+    {
+      "api_version": 1,
+      "...": "..."
+    }
+  ]
 }
 ```
 
@@ -36,10 +34,10 @@ Notice that "api_version" is [not a top-level field](https://github.com/ripple/r
 
 ```json
 {
-    "api_version": 1,
-    "id": 4,
-    "command": "...",
-    "...": "..."
+  "api_version": 1,
+  "id": 4,
+  "command": "...",
+  "...": "..."
 }
 ```
 
@@ -121,7 +119,8 @@ gRPC only:
 - [Original Requirements](https://github.com/pwang200/RippledRPCDesign/blob/API_versioning/requirement/requirements.md)
 - [Original Design Document](https://github.com/pwang200/RippledRPCDesign/blob/API_versioning/design/design.md)
 
-[^1]: Changes to response status codes. For example, this is a breaking change:
-**Before:** POST /values returns 400 for missing property
-**After:** POST /values returns 409 for missing property
-[Reference](https://community.blackbaud.com/blogs/69/3219)
+[^1]:
+    Changes to response status codes. For example, this is a breaking change:
+    **Before:** POST /values returns 400 for missing property
+    **After:** POST /values returns 409 for missing property
+    [Reference](https://community.blackbaud.com/blogs/69/3219)
