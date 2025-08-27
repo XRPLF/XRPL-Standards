@@ -49,7 +49,7 @@ Bits in `MutableFlags` indicate specific fields or flags may be modified after i
   - Refer to [XLS-33 Multi-Purpose Tokens: Transaction-specific Fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3111-transaction-specific-fields) (under `Flags` field)
 
 
-#### 2.2. New Optionbal Field: MutableFlags
+#### 2.2. New Optional Field: MutableFlags
 
 | Field Name     | Required? | JSON Type | Internal Type | Description                               |
 | -------------- |:---------:|:---------:|:-------------:| ----------------------------------------- |
@@ -83,7 +83,7 @@ Bits in `MutableFlags` indicate specific fields or flags may be modified after i
 ## 3. On-Ledger Data Structure Change
 This proposal introduces updates to the `MPTokenIssuance` ledger object, including a new optional field `MutableFlags`.
 
-## 3.1. New Optionbal Field: `MutableFlags`
+## 3.1. New Optional Field: `MutableFlags`
 
 A new optional field, `MutableFlags` (SField `sfMutableFlags`), is added to the `MPTokenIssuance` ledger object.
 
