@@ -1,10 +1,13 @@
-<pre> 
-   Title:        <b>Price Oracles on XRP Ledger</b>
-   Revision:     <b>6</b> (2023-12-21)
- <hr>  Author: <a href="mailto:gtsipenyuk@ripple.com">Gregory Tsipenyuk</a>
-   Affiliation:  <a href="https://ripple.com">Ripple</a>
- 
- </pre>
+<pre>
+  xls: 47
+  title: Price Oracles on XRP Ledger
+  description: On-chain PriceOracle object to bridge blockchain and external world data for decentralized applications
+  author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/129
+  status: Final
+  category: Amendment
+  created: 2023-08-18
+</pre>
  
  # Price Oracles on XRP Ledger
  

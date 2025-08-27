@@ -1,8 +1,13 @@
 <pre>
-title: Dynamic Non Fungible Tokens (dNFTs)
-type: Spec
-author: Vet 
-co-author: Mayukha Vadari, TeQu
+  xls: 46
+  title: Dynamic Non Fungible Tokens (dNFTs)
+  description: Support for XLS-20 NFTs to modify and upgrade token properties as mutable NFTs
+  author: Vet (@xVet), Mayukha Vadari (@mvadari), TeQu (@tequdev)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/130
+  status: Final
+  category: Community
+  requires: [XLS-20](../XLS-0020-non-fungible-tokens/README.md)
+  created: 2023-08-18
 </pre>
 
 ## Abstract

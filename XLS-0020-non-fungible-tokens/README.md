@@ -1,12 +1,12 @@
 <pre>
-  Title:        <b>Non-Fungible Token Support</b>
-  Revision:     <b>10</b> (2023-03-27)
-
-<hr>  Author:       <a href="mailto:david@ripple.com">David J. Schwartz</a>
-                <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-                <a href="mailto:nikb@bougalis.net">Nikolaos D. Bougalis</a>
-  Editor:       <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-  Affiliation:  <a href="https://ripple.com">Ripple</a>
+  xls: 20
+  title: Non-Fungible Token Support
+  description: Extensions to the XRP Ledger that support a native non-fungible token type with operations to enumerate, purchase, sell and hold such tokens
+  author: David J. Schwartz <david@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Nikolaos D. Bougalis <nikb@bougalis.net>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/46
+  status: Final
+  category: Amendment
+  created: 2021-05-24
 </pre>
 
 # 1. Non-Fungible Token Support
@@ -859,4 +859,4 @@ Without this restriction, the following example demonstrates how a duplicate NFT
 
 ## History
 
-This spec, at revision 10, describes XLS-20 with [the `fixNFTokenRemint` amendment](https://xrpl.org/known-amendments.html#fixnftokenremint) active. For earlier versions of this spec, please see [the commit history](https://github.com/XRPLF/XRPL-Standards/commits/master/XLS-20).
+This spec, at revision 10, describes XLS-20 with [the `fixNFTokenRemint` amendment](https://xrpl.org/known-amendments.html#fixnftokenremint) active. For earlier versions of this spec, please see [the commit history](https://github.com/XRPLF/XRPL-Standards/commits/master/XLS-0020-non-fungible-tokens/README.md).

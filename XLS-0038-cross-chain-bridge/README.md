@@ -1,12 +1,12 @@
 <pre>
-Title:        <b>Cross-Chain Bridge</b>
-Description:  Enabling transfer of value between sidechains
-Type:         Draft
-
-Author:       <a href="mailto:mvadari@ripple.com">Mayukha Vadari (Ripple)</a>
-              <a href="mailto:scott.determan@ripple.com">Scott Determan (Ripple)</a>
-
-<hr>  core_protocol_changes_required:     true
+  xls: 38
+  title: Cross-Chain Bridge
+  description: Enabling transfer of value between sidechains through locking and issuing mechanisms
+  author: Mayukha Vadari <mvadari@ripple.com>, Scott Determan <scott.determan@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/92
+  status: Final
+  category: Amendment
+  created: 2023-02-22
 </pre>
 
 # Cross-Chain Bridge
