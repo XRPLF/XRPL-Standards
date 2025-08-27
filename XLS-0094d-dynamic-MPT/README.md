@@ -60,7 +60,7 @@ Bits in `MutableFlags` indicate specific fields or flags may be modified after i
 
 | Flag Name                   | Hex Value  | Decimal Value | Description                                       |
 |-----------------------------|:----------:|:-------------:|---------------------------------------------------|
-| [Reserved]                  | ️`0x0001`   | 1             |[Reserved; used by `lsfMPTLocked`]                 |
+| [Reserved]                  | ️`0x0001`   | 1             | [Reserved; `lsfMPTLocked` is a flag to indicate the lock status of the token, not a configuration flag.]|
 | `tfMPTCanMutateCanLock`     | ️`0x0002`   | 2             | Indicates flag `lsfMPTCanLock` can be changed     |
 | `tfMPTCanMutateRequireAuth` | ️`0x0004`   | 4             | Indicates flag `lsfMPTRequireAuth` can be changed |
 | `tfMPTCanMutateCanEscrow`   | `0x0008`   | 8             | Indicates flag `lsfMPTCanEscrow` can be changed   |
@@ -107,7 +107,7 @@ A new optional field, `MutableFlags` (SField `sfMutableFlags`), is added to the 
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
-## 4. Modifying `MPTokenIssuance` via `MPTokenIssuanceSet`
+## 4. `MPTokenIssuanceSet` Transaction Update
 
 This proposal extends the functionality of the `MPTokenIssuanceSet` transaction, allowing the issuer of the `MPTokenIssuance` to update fields or flags that were explicitly marked as mutable during creation.
 
