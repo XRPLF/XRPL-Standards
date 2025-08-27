@@ -13,12 +13,7 @@
 {% block content %}
 <!-- Category introduction section -->
 <div class="intro">
-    <div class="category-header">
-        <h2>{{ category.title() }} XLS Standards</h2>
-        <div class="category-meta">
-            <span class="count">{{ category_docs|length }} standard{{ 's' if category_docs|length != 1 else '' }}</span>
-        </div>
-    </div>
+    <h2>{{ category.title() }} XLS Standards</h2>
     
     <!-- Category description -->
     <div class="category-description">
@@ -32,6 +27,8 @@
         <p>Standards in the {{ category }} category.</p>
         {% endif %}
     </div>
+    
+    <p>{{ category.title() }} standards: <strong>{{ category_docs|length }}</strong></p>
     
     <!-- Navigation to other categories -->
     <div class="category-nav">

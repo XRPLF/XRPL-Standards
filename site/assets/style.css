@@ -313,20 +313,6 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     font-size: 12px;
 }
 
-/* Category header for individual category pages */
-.category-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.category-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
 .category-description {
     margin: 16px 0 24px 0;
     padding: 16px;
