@@ -71,11 +71,11 @@ Every XLS must have a status included in its heading:
 * **Discussion**: An idea that is pre-draft. This is any other discussion in the Discussions section of the `XRPL-Standards` repo.
 * **Draft**: The first formally tracked stage of an XLS in development. An XLS is merged by an XLS Editor into the XLS repository when properly formatted. XLS numbers will be assigned at this stage.
 * **Final**: This XLS represents the final standard. A `Final` XLS exists in a state of finality and should only be updated to correct errata and add non-normative clarifications. For rippled-related XLSes, the XLS can only be considered `Final` once the rippled PR has been merged. For other XLSes, there needs to be at least one project that has implemented full support of the Standard.
+* **Living**: A special status for XLSes that are designed to be continually updated and not reach a state of finality. This includes, for example, this XLS.
 * **Deprecated**: This is an XLS in any category that was deprecated, as it is no longer supported. Due to the nature of XRP Ledger such features, especially amendment ones, may or may not be permanently removed from the codebase. Only a `Final` feature may be `Deprecated` .
 * **Stagnant**: Any XLS in `Draft` if inactive for a period of 6 months or greater is moved to `Stagnant`. An XLS may be resurrected from this state by Authors or XLS Editors through moving it back to Draft.
 * **Withdrawn**: The XLS Author(s) have withdrawn the proposed XLS. This state has finality and can no longer be resurrected using this XLS number. If the idea is pursued at a later date it is considered a new proposal.
   * If the XLS is withdrawn because it is superseded, the newer replacement XLS is linked.
-* **Living**: A special status for XLSs that are designed to be continually updated and not reach a state of finality. This includes, for example, this XLS.
 
 ![][image1]
 *Note: the “Review” and “Last Call” statuses have been removed from those listed in EIP-1, as we do not have formal processes established for review for XLSes (e.g. Core EIPs need to be approved by all client implementations). This may be re-added in the future, if such processes are desired.*
@@ -109,15 +109,17 @@ Any XLS that wants to be considered for `Draft` status should have the following
 
 Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style header preamble, contained in a `<pre>` HTML block. The headers must appear in the following order.
 
-* `xls`: XLS number
+* `xls`: XLS number (assigned by the Editors - this field must not be included in Ideas or Discussions)
 * `title`: The XLS title is a few words, not a complete sentence
 * `description`: Description is one full (short) sentence
-* `author`: The list of the author’s or authors’ name(s) and/or username(s), or name(s) and email(s). Details are below.
-* `status`: `Draft`, `Final`, `Stagnant`, `Withdrawn`, `Living`
+* `author`: The list of the author’s or authors’ name(s) and/or username(s), or name(s) and email(s).
+* `status`: `Draft`, `Final`, `Living`, `Deprecated`, `Stagnant`, `Withdrawn`
 * `category`: One of `Amendment`, `System`, `Community`, or `Meta`.
-* `created`: Date the XLS was created on
+* `created`: Date the XLS was created on.
+* `discussion-from`: A link to the `Discussion` associated with this XLS.
 * `requires`: XLS number(s) (Optional field)
 * `withdrawal-reason`: A sentence explaining why the XLS was withdrawn. (Optional field, only needed when status is Withdrawn. If this proposal was superseded by another, that can be listed here.)
+* `updated`: The date the XLS was last updated.
 
 *Headers that permit lists must separate elements with commas.*
 *Headers requiring dates will always do so in the format of ISO 8601 (yyyy-mm-dd).*
@@ -151,7 +153,7 @@ This will be codified in a template later.
 
 #### 4.4.3.1. Ledger Entries
 
-Ledger Entries documents one or more new ledger entry objects introduced or modified by the specification. Each ledger entry must be in its own numbered section. The following sections should be in each section:
+`Ledger Entries` documents one or more new ledger entry objects introduced or modified by the specification. Each ledger entry must be in its own numbered section, with the following subsections:
 
 ##### 4.4.3.1.1. Object Identifier
 
@@ -159,7 +161,7 @@ Each object on the XRP Ledger must have a unique object identifier (ID or key). 
 
 ##### 4.4.3.1.2. Fields
 
-This subsection lists the object fields, indicating whether a field is constant or optional, its JSON type (for reference, actual storage is binary), Internal Type, and Default Value. The field table MUST include all standard ledger entry fields (like `LedgerEntryType`, `Flags`, `PreviousTxnID`, `PreviousTxnLgrSeq`, `OwnerNode`) as well as fields unique to the ledger entry. The `Account` field is typical for objects owned by a single account.
+This subsection describes the ledger entry fields in a tabular format, indicating whether a field is constant or optional, its JSON type (for reference, actual storage is binary), Internal Type, and Default Value. The field table MUST include all standard ledger entry fields (like `LedgerEntryType`, `Flags`, `PreviousTxnID`, `PreviousTxnLgrSeq`, `OwnerNode`) as well as fields unique to the ledger entry. The `Account` field is typical for objects owned by a single account.
 
 These columns must all be included in the table:
  * **Field Name**: The column indicates the field's name. Fields follow the `PascalCase` naming convention. For existing field names (and their associated types), please refer to `sfields.macro`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
@@ -175,7 +177,7 @@ These columns must all be included in the table:
    * `N/A`: The field does not have a default value or is always required.
  * **Description**: A brief description of the field. Further details can be written in a subsection of **Fields**.
 
-Following the table of fields, there may optionally be a list of fields that require further details that are too long for the Description column.
+The table may be followed by subsections for fields requiring further details that are too long for the Description column.
 
 ##### 4.4.3.1.3. Ownership
 
@@ -196,7 +198,7 @@ This subsection captures the conditions under which the ledger entry can be dele
 
 ##### 4.4.3.1.6. Pseudo-Account
 
-This section is optional. A "pseudo-account" might be associated if the newly introduced ledger entry needs to hold assets (XRP, IOUs or MPTs) or issue tokens (e.g., MPTs). A pseudo-account is a programmatically derived `Account` that cannot submit transactions, send or receive funds directly via standard payments, or have a key pair. fFor further details about pseudo-accounts, refer to [XLS-64](https://github.com/XRPLF/XRPL-Standards/pull/274) (or the relevant accepted standard). This section should specify if a pseudo-account is used, how its `AccountID` is derived, and its purpose.
+This section is optional. A "pseudo-account" might be associated if the newly introduced ledger entry needs to hold assets (XRP, IOUs or MPTs) or issue tokens (e.g., MPTs). A pseudo-account is a programmatically derived `Account` that cannot submit transactions, send or receive funds directly via standard payments, or have a key pair. For further details about pseudo-accounts, refer to [XLS-64](https://github.com/XRPLF/XRPL-Standards/pull/274) (or the relevant accepted standard). This section should specify if a pseudo-account is used, how its `AccountID` is derived, and its purpose.
 
 ##### 4.4.3.1.7. Freeze/Lock
 
