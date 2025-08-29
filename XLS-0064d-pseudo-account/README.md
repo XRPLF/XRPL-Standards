@@ -1,94 +1,108 @@
-<pre>    
-Title:        <b>Pseudo-Account</b>
-Type:         <b>draft</b>
-Revision:     <b>1</b> (2025-03-04)
-
-<hr> Authors:    
-  <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
-
-Affiliation: 
-  <a href="https://ripple.com">Ripple</a>
+<pre>
+xls: 64
+title: Pseudo-Account
+description: A standard for a "pseudo-account" AccountRoot object to be associated with one or more ledger entries.
+author: Vito Tumas (@Tapanito)
+status: Draft
+category: Ammendment
+created: 2025-03-04
+updated: 2025-08-29
 </pre>
 
-# Pseudo-Account
+### Abstract
 
-## _Abstract_
+This document proposes a standard for a *pseudo-account*, an `AccountRoot` ledger entry that can be associated with one or more other ledger entries. A pseudo-account is designed to hold and/or issue assets on behalf of its associated entries, enabling protocol-level functionality that requires an on-ledger entity to manage funds.
 
-In this document, we propose a standard for a _pseudo-account_, an `AccountRoot` object that can be associated with one or more other ledger entries to hold and/or issue assets on behalf of the associated entries.
+### Motivation
 
-## 1. Introduction
+The XRP Ledger is an account-based system where assets (XRP, IOUs, etc.) can only be held by an `AccountRoot` entry. However, several advanced protocols, such as Automated Market Makers (AMMs), lending pools, and vaults, require a ledger *object* itself to hold and manage assets.
 
-The XRP Ledger is an account-based blockchain in which assets—such as XRP, IOUs, or MPT—can only be held by an account represented by an `AccountRoot` ledger entry. However, certain use cases, such as Automated Market Makers (AMM), Single Asset Vaults, and the Lending Protocol—require assets to be transferable to and from an object.
+The [XLS-30 (AMM)](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0030-automated-market-maker#readme) specification pioneered this concept by introducing a pseudo-account linked to each `AMM` instance. This allows the AMM to track its token balances and issue Liquidity Provider Tokens (`LPTokens`).
 
-The [XLS-30](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0030-automated-market-maker#readme) specification introduced the `AMMID` field in the `AccountRoot` ledger entry. This field associates a _pseudo-account_ with an `AMM` instance, allowing it to track XRP and token balances in the pool and issue `LPTokens` on behalf of the `AMM` instance.
+This specification formalizes and standardizes the requirements for an `AccountRoot` when it functions as a pseudo-account, ensuring a consistent and secure implementation across different protocols. It defines mandatory flags, a naming convention for linking fields, and the core invariants that any protocol using a pseudo-account must enforce.
 
-This specification formalises the requirements for an `AccountRoot` when used as a _pseudo-account_. Specifically, it defines:
+### Specification
 
-- A set of flags that must be enabled.
-- A naming convention for the field identifying the object the `AccountRoot` is associated with.
-- Minimum requirements for any protocol implementing a _pseudo-account_.
+#### Ledger Entries
 
-## 2. Ledger Entries
+This specification defines a set of mandatory properties and fields for an `AccountRoot` ledger entry when it is used as a pseudo-account.
 
-### 2.1. `AccountRoot` Ledger Entry
+##### **`AccountRoot`**
 
-#### 2.1.1. Object Identifier
+###### **Object Identifier**
 
-The address of the `AccountRoot` must be randomised to prevent users from identifying and funding the address before its creation. The protocol that creates an `AccountRoot` must ensure the account address is unoccupied.
+The address of the pseudo-account's `AccountRoot` must be derived deterministically and be difficult to predict before creation. This prevents malicious actors from front-running the creation transaction by pre-funding the address. The protocol creating the `AccountRoot` must ensure the derived address is unoccupied.
 
-The unique ID of the **`AccountRoot`** object, a.k.a. **`AccountRootID`** is computed as follows:
+A nonce-based approach is used to generate the unique `AccountRoot` ID:
 
-- for (i = 0; i <= 256; i--)
-  - Compute `AccountRootID` = `SHA512-Half`(i || [Parent Ledger Hash](https://xrpl.org/ledgerhashes.html) || `<Object>ID>`)
-  - If the computed `AccountRootID` exists, repeat
-    - else, return `AccountRootID`
+1. Initialize a nonce, $i$, to $0$.
+2. Compute a candidate ID: `AccountID` = `SHA512-Half`($i$ || `ParentLedgerHash` || `<ObjectID>`).
+3. Check if an `AccountRoot` with this `AccountID` already exists on the ledger.
+4. If it exists, increment the nonce $i$ and repeat from step 2.
+5. If it does not exist, the computed `AccountID` is used for the new pseudo-account.
 
-#### 2.1.2. Fields
+###### **Fields**
 
-| Field Name   | Modifiable? | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                 |
-| ------------ | :---------: | :-------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------- |
-| `<Object>ID` |    `N/A` |   `no` | `string` |   `HASH256` |     `N/A` | The object identifier the `pseudo-account` is associated with.                                              |
-| `Flags` |    `no` |   `yes` | `number` |   `UINT32` |     `N/A` | A set of flags that must be set for a `pseudo-account`.                                                     |
-| `Sequence` |    `no` |   `yes` | `number` |   `UINT32` |      `0` | The sequence number of the `pseudo-account`.                                                                |
-| `RegularKey` |    `no` |   `yes` | `string` |  `ACCOUNTID` |     `N/A` | The address of a key pair that can be used to sign transactions for this account instead of the master key. |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `<Object>ID` | Yes | Yes | `HASH256` | N/A | The unique identifier of the ledger object this pseudo-account is associated with. |
+| `Flags` | Yes | Yes | `UINT32` | N/A | A set of flags that must be set for a pseudo-account. |
+| `Sequence` | Yes | Yes | `UINT32` | `0` | The sequence number, which must be `0`. |
+| `RegularKey` | Yes | No | `ACCOUNT` | N/A | A regular key, which must not be set for a pseudo-account. |
 
-##### 2.1.2.1. `<Object>ID`
+A detailed description of these fields follows:
 
-The `<Object>ID` field uniquely identifies the ledger entry associated with an account. Any protocol introducing a `pseudo-account` must include a new, optional `<Object>ID` field.
+**`<Object>ID`**
 
-The naming convention for this field follows these rules:
+This field links the pseudo-account to its parent ledger object. Any protocol introducing a pseudo-account must define a new, optional field on the `AccountRoot` object to store this ID. The field name must follow this convention:
 
-- `<Object>` represents the name of the related object:
-  - All letters must be capitalised if the name is an acronym (e.g., `AMM`).
-  - Otherwise, capitalise the first letter of each noun (e.g., `Vault` or `LoanBroker`).
-- `ID` must always be appended as a suffix.
+* `<Object>` is the name of the associated ledger object (e.g., `AMM`, `Vault`). Names that are acronyms should be fully capitalized (`AMMID`). Otherwise, use PascalCase (`VaultID`).
+* The suffix `ID` must always be appended.
 
-##### 2.1.2.2. `Flags`
+**`Flags`**
 
-The following flags must be set for a `pseudo-account`:
+The following flags must be set on a pseudo-account's `AccountRoot` and must be immutable:
 
-| Flag Name          | Flag Value | Modifiable? |                                        Description                                        |
-| ------------------ | :--------: | :---------: | :---------------------------------------------------------------------------------------: |
-| `lsfDisableMaster` |   `0x01` |    `No` | Ensure that no one can control the account directly and send transactions on its behalf.  |
-| `lsfDepositAuth` |  `0x001` |    `No` | Ensure that the only way to add funds to the account is by using a `deposit` transaction. |
+| Flag Name | Hex Value | Description |
+| :--- | :---: | :--- |
+| `lsfDisableMaster` | `0x00040000` | Disables the master key pair, ensuring no entity can sign transactions directly for this account. Control is ceded entirely to protocol rules. |
+| `lsfDepositAuth` | `0x01000000` | Requires authorization for deposits, typically meaning that funds can only be sent to this account via specific protocol transactions rather than standard `Payment` transactions. |
 
+**`Sequence`**
 
+The `Sequence` number of a pseudo-account must be initialized to `0` and must not be changed. This, combined with the disabled master key, prevents the account from ever submitting a transaction on its own behalf.
 
-##### 2.1.2.3. `Sequence`  
-The `Sequence` number of a` _pseudo-account_` **must** be `0`. A _pseudo-account_ cannot submit valid transactions.  
+**`RegularKey`**
 
-##### 2.1.2.4. `RegularKey`  
-A _pseudo-account_ **must not** have a `RegularKey` set.  
+A `RegularKey` must not be set on a pseudo-account.
 
-#### 2.1.3. Cost  
+###### **Reserves**
 
-A transaction that creates a `pseudo-account` must incur a higher-than-usual transaction fee to deter ledger spam. Additionally, the transaction must destroy at least the incremental owner reserve amount, currently `2 XRP`.  
+The cost of creating a pseudo-account depends on whether it is owned and controlled by another account.
 
-#### 2.1.4. Invariant  
+* **Owned Pseudo-Accounts:** For objects like a `Vault` where a single account owns and controls the associated pseudo-account, the transaction must increase the owner's XRP reserve by one increment. This is in addition to any other reserve requirements of the transaction (e.g., for the `Vault` object itself). The transaction fee is the standard network fee.
 
-The following invariants **must** hold for a _pseudo-account_:  
-- The object identified by `<Object>ID` **must** exist on the ledger.  
-- Exactly one `<Object>ID` **must** be set (e.g., a _pseudo-account_ cannot have both `AMMID` and `VaultID` at the same time).  
-- The `lsfDepositAuth` and `lsfDisableMaster` flags **must** be set.  
-- The `Sequence` number **must** be `0`.  
-- The `RegularKey` **must not** be set.  
+* **Unowned Pseudo-Accounts:** For objects like an `AMM` that are not owned by any account, the creation transaction must charge a special, higher-than-normal transaction fee. This fee must be at least the value of one incremental owner reserve (currently **2 XRP**, subject to change via Fee Voting). This amount is burned, compensating for the permanent ledger space without tying the reserve to a specific owner.
+
+###### **Deletion**
+
+A pseudo-account must be deleted together with the associated object.
+
+###### **Invariants**
+
+The following invariants must hold true for any `AccountRoot` entry functioning as a pseudo-account:
+
+* The ledger object identified by the `<Object>ID` field must exist.
+* Exactly one `<Object>ID` field must be present on the `AccountRoot` (e.g., an account cannot be linked to both an `AMMID` and a `VaultID`).
+* The `lsfDisableMaster` and `lsfDepositAuth` flags must always be set.
+* The `Sequence` number must always be `0`.
+* A `RegularKey` must not be set.
+
+### Security Considerations
+
+The design of pseudo-accounts includes several critical security features:
+
+* **No Direct Control:** The mandatory `lsfDisableMaster` flag and the absence of a `RegularKey` ensure that no user can directly control the pseudo-account or its assets. All fund movements are governed exclusively by the rules of the associated protocol.
+* **Transaction Prevention:** A `Sequence` of `0` makes it impossible for the account to submit transactions, preventing any misuse of the account itself.
+* **Address Front-running Prevention:** The deterministic but unpredictable method for generating the account address prevents attackers from guessing the address and sending funds to it before it is officially created by the protocol.
+* **Controlled Deposits:** The `lsfDepositAuth` flag prevents arbitrary `Payment` transactions from being sent to the account, ensuring that its balances can only be modified through legitimate protocol transactions.
