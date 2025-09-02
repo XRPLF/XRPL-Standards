@@ -1,18 +1,10 @@
 <pre>
-    XLS: XLS-8d
-    Title: 0008 XLS-8d Tickets: Supporting out-of-sequence transactions on the XRP Ledger
-    Author: Nik Bougalis (nbougalis)
+    XLS: XLS-8
+    Title: XLS-8 Tickets: Supporting out-of-sequence transactions on the XRP Ledger
+    Author: Nik Bougalis (nbougalis) Scott Schurr (scott@ripple.com)
     Created: 2020-03-28
     Status: Withdrawn
     Category: Amendment
-</pre>
-<pre>
-  XRP Ledger Proposed Standard #8
-
-  Title:        Tickets
-  Author:       Scott Schurr &lt;scott@ripple.com&gt;
-  Affiliation:  Ripple
-  Created:      2020-03-01
 </pre>
 
 # Tickets
@@ -811,3 +803,4 @@ The `Transactor::checkSeq()` method needed to take the presence of `Ticket`s int
 #### Impact in the SQLite Database
 
 None identified, however tests were added to increase confidence.
+
