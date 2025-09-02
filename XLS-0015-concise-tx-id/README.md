@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-15d
-    Title: 0015 XLS-15d: Concise Transaction Identifier
+    XLS: XLS-15
+    Title: XLS-15: Concise Transaction Identifier
     Author: None (RichardAH)
     Created: 2021-03-09
     Status: Withdrawn
@@ -225,5 +225,6 @@ cti_transaction_check(
 ```
 
 RH Note: Advanced case (XLS15.1) examples and reference implementations to be added shortly
+
 
 
