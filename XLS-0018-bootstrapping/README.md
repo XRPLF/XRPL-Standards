@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-18d
-    Title: 0018 XLS-18d Standard For Bootstrapping XRPLD Networks
+    XLS: XLS-18
+    Title: XLS-18 Standard For Bootstrapping XRPLD Networks
     Author: None (RichardAH)
     Created: 2021-03-25
     Status: Stagnant
@@ -41,5 +41,6 @@ Cold start describes a situation in which *none* of the validators in a network 
 
 ### Troubleshooting
 Small networks may require the `quorum` size to be permanently overridden for network stability. To do this modify the control script that runs rippled to include `--quorum X` where X is the number of nodes in your UNL less 1.
+
 
 ### Other cases TBD
