@@ -95,7 +95,8 @@ The following invariants must hold true for any `AccountRoot` entry functioning 
 * The ledger object identified by the `<Object>ID` field must exist.
 * Exactly one `<Object>ID` field must be present on the `AccountRoot` (e.g., an account cannot be linked to both an `AMMID` and a `VaultID`).
 * The `lsfDisableMaster` and `lsfDepositAuth` flags must always be set.
-* The `Sequence` number must always be `0`.
+* The `Sequence` number must always be `0`, and must never change.
+  * AMM pseudo-accounts created under old rules will have a sequence number set to the index of the ledger they were created in. They still must never change.
 * A `RegularKey` must not be set.
 
 ### Security Considerations
