@@ -1,23 +1,13 @@
 <pre>
-    XLS: XLS-11d
-    Title: 0011 XLS-11d: Retiring Amendments
-    Author: Wietse Wind (WietseWind)
+    XLS: XLS-11
+    Title: XLS-11: Retiring Amendments
+    Authors: Wietse Wind (WietseWind), Scott Schurr (scott@ripple.com), Rome Reginelli (rome@ripple.com)
     Created: 2020-05-07
     Status: Final
     Category: Protocol
 </pre>
-By @mDuo13 » https://github.com/xrp-community/standards-drafts/pull/13
 
----
-Draft:        XLS-11d
-Title:        Retiring Amendments
-Authors:
-            - Scott Schurr (scott@ripple.com)
-            - Rome Reginelli <rome@ripple.com>
-Affiliation:  Ripple
-Created:      2020-05-07
----
-# XLS-11d: Retiring Amendments
+# Retiring Amendments
 
 This standard proposes an orderly process for retiring legacy XRP Ledger protocol behavior.
 
@@ -115,3 +105,4 @@ The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 | fix1201           | 2017-11-14   |
 
 > **Note:** As mentioned above, the **FeeEscalation** amendment (enabled 2016-05-19), which did not directly affect transaction processing and ledger replay, has been unconditionalized since v1.2.0.
+
