@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-17d
-    Title: 0017 XLS-17d: XFL Developer-friendly representation of XRPL balances
+    XLS: XLS-17
+    Title: XLS-17: XFL Developer-friendly representation of XRPL balances
     Author: None (RichardAH)
     Created: 2021-03-19
     Status: Final
@@ -162,3 +162,4 @@ function to_string(xfl)
 
 C:
 * See implementation in Hooks: [here](https://github.com/RichardAH/rippled-hooks/blob/6b132d6d1382e3ee61e6759cecad36f08b9e665f/src/ripple/app/tx/impl/applyHook.cpp#L86)
+
