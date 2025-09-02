@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-13d
-    Title: 0013 XLS-13d: Tickets & Ticket Batching
+    XLS: XLS-13
+    Title: XLS-13: Tickets & Ticket Batching
     Author: Nik Bougalis (nbougalis)
     Created: 2020-09-01
     Status: Final
@@ -818,3 +818,4 @@ The `Transactor::checkSeq()` method needed to take the presence of `Ticket`s int
 #### Impact in the SQLite Database
 
 None identified, however tests were added to increase confidence.
+
