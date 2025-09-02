@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-21d
-    Title: 0021 XLS-21d: Allocating Asset Code Prefixes
+    XLS: XLS-21
+    Title: XLS-21: Allocating Asset Code Prefixes
     Author: Rome Reginelli (mDuo13)
     Created: 2021-07-28
     Status: Stagnant
@@ -57,5 +57,6 @@ Extended prefixes are less desirable than regular prefixes since, by the nature 
 ## ASCII Codes
 
 It seems that some XRPL users may already be using a de-facto standard of using the entire 160-bit asset code value to represent a text code / name for the asset. We can avoid overlapping with this usage by avoiding any codes that start with printable ASCII characters, which have codes from `0x20` through `0x7E`.
+
 
 There's probably not much we can do for asset codes in the wild that use extended ASCII or UTF-8. A subsequent proposal could set aside a prefix for a more standardized and flexible format. (For example, you may want to set aside a few bytes for a currency symbol e.g. $, €, ¥, or 💩.)
