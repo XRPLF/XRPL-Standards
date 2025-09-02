@@ -1,15 +1,14 @@
-# Enhanced Secret Numbers
-
 <pre>
-  XRP Ledger Proposed Standard XLS-25d
-
-  Title:        <b>Enhanced Secret Numbers</b>
-                (Enhancements to XLS-12)
-  Author:       <b><a href="mailto:nikb@bougalis.net">Nik Bougalis</a></b>
-  Created:      <b>2021-12-10</b>
+  xls: XLS-25
+  title: Enhanced Secret Numbers
+  description: Enhances XLS-12 secret number format by introducing an additional block for encoding ancillary information, and supporingt for longer secrets.
+  author: Nik Bougalis (nikb@bougalis.net)
+  status: Final
+  category: Community
+  created: 2021-12-10
 </pre>
 
-<hr/>
+# Enhanced Secret Numbers
 
 ## Abstract
 The Secret Numbers proposal **<a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-12">XLS-12</a>** introduces a new format for secrets - based on blocks of numbers/digits (0-9) with block-level checksums - to generate XRP Ledger account keys and address. This draft proposes augmenting and enhancing **XLS-12** to make the format more flexible and more robust.
@@ -99,3 +98,4 @@ The information block itself is then calculated as:
     A = ((X + 7) * 100000) + (C * 256 + F)
 
 The end result is an A block that begins with 7, 8 or 9, which means it cannot be a valid XLS12 block, while still retaining a checksum in the A block.
+
