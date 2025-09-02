@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-10d
-    Title: 0010 XLS-10d: Non-Transferable Token (NTT) standard
+    XLS: XLS-10
+    Title: XLS-10: Non-Transferable Token (NTT) standard
     Author: None (RichardAH)
     Created: 2020-04-05
     Status: Stagnant
@@ -72,5 +72,6 @@ It is proposed that a community “bulletin board” account be created on the X
 In order to whitelist an issuer of a token, the issuer’s 20 byte account ID is truncated at the end by five bytes. Five bytes are then prepended to the start of the account ID in comprising: 0xFF FF FF, followed by the sub-type of the white listed token.
 
 An alternative way to do this would have been to open a trustline to the issuer from the community account, however the above has an additional advantage: by changing the sub-type of the entry to 0xFF FF F**E** we can signal that the token is actually blacklisted rather than whitelisted. Thus the concept of a bulletin board.
+
 
 Further information relevant to all wallets can be stored on the community bulletin board in this way, simply by allocating subtype numbers for those notice types. For example known scam accounts can be placed on the bulletin board, or URL pointers to lists of known scam accounts.
