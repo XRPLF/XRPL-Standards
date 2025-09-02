@@ -1,6 +1,6 @@
 <pre>
-    XLS: XLS-16d
-    Title: 0016 XLS-16d: NFT Metadata
+    XLS: XLS-16
+    Title: XLS-16: NFT Metadata
     Author: Hubert Getrouw (HubertG97)
     Created: 2021-03-17
     Status: Stagnant
@@ -182,5 +182,6 @@ The JSON for the metadata transaction would look like this:
 ```
 
 Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/transactions/7DFCD417FCEE35F7BB3ABECD05C27BA71F1E845BFD29C19AF3CF5E55B44EA55C) transaction
+
 
 After that, a trust set and sending the tokens is the same as the advanced method
