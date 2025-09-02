@@ -1,12 +1,13 @@
 <pre>
     XLS: XLS-18
     Title: XLS-18 Standard For Bootstrapping XRPLD Networks
+    Description: An experimental procedure to bootstrapping XRP Ledger Network 
     Author: None (RichardAH)
     Created: 2021-03-25
     Status: Stagnant
     Category: Community
 </pre>
-### Warning: **DRAFT** do not use until out of draft.
+
 This procedure is experimental and additions amendments or recommendations based on experience to this standard draft are welcome.
 
 ### Problem Definition
@@ -44,3 +45,4 @@ Small networks may require the `quorum` size to be permanently overridden for ne
 
 
 ### Other cases TBD
+
