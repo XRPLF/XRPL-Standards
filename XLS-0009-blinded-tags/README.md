@@ -1,18 +1,10 @@
 <pre>
-    XLS: XLS-9d
-    Title: 0009 XLS-9d: Blinded Tags
+    XLS: XLS-9
+    Title: XLS-9: Blinded Tags
     Author: Nik Bougalis (nbougalis)
     Created: 2020-03-31
     Status: Stagnant
     Category: Amendment
-</pre>
-<pre>
-  XRP Ledger Proposed Standard #9
-
-  Title:        Blinded Tags
-  Author:       Nikolaos D. Bougalis <nikb@bougalis.net>
-  Affiliation:  Ripple
-  Created:      2020-03-30
 </pre>
 
 # Abstract
@@ -215,5 +207,6 @@ The blinding scheme is not conducive to pre-generation of blinded tags. Despite 
 The tag specified in the **X-address** should be unblinded; applications (wallets) should accept such addresses and blind the tag, if appropriate, according to the sender's configuration.
 
 ## Integration with tickets
+
 
 No consideration is given at this time on how this scheme integrates with tickets.
