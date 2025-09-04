@@ -1,5 +1,5 @@
 <pre>
-  xls: 49
+  xls: XLS-49
   title: Multiple Signer Lists
   description: A proposal to enable multiple signer lists per account on the XRP Ledger, allowing different signer lists to authorize specific transaction types.
   author: Mayukha Vadari <mvadari@ripple.com>
