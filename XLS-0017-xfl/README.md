@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-17
-    Title: XLS-17: XFL Developer-friendly representation of XRPL balances
-    Author: None (RichardAH)
-    Created: 2021-03-19
-    Status: Final
-    Category: Protocol
+    xls: 17
+    title: XFL Developer-friendly representation of XRPL balances
+    author: None (RichardAH)
+    created: 2021-03-19
+    status: Final
+    category: Protocol
 </pre>
 # Background
 The XRP ledger allows for two types of balances on accounts:
@@ -162,4 +162,5 @@ function to_string(xfl)
 
 C:
 * See implementation in Hooks: [here](https://github.com/RichardAH/rippled-hooks/blob/6b132d6d1382e3ee61e6759cecad36f08b9e665f/src/ripple/app/tx/impl/applyHook.cpp#L86)
+
 
