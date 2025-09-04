@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-16
-    Title: XLS-16: NFT Metadata
-    Author: Hubert Getrouw (HubertG97)
-    Created: 2021-03-17
-    Status: Stagnant
-    Category: Community
+    xls: 16
+    title: NFT Metadata
+    author: Hubert Getrouw (HubertG97)
+    created: 2021-03-17
+    status: Stagnant
+    category: Community
 </pre>
 In addition to @WietseWind 's [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30)  and  @RichardAH 's proposal [XLS-15d](https://github.com/XRPLF/XRPL-Standards/discussions/34) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code. 
 
@@ -185,3 +185,4 @@ Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/trans
 
 
 After that, a trust set and sending the tokens is the same as the advanced method
+
