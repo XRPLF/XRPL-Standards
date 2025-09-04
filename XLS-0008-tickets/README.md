@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-8
-    Title: XLS-8 Tickets: Supporting out-of-sequence transactions on the XRP Ledger
-    Author: Nik Bougalis (nbougalis) Scott Schurr (scott@ripple.com)
-    Created: 2020-03-28
-    Status: Withdrawn
-    Category: Amendment
+    xls: 8
+    title: Tickets: Supporting out-of-sequence transactions on the XRP Ledger
+    author: Nik Bougalis (nbougalis) Scott Schurr (scott@ripple.com)
+    created: 2020-03-28
+    status: Withdrawn
+    category: Amendment
 </pre>
 
 # Tickets
@@ -803,4 +803,5 @@ The `Transactor::checkSeq()` method needed to take the presence of `Ticket`s int
 #### Impact in the SQLite Database
 
 None identified, however tests were added to increase confidence.
+
 
