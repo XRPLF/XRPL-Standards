@@ -1,5 +1,5 @@
 <pre>
-  xls: XLS-25
+  xls: 25
   title: Enhanced Secret Numbers
   description: Enhances XLS-12 secret number format by introducing an additional block for encoding ancillary information, and supporingt for longer secrets.
   author: Nik Bougalis (nikb@bougalis.net)
@@ -98,4 +98,5 @@ The information block itself is then calculated as:
     A = ((X + 7) * 100000) + (C * 256 + F)
 
 The end result is an A block that begins with 7, 8 or 9, which means it cannot be a valid XLS12 block, while still retaining a checksum in the A block.
+
 
