@@ -2,7 +2,8 @@
     xls: 18
     title: Standard For Bootstrapping XRPLD Networks
     description: An experimental procedure to bootstrapping XRP Ledger Network 
-    author: None (RichardAH)
+    author: Richard Holland (@RichardAH)
+
     created: 2021-03-25
     status: Stagnant
     category: Community
