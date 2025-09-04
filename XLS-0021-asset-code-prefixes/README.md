@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-21
-    Title: XLS-21: Allocating Asset Code Prefixes
-    Author: Rome Reginelli (mDuo13)
-    Created: 2021-07-28
-    Status: Stagnant
-    Category: Community
+    xls: 21
+    title: 21: Allocating Asset Code Prefixes
+    author: Rome Reginelli (mDuo13)
+    created: 2021-07-28
+    status: Stagnant
+    category: Community
 </pre>
 # Proposal for Allocating Asset Code Prefixes
 
@@ -60,3 +60,4 @@ It seems that some XRPL users may already be using a de-facto standard of using 
 
 
 There's probably not much we can do for asset codes in the wild that use extended ASCII or UTF-8. A subsequent proposal could set aside a prefix for a more standardized and flexible format. (For example, you may want to set aside a few bytes for a currency symbol e.g. $, €, ¥, or 💩.)
+
