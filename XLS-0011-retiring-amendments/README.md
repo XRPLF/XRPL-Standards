@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-11
-    Title: XLS-11: Retiring Amendments
+    XLS: 11
+    Title: Retiring Amendments
     Authors: Wietse Wind (WietseWind), Scott Schurr (scott@ripple.com), Rome Reginelli (rome@ripple.com)
     Created: 2020-05-07
     Status: Final
-    Category: Protocol
+    Category: Community
 </pre>
 
 # Retiring Amendments
@@ -105,4 +105,5 @@ The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 | fix1201           | 2017-11-14   |
 
 > **Note:** As mentioned above, the **FeeEscalation** amendment (enabled 2016-05-19), which did not directly affect transaction processing and ledger replay, has been unconditionalized since v1.2.0.
+
 
