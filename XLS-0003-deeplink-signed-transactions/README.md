@@ -34,4 +34,4 @@ MSIE limits URL parsing to 2,083 chars. Safari 65k chars. Todo: need to test thi
 P.S. Another option (proposal) would be to use a specific syntax (prefix) instead of fixed (one) folder; eg.
 `https://xrpl-labs.com/xrpl:signed-transaction:<SIGNEDBLOB>`
 
-... Where the fixed prefix in this case is `xrpl:signed-transaction:`. 
+... Where the fixed prefix in this case is `xrpl:signed-transaction:`.

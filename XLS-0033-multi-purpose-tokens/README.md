@@ -9,15 +9,15 @@
   created: 2022-08-05
 </pre>
 
-#  Multi-Purpose Tokens (MPTs)
+# Multi-Purpose Tokens (MPTs)
 
 ## 1. Abstract
 
 [Trust lines](https://xrpl.org/trust-lines-and-issuing.html#trust-lines-and-issuing) are a fundamental building block for many XRP Ledger tokenization features, including [CBDCs](https://en.wikipedia.org/wiki/Central_bank_digital_currency) and [fiat-collateralized stablecoins](https://www.investopedia.com/terms/s/stablecoin.asp). However, as more and more token issuers embrace the XRP Ledger, the current size of each trust line will become an impediment to ledger stability and scalability.
 
-This proposal introduces extensions to the XRP Ledger to support a more multi-purpose token (i.e., MPT) type, along with operations to enumerate, purchase, sell and hold such tokens. 
+This proposal introduces extensions to the XRP Ledger to support a more multi-purpose token (i.e., MPT) type, along with operations to enumerate, purchase, sell and hold such tokens.
 
-Unlike trust lines, MPTs do not represent bidirectional debt relationships. Instead, MPTs function more like a unidirectional trust line with only one balance, making it simpler to support common tokenization requirements, including even non-monetery use cases such as tracking reputation points in an online game. 
+Unlike trust lines, MPTs do not represent bidirectional debt relationships. Instead, MPTs function more like a unidirectional trust line with only one balance, making it simpler to support common tokenization requirements, including even non-monetery use cases such as tracking reputation points in an online game.
 
 Perhaps as important, however, MPTs require significantly less space than trust lines: ~52 bytes for each MPT held by a token holder, as compared to _at least_ 234 bytes for every new trust line (see Appendix 1 for a more detailed comparison).
 
@@ -25,22 +25,23 @@ Perhaps as important, however, MPTs require significantly less space than trust 
 
 **Advantages**
 
-* Uses a fixed-point balance representation instead of a floating-point representation, yielding the following benefits:
-  * MPT balance amounts can easily be added to other ledger objects like escrows, checks, payment channels, and AMMs.
-  * Enables reliable and easy enforcement of invariant checks and straightforward tracking of fees.
-  * Eliminates edge case floating-point math involving very small amounts violating expected equality conditions (e.g., MPTs will never have to deal with cases where `A+B=A` for non-zero `B` or `(A+B)+C != A+(B+C)`). 
-* Simpler conceptual model (trust lines and rippling make it harder for developers to reason about the system, which increases the risk of errors or value loss).
-* Reduces trust line storage requirements which allows more accounts to hold more tokens, for less cost.
-* Reduces long-term infrastructure and storage burdens on node operators, increasing network resiliency.
-* Improves node performance when processing large volumes of MPT transactions.
+- Uses a fixed-point balance representation instead of a floating-point representation, yielding the following benefits:
+  - MPT balance amounts can easily be added to other ledger objects like escrows, checks, payment channels, and AMMs.
+  - Enables reliable and easy enforcement of invariant checks and straightforward tracking of fees.
+  - Eliminates edge case floating-point math involving very small amounts violating expected equality conditions (e.g., MPTs will never have to deal with cases where `A+B=A` for non-zero `B` or `(A+B)+C != A+(B+C)`).
+- Simpler conceptual model (trust lines and rippling make it harder for developers to reason about the system, which increases the risk of errors or value loss).
+- Reduces trust line storage requirements which allows more accounts to hold more tokens, for less cost.
+- Reduces long-term infrastructure and storage burdens on node operators, increasing network resiliency.
+- Improves node performance when processing large volumes of MPT transactions.
 
 **Disadvantages**
 
-* MPTs would introduce a third asset type on the ledger after XRP and IOUs, which complicates the Payment Engine implementation.
-* New transaction and data types require new implementation code from client libraries and wallets to read, display, and transact.
-* MPTs will represent a smaller overall balance amount as compared to trust lines (Trustlines can represent an enormous range, roughly between 10^-96 to 10^80). 
+- MPTs would introduce a third asset type on the ledger after XRP and IOUs, which complicates the Payment Engine implementation.
+- New transaction and data types require new implementation code from client libraries and wallets to read, display, and transact.
+- MPTs will represent a smaller overall balance amount as compared to trust lines (Trustlines can represent an enormous range, roughly between 10^-96 to 10^80).
 
 ### 1.2. Assumptions
+
 This proposal makes a variety of assumptions, based upon observations of existing trust line usage in order to produce the most compact representations of data. These assumptions include:
 
 1. **Only Unidirectional**. This proposal does not support bidirectional trust line constructions, on the assumption that _most_ token issuers leave their trust line limit set to the default value of 0 (i.e., issuers don't allow debt relationships with token holders, by default). Thus, MPTs do not have the same "balance netting" functionality found in trust lines because MPTs have only a single balance as opposed to the two balances used by trust lines.
@@ -69,15 +70,15 @@ The **`MPTokenIssuance`** object represents a single MPT issuance and holds data
 
 The key of an `MPTokenIssuance` object is computed using the SHA512-Half of the following values, concatenated in order:
 
-* The `MPTokenIssuance` space key (0x007E).
-* The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
-* The `AccountID` of the MPT issuer.
+- The `MPTokenIssuance` space key (0x007E).
+- The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
+- The `AccountID` of the MPT issuer.
 
 The ID of an `MPTokenIssuance` object, a.k.a. `MPTokenIssuanceID`, is a 192-bit integer that contains the following
 fields, concatenated in order:
 
-* The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
-* The `AccountID` of the MPT issuer.
+- The transaction `Sequence` number from `MPTokenIssuanceCreate` transaction that was used to create the issuance.
+- The `AccountID` of the MPT issuer.
 
 This is represented graphically as follows:
 
@@ -99,7 +100,7 @@ and `issuer` address.**
 **`MPTokenIssuance`** objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/directorynode.html) owned by the issuer. Issuances have the following required and optional fields:
 
 | Field Name          | Required?          | JSON Type | Internal Type |
-|---------------------|--------------------|-----------|---------------|
+| ------------------- | ------------------ | --------- | ------------- |
 | `LedgerEntryType`   | :heavy_check_mark: | `number`  | `UINT16`      |
 | `Flags`             | :heavy_check_mark: | `number`  | `UINT32`      |
 | `Issuer`            | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
@@ -122,9 +123,9 @@ The value 0x007E, mapped to the string `MPTokenIssuance`, indicates that this ob
 A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
 | Flag Name           | Flag Value | Description                                                                                                                                                                                                                               |
-|---------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lsfMPTLocked`      | ️`0x0001`  | If set, indicates that all balances are locked.                                                                                                                                                                                           |
-| `lsfMPTCanLock`     | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this MPT.  If not set, the MPT cannot be locked in any way.                                                                                           |
+| `lsfMPTCanLock`     | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this MPT. If not set, the MPT cannot be locked in any way.                                                                                            |
 | `lsfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.                                                                                                                  |
 | `lsfMPTCanEscrow`   | `0x0008`   | If set, indicates that _individual_ holders can place their balances into an escrow.                                                                                                                                                      |
 | `lsfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.                                                                                                                                     |
@@ -147,7 +148,7 @@ MPTs only support whole numbers (i.e., MPT units must be integers). For example,
 represent one cent instead of a whole dollar. Using `AssetScale`, MPT issuers can represent this difference as the
 number of orders of magnitude between a standard unit and an MPT unit.
 
-More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one MPT unit equals $10^{-scale}$ 
+More formally, the asset scale is a non-negative integer (`0`, `1,` `2`, …) such that one MPT unit equals $10^{-scale}$
 of a corresponding standard unit.
 
 The following equations formalize the relationship between an asset's standard unit and an assets MPT unit:
@@ -219,7 +220,7 @@ ultimately have no effect.)
 ##### 2.1.1.3. Example **`MPTokenIssuance`** JSON
 
 ```json
- {
+{
   "LedgerEntryType": "MPTokenIssuance",
   "Flags": 131072,
   "Issuer": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
@@ -263,16 +264,16 @@ transactions. The object key of the `MPToken` is derived from hashing the space 
 
 The Key of an MPToken object is computed using the SHA512-Half of the following values, concatenated in order:
 
-* The `MPToken` space key (0x007F).
-* The `MPTokenIssuanceID` for the issuance being held.
-* The `AccountID` of the token holder.
+- The `MPToken` space key (0x007F).
+- The `MPTokenIssuanceID` for the issuance being held.
+- The `AccountID` of the token holder.
 
 ##### 2.1.2.2. Fields
 
 A **`MPToken`** object can have the following fields.
 
 | Field Name          | Required?          | JSON Type | Internal Type |
-|---------------------|--------------------|-----------|---------------|
+| ------------------- | ------------------ | --------- | ------------- |
 | `LedgerEntryType`   | :heavy_check_mark: | `string`  | `UINT16`      |
 | `Account`           | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 | `MPTokenIssuanceID` | :heavy_check_mark: | `string`  | `UINT192`     |
@@ -305,7 +306,7 @@ this field is `0xFFFF'FFFF'FFFF'FFFF`.
 A set of flags indicating properties or other options associated with this **`MPTokenIssuance`** object. The type specific flags are:
 
 | Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                      |
-|--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lsfMPTLocked`     | `0x0001`   | If set, indicates that the MPT owned by this account is currently locked and cannot be used in any transactions other than sending value back to the issuer.                                                                                                                     |
 | `lsfMPTAuthorized` | `0x0002`   | (Only applicable for allow-listing) If set, indicates that the issuer has authorized the holder for the MPT. This flag can be set using a `MPTokenAuthorize` transaction; it can also be "un-set" using a `MPTokenAuthorize` transaction specifying the `tfMPTUnauthorize` flag. |
 
@@ -324,7 +325,7 @@ Identifies the page in the owner's directory where this item is referenced.
 ##### 2.1.2.3. Example MPToken JSON
 
 ```json
- {
+{
   "LedgerEntryType": "MPToken",
   "Account": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG",
   "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
@@ -343,7 +344,8 @@ Each **`MPToken`** costs an incremental reserve to the owner account.
 This proposal introduces several new transactions to allow for the creation and deletion of MPT issuances. Likewise, this proposal introduce several new transactions for minting and redeeming discrete instances of MPTs. All transactions introduced by this proposal incorporate the [common transaction fields](https://xrpl.org/transaction-common-fields.html) that are shared by all transactions. Common fields are not documented in this proposal unless needed because this proposal introduces new possible values for such fields.
 
 ### 3.1. Transactions for Creating and Destroying Multi-Purpose Token Issuances on XRPL
-We define three transactions related to MPT Issuances: **`MPTokenIssuanceCreate`** and **`MPTokenIssuanceDestroy`** and  **`MPTokenIssuanceSet`** for minting, destroying, and updating MPT _Issuances_ respectively on XRPL.
+
+We define three transactions related to MPT Issuances: **`MPTokenIssuanceCreate`** and **`MPTokenIssuanceDestroy`** and **`MPTokenIssuanceSet`** for minting, destroying, and updating MPT _Issuances_ respectively on XRPL.
 
 #### 3.1.1. The **`MPTokenIssuanceCreate`** transaction
 
@@ -353,44 +355,44 @@ If the transaction is successful, the newly created token will be owned by the a
 
 ##### 3.1.1.1. Transaction-specific Fields
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | --------- | --------- |---------------|
-| `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
+| Field Name        | Required? | JSON Type | Internal Type |
+| ----------------- | --------- | --------- | ------------- |
+| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenIssuanceCreate`**. The integer value is `54`.
 
-| Field Name         | Required?    | JSON Type | Internal Type |
-| ------------------ | ------------ | --------- |---------------|
-| `AssetScale`       | ️           | `number`  | `UINT8`       |
+| Field Name   | Required? | JSON Type | Internal Type |
+| ------------ | --------- | --------- | ------------- |
+| `AssetScale` | ️         | `number`  | `UINT8`       |
 
 An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional, and will default to `0` if not supplied.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- |---------------|
-| `Flags`     | ️          | `number`  | `UINT16`      |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `Flags`    | ️         | `number`  | `UINT16`      |
 
 Specifies the flags for this transaction. In addition to the universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`), the following transaction-specific flags are defined and used to set the appropriate fields in the Fungible Token:
 
-| Flag Name         | Flag Value | Description |
-|-------------------|------------|-------------|
-| `tfMPTCanLock`  | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.|
-| `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.  |
-| `tfMPTCanEscrow`             | `0x0008`  | If set, indicates that _individual_ holders can place their balances into an escrow. |
-| `tfMPTCanTrade`              | `0x0010`  | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX. |
-| `tfMPTCanTransfer`          | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer. |
-| `tfMPTCanClawback`          | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.|
+| Flag Name          | Flag Value | Description                                                                                                                   |
+| ------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `tfMPTCanLock`     | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way. |
+| `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.      |
+| `tfMPTCanEscrow`   | `0x0008`   | If set, indicates that _individual_ holders can place their balances into an escrow.                                          |
+| `tfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX.                                |
+| `tfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer.                                   |
+| `tfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.             |
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
-| `TransferFee` |           | `number`  | `UINT16`      | 
+| `TransferFee` |           | `number`  | `UINT16`      |
 
 The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001. The default value is 0 if this field is not specified.
 
 The field MUST NOT be present if the `tfMPTCanTransfer` flag is not set. If it is, the transaction should fail with `temMALFORMED`.
 
 | Field Name      | Required? | JSON Type | Internal Type |
-|-----------------|-----------|-----------|---------------|
-| `MaximumAmount` |           | `string`  | `UINT64`      | 
+| --------------- | --------- | --------- | ------------- |
+| `MaximumAmount` |           | `string`  | `UINT64`      |
 
 The maximum number of this token's units that should ever be issued. This field is optional. If omitted, the
 implementation will set this to an empty default field value, which will be interpreted at runtime as the current
@@ -400,8 +402,8 @@ Note that the maximum allowed value may increase in the future, so callers shoul
 limit is required.
 
 | Field Name        | Required? | JSON Type | Internal Type |
-|-------------------|-----------|-----------|---------------|
-| `MPTokenMetadata` |           | `string`  | `BLOB`        | 
+| ----------------- | --------- | --------- | ------------- |
+| `MPTokenMetadata` |           | `string`  | `BLOB`        |
 
 Arbitrary metadata about this issuance, in hex format. The limit for this field is 1024 bytes.
 
@@ -430,79 +432,81 @@ If this operation succeeds, the corresponding **`MPTokenIssuance`** is removed a
 reduced by one. This operation must fail if there are any holders of the MPT in question.
 
 Note that destroying an `MPTokenIssuance` does not remove associated `MPToken` objects from accounts that have held a
-deleted token. These can instead be removed using an `MPTokenAuthorize` transaction. 
+deleted token. These can instead be removed using an `MPTokenAuthorize` transaction.
 
 #### 3.2.1. Transaction-specific Fields
 
 | Field Name        | Required? | JSON Type | Internal Type |
-| ----------        | --------- | --------- | ------------- |
-| `TransactionType` |  ✔️        | `string`  | `UINT16`      | 
+| ----------------- | --------- | --------- | ------------- |
+| `TransactionType` | ✔️        | `string`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenIssuanceDestroy`**. The integer value is `55`.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️        | `string`  | `UINT192`     | 
+| Field Name          | Required? | JSON Type | Internal Type |
+| ------------------- | --------- | --------- | ------------- |
+| `MPTokenIssuanceID` | ✔️        | `string`  | `UINT192`     |
 
 Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 
 #### 3.2.2. Example **`MPTokenIssuanceDestroy`** JSON
 
 ```json
- {
+{
   "TransactionType": "MPTokenIssuanceDestroy",
   "Fee": 10,
   "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E"
 }
 ```
- 
+
 ### 3.3. The **`MPTokenIssuanceSet`** Transaction
 
 #### 3.3.1. MPTokenIssuanceSet
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | --------- | --------- |---------------|
-| `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
+| Field Name        | Required? | JSON Type | Internal Type |
+| ----------------- | --------- | --------- | ------------- |
+| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value is `56`.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
+| Field Name          | Required? | JSON Type | Internal Type |
+| ------------------- | --------- | --------- | ------------- |
+| `MPTokenIssuanceID` | ✔️        | `string`  | `UINT192`     |
 
 The `MPTokenIssuance` identifier.
 
 | Field Name      | Required? | JSON Type | Internal Type |
-|-----------------|-----------|-----------|---------------|
-| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   | 
+| --------------- | --------- | --------- | ------------- |
+| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   |
 
 An optional XRPL Address of an individual token holder balance to lock/unlock. If omitted, this transaction will apply
 to all accounts holding MPTs.
 
-| Field Name      | Required?          | JSON Type | Internal Type |
-| --------------- | ------------------ | --------- | ------------- |
-| `Flag`          | :heavy_check_mark: | `string`  | `UINT64`      | 
+| Field Name | Required?          | JSON Type | Internal Type |
+| ---------- | ------------------ | --------- | ------------- |
+| `Flag`     | :heavy_check_mark: | `string`  | `UINT64`      |
 
 #### 3.3.2. Example **`MPTokenIssuanceSet`** JSON
 
 ```json
- {
+{
   "TransactionType": "MPTokenIssuanceSet",
   "Fee": 10,
   "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "Flags": 1
 }
 ```
- 
+
 #### 3.3.1.1. MPTokenIssuanceSet Flags
+
 Transactions of the `MPTokenLock` type support additional values in the Flags field, as follows:
 
-| Flag Name         | Flag Value | Description |
-|-------------------|------------|-------------|
-| `tfMPTLock`     | ️`0x0001`  | If set, indicates that all MPT balances for this asset should be locked. |
-| `tfMPTUnlock`   | ️`0x0002`  | If set, indicates that all MPT balances for this asset should be unlocked. |
+| Flag Name     | Flag Value | Description                                                                |
+| ------------- | ---------- | -------------------------------------------------------------------------- |
+| `tfMPTLock`   | ️`0x0001`  | If set, indicates that all MPT balances for this asset should be locked.   |
+| `tfMPTUnlock` | ️`0x0002`  | If set, indicates that all MPT balances for this asset should be unlocked. |
 
 ### 3.4. The **`Payment`** Transaction
+
 The existing `Payment` transaction will not have any new top-level fields or flags added. However, we will extend the existing `amount` field to accommodate MPT amounts.
 
 #### 3.4.1. The `amount` field
@@ -554,42 +558,42 @@ This transaction can also be used to delete an `MPToken` object with a zero bala
 
 #### 3.5.1. MPTokenAuthorize
 
-| Field Name      | Required?          | JSON Type | Internal Type |
-| --------------- | ------------------ | --------- | ------------- |
-| `Account`       | :heavy_check_mark: | `string`  | `ACCOUNTID`   | 
+| Field Name | Required?          | JSON Type | Internal Type |
+| ---------- | ------------------ | --------- | ------------- |
+| `Account`  | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
 
 This address can indicate either an issuer or a potential holder of a MPT.
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | --------- | --------- |---------------|
-| `TransactionType`  | ️ ✔        | `object`  | `UINT16`      |
+| Field Name        | Required? | JSON Type | Internal Type |
+| ----------------- | --------- | --------- | ------------- |
+| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenAuthorize`**. The integer value is `57`.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenIssuanceID` |  ✔️  | `string`  | `UINT192`     | 
+| Field Name          | Required? | JSON Type | Internal Type |
+| ------------------- | --------- | --------- | ------------- |
+| `MPTokenIssuanceID` | ✔️        | `string`  | `UINT192`     |
 
-Indicates the ID of the MPT involved. 
+Indicates the ID of the MPT involved.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | --------- | --------- | ------------- |
-| `MPTokenHolder` |    | `string`  | `ACCOUNTID`     | 
+| Field Name      | Required? | JSON Type | Internal Type |
+| --------------- | --------- | --------- | ------------- |
+| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   |
 
 Specifies the holder's address that the issuer wants to authorize. Only used for authorization/allow-listing; should not
 be present if submitted by the holder.
 
 | Field Name | Required?          | JSON Type | Internal Type |
-|------------|--------------------|-----------|---------------|
+| ---------- | ------------------ | --------- | ------------- |
 | `Flag`     | :heavy_check_mark: | `string`  | `UINT64`      |
- 
+
 #### 3.3.5.12. MPTokenAuthorize Flags
 
 Transactions of the `MPTokenAuthorize` type support additional values in the Flags field, as follows:
 
-| Flag Name         | Flag Value | Description |
-|-------------------|------------|-------------|
-| `tfMPTUnauthorize`     | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `MPToken`, which will be deleted as a result. If the the holder's `MPToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfMPTAuthorized` flag on the `MPToken`.|
+| Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tfMPTUnauthorize` | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `MPToken`, which will be deleted as a result. If the the holder's `MPToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfMPTAuthorized` flag on the `MPToken`. |
 
 ### 3.6. The **`AccountDelete`** Transaction
 
@@ -604,8 +608,8 @@ from holders if and only if `lsfMPTAllowClawback` is set on the `MPTokenIssuance
 #### 3.7.1. New `MPTokenHolder` field
 
 | Field Name      | Required? | JSON Type | Internal Type |
-|-----------------|-----------|-----------|---------------|
-| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   | 
+| --------------- | --------- | --------- | ------------- |
+| `MPTokenHolder` |           | `string`  | `ACCOUNTID`   |
 
 Specifies the MPT holder's address that the issuer wants to clawback from. The MPT holder must already own an `MPToken`
 object with a non-zero balance.
@@ -614,22 +618,23 @@ object with a non-zero balance.
 
 ```json
 {
-    "TransactionType": "Clawback",
-    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-    "Amount": {
-      "value": 10,
-      "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-    },
-    "MPTokenHolder": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG"
+  "TransactionType": "Clawback",
+  "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+  "Amount": {
+    "value": 10,
+    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47"
+  },
+  "MPTokenHolder": "rajgkBmMxmz161r8bWYH7CQAFZP5bA9oSG"
 }
 ```
+
 ## 4. Details on Locking MPTs
 
 ### 4.1. Locking individual balances
 
 To lock an individual balance of an individual MPT an issuer will submit the `MPTokenIssuanceSet` transaction, indicate the MPT and holder account that they wish to lock, and set the `tfMPTLock` flag. This operation will fail if:
 
-* The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
+- The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
 Issuers can unlock the balance by submitting another `MPTokenIssuanceSet` transaction with the `tfMPTUnlock` flag set.
 
@@ -637,7 +642,7 @@ Issuers can unlock the balance by submitting another `MPTokenIssuanceSet` transa
 
 This operation works the same as above, except that the holder account is not specified in the `MPTokenIssuanceSet` transaction when locking or unlocking. This operation will fail if:
 
-* The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
+- The `MPTokenIssuance` has the `lsfMPTCanLock` flag _not_ set.
 
 Locking an entire MPT without locking other assets issued by an issuer is a new feature of MPTs.
 
@@ -654,26 +659,29 @@ the `ledger_entry` command can be used to query a specific `MPTokenIssuance` or 
 This specification introduces a new Clio RPC called `mpt_holders` to allow querying all the holders of an MPT.
 
 ### 6.1. `ledger_entry` API Updates
+
 `ledger_entry` API is updated to query `MPTokenIssuance` and `MPToken` objects.
 
 ### 6.1.1. `mpt_issuance` Field
+
 A `MPTokenIssuance` object can be queried by specifying the the `mpt_issuance` field.
 
-| Field Name           | Type    | Description |
-|--------------------- |:-------:| ------------|
-| `mpt_issuance`       | ️String   | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.|
+| Field Name     |  Type   | Description                                                                   |
+| -------------- | :-----: | ----------------------------------------------------------------------------- |
+| `mpt_issuance` | ️String | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`. |
 
 ### 6.1.1. `mptoken` Field
 
 A `MPToken` object can be queried by specifying the `mptoken` field.
 
 | Field Name                |       Type        | Description                                                                                                                                                                     |
-|---------------------------|:-----------------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------- | :---------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mptoken`                 | ️Object or String | If string, interpret as ledger entry ID of the `MPToken` to retrieve. If an object, requires the sub-fields `account` and `mpt_issuance_id` to uniquely identify the `MPToken`. |
 | `mptoken.mpt_issuance_id` |      ️String      | (Required if `mptoken` is specified as an object) The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.                                                 |
 | `mptoken.account`         |      ️String      | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.                                                                                          |
 
 ### 6.2. `mpt_holders` API (Clio-only)
+
 For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of an MPT and their balance. This RPC might return very large data sets, so users should handle result paging using the `marker` field.
 
 #### 6.2.1. Request fields
@@ -686,33 +694,33 @@ For a given `MPTokenIssuanceID`, `mpt_holders` will return all holders of an MPT
 }
 ```
 
-| Field Name        | Required?             | JSON Type |
-|-------------------|:---------------------:|:---------:|
-| `mpt_issuance_id`          |:heavy_check_mark:     | `string`  |
+| Field Name        |     Required?      | JSON Type |
+| ----------------- | :----------------: | :-------: |
+| `mpt_issuance_id` | :heavy_check_mark: | `string`  |
 
 Indicates the MPTokenIssuance we wish to query.
 
-| Field Name        | Required?             | JSON Type |
-|-------------------|:---------------------:|:---------:|
-| `ledger_index`    |                       | `string` or `number` (positive integer) |
+| Field Name     | Required? |                JSON Type                |
+| -------------- | :-------: | :-------------------------------------: |
+| `ledger_index` |           | `string` or `number` (positive integer) |
 
 The ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically. Either `ledger_index` or `ledger_hash` must be specified.
 
-| Field Name        | Required?             | JSON Type |
-|-------------------|:---------------------:|:---------:|
-| `ledger_hash`    |                       | `string`   |
+| Field Name    | Required? | JSON Type |
+| ------------- | :-------: | :-------: |
+| `ledger_hash` |           | `string`  |
 
-A 20-byte hex string for the  max ledger version to use. Either `ledger_index` or `ledger_hash` must be specified.
+A 20-byte hex string for the max ledger version to use. Either `ledger_index` or `ledger_hash` must be specified.
 
-| Field Name        | Required?             | JSON Type |
-|-------------------|:---------------------:|:---------:|
-| `marker`          |                       | `string`  |
+| Field Name | Required? | JSON Type |
+| ---------- | :-------: | :-------: |
+| `marker`   |           | `string`  |
 
 Used to continue querying where we left off when paginating.
 
-| Field Name        | Required?             | JSON Type |
-|-------------------|:---------------------:|:---------:|
-| `limit`           |                       | `number` (positive integer) |
+| Field Name | Required? |          JSON Type          |
+| ---------- | :-------: | :-------------------------: |
+| `limit`    |           | `number` (positive integer) |
 
 Specify a limit to the number of MPTs returned.
 
@@ -720,50 +728,54 @@ Specify a limit to the number of MPTs returned.
 
 ```json
 {
-    "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
-    "limit":50,
-    "ledger_index": 2,
-    "mptokens": [{
-        "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
-        "flags": 0,
-        "mpt_amount": "20",
-        "locked_amount": "1",
-        "mptoken_index": "36D91DEE5EFE4A93119A8B84C944A528F2B444329F3846E49FE921040DE17E65"
+  "mpt_issuance_id": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+  "limit": 50,
+  "ledger_index": 2,
+  "mptokens": [
+    {
+      "account": "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx",
+      "flags": 0,
+      "mpt_amount": "20",
+      "locked_amount": "1",
+      "mptoken_index": "36D91DEE5EFE4A93119A8B84C944A528F2B444329F3846E49FE921040DE17E65"
     },
     {
-        "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
-        "flags": 0,
-        "mpt_amount": "1",
-        "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
-    }],
-    "validated": true
+      "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
+      "flags": 0,
+      "mpt_amount": "1",
+      "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
+    }
+  ],
+  "validated": true
 }
 ```
 
-| Field Name        | JSON Type | Description |
-|-------------------|:---------:| --------- |
-| `mpt_issuance_id` | `string`  | Indicates the `MPTokenIssuance` we queried. |
-| `mptokens`   | `array`   | An array of `mptoken`s. Includes all relevant fields in the underlying `MPToken` object. |
+| Field Name        | JSON Type | Description                                                                                                          |
+| ----------------- | :-------: | -------------------------------------------------------------------------------------------------------------------- |
+| `mpt_issuance_id` | `string`  | Indicates the `MPTokenIssuance` we queried.                                                                          |
+| `mptokens`        |  `array`  | An array of `mptoken`s. Includes all relevant fields in the underlying `MPToken` object.                             |
 | `marker`          | `string`  | Used to continue querying where we left off when paginating. Omitted if there are no more entries after this result. |
-| `limit`          | `number`  | The limit, as specified in the request|
-| `ledger_index`     | `number`  | The index of the ledger used.|
+| `limit`           | `number`  | The limit, as specified in the request                                                                               |
+| `ledger_index`    | `number`  | The index of the ledger used.                                                                                        |
 
 A `mptoken` object has the following parameters:
-| Field Name          | JSON Type | Description |
+| Field Name | JSON Type | Description |
 | ------------------- |:---------:| ----------- |
-| `account`           | `string`  | The account address of the holder who owns the `MPToken`. |
-| `flags`             | `number`  | The flags of the `MPToken` object.|
-| `mpt_amount`        | `string`  | Hex-encoded amount of the holder's balance. |
-| `locked_amount`     | `string`  | Hex-encoded amount of the locked balance. (May be omitted if the value is 0) |
-| `mptoken_index`     | `string`  | Key of the `MPToken` object. |
+| `account` | `string` | The account address of the holder who owns the `MPToken`. |
+| `flags` | `number` | The flags of the `MPToken` object.|
+| `mpt_amount` | `string` | Hex-encoded amount of the holder's balance. |
+| `locked_amount` | `string` | Hex-encoded amount of the locked balance. (May be omitted if the value is 0) |
+| `mptoken_index` | `string` | Key of the `MPToken` object. |
 
 ### 6.3. Synthetic `mpt_issuance_id` field
+
 `MPTokenIssuanceID` is an identifier that allows user to specify a `MPTokenIssuance` in RPCs. Therefore, a synthetically parsed `mpt_issuance_id` field is added into API responses to avoid the need for client-side parsing of the `MPTokenIssuanceID`.
 
 #### 6.3.1. Transaction Metadata
- A `mpt_issuance_id` field is provided in JSON transaction metadata (not available for binary) for all successful `MPTokenIssuanceCreate` transactions. The following APIs are impacted: `tx`, `account_tx`, `subscribe` and `ledger`.
 
- ##### 6.3.1.1. Example
+A `mpt_issuance_id` field is provided in JSON transaction metadata (not available for binary) for all successful `MPTokenIssuanceCreate` transactions. The following APIs are impacted: `tx`, `account_tx`, `subscribe` and `ledger`.
+
+##### 6.3.1.1. Example
 
 Example of a `tx` response:
 
@@ -796,6 +808,7 @@ Example of a `tx` response:
 ```
 
 #### 6.3.2. Object
+
 A `mpt_issuance_id` field is provided in JSON `MPTokenIssuance` objects (not available for binary). The following APIs are impacted: `ledger_data` and `account_objects`.
 
 ##### 6.3.2.1. Example
@@ -804,27 +817,27 @@ Example of an `account_objects` response:
 
 ```json
 {
-   "result": {
-      "account": "rBT9cUqK6UvpvZhPFNQ2qpUTin8rDokBeL",
-      "account_objects": [
-         {
-            "AssetScale": 2,
-            "Flags": 64,
-            "Issuer": "rBT9cUqK6UvpvZhPFNQ2qpUTin8rDokBeL",
-            "LedgerEntryType": "MPTokenIssuance",
-            "OutstandingAmount": "50",
-            "OwnerNode": "0",
-            "PreviousTxnID": "BDC5ECA6B115C74BF4DA83E36325A2F55DF9E2C968A5CC15EB4D009D87D5C7CA",
-            "PreviousTxnLgrSeq": 308,
-            "Sequence": 303,
-            "index": "75EC6F2939ED6C5798A5F369A0221BC4F6DDC50F8614ECF72E3B976351057A63",
-            "mpt_issuance_id": "0000012F72A341F09A988CDAEA4FF5BE31F25B402C550ABE"
-         }
-      ],
-      "ledger_current_index": 309,
-      "status": "success",
-      "validated": false
-   }
+  "result": {
+    "account": "rBT9cUqK6UvpvZhPFNQ2qpUTin8rDokBeL",
+    "account_objects": [
+      {
+        "AssetScale": 2,
+        "Flags": 64,
+        "Issuer": "rBT9cUqK6UvpvZhPFNQ2qpUTin8rDokBeL",
+        "LedgerEntryType": "MPTokenIssuance",
+        "OutstandingAmount": "50",
+        "OwnerNode": "0",
+        "PreviousTxnID": "BDC5ECA6B115C74BF4DA83E36325A2F55DF9E2C968A5CC15EB4D009D87D5C7CA",
+        "PreviousTxnLgrSeq": 308,
+        "Sequence": 303,
+        "index": "75EC6F2939ED6C5798A5F369A0221BC4F6DDC50F8614ECF72E3B976351057A63",
+        "mpt_issuance_id": "0000012F72A341F09A988CDAEA4FF5BE31F25B402C550ABE"
+      }
+    ],
+    "ledger_current_index": 309,
+    "status": "success",
+    "validated": false
+  }
 }
 ```
 
@@ -854,7 +867,7 @@ to avoid breaking any existing functionality.
 
 #### A.1.4. Are MPTs targeted for Mainnet or a Sidechain?
 
-This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, MPTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-mpt-proposal-stored-mptoken-objects-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding MPTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling. 
+This is still being considered and debated, but is ultimately up to Validators to decide. On the one hand, MPTs on Mainnet would enable some new tokenization use-cases that could be problematic if Trustlines were to be used (see [FAQ 2.1.7](#217-an-early-draft-of-this-mpt-proposal-stored-mptoken-objects-in-a-paging-structure-similar-to-that-used-by-nfts-why-was-that-design-abandoned) for more details). On the other hand, adding MPTs introduces a new payment type into the payment engine, which complicates both the implementation of rippled itself, and XRPL tooling.
 
 In any event, we will first preview MPTs in a MPT-Devnet, and depending on what we learn there, revisit this issue then.
 
@@ -870,7 +883,7 @@ Practically speaking, no. The number of MPToken objects or MPTokenIssuance objec
 
 The original design was optimized for on-ledger space savings, but it came with a tradeoff of increased complexity, both in terms of this specification and the implementation. Another consideration is the datapoint that many NFT developers struggled with the mechanism used to identify NFTs, some of which is a result of the NFT paging structure.
 
-After analyzing on-ledger space requirements for (a) Trustlines, (b) `MPTokenPages`, (c) and simply storing `MPToken` objects in an Owner Directory, we determined that for a typical user (i.e., one holding ~10 different MPTs), the overall space required by the simpler design strikes a nice balance between the more complicated design and Trustlines. For example, the simpler design requires ~3.2x more bytes on-ledger than  more complicated design. However, the simpler design requires about 30% fewer bytes on-ledger than Trustlines.
+After analyzing on-ledger space requirements for (a) Trustlines, (b) `MPTokenPages`, (c) and simply storing `MPToken` objects in an Owner Directory, we determined that for a typical user (i.e., one holding ~10 different MPTs), the overall space required by the simpler design strikes a nice balance between the more complicated design and Trustlines. For example, the simpler design requires ~3.2x more bytes on-ledger than more complicated design. However, the simpler design requires about 30% fewer bytes on-ledger than Trustlines.
 
 With all that said, this decision is still open for debate. For example, in early 2024 the Ripple team plans to perform limit testing around Trustlines and the simpler MPT design to see how increased numbers of both types of ledger objects affect ledger performance. Once that data is complete, we'll likely revisit this design choice to either validate it or change it.
 
@@ -899,7 +912,7 @@ The initial name, "Compact Fungible Token", did not effectively convey the flexi
 
 For example, MPTs might be better suited than NFTs for certain semi-fungible use-cases (especially ones where each token might have a quantity greater than 1). In addition, some NFT issuers today issue multiple copies of the same NFT in order to make them semi-fungible. This technically violates the intent of the NFT spec, and may not work well in all NFT use-cases.
 
-That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research). 
+That said, we'll need to consider any future requirements and tradeoffs here before choosing between NFT or MPT for any particular use-case. For example, NFTs have the ability to link to off-ledger meta-data via the `URI` field, and likely require fewer storage bytes on-ledger than an MPT (though this deserves future research).
 
 #### A.1.12. What numeric range do MPT amounts support?
 
@@ -908,9 +921,9 @@ between `0` and`2^64 -1` (inclusive). An exception to this rule occurs when MPT 
 any other transaction that requires an `STAmount`. In these instances, the MPT amount values are limited to values
 between `0` and `2^63 -1` (inclusive), because this is the range supported by `STAmount`.
 
-Because of this limitation, the maximum amounts allowed by any balance tracking field in `MPTokenIssuance` and `MPToken` 
-are also limited to values between `0` and `2^63 -1` (inclusive), although these values may be increased in the future 
-to enable more tokens to exist. 
+Because of this limitation, the maximum amounts allowed by any balance tracking field in `MPTokenIssuance` and `MPToken`
+are also limited to values between `0` and `2^63 -1` (inclusive), although these values may be increased in the future
+to enable more tokens to exist.
 
 For context, MPT amounts in `STAmount` objects are limited to the above range so that MPT amounts will eventually work
 correctly with the `Number` class, which is used internally in rippled for certain mathematical operations such as
@@ -940,6 +953,7 @@ bits by reducing the space required by an `MPTokenIssuanceID` to 192 bits (when 
 a space reduction of 64 bits per `MPToken`.
 
 #### A.1.14. Why isn’t `MPTokenIssuanceID` constructed from the hash of an issuer address and currency code?
+
 Primarily because we did not want MPT meta-data to be part of an MPTs unique identifier. This mirrors the design of other tokenization primitives on other blockchain networks that have gained massive adoption, offering strong “prior art” (e.g., ERC-20 and ERC-721 tokens). For a more detailed discussion, see [here](https://github.com/XRPLF/XRPL-Standards/discussions/128).
 
 #### A.1.15. What is MPT metadata, and how do we envision it being defined?
@@ -975,18 +989,18 @@ necessary. Instead, MPT Global and user-level balance locking is likely sufficie
 
 #### A.1.18 What impact will MPTs have on the rippled codebase when it comes to representing issuers, currency types, or token amounts?
 
-The following changes have been made to the rippled codebase to accommodate this spec: 
+The following changes have been made to the rippled codebase to accommodate this spec:
 
-* The `Asset` class is added, replacing `Issue` in many contexts. `Issue` stays as-is; it supports only XRP and IOU.
+- The `Asset` class is added, replacing `Issue` in many contexts. `Issue` stays as-is; it supports only XRP and IOU.
   `Asset` supports XRP, IOU, and MPT. When one needs to represent a token type, `Asset` should be used.
-* `STAmount` will support MPT tokens (in addition to XRP and IOU) by holding an `Asset` instead of an `Issue`.
-* `STIssue` will support MPT tokens (in addition to XRP and IOU) by holding an `Asset` instead of an `Issue`.
-* `STNumber` is added, which supports MPT, XRP, and IOU by being a `Number`. `STNumber` is effectively an STAmount
+- `STAmount` will support MPT tokens (in addition to XRP and IOU) by holding an `Asset` instead of an `Issue`.
+- `STIssue` will support MPT tokens (in addition to XRP and IOU) by holding an `Asset` instead of an `Issue`.
+- `STNumber` is added, which supports MPT, XRP, and IOU by being a `Number`. `STNumber` is effectively an STAmount
   without the `Asset`, which means it is smaller when serialized.
-* There will be an `MPTIssue`, but no `XRPIssue` or `IOUIssue`. Instead, they are both represented by `Issue`.
-* Implicit conversions will be added from `MPTAmount`, `XRPAmount`, and `IOUAmount` to `Number` / `STNumber` and
+- There will be an `MPTIssue`, but no `XRPIssue` or `IOUIssue`. Instead, they are both represented by `Issue`.
+- Implicit conversions will be added from `MPTAmount`, `XRPAmount`, and `IOUAmount` to `Number` / `STNumber` and
   explicit conversions in the opposite direction.
-* There are implicit conversions from `MPTIssue` and `Issue` to `Asset`, and explicit conversions in the opposite
+- There are implicit conversions from `MPTIssue` and `Issue` to `Asset`, and explicit conversions in the opposite
   direction.
 
 ### A.2. Appendix: Supplemental Information
@@ -1001,8 +1015,8 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 
 **Required Fields**
 
-|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                          | 
-|------------------:|:-----------:|:------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                          |
+| ----------------: | :---------: | :----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                               |
 |             Flags |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |
 |           Balance |     384     |      48      | (160–224 wasted)                                                                                                                                              |
@@ -1011,25 +1025,25 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 |           LowNode |     64      |      8       | (often has value 0)                                                                                                                                           |
 |          HighNode |     64      |      8       | (often has value 0)                                                                                                                                           |
 |     PreviousTxnID |     256     |      32      |                                                                                                                                                               |
-| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                               | 
+| PreviousTxnLgrSeq |     32      |      4       |                                                                                                                                                               |
 |  Field+Type Codes |     144     |      18      | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have nine fields. |
 |               --- |     --      |     ---      |                                                                                                                                                               |
 |         SUB-TOTAL |    1760     |     220      |                                                                                                                                                               |
 |               --- |     --      |     ---      |                                                                                                                                                               |
-|      LowQualityIn |     32      |      4       |                                                                                                                                                               |   
-|     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |   
-|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                                              |   
+|      LowQualityIn |     32      |      4       |                                                                                                                                                               |
+|     LowQualityOut |     32      |      4       | ("optional" but present in > 99.99% of cases)                                                                                                                 |
+|     HighQualityIn |     32      |      4       | (160–224 wasted)                                                                                                                                              |
 |    HighQualityOut |     32      |      4       | (160–224 wasted)                                                                                                                                              |
 |  Field+Type Codes |     64      |      8       | For every field, there is a `FieldCode` and a `TypeCode`, taking 2 bytes in total (e.g., if there are 4 fields, we'll use 8 bytes). Here we have four fields. |
 |               --- |     --      |     ---      |                                                                                                                                                               |
 |         SUB-TOTAL |     192     |      24      |                                                                                                                                                               |
-|               --- |     --      |     ---      |                                                                                                                                                               |                    
-|             TOTAL |    1952     |     244      |                                                                                                                                                               |                    
+|               --- |     --      |     ---      |                                                                                                                                                               |
+|             TOTAL |    1952     |     244      |                                                                                                                                                               |
 
 ##### A.2.1.2. `MPToken` Object (Size in Bytes)
 
 |        FIELD NAME | SIZE (BITS) | SIZE (BYTES) | NOTE                                                                                                                                                       |
-|------------------:|:-----------:|:------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------: | :---------: | :----------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |   LedgerEntryType |     16      |      2       |                                                                                                                                                            |
 | MPTokenIssuanceID |     192     |      24      |                                                                                                                                                            |
 |         MPTAmount |     64      |      8       |                                                                                                                                                            |
@@ -1044,14 +1058,15 @@ This section attempts to catalog expected size, in bytes, for both Trustlines an
 
 As can be seen from the following size comparison table, Trustlines take up approximately 2.2-2.4x as much space on ledger, in bytes, as MPTs would.
 
-|                 Description | # MPT Directories | Total Bytes (MPT) | # Trustline Directories	 | Total Bytes (Trustline) | Trustlines are X-times Larger | 
-|----------------------------:|:-----------------:|:-----------------:|:------------------------:|:-----------------------:|:-----------------------------:|
-|  Bytes for holding 1 Tokens |         1         |        218        |            2             |           488           |             2.2x              |
-| Bytes for holding 10 Tokens |         1         |       1,370       |            2             |          3,260          |             2.4x              |
-| Bytes for holding 32 Tokens |         2         |       5,300       |            4             |         12,264          |             2.3x              |
-| Bytes for holding 64 Tokens |         3         |      12,558       |            6             |         28,444          |             2.3x              |
+|                 Description | # MPT Directories | Total Bytes (MPT) | # Trustline Directories | Total Bytes (Trustline) | Trustlines are X-times Larger |
+| --------------------------: | :---------------: | :---------------: | :---------------------: | :---------------------: | :---------------------------: |
+|  Bytes for holding 1 Tokens |         1         |        218        |            2            |           488           |             2.2x              |
+| Bytes for holding 10 Tokens |         1         |       1,370       |            2            |          3,260          |             2.4x              |
+| Bytes for holding 32 Tokens |         2         |       5,300       |            4            |         12,264          |             2.3x              |
+| Bytes for holding 64 Tokens |         3         |      12,558       |            6            |         28,444          |             2.3x              |
 
 #### A.2.2. `STAmount` serialization
+
 Referenced from https://gist.github.com/sappenin/2c923bb249d4e9dd153e2e5f32f96d92 with some modifications:
 
 ##### Binary Encoding
@@ -1138,7 +1153,7 @@ With allow-listing, there needs to be a bidirectional trust between the holder a
 
 1. Alice has a MPT of currency `USD` (same as above)
 2. Bob wants to hold it, and therefore submits a `MPTokenAuthorize` transaction specifying the `MPTokenIssuanceID`, and does not specify any flag. This will create a `MPToken` object with zero balance, and potentially taking up extra reserve. (same as above)
-**However at this point, Bob still does not have the permission to use `USD`!**
+   **However at this point, Bob still does not have the permission to use `USD`!**
 3. Alice needs to send a `MPTokenAuthorize` transaction specifying Bob's address in the `MPTokenHolder` field, and if successful, it will set the `lsfMPTAuthorized` flag on Bob's `MPToken` object. This will now finally enable Bob to use `USD`.
 4. Same as step 4 above
 5. Same as step 5 above
