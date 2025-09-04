@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-9
-    Title: XLS-9: Blinded Tags
-    Author: Nik Bougalis (nbougalis)
-    Created: 2020-03-31
-    Status: Stagnant
-    Category: Amendment
+    xls: XLS-9
+    title: Blinded Tags
+    author: Nik Bougalis (nbougalis)
+    created: 2020-03-31
+    status: Stagnant
+    category: Amendment
 </pre>
 
 # Abstract
@@ -210,3 +210,4 @@ The tag specified in the **X-address** should be unblinded; applications (wallet
 
 
 No consideration is given at this time on how this scheme integrates with tickets.
+
