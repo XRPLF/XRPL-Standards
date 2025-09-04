@@ -1,7 +1,7 @@
 <pre>
     xls: 41
     title: XRPL Proof of Payment Standard (XPOP)
-    author: None (RichardAH)
+    author: Richard Holland (RichardAH)
     created: 2023-05-04
     status: Final
     category: Community
@@ -133,3 +133,4 @@ The `proof` key inside `transaction` section has one of two possible forms:
 # Verifying
 
 See reference implementation at: [xpop-verifier-py](https://github.com/RichardAH/xpop-verifier-py/blob/main/verify.py)
+
