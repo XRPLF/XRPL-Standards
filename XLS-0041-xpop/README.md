@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-41d
-    Title: 0041 XLS-41d: XRPL Proof of Payment Standard (XPOP)
-    Author: None (RichardAH)
-    Created: 2023-05-04
-    Status: Final
-    Category: Community
+    xls: 41
+    title: XRPL Proof of Payment Standard (XPOP)
+    author: None (RichardAH)
+    created: 2023-05-04
+    status: Final
+    category: Community
 </pre>
 # XLS-41d
 
@@ -131,4 +131,5 @@ The `proof` key inside `transaction` section has one of two possible forms:
     ```
     
 # Verifying
+
 See reference implementation at: [xpop-verifier-py](https://github.com/RichardAH/xpop-verifier-py/blob/main/verify.py)
