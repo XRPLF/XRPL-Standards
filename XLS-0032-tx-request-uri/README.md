@@ -1,9 +1,8 @@
 <pre>
     xls: 32
     title: Request URI Structure
-
     author: Ryan (@interc0der)
-
+    description: A standard URI schema for making payments and sharing data between platforms on the XRP Ledger
     created: 2022-07-28
     status: Stagnant
     category: Community
