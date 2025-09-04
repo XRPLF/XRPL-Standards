@@ -1,8 +1,12 @@
 <pre>
-title: <b>Prepublish Validator Lists</b>
-type: released in rippled 1.7.0
-description: Future activation date and improved expiration handling of UNLs
-author: <a href="mailto:ed@ripple.com">Ed Hennis (Ripple)</a>
+  xls: 45
+  title: Prepublish Validator Lists
+  description: Future activation date and improved expiration handling of UNLs
+  author: Ed Hennis <ed@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/pull/124
+  status: Final
+  category: Protocol
+  created: 2020-06-17
 </pre>
 
 

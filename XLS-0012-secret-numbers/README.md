@@ -1,11 +1,13 @@
-|       | Info |
-|-------|---------|
-| Draft | XLS-12 |
-| Title | Secret Numbers |
-| Author(s) | Wietse Wind <w@xrpl-labs.com>, based on an idea by [Nik Bougalis](https://github.com/nbougalis) |
-| Created | 2019-07-12 ([TS Lib.](https://github.com/WietseWind/xrpl-secret-numbers)) / 2020-05-13 (Draft) |
-
----
+<pre>
+  xls: 12
+  title: Secret Numbers
+  description: Derive XRPL account keypairs based on 8x 6 digits for user-friendly, language-agnostic account secrets
+  author: Wietse Wind <w@xrpl-labs.com>, Nik Bougalis (@nbougalis)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/15
+  status: Final
+  category: Community
+  created: 2020-05-13
+</pre>
 
 # XLS-12: Secret Numbers
 ### Derive XRPL account keypairs based on 8x 6 digits
