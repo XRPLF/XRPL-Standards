@@ -201,6 +201,10 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required category metadata"
                 )
+            elif doc.category not in ["Amendment", "Community", "Protocol", "Meta"]:
+                validation_errors.append(
+                    f"Error: {doc.folder} has an invalid category: {doc.category}"
+                )
             if not doc.created or doc.created == "Unknown":
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required created metadata"
