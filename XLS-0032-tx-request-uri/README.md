@@ -1,7 +1,9 @@
 <pre>
     xls: 32
-    title:Request URI Structure
-    author: Ryan (interc0der)
+    title: Request URI Structure
+
+    author: Ryan (@interc0der)
+
     created: 2022-07-28
     status: Stagnant
     category: Community
