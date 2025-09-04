@@ -1,5 +1,5 @@
 <pre>
-    xls: XLS-9
+    xls: 9
     title: Blinded Tags
     author: Nik Bougalis (nbougalis)
     created: 2020-03-31
@@ -210,4 +210,5 @@ The tag specified in the **X-address** should be unblinded; applications (wallet
 
 
 No consideration is given at this time on how this scheme integrates with tickets.
+
 
