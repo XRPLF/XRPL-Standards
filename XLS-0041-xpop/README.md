@@ -2,19 +2,12 @@
     xls: 41
     title: XRPL Proof of Payment Standard (XPOP)
     author: Richard Holland (RichardAH)
+	description: An offline non-interactive cryptographic proof that a transaction was successfully submitted to the XRP Ledger and what its impact (metadata) was
     created: 2023-05-04
     status: Final
     category: Community
 </pre>
 # XLS-41d
-
-```
-Title: XRPL Proof of Payment Standard (XPOP)
-Revison: 1 (2023-05-04)
-
-Author: Richard Holland
-Affiliation: XRPL-Labs, XRPLF
-```
 
 # Abstract
 
@@ -133,4 +126,5 @@ The `proof` key inside `transaction` section has one of two possible forms:
 # Verifying
 
 See reference implementation at: [xpop-verifier-py](https://github.com/RichardAH/xpop-verifier-py/blob/main/verify.py)
+
 
