@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-32d
-    Title: 0032 XLS-32d: Request URI Structure
-    Author: Ryan (interc0der)
-    Created: 2022-07-28
-    Status: Stagnant
-    Category: Community
+    xls: 32
+    title:Request URI Structure
+    author: Ryan (interc0der)
+    created: 2022-07-28
+    status: Stagnant
+    category: Community
 </pre>
 ```
 XRP Ledger Proposed Standard XLS-32d
@@ -581,5 +581,6 @@ XLS-15d  https://github.com/XRPLF/XRPL-Standards/discussions/34
 
 2023-02-01
 1. Updated to version 0.0.30beta and added to implementation section; https://github.com/standardconnect/xls-32d
+
 
 
