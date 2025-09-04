@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-24d
-    Title: 0024 XLS-24d: Metadata Structure for XLS-20d NFTs
-    Author: X-Tokenize (x-Tokenize)
-    Created: 2022-02-16
-    Status: Final
-    Category: Community
+    xls: 24
+    title: Metadata Structure for XLS-20
+    author: X-Tokenize (x-Tokenize)
+    created: 2022-02-16
+    status: Final
+    category: Community
 </pre>
 # 0024 XLS-24d: XLS-20d NFT Metadata Structure
 ##### By: [MikeCheckYaSelf](https://twitter.com/MikeCheckYaSelf)
@@ -361,4 +361,5 @@ Although this revision includes guidance for the art.v0 nftType, it also shows t
 
 
 ### Discord
+
 To actively participate in the discussion join the [X-Tokenize Discord](https://discord.gg/mpd5msUSmf).
