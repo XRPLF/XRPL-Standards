@@ -169,10 +169,10 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
     font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
     font-weight: 500;
 }
-.title-col { width: auto; min-width: 400px; }
+.title-col { width: auto; min-width: 300px; }
 .author-col { width: 250px; color: var(--text-color-secondary); }
 .status-col { width: 120px; text-align: center; }
-.created-col { width: 120px; }
+.created-col { width: 130px; }
 
 /* Links */
 .xls-link { font-weight: 600; }
@@ -311,20 +311,6 @@ main { min-height: calc(100vh - 200px); padding: 48px 0; }
 .category-link .count {
     color: var(--text-color-secondary);
     font-size: 12px;
-}
-
-.category-description {
-    margin: 16px 0 24px 0;
-    padding: 16px;
-    background: var(--color-gray-8);
-    border-left: 4px solid var(--link-color);
-    border-radius: 0 4px 4px 0;
-}
-
-.category-description p {
-    margin: 0;
-    color: var(--text-color-secondary);
-    line-height: 1.6;
 }
 
 /* XLS document page */
@@ -500,6 +486,10 @@ footer {
     .xls-meta { flex-direction: column; align-items: flex-start; gap: 16px; }
     .document-nav { flex-direction: column; gap: 12px; }
     .document-nav a { width: 100%; text-align: center; }
+    
+    .standards-table .title-col {
+        min-width: 200px;
+    }
 }
 
 /* Mobile - keep table layout but make horizontally scrollable */
@@ -520,10 +510,6 @@ footer {
     
     .standards-table .number-col {
         min-width: 80px;
-    }
-    
-    .standards-table .title-col {
-        min-width: 200px;
     }
     
     .standards-table .author-col {
