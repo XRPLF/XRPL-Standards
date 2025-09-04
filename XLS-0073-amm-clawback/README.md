@@ -1,10 +1,13 @@
 <pre>
-Title:       <b>AMMClawback</b>
-Type:        <b>draft</b>
-
-Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-             <a href="mailto:yqian@ripple.com">Yinyi Qian</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 73
+  title: AMMClawback
+  description: Amendment to enable token issuers to claw back tokens from AMM pools for regulatory compliance
+  author: Shawn Xie <shawnxie@ripple.com>, Yinyi Qian <yqian@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/212
+  status: Draft
+  category: Amendment
+  requires: [XLS-39](../XLS-0039-clawback/README.md), [XLS-30](../XLS-0030-automated-market-maker/README.md)
+  created: 2024-08-02
 </pre>
 
 #  AMMClawback
