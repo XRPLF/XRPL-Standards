@@ -201,7 +201,8 @@ The `LoanBroker` object has the following fields:
 
 | Field Name             | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                  |
 | ---------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `LedgerEntryType`      |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Ledger object type.                                                                                                                                                                                          |
+
+| `LedgerEntryType`      |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                          |
 | `LedgerIndex`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                    |
 | `Flags`                |      `Yes`       |   `No`    | :heavy_check_mark: | `string`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                         |
 | `PreviousTxnID`        |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                    |
@@ -448,7 +449,7 @@ The `LoanID` is calculated as follows:
 
 | Field Name                | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type |                    Default Value                    | Description                                                                                                                                                    |
 | ------------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-------------------------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`         |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                      **TODO**                       | Ledger object type.                                                                                                                                            |
+| `LedgerEntryType`         |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                      `0x0089`                       | Ledger object type.                                                                                                                                            |
 | `LedgerIndex`             |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                        `N/A`                        | Ledger object identifier.                                                                                                                                      |
 | `Flags`                   |      `Yes`       |   `No`    |                    | `string`  |   `UINT32`    |                          0                          | Ledger object flags.                                                                                                                                           |
 | `PreviousTxnID`           |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |                        `N/A`                        | The ID of the transaction that last modified this object.                                                                                                      |
@@ -514,7 +515,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 | Field Name             |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                        |
 | ---------------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`      | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                                                                                                                              |
+| `TransactionType`      | :heavy_check_mark: | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
 | `VaultID`              | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity.                                                                               |
 | `LoanBrokerID`         |                    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
 | `Flags`                |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Lending Protocol.                                                                                                      |
@@ -571,7 +572,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                          |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                                |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `75`      | The transaction type.                                |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is deleting. |
 
 ##### 3.1.2.1 Failure Conditions
@@ -616,7 +617,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                       |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------ |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                             |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `76`      | The transaction type.                             |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
 | `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to deposit.          |
 
@@ -676,7 +677,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                                       |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `77`      | Transaction type.                                                       |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
 | `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw. |
 | `Destination`     |                    | `string`  |   `AccountID` |     Empty     | An account to receive the assets. It must be able to receive the asset. |
@@ -754,11 +755,11 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from the `LoanBroker`. The transaction can only be submitted by the Issuer of the Loan asset. Furthermore, the transaction can only clawback funds up to the minimum cover required for the current loans.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | Transaction type.                                                       |
-| `LoanBrokerID`    |  | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction.          |
-| `Amount`          |   | `object`  |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                            |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                                                                      |
+| `LoanBrokerID`    |                    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
+| `Amount`          |                    | `object`  |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
 
 ##### 3.1.5.1 Failure conditions
 
@@ -822,7 +823,7 @@ The transaction creates a new `Loan` object.
 
 | Field Name                |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                   |
 | ------------------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`         | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                                                                                                                         |
+| `TransactionType`         | :heavy_check_mark: | `string`  |   `UINT16`    |     `80`      | The transaction type.                                                                                                                         |
 | `LoanBrokerID`            | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
 | `Flags`                   |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
 | `Data`                    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
@@ -999,7 +1000,7 @@ The transaction deletes an existing `Loan` object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                    |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `81`      | The transaction type.                    |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be deleted. |
 
 ##### 3.2.2.1 Failure Conditions
@@ -1032,7 +1033,7 @@ The transaction deletes an existing `Loan` object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                    |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `82`      | The transaction type.                    |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be updated. |
 | `Flags`           |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Loan.        |
 
@@ -1152,7 +1153,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                    |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `83`      | The transaction type.                    |
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
 | `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.              |
 
