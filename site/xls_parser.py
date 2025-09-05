@@ -193,10 +193,20 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required authors metadata"
                 )
+            elif any(not name for name, _ in doc.authors):
+                validation_errors.append(
+                    f"Error: {doc.folder} has an author with missing name"
+                )
+            elif any(link == "" for _, link in doc.authors):
+                validation_errors.append(
+                    f"Error: {doc.folder} has an author with missing link"
+                )
+
             if not doc.status or doc.status == "Unknown":
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required status metadata"
                 )
+
             if not doc.category or doc.category == "Unknown":
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required category metadata"
@@ -205,12 +215,14 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} has an invalid category: {doc.category}"
                 )
+
             if not doc.created or doc.created == "Unknown":
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required created metadata"
                 )
 
         if validation_errors:
+            print("\n")
             for error in validation_errors:
                 print(error)
             print(
@@ -218,7 +230,7 @@ def validate_xls_documents(root_dir: Path) -> bool:
             )
             return False
 
-        print(f"Successfully validated {len(docs)} XLS documents")
+        print(f"\nSuccessfully validated {len(docs)} XLS documents")
         return True
 
     except Exception as e:
