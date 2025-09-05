@@ -1,7 +1,7 @@
 name: Stale GitHub Discussions
 
 on:
-  push: # just for debug purposes
+  pull_request: # just for debug purposes
   workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1" # Every Monday at 6:00 AM UTC (8:00 AM CET)
