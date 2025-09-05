@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-51d
-    Title: 0051 XLS-51d: NFToken Escrows
-    Author: Mayukha Vadari (mvadari)
-    Created: 2023-11-17
-    Status: Stagnant
-    Category: Amendment
+  xls: 51d
+  title: NFToken Escrows
+  author: Mayukha Vadari (@mvadari)
+  created: 2023-11-17
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # NFToken Escrows
