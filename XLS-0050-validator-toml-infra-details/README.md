@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-50d
-    Title: 0050 XLS-50d: Aiming for a healthy distribution of (validator) infrastructure
-    Author: Wietse Wind (WietseWind)
-    Created: 2023-11-14
-    Status: Final
-    Category: Community
+  xls: 50
+  title: Aiming for a healthy distribution of (validator) infrastructure
+  description: Best practices for the geographical & provider distribution of validators
+  author: Wietse Wind (@WietseWind)
+  created: 2023-11-14
+  status: Final
+  category: Community
 </pre>
 
 # Abstract
