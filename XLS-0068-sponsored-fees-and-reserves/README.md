@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-68d
-    Title: 0068 XLS-68d: Sponsored Fees and Reserves
-    Author: Mayukha Vadari (mvadari)
-    Created: 2024-05-02
-    Status: Stagnant
-    Category: Amendment
+  xls: XLS-68d
+  title: Sponsored Fees and Reserves
+  description: Allow an account to fund fees and reserves on behalf of another account
+  author: Mayukha Vadari (@mvadari)
+  created: 2024-05-02
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # Sponsored Fees and Reserves
