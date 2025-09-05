@@ -1,7 +1,7 @@
 <pre>
     xls: 41
     title: XRPL Proof of Payment Standard (XPOP)
-    author: Richard Holland (RichardAH)
+    author: Richard Holland (@RichardAH)
 	description: An offline non-interactive cryptographic proof that a transaction was successfully submitted to the XRP Ledger and what its impact (metadata) was
     created: 2023-05-04
     status: Final
