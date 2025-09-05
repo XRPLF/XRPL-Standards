@@ -99,7 +99,6 @@ The `proof` key inside `transaction` section has one of two possible forms:
 1. Tree form:
 
    In this form the merkle proof is an object of objects containing the entire transaction map for the ledger. This form is useful if many XPOPs must be generated for the same ledger and the size of each individual XPOP is less relevant than the amount of work to make and store the XPOPs. Each object contains three keys: `children`, `hash`, `key`.
-
    - The `children` key is always either an empty object or is keyed with only the branches which actually exist there, each as a single hex nibble `0` - `F`.
    - The `hash` key is always a 64 nibble hex string: either the hash over the children (with appropriate namespace) or, if a leaf node, the hash over the node (with appropriate namespace).
    - The `key` key is always a 64 nibble hex string: the keylet (index) of the object at this location.
