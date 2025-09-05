@@ -43,6 +43,8 @@ jobs:
 
       - name: Build site
         run: python site/build_site.py
+        env: 
+          GITHUB_PAGES_BASE_URL: ""
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
