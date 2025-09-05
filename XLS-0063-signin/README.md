@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-63d
-    Title: 0063 XLS-63d: SignIn Transaction
-    Author: Denis Angell (dangell7)
-    Created: 2024-03-26
-    Status: Draft
-    Category: Community
+  xls: 63
+  title: SignIn Transaction
+  description: A dedicated transaction type for off-chain signing in with wallets
+  author: Denis Angell (dangell7)
+  created: 2024-03-26
+  status: Stagnant
+  category: Community
 </pre>
 
 Title: SignIn Transaction
