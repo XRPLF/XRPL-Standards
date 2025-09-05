@@ -2,7 +2,7 @@
   xls: 61
   title: CrossCurrency NFTokenAcceptOffer
   description: Allow cross-currency NFToken transactions using multiple currencies
-  author: tequ (tequdev)
+  author: tequ (@tequdev)
   created: 2024-02-26
   status: Stagnant
   category: Amendment
