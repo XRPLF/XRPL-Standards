@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-62d
-    Title: 0062 XLS-62d: Options
-    Author: Denis Angell (dangell7)
-    Created: 2024-03-25
-    Status: Stagnant
-    Category: Amendment
+  xls: 62
+  title: Options
+  description: A new framework for options trading on the XRPL protocol
+  author: Denis Angell (@dangell7)
+  created: 2024-03-25
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # XLS-62d: Options on XRPL Protocol Chains
