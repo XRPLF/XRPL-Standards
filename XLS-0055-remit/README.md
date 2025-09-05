@@ -1,6 +1,7 @@
 <pre>
-  xls: XLS-55d
-  title: 0055 XLS-55d: Remit: Atomic Multi-Asset Payments for  XRPL Protocol Chains
+  xls: 55
+  title: Remit
+  description: Atomic Multi-Asset Payments for XRPL Protocol Chains
   author: Richard Holland (@RichardAH)
   created: 2023-12-03
   status: Final
