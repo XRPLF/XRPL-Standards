@@ -1,0 +1,20 @@
+on:
+  schedule:
+    - cron: "0 0 * * *" # Runs every day at midnight UTC
+  workflow_dispatch: # for testing
+
+jobs:
+  close-stale-discussions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run action
+        uses: steffen-karlsson/stalesweeper@v1.1.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: "This discussion has been closed due to inactivity."
+          days-before-close: "14"
+          close-unanswered: "true"
+          close-reason: "OUTDATED"
+          dry-run: "true"
+          verbose: "true"
