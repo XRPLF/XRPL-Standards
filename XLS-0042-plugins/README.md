@@ -1,10 +1,12 @@
 <pre>
-Title:       <b>XRPL Plugins</b>
-Revision:    <b>2</b> (2024-03-27)
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a> (mvadari)
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 42
+  title: XRPL Plugins
+  description: A plugin transactor API to make it easier for developers to modify rippled for sidechains without needing C++ knowledge
+  author: Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/116
+  status: Stagnant
+  category: Protocol
+  created: 2023-06-26
 </pre>
 
 # XRPL Plugins
@@ -17,7 +19,7 @@ The architecture will be as follows:
 
 1.  A shared library (with wrappers to convert it into a native library) that is…
 2.  Called by a program (the “plugin”) that is written by the user and contains all of the transaction logic, which is…
-3.  Compiled as a dynamic library, via a thin C++ layer if needed, which is…    
+3.  Compiled as a dynamic library, via a thin C++ layer if needed, which is…
 4.  Loaded by `rippled` at runtime, without needing to recompile
 
 <p align="center">
@@ -27,8 +29,9 @@ The architecture will be as follows:
 The first non-C++ language in which to implement this design will be Python. This is because there is an easy-to-use and well-documented C/C++ API, which will make the connectors easier to write, and it is usually well-known by devs of C++/other similar languages.
 
 We will initially implement this project in 2 languages:
--   C++
--   Python
+
+- C++
+- Python
 
 _Note:_ this design only applies to transactions and ledger objects, not RPC requests. There will be a separate design for that at a later point in time, as it would also be useful to have plugin versions of those features. It will likely be similar.
 
@@ -52,21 +55,23 @@ The main idea behind this project is to make transactions language-agnostic, so 
 The term "transactor" refers to the code in `rippled` that processes a transaction.
 
 Every transaction is mainly made up of 5 functions:
+
 - `preflight`
-	- What is everything that you can check about the validity of the transaction without needing to check the current ledger state?
+  - What is everything that you can check about the validity of the transaction without needing to check the current ledger state?
     - This method is run by the node that receives the submitted transaction before it is broadcast to peers, so any errors that are caught here helps make the network more efficient. An error caught here also does not incur a transaction fee.
 - `preclaim`
-	- What can you check about the validity of the transaction with _read-only_ access to the ledger state (within reason, since you don’t want to duplicate too much work between `preclaim` and `doApply`)?
+  - What can you check about the validity of the transaction with _read-only_ access to the ledger state (within reason, since you don’t want to duplicate too much work between `preclaim` and `doApply`)?
 - `doApply`
-	- Do a few sanity checks, and actually try to apply the transaction.
+  - Do a few sanity checks, and actually try to apply the transaction.
 - `calculateBaseFee`
-	- Calculate the fee that the transaction needs to pay (usually this is just inherited from the base transactor, but some transactions, like `AccountDelete`, need higher fees).
+  - Calculate the fee that the transaction needs to pay (usually this is just inherited from the base transactor, but some transactions, like `AccountDelete`, need higher fees).
 - `makeTxConsequences`
-	- Used when an account has multiple transactions queued to estimate whether it’ll be able to pay the fees for all of them.
+  - Used when an account has multiple transactions queued to estimate whether it’ll be able to pay the fees for all of them.
 
 There are several other methods that transactors call, but they only rarely need to be modified.
 
 Other parts of transactions include:
+
 - The params of a transaction (`TxFormats`)
 - The transaction type ID (`TxType`)
 - The strings in the JSON (`jss`)
@@ -124,51 +129,63 @@ There are several functions that the API exposes. Each returns an array of the s
 _Note: Every array will be represented as a `{pointer, size}` struct, since non-fixed-length arrays can’t be passed as parameters._
 
 #### 3.1.1. `txName`
+
 The name of the transaction.
 
 #### 3.1.2. `txType`
+
 The unique ID of the transaction.
 
 #### 3.1.3. `txFormat`
+
 The parameters of the transaction, and whether they're required or optional.
 
 #### 3.1.4. `makeTxConsequences`
+
 The function pointer for the `makeTxConsequences` function.
 
 The `PreflightContext` variable provides access to the transaction being processed and other info like the currently-enabled amendments.
 
 #### 3.1.5. `calculateBaseFee`
+
 The function pointer for the `calculateBaseFee` function.
 
 `ReadView` provides read-only access to the ledger state, and `tx` is the transaction being processed.
 
 #### 3.1.6. `preflight`
+
 The function pointer for the `preflight` function.
 
 The `PreflightContext` variable provides access to the transaction being processed and other info like the currently-enabled amendments. `NotTEC` is any result code that doesn't start with `tec...`.
 
 #### 3.1.7. `preclaim`
+
 The function pointer for the `preclaim` function.
 
 The `PreclaimContext` variable provides access to the transaction being processed and other info like the currently-enabled amendments, as well as read-only access to the ledger state. `TER` is any result code.
 
 #### 3.1.8. `doApply`
+
 The function pointer for the `doApply` function.
 
 The `ApplyContext` variable provides access to the transaction being processed, as well as read _and_ write access to the ledger state. `mPriorBalance` is the balance of the account that submitted the transaction prior to running the transaction, and `mSourceBalance` is the current balance. `TER` is any result code.
 
 #### 3.1.9. `checkSeqProxy`
+
 This function won't need to be overridden very often. It validates the sequence number of the transaction and is run as a part of processing `preclaim`.
 
 `beast::Journal` is a logging variable.
 
 #### 3.1.10. `checkPriorTxAndLastLedger`
+
 This function won't need to be overridden very often. It validates the `AccountTxnID` and `LastLedgerSequence` of a transaction and is run as a part of processing `preclaim`.
 
 #### 3.1.11. `checkFee`
+
 This function won't need to be overridden very often. It validates the fee of a transaction and is run as a part of processing `preclaim`.
 
 #### 3.1.12. `checkSign`
+
 This function won't need to be overridden very often. It validates the signature (or signatures) of a transaction and is run as a part of processing `preclaim`.
 
 ### 3.2. Ledger Object Types
@@ -187,24 +204,31 @@ This function won't need to be overridden very often. It validates the signature
 The unique number for the ledger object type. This is analogous to the transaction type value.
 
 #### 3.2.2. `name`
+
 The name of the object, which will show up in the `LedgerEntryType` parameter. Should be in `CamelCase`.
 
 #### 3.2.3. `rpcName`
+
 The filter used in RPC commands, like `account_objects`. Should be in `snake_case`.
 
 #### 3.2.4. `format`
+
 The format (parameters and whether or not they're required) of the ledger object.
 
 #### 3.2.5. `isDeletionBlocker`
+
 Whether the object should be a blocker for account deletion. An example of a blocker is an escrow; an example of a non-blocker is a ticket.
 
 #### 3.2.6 `deleteObject`
+
 If an object is not an account deletion blocker, then the `AccountDelete` transaction needs to know how to delete it, since the object must be deleted when the owner account is removed from the ledger. This function handles that process. This function is only used (and must be included) if `isDeletionBlocker` is `false`.
 
 #### 3.2.7. `visitEntryXRPChange`
+
 This function is used as a part of the invariant check that determines whether the total amount of XRP has changed in the ledger. If an object stores value, like an Escrow, then this function is required.
 
 ### 3.3. `SField`s
+
 An `SField` is a "serialized field" in `rippled`. All transaction fields and ledger object fields are `SField`s. While new transaction fields aren't strictly necessary (a lot of common ones already exist, like `Destination`), many new transactors will require new `SField`s. In `rippled`, `SField`s are declared in [`ripple/protocol/SField.h`](https://github.com/XRPLF/rippled/blob/develop/src/ripple/protocol/SField.h) and the variable names are preceded with `sf` (e.g. `sfDestination`).
 
 - `extern “C” getSFields`
@@ -213,15 +237,19 @@ An `SField` is a "serialized field" in `rippled`. All transaction fields and led
   - `const char * txtName;`
 
 #### 3.3.1. `typeId`
+
 This is the type of the field's value (e.g. is it a `UInt32` or an `AccountID`). For example, the `typeId` of `STAccount` (the type that represents accounts) is `8`.
 
 #### 3.3.2. `fieldValue`
+
 This is the unique value of the field. Every `SField` must have a unique `(typeId, fieldValue)` pair. For example, `sfDestination` has the pair `(8, 3)`.
 
 #### 3.3.3. `txtName`
+
 The actual text name of the `SField` (e.g. `Destination`).
 
 ### 3.4. Serialized Types
+
 Serialized types are the valid types of `SField`s. For example, `STAccount` represents all account fields. 99.9% of the time, plugin devs will not need to create new serialized types, but if they do, they can import them in.
 
 For an example of what a serialized type looks like in C++, you can refer to [`STAccount`](https://github.com/XRPLF/rippled/blob/develop/src/ripple/protocol/STAccount.h).
@@ -235,26 +263,33 @@ For an example of what a serialized type looks like in C++, you can refer to [`S
   - `Buffer fromSerialIter(int typeId, SerialIter& st);`
 
 #### 3.4.1. `typeId`
+
 This is the type of the field's value (e.g. is it a `UInt32` or an `AccountID`). For example, the `typeId` of `STAccount` (the type that represents accounts) is `8`.
 
 #### 3.4.2. `parseValue`
+
 This function parses the data from a JSON. Most of the parameters are only for better error-handling.
 
 #### 3.4.3. `toString`
+
 This function generates a human-readable version of the data.
 
 #### 3.4.4. `toJson`
+
 This function generates the JSON version of the data. If this is not specified, it will use `toString`.
 
 `Json::Value` is any JSON-safe object (such as `int` or `char const*`).
 
 #### 3.4.5. `toSerializer`
+
 This function serializes the new type to its serialized version.
 
 #### 3.4.6. `fromSerialIter`
+
 This function processes the new type from its serialization, such as in a transaction blob.
 
 ### 3.5. Amendments
+
 New transactions should be guarded by [amendments](https://xrpl.org/amendments.html).
 
 You can refer to [`Feature.h`](https://github.com/XRPLF/rippled/blob/develop/src/ripple/protocol/Feature.h) for more details on how amendments are processed.
@@ -277,6 +312,7 @@ Whether or not the amendment is complete and ready to be voted on. This will alm
 The default vote for the amendment for validators.
 
 ### 3.6. Result Codes
+
 New transactions may introduce new result codes. This function facilitates the export of those result codes.
 
 You can refer to [`TER.h`](https://github.com/XRPLF/rippled/blob/develop/src/ripple/protocol/TER.h) for more details about the result codes.
@@ -287,15 +323,19 @@ You can refer to [`TER.h`](https://github.com/XRPLF/rippled/blob/develop/src/rip
   - `char const* description;`
 
 #### 3.6.1. `code`
+
 The unique integer code for the result code (e.g. `temDISABLED` is `-273`). Each type of result (`tec`, `ter`, etc.) has its own range of valid codes.
 
 #### 3.6.2. `codeStr`
+
 The short string name of the code (e.g. `"temDISABLED"`).
 
 #### 3.6.3 `description`
+
 The longer description of the result (e.g. `"The transaction requires logic that is currently disabled."`).
 
 ### 3.7. Invariant Checks
+
 [Invariant checking](https://xrpl.org/invariant-checking.html) is a safety feature of the XRP Ledger. It consists of a set of checks, separate from normal transaction processing, that guarantee that certain invariants hold true across all transactions. These invariants serve as crucial checks to maintain the consistency and integrity of the XRPL ledger, preventing any unexpected or undesirable behavior. Some examples include ensuring that no XRP was created and there aren't any offers with negative amounts.
 
 You can refer to [`InvariantChecks.h`](https://github.com/XRPLF/rippled/blob/develop/src/ripple/app/tx/impl/InvariantCheck.h) for more details about the code.
@@ -307,16 +347,19 @@ Not all new ledger objects will require new invariant checks, but plugin devs ca
   - `bool finalize(void* id, STTx const& tx, TER const result, XRPAmount const fee, ReadView const& view, beast::Journal const& j);`
 
 #### 3.7.1. `visitEntry`
+
 This function is called on each ledger entry that is touched in any given transaction. It processes the before and after state of the ledger object, to see what has changed for this invariant. For example, the "no XRP created" check totals up the XRP before and after the transaction is run.
 
 `STLedgerEntry` represents a single ledger object. The `id` param is used to make it easier for plugins to store data between `visitEntry` and `finalize`.
 
 #### 3.7.2. `finalize`
+
 This function is called after all ledger entries that were touched by the given transaction have been visited. It determines the final status of the check: whether it has passed or failed.
 
 `TER` is any result code, `ReadView` provides read-only access to the ledger, and `beast::Journal` is a logging variable.
 
 ### 3.8. Inner Object Formats
+
 When working with nested objects (`STObject`), it is highly recommended that you create `InnerObjectFormat`s for those objects, so its shape is well-defined. One example of an inner object is `SignerEntry`, which is a sub-type inside of `SignerEntries`.
 
 - `extern “C” getInnerObjectFormats` (needed if there are any `STObjects` used in the transactions or ledger objects)
@@ -325,19 +368,22 @@ When working with nested objects (`STObject`), it is highly recommended that you
   - `Param[] format;`
 
 #### 3.8.1. `name`
+
 The name of the inner object.
 
 #### 3.8.2. `code`
+
 The field code of the `SField` of the inner object.
 
 #### 3.8.3. `format`
+
 The parameters of the inner object.
 
 ### 3.9 Shutdown
+
 Some languages, like Python and JavaScript, interact with C++ by running an interpreter in C++ that runs the code. Plugins written in these languages sometimes need to be told to shut down the interpreter when `rippled` shuts down. This is essentially a plugin cleanup function, and has a `void` return type.
 
 - `extern “C” shutdown` (needed if any shutdown cleanup is needed)
-
 
 ## 4. Changes to `rippled`
 
@@ -372,4 +418,3 @@ Since Python does not support directly exposing function pointers, a thin C++ la
 ### 6.2. JavaScript
 
 JavaScript plugins are still in an experimental phase, so there are likely additional challenges that need to be addressed. However, similar to Python, it will also require a thin C++ layer to communicate with `rippled`'s plugin API, since JavaScript also does not have support for directly exposing function pointers.
-

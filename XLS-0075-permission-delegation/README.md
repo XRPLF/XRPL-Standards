@@ -1,9 +1,12 @@
 <pre>
-Title:       <b>Permission Delegation</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a> (Ripple)
-             <a href="mailto:yqian@ripple.com">Yinyi Qian</a> (Ripple)
-             <a href="mailto:ed@ripple.com">Ed Hennis</a> (Ripple)
+  xls: 75
+  title: Permission Delegation
+  description: Authorization delegation mechanism to enhance flexibility and usability of XRPL accounts
+  author: Mayukha Vadari <mvadari@ripple.com>, Yinyi Qian <yqian@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/218
+  status: Final
+  category: Amendment
+  created: 2024-08-21
 </pre>
 
 # Permission Delegation

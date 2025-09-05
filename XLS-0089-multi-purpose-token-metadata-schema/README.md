@@ -1,18 +1,18 @@
 <pre>
-Title:       <b>Multi-Purpose Token Metadata Schema</b>
-Revision:    <b>Draft</b> (2025-06-27)
-
-Authors:     <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-             <a href="mailto:gtsipenyuk@ripple.com">Greg Tsipenyuk</a>
-             <a href="mailto:smittal@ripple.com">Shashwat Mittal</a>
-             <a href="mailto:jberridi@ripple.com">Julian Berridi</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 89
+  title: Multi-Purpose Token Metadata Schema
+  description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
+  author: Shawn Xie <shawnxie@ripple.com>, Greg Tsipenyuk <gtsipenyuk@ripple.com>, Shashwat Mittal <smittal@ripple.com>, Julian Berridi <jberridi@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
+  status: Draft
+  category: Community
+  requires: XLS-33
+  created: 2025-01-27
 </pre>
 
 ---
 
-# XLS-0089d Multi-Purpose Token Metadata Schema
+# XLS-89 Multi-Purpose Token Metadata Schema
 
 ## 1. Abstract
 

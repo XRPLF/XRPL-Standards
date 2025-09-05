@@ -1,7 +1,13 @@
 <pre>
-title: NFTokenMintOffer
-type: Spec
-author: tequ
+  xls: 52
+  title: NFTokenMintOffer
+  description: Extension to NFTokenMint transaction to allow NFToken Sell Offer creation at the same time as minting
+  author: tequ (@tequdev)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/147
+  status: Final
+  category: Amendment
+  requires: [XLS-20](../XLS-0020-non-fungible-tokens/README.md)
+  created: 2023-11-21
 </pre>
 
 ## Abstract
@@ -21,11 +27,11 @@ NFTokenOfferMint is expected to significantly improve the experience of NFT proj
 
 Add 3 new fields to the`NFTokenMint` transaction.
 
-| Field Name    | Required? | JSON Type            | Internal Type |
-|-------------- |:---------:|:-------------------: |:-------------:|
-| `Amount`      |           | `Currency Amount`    | `AMOUNT`      |
-| `Destination` |           | `string`             | `AccountID`   |
-| `Expiration`  |           | `number`             | `UINT32`      |
+| Field Name    | Required? |     JSON Type     | Internal Type |
+| ------------- | :-------: | :---------------: | :-----------: |
+| `Amount`      |           | `Currency Amount` |   `AMOUNT`    |
+| `Destination` |           |     `string`      |  `AccountID`  |
+| `Expiration`  |           |     `number`      |   `UINT32`    |
 
 These fields have the same meaning as the field of the same name used in the `NFTokenCreateOffer` transaction, but the `Amount` field is not a required field.
 

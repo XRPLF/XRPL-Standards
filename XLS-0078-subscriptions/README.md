@@ -1,7 +1,12 @@
 <pre>
-Title:       <b>XLS-78d Subscriptions</b>
-Authors:     <a href="mailto:xrpl365@gmail.com">Chris Dangerfield</a>
-             <a href="mailto:dangell@transia.co">Denis Angell</a>
+  xls: 78
+  title: Subscriptions
+  description: A subscription mechanism for recurring payments on the XRP Ledger
+  author: Denis Angell <dangell@ripple.com>, Chris Dangerfield <xrpl365@gmail.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/222
+  status: Draft
+  category: Amendment
+  created: 2024-08-30
 </pre>
 
 # Subscriptions
@@ -343,7 +348,6 @@ Currently, the subscription model does not include a specific "pause" feature. H
 
 1. **Cancel and Recreate** : The user can cancel the subscription using a `SubscriptionCancel` transaction and later recreate it with a `SubscriptionCreate` transaction when they wish to resume payments. This method gives the user full control over their subscriptions but requires them to manage the timing manually.
 2. **Pause the Service with the Provider** : The user can also pause the service directly with the provider, leaving the subscription in place. In this case, the provider has two options:
-
    1. **Submit a 0-Value Claim** : The provider can submit a `SubscriptionClaim` transaction with a 0-value amount, which would be considered valid and would update the `NextPaymentTime` without transferring any funds. This allows the subscription to remain active while effectively pausing payments.
    2. **Partial Payment** : The provider could agree to a partial payment for the period (e.g., pausing the service for two weeks and submitting a claim for 50% of the maximum value). This allows the provider to reduce the payment amount based on the paused duration while still maintaining the subscription’s timing and validity.
 

@@ -1,9 +1,12 @@
 <pre>
-Title:       <b>XLS-77d Deep-freeze</b>
-Type:        <b>draft</b>
-Revision:    <b>3</b> (2024-10-25)
-Author:      <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 77
+  title: Deep Freeze
+  description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
+  author: Shawn Xie <shawnxie@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/220
+  status: Final
+  category: Amendment
+  created: 2024-07-08
 </pre>
 
 # Deep-freeze

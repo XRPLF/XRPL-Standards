@@ -1,10 +1,13 @@
 <pre>
-Title:       <b>Permissioned DEXes</b>
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-             <a href="mailto:shawnxie@ripple.com">Shawn Xie</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 81
+  title: Permissioned DEXes
+  description: A permissioned DEX system for the XRPL to enable regulated financial institutions to participate while adhering to compliance requirements
+  author: Denis Angell <dangell@ripple.com>, Mayukha Vadari <mvadari@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/229
+  status: Final
+  category: Amendment
+  requires: [XLS-70](../XLS-0070-credentials/README.md), [XLS-80](../XLS-0080-permissioned-domains/README.md)
+  created: 2024-09-12
 </pre>
 
 # Permissioned DEXes
@@ -19,7 +22,7 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-80d, Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080d-permissioned-domains), as Permissioned Domains are needed to handle the permissioning aspect.
+This proposal builds on top of [XLS-80, Permissioned Domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains), as Permissioned Domains are needed to handle the permissioning aspect.
 
 We propose:
 
