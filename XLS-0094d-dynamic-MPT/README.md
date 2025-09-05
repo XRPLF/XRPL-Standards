@@ -2,7 +2,7 @@
   xls: 94
   title: Dynamic Multi-Purpose Tokens
   description: This amendment enables selected fields and flags of MPTokenIssuance to be updated after creation.
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/289
+  discussion-from: <a href=https://github.com/XRPLF/XRPL-Standards/discussions/289>https://github.com/XRPLF/XRPL-Standards/discussions/289</a>
   author: Yinyi Qian <mailto:yqian@ripple.com>
   status: Draft
   category: Amendment
@@ -142,7 +142,7 @@ Setting `TransferFee` to zero removes the field.
 | ------------------- |:----------------:|:-------------:|:-----------------:|
 | `MutableFlags`      |                  |`number`       |   `UINT32`        |  
 
-Set or clear the flags which were marked as mutable.  
+Set or clear the flags which were marked as mutable.
 
 **The valid `MutableFlags` values**:
 
