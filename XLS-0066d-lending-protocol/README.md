@@ -679,8 +679,8 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `77`      | Transaction type.                                                       |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw. |
-| `Destination`     |                    | `string`  |   `AccountID` |     Empty     | An account to receive the assets. It must be able to receive the asset. |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw.                               |
+| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
 ##### 3.1.4.1 Failure conditions
 
@@ -692,21 +692,25 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - If the `Destination` field is not specified:
+
     - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-  
+
   - If the `Destination` field is specified:
+
     - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
     - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  
+
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
   - If the `Destination` field is not specified:
+
     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
 
   - If the `Destination` field specified:
+
     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
     - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
 
@@ -724,24 +728,27 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
   - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - If `Destination` field is not specified:
+
     - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
   - If `Destination` field is specified:
     - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
-  
+
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - If `Destination` field is not specified:
+
     - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
   - If `Destination` field is specified:
     - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  
+
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
   - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - If `Destination` field is not specified:
+
     - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
   - If `Destination` field is specified:
@@ -769,10 +776,10 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 - If the `LoanBrokerID` is specified, the `LoanBroker` object with that ID does not exist on the ledger.
 - If the `LoanBrokerID` is not specified, and can not be determined from `Amount`.
   - `Amount` specifies an MPT.
-  - `Amount` specifies an IOU, and the `issuer` value is *not* a pseudo-account with `Account(Amount.issuer).LoanBrokerID` set. If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
+  - `Amount` specifies an IOU, and the `issuer` value is _not_ a pseudo-account with `Account(Amount.issuer).LoanBrokerID` set. If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
 - If both the `LoanBrokerID` and `Amount` are specified, and:
 
-    - The `Amount.issuer` value does not match the submitter `Account` of the transaction or `LoanBroker(LoanBrokerID).Account` (the pseudo-account of the LoanBroker).
+  - The `Amount.issuer` value does not match the submitter `Account` of the transaction or `LoanBroker(LoanBrokerID).Account` (the pseudo-account of the LoanBroker).
   - The `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is not the same asset type as `Amount`, allowing for an IOU `Amount.issuer` to specify `LoanBroker(LoanBrokerID).Account` instead of `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
@@ -796,19 +803,18 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 - `LoanBroker.CoverAvailable` <= `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
 
 ##### 3.1.5.2 State Changes
-  
-- If `Amount` is 0 or unset, set `Amount` to `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
-- Otherwise set `Amount` to `min(Amount, `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`).
 
+- If `Amount` is 0 or unset, set `Amount` to `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
+- Otherwise set `Amount` to `min(Amount,`LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  
+
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
   - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  
+
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
 
 [**Return to Index**](#index)
@@ -845,8 +851,8 @@ The transaction creates a new `Loan` object.
 
 ##### 3.2.1.1 `Flags`
 
-| Flag Name           |  Flag Value  | Description                                     |
-| ------------------- | :----------: | :---------------------------------------------- |
+| Flag Name           |  Flag Value  | Description                                    |
+| ------------------- | :----------: | :--------------------------------------------- |
 | `tfLoanOverpayment` | `0x00010000` | Indicates that the loan supports overpayments. |
 
 ##### 3.2.1.2 `CounterpartySignature`
@@ -879,7 +885,8 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 - `Borrower` initiates the transaction:
 
   1. The `Borrower` creates the transaction from their account, setting the pre-agreed terms.
-      - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
+
+     - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
 
   2. The `Borrower` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
   3. The `Borrower` sends the transaction to the `Loan Issuer`.
@@ -891,7 +898,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 
   1. The `Loan Issuer` creates the transaction from their account setting the pre-agreed terms.
 
-      - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
+     - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
 
   2. The `Loan Issuer` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
   3. The `Loan Issuer` sends the transaction to the `Borrower`.
@@ -941,6 +948,7 @@ The account specified in the `Account` field pays the transaction fee.
   - `LoanBroker(LoanBrokerID).DebtMaximum` < `Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)`
 
 - Insufficient First-Loss Capital:
+
   - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
 ##### 3.2.1.6 State Changes
@@ -1551,11 +1559,11 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
     - `feeManagement = interest_paid x LoanBroker.ManagementFeeRate`
 
   - Total paid, and what portion goes to the vault:
-  
+
     - `totalPaid = principal_paid + interest_paid + fee_paid`
     - `totalPaidToVault = principal_paid + interest_paid`
     - `totalPaidToBroker = fee_paid`
-    
+
   - Adjust the totals for the management fee:
 
     - `totalPaidToVault = totalPaidToVault - feeManagement`
