@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-67d
-    Title: 0067 XLS-67d: Charge
-    Author: tequ (tequdev)
-    Created: 2024-04-22
-    Status: Stagnant
-    Category: Amendment
+  xls: 67
+  title: Charge
+  description: A feature that focuses on fee collection and makes monetization easier and simpler for platforms, wallet services, and users to use
+  author: tequ (@tequdev)
+  created: 2024-04-22
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # Abstract
