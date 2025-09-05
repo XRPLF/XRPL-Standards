@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-54d
-    Title: 0054 XLS-54d: Add DestinationTag to NFTokenCreateOffer transaction and NFTokenOffer object
-    Author: Florent (florent-uzio)
-    Created: 2023-11-27
-    Status: Stagnant
-    Category: Amendment
+  xls: 54
+  title: NFTokenOffer Destination Tag
+  description: Add DestinationTag to NFTokenCreateOffer transaction and NFTokenOffer object
+  author: Florent (@florent-uzio)
+  created: 2023-11-27
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # Challenge Overview
