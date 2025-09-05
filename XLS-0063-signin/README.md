@@ -2,7 +2,7 @@
   xls: 63
   title: SignIn Transaction
   description: A dedicated transaction type for off-chain signing in with wallets
-  author: Denis Angell (dangell7)
+  author: Denis Angell (@dangell7)
   created: 2024-03-26
   status: Stagnant
   category: Community
