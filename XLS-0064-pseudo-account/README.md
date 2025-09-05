@@ -4,7 +4,7 @@ title: Pseudo-Account
 description: A standard for a "pseudo-account" AccountRoot object to be associated with one or more ledger entries.
 author: Vito Tumas (@Tapanito)
 status: Draft
-category: Ammendment
+category: Amendment
 created: 2025-03-04
 updated: 2025-08-29
 </pre>
