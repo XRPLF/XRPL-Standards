@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-60d
-    Title: 0060 XLS-60d: DefaultAutoBridge
-    Author: tequ (tequdev)
-    Created: 2024-02-05
-    Status: Stagnant
-    Category: Amendment
+  xls: 60
+  title: DefaultAutoBridge
+  author: tequ (@tequdev)
+  created: 2024-02-05
+  status: Stagnant
+  category: Amendment
 </pre>
 
 ## Abstract
