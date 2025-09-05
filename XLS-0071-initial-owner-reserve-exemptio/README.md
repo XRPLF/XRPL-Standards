@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-71d
-    Title: 0071 XLS-71d: Initial Owner Reserve Exemption
-    Author: Vet (xVet)
-    Created: 2024-07-01
-    Status: Stagnant
-    Category: Amendment
+  xls: 71
+  title: Initial Owner Reserve Exemption
+  description: The first two account `objects` that are counted towards the `OwnerCount` shall not increase the `Owner Reserve`
+  author: Vet (@xVet)
+  created: 2024-07-01
+  status: Stagnant
+  category: Amendment
 </pre>
 
 ## Terminology
