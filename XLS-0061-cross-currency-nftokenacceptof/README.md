@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-61d
-    Title: 0061 XLS-61d: CrossCurrency NFTokenAcceptOffer
-    Author: tequ (tequdev)
-    Created: 2024-02-26
-    Status: Stagnant
-    Category: Amendment
+  xls: 61
+  title: CrossCurrency NFTokenAcceptOffer
+  description: Allow cross-currency NFToken transactions using multiple currencies
+  author: tequ (tequdev)
+  created: 2024-02-26
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # Abstract
