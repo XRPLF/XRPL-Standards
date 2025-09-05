@@ -1,10 +1,11 @@
 <pre>
-    XLS: XLS-76d
-    Title: 0076 XLS-76d: Min Incoming Amount
-    Author: Kris Dangerfield (xrpl365)
-    Created: 2024-08-23
-    Status: Stagnant
-    Category: Amendment
+  xls: 76
+  title: Min Incoming Amount
+  description: Allow an account holder to specify a minimum amount of XRP that can be received in a Payment
+  author: Kris Dangerfield (@xrpl365)
+  created: 2024-08-23
+  status: Stagnant
+  category: Amendment
 </pre>
 
 # XLS-76d - Min Incoming Amount
