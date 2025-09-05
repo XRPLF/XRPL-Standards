@@ -2,7 +2,7 @@
   xls: 6
   title: Standard for Visual Account Icons
   description: A standard for visually distinguishing XRPL accounts by generating unique icons for each account, regardless of address format.
-  author: Richard Holland (RichardAH)
+  author: Richard Holland (@RichardAH)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/24
   status: Final
   category: Community
