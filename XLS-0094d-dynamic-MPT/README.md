@@ -1,9 +1,12 @@
 <pre>
-Title:       <b>Dynamic Multi-Purpose Tokens</b>
-Type:        <b>draft</b>
-
-Author:      <a href="mailto:yqian@ripple.com">Yinyi Qian</a>
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  xls: 94
+  title: Dynamic Multi-Purpose Tokens
+  description: This amendment enables selected fields and flags of MPTokenIssuance to be updated after creation.
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/289
+  author: Yinyi Qian <mailto:yqian@ripple.com>
+  status: Draft
+  category: Amendment
+  created: 2025-06-09
 </pre>
 
 # Dynamic Multi-Purpose Tokens
@@ -121,6 +124,7 @@ For details on the original MPTokenIssuanceSet transaction see: [**The MPTokenIs
 
 New metadata to replace the existing value.
 The transaction will be rejected if `lsfMPTCanMutateMetadata` was not set in `MutableFlags`.
+Setting an empty `MPTokenMetadata` removes the field.
 
 ---
 
@@ -130,6 +134,7 @@ The transaction will be rejected if `lsfMPTCanMutateMetadata` was not set in `Mu
 
 Updated transfer fee value.
 The transaction will be rejected if `lsfMPTCanMutateTransferFee` was not set in `MutableFlags`.
+Setting `TransferFee` to zero removes the field.
 
 ---
 
@@ -137,7 +142,7 @@ The transaction will be rejected if `lsfMPTCanMutateTransferFee` was not set in 
 | ------------------- |:----------------:|:-------------:|:-----------------:|
 | `MutableFlags`      |                  |`number`       |   `UINT32`        |  
 
-Set or clear the flags which were marked as mutable.
+Set or clear the flags which were marked as mutable.  
 
 **The valid `MutableFlags` values**:
 
@@ -156,7 +161,9 @@ Set or clear the flags which were marked as mutable.
 | `tfMPTSetCanClawback`  | ️`0x0400`  | 1024          |Sets the `lsfMPTCanClawback` flag. Enables the issuer to claw back tokens via `Clawback` or `AMMClawback` transactions. |
 | `tfMPTClearCanClawback`| ️`0x0800`  | 2048          | Clears the `lsfMPTCanClawback` flag. The token can not be clawed back. |
 
-**Note**: Setting and clearing the same flag simultaneously will be rejected. For example, you can not provide both `tfMPTSetCanLock` and `tfMPTClearCanLock`.
+**Note**:
+- Setting and clearing the same flag simultaneously will be rejected. For example, you can not provide both `tfMPTSetCanLock` and `tfMPTClearCanLock`.
+- When `lsfMPTCanTransfer` is cleared, the `TransferFee` field is automatically removed.
 
 ---
 
@@ -164,10 +171,14 @@ Set or clear the flags which were marked as mutable.
 
 | Failure Condition   											   	                     | Error Code            |
 | ------------------------------------------------------------------ | --------------------- |
-| `MutableFlags` contains invalid value                              | `temINVALID_FLAG`     |
+| `MutableFlags` contains invalid value (0 is invalid as well)       | `temINVALID_FLAG`     |
 | `MPTokenHolder` is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present    | `temMALFORMED` |
-| `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present            | `temMALFORMED` |
+| `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present      | `temMALFORMED` |
+| `TransferFee` exceeds the limit, which is 50000                    | `temBAD_TRANSFER_FEE` |
+| `MPTokenMetadata` length exceeds the limit, which is 1024          | `temMALFORMED`        |
 | Setting and clearing the same flag simultaneously, e.g., specifying both `tfMPTSetCanLock` and `tfMPTClearCanLock`  | `temMALFORMED` |
+| Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not set | `temMALFORMED`     |
+| Including a non-zero `TransferFee` and `tfMPTClearCanTransfer` in the same transaction | `temMALFORMED`     |
 | `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled | `temDISABLED`  |
 | `MPTokenIssuanceID` does not exist                                 | `tecOBJECT_NOT_FOUND` |
 | `Account` is not the issuer of the target `MPTokenIssuance`        | `tecNO_PERMISSION`    |
@@ -175,9 +186,39 @@ Set or clear the flags which were marked as mutable.
 | `MPTokenMetadata` is present but was not marked as mutable         | `tecNO_PERMISSION`    |
 | `TransferFee` is present but was not marked as mutable             | `tecNO_PERMISSION`    |
 
+### 4.3. `TransferFee` Modification Rules
+
+Since `TransferFee` **MUST NOT** be present if `tfMPTCanTransfer` flag is not set during `MPTokenIssuanceCreate`, there are extra rules we should follow when it comes to mutating the `TransferFee` field.
+
+The ability to modify `TransferFee` depends on two flags:
+  - `lsfMPTCanTransfer` : must already be set to allow any non-zero `TransferFee`.
+  - `lsfMPTCanMutateTransferFee`: must be set at creation (`MPTokenIssuanceCreate`) to allow any modification of the `TransferFee` field.
+
+And `lsfMPTCanTransfer` can be modified through `tfMPTSetCanTransfer`/`tfMPTClearCanTransfer` if `lsfMPTCanMutateCanTransfer` is set.
+
+#### Because these flags overlap in function, the rules break down as follows:  
+
+**Case1**: `lsfMPTCanTransfer` not set:
+  - Setting `TransferFee` to zero:
+    - If `lsfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
+    - If `lsfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
+  - Setting `TransferFee` to a non-zero value:
+    - Always invalid: returns `temMALFORMED`, regardless of `lsfMPTCanMutateTransferFee`.
+    - ❗**Note**: Even including `tfMPTSetCanTransfer` in the same transaction returns `temMALFORMED`.
+      - `lsfMPTCanTransfer` must already be set before assigning a non-zero `TransferFee`.
+
+**Case2**: `lsfMPTCanTransfer` set:
+  - Setting `TransferFee` to a non-zero value:
+    - If `lsfMPTCanMutateTransferFee` is set: allowed; modifies the `TransferFee` field.
+      - ❗**Note**: `tfMPTClearCanTransfer` **MUST NOT** be included in the same transaction when setting a non-zero `TransferFee`: otherwise returns `temMALFORMED`.
+    - If `lsfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
+  - Setting `TransferFee` to zero:
+    - If `lsfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
+      - ❗**Note**: if `lsfMPTCanMutateCanTransfer` is set, `tfMPTClearCanTransfer` is allowed to be included when setting to a zero `TransferFee`: it removes  `TransferFee` field and clears the `lsfMPTCanTransfer`.
+    - If `lsfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
 
 ## 5. Examples
-### 5.1. `MPTokenMetadata` is Mutable
+### 5.1. Example 1
 
 #### 5.1.1. `MPTokenIssuanceCreate` Transaction
 
@@ -189,8 +230,7 @@ Set or clear the flags which were marked as mutable.
   "MaximumAmount": "100000000",
   "MutableFlags": 65536, // lsfMPTCanMutateMetadata
   "MPTokenMetadata": "464F4F",
-  "TransferFee": 100,
-  "Fee": 10
+  "TransferFee": 100
 }
 ```
 - `tfMPTCanChangeMetadata` is set, indicating the `MPTokenMetadata` field can be modified.
@@ -202,8 +242,7 @@ Set or clear the flags which were marked as mutable.
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
-  "MPTokenMetadata": "575C5C",
-  "Fee": 10
+  "MPTokenMetadata": "575C5C"
 }
 ```
 - `MPTokenMetadata` was set mutable, so this will update the metadata from `464F4F` to `575C5C`.
@@ -214,13 +253,12 @@ Set or clear the flags which were marked as mutable.
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
   "MutableFlags": 1, // tfMPTSetCanLock (0x0001)
-  "MPTokenMetadata": "575C5C",
-  "Fee": 10
+  "MPTokenMetadata": "575C5C"
 }
 ```
 - This transaction attempts to set the `lsfMPTCanLock` flag by including `tfMPTSetCanLock` in the `MutableFlags` field. However, the mutation will be rejected because `lsfMPTCanLock` was not marked during creation.
 
-### 5.2. `TransferFee` and Some Flags are Mutable
+### 5.2. Example 2
 
 #### 5.2.1. `MPTokenIssuanceCreate` Transaction
 ```js
@@ -229,11 +267,10 @@ Set or clear the flags which were marked as mutable.
   "Account": "rIssuer...",
   "AssetScale": "2",
   "MaximumAmount": "100000000",
-  "Flags": 8,
+  "Flags": 32,  // tfMPTCanTransfer
   "MutableFlags": 131082,  // tfMPTCanMutateTransferFee + tfMPTCanMutateCanLock + tfMPTCanMutateCanEscrow
   "MPTokenMetadata": "464F4F",
-  "TransferFee": 100,
-  "Fee": 10
+  "TransferFee": 100
 }
 ```
 - `tfMPTCanMutateTransferFee` is set, indicating the `TransferFee` field can be modified.
@@ -247,8 +284,7 @@ Set or clear the flags which were marked as mutable.
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
   "MutableFlags": 33,  // tfMPTSetCanLock(0x0001) + tfMPTClearCanEscrow (0x0020)
-  "TransferFee": 200,
-  "Fee": 10
+  "TransferFee": 200
 }
 ```
 - `TransferFee` was set mutable. It will be updated to 200.
@@ -260,8 +296,7 @@ Set or clear the flags which were marked as mutable.
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
   "MutableFlags": 4, // tfMPTSetRequireAuth (0x0004)
-  "TransferFee": 200,
-  "Fee": 10
+  "TransferFee": 200
 }
 ```
 - This will be rejected. It tries to set `lsfMPTRequireAuth`, which is not mutable.
@@ -273,8 +308,81 @@ Set or clear the flags which were marked as mutable.
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
   "TransferFee": 200,
-  "Fee": 10,
   "MPTokenMetadata": "575C5C"
 }
 ```
 - This will be rejected. It tries to set `MPTokenMetadata`, which is not mutable.
+
+### 5.3. Example 3
+
+#### 5.3.1. `MPTokenIssuanceCreate` Transaction
+```js
+{
+  "TransactionType": "MPTokenIssuanceCreate",
+  "Account": "rIssuer...",
+  "AssetScale": "2",
+  "MaximumAmount": "100000000",
+  "Flags": 2,  // tfMPTCanLock
+  "MutableFlags": 131104,  // tfMPTCanMutateTransferFee + tfMPTCanMutateCanTransfer
+}
+```
+- `tfMPTCanMutateTransferFee` is set, allowing the `TransferFee` field to be modified.
+- `tfMPTCanMutateCanTransfer` is set, allowing the `lsfMPTCanTransfer` flag to be modified.
+- `tfMPTCanLock` is set.
+- `TransferFee` is not present (and **MUST NOT** be present) because `tfMPTCanTransfer` is not set.
+
+#### 5.3.2. `MPTokenIssuanceSet` Transaction
+**Sample 1**(rejected):
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "TransferFee": 200
+}
+```
+- This will be rejected. Although `lsfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be set without `tfMPTCanTransfer`.
+
+**Sample 2**(rejected):
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "MutableFlags": 256, // tfMPTSetCanTransfer
+  "TransferFee": 200
+}
+```
+- This will be rejected. Although `lsfMPTCanMutateTransferFee` is set, setting non-zero `TransferFee` is still not allowed without `tfMPTCanTransfer`, even the user is trying to set `tfMPTSetCanTransfer` in the same transaction.
+
+**Sample 3**(successful):  
+The following sequence of transactions illustrates a successful case:  
+
+**Step1**:
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "MutableFlags": 256 // tfMPTSetCanTransfer
+}
+```
+- Since `lsfMPTCanMutateCanTransfer` is set during creation, this transaction successfully sets the `lsfMPTCanTransfer` flag.
+
+**Step2**:
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "TransferFee": 200
+}
+```
+- With both `lsfMPTCanTransfer` and `lsfMPTCanMutateTransferFee` set, a non-zero `TransferFee` can now be applied.
+
+**Step3**:
+```js
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "MutableFlags": 512 // tfMPTClearCanTransfer
+}
+```
+- Since `lsfMPTCanMutateCanTransfer` is set, the `lsfMPTCanTransfer` flag can be cleared.
+- Clearing `lsfMPTCanTransfer` automatically removes the `TransferFee` from the `MPTokenIssuance` object.
