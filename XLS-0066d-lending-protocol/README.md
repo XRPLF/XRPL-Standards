@@ -1,17 +1,12 @@
 <pre>
-Title:        <b>Lending Protocol</b>
-Revision:     <b>1</b> (2024-10-18)
-
-<hr>Authors:
-  <a href="mailto:vtumas@ripple.com">Vytautas Vito Tumas</a>
-  <a href="mailto:amalhotra@ripple.com">Aanchal Malhotra</a>
-
-Affiliation:
-  <a href="https://ripple.com">Ripple</a>
+  xls: 66
+  title: Lending Protocol
+  description: XRP Ledger-native protocol for issuing uncollateralized, fixed-term loans using pooled funds, enabling on-chain credit origination.
+  author: Vytautas Vito Tumas (@Tapanito) Aanchal Malhotra <amalhotra@ripple.com>
+  status: Draft
+  category: Amendment
+  created: 2024-10-18
 </pre>
-
-# Lending Protocol
-
 ## _Abstract_
 
 Decentralized Finance (DeFi) lending represents a transformative force within the blockchain ecosystem. It revolutionizes traditional financial services by offering a peer-to-peer alternative without intermediaries like banks or financial institutions. At its core, DeFi lending platforms empower users to borrow and lend digital assets directly, fostering financial inclusion, transparency, and efficiency.
