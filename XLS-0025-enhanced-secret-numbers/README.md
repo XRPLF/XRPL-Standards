@@ -2,7 +2,7 @@
   xls: 25
   title: Enhanced Secret Numbers
   description: Enhances XLS-12 secret number format by introducing an additional block for encoding ancillary information, and supporingt for longer secrets.
-  author: Nik Bougalis (nikb@bougalis.net)
+  author: Nik Bougalis <nikb@bougalis.net>
   status: Final
   category: Community
   created: 2021-12-10
