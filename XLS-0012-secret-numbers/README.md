@@ -10,9 +10,11 @@
 </pre>
 
 # XLS-12: Secret Numbers
+
 ### Derive XRPL account keypairs based on 8x 6 digits
 
 ##### Abstract
+
 Existing XRPL account secrets are prone to typo's and not that user friendly. Using numbers means the secrets will be language (spoken, written) agnostic. Existing secrets (family seed, mnemonic) may be intimidating for the public that's relatively new to cryptocurrencies / blockchain technology & very prone to user error (eg. when writing down or reading).
 
 ## Background
@@ -45,7 +47,7 @@ B. 394230
 H. 258676
 ```
 
-The first five digits are the decimal representation of a chunk of the entropy buffer, and will be in the range of `0 - 65535` (`0000 - FFFF`). 
+The first five digits are the decimal representation of a chunk of the entropy buffer, and will be in the range of `0 - 65535` (`0000 - FFFF`).
 
 ## Compatibility
 
@@ -70,13 +72,13 @@ calculateChecksum(position: number, value: number): number {
 
 ##### Samples
 
-| HEX | Decimal | Block # | Calculation               | Checksum | Result    |
-|-----|---------|---------|---------------------------|----------|-----------|
-|AF71 | 44913   | 0       | `44913 * (0 * 2 + 1) % 9` | 3        | 449133          |
-|0000 | 0       | 2       | `    0 * (2 * 2 + 1) % 9` | 0        | 000000          |
-|FFFF | 65535   | 3       | `65535 * (3 * 2 + 1) % 9` | 6        | 655356          |
-|FFFF | 65535   | 4       | `65535 * (4 * 2 + 1) % 9` | 0        | 655350          |
-|CD91 | 52625   | 7       | `52625 * (7 * 2 + 1) % 9` | 3        | 526253          |
+| HEX  | Decimal | Block # | Calculation               | Checksum | Result |
+| ---- | ------- | ------- | ------------------------- | -------- | ------ |
+| AF71 | 44913   | 0       | `44913 * (0 * 2 + 1) % 9` | 3        | 449133 |
+| 0000 | 0       | 2       | `    0 * (2 * 2 + 1) % 9` | 0        | 000000 |
+| FFFF | 65535   | 3       | `65535 * (3 * 2 + 1) % 9` | 6        | 655356 |
+| FFFF | 65535   | 4       | `65535 * (4 * 2 + 1) % 9` | 0        | 655350 |
+| CD91 | 52625   | 7       | `52625 * (7 * 2 + 1) % 9` | 3        | 526253 |
 
 ## Implementations
 
@@ -85,11 +87,13 @@ calculateChecksum(position: number, value: number): number {
 ## Representations
 
 #### String
+
 ```
 554872 394230 <...> 258676
 ```
 
 #### Human Readable & entry
+
 ```
 A. 554872
 B. 394230
@@ -98,6 +102,7 @@ H. 258676
 ```
 
 #### QR Codes
+
 ```
 xrplsn:554872394230<...>258676
 ```
