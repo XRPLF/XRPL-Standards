@@ -3,7 +3,7 @@
   title: Dynamic Multi-Purpose Tokens
   description: This amendment enables selected fields and flags of MPTokenIssuance to be updated after creation.
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/289
-  author: Yinyi Qian
+  author: Yinyi Qian <yqian@ripple.com>
   status: Draft
   category: Amendment
   created: 2025-06-09
