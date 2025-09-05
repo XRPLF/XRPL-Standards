@@ -7,30 +7,31 @@
     - Navigation links back to index and GitHub source
     - XRPL.org themed styling for document presentation
 -->
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="xls-document">
-    <!-- Document metadata header -->
-    <div class="xls-meta">
-        <!-- Large XLS number display -->
-        <div class="xls-number-large">XLS-{{ doc.number }}</div>
-        <!-- Status badge with conditional styling -->
-        <div class="xls-status-badge {{ doc.status }}">{{ doc.status.title() }}</div>
+  <!-- Document metadata header -->
+  <div class="xls-meta">
+    <!-- Large XLS number display -->
+    <div class="xls-number-large">XLS-{{ doc.number }}</div>
+    <!-- Status badge with conditional styling -->
+    <div class="xls-status-badge {{ doc.status }}">
+      {{ doc.status.title() }}
     </div>
-    
-    <!-- Main document content area -->
-    <!-- The content variable contains the rendered HTML from markdown -->
-    <div class="document-content">
-        {{ content|safe }}
-    </div>
-    
-    <!-- Document navigation footer -->
-    <div class="document-nav">
-        <!-- Back to standards index -->
-        <a href="{{ base_url }}/">&larr; Back to All Standards</a>
-        <!-- Direct link to GitHub source -->
-        <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{ doc.folder }}">View on GitHub</a>
-    </div>
+  </div>
+
+  <!-- Main document content area -->
+  <!-- The content variable contains the rendered HTML from markdown -->
+  <div class="document-content">{{ content|safe }}</div>
+
+  <!-- Document navigation footer -->
+  <div class="document-nav">
+    <!-- Back to standards index -->
+    <a href="{{ base_url }}/">&larr; Back to All Standards</a>
+    <!-- Direct link to GitHub source -->
+    <a
+      href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{ doc.folder }}"
+      >View on GitHub</a
+    >
+  </div>
 </div>
 {% endblock %}

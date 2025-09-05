@@ -8,178 +8,232 @@
     - JavaScript-powered sorting functionality
     - Navigation links back to main page and other categories
 -->
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <!-- Category introduction section -->
 <div class="intro">
-    <h2>{{ category.title() }} XLS Standards</h2>
-    
-    <!-- Category description -->
-    <div>
-        {% if category|lower == 'amendment' %}
-        <p>Amendment standards define changes to the core XRP Ledger protocol that require network consensus and activation through the amendment process.</p>
-        {% elif category|lower == 'community' %}
-        <p>Community standards describe best practices, conventions, and guidelines for the XRP Ledger ecosystem that don't require protocol changes.</p>
-        {% elif category|lower == 'protocol' %}
-        <p>Protocol standards specify XRP Ledger APIs, formats, and behaviors that don't require consensus changes but define how applications interact with the network.</p>
-        {% else %}
-        <p>Standards in the {{ category }} category.</p>
-        {% endif %}
+  <h2>{{ category.title() }} XLS Standards</h2>
+
+  <!-- Category description -->
+  <div>
+    {% if category|lower == 'amendment' %}
+    <p>
+      Amendment standards define changes to the core XRP Ledger protocol that
+      require network consensus and activation through the amendment process.
+    </p>
+    {% elif category|lower == 'community' %}
+    <p>
+      Community standards describe best practices, conventions, and guidelines
+      for the XRP Ledger ecosystem that don't require protocol changes.
+    </p>
+    {% elif category|lower == 'protocol' %}
+    <p>
+      Protocol standards specify XRP Ledger APIs, formats, and behaviors that
+      don't require consensus changes but define how applications interact with
+      the network.
+    </p>
+    {% else %}
+    <p>Standards in the {{ category }} category.</p>
+    {% endif %}
+  </div>
+
+  <p>
+    {{ category.title() }} standards:
+    <strong>{{ category_docs|length }}</strong>
+  </p>
+
+  <!-- Navigation to other categories -->
+  <div class="category-nav">
+    <h3>Browse by Category:</h3>
+    <div class="category-links">
+      <a href="{{ base_url }}/" class="category-link">
+        <span class="category-badge all">All Categories</span>
+        <span class="count">{{ total_count }} standards</span>
+      </a>
+      {% for cat_name, cat_count in all_categories %}
+      <a
+        href="{{ base_url }}/category/{{ cat_name|lower }}.html"
+        class="category-link{% if cat_name|lower == category|lower %} active{% endif %}"
+      >
+        <span class="category-badge {{ cat_name|lower }}">{{ cat_name }}</span>
+        <span class="count"
+          >{{ cat_count }} standard{{ 's' if cat_count != 1 else '' }}</span
+        >
+      </a>
+      {% endfor %}
     </div>
-    
-    <p>{{ category.title() }} standards: <strong>{{ category_docs|length }}</strong></p>
-    
-    <!-- Navigation to other categories -->
-    <div class="category-nav">
-        <h3>Browse by Category:</h3>
-        <div class="category-links">
-            <a href="{{ base_url }}/" class="category-link">
-                <span class="category-badge all">All Categories</span>
-                <span class="count">{{ total_count }} standards</span>
-            </a>
-            {% for cat_name, cat_count in all_categories %}
-            <a href="{{ base_url }}/category/{{ cat_name|lower }}.html" class="category-link{% if cat_name|lower == category|lower %} active{% endif %}">
-                <span class="category-badge {{ cat_name|lower }}">{{ cat_name }}</span>
-                <span class="count">{{ cat_count }} standard{{ 's' if cat_count != 1 else '' }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
+  </div>
 </div>
 
 <!-- Category standards table -->
 <div class="standards-table-container">
-    <table class="standards-table" id="standardsTable">
-        <thead>
-            <tr>
-                <!-- Sortable column headers - no category column since all are the same category -->
-                <th class="sortable" data-column="number">Number</th>
-                <th class="sortable" data-column="title">Title</th>
-                <th class="sortable" data-column="author">Author(s)</th>
-                <th class="sortable" data-column="status">Status</th>
-                <th class="sortable" data-column="created">Created</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Loop through category-specific XLS documents -->
-            {% for doc in category_docs %}
-            <tr class="status-{{ doc.status }}">
-                <!-- XLS number column with link to document -->
-                <td class="number-col" data-label="Number" data-sort-value="{{ doc.number|int }}">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link">XLS-{{ doc.number }}</a>
-                </td>
-                
-                <!-- Document title with link -->
-                <td class="title-col" data-label="Title" data-sort-value="{{ doc.title|lower }}">
-                    <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
-                </td>
-                
-                <!-- Author information -->
-                <td class="author-col" data-label="Author" data-sort-value="{% for author in doc.authors %}{% if author %}{{ author[0]|lower }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}">
-                {% for author in doc.authors %}
-                    <a href="{{ author[1] }}">{{ author[0] }}</a>{% if not loop.last %}, {% endif %}
-                {% endfor %}
-                </td>
-                
-                <!-- Status badge with conditional styling -->
-                <td class="status-col" data-label="Status" data-sort-value="{{ doc.status|lower }}">
-                    <span class="status-badge {{doc.status|lower}}">{{ doc.status.title() }}</span>
-                </td>
-                
-                <!-- Created date column -->
-                <td class="created-col" data-label="Created" data-sort-value="{{ doc.created }}">
-                    {{ doc.created }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock %}
+  <table class="standards-table" id="standardsTable">
+    <thead>
+      <tr>
+        <!-- Sortable column headers - no category column since all are the same category -->
+        <th class="sortable" data-column="number">Number</th>
+        <th class="sortable" data-column="title">Title</th>
+        <th class="sortable" data-column="author">Author(s)</th>
+        <th class="sortable" data-column="status">Status</th>
+        <th class="sortable" data-column="created">Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Loop through category-specific XLS documents -->
+      {% for doc in category_docs %}
+      <tr class="status-{{ doc.status }}">
+        <!-- XLS number column with link to document -->
+        <td
+          class="number-col"
+          data-label="Number"
+          data-sort-value="{{ doc.number|int }}"
+        >
+          <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link"
+            >XLS-{{ doc.number }}</a
+          >
+        </td>
 
-{% block scripts %}
+        <!-- Document title with link -->
+        <td
+          class="title-col"
+          data-label="Title"
+          data-sort-value="{{ doc.title|lower }}"
+        >
+          <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+        </td>
+
+        <!-- Author information -->
+        <td
+          class="author-col"
+          data-label="Author"
+          data-sort-value="{% for author in doc.authors %}{% if author %}{{ author[0]|lower }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}"
+        >
+          {% for author in doc.authors %}
+          <a href="{{ author[1] }}">{{ author[0] }}</a>{% if not loop.last %},
+          {% endif %} {% endfor %}
+        </td>
+
+        <!-- Status badge with conditional styling -->
+        <td
+          class="status-col"
+          data-label="Status"
+          data-sort-value="{{ doc.status|lower }}"
+        >
+          <span class="status-badge {{doc.status|lower}}"
+            >{{ doc.status.title() }}</span
+          >
+        </td>
+
+        <!-- Created date column -->
+        <td
+          class="created-col"
+          data-label="Created"
+          data-sort-value="{{ doc.created }}"
+        >
+          {{ doc.created }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} {% block scripts %}
 <!-- JavaScript for interactive table sorting functionality -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const table = document.getElementById('standardsTable');
-    const headers = table.querySelectorAll('th.sortable');
+  document.addEventListener("DOMContentLoaded", function () {
+    const table = document.getElementById("standardsTable");
+    const headers = table.querySelectorAll("th.sortable");
     // Default sort: reverse numerical order (later standards more relevant)
-    let currentSort = {column: 'number', direction: 'desc'};
-    
+    let currentSort = { column: "number", direction: "desc" };
+
     // Set initial sort indicator on the Number column
     const numberHeader = table.querySelector('th[data-column="number"]');
-    if (numberHeader) numberHeader.classList.add('sort-desc');
-    
+    if (numberHeader) numberHeader.classList.add("sort-desc");
+
     // Add click event listeners to all sortable headers
-    headers.forEach(header => {
-        header.addEventListener('click', function() {
-            const column = this.dataset.column;
-            let direction = 'asc';
-            
-            // Toggle direction if clicking the same column
-            if (currentSort.column === column && currentSort.direction === 'asc') {
-                direction = 'desc';
-            }
-            
-            // Perform the sort and update UI indicators
-            sortTable(column, direction);
-            updateSortIndicators(this, direction);
-            
-            // Update current sort state
-            currentSort = {column, direction};
-        });
+    headers.forEach((header) => {
+      header.addEventListener("click", function () {
+        const column = this.dataset.column;
+        let direction = "asc";
+
+        // Toggle direction if clicking the same column
+        if (currentSort.column === column && currentSort.direction === "asc") {
+          direction = "desc";
+        }
+
+        // Perform the sort and update UI indicators
+        sortTable(column, direction);
+        updateSortIndicators(this, direction);
+
+        // Update current sort state
+        currentSort = { column, direction };
+      });
     });
-    
+
     /**
      * Sort the table by the specified column and direction
      */
     function sortTable(column, direction) {
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        
-        // Sort rows based on data-sort-value attributes
-        rows.sort((a, b) => {
-            let aVal, bVal;
-            
-            // Special handling for numerical sorting of XLS numbers and dates
-            if (column === 'number') {
-                aVal = parseInt(a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
-                bVal = parseInt(b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue);
-            } else if (column === 'created') {
-                // Sort by date - data is already in YYYY-MM-DD format which sorts correctly as strings
-                aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
-                bVal = b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
-            } else {
-                // Text-based sorting for other columns
-                aVal = a.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
-                bVal = b.querySelector(`td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`).dataset.sortValue;
-            }
-            
-            // Apply sort direction
-            if (direction === 'asc') {
-                return aVal > bVal ? 1 : -1;
-            } else {
-                return aVal < bVal ? 1 : -1;
-            }
-        });
-        
-        // Re-append sorted rows to the table body
-        rows.forEach(row => tbody.appendChild(row));
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      // Sort rows based on data-sort-value attributes
+      rows.sort((a, b) => {
+        let aVal, bVal;
+
+        // Special handling for numerical sorting of XLS numbers and dates
+        if (column === "number") {
+          aVal = parseInt(
+            a.querySelector(
+              `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+            ).dataset.sortValue,
+          );
+          bVal = parseInt(
+            b.querySelector(
+              `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+            ).dataset.sortValue,
+          );
+        } else if (column === "created") {
+          // Sort by date - data is already in YYYY-MM-DD format which sorts correctly as strings
+          aVal = a.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+          bVal = b.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+        } else {
+          // Text-based sorting for other columns
+          aVal = a.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+          bVal = b.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+        }
+
+        // Apply sort direction
+        if (direction === "asc") {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+
+      // Re-append sorted rows to the table body
+      rows.forEach((row) => tbody.appendChild(row));
     }
-    
+
     /**
      * Update visual sort indicators in column headers
      */
     function updateSortIndicators(activeHeader, direction) {
-        // Clear all existing sort indicators
-        headers.forEach(h => {
-            h.classList.remove('sort-asc', 'sort-desc');
-        });
-        
-        // Add indicator to the active header
-        activeHeader.classList.add(`sort-${direction}`);
+      // Clear all existing sort indicators
+      headers.forEach((h) => {
+        h.classList.remove("sort-asc", "sort-desc");
+      });
+
+      // Add indicator to the active header
+      activeHeader.classList.add(`sort-${direction}`);
     }
-});
+  });
 </script>
 {% endblock %}

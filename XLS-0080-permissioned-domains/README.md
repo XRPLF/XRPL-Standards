@@ -21,18 +21,19 @@ This proposal introduces the concept of permissioned domains. Permissioned domai
 This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202), as credentials are needed for permissioning.
 
 We propose:
-* Creating a `PermissionedDomain` ledger object.
-* Creating a `PermissionedDomainSet` transaction.
-* Creating a `PermissionedDomainDelete` transaction.
+
+- Creating a `PermissionedDomain` ledger object.
+- Creating a `PermissionedDomainSet` transaction.
+- Creating a `PermissionedDomainDelete` transaction.
 
 This feature will require an amendment. Since this feature doesn't bring any functionality to the XRPL by itself, it will be gated by other amendments that use it instead.
 
 ### 1.1. Terminology
 
-* **Domain**: A collection of rules indicating what accounts may be a part of it. This spec includes credential-gating, but more options could be added in the future. A domain is focused on "who can participate". The "how they can participate" (e.g. what tokens they may use) aspect can be done in other ways in the primitives they're used.
-* **Domain Rules**: The set of rules that govern a domain, i.e. the credentials it accepts.
-* **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
-* **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
+- **Domain**: A collection of rules indicating what accounts may be a part of it. This spec includes credential-gating, but more options could be added in the future. A domain is focused on "who can participate". The "how they can participate" (e.g. what tokens they may use) aspect can be done in other ways in the primitives they're used.
+- **Domain Rules**: The set of rules that govern a domain, i.e. the credentials it accepts.
+- **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
+- **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
 
 ## 2. On-Ledger Object: `PermissionedDomain`
 
@@ -40,17 +41,17 @@ This object represents a permissioned domain.
 
 ### 2.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`LedgerIndex`|✔️|`string`|`Hash256`|The unique ID of the ledger object.|
-|`Flags`| ✔️|`number`|`UInt32`|Flag values associated with this object.|
-|`LedgerEntryType`|✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
-|`Owner`|✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
-|`OwnerNode`|✔️|`string`|`UInt64`|A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages.|
-|`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain.|
-|`AcceptedCredentials`|✔️|`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
-|`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this entry.|
-|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The ledger index that contains the transaction that most recently modified this object.|
+| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                               |
+| --------------------- | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerIndex`         | ✔️        | `string`  | `Hash256`     | The unique ID of the ledger object.                                                                                                                       |
+| `Flags`               | ✔️        | `number`  | `UInt32`      | Flag values associated with this object.                                                                                                                  |
+| `LedgerEntryType`     | ✔️        | `string`  | `UInt16`      | The ledger object's type (`PermissionedDomain`).                                                                                                          |
+| `Owner`               | ✔️        | `string`  | `AccountID`   | The account that controls the settings of the domain.                                                                                                     |
+| `OwnerNode`           | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages.                      |
+| `Sequence`            | ✔️        | `number`  | `UInt32`      | The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain. |
+| `AcceptedCredentials` | ✔️        | `array`   | `STArray`     | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.                    |
+| `PreviousTxnID`       | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                           |
+| `PreviousTxnLgrSeq`   | ✔️        | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                   |
 
 #### 2.1.1. `LedgerIndex`
 
@@ -64,10 +65,10 @@ This is an array of inner objects referencing a type of credential. The maximum 
 
 The array will be sorted by `Issuer`, so that searching it for a match is more performant.
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`|✔️|`string`|`Blob`|A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d).|
+| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                                |
+| ---------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Issuer`         | ✔️        | `string`  | `AccountID`   | The issuer of the credential.                                                                                              |
+| `CredentialType` | ✔️        | `string`  | `Blob`        | A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d). |
 
 ### 2.2. Account Deletion
 
@@ -79,26 +80,27 @@ This transaction creates or modifies a `PermissionedDomain` object.
 
 ### 3.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainSet`).|
-|`Account`|✔️|`string`|`AccountID`|The account sending the transaction.|
-|`DomainID`| |`string`|`Hash256`|The domain to modify. Must be included if modifying an existing domain.|
-|`AcceptedCredentials`|✔️|`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field.|
+| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                     |
+| --------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`PermissionedDomainSet`).                                                                                                                                 |
+| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction.                                                                                                                                            |
+| `DomainID`            |           | `string`  | `Hash256`     | The domain to modify. Must be included if modifying an existing domain.                                                                                                         |
+| `AcceptedCredentials` | ✔️        | `array`   | `STArray`     | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field. |
 
 ### 3.2. Failure Conditions
 
-* `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
-* The `AcceptedCredentials` array is empty or too long (limit 10).
-* Any credential in `AcceptedCredentials` has an empty `CredentialType` or a `CredentialType` longer than 64 bytes (as per XLS-70d).
-* If `DomainID` is included:
-	* That domain doesn't exist.
-	* The `Account` isn't the domain owner.
+- `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
+- The `AcceptedCredentials` array is empty or too long (limit 10).
+- Any credential in `AcceptedCredentials` has an empty `CredentialType` or a `CredentialType` longer than 64 bytes (as per XLS-70d).
+- If `DomainID` is included:
+  - That domain doesn't exist.
+  - The `Account` isn't the domain owner.
 
 ### 3.3. State Changes
 
 If the transaction is successful:
-* It creates or modifies a `PermissionedDomain` object.
+
+- It creates or modifies a `PermissionedDomain` object.
 
 ## 4. Transaction: `PermissionedDomainDelete`
 
@@ -106,21 +108,22 @@ This transaction deletes a `PermissionedDomain` object.
 
 ### 4.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainDelete`).|
-|`Account`|✔️|`string`|`AccountID`|The account sending the transaction.|
-|`DomainID`|✔️|`string`|`Hash256`|The domain to delete.|
+| Field Name        | Required? | JSON Type | Internal Type | Description                                        |
+| ----------------- | --------- | --------- | ------------- | -------------------------------------------------- |
+| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`PermissionedDomainDelete`). |
+| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction.               |
+| `DomainID`        | ✔️        | `string`  | `Hash256`     | The domain to delete.                              |
 
 ### 4.2. Failure Conditions
 
-* The domain specified in `DomainID` doesn't exist.
-* The account isn't the owner of the domain.
+- The domain specified in `DomainID` doesn't exist.
+- The account isn't the owner of the domain.
 
 ### 4.3. State Changes
 
 If the transaction is successful:
-* It deletes a `PermissionedDomain` object.
+
+- It deletes a `PermissionedDomain` object.
 
 ## 5. Examples
 
@@ -143,8 +146,8 @@ A sample domain object may look like this (ignoring common fields):
 
 ## 6. Invariants
 
-* You cannot have a domain with no rules.
-* The `AcceptedCredentials` array must  have length between 1 and 10, if included.
+- You cannot have a domain with no rules.
+- The `AcceptedCredentials` array must have length between 1 and 10, if included.
 
 ## 7. Security
 
@@ -189,4 +192,3 @@ No.
 This won't work.
 
 The ledger needs to be able to iterate through the domain rules to ensure that all of them are being adhered to. If a domain owner has millions of objects (or millions of rules), then iterating through all of those objects becomes prohibitively expensive from a performance standpoint.
-

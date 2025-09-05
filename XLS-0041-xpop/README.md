@@ -7,6 +7,7 @@
     status: Final
     category: Community
 </pre>
+
 # XLS-41d
 
 # Abstract
@@ -69,9 +70,8 @@ XPOPs are a JSON object with the following schema:
 The `proof` key inside `transaction` section has one of two possible forms:
 
 1. List form:
-    
-    In this form the merkle proof is a list of lists (and strings) containing the minimum number of entries to form the merkle proof. Each list contains 16 entries (branches `0` through `F`). For each branch either the the root hash of that branch is provided as a 64 hex nibble string, or a further list of 16 entries is provided, until the transaction that the proof proves is reached. If a list contains fewer than 16 entries then the verifier should infer that the remaining entries are all null entries (hash strings that are sequences of 0s).
-    
+
+   In this form the merkle proof is a list of lists (and strings) containing the minimum number of entries to form the merkle proof. Each list contains 16 entries (branches `0` through `F`). For each branch either the the root hash of that branch is provided as a 64 hex nibble string, or a further list of 16 entries is provided, until the transaction that the proof proves is reached. If a list contains fewer than 16 entries then the verifier should infer that the remaining entries are all null entries (hash strings that are sequences of 0s).
 
 ```
 # list form
@@ -80,7 +80,7 @@ The `proof` key inside `transaction` section has one of two possible forms:
 	...
         hex string for branch 'A',
 	# branch 'B' is a list
-	[ 
+	[
 			hex string for branch 'B0',
 			... ,
 			hex string for branch 'BE',
@@ -97,34 +97,31 @@ The `proof` key inside `transaction` section has one of two possible forms:
 ```
 
 1. Tree form:
-    
-    In this form the merkle proof is an object of objects containing the entire transaction map for the ledger. This form is useful if many XPOPs must be generated for the same ledger and the size of each individual XPOP is less relevant than the amount of work to make and store the XPOPs. Each object contains three keys: `children`, `hash`, `key`.
-    
-    - The `children` key is always either an empty object or is keyed with only the branches which actually exist there, each as a single hex nibble `0` - `F`.
-    - The `hash` key is always a 64 nibble hex string: either the hash over the children (with appropriate namespace) or, if a leaf node, the hash over the node (with appropriate namespace).
-    - The `key` key is always a 64 nibble hex string: the keylet (index) of the object at this location.
-    
-    ```
-    # tree form
-    "proof": {
-      "hash" : hex string,
-      "key" : hex string,
-    	"children" : {
-    		"0":
-    		{
-    			"children": {},
-    			"hash": hex string,
-    			"key": hex string
-    		},
-    		...
-    		"F":
-    		{ ...}
-    	}
-    }
-    ```
-    
+
+   In this form the merkle proof is an object of objects containing the entire transaction map for the ledger. This form is useful if many XPOPs must be generated for the same ledger and the size of each individual XPOP is less relevant than the amount of work to make and store the XPOPs. Each object contains three keys: `children`, `hash`, `key`.
+   - The `children` key is always either an empty object or is keyed with only the branches which actually exist there, each as a single hex nibble `0` - `F`.
+   - The `hash` key is always a 64 nibble hex string: either the hash over the children (with appropriate namespace) or, if a leaf node, the hash over the node (with appropriate namespace).
+   - The `key` key is always a 64 nibble hex string: the keylet (index) of the object at this location.
+
+   ```
+   # tree form
+   "proof": {
+     "hash" : hex string,
+     "key" : hex string,
+   	"children" : {
+   		"0":
+   		{
+   			"children": {},
+   			"hash": hex string,
+   			"key": hex string
+   		},
+   		...
+   		"F":
+   		{ ...}
+   	}
+   }
+   ```
+
 # Verifying
 
 See reference implementation at: [xpop-verifier-py](https://github.com/RichardAH/xpop-verifier-py/blob/main/verify.py)
-
-
