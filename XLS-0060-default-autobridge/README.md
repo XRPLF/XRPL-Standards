@@ -1,6 +1,7 @@
 <pre>
   xls: 60
-  title: DefaultAutoBridge
+  title: Default AutoBridge
+  description: Use autobridging in IOU-IOU Payment transactions
   author: tequ (@tequdev)
   created: 2024-02-05
   status: Stagnant
