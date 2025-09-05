@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'XRPLF/XRPL-Standards'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,11 +48,12 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: "site/_site"
 
   deploy:
+    if: github.repository == 'XRPLF/XRPL-Standards'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
