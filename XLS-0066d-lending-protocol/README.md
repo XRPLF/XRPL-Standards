@@ -56,8 +56,7 @@ This version intentionally skips the complex mechanisms of automated on-chain co
     - [**3.2.1. LoanSet Transaction**](#321-loanset-transaction)
     - [**3.2.2. LoanDelete Transaction**](#322-loandelete-transaction)
     - [**3.2.3. LoanManage Transaction**](#323-loanmanage-transaction)
-    - [**3.2.4. LoanDraw Transaction**](#324-loandraw-transaction)
-    - [**3.2.5 LoanPay Transaction**](#325-loanpay-transaction)
+    - [**3.2.4. LoanPay Transaction**](#324-loanpay-transaction)
 - [**Appendix**](#appendix)
 
 ## 1. Introduction
@@ -78,7 +77,6 @@ The specification introduces the following transactions:
 - **`LoanSet`**: A transaction to create a new `Loan` object.
 - **`LoanDelete`**: A transaction to delete an existing `Loan` object.
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
-- **`LoanDraw`**: A transaction to drawdown `Loan` funds.
 - **`LoanPay`**: A transaction to make a `Loan` payment.
 
 The flow of the lending protocol is as follows:
@@ -87,13 +85,12 @@ The flow of the lending protocol is as follows:
 2. The Loan Broker creates a `LoanBroker` ledger entry with a `LoanBrokerSet` transaction.
 3. The Depositors deposit assets into the `Vault`.
 4. Optionally, the Loan Broker deposits First-Loss Capital into the `LoanBroker` with the `LoanBrokerCoverDeposit` transaction.
-5. The Loan Broker and Borrower create a `Loan` object with a `LoanSet` transaction.
-6. The Borrower can draw funds with the `LoanDraw` transaction and make payments with the `LoanPay`.
-7. If the Borrower fails to pay the Loan, the Loan Broker can default the `Loan` using the `LoanManage` transaction.
-8. Once the Loan has matured (or defaulted), the Borrower or the Loan Broker can delete it using a `LoanDelete` transaction.
-9. Optionally, the Loan Broker can withdraw the First-Loss Capital using the `LoanBrokerCoverWithdraw` transaction.
-10. When all `Loan` objects are deleted, the Loan Broker can delete the `LoanBroker` object with a `LoanBrokerDelete` transaction.
-11. When all `LoanBroker` objects are deleted, the Loan Broker can delete the `Vault` object.
+5. The Loan Broker and Borrower create a `Loan` object with a `LoanSet` transaction and the requested principal (excluding fees) is transered to the Borrower.
+6. If the Borrower fails to pay the Loan, the Loan Broker can default the `Loan` using the `LoanManage` transaction.
+7. Once the Loan has matured (or defaulted), the Borrower or the Loan Broker can delete it using a `LoanDelete` transaction.
+8. Optionally, the Loan Broker can withdraw the First-Loss Capital using the `LoanBrokerCoverWithdraw` transaction.
+9. When all `Loan` objects are deleted, the Loan Broker can delete the `LoanBroker` object with a `LoanBrokerDelete` transaction.
+10. When all `LoanBroker` objects are deleted, the Loan Broker can delete the `Vault` object.
 
 ### 1.2 Compliance Features
 
@@ -105,12 +102,11 @@ Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws bac
 
 Freeze is a mechanism by which an asset Issuer (IOUT or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents and `Account` from both sending and receiving and Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
 
-If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Brrower cannot make loan payments and they cannot draw down Loan funds.
+If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Brrower cannot make loan payments.
 
 A Deep Freeze does not affect the Loan Broker's functions. However, a Deep Freeze will prevent the Loan Broker from receing any Lending Protocol Fees.
 
-The Issuer may also Freeze of Deep Freeze the `_pseudo-account_` of the Loan Broker. A Freeze on the `_pseudo-account_` will prevent the Loan Broker from creating new Loans as well as prevent Borrowers from drawing down their Loans. However existing Loans will not be affected. In contrast, a Deep Freeze, will also prevent the Loans from being paid.
-
+The Issuer may also Freeze of Deep Freeze the `_pseudo-account_` of the Loan Broker. A Freeze on the `_pseudo-account_` will prevent the Loan Broker from creating new Loans. However existing Loans will not be affected. In contrast, a Deep Freeze, will also prevent the Loans from being paid.
 
 ### 1.3 Risk Management
 
@@ -141,7 +137,6 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - **`Fixed-Term Loan`**: A type of Loan with a known end date and a constant periodic payment schedule.
 - **`Principal`**: The original sum of money borrowed that must be repaid, excluding interest or other fees.
 - **`Interest`**: The cost of borrowing the Asset, calculated as a percentage of the loan principal, which the Borrower pays to the Lender over time.
-- **`Drawdown`**: The process where a borrower accesses part or all of the loan funds after the Loan has been created.
 - **`Default`**: The failure by the Borrower to meet the obligations of a loan, such as missing payments.
 - **`First-Loss Capital`**: The portion of capital that absorbs initial losses in case of a Default, protecting the Vault from loss.
 - **`Term`**: The period over which a Borrower must repay the Loan.
@@ -472,13 +467,12 @@ The `LoanID` is calculated as follows:
 | `LateInterestRate`        |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
 | `CloseInterestRate`       |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | An interest rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                       |
 | `OverpaymentInterestRate` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                   |
-| `StartDate`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                  |
+| `StartDate`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |              `CurrentLedgerTimestamp`               | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                 |
 | `PaymentInterval`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | Number of seconds between Loan payments.                                                                                                                       |
 | `GracePeriod`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                        `N/A`                        | The number of seconds after the Payment Due Date that the Loan can be Defaulted.                                                                               |
 | `PreviousPaymentDate`     |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                         `0`                         | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `NextPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |    `LoanSet.StartDate + LoanSet.PaymentInterval`    | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
 | `PaymentRemaining`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |               `LoanSet.PaymentTotal`                | The number of payments remaining on the Loan.                                                                                                                  |
-| `AssetsAvailable`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `LoanSet.[PrincipalRequested - LoanOriginationFee]` | The asset amount that is available in the Loan.                                                                                                                |
 | `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |            `LoanSet.PrincipalRequested`             | The principal amount requested by the Borrower.                                                                                                                |
 
 ##### 2.2.2.1 Flags
@@ -844,7 +838,6 @@ The transaction creates a new `Loan` object.
 | `CloseInterestRate`       |                    | `number`  |   `UINT32`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
 | `OverpaymentInterestRate` |                    | `number`  |   `UINT32`    |       0       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
 | `PrincipalRequested`      | :heavy_check_mark: | `number`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
-| `StartDate`               | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The timestamp of when the Loan starts [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `PaymentTotal`            |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
 | `PaymentInterval`         |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
 | `GracePeriod`             |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
@@ -918,15 +911,16 @@ The account specified in the `Account` field pays the transaction fee.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `RippleState` object between the LoanBroker account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-
   - The `RippleState` between the `Vault(LoanBroker(LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the LoanBroker `AccountRoot` has `lsfMPTLocked` flag set.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the Borrower `AccountRoot` has `lsfMPTLocked` flag set.
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
@@ -936,7 +930,6 @@ The account specified in the `Account` field pays the transaction fee.
 
 - `PaymentInterval` is less than `60` seconds.
 - `GracePeriod` is greater than the `PaymentInterval`.
-- `Loan.StartDate < LastClosedLedger.CloseTime`.
 
 - Insufficient assets in the Vault:
 
@@ -958,7 +951,7 @@ The account specified in the `Account` field pays the transaction fee.
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
 
   - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested`.
-  - Increase the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `Balance` field of `Borrower` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
   - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `Loan.LoanOriginationFee`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
@@ -966,7 +959,7 @@ The account specified in the `Account` field pays the transaction fee.
   - Create a `RippleState` object between the `Issuer` and the `Borrower` if one does not exist.
 
   - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested`.
-  - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `RippleState` balance between the `Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
   - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
@@ -974,7 +967,7 @@ The account specified in the `Account` field pays the transaction fee.
   - Create an `MPToken` object for the `Borrower` if one does not exist.
 
   - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested`.
-  - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
+  - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
   - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset` by `Loan.LoanOriginationFee`
 
 - `Vault(LoanBroker(LoanBrokerID).VaultID)` object state changes:
@@ -1017,23 +1010,6 @@ The transaction deletes an existing `Loan` object.
   - `Loan.PaymentRemaining > 0`
 
 ##### 3.2.2.2 State Changes
-
-- If `Loan(LoanID).AssetsAvailable > 0` (transfer remaining funds to the borrower):
-
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-
-    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-    - Increase the `Balance` field of `Loan(LoanID).Borrower` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-
-    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-    - Increase the `RippleState` balance between the `Loan(LoanID).Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan(LoanID).AssetsAvailable`.
-
-  - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-
-    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`.
-    - Increase the `MPToken.MPTAmount` of the `Loan(LoanID).Borrower` `MPToken` object for the `Vault.Asset` by `Loan(LoanID).AssetsAvailable`
 
 - Delete the `Loan` object.
 
@@ -1091,11 +1067,11 @@ The transaction deletes an existing `Loan` object.
   - Calculate the amount of the Default that First-Loss Capital covers:
 
     - The default Amount equals the outstanding principal and interest, excluding any funds unclaimed by the Borrower.
-      - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding) - Loan.AssetsAvailable`.
+      - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding)`.
     - Apply the First-Loss Capital to the Default Amount
       - `DefaultCovered = min((LoanBroker(Loan.LoanBrokerID).DebtTotal x LoanBroker(Loan.LoanBrokerID).CoverRateMinimum)  x LoanBroker(Loan.LoanBrokerID).CoverRateLiquidation, DefaultAmount)`
     - `DefaultAmount -= DefaultCovered`
-    - `ReturnToVault = DefaultCovered + Loan.AssetsAvailable`
+    - `ReturnToVault = DefaultCovered`
 
   - Update the `Vault` object:
 
@@ -1104,7 +1080,7 @@ The transaction deletes an existing `Loan` object.
     - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += ReturnToVault`.
     - If `Loan.lsfLoanImpaired` flag is set:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
 
 - Update the `LoanBroker` object:
 
@@ -1117,7 +1093,6 @@ The transaction deletes an existing `Loan` object.
 
   - `Loan(LoanID).Flags |= lsfLoanDefault`
   - `Loan(LoanID).PaymentRemaining = 0`
-  - `Loan(LoanID).AssetsAvailable = 0`
   - `Loan(LoanID).PrincipalOutstanding = 0`
 
   - Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
@@ -1141,7 +1116,7 @@ The transaction deletes an existing `Loan` object.
 
     - Update the `Vault` object (set "paper loss"):
 
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
     - Update the `Loan` object:
     - `Loan(LoanID).Flags |= lsfLoanImpaired`
@@ -1151,7 +1126,7 @@ The transaction deletes an existing `Loan` object.
   - If the `tfLoanUnimpair` flag is specified:
 
     - Update the `Vault` object (clear "paper loss"):
-    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.5.1.5 Total Value Calculation**](#3252-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
     - Update the `Loan` object:
 
@@ -1171,69 +1146,7 @@ The transaction deletes an existing `Loan` object.
 
 [**Return to Index**](#index)
 
-#### 3.2.4 `LoanDraw` Transaction
-
-The Borrower submits a `LoanDraw` transaction to draw funds from the Loan.
-
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                 |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------ |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |   **TODO**    | The transaction type.                       |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be drawn from. |
-| `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to drawdown.            |
-
-##### 3.2.4.1 Failure Conditions
-
-- A `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The `AccountRoot.Account` of the submitter is not `Loan.Borrower`.
-- The Loan has not started:
-  - `Loan.StartDate > LastClosedLedger.CloseTime`.
-- There are insufficient assets in the `Loan`:
-
-  - `Loan.AssetsAvailable` < `Amount`.
-
-- The `Loan` has `lsfLoanImpaired` or `lsfLoanDefault` flags set.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-
-  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
-
-- The `Borrower` missed a payment:
-  - `LastClosedLedger.CloseTime > Loan.NextPaymentDueDate`.
-
-##### 3.2.4.2 State Changes
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-
-  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
-  - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-
-  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
-
-- Decrease `Loan.AssetsAvailable` by `Amount`.
-
-##### 3.2.4.3 Invariants
-
-**TBD**
-
-[**Return to Index**](#index)
-
-#### 3.2.5 `LoanPay` Transaction
+#### 3.2.4 `LoanPay` Transaction
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 
@@ -1243,7 +1156,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 | `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
 | `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.              |
 
-##### 3.2.5.1 Payment Types
+##### 3.2.4.1 Payment Types
 
 A Loan payment has four types:
 
@@ -1275,7 +1188,7 @@ If the Loan Broker and the borrower have agreed to allow overpayments, any amoun
 
 Each payment comprises three parts, `principal`, `interest` and `fee`. The `principal` is an amount paid against the principal of the Loan, `interest` is the interest portion of the Loan, and `fee` is the fee part paid by the Borrower on top of `principal` and `interest`.
 
-###### 3.2.5.1.1 Regular Payment
+###### 3.2.4.1.1 Regular Payment
 
 A periodic payment amount is calculated using the amortization payment formula:
 
@@ -1303,7 +1216,7 @@ $$
 principal = periodicPayment - interest
 $$
 
-###### 3.2.5.1.2 Late Payment
+###### 3.2.4.1.2 Late Payment
 
 When a Borrower makes a payment after `NextPaymentDueDate`, they must pay a nominal late payment fee and an additional interest rate charged on the overdue amount for the unpaid period. The formula is as follows:
 
@@ -1331,7 +1244,7 @@ $$
 
 Note that `valueChange >= 0`.
 
-###### 3.2.5.1.3 Loan Overpayment
+###### 3.2.4.1.3 Loan Overpayment
 
 - Let $\mathcal{P}$ and $\mathcal{p}$ represent the total and outstanding Loan principal.
 - Let $\mathcal{I}$ and $\mathcal{i}$ represent the total and outstanding Loan interest computed from $\mathcal{P}$ and $\mathcal{p}$ respectively.
@@ -1362,7 +1275,7 @@ $$
 valueChange =  \mathcal{i} - \mathcal{i'}
 $$
 
-###### 3.2.5.1.4 Early Full Repayment
+###### 3.2.4.1.4 Early Full Repayment
 
 A Borrower can close a Loan early by submitting the total amount needed to do so. This amount is the sum of the remaining balance, any accrued interest, a prepayment penalty, and a prepayment fee.
 
@@ -1396,7 +1309,7 @@ $$
 valueChange = (prepaymentPenalty) - (interestOutstanding - accruedInterest)
 $$
 
-###### 3.2.5.1.5 Management Fee Calculations
+###### 3.2.4.1.5 Management Fee Calculations
 
 The `LoanBroker` Management fee is charged against the interest portion of the Loan and subtracted from the total Loan value at Loan creation. However, the fee is charged only during Loan payments. Early and Late payments change the total value of the Loan by decreasing or increasing the value of total interest. Therefore, when an early, late or an overpayment payment is made, the management fee must be updated.
 
@@ -1455,7 +1368,7 @@ $$
 LoanBroker.DebtTotal = LoanBroker.DebtTotal - managementFeeChange
 $$
 
-##### 3.2.5.2 Total Loan Value Calculation
+##### 3.2.4.2 Total Loan Value Calculation
 
 At any point in time the following formulae can be used to calculate the total remaining value of the loan.
 
@@ -1483,7 +1396,7 @@ $$
 totalInterestOutstanding = totalValueOutstanding - principalOutstanding
 $$
 
-##### 3.2.5.3 Transaction Pseudo-code
+##### 3.2.4.3 Transaction Pseudo-code
 
 The following is the pseudo-code for handling a Loan payment transaction.
 
@@ -1572,11 +1485,11 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     return (total_principal_paid, total_interest_paid, loan_value_change, total_fee_paid)
 ```
 
-##### 3.2.5.4 Failure Conditions
+##### 3.2.4.4 Failure Conditions
 
 Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`. `totalDue` is the minimum payment due by the borrower.
 
-Assume the payment is handled by a function that implements the [Pseudo-Code](#3252-transaction-pseudo-code) that returns `principal_paid`, `interest_paid`, `value_change` and `fee_paid`, where:
+Assume the payment is handled by a function that implements the [Pseudo-Code](#3242-transaction-pseudo-code) that returns `principal_paid`, `interest_paid`, `value_change` and `fee_paid`, where:
 
 - `principal_paid` is the amount of principal that the payment covered.
 - `interest_paid` is the amount of interest that the payment covered.
@@ -1589,8 +1502,6 @@ Assume the payment is handled by a function that implements the [Pseudo-Code](#3
 Furthermore, assume `full_periodic_payments` variable represents the number of payment intervals that the payment covered.
 
 - A `Loan` object with specified `LoanID` does not exist on the ledger.
-
-- The Loan has not started yet: `Loan.StartDate > LastClosedLedger.CloseTime`.
 
 - The submitter `AccountRoot.Account` is not equal to `Loan.Borrower`.
 
@@ -1616,7 +1527,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 - If `LastClosedLedger.CloseTime < Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
-##### 3.2.5.5 State Changes
+##### 3.2.4.5 State Changes
 
 - `Loan` object state changes:
 
@@ -1728,7 +1639,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 [**Return to Index**](#index)
 
-##### 3.2.5.6 Invariants
+##### 3.2.4.6 Invariants
 
 **TBD**
 
