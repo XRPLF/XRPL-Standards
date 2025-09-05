@@ -131,7 +131,7 @@ Setting an empty `MPTokenMetadata` removes the field.
 | ------------- | :-------: | :-------: | :-----------: |
 | `TransferFee` |           | `number`  |   `UINT16`    |
 
-Updated transfer fee value.
+New transfer fee value.
 The transaction will be rejected if `lsfMPTCanMutateTransferFee` was not set in `MutableFlags`.
 Setting `TransferFee` to zero removes the field.
 
@@ -361,7 +361,7 @@ And `lsfMPTCanTransfer` can be modified through `tfMPTSetCanTransfer`/`tfMPTClea
 }
 ```
 
-- This will be rejected. Although `lsfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be set without `tfMPTCanTransfer`.
+- This will be rejected. Although `lsfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled.
 
 **Sample 2**(rejected):
 
@@ -374,7 +374,7 @@ And `lsfMPTCanTransfer` can be modified through `tfMPTSetCanTransfer`/`tfMPTClea
 }
 ```
 
-- This will be rejected. Although `lsfMPTCanMutateTransferFee` is set, setting non-zero `TransferFee` is still not allowed without `tfMPTCanTransfer`, even the user is trying to set `tfMPTSetCanTransfer` in the same transaction.
+- This will be rejected. Even if `lsfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled, even if the transaction also includes `tfMPTSetCanTransfer`.
 
 **Sample 3**(successful):  
 The following sequence of transactions illustrates a successful case:
