@@ -1,7 +1,8 @@
 <pre>
     xls: 17
     title: XFL Developer-friendly representation of XRPL balances
-    author: None (RichardAH)
+    descrption: Introduces developer-friendly representation of XRPL balances.
+    author: RichardAH (@RichardAH)
     created: 2021-03-19
     status: Final
     category: Protocol
@@ -162,5 +163,6 @@ function to_string(xfl)
 
 C:
 * See implementation in Hooks: [here](https://github.com/RichardAH/rippled-hooks/blob/6b132d6d1382e3ee61e6759cecad36f08b9e665f/src/ripple/app/tx/impl/applyHook.cpp#L86)
+
 
 
