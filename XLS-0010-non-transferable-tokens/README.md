@@ -1,12 +1,11 @@
 <pre>
     xls: 10
     title: Non-Transferable Token (NTT) standard
-    author: None (RichardAH)
+    author: RichardAH (@RichardAH)
     created: 2020-04-05
     status: Stagnant
     category: Community
 </pre>
-# XLS-10d: Non-Transferable Token (NTT) standard
 
 ## Changelog
 28-7-21: Name of this standard was changed from `Issuer Controlled Token` to `Non-Transferable Token` to reflect industry norms
@@ -75,4 +74,5 @@ An alternative way to do this would have been to open a trustline to the issuer 
 
 
 Further information relevant to all wallets can be stored on the community bulletin board in this way, simply by allocating subtype numbers for those notice types. For example known scam accounts can be placed on the bulletin board, or URL pointers to lists of known scam accounts.
+
 
