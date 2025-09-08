@@ -8,6 +8,7 @@
 </pre>
 
 ## Changelog
+
 28-7-21: Name of this standard was changed from `Issuer Controlled Token` to `Non-Transferable Token` to reflect industry norms
 
 ## 1. Introduction
@@ -20,7 +21,7 @@ However in recent years, particularly with the rise in popularity of programmabl
 
 ## 2. User Controlled Tokens
 
-The standard IOU on the XRPL exists as a relationship between two parties: a *user* and an *issuer*. In order to use the issuer’s token, the user must first add a trustline to their XRPL account for the specified currency code and issuer. Once the trustline exists the issuer (or potentially another user) may send IOUs to that trustline balance. More background here: [https://xrpl.org/trust-lines-and-issuing.html](https://xrpl.org/trust-lines-and-issuing.html)
+The standard IOU on the XRPL exists as a relationship between two parties: a _user_ and an _issuer_. In order to use the issuer’s token, the user must first add a trustline to their XRPL account for the specified currency code and issuer. Once the trustline exists the issuer (or potentially another user) may send IOUs to that trustline balance. More background here: [https://xrpl.org/trust-lines-and-issuing.html](https://xrpl.org/trust-lines-and-issuing.html)
 
 ## 3. Non-transferable Tokens (aka Issuer Controlled Tokens)
 
@@ -72,7 +73,4 @@ In order to whitelist an issuer of a token, the issuer’s 20 byte account ID is
 
 An alternative way to do this would have been to open a trustline to the issuer from the community account, however the above has an additional advantage: by changing the sub-type of the entry to 0xFF FF F**E** we can signal that the token is actually blacklisted rather than whitelisted. Thus the concept of a bulletin board.
 
-
 Further information relevant to all wallets can be stored on the community bulletin board in this way, simply by allocating subtype numbers for those notice types. For example known scam accounts can be placed on the bulletin board, or URL pointers to lists of known scam accounts.
-
-
