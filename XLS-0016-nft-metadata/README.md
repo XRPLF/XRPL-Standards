@@ -6,7 +6,8 @@
     status: Stagnant
     category: Community
 </pre>
-In addition to @WietseWind 's [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30)  and  @RichardAH 's proposal [XLS-15d](https://github.com/XRPLF/XRPL-Standards/discussions/34) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code. 
+
+In addition to @WietseWind 's [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30) and @RichardAH 's proposal [XLS-15d](https://github.com/XRPLF/XRPL-Standards/discussions/34) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code.
 
 When issuing an indivisible token on the XRPL the only data given is the currency code. For optimal usage, there has to be more metadata for an NFT. For example a description and a URI to an IPFS file.
 Using the Concise Transaction Identifier, a prior transaction can be used to mark the metadata contained in the memo's field for the use of the NFT.
@@ -17,7 +18,7 @@ The [Memos Field](https://xrpl.org/transaction-common-fields.html#memos-field) i
 - MemoFormat
 - MemoType
 
-The MemoData field can be used for the metadata itself and the MemoFormat indicates the nature of the given data inside the MemoData field (MIME type). To create a certain hierarchy for covering failure of the URI specified, the MemoType field contains  the numbering of the data named as shown below followed by the MIME type:
+The MemoData field can be used for the metadata itself and the MemoFormat indicates the nature of the given data inside the MemoData field (MIME type). To create a certain hierarchy for covering failure of the URI specified, the MemoType field contains the numbering of the data named as shown below followed by the MIME type:
 
 - NFT/0 - _Description_ - `text/plain`
 - NFT/1 - _Author_ - `text/plain`
@@ -25,8 +26,8 @@ The MemoData field can be used for the metadata itself and the MemoFormat indica
 - NFT/3 - _Back-up URI_ - `text/uri`
 - NFT/4 - _Reduced image Data URI as last back-up_ - `text/uri`
 
-The usage of a back-up URI and Data URI can be seen as optional and can be replaced with other kinds of data that have the preference of the issuer of the NFT for example contact information. 
-The limit of storage is 1kb of data in the memo's field in total. Multiple memos can be used to give as much information as fits to the 1kb of data. 
+The usage of a back-up URI and Data URI can be seen as optional and can be replaced with other kinds of data that have the preference of the issuer of the NFT for example contact information.
+The limit of storage is 1kb of data in the memo's field in total. Multiple memos can be used to give as much information as fits to the 1kb of data.
 
 If there is only one memo on the CTI referenced transaction and the memo data contains a URI of any sort then this is deemed to be the NFT content. The multiple memo's structure will be the advanced method to issue NFTs. The standard will also be compatible with previously created NFTs referred to as the simple method.
 
@@ -34,15 +35,13 @@ If there is only one memo on the CTI referenced transaction and the memo data co
 
 **Issuing**
 
-For the metadata, there has to be created a transaction from the same address as the issuer of the NFT to for example a hot wallet. This transaction of 1 drop contains the description and URIs needed for the NFT.  
- 
-
+For the metadata, there has to be created a transaction from the same address as the issuer of the NFT to for example a hot wallet. This transaction of 1 drop contains the description and URIs needed for the NFT.
 
 The currency code for an NFT consists of 3 parts:
 
-- Prefix 02 for HEX currency code 
--  [CTI](https://github.com/XRPLF/XRPL-Standards/discussions/34) (Concise Transaction Identifier)
-- Short name converted to HEX for the NFT to a maximum of 12 characters or less (filled up with 0's if it's less) 
+- Prefix 02 for HEX currency code
+- [CTI](https://github.com/XRPLF/XRPL-Standards/discussions/34) (Concise Transaction Identifier)
+- Short name converted to HEX for the NFT to a maximum of 12 characters or less (filled up with 0's if it's less)
 
 After this, a Trust line can be set up using the above currency code and the NFTs being transferred from the issuing address to the hot wallet.
 
@@ -52,10 +51,10 @@ After this, a Trust line can be set up using the above currency code and the NFT
 
 _For example_
 
-**Issuer:**  `rBzoA1EXxE2FeGV4Z57pMGRuzd3dfKxVUt`
+**Issuer:** `rBzoA1EXxE2FeGV4Z57pMGRuzd3dfKxVUt`
 **Hot wallet:** `rp9d3gds8bY7hkP8FmNqJZ1meMtYLtyPoz`
 
- The JSON for the metadata transaction would look like this:
+The JSON for the metadata transaction would look like this:
 
 ```
 {
@@ -105,21 +104,20 @@ _For example_
 }
 ```
 
-Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/transactions/24ADC5D0EF72DDA45A7464A7F74B762801FA12C26F6BFEEFC61CF72140623F27) transaction 
+Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/transactions/24ADC5D0EF72DDA45A7464A7F74B762801FA12C26F6BFEEFC61CF72140623F27) transaction
 
+Using this transaction's txn hash, txn_index, ledger_hash, and ledger_index creates a CTI of `23080995397183855`
+Converted to HEX it will be `52000B03B6296F`
 
-Using this transaction's  txn hash, txn_index, ledger_hash, and ledger_index creates a CTI of `23080995397183855`
-Converted to HEX it will be `52000B03B6296F` 
-
-The name of the NFT will be '_Purple moon_'. 
+The name of the NFT will be '_Purple moon_'.
 After conversing this to HEX the complete currency code looks like this `0252000B03B6296F507572706C65206D6F6F6E00`
 
-**02**  - _XRPL NFT identifier_ 
+**02** - _XRPL NFT identifier_
 **52000B03B6296F** - _CTI_
-**507572706C65206D6F6F6E00** -  _NFT name_
+**507572706C65206D6F6F6E00** - _NFT name_
 
-When Issuing a token the same address has to be used as the sender of the aforementioned transaction. 
-As explained in this [blogpost](https://coil.com/p/Huub/Introduction-to-NFT-on-the-XRP-Ledger/4ee41zWW-) a Trust line has to be created between the Issuer and the hot wallet. 
+When Issuing a token the same address has to be used as the sender of the aforementioned transaction.
+As explained in this [blogpost](https://coil.com/p/Huub/Introduction-to-NFT-on-the-XRP-Ledger/4ee41zWW-) a Trust line has to be created between the Issuer and the hot wallet.
 
 Make sure the issuer address has an `AccountSet` of `SetFlag` to `8`
 
@@ -137,11 +135,11 @@ Make sure the issuer address has an `AccountSet` of `SetFlag` to `8`
 }
 ```
 
-In the currency field the HEX converted currency code is used. 
+In the currency field the HEX converted currency code is used.
 The value is set to `1000000000000000e-95` which will result in 10 NFTs.
 More explanation about this can be found in @WietseWind's proposal [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30)
 
-Last step is to send the tokens from the issuer to the hot wallet. 
+Last step is to send the tokens from the issuer to the hot wallet.
 
 ```
 {
@@ -157,8 +155,7 @@ Last step is to send the tokens from the issuer to the hot wallet.
 }
 ```
 
-Now there are 10 Purple moon NFTs on  address `rp9d3gds8bY7hkP8FmNqJZ1meMtYLtyPoz`
-
+Now there are 10 Purple moon NFTs on address `rp9d3gds8bY7hkP8FmNqJZ1meMtYLtyPoz`
 
 ### Simple Method
 
@@ -183,7 +180,4 @@ The JSON for the metadata transaction would look like this:
 
 Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/transactions/7DFCD417FCEE35F7BB3ABECD05C27BA71F1E845BFD29C19AF3CF5E55B44EA55C) transaction
 
-
 After that, a trust set and sending the tokens is the same as the advanced method
-
-
