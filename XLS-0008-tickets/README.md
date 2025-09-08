@@ -23,15 +23,15 @@ Tickets are a proposed change to the XRP Ledger protocol. They would allow selec
 
 Multisigning on the XRP Ledger. Cool, huh? And it's actually getting used. In March of 2018 approximately 4.4% of all payment transactions on the XRP ledger were multisigned. That's over 33,000 payments in that single month. That's not a large percentage, but when you consider the total number of multisigned payments, it's significant.
 
-As long as multisigning is being used in automated situations, it's great. But for non-automated situations  there's at least one downside.
+As long as multisigning is being used in automated situations, it's great. But for non-automated situations there's at least one downside.
 
 ### Sequence Numbers
 
 The trick is that in the XRP Ledger...
 
-* Every account has an incrementing sequence number.
-* Every transaction on that account must contain that sequence number.
-* Transactions on that account must be applied to the ledger in order by sequence number.
+- Every account has an incrementing sequence number.
+- Every transaction on that account must contain that sequence number.
+- Transactions on that account must be applied to the ledger in order by sequence number.
 
 For example, somebody just created an account for Zoe by sending her some XRP. Zoe's brand new account has a starting sequence number. The very first transaction that Zoe applies to her new account must contain that sequence number. If her first transaction omits the sequence number then the transaction fails. If her first transaction uses a sequence number other than the one in her account, then the transaction fails.
 
@@ -69,7 +69,7 @@ Now that you understand the point of Tickets, you may want to read about the det
 
 ## Discussion of the Details
 
-Creating a replacement for something as fundamental as sequence numbers in transactions is delicate work. The following design is as simple as possible.  But even with that, there are a lot of details to attend to.
+Creating a replacement for something as fundamental as sequence numbers in transactions is delicate work. The following design is as simple as possible. But even with that, there are a lot of details to attend to.
 
 ### Why Sequence Numbers?
 
@@ -85,8 +85,8 @@ What matters for both of these considerations is that the `Sequence` number must
 
 So whatever we do with `Ticket`s needs to carefully:
 
-* reproduce the uniqueness that `Sequence` numbers provide while
-* removing the requirement for consecutiveness.
+- reproduce the uniqueness that `Sequence` numbers provide while
+- removing the requirement for consecutiveness.
 
 ### Creating `Ticket`s
 
@@ -156,11 +156,11 @@ There are four primary ways in which `Sequence` numbers affect the ledger and tr
 
 1. All transactions use the `Sequence` number to verify that the transaction is unique in the ledger and that the hash of the validated transaction is unique.
 1. Some transactions use the `Sequence` number as a persistent identifier in a ledger object. This happens both...
-    1. Explicitly (`Offer`s and `Check`s) and
-    1. Implicitly (`Escrow` and `PayChan`).
+   1. Explicitly (`Offer`s and `Check`s) and
+   1. Implicitly (`Escrow` and `PayChan`).
 1. The `Sequence` number of a transaction is used to sort transactions. This is important because
-    1. Transactions are actually applied to a final ledger one-at-a-time in that sorted order and
-    1. The Transaction Queue (`TxQ`) stores queued transactions in that order.
+   1. Transactions are actually applied to a final ledger one-at-a-time in that sorted order and
+   1. The Transaction Queue (`TxQ`) stores queued transactions in that order.
 1. The account ID and `Sequence` number of a transaction can be used to identify all of the validated transactions associated with an account, as well as the order of those transactions.
 
 All of these behaviors will be affected by the presence of `Ticket`s in transactions.
@@ -193,6 +193,7 @@ First let's compare a simple transaction using a `Sequence` number to the same t
    "TransactionType" : "AccountSet"
 }
 ```
+
 Now, for contrast, suppose instead that we'd created a `Ticket` using `TicketSequence` number 12. We'll now use that `Ticket`.
 
 ```
@@ -216,12 +217,13 @@ Now, for contrast, suppose instead that we'd created a `Ticket` using `TicketSeq
     "TransactionType" : "AccountSet"
 }
 ```
+
 By examining the differences between these two transactions you can see that they will generate different hashes:
 
 1. The `Sequence` field is present in both transactions, but in one transaction it's non-zero, in the other it's zero.
 1. The `TicketSequence` field is new in the transaction that uses the `Ticket`.
 
-The `Sequence` field is always required, but if a `TicketSequence` is present the `Sequence` field must be zero.  If the `Sequence` field is ever omitted then the transaction is malformed.  Correspondingly, a transaction that includes both a non-zero `Sequence` number and a `TicketSequence` field is treated as malformed and returns a `tem` code.
+The `Sequence` field is always required, but if a `TicketSequence` is present the `Sequence` field must be zero. If the `Sequence` field is ever omitted then the transaction is malformed. Correspondingly, a transaction that includes both a non-zero `Sequence` number and a `TicketSequence` field is treated as malformed and returns a `tem` code.
 
 ##### Testing for Transaction Validity and Uniqueness
 
@@ -235,11 +237,11 @@ If the `Sequence` is zero then, in order to be a valid transaction, the presence
 
 Every transaction that operates on an `Account` today leaves some kind of artifact in the ledger. (We're ignoring pseudo transactions, since they don't operate on actual `Accounts`). Today, at a minimum, every transaction on an `Account` causes the `Sequence` of that account root to increment. With `Ticket`s we lose that guarantee of the `Sequence` increment. But there are still guaranteed changes to the ledger, including to the account root.
 
-* Every time a `Ticket` is used, then the consumed `Ticket` is removed from the ledger. So the `Ticket` itself will be removed from the ledger.
-* The account's directory will have the `Ticket` removed, so the directory will change as well.
-* The `PreviousTxnID` field in the account root will be modified to contain the hash of the transaction that consumed the `Ticket`.
-* Typically the `OwnerCount` field in the account root will decrease, but that is not required. If the transaction adds one entry to the account's directory, then the removed `Ticket` will be counter-balanced by the added directory entry (say an `Offer`) which could cause the `OwnerCount` field to be left unchanged.
-* Also typically the account root `Balance` field would change due to the fee, but this too is not required. If the transaction does not require a fee (for example, a [Key Reset Transaction](https://developers.ripple.com/transaction-cost.html#key-reset-transaction)) then no fee will be consumed. Or, say with a `CheckCash` transaction, the transaction could bring just enough XRP into the account to counterbalance the fee. If this were to occur, then the `Balance` would not change.
+- Every time a `Ticket` is used, then the consumed `Ticket` is removed from the ledger. So the `Ticket` itself will be removed from the ledger.
+- The account's directory will have the `Ticket` removed, so the directory will change as well.
+- The `PreviousTxnID` field in the account root will be modified to contain the hash of the transaction that consumed the `Ticket`.
+- Typically the `OwnerCount` field in the account root will decrease, but that is not required. If the transaction adds one entry to the account's directory, then the removed `Ticket` will be counter-balanced by the added directory entry (say an `Offer`) which could cause the `OwnerCount` field to be left unchanged.
+- Also typically the account root `Balance` field would change due to the fee, but this too is not required. If the transaction does not require a fee (for example, a [Key Reset Transaction](https://developers.ripple.com/transaction-cost.html#key-reset-transaction)) then no fee will be consumed. Or, say with a `CheckCash` transaction, the transaction could bring just enough XRP into the account to counterbalance the fee. If this were to occur, then the `Balance` would not change.
 
 ##### Ledger Artifacts With Explicit `Sequence` Numbers
 
@@ -299,7 +301,7 @@ Here's the transaction sorting order with `TicketSequences` taken into account:
 1. The smaller account ID goes in front. If the account IDs are equal, then...
 1. The smaller non-zero `Sequence` number goes in front. Zero `Sequence` numbers go to the back. If the `Sequence` numbers are equal, then...
 1. If both transactions have `TicketSequence`s then the `TicketSequence` with the smaller number goes to the front. If either transaction
-has no `TicketSequence` or if the `TicketSequence` numbers are the same, then...
+   has no `TicketSequence` or if the `TicketSequence` numbers are the same, then...
 1. The smaller transaction ID goes in front. There should never be equal transaction IDs.
 
 ##### `TxQ` Transaction Ordering
@@ -315,20 +317,20 @@ Both of these sort orders (`TxQ` and `CanonicalTxSet`) leave open the possibilit
 Here are two different ways this reordering could happen:
 
 1. Inserting in front by selective use of `Ticket`s:
-    1. Abril creates a wad of `Ticket`s on her account.
-    1. She submits a transaction using a high numbered `TicketSequence`.
-    1. She submits a second transaction with a lower numbered `TicketSequence`.
-    1. As long as neither transaction has been validated, the second transaction she submitted will be sorted in front of the earlier transaction.
+   1. Abril creates a wad of `Ticket`s on her account.
+   1. She submits a transaction using a high numbered `TicketSequence`.
+   1. She submits a second transaction with a lower numbered `TicketSequence`.
+   1. As long as neither transaction has been validated, the second transaction she submitted will be sorted in front of the earlier transaction.
 1. Inserting in front by selective use of `Sequence` numbers and `Ticket`s:
-    1. Vita creates a few `Ticket`s on her account.
-    1. She submits a transaction using a `TicketSequence`.
-    1. She submits a second transaction using a (plain) `Sequence` number.
-    1. As long as neither transaction has been validated, the second transaction she submitted (the one with the `Sequence` number) will be sorted in front of the earlier transaction (with the `TicketSequence`).
+   1. Vita creates a few `Ticket`s on her account.
+   1. She submits a transaction using a `TicketSequence`.
+   1. She submits a second transaction using a (plain) `Sequence` number.
+   1. As long as neither transaction has been validated, the second transaction she submitted (the one with the `Sequence` number) will be sorted in front of the earlier transaction (with the `TicketSequence`).
 
 I'm not convinced that we need to worry about this kind of reordering.
 
-* Any reordering that does happen is limited to the account that owns the `Ticket`(s).
-* The `TxQ` already allows the account owner to replace one transaction with another by re-issuing a transaction with the same sequence but a higher fee. To the best of our current knowledge this is not being used to manipulate the ledger.
+- Any reordering that does happen is limited to the account that owns the `Ticket`(s).
+- The `TxQ` already allows the account owner to replace one transaction with another by re-issuing a transaction with the same sequence but a higher fee. To the best of our current knowledge this is not being used to manipulate the ledger.
 
 Someone who's more clever with possible ledger manipulations may have ideas for how this kind of reordering could be abused. If so I'm all ears.
 
@@ -341,8 +343,8 @@ Fortunately, yes. By looking at the `Sequence` field of the account root we can 
 1. If a transaction uses a `Ticket` and
 1. The transaction's account root `Sequence` is past the `TicketSequence` number, and
 1. The `Ticket` is not in the ledger, then
-    1. The `Ticket` was created and already consumed or
-    1. The `Ticket` never was (and can never be) created.
+   1. The `Ticket` was created and already consumed or
+   1. The `Ticket` never was (and can never be) created.
 1. At any rate, that `Ticket` can never become available for this transaction, so the transaction can never succeed.
 
 So the rule is just a bit more complicated than the rule we currently have with `Sequence` numbers.
@@ -355,18 +357,19 @@ A transaction that consumes a `Ticket` has some interesting new behaviors if the
 
 Usually a transaction that generates a `tec` has small but important interactions with the ledger:
 
-* The transaction's fee is removed from the account root.
-* The account root's `Sequence` number is advanced by 1.
+- The transaction's fee is removed from the account root.
+- The account root's `Sequence` number is advanced by 1.
 
 There is one `tec` code (`tecOVERSIZE`) that has more impact on the ledger; it also removes a collection of unfunded and expired offers. But, under ordinary circumstances, a transaction that generates a `tec` code does not change the ledger very much.
 
-Note that one of the things a `tec` code always does is advance the account root `Sequence` number. However, if the transaction generating the `tec` is also consuming a `Ticket` we can't follow that path. Instead we remove the `Ticket` that was in the transaction from the ledger.  The account root `Sequence` does not change.
+Note that one of the things a `tec` code always does is advance the account root `Sequence` number. However, if the transaction generating the `tec` is also consuming a `Ticket` we can't follow that path. Instead we remove the `Ticket` that was in the transaction from the ledger. The account root `Sequence` does not change.
 
 This is not a big change, but it's worth drawing people's attention to the change so they can think about it.
 
 #### The Transaction Database and Indices
 
 One of the SQLite databases that rippled keeps is called the Transaction database. As you might expect, that database stores transactions in a table. It also keeps several indices that make it easier to locate transactions in that database. The Transaction database looks like this:
+
 ```
     TABLE Transactions (
         TransID CHARACTER(64) PRIMARY KEY,
@@ -398,6 +401,7 @@ One of the SQLite databases that rippled keeps is called the Transaction databas
     INDEX AcctLgrIndex ON
         AccountTransactions(LedgerSeq, Account, TransID);
 ```
+
 The transaction's `Sequence` number shows up in the top-most `Transactions` table as the `FromSeq` field. But it makes no additional showing in any of the other tables or indexes. Note that it's easy to get confused by the `TxnSeq` fields in the other tables and indices. But the `TxnSeq` field is not the `Sequence` number that is embedded in the transaction. `TxnSeq` carries the order of transaction application within one ledger – a much different thing.
 
 We spent some time examining these tables and came to the conclusion that they do not need any modifications to take `Ticket`s into account.
@@ -445,23 +449,23 @@ One of the features of the XRP Ledger is that the full transaction history of an
 
 The transaction metadata still contains the full story. But you can't simply look a the `Sequence` number.
 
-* If the account root `Sequence` number does not change between two transactions, then the metadata will show a `Ticket` node being deleted.
-* If the account root `Sequence` number leaps between transactions, then the metadata will show as many `Ticket`s being created as the size of the `Sequence` number leap.
+- If the account root `Sequence` number does not change between two transactions, then the metadata will show a `Ticket` node being deleted.
+- If the account root `Sequence` number leaps between transactions, then the metadata will show as many `Ticket`s being created as the size of the `Sequence` number leap.
 
 If folks decide that digging around in metadata looking for `Ticket`s being created or deleted is too messy we could choose to add artifacts to the account root to annotate the change. Such account root additions would be purely to help external tools understand chains of transactions.
 
 For a straw man, let's propose that we add two new optional fields in the account root:
 
-* `SubSequence`, and
-* `JumpSequence`.
+- `SubSequence`, and
+- `JumpSequence`.
 
 `SubSequence` would work as follows:
 
 1. We'd add a new optional account root entry called `SubSequence`, it would be 32-bit unsigned.
 1. When we execute a transaction with a normal `Sequence` number, we remove the `SubSequence` field, if present.
 1. When we execute a transaction with a `Ticket`:
-    1. If no `SubSequence` field exists in the account root, we create one and set it to 1.
-    1. If a `SubSequence` field exists in the account root, we increment it.
+   1. If no `SubSequence` field exists in the account root, we create one and set it to 1.
+   1. If a `SubSequence` field exists in the account root, we increment it.
 
 This will cause the metadata in the account root of the transaction to indicate whether the prior transaction was a ticketed one or not. And it doesn't (in general) tend to make the ledger larger since the `SubSequence` field is removed once we're done with it.
 
@@ -470,8 +474,8 @@ The `SubSequence` field would be sufficient to deal with the presence of `Ticket
 1. We'd add a new optional account root entry called `JumpSequence`, it would be 32-bit unsigned.
 1. When we execute any transaction other than `TicketCreate` then we remove the `JumpSequence` field if it is present.
 1. When we execute a `TicketCreate` transaction:
-    1. If no `JumpSequence` field exists in the account root, we create one and set it to the count.
-    1. If a `JumpSequence` field already exists in the account root, set it to the count.
+   1. If no `JumpSequence` field exists in the account root, we create one and set it to the count.
+   1. If a `JumpSequence` field already exists in the account root, set it to the count.
 
 We have seen no evidence that tools outside the XRP Ledger need this kind of information. So the additional fields are not being added.
 
@@ -494,6 +498,7 @@ The point of `Ticket`s is to allow execution of transactions out of order. That,
 ### Submit Order is not Canonical
 
 Prior to `Ticket`s all transactions on a single account had to be submitted to the ledger in canonical order. With `Ticket`s you can submit a transaction with `TicketSequence` 5 followed by `TicketSequence` 4. If they are submitted quickly enough they will probably both go into the same ledger. They will be applied to the ledger in canonical order (4 followed by 5). Suppose that `Ticket`s 4 and 5 are already in the ledger and the following transactions are submitted:
+
 ```
 Submit Order:
     AccountSet    signed with current  Regular Key and uses Ticket 5
@@ -503,6 +508,7 @@ Applied To Ledger (Canonical Order):
     SetRegularKey replaces             Regular Key and uses Ticket 4
     AccountSet    signed with replaced Regular Key and uses Ticket 5
 ```
+
 So the transactions work in submit order. The local rippled tries them in that order when the transactions are initially submitted to the network. Since the transactions both succeed in submit order, the transactions are forwarded to the full network.
 
 The validators apply the transactions in canonical order. In canonical order the `SetRegularKey` is applied to the ledger first. So the `AccountSet` transaction fails; it has the wrong signature. Since the signature is wrong we cannot charge the fee. So the entire network has processed a transaction that is guaranteed to fail and a fee is not charged.
@@ -524,10 +530,10 @@ This means a hostile or un-caring user with lots of XRP could create millions of
 
 Four different approaches to managing this possible ledger spam were explored:
 
-* We could change the `Ticket` storage format so multiple `Ticket`s occupy less space in the ledger.
-* We can reduce the number of `Ticket`s that a single `TicketCreate` transaction can produce.
-* We can make it more costly (increase the fee) for adding `Ticket`s.
-* We can limit the number of `Ticket`s an account is allowed to keep in-ledger.
+- We could change the `Ticket` storage format so multiple `Ticket`s occupy less space in the ledger.
+- We can reduce the number of `Ticket`s that a single `TicketCreate` transaction can produce.
+- We can make it more costly (increase the fee) for adding `Ticket`s.
+- We can limit the number of `Ticket`s an account is allowed to keep in-ledger.
 
 An extended discussion occurred. The conclusion was to choose limiting the number of `Ticket`s any individual account root can hold.
 
@@ -543,19 +549,19 @@ The only remaining question is the behavior when a `TicketCreate` would exceed t
 
 To briefly summarize the current proposal, we have the following new rules.
 
-* An account can create a new ledger artifact: a `Ticket`.
-* A `TicketSequence` can be used in place of a `Sequence` number in a transaction.
-* A transaction that uses a `TicketSequence` must also include the `Sequence` field, but that `Sequence` field must be set to zero.
-* Transactions that use `Ticket`s may be submitted to the network in any order; they are not order constrained like transactions with `Sequence` numbers.
-* A transaction that includes both a `TicketSequence` and a non-zero `Sequence` field is malformed.
-* A `TicketCreate` transaction can create up to 250 `Ticket`s in a single transaction.
-* The maximum number of `Ticket`s that a single account can keep in the ledger is 250.
-* Any `TicketCreate` transaction that would take a given account above the limit of 250 `Ticket`s fails with a `tecDIR_FULL`.
-* Only the account that created the `Ticket` can use the `Ticket` in a valid transaction.
-* Each `Ticket` on an account takes one standard reserve unit on that account.
-* A transaction that uses a `Ticket` is not forwarded to the network unless the `Ticket` is present in the local ledger.
-* When being applied to the ledger, transactions with `Ticket`s are sorted behind transactions with non-zero `Sequence` numbers.
-* When a transaction with a `TicketSequence` is applied to the ledger, with either a `tesSUCCESS` or a `tec` code, that `Ticket` is removed from the ledger.
+- An account can create a new ledger artifact: a `Ticket`.
+- A `TicketSequence` can be used in place of a `Sequence` number in a transaction.
+- A transaction that uses a `TicketSequence` must also include the `Sequence` field, but that `Sequence` field must be set to zero.
+- Transactions that use `Ticket`s may be submitted to the network in any order; they are not order constrained like transactions with `Sequence` numbers.
+- A transaction that includes both a `TicketSequence` and a non-zero `Sequence` field is malformed.
+- A `TicketCreate` transaction can create up to 250 `Ticket`s in a single transaction.
+- The maximum number of `Ticket`s that a single account can keep in the ledger is 250.
+- Any `TicketCreate` transaction that would take a given account above the limit of 250 `Ticket`s fails with a `tecDIR_FULL`.
+- Only the account that created the `Ticket` can use the `Ticket` in a valid transaction.
+- Each `Ticket` on an account takes one standard reserve unit on that account.
+- A transaction that uses a `Ticket` is not forwarded to the network unless the `Ticket` is present in the local ledger.
+- When being applied to the ledger, transactions with `Ticket`s are sorted behind transactions with non-zero `Sequence` numbers.
+- When a transaction with a `TicketSequence` is applied to the ledger, with either a `tesSUCCESS` or a `tec` code, that `Ticket` is removed from the ledger.
 
 ## FAQ
 
@@ -571,7 +577,7 @@ In addition to the fee for the transaction, each `Ticket` held by an account inc
 
 Q: **How many `Ticket`s can I create in a single transaction?**
 
-A: From 1 to 250. The compute time required for a `CreateTicket` transaction to add 250 `Ticket`s to the ledger is slightly less that the compute time required by a single complicated (3 path) payment.  So the compute time to create 250 `Ticket`s has a reasonable bound.
+A: From 1 to 250. The compute time required for a `CreateTicket` transaction to add 250 `Ticket`s to the ledger is slightly less that the compute time required by a single complicated (3 path) payment. So the compute time to create 250 `Ticket`s has a reasonable bound.
 
 Q: **How many `Ticket`s can I keep in my account?**
 
@@ -601,9 +607,9 @@ A: The [`account_objects`](https://ripple.com/build/rippled-apis/#account-object
 
 However if you have several transactions simultaneously getting signed outside of the ledger, then you must personally take steps to not use the same `Ticket` in two or more of those transactions. If you have responsibility for only one account then tracking is easy; just note the integer value of each `TicketSequence` you use. If you are responsible for several accounts, then you must keep separate lists for each of the accounts.
 
-If several transaction creators are sharing one account, then they need to create a policy for which user can use which `Tickets`.  Fixed schemes (e.g., Alice gets even `TicketSequence`s and Bob gets the odd ones) can get out of balance over time.  Consider what happens with this policy if Alice writes a lot more transactions than Bob for a prolonged period.
+If several transaction creators are sharing one account, then they need to create a policy for which user can use which `Tickets`. Fixed schemes (e.g., Alice gets even `TicketSequence`s and Bob gets the odd ones) can get out of balance over time. Consider what happens with this policy if Alice writes a lot more transactions than Bob for a prolonged period.
 
-A more sustainable approach for multiple transaction creators is that each party gets an initial set of assigned `Ticket`s.  From that point on each party creates `Ticket`s when they need them and uses only `Ticket`s they created.  A bit of stewardship is still required in this model.  For example, if Bob acquires 230 `Ticket`s, then Alice can create at most 20 `Ticket`s until Bob burns down his supply.  People still need to be considerate of their cosigners.
+A more sustainable approach for multiple transaction creators is that each party gets an initial set of assigned `Ticket`s. From that point on each party creates `Ticket`s when they need them and uses only `Ticket`s they created. A bit of stewardship is still required in this model. For example, if Bob acquires 230 `Ticket`s, then Alice can create at most 20 `Ticket`s until Bob burns down his supply. People still need to be considerate of their cosigners.
 
 ## Appendix A: Specification
 
@@ -613,14 +619,15 @@ A more sustainable approach for multiple transaction creators is that each party
 
 ##### Parameters
 
-Field     | Style    | Description
---------- | -------- | -----------------------------------------------
-`Account` | Required | The account that is adding one or more Tickets.
-`Count` | Required | The number of Tickets to add to the account.
-`Sequence` | Required | The Sequence number of the transaction or zero.
-`TicketSequence` | Optional | The `TicketSequence` number to consume for the transaction. The corresponding `Ticket` must already be in the ledger.
+| Field            | Style    | Description                                                                                                           |
+| ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `Account`        | Required | The account that is adding one or more Tickets.                                                                       |
+| `Count`          | Required | The number of Tickets to add to the account.                                                                          |
+| `Sequence`       | Required | The Sequence number of the transaction or zero.                                                                       |
+| `TicketSequence` | Optional | The `TicketSequence` number to consume for the transaction. The corresponding `Ticket` must already be in the ledger. |
 
 The following example is a `TicketCreate` transaction that creates 250 `Ticket`s and includes 4 multisigners.
+
 ```
 {
     "Account" : "rDg53Haik2475DJx8bjMDSDPj4VX7htaMd",
@@ -665,9 +672,9 @@ The following example is a `TicketCreate` transaction that creates 250 `Ticket`s
 
 ##### Restrictions / Validation
 
-* If the Account would end up with more than 250 `Ticket`s in ledger as a consequence of this `TicketCreate`, then the transaction fails with a `tecDIR_FULL`.
-* The Account must have sufficient funds to meet the reserve for all requested `Ticket`s. Otherwise `tecINSUFFICIENT_RESERVE` is returned.
-* Either all of the requested `Ticket`s are created or none of them are.
+- If the Account would end up with more than 250 `Ticket`s in ledger as a consequence of this `TicketCreate`, then the transaction fails with a `tecDIR_FULL`.
+- The Account must have sufficient funds to meet the reserve for all requested `Ticket`s. Otherwise `tecINSUFFICIENT_RESERVE` is returned.
+- Either all of the requested `Ticket`s are created or none of them are.
 
 ##### Who Can Issue
 
@@ -691,10 +698,10 @@ All transactions associated with an account (i.e., not pseudo-transactions) can 
 
 In order to submit a transaction that uses a `Ticket` instead of a `Sequence` you must make the following adjustments to the transaction.
 
-Field      | Description
----------- | ---------------------------------------------------------
-`Sequence` | The `Sequence` field must be present and must contain zero.
-`TicketSequence` | The `TicketSequence` field must be present and contain the `TicketSequence` value of a `Ticket` that is currently owned by the `Account`.
+| Field            | Description                                                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `Sequence`       | The `Sequence` field must be present and must contain zero.                                                                               |
+| `TicketSequence` | The `TicketSequence` field must be present and contain the `TicketSequence` value of a `Ticket` that is currently owned by the `Account`. |
 
 In order to allow `Ticket`s to be consumed by transactions, all transactions associated with an account allow an optional `TicketSequence` field.
 
@@ -704,15 +711,16 @@ In order to allow `Ticket`s to be consumed by transactions, all transactions ass
 
 A `Ticket` in the ledger has the following fields:
 
-Field       | Style    | Description
------------ | -------- | ---------------------------------------------
-`sfAccount` | Required | The ID of the account that owns the `Ticket`.
-`sfTicketSequence` | Required | The `TicketSequence`, an unsigned 32-bit integer.
-`sfOwnerNode` | Required | The page number for this `Ticket` in the `Ticket` owner's directory.
-`sfPreviousTxnID` | Required | Transaction threading support.
-`sfPreviousTxnLgrSeq` | Required | Transaction threading support.
+| Field                 | Style    | Description                                                          |
+| --------------------- | -------- | -------------------------------------------------------------------- |
+| `sfAccount`           | Required | The ID of the account that owns the `Ticket`.                        |
+| `sfTicketSequence`    | Required | The `TicketSequence`, an unsigned 32-bit integer.                    |
+| `sfOwnerNode`         | Required | The page number for this `Ticket` in the `Ticket` owner's directory. |
+| `sfPreviousTxnID`     | Required | Transaction threading support.                                       |
+| `sfPreviousTxnLgrSeq` | Required | Transaction threading support.                                       |
 
 #### `Ticket` Indexing Function
+
 ```
 /** A ticket */
 struct ticket_t
@@ -772,8 +780,8 @@ The `ledger_data` RPC command accepts an argument `"type"`. (That `"type"` argum
 
 The `ledger_entry` command is modified to return a `Ticket` object specified either as:
 
-* A string containing the `Ticket` index as hexadecimal, or as
-* A JSON object containing an `"owner"` and a `"ticket_sequence"` field.
+- A string containing the `Ticket` index as hexadecimal, or as
+- A JSON object containing an `"owner"` and a `"ticket_sequence"` field.
 
 Tests for `Ticket`s in `ledger_entry` are added.
 
