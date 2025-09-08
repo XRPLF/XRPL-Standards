@@ -1,7 +1,8 @@
 <pre>
     xls: 9
     title: Blinded Tags
-    author: Nik Bougalis (nbougalis)
+    author: Nik Bougalis (@nbougalis)
+    description: Introduces _tag blinding_, a blinded tag is mutated in such a way that it is meaningful only to the sender and the recipient of a transaction, but appears random to everyone else.
     created: 2020-03-31
     status: Stagnant
     category: Amendment
@@ -210,5 +211,6 @@ The tag specified in the **X-address** should be unblinded; applications (wallet
 
 
 No consideration is given at this time on how this scheme integrates with tickets.
+
 
 
