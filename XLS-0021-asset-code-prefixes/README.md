@@ -1,7 +1,8 @@
 <pre>
     xls: 21
     title: 21: Allocating Asset Code Prefixes
-    author: Rome Reginelli (mDuo13)
+    description: This proposal defines a mechanism for setting aside prefixes for specific formats and publishing a list of formats potentially in use.
+    author: Rome Reginelli (@mDuo13)
     created: 2021-07-28
     status: Stagnant
     category: Community
@@ -60,4 +61,5 @@ It seems that some XRPL users may already be using a de-facto standard of using 
 
 
 There's probably not much we can do for asset codes in the wild that use extended ASCII or UTF-8. A subsequent proposal could set aside a prefix for a more standardized and flexible format. (For example, you may want to set aside a few bytes for a currency symbol e.g. $, €, ¥, or 💩.)
+
 
