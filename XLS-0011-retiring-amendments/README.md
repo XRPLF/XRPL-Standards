@@ -1,11 +1,11 @@
 <pre>
-    xls: 11
-    title: Retiring Amendments
-    authors: Wietse Wind (@WietseWind),Scott Schurr <scott@ripple.com>,Rome Reginelli <rome@ripple.com>
-    description: This standard proposes an orderly process for retiring legacy XRP Ledger protocol behavior.
-    created: 2020-05-07
-    status: Final
-    category: Community
+  xls: 11
+  title: Retiring Amendments
+  authors: Wietse Wind (@WietseWind),Scott Schurr <scott@ripple.com>, Rome Reginelli <rome@ripple.com>
+  description: This standard proposes an orderly process for retiring legacy XRP Ledger protocol behavior.
+  created: 2020-05-07
+  status: Final
+  category: Community
 </pre>
 
 # Retiring Amendments
