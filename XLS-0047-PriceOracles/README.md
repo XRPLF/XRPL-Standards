@@ -8,12 +8,12 @@
   category: Amendment
   created: 2023-08-18
 </pre>
- 
- # Price Oracles on XRP Ledger
- 
- ## Abstract
 
- This proposal adds an on-chain `PriceOracle` object to the XRP Ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance  market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles on the XRP Ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
+# Price Oracles on XRP Ledger
+
+## Abstract
+
+This proposal adds an on-chain `PriceOracle` object to the XRP Ledger. A blockchain oracle is a system or service that acts as a bridge between a blockchain network and the external world, providing off-chain data or information to decentralized applications (dApps) on the blockchain. Oracles are used to bring real-world data, for instance market prices, exchange rates, interest rates, or weather conditions onto the blockchain, enabling dApps to access and utilize information that resides outside the blockchain. This document outlines a new protocol for price oracles on the XRP Ledger, and provides guidelines for developers and system architects to implement and utilize this solution effectively. This proposal introduces a new on-ledger `PriceOracle` object and the transactions to create, delete, and update the `PriceOracle`. It also adds the `get_aggregate_price` API, to retrieve an `aggregate mean`, `trimmed mean`, and `median` for the provided price oracles. This feature requires an amendment.
 
 ### Terminology
 
@@ -28,30 +28,29 @@
 
 The `PriceOracle` ledger entry represents the `PriceOracle` object on XRP Ledger and contains the following fields:
 
-|FieldName | Required? | JSON Type | Internal Type|
-|:---------|:-----------|:---------------|:---------------|
-| `LedgerEntryType`| :heavy_check_mark: | `string` | `UINT16` |
-| `Owner` | :heavy_check_mark: | `string` | `ACCOUNTID` |
-| `Provider` | :heavy_check_mark: | `string` | `BLOB` |
-| `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
-| `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
-| `URI` | | `string` | `BLOB` |
-| `AssetClass` | :heavy_check_mark: | `string` | `BLOB` |
-| `PreviousTxnID` | :heavy_check_mark: | `string` | `HASH256` |
-| `PreviousTxnLgrSeq`| :heavy_check_mark: | `number` | `UINT32` |
+| FieldName           | Required?          | JSON Type | Internal Type |
+| :------------------ | :----------------- | :-------- | :------------ |
+| `LedgerEntryType`   | :heavy_check_mark: | `string`  | `UINT16`      |
+| `Owner`             | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
+| `Provider`          | :heavy_check_mark: | `string`  | `BLOB`        |
+| `PriceDataSeries`   | :heavy_check_mark: | `array`   | `ARRAY`       |
+| `LastUpdateTime`    | :heavy_check_mark: | `number`  | `UINT32`      |
+| `URI`               |                    | `string`  | `BLOB`        |
+| `AssetClass`        | :heavy_check_mark: | `string`  | `BLOB`        |
+| `PreviousTxnID`     | :heavy_check_mark: | `string`  | `HASH256`     |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  | `UINT32`      |
 
 - `LedgerEntryType` identifies the type of ledger object. The proposal recommends the value 0x0080 as the reserved entry type.
 - `Owner` is the account that owns this object and has the update and delete privileges. It is recommended that this account has an associated [`signer list`](https://xrpl.org/set-up-multi-signing.html).
 - `Provider` identifies an Oracle Provider. It can be URI or any data, for instance `chainlink`. It is a string of up to 256 ASCII hex encoded characters (0x20-0x7E).
 - `PriceDataSeries` is an array of up to ten `PriceData` objects, where `PriceData` represents the price information for a token pair. Any `PriceOracle` with more than five `PriceData` objects requires two owner reserves. `PriceData` includes the following fields:
 
-  |FieldName | Required? | JSON Type | Internal Type|
-  |:---------|:-----------|:---------------|:---------------|
-  | `BaseAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-  | `QuoteAsset` | :heavy_check_mark: | `string` | `CURRENCY` |
-  | `AssetPrice` | | `number` | `UINT64` |
-  | `Scale` | | `number` | `UINT8` |
-
+  | FieldName    | Required?          | JSON Type | Internal Type |
+  | :----------- | :----------------- | :-------- | :------------ |
+  | `BaseAsset`  | :heavy_check_mark: | `string`  | `CURRENCY`    |
+  | `QuoteAsset` | :heavy_check_mark: | `string`  | `CURRENCY`    |
+  | `AssetPrice` |                    | `number`  | `UINT64`      |
+  | `Scale`      |                    | `number`  | `UINT8`       |
   - `BaseAsset` refers to the primary asset within a trading pair. It is the asset against which the price of the quote asset is quoted. The base asset is usually considered the 'primary' asset and forms the basis for trading. Any valid identifier, such as a stock symbol, bond CUSIP, or currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, BTC is the base asset; in 912810RR9/BTC, 912810RR9 is the base asset. A new type, `STI_CURRENCY`, is introduced to support the `CURRENCY` field (see Appendix for details).
   - `QuoteAsset` represents the secondary or quote asset in a trading pair. It denotes the price of one unit of the base asset. The quote asset's value is expressed in terms of the base asset. Any valid identifier such as a currency or a crypto-currency code, should be allowed and interpreted exactly like other asset identifiers in the ledger. For example, in the pair BTC/USD, USD is the quote asset; in 912810RR9/BTC, BTC is the quote asset. A new enum value STI_CURRENCY is introduced to support the `CURRENCY` field (see Appendix for details). The `BaseAsset` and `QuoteAsset` together form a trading pair, and their relationship determines the price at which one asset can be exchanged for another.
   - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor. This is an optional field. It is not included if the last update transaction didn't include the `BaseAsset`/`QuoteAsset` pair.
@@ -103,7 +102,7 @@ This proposal introduces several new transactions to allow for the creation, upd
 
 ### Transaction for creating or updating `PriceOracle` instance
 
-We define a new transaction **OracleSet** for creating or updating a `PriceOracle` instance.  Before the transaction can be submitted to create a new `PriceOracle` instance, the Oracle Provider has to do the following:
+We define a new transaction **OracleSet** for creating or updating a `PriceOracle` instance. Before the transaction can be submitted to create a new `PriceOracle` instance, the Oracle Provider has to do the following:
 
 - Create or own the `Owner` on the XRPL with sufficient XRP balance to meet the XRP reserve and the transaction fee requirements.
 - The Oracle Provider has to publish the `Owner` account public key so that it can be used for verification by dApp’s.
@@ -134,16 +133,16 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 
 #### Transaction fields for **OracleSet** transaction
 
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `TransactionType` | :heavy_check_mark: | `string`| UINT16 |
-| `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
-| `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
-| `Provider` | :grey_question: | `string` | `BLOB` |
-| `URI` | | `string` | `BLOB` |
-| `AssetClass` | :grey_question: | `string` | `BLOB` |
-| `LastUpdateTime` | :heavy_check_mark: | `number` | `UINT32` |
-| `PriceDataSeries` | :heavy_check_mark: | `array` | `ARRAY` |
+| FieldName          | Required?          | JSON Type | Internal Type |
+| :----------------- | :----------------- | :-------- | :------------ |
+| `TransactionType`  | :heavy_check_mark: | `string`  | UINT16        |
+| `Account`          | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
+| `OracleDocumentID` | :heavy_check_mark: | `string`  | `UINT32`      |
+| `Provider`         | :grey_question:    | `string`  | `BLOB`        |
+| `URI`              |                    | `string`  | `BLOB`        |
+| `AssetClass`       | :grey_question:    | `string`  | `BLOB`        |
+| `LastUpdateTime`   | :heavy_check_mark: | `number`  | `UINT32`      |
+| `PriceDataSeries`  | :heavy_check_mark: | `array`   | `ARRAY`       |
 
 - `TransactionType` Indicates a new transaction type `OracleSet`.
 - `Account` is the XRPL account that has update and delete privileges on the Oracle being set. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
@@ -203,11 +202,11 @@ We define a new transaction **OracleDelete** for deleting an Oracle instance.
 
 #### Transaction fields for **OracleDelete** transaction
 
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
-| `Account` | :heavy_check_mark: | `string` | `ACCOUNTID` |
-| `OracleDocumentID` | :heavy_check_mark: | `string` | `UINT32` |
+| FieldName          | Required?          | JSON Type | Internal Type |
+| :----------------- | :----------------- | :-------- | :------------ |
+| `TransactionType`  | :heavy_check_mark: | `string`  | `UINT16`      |
+| `Account`          | :heavy_check_mark: | `string`  | `ACCOUNTID`   |
+| `OracleDocumentID` | :heavy_check_mark: | `string`  | `UINT32`      |
 
 - `TransactionType` indicates a new transaction type `OracleDelete`.
 - `Account` is the account that has the Oracle update and delete privileges. This field corresponds to the `Owner` field on the `PriceOracle` ledger object.
@@ -344,15 +343,15 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 
 #### Input API fields
 
-|FieldName | Required? | JSON Type |
-|:---------|:-----------|:---------------|
-| `ledger_index` | | `string` or `number` (positive integer)|
-| `ledger_hash` | | `string` |
-| `base_asset` | :heavy_check_mark: | `string` |
-| `quote_asset` | :heavy_check_mark: | `string` |
-| `oracles` | :heavy_check_mark: | `array` |
-| `trim` | | `number` |
-| `time_threshold` | | `number` |
+| FieldName        | Required?          | JSON Type                               |
+| :--------------- | :----------------- | :-------------------------------------- |
+| `ledger_index`   |                    | `string` or `number` (positive integer) |
+| `ledger_hash`    |                    | `string`                                |
+| `base_asset`     | :heavy_check_mark: | `string`                                |
+| `quote_asset`    | :heavy_check_mark: | `string`                                |
+| `oracles`        | :heavy_check_mark: | `array`                                 |
+| `trim`           |                    | `number`                                |
+| `time_threshold` |                    | `number`                                |
 
 - `ledger_index` is the ledger index of the max ledger to use, or a shortcut string to choose a ledger automatically.
 - `ledger_hash` is a 20-byte hex string for the max ledger version to use.
@@ -360,13 +359,12 @@ An Oracle object can be retrieved with the `ledger_entry` API call by specifying
 - `quote_asset` is the denomination in which the prices are expressed.
 - `oracles` is an array of `oracle` objects to aggregate over. `oracle` object has two fields:
 
-  |FieldName | Required? | JSON Type |
-  |:---------|:-----------|:---------------|
-  | `account` | :heavy_check_mark: | `string` |
-  | `oracle_document_id` | :heavy_check_mark: | `number` |
-
-    - `account` is the Oracle's account.
-    - `oracle_document_id` is a unique identifier of the Price Oracle for the given Account.
+  | FieldName            | Required?          | JSON Type |
+  | :------------------- | :----------------- | :-------- |
+  | `account`            | :heavy_check_mark: | `string`  |
+  | `oracle_document_id` | :heavy_check_mark: | `number`  |
+  - `account` is the Oracle's account.
+  - `oracle_document_id` is a unique identifier of the Price Oracle for the given Account.
 
 - `trim` is the percentage of outliers to trim. Valid trim range is 1-25. If this parameter is included then the API returns statistics for the trimmed data.
 - `time_threshold` is used to define a time range in seconds for filtering out older price data. It's an optional parameter and is 0 by default; i.e. there is no filtering in this case.

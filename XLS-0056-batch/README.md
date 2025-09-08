@@ -20,12 +20,13 @@ This document proposes a design to allow multiple transactions to be packaged to
 This eliminates the risk of partial completion and unexpected outcomes, fostering a more reliable and predictable user experience for complex operations. By introducing these batch transactions, developers gain the ability to design innovative features and applications that were previously hindered by the lack of native smart contracts for conditional workflows. This empowers them to harness the full potential of the XRP Ledger's built-in features while ensuring robust execution of complex processes.
 
 Some use-cases that may be enabled by batch transactions include (but are certainly not limited to):
-* All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
-* Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
-* Platform fees: Package platform fees within the transaction itself, simplifying the process.
-* Trustless swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
-* Flash loans: Borrowing funds, using them, and returning them all in the same transaction.
-* Withdrawing accounts (multi-account): Attempt a withdrawal from your checking account, and if that fails, withdraw from your savings account instead.
+
+- All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
+- Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
+- Platform fees: Package platform fees within the transaction itself, simplifying the process.
+- Trustless swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
+- Flash loans: Borrowing funds, using them, and returning them all in the same transaction.
+- Withdrawing accounts (multi-account): Attempt a withdrawal from your checking account, and if that fails, withdraw from your savings account instead.
 
 ## 1. Overview
 
@@ -35,44 +36,49 @@ The rough idea of this design is that users can include "sub-transactions" insid
 
 ### 1.1. Terminology
 
-* **Inner transaction**: the sub-transactions included in the `Batch` transaction, that are executed atomically.
-* **Outer transaction**: the wrapper `Batch` transaction itself.
-* **Batch mode** or **mode**: the "mode" of batch processing that the transaction uses. See section 2.2 for more details.
+- **Inner transaction**: the sub-transactions included in the `Batch` transaction, that are executed atomically.
+- **Outer transaction**: the wrapper `Batch` transaction itself.
+- **Batch mode** or **mode**: the "mode" of batch processing that the transaction uses. See section 2.2 for more details.
 
 ## 2. Transaction: `Batch`
 
 ### 2.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`Flags`|✔️|`number`|`UInt32`|A bit-map of boolean flags enabled for this transaction. These flags represent the batch mode of the transaction.|
-|`RawTransactions`|✔️|`array`|`STArray`|The list of inner transactions that will be applied.|
-|`BatchSigners`| |`array`|`STArray`|An array of objects that represent signatures for a multi-account Batch transaction, signifying authorization of this transaction.|
+| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                        |
+| ----------------- | --------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Flags`           | ✔️        | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. These flags represent the batch mode of the transaction.                  |
+| `RawTransactions` | ✔️        | `array`   | `STArray`     | The list of inner transactions that will be applied.                                                                               |
+| `BatchSigners`    |           | `array`   | `STArray`     | An array of objects that represent signatures for a multi-account Batch transaction, signifying authorization of this transaction. |
 
 #### 2.1.1. `Flags`
 
 The `Flags` field represents the **batch mode** of the transaction. Exactly one must be specified in a `Batch` transaction.
 
-This spec supports four modes: 
-* `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00010000`)
-* `ONLYONE` or `tfOnlyOne` (with a value of `0x00020000`)
-* `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00040000`)
-* `INDEPENDENT` or `tfIndependent` (with a value of `0x00080000`)
+This spec supports four modes:
+
+- `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00010000`)
+- `ONLYONE` or `tfOnlyOne` (with a value of `0x00020000`)
+- `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00040000`)
+- `INDEPENDENT` or `tfIndependent` (with a value of `0x00080000`)
 
 A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
 ##### 2.1.1.1. `ALLORNOTHING`
+
 All or nothing. All transactions must succeed for any of them to succeed.
 
 ##### 2.1.1.2. `ONLYONE`
+
 The first transaction to succeed will be the only one to succeed; all other transactions either failed or were never tried.
 
 While this can sort of be done by submitting multiple transactions with the same sequence number, there is no guarantee that the transactions are processed in the same order they are sent.
 
 ##### 2.1.1.3. `UNTILFAILURE`
+
 All transactions will be applied until the first failure, and all transactions after the first failure will not be applied.
 
 ##### 2.1.1.4. `INDEPENDENT`
+
 All transactions will be applied, regardless of failure.
 
 #### 2.1.2. `RawTransactions`
@@ -80,9 +86,10 @@ All transactions will be applied, regardless of failure.
 `RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. These transactions can come from one account or multiple accounts.
 
 Each inner transaction:
-* **Must** contain the `tfInnerBatchTxn` flag (see section 3 for details).
-* **Must not** have a fee. It must use a fee value of `"0"`.
-* **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` field, and the `TxnSignature` field must be omitted.
+
+- **Must** contain the `tfInnerBatchTxn` flag (see section 3 for details).
+- **Must not** have a fee. It must use a fee value of `"0"`.
+- **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` field, and the `TxnSignature` field must be omitted.
 
 _Note: the 8 transaction limit can be relaxed in the future._
 
@@ -94,12 +101,12 @@ This field must be provided if more than one account has inner transactions incl
 
 Each object in this array contains the following fields:
 
-|FieldName | Required? | JSON Type | Internal Type |
-|:---------|:-----------|:---------------|:------------|
-|`Account`|✔️|`string`|`STAccount`|
-|`SigningPubKey`| |`string`|`STBlob`|
-|`TxnSignature`| |`string`|`STBlob`|
-|`Signers`| |`array`|`STArray`|
+| FieldName       | Required? | JSON Type | Internal Type |
+| :-------------- | :-------- | :-------- | :------------ |
+| `Account`       | ✔️        | `string`  | `STAccount`   |
+| `SigningPubKey` |           | `string`  | `STBlob`      |
+| `TxnSignature`  |           | `string`  | `STBlob`      |
+| `Signers`       |           | `array`   | `STArray`     |
 
 Either the `SigningPubKey` and `TxnSignature` fields must be included, or the `Signers` field.
 
@@ -131,6 +138,7 @@ The fees for the individual inner transactions are paid here instead of in the i
 The inner transactions will be committed separately to the ledger and will therefore have separate metadata. This is to ensure better backwards compatibility for legacy systems, so they can support `Batch` transactions without needing any changes to their systems.
 
 For example, a ledger that only has one `Batch` transaction containing 2 inner transactions would look like this:
+
 ```
 [
   OuterTransaction,
@@ -153,9 +161,9 @@ There will also be a pointer back to the parent outer transaction (`ParentBatchI
 
 This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
 
-| Flag Name | Value |
-|-----------|-------|
-|`tfInnerBatchTxn`|`0x40000000`|
+| Flag Name         | Value        |
+| ----------------- | ------------ |
+| `tfInnerBatchTxn` | `0x40000000` |
 
 This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
 
@@ -166,12 +174,14 @@ This flag should only be used if a transaction is an inner transaction in a `Bat
 Regardless of how many accounts' transactions are included in a `Batch` transaction, all accounts need to sign the collection of transactions.
 
 #### 4.1.1. Single Account
+
 In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
 
 #### 4.1.2. Multi Account
+
 The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless swap via a multi-account `Batch`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Batch` transaction, so Alice must provide her part of the swap to him.
 
-If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned. 
+If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned.
 
 If Alice just signs her part of the `Batch` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Batch` transaction (and all its inner transactions) must be signed by all parties.
 
@@ -180,8 +190,9 @@ If Alice just signs her part of the `Batch` transaction, Bob could modify his tr
 An inner batch transaction is a very special case. It doesn't include a signature or a fee (since those are both included in the outer transaction). Therefore, they must be handled very carefully to ensure that someone can't somehow directly submit an inner `Batch` transaction without it being included in an outer transaction.
 
 Namely:
-* Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
-* Inner transactions may not be directly submitted via the `submit` RPC.
+
+- Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
+- Inner transactions may not be directly submitted via the `submit` RPC.
 
 ## 5. Examples
 
@@ -195,6 +206,7 @@ In this example, the user is creating an offer while trading on a DEX UI, and th
 <summary>
 
 The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one account involved.
+
 </summary>
 
 ```typescript
@@ -238,6 +250,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
   TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
 }
 ```
+
 </details>
 
 #### 5.1.2. Sample Ledger
@@ -247,6 +260,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
 This example shows what the ledger will look like after the transaction is confirmed.
 
 Note that the inner transactions are committed as normal transactions.
+
 </summary>
 
 ```typescript
@@ -265,12 +279,12 @@ Note that the inner transactions are committed as normal transactions.
           TakerPays: {
             currency: "GKO",
             issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
-            value: "2"
+            value: "2",
           },
           Sequence: 4,
           Fee: "0",
-          SigningPubKey: ""
-        }
+          SigningPubKey: "",
+        },
       },
       {
         RawTransaction: {
@@ -281,14 +295,16 @@ Note that the inner transactions are committed as normal transactions.
           Amount: "1000",
           Sequence: 5,
           Fee: "0",
-          SigningPubKey: ""
-        }
-      }
+          SigningPubKey: "",
+        },
+      },
     ],
     Sequence: 3,
     Fee: "40",
-    SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
-    TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
+    SigningPubKey:
+      "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
+    TxnSignature:
+      "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8",
   },
   {
     TransactionType: "OfferCreate",
@@ -298,11 +314,11 @@ Note that the inner transactions are committed as normal transactions.
     TakerPays: {
       currency: "GKO",
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
-      value: "2"
+      value: "2",
     },
     Sequence: 4,
     Fee: "0",
-    SigningPubKey: ""
+    SigningPubKey: "",
   },
   {
     TransactionType: "Payment",
@@ -312,10 +328,11 @@ Note that the inner transactions are committed as normal transactions.
     Amount: "1000",
     Sequence: 5,
     Fee: "0",
-    SigningPubKey: ""
-  }
-]
+    SigningPubKey: "",
+  },
+];
 ```
+
 </details>
 
 ### 5.2. Multiple Accounts
@@ -328,6 +345,7 @@ In this example, two users are atomically swapping their tokens, XRP for GKO.
 <summary>
 
 The inner transactions are still not signed, but the `BatchSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Batch` transaction.
+
 </summary>
 
 ```typescript
@@ -380,6 +398,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
   TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
 }
 ```
+
 </details>
 
 #### 5.2.2. Sample Ledger
@@ -389,6 +408,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
 This example shows what the ledger will look like after the transaction is confirmed.
 
 Note that the inner transactions are committed as normal transactions.
+
 </summary>
 
 ```typescript
@@ -407,8 +427,8 @@ Note that the inner transactions are committed as normal transactions.
           Amount: "6000000",
           Sequence: 5,
           Fee: "0",
-          SigningPubKey: ""
-        }
+          SigningPubKey: "",
+        },
       },
       {
         RawTransaction: {
@@ -419,27 +439,31 @@ Note that the inner transactions are committed as normal transactions.
           Amount: {
             currency: "GKO",
             issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
-            value: "2"
+            value: "2",
           },
           Sequence: 20,
           Fee: "0",
-          SigningPubKey: ""
-        }
-      }
+          SigningPubKey: "",
+        },
+      },
     ],
     BatchSigners: [
       {
         BatchSigner: {
           Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
-          SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
-          TxnSignature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
-        }
+          SigningPubKey:
+            "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
+          TxnSignature:
+            "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899",
+        },
       },
     ],
     Sequence: 4,
     Fee: "60",
-    SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
-    TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
+    SigningPubKey:
+      "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
+    TxnSignature:
+      "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8",
   },
   {
     TransactionType: "Payment",
@@ -449,7 +473,7 @@ Note that the inner transactions are committed as normal transactions.
     Amount: "6000000",
     Sequence: 5,
     Fee: "0",
-    SigningPubKey: ""
+    SigningPubKey: "",
   },
   {
     TransactionType: "Payment",
@@ -459,14 +483,15 @@ Note that the inner transactions are committed as normal transactions.
     Amount: {
       currency: "GKO",
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
-      value: "2"
+      value: "2",
     },
     Sequence: 20,
     Fee: "0",
-    SigningPubKey: ""
-  }
-]
+    SigningPubKey: "",
+  },
+];
 ```
+
 </details>
 
 # Appendix
@@ -484,9 +509,10 @@ Yes, just as they would if they were individually submitted.
 ### A.3: Would this feature enable greater frontrunning abilities?
 
 That is definitely a concern. Ways to mitigate this are still being investigated. Some potential answers:
-* Charge for more extensive path usage
-* Have higher fees for `Batch` transactions
-* Submit the `Batch` transactions at the end of the ledger
+
+- Charge for more extensive path usage
+- Have higher fees for `Batch` transactions
+- Submit the `Batch` transactions at the end of the ledger
 
 ### A.4: What error is returned if the inner transactions fail (e.g. in `tfALLORNOTHING` or `tfONLYONE`)?
 
@@ -520,7 +546,7 @@ No, `OnBehalfOf` will not be allowed on `Batch` transactions. Instead, the inner
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.11: Why do the inner transactions need to include sequence numbers? 
+### A.11: Why do the inner transactions need to include sequence numbers?
 
 The primary use of sequence numbers is to prevent hash collisions - two otherwise-identical transactions must have different sequence numbers (or different `TicketSequence` values).
 
