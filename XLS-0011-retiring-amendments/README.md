@@ -62,20 +62,19 @@ The process of fully "retiring" an amendment makes an amendment a permanent part
 
 1. Set a cutoff date, to retire all (not-yet-retired) amendments that were enabled before that date.
 
-    We call the set of amendments that are to be retired in this way the "retiring amendments."
+   We call the set of amendments that are to be retired in this way the "retiring amendments."
 
 2. "Unconditionalize" the amendments in the XRP Ledger server code.
 
-    After doing this, the server follows the amended transaction logic for all transactions regardless of the amendments' status as of any given ledger. As a result, the server is no longer guaranteed to produce historically-accurate results when trying to replay ledgers older than the cutoff date. The `rippled` server implementation issues a warning message to the log when trying to replay a ledger outside of its supported range.
+   After doing this, the server follows the amended transaction logic for all transactions regardless of the amendments' status as of any given ledger. As a result, the server is no longer guaranteed to produce historically-accurate results when trying to replay ledgers older than the cutoff date. The `rippled` server implementation issues a warning message to the log when trying to replay a ledger outside of its supported range.
 
 3. Use a "roll-up" amendment to remove the amendments from the "enabled amendments" data structures.
 
-    When this amendment becomes enabled through the usual process involving a consensus of validators, the XRP Ledger network removes the retiring amendments from the data structures of enabled amendments in the ledger. The roll-up amendment has no other effect.
+   When this amendment becomes enabled through the usual process involving a consensus of validators, the XRP Ledger network removes the retiring amendments from the data structures of enabled amendments in the ledger. The roll-up amendment has no other effect.
 
-    Each server must know which amendments are retiring and MUST NOT propose those amendments again for approval in the consensus process after they have been retired. At this time or later, the server can remove the list of retiring amendments from its internal data structures and API methods. A server should do this only _after_ the amendments have been removed from the ledger, so that the server doesn't become [amendment blocked](https://xrpl.org/amendments.html#amendment-blocked).
+   Each server must know which amendments are retiring and MUST NOT propose those amendments again for approval in the consensus process after they have been retired. At this time or later, the server can remove the list of retiring amendments from its internal data structures and API methods. A server should do this only _after_ the amendments have been removed from the ledger, so that the server doesn't become [amendment blocked](https://xrpl.org/amendments.html#amendment-blocked).
 
 After this process has completed, the retiring amendments are no longer listed as available in the latest version of the XRP Ledger reference implementation, nor in the on-ledger data structures. The XRP Ledger protocol can continue to carry on, including all the changes that were originally introduced by those amendments, without needing to keep a list of all of them.
-
 
 ## Current Plans
 
@@ -88,7 +87,7 @@ Ripple proposes January 1, 2018 as the cutoff date for the first batch of uncond
 The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 
 | Amendment Name    | Date Enabled |
-|:------------------|:-------------|
+| :---------------- | :----------- |
 | MultiSign         | 2016-06-27   |
 | TrustSetAuth      | 2016-07-19   |
 | Flow              | 2016-10-21   |
@@ -106,7 +105,3 @@ The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 | fix1201           | 2017-11-14   |
 
 > **Note:** As mentioned above, the **FeeEscalation** amendment (enabled 2016-05-19), which did not directly affect transaction processing and ledger replay, has been unconditionalized since v1.2.0.
-
-
-
-
