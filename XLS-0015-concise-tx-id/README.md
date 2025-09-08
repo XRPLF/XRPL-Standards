@@ -1,11 +1,12 @@
 <pre>
-    xls: 15
-    title: Concise Transaction Identifier
-    description: Introduces concise transaction identifier
-    author: RichardAH (@RichardAH)
-    created: 2021-03-09
-    status: Withdrawn
-    category: Protocol
+  xls: 15
+  title: Concise Transaction Identifier
+  description: Introduces concise transaction identifier
+  author: RichardAH (@RichardAH)
+  created: 2021-03-09
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/34
+  status: Withdrawn
+  category: Protocol
 </pre>
 
 ## Change Log
