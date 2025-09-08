@@ -208,7 +208,7 @@ The `MPToken` ledger object is updated as follows:
 
 | Field Name      | JSON Type        | Internal Type | Description                                                                                                                                                  |
 |-----------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sfLockedAmount`        | Number | UInt64        | *(Optional)* The total of all outstanding escrows for this issuance.                                |
+| `sfLockedAmount`        | String | UInt64        | *(Optional)* The total of all outstanding escrows for this issuance.                                |
 
 ### 1.5.3 `MPTokenIssuance` Ledger Object
 
@@ -216,7 +216,7 @@ The `MPTokenIssuance` ledger object is updated as follows:
 
 | Field Name      | JSON Type        | Internal Type | Description                                                                                                                                                  |
 |-----------------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sfLockedAmount`        | Number | UInt64        | *(Optional)* The total of all outstanding escrows for this issuance.                                 |
+| `sfLockedAmount`        | String | UInt64        | *(Optional)* The total of all outstanding escrows for this issuance.                                 |
 
 ### 1.5.4 `AccountRoot` Ledger Object
 
