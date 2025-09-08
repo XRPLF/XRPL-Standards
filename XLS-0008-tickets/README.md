@@ -1,18 +1,12 @@
 <pre>
   xls: 8
-  title: Tickets: Supporting out-of-sequence transactions on the XRP Ledger
-  author: Nik Bougalis (@nbougalis)
-  created: 2020-03-28
+  title: Tickets
+  description: Supporting out-of-sequence transactions on the XRP Ledger
+  author: Scott Schurr <scott@ripple.com>, Nik Bougalis (@nbougalis)
+  created: 2020-03-01
   status: Withdrawn
   category: Amendment
 </pre>
-<pre>
-  XRP Ledger Proposed Standard #8
-
-  Title:        Tickets
-  Author:       Scott Schurr &lt;scott@ripple.com&gt;
-  Affiliation:  Ripple
-  Created:      2020-03-01
 </pre>
 
 # Tickets
