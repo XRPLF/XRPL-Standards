@@ -1,20 +1,18 @@
----
-title: <The title is a few words, not a complete sentence>
-type: draft
-description: <Description is one full (short) sentence>
-author: <a comma separated list of the author(s)>
-# The format of each author should be one of the following:
-# - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
-# - Author's name, author's affiliation + email (in angle brackets)
-#
-# Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
-requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
-core_protocol_changes_required: <true/false> # Indicates whether the proposal requires any changes to the core protocol.
----
+<pre>
+  xls: <XLS number>
+  title: <The title is a few words, not a complete sentence>
+  description: <Description is one full (short) sentence>
+  author: <a comma separated list of the author(s) with email addresses>
+  discussion-from: [link to XRPL-Standards discussion with the same XLS number]
+  status: Discussion
+  category: Meta
+  requires: [optional, based on if it depends on other features]
+  created: YYYY-MM-DD
+</pre>
 
 <!--
   This is the suggested template for new XLS specifications. After you have filled in the requisite fields, please delete these comments.
-  
+
   The requirements to sections depend on the type of proposal. For example, amendments require some information that may not be relevant for other kinds of proposals. Please adapt the template as appropriate.
 
   The title should be 44 characters or less.
@@ -157,4 +155,3 @@ Invariants are fundamental rules governing a feature's behavior that must always
 -->
 
 Needs discussion.
-

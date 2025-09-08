@@ -1,0 +1,47 @@
+name: Validate XLS Documents
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-xls:
+    runs-on: ubuntu-latest
+    name: Validate XLS Document Parsing
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/site/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r site/requirements.txt
+
+      - name: Validate XLS document parsing
+        run: |
+          echo "Running XLS document validation..."
+          python site/xls_parser.py
+
+      - name: Report validation results
+        if: always()
+        run: |
+          echo "XLS validation completed"
+          echo "This pipeline validates that all XLS documents can be parsed correctly"
+          echo "If this fails, it indicates issues with XLS document formatting or metadata"

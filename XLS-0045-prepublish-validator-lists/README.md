@@ -1,10 +1,13 @@
 <pre>
-title: <b>Prepublish Validator Lists</b>
-type: released in rippled 1.7.0
-description: Future activation date and improved expiration handling of UNLs
-author: <a href="mailto:ed@ripple.com">Ed Hennis (Ripple)</a>
+  xls: 45
+  title: Prepublish Validator Lists
+  description: Future activation date and improved expiration handling of UNLs
+  author: Ed Hennis <ed@ripple.com>
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/pull/124
+  status: Final
+  category: Protocol
+  created: 2020-06-17
 </pre>
-
 
 ## Abstract
 
@@ -47,7 +50,6 @@ mitigate this issue by getting the UNL propagated faster, but it's still
 not synchronous, and could still cause problems if the network topology
 is "unfriendly". It also requires publishers to time the release of
 new UNLs carefully so the old one doesn't expire first.
-
 
 ## Specification
 
@@ -92,24 +94,24 @@ The following is an example of how you can document new object types and fields:
 ### Overview of changes
 
 1. Add functionality to the UNL to include a future effective date. Change
-the published file format to allow multiple UNLs to be returned.
-(Limit number of future UNLs to mitigate some potential attacks.) All
-nodes will start using the new UNL after the first validated ledger with
-an earlier close time (falling back to the wall clock if necessary, such
-as when the node is not synced).
+   the published file format to allow multiple UNLs to be returned.
+   (Limit number of future UNLs to mitigate some potential attacks.) All
+   nodes will start using the new UNL after the first validated ledger with
+   an earlier close time (falling back to the wall clock if necessary, such
+   as when the node is not synced).
 2. Add enforcement of the expiration date by changing rippled's behavior
-to something similar to being amendment blocked (reuse that code as much
-as possible).
+   to something similar to being amendment blocked (reuse that code as much
+   as possible).
 
 ### Data format
 
 #### Glossary
 
-Term or acronym | Definition
-----------------|------------
-VL  | **V**alidator **L**ist. Also known as the "UNL", this is the list of validators that a server trusts not to collude.
-UNL | **U**nique **N**ode **L**ist. Also known as the "VL", this is the list of validators that a server trusts not to collude.
-UNL file (or VL file) | A file containing a publisher's manifest, public key, etc., and one or more UNLs.
+| Term or acronym       | Definition                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| VL                    | **V**alidator **L**ist. Also known as the "UNL", this is the list of validators that a server trusts not to collude.      |
+| UNL                   | **U**nique **N**ode **L**ist. Also known as the "VL", this is the list of validators that a server trusts not to collude. |
+| UNL file (or VL file) | A file containing a publisher's manifest, public key, etc., and one or more UNLs.                                         |
 
 #### Current format
 
@@ -161,12 +163,14 @@ could lead to integer overflows.
 #### Future format
 
 The `blob` v2 format adds a single field to the v1 format:
+
 ```
 "effective" : Unsigned integer representing the ripple time point when the
   list will become valid
 ```
 
 So the full `blob` v2 format will be:
+
 ```
 {
   "sequence" : Unsigned integer sequence of this VL. The sequence number
@@ -189,6 +193,7 @@ So the full `blob` v2 format will be:
 
 Using this `blob` v2 format, the VL v2 file format will remove `blob`
 and `signature` and add:
+
 ```
 "blobs-v2" : [
   {
@@ -202,7 +207,9 @@ and `signature` and add:
   ...Optionally repeats...
 ]
 ```
+
 So the full VL v2 format will be:
+
 ```
 {
   "public_key" : string representing the publisher's hex-encoded master
@@ -241,17 +248,19 @@ problem. I'm not sure this behavior is correct. Consider treating a
 `stale` manifest as an `untrusted` list.)
 
 Pros of the new format:
-* By signing each `blob` separately, the VL file can be modified to
+
+- By signing each `blob` separately, the VL file can be modified to
   move the `blob`s around in the `blobs-v2` array as older `blob`s expire
   and new `blob`s are added without requiring any extra signing.
-* The objects in the `blobs-v2` array don't necessarily need to be in
+- The objects in the `blobs-v2` array don't necessarily need to be in
   order, but it will simplify maintenance if they are.
-* Old `blob`s can be left in the `blobs-v2` array without causing any harm, as
+- Old `blob`s can be left in the `blobs-v2` array without causing any harm, as
   long as a more recent blob has already been added. In other words, old data
   can be cleaned up when it's convenient.
 
 Cons:
-* Each `blob` will need to be signed separately, even if they are all built at
+
+- Each `blob` will need to be signed separately, even if they are all built at
   once.
 
 ##### Migration strategy
@@ -270,14 +279,16 @@ In terms of the code, if the file version is 1, then rippled will follow
 the v1 rules, and if it's 2, rippled will follow the v2 rules.
 
 Pros:
-* Keeps rippled code simple
-* If a publisher chooses to publish a v2 UNL file while there are still
+
+- Keeps rippled code simple
+- If a publisher chooses to publish a v2 UNL file while there are still
   nodes on the network that won't understand it, newer peers will
   [communicate](#protocol-changes-for-v2-unl-broadcasts) the "current"
   UNL to older peers, if they're connected sufficiently.
 
 Cons:
-* Adoption will probably be delayed until some other "limiting event" or
+
+- Adoption will probably be delayed until some other "limiting event" or
   synchronization point happens which forces all nodes to upgrade. This
   will most likely be when an amendment is enabled that no v1-only nodes
   support.
@@ -285,15 +296,16 @@ Cons:
 See the [appendix](#appendix) for descriptions of some other migration
 strategies that were considered and rejected.
 
--------------------------------------------- ---------
+---
+
 :bangbang: Support for XLS-45 has been fully deployed across all XRPL Mainnet
 nodes.
 
 This is because, after the "UNLv2" implementation was included in a release,
 amendments from that release (or later) have been enabled. For details, see
 [Amendment Blocked Servers](https://xrpl.org/docs/concepts/networks-and-servers/amendments/#amendment-blocked-servers).
--------------------------------------------- ---------
 
+---
 
 ### Rippled changes
 
@@ -333,6 +345,7 @@ will be built using the stored current and future VLs.
 
 The `ValidatorList` currently defines a member to hold the published VLs
 and look them up by the public key of the publisher:
+
 ```C++
 // Published lists stored by publisher master public key
 hash_map<PublicKey, PublisherList> publisherLists_;
@@ -351,6 +364,7 @@ Then, the `publisherLists_` member will be modified to hold a collection of
 
 Without going into too much implementation detail, define a new
 structure to hold the VLs, and use it for the `publisherLists_`:
+
 ```C++
 struct PublisherListCollection
 {
@@ -363,13 +377,14 @@ hash_map<PublicKey, PublisherListCollection> publisherLists_;
 ```
 
 The `current` VL will be defined as the one which
+
 1. Has the largest sequence number that
 2. Has ever been effective (the `effective` date is absent or in the past).
-   * If this VL has expired, all VLs with previous sequence numbers will
-      also be considered expired, and thus there will be no valid VL until
-      one with a larger sequence number becomes effective. This is to prevent
-      erroneous or intentional "funny business" allowing old VLs to reactivate.
-   * This maps to the current expiration behavior.
+   - If this VL has expired, all VLs with previous sequence numbers will
+     also be considered expired, and thus there will be no valid VL until
+     one with a larger sequence number becomes effective. This is to prevent
+     erroneous or intentional "funny business" allowing old VLs to reactivate.
+   - This maps to the current expiration behavior.
 
 The `remaining` list will hold any relevant VLs which have a larger sequence
 number than `current`. By definition they will all have an `effective`
@@ -465,9 +480,9 @@ don't, and will be cached in memory until rippled restarts. This will be
 important to test. However, it is important to document that best
 practice when incrementing the Manifest sequence number is to resign all
 valid `blob`s, publish them with their new signatures, and never
-populate the `manifest` field in `BlobInfo`. *(Is this worth supporting
+populate the `manifest` field in `BlobInfo`. _(Is this worth supporting
 right out of the gate? Is the benefit of not needing to resign blobs in
-this rare situation worth the extra complexity and data field?)*
+this rare situation worth the extra complexity and data field?)_
 
 The processor can safely ignore any older VLs, including any that are
 expired, or which have a lower sequence number than the `current`.
@@ -499,7 +514,7 @@ the current maximum version.
 
 We could reuse the `TMValidatorList` message for sending VL collections,
 but that will waste a lot of bandwidth because of duplicated data, such
-as the `manifest`.  Instead, create two new message types that will
+as the `manifest`. Instead, create two new message types that will
 mimic the v2 file format:
 
 ```C++
@@ -518,7 +533,7 @@ message TMValidatorListCollection
 ```
 
 Peers that do not support the incremented protocol version will be sent
-a single `TMValidatorList` containing the `current` VL.  Those that do
+a single `TMValidatorList` containing the `current` VL. Those that do
 will be sent one or more `TMValidatorListCollection`s.
 
 The `TMValidatorListCollection` will be built from the
@@ -530,7 +545,7 @@ continue to only send VLs the peer has not seen. For optimization, this may
 require grouping peers by most recent sequence before building the message(s).
 
 Before sending, check the message size, splitting it into multiple
-messages if necessary. Use `Message.getBuffer().size()`.  If the size is
+messages if necessary. Use `Message.getBuffer().size()`. If the size is
 larger than the message size limit (64Mb), split the array of
 `TMValidatorListV2`s in half until it's small enough. If it gets down to
 a single `BlobInfo`, send a `TMValidatorList`. If that is still larger
@@ -547,8 +562,9 @@ of the message and pass that to the updated
 #### Expiration and automatic rotation
 
 There are two functions where the VL `expiration` is currently checked:
-* `ValidatorList::expires`
-* `ValidatorList::updateTrusted`
+
+- `ValidatorList::expires`
+- `ValidatorList::updateTrusted`
 
 ##### `ValidatorList::expires`
 
@@ -569,10 +585,10 @@ and a `const&` to the `NetworkOPsImp` calling object.
 For all time comparisons, if the wall clock time is more than 30 seconds
 ahead of the `closeTime`, it will be used instead.
 
-* While iterating over the publisher lists, if the first entry in `remaining`
+- While iterating over the publisher lists, if the first entry in `remaining`
   has an `effective` date before the `closeTime`, then it will be moved to
   `current`, and removed from `remaining`.
-* Additionally, the `expiration` will be compared to the `closeTime`. If
+- Additionally, the `expiration` will be compared to the `closeTime`. If
   the `current` VL has expired and no replacement has been pulled out of
   `remaining`, then in addition to calling `removePublisherList`, call
   [`NetworkOPs::setUNLBlocked`](#stopping-and-resuming-operations-on-expiration).
@@ -580,11 +596,11 @@ ahead of the `closeTime`, it will be used instead.
   `ValidatorList::verify`, but that removes the publisher entirely. As
   currently implemented, if there is another publisher configured, the
   node will not get stuck. Is this behavior correct?)
-  * If at the end of `updateTrusted`, `unlSize` is 0, (or `quorum` is set
+  - If at the end of `updateTrusted`, `unlSize` is 0, (or `quorum` is set
     to max), also call `NetworkOPs::setUNLBlocked`. This
     addresses the scenario where all the publisher manifests are
     revoked.
-* Finally, any updated `current` VLs will be broadcast to older peers (those
+- Finally, any updated `current` VLs will be broadcast to older peers (those
   that don't support the updated protocol version) so that they can get on
   the new VL as soon as possible.
 
@@ -593,8 +609,8 @@ ahead of the `closeTime`, it will be used instead.
 Define a new `std::atomic<bool> unlBlocked_{false};` in
 `NetworkOPsImp`. The set and clear functions will set and clear the flag
 respectively. The set function will also set the operating mode to
-`TRACKING`.  Also define an `isUNLBlocked` that returns the
-value of the new flag.  This parallels the `setAmendmentBlocked`
+`TRACKING`. Also define an `isUNLBlocked` that returns the
+value of the new flag. This parallels the `setAmendmentBlocked`
 function except that this flag can be cleared.
 
 Define a new `bool NetworkOPs::isBlocked()` function that
@@ -610,24 +626,22 @@ As [described](#validatorlistupdatetrusted) [above](#file-processing),
 `clearUNLBlocked` is called whenever a new downloaded VL is
 accepted (in `ValidatorList::applyList`).
 
-
 #### Reporting
 
 There are two functions that return validator information for reporting
 purposes via the RPC interface:
-* `NetworkOPsImp::getServerInfo`
-  * Will be left unchanged, since it only reports the number of sources
+
+- `NetworkOPsImp::getServerInfo`
+  - Will be left unchanged, since it only reports the number of sources
     and the next expiration time via `expires`.
-* `ValidatorList::getJson`
-  * This function loops over all the publishers, and includes information about
+- `ValidatorList::getJson`
+  - This function loops over all the publishers, and includes information about
     all of their VLs the JSON `publisher_lists` array of objects.
-  * Keep the same format and fields for the `current` VL (`seq, expiration,
-    list`). I don't think it's necessary to include `effective` for the
+  - Keep the same format and fields for the `current` VL (`seq, expiration,
+list`). I don't think it's necessary to include `effective` for the
     `current` VL because it's no longer relevant.
-  * Add an array of objects for `remaining` containing the same fields
+  - Add an array of objects for `remaining` containing the same fields
     as `current`, plus a new field for `effective`.
-
-
 
 #### Expand `/vl/` URL handling
 
@@ -646,10 +660,9 @@ the same format as returned now, using the values from `current`.
 
 If version is 2, `getAvailable` returns a version 2 `Json` object as
 described [above](#future), building the `blobs-v2` array from `current`
-and `remaining`.  Don't forget to include `public_key`!
+and `remaining`. Don't forget to include `public_key`!
 
 Any other value of version will return an unseated optional.
-
 
 ### UNL-tool changes (signer)
 
@@ -665,21 +678,20 @@ To support version 2, the unl-tool will add a prompt for the effective
 date, and change the prompt for the expiration date. The workflow will
 be something like:
 
-* Prompt "Sequence number:", read the unsigned int value.
-* Prompt "Delay until effective in days:", read the unsigned int value.
-  * The `effective` time value will be computed from today plus this
-    value , and rounded *down* to midnight UTC, then converted to
+- Prompt "Sequence number:", read the unsigned int value.
+- Prompt "Delay until effective in days:", read the unsigned int value.
+  - The `effective` time value will be computed from today plus this
+    value , and rounded _down_ to midnight UTC, then converted to
     "ripple time".
-  * If the value is 0, the `effective` field will not be populated.
-* Prompt "Expiration after effective in days:", read the unsigned int value.
-  * The `expiration` time value will be computed from the `effective`
+  - If the value is 0, the `effective` field will not be populated.
+- Prompt "Expiration after effective in days:", read the unsigned int value.
+  - The `expiration` time value will be computed from the `effective`
     time plus this value. Rounding will not be necessary since the process
-    adds whole days, and UTC doesn't have leap years. (*Is this
-    correct?*)
-  * A value of 0 will be invalid and cause an error or reprompt.
-* Once the JSON is built, with or without the `effective` field, the
+    adds whole days, and UTC doesn't have leap years. (_Is this
+    correct?_)
+  - A value of 0 will be invalid and cause an error or reprompt.
+- Once the JSON is built, with or without the `effective` field, the
   signing process can continue unmodified.
-
 
 ## Backwards Compatibility
 
@@ -693,9 +705,6 @@ As noted above, this has already be implemented in rippled in commit
 ## Security Considerations
 
 Needs discussion.
-
-
-
 
 ## Appendix
 
@@ -731,18 +740,20 @@ considered malformed if either `blob` or `signature` are present, though
 clients MAY ignore them.
 
 Pros:
-* With `version` 1, the file is both forward and backward compatible.
+
+- With `version` 1, the file is both forward and backward compatible.
   Since older clients will ignore the `effective` date, the VL will be
   valid as long as it's not expired.
 
 Cons:
-* To maintain backward compatibility with `version` 1, the "next" `blob`
+
+- To maintain backward compatibility with `version` 1, the "next" `blob`
   (i.e. the first blob listed in `blobs-v2`) will have to be manually moved
   into the top level `blob` and `signature` sometime between the
   new VL's `effective` and the old VL's `expiration`. Until this is done,
   old clients will be using the outdated VL. This could be mitigated if
   newer nodes broadcast the updated VL to older nodes when they switch.
-* If an older node ever sees a v2-formatted blob, it will start using it
+- If an older node ever sees a v2-formatted blob, it will start using it
   immediately, regardless of the `effective` date. Because this
   information can be sent via protocol messages, a buggy or malicious
   peer could cause this to happen prematurely.
@@ -756,7 +767,7 @@ can change their `version` number to 2, and stop populating the top-level
 
 Instead of handling the migration in the file and rippled code, this
 option allows the publisher to _optionally_ publish two UNL files at
-separate URLs.  For example: https://vl.ripple.com (for v1) and
+separate URLs. For example: https://vl.ripple.com (for v1) and
 https://vl.ripple.com/v2 (for v2, obviously).
 
 First, each version will be interpreted strictly - it's either v1 or v2,
@@ -772,18 +783,22 @@ for every URL defined in `[validator_list_sites]` that does not contain
 that substring, add both the original URL and the URL with the path
 appended to the list of UNL download sites. For example, if the config
 file contains
+
 ```
 [validator_list_sites]
 https://vl.ripple.com
 ```
+
 Then rippled will attempt to use both https://vl.ripple.com and
 https://vl.ripple.com/v2.
 
 But if the config file contains
+
 ```
 [validator_list_sites]
 https://vl.ripple.com/v2
 ```
+
 Then only https://vl.ripple.com/v2 will be used.
 
 Add a boolean configuration option to the validators.txt processing
@@ -791,55 +806,56 @@ named `[use_validator_site_suffix]` that defaults to true, but can be
 overridden by node operators to explicitly disable this behavior.
 
 Pros:
-* Simplifies rippled code and file processing because there's no need to
+
+- Simplifies rippled code and file processing because there's no need to
   worry about conditional processing.
 
 Cons:
-* If the publisher publishes both v1 and v2 UNLs simultaneously, and
+
+- If the publisher publishes both v1 and v2 UNLs simultaneously, and
   doesn't use the default suffix, operators using their v2 UNL will have
   to manually change their config file.
-* Like with their "backward compatibility" option, to maintain backward
+- Like with their "backward compatibility" option, to maintain backward
   compatibility with `version` 1, the "next" `blob`
   (i.e. the first blob listed in `blobs-v2`) will have to be manually
   moved into the v1 file sometime between the new VL's `effective` and
   the old VL's `expiration`. Until this is done, old clients will be
   using the outdated VL. This could be mitigated if newer nodes
   broadcast the updated VL to older nodes when they switch.
-* By default rippled will make twice as many requests to the publishers'
+- By default rippled will make twice as many requests to the publishers'
   websites. This isn't too bad, since requests are only made every
   5 minutes, but this may still be significant enough to mention.
-* If an older node ever sees a v2-formatted blob, it will start using it
+- If an older node ever sees a v2-formatted blob, it will start using it
   immediately, regardless of the `effective` date. Because this
   information can be sent via protocol messages, a buggy or malicious
   peer could cause this to happen prematurely.
-
 
 ## References
 
 ### Issues
 
-* [Allow prepublishing of a UNL with a future activation date](https://github.com/ripple/rippled/issues/3548)
-* [Validator List Expiration Improvements](https://github.com/ripple/rippled/issues/3470)
+- [Allow prepublishing of a UNL with a future activation date](https://github.com/ripple/rippled/issues/3548)
+- [Validator List Expiration Improvements](https://github.com/ripple/rippled/issues/3470)
 
 ### Expiration call tree in current code
 
-* `expiration` is checked
-  * `ValidatorList::expires` returns the earliest date that any VL expires.
-    * `NetworkOPsImp::getServerInfo`
-    * `RCLConsensus::Adaptor::preStartRound`
-    * `ValidatorList::getJson`
-  * `ValidatorList::updateTrusted` - All validators from expired lists are
+- `expiration` is checked
+  - `ValidatorList::expires` returns the earliest date that any VL expires.
+    - `NetworkOPsImp::getServerInfo`
+    - `RCLConsensus::Adaptor::preStartRound`
+    - `ValidatorList::getJson`
+  - `ValidatorList::updateTrusted` - All validators from expired lists are
     removed from the list of master public keys (`keyListings`). Also sets
     `quorum_` to maxint.
-    *  `NetworkOPsImp::beginConsensus`
+    - `NetworkOPsImp::beginConsensus`
 
-* `AmendmentTable::hasUnsupportedEnabled`
-  * `LedgerMaster::setValidLedger` calls `NetworkOPs::setAmendmentBlocked`
-* `amendmentBlocked_` is checked
-  * `NetworkOPsImp::isAmendmentBlocked`
-    * `RCLConsensus::Adaptor::preStartRound`
-    * `LedgerMaster::setValidLedger`
-    * `ApplicationImp::serverOkay`
-    * `NetworkOPsImp::getServerInfo`
-    * `ripple::RPC::conditionMet<T>`
-  * `NetworkOPsImp::setMode`
+- `AmendmentTable::hasUnsupportedEnabled`
+  - `LedgerMaster::setValidLedger` calls `NetworkOPs::setAmendmentBlocked`
+- `amendmentBlocked_` is checked
+  - `NetworkOPsImp::isAmendmentBlocked`
+    - `RCLConsensus::Adaptor::preStartRound`
+    - `LedgerMaster::setValidLedger`
+    - `ApplicationImp::serverOkay`
+    - `NetworkOPsImp::getServerInfo`
+    - `ripple::RPC::conditionMet<T>`
+  - `NetworkOPsImp::setMode`
