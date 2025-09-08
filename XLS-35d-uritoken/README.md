@@ -2,7 +2,7 @@
   xls: 35
   title: URITokens
   description: Lightweight first-class NFTs for XRPL Protocol Chains
-  author: Richard Holland, Wietse Wind
+  author: Richard Holland (@RichardAH), Wietse Wind (@WietseWind)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/89
   status: Draft
   category: Amendment
