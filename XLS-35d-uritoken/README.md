@@ -1,12 +1,15 @@
+<pre>
+  xls: 35
+  title: URITokens
+  description: Lightweight first-class NFTs for XRPL Protocol Chains
+  author: Richard Holland, Wietse Wind
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/89
+  status: Draft
+  category: Amendment
+  created: 2023-02-09
+</pre>
+
 # XLS-35d URITokens — Lightweight first-class NFTs for XRPL Protocol Chains
-```
-Title: URITokens
-Type: Draft
-Author:
-	Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
-	Wietse Wind, Xaman <a href="https://github.com/WietseWind/">(WietseWind)</a>
-Affiliation: XRPLF
-```
 
 # Problem Statement
 
