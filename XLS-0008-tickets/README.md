@@ -7,7 +7,6 @@
   status: Withdrawn
   category: Amendment
 </pre>
-</pre>
 
 # Tickets
 
