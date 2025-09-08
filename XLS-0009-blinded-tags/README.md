@@ -42,25 +42,25 @@ Two corresponding [AccountSet flags](https://xrpl.org/accountset.html#accountset
 
 If the existing `lsfRequireDest` account flag is set on an account, then all transactions for which a `DestinationTag` can be specified must include a destination tag. For accounts which support blinded tags, the `BlindedDestinationTag` may be specified instead. More specifically:
 
-|`lsfRequireDest`  |`lsfSupportsBlindedTags`|`lsfRequiresBlindedTags`|Description|
-|:----------------:|:----------------------:|:----------------------:|:----------|
-|:x:               |:x:                     |:x:                     |The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
-|:x:               |:x:                     |:heavy_check_mark:      |The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used.|
-|:x:               |:heavy_check_mark:      |:x:                     |The `DestinationTag` or `BlindedDestinationTag` may be used. |
-|:x:               |:heavy_check_mark:      |:heavy_check_mark:      |Invalid configuration.|
-|:heavy_check_mark:|:x:                     |:x:                     |The `DestinationTag` is required. The `BlindedDestinationTag` may not be used. |
-|:heavy_check_mark:|:x:                     |:heavy_check_mark:      |The `BlindedDestinationTag` is required. The `DestinationTag` may not be used. |
-|:heavy_check_mark:|:heavy_check_mark:      |:x:                     |Either the `DestinationTag` or `BlindedDestinationTag` is required. |
-|:heavy_check_mark:|:heavy_check_mark:      |:heavy_check_mark:      |Invalid configuration. |
+|  `lsfRequireDest`  | `lsfSupportsBlindedTags` | `lsfRequiresBlindedTags` | Description                                                                        |
+| :----------------: | :----------------------: | :----------------------: | :--------------------------------------------------------------------------------- |
+|        :x:         |           :x:            |           :x:            | The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
+|        :x:         |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used. |
+|        :x:         |    :heavy_check_mark:    |           :x:            | The `DestinationTag` or `BlindedDestinationTag` may be used.                       |
+|        :x:         |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
+| :heavy_check_mark: |           :x:            |           :x:            | The `DestinationTag` is required. The `BlindedDestinationTag` may not be used.     |
+| :heavy_check_mark: |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` is required. The `DestinationTag` may not be used.     |
+| :heavy_check_mark: |    :heavy_check_mark:    |           :x:            | Either the `DestinationTag` or `BlindedDestinationTag` is required.                |
+| :heavy_check_mark: |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
 
 #### New optional Transaction fields:
 
-| Tag | Type | Description |
-|:---:|:----:|:------------|
-|`BlindedSourceTag`     |64-bit UInt  |Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided.                               |
-|`BlindedDestinationTag`|64-bit UInt |Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided.                     |
-|`KeyIdentifier`        |32-bit UInt |MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
-|`RandomValue`          |256-bit UInt|MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+|           Tag           |     Type     | Description                                                                                                                       |
+| :---------------------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------- |
+|   `BlindedSourceTag`    | 64-bit UInt  | Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided.                               |
+| `BlindedDestinationTag` | 64-bit UInt  | Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided.                     |
+|     `KeyIdentifier`     | 32-bit UInt  | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+|      `RandomValue`      | 256-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
 
 **Note:** The new fields are supported on transaction which support the `DestinationTag` and `SourceTag` fields. Not all transaction types support them.
 
@@ -71,10 +71,10 @@ The rest of this specification describes the use and meaning of these new fields
 In order to **receive** transactions with blinded tags, individuals accounts must opt-in to the feature set. This will be accomplished through the new and existing account settings, which can be enabled with an [AccountSet transaction](https://xrpl.org/accountset.html).
 
 - The recipient must create a new **`secp256k1`** keypair. The sender must set the public key of this keypair as the `MessageKey` of their account. Effectively, this means that the exchange will have associated an additional public key to their receiving wallet address.
-    - The `MessageKey` account field already exists in the XRP Ledger and is not used for any specific purpose at the time of writing.
+  - The `MessageKey` account field already exists in the XRP Ledger and is not used for any specific purpose at the time of writing.
 - The recipient must enable one of two new account flags:
-    - `RequiresBlindedTags` if you _must_ use blinded destination tags to send to this address, or
-    - `SupportsBlindedTags` if you _may_ use blinded destination tags to send to this address.
+  - `RequiresBlindedTags` if you _must_ use blinded destination tags to send to this address, or
+  - `SupportsBlindedTags` if you _may_ use blinded destination tags to send to this address.
 
 You do not need to configure any settings in the XRP Ledger to send transactions using blinded destination tags.
 
@@ -90,7 +90,7 @@ Both sender and recipient need the following common information:
 
 1. The elliptic curve domain parameters for **secp256k1** _( `p` , `a` , `b` , `G` , `n` , `h` )_.
 2. The key derivation function _KDF_ = **RIPEMD-160**.
-4. The sequence number (or ticket number) associated with the transaction, _N_.
+3. The sequence number (or ticket number) associated with the transaction, _N_.
 
 ##### Sender
 
@@ -98,27 +98,28 @@ The process always begins with the sender, who can choose whether to use blinded
 
 In addition to the common information, the sender requires:
 
-- The recipient's **secp256k1** public key, *K<sub>pub</sub>*
+- The recipient's **secp256k1** public key, _K<sub>pub</sub>_
 
-    (The recipient publishes this in their account's `MessageKey` field.)
+  (The recipient publishes this in their account's `MessageKey` field.)
 
 ###### Steps:
-1. Generate a random number *r*, between 0 and 2<sup>128</sup>-1, and calculate *R = rG*.
-2. Calculate *P = rK<sub>pub</sub>*.
-3. Calculate the shared encryption key *X = KDF(P<sub>x</sub> || N),...)* where *P<sub>x</sub>* represents the x-coordinate of the point *P* which **should not** be the point at infinity, and `...` denotes any additional parameters the function may require.
-5. Return *{X, R}*.
+
+1. Generate a random number _r_, between 0 and 2<sup>128</sup>-1, and calculate _R = rG_.
+2. Calculate _P = rK<sub>pub</sub>_.
+3. Calculate the shared encryption key _X = KDF(P<sub>x</sub> || N),...)_ where _P<sub>x</sub>_ represents the x-coordinate of the point _P_ which **should not** be the point at infinity, and `...` denotes any additional parameters the function may require.
+4. Return _{X, R}_.
 
 ##### Recipient
 
 In addition to the common information, the recipient requires:
 
-- The value *R* that the sender calculated.
+- The value _R_ that the sender calculated.
 
 ###### Steps:
 
-1. Calculate *P = K<sub>sec</sub>R*.
-2. Calculate the shared encryption key *X = KDF(P<sub>x</sub> || N),...)* where *P<sub>x</sub>* represents the x-coordinate of the point *P* which **should not** be the point at infinity, and `...` denotes any additional parameters the function may require.
-3. Return *{X, R}*.
+1. Calculate _P = K<sub>sec</sub>R_.
+2. Calculate the shared encryption key _X = KDF(P<sub>x</sub> || N),...)_ where _P<sub>x</sub>_ represents the x-coordinate of the point _P_ which **should not** be the point at infinity, and `...` denotes any additional parameters the function may require.
+3. Return _{X, R}_.
 
 ### Random Blinding Factor Generation
 
@@ -138,18 +139,18 @@ If the sender determines that the recipient of a transaction supports blinded ta
 
 1. Calculate the shared secret using ECIES.
 2. If a blinded destination tag is required:
-    1. Start with an unblinded destination tag, _U<sub>dst</sub>_.
-    2. Calculate the destination tag blinding factor _B<sub>dst</sub>_ as explained above.
-    3. Calculate the blinded destination tag as _T<sub>dst</sub> = U<sub>dst</sub> ⊕ B<sub>dst</sub>_.
-    4. Set the `BlindedDestinationTag` field in the transaction to _T<sub>dst</sub>_.
+   1. Start with an unblinded destination tag, _U<sub>dst</sub>_.
+   2. Calculate the destination tag blinding factor _B<sub>dst</sub>_ as explained above.
+   3. Calculate the blinded destination tag as _T<sub>dst</sub> = U<sub>dst</sub> ⊕ B<sub>dst</sub>_.
+   4. Set the `BlindedDestinationTag` field in the transaction to _T<sub>dst</sub>_.
 3. If a blinded source tag is required:
-    1. Start with an unblinded source tag, _U<sub>src</sub>_.
-    2. Calculate the source tag blinding factor _B<sub>src</sub>_ as explained above.
-    3. Calculate _T<sub>src</sub> = U<sub>src</sub> ⊕ B<sub>src</sub>_.
-    4. Set the `BlindedSourceTag` field in the transaction to _T<sub>src</sub>_.
-4. Calculate the key identifier *Z* as explained above.
-5. Set the `KeyIdentifier` field in the transaction to *Z*.
-6. Set the `RandomValue` field in the transaction to *R*.
+   1. Start with an unblinded source tag, _U<sub>src</sub>_.
+   2. Calculate the source tag blinding factor _B<sub>src</sub>_ as explained above.
+   3. Calculate _T<sub>src</sub> = U<sub>src</sub> ⊕ B<sub>src</sub>_.
+   4. Set the `BlindedSourceTag` field in the transaction to _T<sub>src</sub>_.
+4. Calculate the key identifier _Z_ as explained above.
+5. Set the `KeyIdentifier` field in the transaction to _Z_.
+6. Set the `RandomValue` field in the transaction to _R_.
 
 ## What the recipient of a transaction does:
 
@@ -158,15 +159,15 @@ When the recipient receives a transaction, they examine if the transaction for t
 1. Extract the random value _R_ from the `RandomValue` field.
 2. Calculate the shared secret using ECIES and `R`.
 3. If the `KeyIdentifier` field is present, do the following:
-    1. Calculates the key identifier _Z_ as explained above.
-    2. Compares _Z_ to the `KeyIdentifier` field in the transaction.
-    3. If _Z_ and the `KeyIdentifier` field are not the same, try to use an older keypair to determine the secret key to use. (Older keypairs are based on all `MessageKey` values the recipient has previously set.)
+   1. Calculates the key identifier _Z_ as explained above.
+   2. Compares _Z_ to the `KeyIdentifier` field in the transaction.
+   3. If _Z_ and the `KeyIdentifier` field are not the same, try to use an older keypair to determine the secret key to use. (Older keypairs are based on all `MessageKey` values the recipient has previously set.)
 4. If the `BlindedDestinationTag` field is present:
-    1. Calculate the destination tag blinding factor _B<sub>dst</sub>_ as described above.
-    2. Calculates the unblinded destination tag _U<sub>dst</sub> = `BlindedDestinationTag` ⊕ B<sub>dst</sub>_.
+   1. Calculate the destination tag blinding factor _B<sub>dst</sub>_ as described above.
+   2. Calculates the unblinded destination tag _U<sub>dst</sub> = `BlindedDestinationTag` ⊕ B<sub>dst</sub>_.
 5. If the `BlindedSourceTag` field is present:
-    1. Calculate the source tag blinding factor _B<sub>src</sub>_ as described above.
-    2. Calculate the unblinded source tag _U<sub>src</sub> = `BlindedSourceTag` ⊕ B<sub>src</sub>_.
+   1. Calculate the source tag blinding factor _B<sub>src</sub>_ as described above.
+   2. Calculate the unblinded source tag _U<sub>src</sub> = `BlindedSourceTag` ⊕ B<sub>src</sub>_.
 
 Once the preprocessing stage is complete, the recipient now processes the incoming transaction normally, but uses the calculated unblinded source and destination tags (_U<sub>src</sub>_ and _U<sub>dst</sub>_ respectively) instead of the blinded tags present in the transaction.
 
@@ -209,8 +210,4 @@ The tag specified in the **X-address** should be unblinded; applications (wallet
 
 ## Integration with tickets
 
-
 No consideration is given at this time on how this scheme integrates with tickets.
-
-
-
