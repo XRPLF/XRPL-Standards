@@ -1,17 +1,12 @@
 <pre>
     xls: 24
     title: Metadata Structure for XLS-20
-    author: X-Tokenize (x-Tokenize)
+    description: Introduces a metadata standard for Non Fungible Tokens
+    author: X-Tokenize (@x-Tokenize)
     created: 2022-02-16
     status: Final
     category: Community
 </pre>
-# 0024 XLS-24d: XLS-20d NFT Metadata Structure
-##### By: [MikeCheckYaSelf](https://twitter.com/MikeCheckYaSelf)
-##### Affiliation: @X-Tokenize
-##### Revision: 2
-##### Revision History: [XLS-24d Revisions](https://github.com/x-Tokenize/XLS-24D)
-##### Contributors: [Mwni](https://github.com/Mwni), [nkl](https://twitter.com/NavidKianiL), [ajkagy](https://github.com/ajkagy), [dangell7](https://github.com/dangell7), [CombatKanga](https://github.com/Cadey), [XPunkDS](https://twitter.com/XPunkDS), [TheCryptoonz](https://twitter.com/TheCryptoonz), [xDude](https://twitter.com/XRPLXDUDE), [Andrew Kaskaniotis](https://github.com/Andrewkasko), [PeerKat](https://github.com/ma06rii), [moonkie](https://twitter.com/xMoonkie), [vet](https://github.com/xVet), [Henk ter Harmsel](https://github.com/pkmelee337)
 
 ## Introduction
 An NFT (Non Fungible Token) is a type of digital asset that uniquely represents ownership or the right to access to "something" that lives off chain. This "something" can take many different forms in the physical/digital realm such as works of art, real-estate, contractual agreements, tickets to events, derivative assets and much more. 
@@ -363,3 +358,4 @@ Although this revision includes guidance for the art.v0 nftType, it also shows t
 ### Discord
 
 To actively participate in the discussion join the [X-Tokenize Discord](https://discord.gg/mpd5msUSmf).
+
