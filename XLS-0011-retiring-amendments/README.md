@@ -1,7 +1,7 @@
 <pre>
     xls: 11
     title: Retiring Amendments
-    authors: Wietse Wind (@WietseWind) Scott Schurr <scott@ripple.com>, Rome Reginelli <rome@ripple.com>
+    authors: Wietse Wind (@WietseWind),Scott Schurr <scott@ripple.com>,Rome Reginelli <rome@ripple.com>
     description: This standard proposes an orderly process for retiring legacy XRP Ledger protocol behavior.
     created: 2020-05-07
     status: Final
@@ -106,6 +106,7 @@ The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 | fix1201           | 2017-11-14   |
 
 > **Note:** As mentioned above, the **FeeEscalation** amendment (enabled 2016-05-19), which did not directly affect transaction processing and ledger replay, has been unconditionalized since v1.2.0.
+
 
 
 
