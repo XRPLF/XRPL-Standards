@@ -1,20 +1,18 @@
----
-title: <The title is a few words, not a complete sentence>
-type: draft
-description: <Description is one full (short) sentence>
-author: <a comma separated list of the author(s)>
-# The format of each author should be one of the following:
-# - Author's name, author's affiliation (organization or company) + GitHub username (in parenthesis)
-# - Author's name, author's affiliation + email (in angle brackets)
-#
-# Example: FirstName LastName, OrganizationName (@GitHubUsername) , FirstName LastName, BarCompany <foo@bar.com>
-requires: <XLS number(s)> # Only required when you reference an XLS in the `Specification` section. Otherwise, remove this field.
-core_protocol_changes_required: <true/false> # Indicates whether the proposal requires any changes to the core protocol.
----
+<pre>
+  xls: <XLS number>
+  title: <The title is a few words, not a complete sentence>
+  description: <Description is one full (short) sentence>
+  author: <a comma separated list of the author(s) with email addresses>
+  discussion-from: [link to XRPL-Standards discussion with the same XLS number]
+  status: Discussion
+  category: Meta
+  requires: [optional, based on if it depends on other features]
+  created: YYYY-MM-DD
+</pre>
 
 <!--
   This is the suggested template for new XLS specifications. After you have filled in the requisite fields, please delete these comments.
-  
+
   The requirements to sections depend on the type of proposal. For example, amendments require some information that may not be relevant for other kinds of proposals. Please adapt the template as appropriate.
 
   The title should be 44 characters or less.
@@ -55,9 +53,9 @@ core_protocol_changes_required: <true/false> # Indicates whether the proposal re
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 
 <!--
-The following is an example of how you can document new object types and fields:
+The following is an example of how you can document new transactions, ledger entry types, and fields:
 
-#### The **`<object name>`** object
+#### **`<entry name>`** ledger entry
 
 <High level overview, explaining the object>
 
@@ -71,7 +69,7 @@ The following is an example of how you can document new object types and fields:
 |-------------------|:----------------:|:---------------:|:-----------------:|
 | `<field name>` | :heavy_check_mark: | `<string, number, object, array, boolean>` | `<UINT128, UINT160, UINT256, ...>` |
 
-<Any explanatory text about specific fields>
+<Any explanatory text about specific fields. For example, if an object must contain exactly one of three fields, note that here.>
 
 ###### Flags
 
@@ -80,6 +78,10 @@ The following is an example of how you can document new object types and fields:
 >| `lsf<flag name>` | `0x0001`| <flag description> |
 
 <Any explanatory text about specific flags>
+
+For "Internal Type", most fields should use existing types defined in the XRPL binary format's type list here: https://xrpl.org/docs/references/protocol/binary-format#type-list . If a new type must be defined, add a separate section describing the rationale for the type, its binary format, and JSON representation.
+
+When defining transactions, please identify any potential error scenarios. If a transaction can fail with a `tec`-class result code, specify the appropriate code. Remember that tec codes are immutable ledger entries, so changing them can cause compatibility issues with older data. Additionally, as tec codes are limited in number, it's best to reuse existing codes whenever possible. While error code details may be initially vague or incomplete, they should be refined as the proposal progresses through the candidate specification process.
 -->
 
 ## Rationale
@@ -120,6 +122,17 @@ No backward compatibility issues found.
   TODO: Remove this comment before submitting
 -->
 
+## Invariants
+
+<!--
+  This section is optional, but recommended.
+
+Invariants are fundamental rules governing a feature's behavior that must always hold true. They define the boundaries of expected behavior and the underlying assumptions of the design. If a situation violates an invariant, it can be classified as unintended behavior, aiding in bug detection and prevention. The XRP Ledger's code incorporates invariant checks to prevent transactions from executing if they would violate an invariant rule, thereby safeguarding the ledger's immutable history from erroneous or corrupted data. While the invariants specified here can be used to create invariant checks, some may be impractical to verify at runtime.
+
+  TODO: Remove this comment before submitting
+
+-->
+
 ## Reference Implementation
 
 <!--
@@ -142,4 +155,3 @@ No backward compatibility issues found.
 -->
 
 Needs discussion.
-
