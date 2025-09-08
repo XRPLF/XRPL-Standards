@@ -1,11 +1,13 @@
 <pre>
     xls: 15
     title: Concise Transaction Identifier
-    author: None (RichardAH)
+    description: Introduces concise transaction identifier
+    author: RichardAH (@RichardAH)
     created: 2021-03-09
     status: Withdrawn
     category: Protocol
 </pre>
+
 ## Change Log
 This standard was amended on 25th March 2021:
 ### XLS15.1
@@ -225,6 +227,7 @@ cti_transaction_check(
 ```
 
 RH Note: Advanced case (XLS15.1) examples and reference implementations to be added shortly
+
 
 
 
