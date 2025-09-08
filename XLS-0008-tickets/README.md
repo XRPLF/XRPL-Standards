@@ -1,10 +1,10 @@
 <pre>
-    XLS: XLS-8d
-    Title: 0008 XLS-8d Tickets: Supporting out-of-sequence transactions on the XRP Ledger
-    Author: Nik Bougalis (nbougalis)
-    Created: 2020-03-28
-    Status: Withdrawn
-    Category: Amendment
+  xls: 8
+  title: Tickets: Supporting out-of-sequence transactions on the XRP Ledger
+  author: Nik Bougalis (@nbougalis)
+  created: 2020-03-28
+  status: Withdrawn
+  category: Amendment
 </pre>
 <pre>
   XRP Ledger Proposed Standard #8
