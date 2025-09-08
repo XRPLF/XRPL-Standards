@@ -45,29 +45,34 @@ This amendment extends the functionality of escrows to support both IOUs and MPT
 
 The `EscrowCreate` transaction is modified as follows:
 
-| Field         | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Amount`      | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
+| Field    | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount` | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
 
 **Failure Conditions:**
 
 - **Issuer is the Source:**
+
   - If the source account is the issuer of the token, the transaction fails with `tecNO_PERMISSION`.
 
 - **Issuer Does Not Allow Token Escrow or Transfer:**
+
   - **IOU Tokens**: If the issuer's account does not have the `lsfAllowTrustLineLocking` flag set, the transaction fails with `tecNO_PERMISSION`.
   - **MPTs**:
     - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanEscrow` flag, the transaction fails with `tecNO_PERMISSION`.
     - If the `MPTokenIssuance` of the token being escrowed lacks the `lsfMPTCanTransfer` flag, the transaction fails with `tecNO_PERMISSION` unless the destination address of the Escrow is the issuer of the MPT.
 
 - **Source Account Not Authorized to Hold Token:**
+
   - If the issuer requires authorization and the source is not authorized, the transaction fails with `tecNO_AUTH`.
 
 - **Source Account's Token Holding Issues:**
+
   - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecUNFUNDED `.
   - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
 - **Source Account is Frozen or Token is Locked:**
+
   - If the token is frozen (global/individual/deepfreeze) (IOU) or locked (MPT) for the source, the transaction fails with `tecFROZEN`.
 
 - **Insufficient Spendable Balance:**
@@ -90,14 +95,17 @@ The `EscrowCreate` transaction is modified as follows:
 **Failure Conditions:**
 
 - **Destination Not Authorized to Hold Token:**
+
   - If authorization is required and the destination is not authorized, transaction fails with `tecNO_AUTH`.
 
 - **Destination Lacks Trustline or MPT Holding:**
+
   - **IOU Tokens**: If the destination lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
   - **MPTs**: If the destination does not hold the MPT, transaction fails with `tecNO_ENTRY`.
   - A new trustline or MPT holding may be created during `EscrowFinish` if authorization is not required.
 
 - **Cannot Create Trustline or MPT Holding:**
+
   - If unable to create due to lack of authorization or reserves, transaction fails with `tecNO_AUTH` or `tecINSUFFICIENT_RESERVE`.
 
 - **Destination Account is Frozen or Token is Locked:**
@@ -136,14 +144,17 @@ The `EscrowCreate` transaction is modified as follows:
 **Failure Conditions:**
 
 - **Source Not Authorized to Hold Token:**
+
   - If authorization is required and the source is not authorized, transaction fails with `tecNO_AUTH`.
 
 - **Source Lacks Trustline or MPT Holding:**
+
   - **IOU Tokens**: If the source lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
   - **MPTs**: If the source does not hold the MPT, transaction fails with `tecNO_ENTRY`.
   - A new trustline or MPT holding may be created during `EscrowCancel` if authorization is not required.
 
 - **Cannot Create Trustline or MPT Holding:**
+
   - If unable to create due to lack of authorization or reserves, transaction fails with `tecNO_AUTH` or `tecINSUFFICIENT_RESERVE`.
 
 - **Source Account is Frozen or Token is Locked:**
