@@ -1,7 +1,7 @@
 <pre>
     xls: 16
     title: NFT Metadata
-    author: Hubert Getrouw (HubertG97)
+    author: Hubert Getrouw (@HubertG97)
     created: 2021-03-17
     status: Stagnant
     category: Community
@@ -185,4 +185,5 @@ Converted to human-readable output's [this](https://xrpcharts.ripple.com/#/trans
 
 
 After that, a trust set and sending the tokens is the same as the advanced method
+
 
