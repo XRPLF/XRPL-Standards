@@ -172,3 +172,7 @@ def main():
                 recent_comments = [c for c in comments if datetime.strptime(c['createdAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC) > stale_time]
                 if not recent_comments:
                     close_and_lock(number)
+
+
+if __name__ == "__main__":
+    main()
