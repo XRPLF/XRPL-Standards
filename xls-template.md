@@ -12,7 +12,7 @@
 
 <!--
   This is the suggested template for new XLS specifications. After you have filled in the requisite fields, please delete these comments.
-  
+
   The requirements to sections depend on the type of proposal. For example, amendments require some information that may not be relevant for other kinds of proposals. Please adapt the template as appropriate.
 
   The title should be 44 characters or less.
@@ -155,4 +155,3 @@ Invariants are fundamental rules governing a feature's behavior that must always
 -->
 
 Needs discussion.
-

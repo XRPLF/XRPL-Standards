@@ -68,7 +68,7 @@ For each Instrument (e.g. `Escrow`, `PayChan`) a user holds that locks up some t
 
 The LockCount field on a RippleState ledger object indicates the total number of locks held against the balance of the Trustline. This is always exactly the number of Instruments (e.g. `Escrows`, `PayChannels`) locking a non-zero amount of the Trustline balance. Adding an additional instrument increments the LockCount. Removing an instrument decrements the LockCount.
 
-The LockCount field exists to account for any floating point *dust* that is left after the final instrument locking a trustline balance is released. If the LockCount reaches zero but the LockBalance is non-zero (typically extrtemely small) then the LockBalance is assumed to be zero, and is thus deleted.
+The LockCount field exists to account for any floating point _dust_ that is left after the final instrument locking a trustline balance is released. If the LockCount reaches zero but the LockBalance is non-zero (typically extrtemely small) then the LockBalance is assumed to be zero, and is thus deleted.
 
 ### 3.3. New Field: `TransferRate`.
 
@@ -121,10 +121,10 @@ The propossed changes would include modifications to the following rpc methods;
 
 The following fields would be added to the [`RippleState`](https://xrpl.org/ripplestate.html#ripplestate-fields) Ledger Object;
 
-| Field Name | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `LockCount` | number | uint32 | The total number of lock balances on a RippleState ledger object |
-| `LockedBalance` | object | Amount | The current amount of locked tokens for a specific trustline |
+| Field Name      | JSON Type | Internal Type | Description                                                      |
+| --------------- | --------- | ------------- | ---------------------------------------------------------------- |
+| `LockCount`     | number    | uint32        | The total number of lock balances on a RippleState ledger object |
+| `LockedBalance` | object    | Amount        | The current amount of locked tokens for a specific trustline     |
 
 &nbsp;
 
@@ -132,11 +132,11 @@ The following fields would be added to the [`RippleState`](https://xrpl.org/ripp
 
 The following fields would be modified on the [`PayChannel`](https://xrpl.org/paychannel.html#paychannel-fields) Ledger Object;
 
-| Field Name | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `Amount` | object or string | Amount | Total that has been allocated to this channel. This includes amounts that has been paid to the destination address. This is initially set by the transaction that created the channel and can be increased if the source address sends a PaymentChannelFund transaction. |
-| `Balance` | object or string | Amount | Total already paid out by the channel. The difference between this value and the Amount field is how much can still be paid to the destination address with PaymentChannelClaim transactions. If the channel closes, the remaining difference is returned to the source address. |
-| `TransferRate` | number | UInt32 | The fee to charge when users make claims on a payment channel, initially set on the creation of a payment channel and updated on subsequent funding or claim transactions. |
+| Field Name     | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                      |
+| -------------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`       | object or string | Amount        | Total that has been allocated to this channel. This includes amounts that has been paid to the destination address. This is initially set by the transaction that created the channel and can be increased if the source address sends a PaymentChannelFund transaction.         |
+| `Balance`      | object or string | Amount        | Total already paid out by the channel. The difference between this value and the Amount field is how much can still be paid to the destination address with PaymentChannelClaim transactions. If the channel closes, the remaining difference is returned to the source address. |
+| `TransferRate` | number           | UInt32        | The fee to charge when users make claims on a payment channel, initially set on the creation of a payment channel and updated on subsequent funding or claim transactions.                                                                                                       |
 
 &nbsp;
 
@@ -144,10 +144,10 @@ The following fields would be modified on the [`PayChannel`](https://xrpl.org/pa
 
 The following fields would be modified on the [`Escrow`](https://xrpl.org/escrow-object.html#escrow-fields) Ledger Object;
 
-| Field Name | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `Amount` | object or string | Amount | The amount to be delivered by the held payment. |
-| `TransferRate` | number | UInt32 | The fee to charge when users finish an escrow, initially set on the creation of an escrow contract, and updated on subsequent finish transactions |
+| Field Name     | JSON Type        | Internal Type | Description                                                                                                                                       |
+| -------------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`       | object or string | Amount        | The amount to be delivered by the held payment.                                                                                                   |
+| `TransferRate` | number           | UInt32        | The fee to charge when users finish an escrow, initially set on the creation of an escrow contract, and updated on subsequent finish transactions |
 
 &nbsp;
 
@@ -159,9 +159,9 @@ The following fields would be modified on the [`Escrow`](https://xrpl.org/escrow
 
 The following fields would be modified on the [`PaymentChannelCreate`](https://xrpl.org/paymentchannelcreate.html#paymentchannelcreate-fields) transaction;
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- | --- |
-| `Amount` | Yes | object or string | Amount | Amount to deduct from the sender's balance and set aside in this channel. While the channel is open, the amount can only go to the Destination address. When the channel closes, any unclaimed amount is returned to the source address's balance. |
+| Field Name | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                        |
+| ---------- | --------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`   | Yes       | object or string | Amount        | Amount to deduct from the sender's balance and set aside in this channel. While the channel is open, the amount can only go to the Destination address. When the channel closes, any unclaimed amount is returned to the source address's balance. |
 
 &nbsp;
 
@@ -169,9 +169,9 @@ The following fields would be modified on the [`PaymentChannelCreate`](https://x
 
 The following fields would be modified on the [`PaymentChannelFund`](https://xrpl.org/paymentchannelfund.html#paymentchannelfund-fields) transaction;
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- | --- |
-| `Amount` | Yes | object or string | Amount | Amount to add to the channel. Must be a positive amount. |
+| Field Name | Required? | JSON Type        | Internal Type | Description                                              |
+| ---------- | --------- | ---------------- | ------------- | -------------------------------------------------------- |
+| `Amount`   | Yes       | object or string | Amount        | Amount to add to the channel. Must be a positive amount. |
 
 &nbsp;
 
@@ -179,10 +179,10 @@ The following fields would be modified on the [`PaymentChannelFund`](https://xrp
 
 The following fields would be modified on the [`PaymentChannelClaim`](https://xrpl.org/paymentchannelclaim.html#paymentchannelclaim-fields) transaction;
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- | --- |
-| `Balance` | No | object or string | Amount | Total amount delivered by this channel after processing this claim. Required to deliver amount. Must be more than the total amount delivered by the channel so far, but not greater than the Amount of the signed claim. Must be provided except when closing the channel. |
-| `Amount` | No | object or string | Amount | The amount authorized by the Signature. This must match the amount in the signed message. This is the cumulative amount that can be dispensed by the channel, including amounts previously redeemed. |
+| Field Name | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                |
+| ---------- | --------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Balance`  | No        | object or string | Amount        | Total amount delivered by this channel after processing this claim. Required to deliver amount. Must be more than the total amount delivered by the channel so far, but not greater than the Amount of the signed claim. Must be provided except when closing the channel. |
+| `Amount`   | No        | object or string | Amount        | The amount authorized by the Signature. This must match the amount in the signed message. This is the cumulative amount that can be dispensed by the channel, including amounts previously redeemed.                                                                       |
 
 &nbsp;
 
@@ -190,9 +190,9 @@ The following fields would be modified on the [`PaymentChannelClaim`](https://xr
 
 The following fields would be modified on the [`EscrowCreate`](https://xrpl.org/escrowcreate.html#escrowcreate-fields) transaction;
 
-| Field Name | Required? | JSON Type | Internal Type | Description |
-| --- | --- | --- | --- | --- |
-| `Amount` | No | object or string | Amount | Amount to deduct from the sender's balance and escrow. Once escrowed, the amount can either go to the Destination address (after the FinishAfter time) or returned to the sender (after the CancelAfter time). |
+| Field Name | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                    |
+| ---------- | --------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`   | No        | object or string | Amount        | Amount to deduct from the sender's balance and escrow. Once escrowed, the amount can either go to the Destination address (after the FinishAfter time) or returned to the sender (after the CancelAfter time). |
 
 &nbsp;
 
@@ -204,10 +204,10 @@ The following fields would be modified on the [`EscrowCreate`](https://xrpl.org/
 
 Each `RippleState` Object has the following field added to the [`account_lines`](https://xrpl.org/account_lines.html#response-format) method:
 
-| Field | Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `LockedBalance` | object | Amount | The total amount locked in payment channels or escrow. |
-| `LockCount` | number | uint32 | The total number of lock balances on a RippleState ledger object. |
+| Field           | Type   | Internal Type | Description                                                       |
+| --------------- | ------ | ------------- | ----------------------------------------------------------------- |
+| `LockedBalance` | object | Amount        | The total amount locked in payment channels or escrow.            |
+| `LockCount`     | number | uint32        | The total number of lock balances on a RippleState ledger object. |
 
 &nbsp;
 
@@ -215,11 +215,11 @@ Each `RippleState` Object has the following field added to the [`account_lines`]
 
 Each `PayChannel` Object has the following fields updated on the [`account_channels`](https://xrpl.org/account_channels.html#response-format) method:
 
-| Field | Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `Amount` | object or string | Amount | The total amount allocated to this channel. |
-| `Balance` | object or string | Amount | The total amount paid out from this channel, as of the ledger version used. (You can calculate the amount left in the channel by subtracting balance from amount. |
-| `TransferRate` | number | UInt32 | The fee to charge when users make claims on a payment channel, initially set on the creation of a payment channel and updated on subsequent funding or claim transactions. |
+| Field          | Type             | Internal Type | Description                                                                                                                                                                |
+| -------------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`       | object or string | Amount        | The total amount allocated to this channel.                                                                                                                                |
+| `Balance`      | object or string | Amount        | The total amount paid out from this channel, as of the ledger version used. (You can calculate the amount left in the channel by subtracting balance from amount.          |
+| `TransferRate` | number           | UInt32        | The fee to charge when users make claims on a payment channel, initially set on the creation of a payment channel and updated on subsequent funding or claim transactions. |
 
 &nbsp;
 
@@ -227,10 +227,10 @@ Each `PayChannel` Object has the following fields updated on the [`account_chann
 
 Each `Escrow` Object has the following fields updated on the [`account_objects`](https://xrpl.org/account_objects.html#response-format) method:
 
-| Field | Type | Internal Type | Description |
-| --- | --- | --- | --- |
-| `Amount` | object or string | Amount | The amount to be delivered by the held payment. |
-| `TransferRate` | number | UInt32 | The fee to charge when users finish an escrow, initially set on the creation of an escrow contract, and updated on subsequent finish transactions |
+| Field          | Type             | Internal Type | Description                                                                                                                                       |
+| -------------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`       | object or string | Amount        | The amount to be delivered by the held payment.                                                                                                   |
+| `TransferRate` | number           | UInt32        | The fee to charge when users finish an escrow, initially set on the creation of an escrow contract, and updated on subsequent finish transactions |
 
 &nbsp;
 
@@ -238,9 +238,9 @@ Each `Escrow` Object has the following fields updated on the [`account_objects`]
 
 The request includes the following updated fields for the [`channel_authorize`](https://xrpl.org/channel_authorize.html#request-format) method:
 
-| Field | Required? | Type | Internal Type | Description |
-| ---  | --- | --- | --- | --- |
-| `Amount` | Yes | object or string | Amount | Cumulative amount to authorize. If the destination has already received a lesser amount from this channel, the signature created by this method can be redeemed for the difference. |
+| Field    | Required? | Type             | Internal Type | Description                                                                                                                                                                         |
+| -------- | --------- | ---------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount` | Yes       | object or string | Amount        | Cumulative amount to authorize. If the destination has already received a lesser amount from this channel, the signature created by this method can be redeemed for the difference. |
 
 &nbsp;
 
@@ -248,8 +248,8 @@ The request includes the following updated fields for the [`channel_authorize`](
 
 The request includes the following updated fields for the [`channel_verify`](https://xrpl.org/channel_verify.html#request-format) method:
 
-| Field | Required? | Type | Internal Type | Description |
-| --- | --- | --- | --- | --- |
-| `Amount` | Yes | object or string | Amount | The amount the provided signature authorizes. |
+| Field    | Required? | Type             | Internal Type | Description                                   |
+| -------- | --------- | ---------------- | ------------- | --------------------------------------------- |
+| `Amount` | Yes       | object or string | Amount        | The amount the provided signature authorizes. |
 
 &nbsp;

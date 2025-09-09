@@ -16,13 +16,14 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'XRPLF/XRPL-Standards'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -42,16 +43,19 @@ jobs:
 
       - name: Build site
         run: python site/build_site.py
+        env:
+          GITHUB_PAGES_BASE_URL: ""
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: "site/_site"
 
   deploy:
+    if: github.repository == 'XRPLF/XRPL-Standards'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
