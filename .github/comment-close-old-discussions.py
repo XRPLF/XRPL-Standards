@@ -77,7 +77,7 @@ def main():
     for d in discussions:
         number = d['number']
         labels = [label['name'] for label in d.get('labels', [])]
-        last_updated = datetime.strptime(d['updated_at'], "%Y-%m-%dT%H:%M:%SZ")
+        last_updated = datetime.strptime(d['updated_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
         comments = get_comments(number)
         stale_comment = next((c for c in comments if STALE_COMMENT in c['body']), None)
 
@@ -89,10 +89,10 @@ def main():
 
         # Close and lock after 14 days of being stale
         if STALE_LABEL in labels and stale_comment:
-            stale_time = datetime.strptime(stale_comment['created_at'], "%Y-%m-%dT%H:%M:%SZ")
+            stale_time = datetime.strptime(stale_comment['created_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
             if (now - stale_time).days >= TIME_TIL_CLOSE:
                 # Check for any comments after stale comment
-                recent_comments = [c for c in comments if datetime.strptime(c['created_at'], "%Y-%m-%dT%H:%M:%SZ") > stale_time]
+                recent_comments = [c for c in comments if datetime.strptime(c['created_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC) > stale_time]
                 if not recent_comments:
                     close_and_lock(number)
 
