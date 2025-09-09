@@ -4,7 +4,7 @@
   description: Allow an account holder to specify a minimum amount of XRP that can be received in a Payment
   author: Kris Dangerfield (@xrpl365)
   created: 2024-08-23
-  status: Stagnant
+  status: Deprecated
   category: Amendment
 </pre>
 
