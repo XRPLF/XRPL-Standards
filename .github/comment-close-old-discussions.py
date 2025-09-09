@@ -4,9 +4,10 @@ from datetime import datetime, UTC
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 REPO = os.environ['GITHUB_REPOSITORY']
-API_URL = f"https://api.github.com/repos/{REPO}/discussions"
+OWNER, NAME = REPO.split('/')
+API_URL = "https://api.github.com/graphql"
 HEADERS = {
-    "Authorization": f"token {GITHUB_TOKEN}",
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
 
@@ -15,69 +16,149 @@ STALE_COMMENT = "This discussion has been marked as stale due to inactivity for 
 TIME_TIL_STALE = 90  # days
 TIME_TIL_CLOSE = 14  # days
 
+def graphql(query, variables=None):
+    resp = requests.post(API_URL, headers=HEADERS, json={"query": query, "variables": variables or {}})
+    if resp.status_code != 200 or 'errors' in resp.json():
+        print(f"GraphQL error: {resp.text}")
+        return None
+    return resp.json()['data']
 
 def get_discussions():
     discussions = []
-    page = 1
+    cursor = None
     while True:
-        resp = requests.get(f"{API_URL}?per_page=100&page={page}", headers=HEADERS)
-        if resp.status_code != 200:
-            break
-        data = resp.json()
+        query = """
+        query($owner: String!, $name: String!, $cursor: String) {
+          repository(owner: $owner, name: $name) {
+            discussions(first: 50, after: $cursor) {
+              pageInfo { hasNextPage endCursor }
+              nodes {
+                number
+                updatedAt
+                labels(first: 10) { nodes { name } }
+              }
+            }
+          }
+        }
+        """
+        variables = {"owner": OWNER, "name": NAME, "cursor": cursor}
+        data = graphql(query, variables)
         if not data:
             break
-        discussions.extend(data)
-        page += 1
+        nodes = data['repository']['discussions']['nodes']
+        discussions.extend(nodes)
+        page_info = data['repository']['discussions']['pageInfo']
+        if not page_info['hasNextPage']:
+            break
+        cursor = page_info['endCursor']
     return discussions
 
-
 def get_comments(discussion_number):
-    url = f"{API_URL}/{discussion_number}/comments"
-    resp = requests.get(url, headers=HEADERS)
-    if resp.status_code != 200:
+    query = """
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) {
+        discussion(number: $number) {
+          comments(first: 100) {
+            nodes {
+              body
+              createdAt
+            }
+          }
+        }
+      }
+    }
+    """
+    variables = {"owner": OWNER, "name": NAME, "number": discussion_number}
+    data = graphql(query, variables)
+    if not data:
         return []
-    return resp.json()
-
-
-def safe_post(url, json_data):
-    resp = requests.post(url, headers=HEADERS, json=json_data)
-    if resp.status_code >= 400:
-        print(f"POST {url} failed: {resp.status_code} {resp.text}")
-    return resp
-
-
-def safe_patch(url, json_data):
-    resp = requests.patch(url, headers=HEADERS, json=json_data)
-    if resp.status_code >= 400:
-        print(f"PATCH {url} failed: {resp.status_code} {resp.text}")
-    return resp
-
+    return data['repository']['discussion']['comments']['nodes']
 
 def add_label(discussion_number, label):
     print(f"Adding label '{label}' to discussion #{discussion_number}")
-    url = f"https://api.github.com/repos/{REPO}/discussions/{discussion_number}/labels"
-    safe_post(url, {"labels": [label]})
+    query = """
+    mutation($input: AddLabelsToLabelableInput!) {
+      addLabelsToLabelable(input: $input) {
+        clientMutationId
+      }
+    }
+    """
+    # Get discussion node id
+    node_id = get_discussion_node_id(discussion_number)
+    label_id = get_label_node_id(label)
+    if not node_id or not label_id:
+        print("Could not get node IDs for label/discussion.")
+        return
+    variables = {"input": {"labelableId": node_id, "labelIds": [label_id]}}
+    graphql(query, variables)
 
+def get_discussion_node_id(discussion_number):
+    query = """
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) {
+        discussion(number: $number) { id }
+      }
+    }
+    """
+    variables = {"owner": OWNER, "name": NAME, "number": discussion_number}
+    data = graphql(query, variables)
+    if not data:
+        return None
+    return data['repository']['discussion']['id']
+
+def get_label_node_id(label_name):
+    query = """
+    query($owner: String!, $name: String!, $label: String!) {
+      repository(owner: $owner, name: $name) {
+        label(name: $label) { id }
+      }
+    }
+    """
+    variables = {"owner": OWNER, "name": NAME, "label": label_name}
+    data = graphql(query, variables)
+    if not data or not data['repository']['label']:
+        return None
+    return data['repository']['label']['id']
 
 def post_comment(discussion_number, body):
     print(f"Posting comment to discussion #{discussion_number}")
-    url = f"{API_URL}/{discussion_number}/comments"
-    safe_post(url, {"body": body})
-
+    query = """
+    mutation($input: AddDiscussionCommentInput!) {
+      addDiscussionComment(input: $input) {
+        clientMutationId
+      }
+    }
+    """
+    node_id = get_discussion_node_id(discussion_number)
+    if not node_id:
+        print("Could not get node ID for discussion.")
+        return
+    variables = {"input": {"discussionId": node_id, "body": body}}
+    graphql(query, variables)
 
 def close_and_lock(discussion_number):
     print(f"Closing and locking discussion #{discussion_number}")
-    url = f"{API_URL}/{discussion_number}"
-    safe_patch(url, {"state": "closed", "locked": True})
-
+    query = """
+    mutation($input: UpdateDiscussionInput!) {
+      updateDiscussion(input: $input) {
+        clientMutationId
+      }
+    }
+    """
+    node_id = get_discussion_node_id(discussion_number)
+    if not node_id:
+        print("Could not get node ID for discussion.")
+        return
+    variables = {"input": {"discussionId": node_id, "locked": True, "state": "CLOSED"}}
+    graphql(query, variables)
 
 def main():
     now = datetime.now(UTC)
     discussions = get_discussions()
     for d in discussions:
         number = d['number']
-        labels = [label['name'] for label in d.get('labels', [])]
-        last_updated = datetime.strptime(d['updated_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+        labels = [label['name'] for label in d.get('labels', {}).get('nodes', [])]
+        last_updated = datetime.strptime(d['updatedAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
         comments = get_comments(number)
         stale_comment = next((c for c in comments if STALE_COMMENT in c['body']), None)
 
@@ -89,13 +170,12 @@ def main():
 
         # Close and lock after 14 days of being stale
         if STALE_LABEL in labels and stale_comment:
-            stale_time = datetime.strptime(stale_comment['created_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+            stale_time = datetime.strptime(stale_comment['createdAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
             if (now - stale_time).days >= TIME_TIL_CLOSE:
                 # Check for any comments after stale comment
-                recent_comments = [c for c in comments if datetime.strptime(c['created_at'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC) > stale_time]
+                recent_comments = [c for c in comments if datetime.strptime(c['createdAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC) > stale_time]
                 if not recent_comments:
                     close_and_lock(number)
-
 
 if __name__ == "__main__":
     main()
