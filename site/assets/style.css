@@ -134,11 +134,13 @@ main {
 
 /* Standards table */
 .standards-table-container {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   margin-top: 32px;
   background: var(--bg-color-raised);
+  position: relative;
 }
 
 .standards-table {
@@ -167,6 +169,7 @@ main {
   text-align: left;
   transition: background-color 0.2s;
   user-select: none;
+  overflow: visible;
 }
 .standards-table th:hover {
   background: var(--color-gray-6);
@@ -844,7 +847,7 @@ footer {
   border-radius: 6px;
   padding: 12px;
   position: absolute;
-  z-index: 1000;
+  z-index: 10000;
   bottom: 125%;
   left: 50%;
   margin-left: -150px;
@@ -855,6 +858,8 @@ footer {
   font-weight: 400;
   line-height: 1.4;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  display: none;
 }
 
 .tooltip .tooltip-text::after {
@@ -888,4 +893,11 @@ footer {
 
 .tooltip-status strong {
   color: var(--link-color);
+}
+
+/* JavaScript will handle tooltip positioning */
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  display: block;
 }
