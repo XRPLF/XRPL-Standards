@@ -838,11 +838,10 @@ footer {
   color: var(--text-color);
 }
 
-/* Hide tooltip text by default */
+/* Hide tooltip text by default using display none */
 .tooltip .tooltip-text {
+  display: none !important;
   position: absolute !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
   width: 300px;
   background-color: var(--color-gray-7);
   color: var(--text-color);
@@ -853,7 +852,6 @@ footer {
   bottom: 125%;
   left: 50%;
   margin-left: -150px;
-  transition: opacity 0.3s;
   border: 1px solid var(--border-color);
   font-size: 14px;
   font-weight: 400;
@@ -892,6 +890,7 @@ footer {
 
 /* Show tooltip on hover */
 .tooltip:hover .tooltip-text {
+  display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
