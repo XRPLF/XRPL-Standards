@@ -838,20 +838,21 @@ footer {
   color: var(--text-color);
 }
 
+/* Hide tooltip text by default */
 .tooltip .tooltip-text {
-  visibility: hidden;
+  position: absolute !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
   width: 300px;
   background-color: var(--color-gray-7);
   color: var(--text-color);
   text-align: left;
   border-radius: 6px;
   padding: 12px;
-  position: absolute;
-  z-index: 10000;
+  z-index: 99999;
   bottom: 125%;
   left: 50%;
   margin-left: -150px;
-  opacity: 0;
   transition: opacity 0.3s;
   border: 1px solid var(--border-color);
   font-size: 14px;
@@ -859,7 +860,6 @@ footer {
   line-height: 1.4;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none;
-  display: none;
 }
 
 .tooltip .tooltip-text::after {
@@ -890,9 +890,8 @@ footer {
   color: var(--link-color);
 }
 
-/* JavaScript will handle tooltip positioning */
+/* Show tooltip on hover */
 .tooltip:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-  display: block;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
