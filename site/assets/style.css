@@ -838,57 +838,67 @@ footer {
   color: var(--text-color);
 }
 
-/* Hide tooltip text by default using display none */
+/* Hide tooltip text by default with very specific selector */
+table.standards-table thead th .tooltip .tooltip-text,
+.standards-table .tooltip .tooltip-text,
 .tooltip .tooltip-text {
   display: none !important;
-  position: absolute !important;
-  width: 300px;
-  background-color: var(--color-gray-7);
-  color: var(--text-color);
-  text-align: left;
-  border-radius: 6px;
-  padding: 12px;
-  z-index: 99999;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -150px;
-  border: 1px solid var(--border-color);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.4;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
+  position: fixed !important;
+  width: 300px !important;
+  background-color: var(--color-gray-7) !important;
+  color: var(--text-color) !important;
+  text-align: left !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  z-index: 999999 !important;
+  bottom: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  margin: 0 !important;
+  border: 1px solid var(--border-color) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  pointer-events: none !important;
+  transform: translateX(-50%) translateY(-100%) translateY(-10px) !important;
 }
 
+/* Tooltip arrow */
+table.standards-table thead th .tooltip .tooltip-text::after,
+.standards-table .tooltip .tooltip-text::after,
 .tooltip .tooltip-text::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: var(--color-gray-7) transparent transparent transparent;
+  content: "" !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 50% !important;
+  margin-left: -5px !important;
+  border-width: 5px !important;
+  border-style: solid !important;
+  border-color: var(--color-gray-7) transparent transparent transparent !important;
 }
 
 /* Category-specific styling in tooltip text */
 .tooltip-category {
-  margin-bottom: 8px;
+  margin-bottom: 8px !important;
 }
 
 .tooltip-category strong {
-  color: var(--link-color);
+  color: var(--link-color) !important;
 }
 
 .tooltip-status {
-  margin-bottom: 8px;
+  margin-bottom: 8px !important;
 }
 
 .tooltip-status strong {
-  color: var(--link-color);
+  color: var(--link-color) !important;
 }
 
-/* Show tooltip on hover */
+/* Show tooltip on hover with multiple selectors for specificity */
+table.standards-table thead th .tooltip:hover .tooltip-text,
+.standards-table .tooltip:hover .tooltip-text,
 .tooltip:hover .tooltip-text {
   display: block !important;
   visibility: visible !important;

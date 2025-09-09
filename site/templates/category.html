@@ -171,6 +171,26 @@
     const numberHeader = table.querySelector('th[data-column="number"]');
     if (numberHeader) numberHeader.classList.add("sort-desc");
 
+    // Tooltip positioning functionality
+    const tooltips = document.querySelectorAll('.tooltip');
+    tooltips.forEach(tooltip => {
+      const tooltipText = tooltip.querySelector('.tooltip-text');
+      if (tooltipText) {
+        tooltip.addEventListener('mouseenter', function(e) {
+          // Get the position of the tooltip trigger
+          const rect = tooltip.getBoundingClientRect();
+          const tooltipRect = tooltipText.getBoundingClientRect();
+          
+          // Position the tooltip above the trigger, centered horizontally
+          const left = rect.left + (rect.width / 2);
+          const top = rect.top - 10; // 10px above the trigger
+          
+          tooltipText.style.left = left + 'px';
+          tooltipText.style.top = top + 'px';
+        });
+      }
+    });
+
     // Add click event listeners to all sortable headers
     headers.forEach((header) => {
       header.addEventListener("click", function () {
