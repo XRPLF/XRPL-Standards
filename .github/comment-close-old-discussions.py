@@ -1,293 +1,78 @@
-#!python
-
-# DEPENDENCIES
-# python3 -m pip install python-graphql-client
-
-#Ref : Action in python https://www.python-engineer.com/posts/run-python-github-actions/
-
-# source: https://github.com/sofa-framework/sofa/blob/master/scripts/comment-close-old-discussions.py
-
-
 import os
-from datetime import datetime, timedelta, date
-from python_graphql_client import GraphqlClient
-from dateutil.relativedelta import relativedelta
+import requests
+from datetime import datetime, timedelta
 
+GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
+REPO = os.environ['GITHUB_REPOSITORY']
+API_URL = f"https://api.github.com/repos/{REPO}/discussions"
+HEADERS = {
+    "Authorization": f"token {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
 
-client = GraphqlClient(endpoint="https://api.github.com/graphql")
-github_token = os.environ['GITHUB_TOKEN']
+STALE_LABEL = "Stale"
+STALE_COMMENT = "This discussion has been marked as stale due to inactivity for 90 days. If there is no further activity, it will be closed in 14 days."
 
+def get_discussions():
+    discussions = []
+    page = 1
+    while True:
+        resp = requests.get(f"{API_URL}?per_page=100&page={page}", headers=HEADERS)
+        if resp.status_code != 200:
+            break
+        data = resp.json()
+        if not data:
+            break
+        discussions.extend(data)
+        page += 1
+    return discussions
 
-# List of the repository to scan
-repos=[['XRPLF', 'XRPL-Standards']]
+def get_comments(discussion_number):
+    url = f"{API_URL}/{discussion_number}/comments"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        return []
+    return resp.json()
 
+def add_label(discussion_number, label):
+    print(f"Adding label '{label}' to discussion #{discussion_number}")
+    # url = f"{API_URL}/{discussion_number}/labels"
+    # requests.post(url, headers=HEADERS, json={"labels": [label]})
 
-# Format the reference date (with which the last reply will be compared)
-# Today
-date_today = date.today()
-# warning delay = 2-month delay for warning
-delay_warning = relativedelta(days = 90)
-date_reference_warning = date_today - delay_warning
-# closing delay = 2+2.5-month delay for closing
-delay_closing = relativedelta(days = 90) + relativedelta(days = 30)
-date_reference_closing = date_today - delay_closing
+def post_comment(discussion_number, body):
+    print(f"Posting comment to discussion #{discussion_number}")
+    # url = f"{API_URL}/{discussion_number}/comments"
+    # requests.post(url, headers=HEADERS, json={"body": body})
 
-# Check if the "createdAt" is older than the "date_reference"
-def isOlderThan(date_reference, createdAt):
-  # Format date of creation YYYY-MM-DD
-  creation_date = createdAt[:-10]
-  creation_date = datetime.strptime(creation_date, '%Y-%m-%d')
+def close_and_lock(discussion_number):
+    print(f"Closing and locking discussion #{discussion_number}")
+    # url = f"{API_URL}/{discussion_number}"
+    # requests.patch(url, headers=HEADERS, json={"state": "closed", "locked": True})
 
-  if creation_date.date() > date_reference:
-    return False
-  else :
-    return True
+def main():
+    now = datetime.utcnow()
+    discussions = get_discussions()
+    for d in discussions:
+        number = d['number']
+        labels = [l['name'] for l in d.get('labels', [])]
+        last_updated = datetime.strptime(d['updated_at'], "%Y-%m-%dT%H:%M:%SZ")
+        comments = get_comments(number)
+        stale_comment = next((c for c in comments if STALE_COMMENT in c['body']), None)
 
-# Returns true of the date "createdAt" is more than the warning delay
-def isToBeWarned(createdAt):
-  return isOlderThan(date_reference_warning, createdAt)
-
-
-# Returns true of the date "createdAt" is more than the closing delay
-def isToBeClosed(createdAt):
-  return isOlderThan(date_reference_closing, createdAt)
-
-
-def computeListOfDiscussionToProcess():
-  for repo in repos:
-
-    owner = repo[0]
-    name = repo[1]
-
-    has_next_page = True
-    after_cursor = None
-
-    to_be_warned_discussion_number = []
-    to_be_warned_discussion_id = []
-    to_be_warned_discussion_author = []
-
-    to_be_closed_discussion_number = []
-    to_be_closed_discussion_id = []
-    to_be_closed_discussion_author = []
-
-    while has_next_page:
-        # Trigger the query on discussions
-        data = client.execute(
-            query = make_query_discussions(owner, name, after_cursor),
-            headers = {"Authorization": "Bearer {}".format(github_token)},
-        )
-
-        # Process each discussion
-        for discussion in data["data"]["repository"]["discussions"]["nodes"]:
-
-          # Save original author of the discussion
-          discussionAuthor = discussion["author"]["login"]
-
-          # Detect the last comment
-          lastCommentId = len(discussion["comments"]["nodes"]) - 1
-
-          # Pass to the next discussion item if :
-          # no comment in the discussion OR discussion is answered OR closed
-          if(lastCommentId < 0 or discussion["closed"] == True or discussion["isAnswered"] == True ):
+        # Mark as stale after 90 days
+        if (now - last_updated).days >= 90 and STALE_LABEL not in labels:
+            add_label(number, STALE_LABEL)
+            post_comment(number, STALE_COMMENT)
             continue
 
-          lastReplyOnLastComment = len(discussion["comments"]["nodes"][lastCommentId]["replies"]["nodes"]) - 1
+        # Close and lock after 14 days of being stale
+        if STALE_LABEL in labels and stale_comment:
+            stale_time = datetime.strptime(stale_comment['created_at'], "%Y-%m-%dT%H:%M:%SZ")
+            if (now - stale_time).days >= 14:
+                # Check for any comments after stale comment
+                recent_comments = [c for c in comments if datetime.strptime(c['created_at'], "%Y-%m-%dT%H:%M:%SZ") > stale_time]
+                if not recent_comments:
+                    close_and_lock(number)
 
-          # No replies on the last comment
-          if(lastReplyOnLastComment < 0):
-            author = discussion["comments"]["nodes"][lastCommentId]["author"]["login"]
-            dateLastMessage = discussion["comments"]["nodes"][lastCommentId]["createdAt"]
-          # Select the last reply of the last comment
-          else:
-            author = discussion["comments"]["nodes"][lastCommentId]["replies"]["nodes"][lastReplyOnLastComment]["author"]["login"]
-            dateLastMessage = discussion["comments"]["nodes"][lastCommentId]["replies"]["nodes"][lastReplyOnLastComment]["createdAt"]
-
-          authorAsList = [author]
-
-        if isToBeClosed(dateLastMessage) == True:
-            to_be_closed_discussion_number.append(discussion["number"])
-            to_be_closed_discussion_id.append(discussion["id"])
-            to_be_closed_discussion_author.append(discussionAuthor)
-        elif isToBeWarned(dateLastMessage) == True   and   author != "github-actions":
-            to_be_warned_discussion_number.append(discussion["number"])
-            to_be_warned_discussion_id.append(discussion["id"])
-            to_be_warned_discussion_author.append(discussionAuthor)
-
-
-        # save if request has another page to browse and its cursor pointers
-        has_next_page = data["data"]["repository"]["discussions"]["pageInfo"]["hasNextPage"]
-        after_cursor = data["data"]["repository"]["discussions"]["pageInfo"]["endCursor"]
-  return [to_be_warned_discussion_number,to_be_warned_discussion_id,to_be_warned_discussion_author,to_be_closed_discussion_number,to_be_closed_discussion_id,to_be_closed_discussion_author]
-
-
-# Query to access all discussions
-def make_query_discussions(owner, name, after_cursor=None):
-    query = """
-      query {
-        repository(owner: "%s" name: "%s") {
-          discussions(answered: false, first: 10, after:AFTER) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              id
-              number
-              isAnswered
-              closed
-              author {
-                login
-              }
-              comments (first: 100) {
-                nodes {
-                  createdAt
-                  author {
-                    login
-                  }
-                  replies (first: 100) {
-                    nodes {
-                      createdAt
-                      author {
-                        login
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }""" % (owner, name)
-    return query.replace("AFTER", '"{}"'.format(after_cursor) if after_cursor else "null")
-
-
-
-
-def make_github_warning_comment(discussion_id, discussion_author):
-    message = ":warning: :warning: :warning:<br>@"+str(discussion_author)+"<br>Feedback has been given to you by the project reviewers, however we have not received a response from you. Without further news in the coming weeks, this discussion will be automatically closed in order to keep this forum clean and fresh :seedling: Thank you for your understanding"
-
-    query = """
-      mutation {
-        addDiscussionComment(input: {body: "%s", discussionId: "%s"}) {
-          comment {
-            id
-          }
-        }
-      }
-""" % (message, discussion_id)
-    return query
-
-
-
-def make_github_closing_comment(discussion_id, discussion_author):
-  message = ":warning: :warning: :warning:<br>@"+str(discussion_author)+"<br>In accordance with our forum management policy, the last reply is more than 4 months old and is therefore closed. Our objective is to keep the forum up to date and offer the best support experience.<br><br>Please feel free to reopen it if the topic is still active by providing us with an update. Please feel free to open a new thread at any time - we'll be happy to help where and when we can."
-
-  query = """
-    mutation {
-      addDiscussionComment(input: {body: "%s", discussionId: "%s"}) {
-        comment {
-          id
-        }
-      }
-    }
-""" % (message, discussion_id)
-  return query
-
-
-
-def close_github_discussion(discussion_id):
-
-  query = """
-    mutation {
-      closeDiscussion(input: {discussionId: "%s"}) {
-        discussion {
-          id
-        }
-      }
-    }
-""" % discussion_id
-  return query
-
-
-
-
-
-
-#==========================================================
-# STEPS computed by the script
-#==========================================================
-# 1 - get the discussion to be warned and closed
-result = computeListOfDiscussionToProcess()
-to_be_warned_discussion_number = result[0]
-to_be_warned_discussion_id = result[1]
-to_be_warned_discussion_author = result[2]
-to_be_closed_discussion_number = result[3]
-to_be_closed_discussion_id = result[4]
-to_be_closed_discussion_author = result[5]
-#==========================================================
-# 2- do it using github API
-if(len(to_be_warned_discussion_id)!=len(to_be_warned_discussion_author)):
-    print('Error: size of both vectors number/author for discussions to be warned is different')
-    exit(1)
-if(len(to_be_closed_discussion_id)!=len(to_be_closed_discussion_author)):
-    print('Error: size of both vectors number/author for discussions to be closed is different')
-    exit(1)
-
-print("** Output lists **")
-print("******************")
-print("Nb discussions to be WARNED = "+str(len(to_be_warned_discussion_number)))
-print("Nb discussions to be CLOSED = "+str(len(to_be_closed_discussion_number)))
-print("******************")
-print("to_be_warned_discussion_number = "+str(to_be_warned_discussion_number))
-print("to_be_warned_discussion_id = "+str(to_be_warned_discussion_id))
-print("to_be_warned_discussion_author = "+str(to_be_warned_discussion_author))
-print("******************")
-print("to_be_closed_discussion_number = "+str(to_be_closed_discussion_number))
-print("to_be_closed_discussion_id = "+str(to_be_closed_discussion_id))
-print("to_be_closed_discussion_author = "+str(to_be_closed_discussion_author))
-print("******************")
-print("******************")
-
-#==========================================================
-# WARNING step
-print("** WARNING step **")
-
-for index, discussion_id in enumerate(to_be_warned_discussion_id):
-    print("to_be_warned_discussion_number[index] = "+str(to_be_warned_discussion_number[index]))
-    print("to_be_warned_discussion_author[index] = "+str(to_be_warned_discussion_author[index]))
-    print("discussion_id = "+str(discussion_id))
-    # Warning comment
-    data = client.execute(
-            query = make_github_warning_comment( discussion_id, to_be_warned_discussion_author[index] ),
-            headers = {"Authorization": "Bearer {}".format(github_token)},
-        )
-    print(data)
-print("******************")
-print("******************")
-
-#==========================================================
-# CLOSING step
-print("** CLOSING step **")
-
-for index, discussion_id in enumerate(to_be_closed_discussion_id):
-    print("to_be_closed_discussion_number[index] = "+str(to_be_closed_discussion_number[index]))
-    print("to_be_closed_discussion_author[index] = "+str(to_be_closed_discussion_author[index]))
-    print("discussion_id = "+str(discussion_id))
-
-    continue  # dummy
-    # Closing comment
-    data = client.execute(
-      query = make_github_closing_comment( discussion_id, to_be_closed_discussion_author[index] ),
-      headers = {"Authorization": "Bearer {}".format(github_token)},
-    )
-    print(data)
-
-    # Close discussion
-    data = client.execute(
-      query = close_github_discussion( discussion_id ),
-      headers = {"Authorization": "Bearer {}".format(github_token)},
-    )
-    print(data)
-
-#==========================================================
+if __name__ == "__main__":
+    main()
