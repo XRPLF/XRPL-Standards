@@ -55,7 +55,7 @@ def safe_patch(url, json_data):
 
 def add_label(discussion_number, label):
     print(f"Adding label '{label}' to discussion #{discussion_number}")
-    url = f"https://api.github.com/repos/{REPO}/issues/{discussion_number}/labels"
+    url = f"https://api.github.com/repos/{REPO}/discussions/{discussion_number}/labels"
     safe_post(url, {"labels": [label]})
 
 
