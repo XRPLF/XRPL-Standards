@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 REPO = os.environ['GITHUB_REPOSITORY']
@@ -58,7 +58,7 @@ def close_and_lock(discussion_number):
 
 
 def main():
-    now = datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
     discussions = get_discussions()
     for d in discussions:
         number = d['number']
