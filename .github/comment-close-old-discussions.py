@@ -116,12 +116,12 @@ def get_label_node_id(label_name):
 
 def post_comment(discussion_number, body):
     print(f"Posting comment to discussion #{discussion_number}")
-    query = """
-    mutation($input: AddDiscussionCommentInput!) {
-      addDiscussionComment(input: $input) {
-        clientMutationId
-      }
-    }
+    query = f"""
+    mutation {{
+        addDiscussionComment(input:{{body: "{body}" , discussionId: "{discussion_number}"}}) {{
+            comment{{id}}
+        }}
+    }}
     """
     node_id = get_discussion_node_id(discussion_number)
     if not node_id:
@@ -133,12 +133,12 @@ def post_comment(discussion_number, body):
 
 def close_and_lock(discussion_number):
     print(f"Closing and locking discussion #{discussion_number}")
-    query = """
-    mutation($input: UpdateDiscussionInput!) {
-      updateDiscussion(input: $input) {
-        clientMutationId
-      }
-    }
+    query = f"""
+    mutation {{
+        closeDiscussion(input:{{discussionId: "{discussion_number}", reason: "OUTDATED"}}) {{
+            discussion{{id}}
+        }}
+    }}
     """
     node_id = get_discussion_node_id(discussion_number)
     if not node_id:
