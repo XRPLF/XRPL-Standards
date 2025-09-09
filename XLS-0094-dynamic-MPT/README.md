@@ -376,7 +376,7 @@ And `lsfMPTCanTransfer` can be modified through `tfMPTSetCanTransfer`/`tfMPTClea
 
 - This will be rejected. Even if `lsfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled, even if the transaction also includes `tfMPTSetCanTransfer`.
 
-**Sample 3**(successful):  
+**Sample 3**(successful):
 The following sequence of transactions illustrates a successful case:
 
 **Step1**:
