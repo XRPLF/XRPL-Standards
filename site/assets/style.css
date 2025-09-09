@@ -484,7 +484,6 @@ main {
 .document-content table {
   overflow: hidden;
   width: 100%;
-  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin: 16px 0;
   border-collapse: collapse;
@@ -498,18 +497,15 @@ main {
   text-align: left;
 }
 
-.document-content th:last-child,
-.document-content td:last-child {
-  border-right: none;
+.document-content th:first-child,
+.document-content td:first-child {
+  border-left: 1px solid var(--border-color);
 }
 
 .document-content th {
   background: var(--color-gray-7);
   color: var(--text-color);
   font-weight: 600;
-}
-.document-content tbody tr:last-child td {
-  border-bottom: none;
 }
 
 /* Document navigation */
