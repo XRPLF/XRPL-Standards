@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, UTC
 
 GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
 REPO = os.environ['GITHUB_REPOSITORY']
@@ -39,26 +39,40 @@ def get_comments(discussion_number):
     return resp.json()
 
 
+def safe_post(url, json_data):
+    resp = requests.post(url, headers=HEADERS, json=json_data)
+    if resp.status_code >= 400:
+        print(f"POST {url} failed: {resp.status_code} {resp.text}")
+    return resp
+
+
+def safe_patch(url, json_data):
+    resp = requests.patch(url, headers=HEADERS, json=json_data)
+    if resp.status_code >= 400:
+        print(f"PATCH {url} failed: {resp.status_code} {resp.text}")
+    return resp
+
+
 def add_label(discussion_number, label):
     print(f"Adding label '{label}' to discussion #{discussion_number}")
-    url = f"{API_URL}/{discussion_number}/labels"
-    requests.post(url, headers=HEADERS, json={"labels": [label]})
+    url = f"https://api.github.com/repos/{REPO}/issues/{discussion_number}/labels"
+    safe_post(url, {"labels": [label]})
 
 
 def post_comment(discussion_number, body):
     print(f"Posting comment to discussion #{discussion_number}")
     url = f"{API_URL}/{discussion_number}/comments"
-    requests.post(url, headers=HEADERS, json={"body": body})
+    safe_post(url, {"body": body})
 
 
 def close_and_lock(discussion_number):
     print(f"Closing and locking discussion #{discussion_number}")
     url = f"{API_URL}/{discussion_number}"
-    requests.patch(url, headers=HEADERS, json={"state": "closed", "locked": True})
+    safe_patch(url, {"state": "closed", "locked": True})
 
 
 def main():
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     discussions = get_discussions()
     for d in discussions:
         number = d['number']
