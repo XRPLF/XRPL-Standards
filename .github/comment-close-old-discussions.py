@@ -16,12 +16,14 @@ STALE_COMMENT = "This discussion has been marked as stale due to inactivity for 
 TIME_TIL_STALE = 90  # days
 TIME_TIL_CLOSE = 14  # days
 
+
 def graphql(query, variables=None):
     resp = requests.post(API_URL, headers=HEADERS, json={"query": query, "variables": variables or {}})
     if resp.status_code != 200 or 'errors' in resp.json():
         print(f"GraphQL error: {resp.text}")
         return None
     return resp.json()['data']
+
 
 def get_discussions():
     discussions = []
@@ -53,6 +55,7 @@ def get_discussions():
         cursor = page_info['endCursor']
     return discussions
 
+
 def get_comments(discussion_number):
     query = """
     query($owner: String!, $name: String!, $number: Int!) {
@@ -74,23 +77,12 @@ def get_comments(discussion_number):
         return []
     return data['repository']['discussion']['comments']['nodes']
 
+
+# GitHub Discussions do not support adding labels via API for GitHub Apps/integrations.
 def add_label(discussion_number, label):
-    print(f"Adding label '{label}' to discussion #{discussion_number}")
-    query = """
-    mutation($input: AddLabelsToLabelableInput!) {
-      addLabelsToLabelable(input: $input) {
-        clientMutationId
-      }
-    }
-    """
-    # Get discussion node id
-    node_id = get_discussion_node_id(discussion_number)
-    label_id = get_label_node_id(label)
-    if not node_id or not label_id:
-        print("Could not get node IDs for label/discussion.")
-        return
-    variables = {"input": {"labelableId": node_id, "labelIds": [label_id]}}
-    graphql(query, variables)
+    print(f"Skipping label '{label}' for discussion #{discussion_number} (not supported by API)")
+    return
+
 
 def get_discussion_node_id(discussion_number):
     query = """
@@ -106,6 +98,7 @@ def get_discussion_node_id(discussion_number):
         return None
     return data['repository']['discussion']['id']
 
+
 def get_label_node_id(label_name):
     query = """
     query($owner: String!, $name: String!, $label: String!) {
@@ -119,6 +112,7 @@ def get_label_node_id(label_name):
     if not data or not data['repository']['label']:
         return None
     return data['repository']['label']['id']
+
 
 def post_comment(discussion_number, body):
     print(f"Posting comment to discussion #{discussion_number}")
@@ -136,6 +130,7 @@ def post_comment(discussion_number, body):
     variables = {"input": {"discussionId": node_id, "body": body}}
     graphql(query, variables)
 
+
 def close_and_lock(discussion_number):
     print(f"Closing and locking discussion #{discussion_number}")
     query = """
@@ -151,6 +146,7 @@ def close_and_lock(discussion_number):
         return
     variables = {"input": {"discussionId": node_id, "locked": True, "state": "CLOSED"}}
     graphql(query, variables)
+
 
 def main():
     now = datetime.now(UTC)
@@ -169,13 +165,10 @@ def main():
             continue
 
         # Close and lock after 14 days of being stale
-        if STALE_LABEL in labels and stale_comment:
+        if stale_comment:
             stale_time = datetime.strptime(stale_comment['createdAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
             if (now - stale_time).days >= TIME_TIL_CLOSE:
                 # Check for any comments after stale comment
                 recent_comments = [c for c in comments if datetime.strptime(c['createdAt'], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC) > stale_time]
                 if not recent_comments:
                     close_and_lock(number)
-
-if __name__ == "__main__":
-    main()
