@@ -873,11 +873,6 @@ footer {
   border-color: var(--color-gray-7) transparent transparent transparent;
 }
 
-.tooltip:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
-
 /* Category-specific styling in tooltip text */
 .tooltip-category {
   margin-bottom: 8px;
