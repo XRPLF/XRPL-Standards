@@ -58,7 +58,7 @@ def close_and_lock(discussion_number):
 
 
 def main():
-    now = datetime.datetime.now(datetime.UTC)
+    now = datetime.now(datetime.UTC)
     discussions = get_discussions()
     for d in discussions:
         number = d['number']
