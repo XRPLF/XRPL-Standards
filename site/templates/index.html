@@ -50,9 +50,28 @@
         <!-- Sortable column headers with data attributes for JavaScript -->
         <th class="sortable" data-column="number">Number</th>
         <th class="sortable" data-column="title">Title</th>
-        <th class="sortable" data-column="category">Category</th>
+        <th class="sortable" data-column="category">
+          <span class="tooltip">
+            Category
+            <span class="tooltip-text">
+              <div class="tooltip-category"><strong>Amendment:</strong> Changes to core XRP Ledger protocol requiring network consensus and activation through the amendment process.</div>
+              <div class="tooltip-category"><strong>Community:</strong> Best practices, conventions, and guidelines for the XRP Ledger ecosystem that don't require protocol changes.</div>
+              <div class="tooltip-category"><strong>Protocol:</strong> XRP Ledger APIs, formats, and behaviors that don't require consensus changes but define how applications interact with the network.</div>
+            </span>
+          </span>
+        </th>
         <th class="sortable" data-column="author">Author(s)</th>
-        <th class="sortable" data-column="status">Status</th>
+        <th class="sortable" data-column="status">
+          <span class="tooltip">
+            Status
+            <span class="tooltip-text">
+              <div class="tooltip-status"><strong>Draft:</strong> Work in progress, subject to change and further development.</div>
+              <div class="tooltip-status"><strong>Final:</strong> Completed and approved standard, ready for implementation.</div>
+              <div class="tooltip-status"><strong>Stagnant:</strong> No longer actively developed or maintained.</div>
+              <div class="tooltip-status"><strong>Withdrawn:</strong> Withdrawn from consideration and will not be implemented.</div>
+            </span>
+          </span>
+        </th>
         <th class="sortable" data-column="created">Created</th>
       </tr>
     </thead>
