@@ -14,7 +14,7 @@ My team is working with multiple partners who build on the XRP Ledger.
 The majority of those partners mention the cost associated with the XRP reserves (base + owner) which can quickly become high.
 Some projects use NFTs and they need to create hundred, thousand... of accounts. Those projects custody the key for their end users.
 
-As an example, an NFT project recently needed to create 4000 accounts requiring approximately 60,000 XRP for it (10 base + ~5 to cover transaction fees and owner reserves).
+As an example, in 2023 an NFT project needed to create 4000 accounts requiring approximately 60,000 XRP for it (10 base + ~5 to cover transaction fees and owner reserves).
 
 # 1. Proposed solution
 
