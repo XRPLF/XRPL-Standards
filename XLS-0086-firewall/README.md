@@ -3,6 +3,7 @@
   title: Firewall
   description: Time-based spending limits and whitelist functionality to prevent unauthorized account drainage on the XRPL.
   author: Kris Dangerfield (@krisdangerfield), Denis Angell (@angell_denis)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/255
   status: Draft
   category: Amendment
   created: 2024-11-29
