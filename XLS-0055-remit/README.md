@@ -8,8 +8,6 @@
   category: Amendment
 </pre>
 
-# XLS-55d - Remit: Atomic Multi-Asset Payments for XRPL Protocol Chains
-
 ## Introduction
 
 **_Remit_** is a new payment transactor designed for XRPL Protocol Chains, which allows a sender to send multiple currencies and tokens atomically to a specified destination. It is a push payment that delivers "no matter what" and is designed for retail and Hooks use-cases.
