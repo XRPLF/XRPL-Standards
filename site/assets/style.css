@@ -430,6 +430,27 @@ main {
   font-size: 32px;
 }
 
+.document-content h1 .headerlink,
+.document-content h2 .headerlink,
+.document-content h3 .headerlink,
+.document-content h4 .headerlink,
+.document-content h5 .headerlink,
+.document-content h6 .headerlink {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.document-content h1:hover .headerlink,
+.document-content h2:hover .headerlink,
+.document-content h3:hover .headerlink,
+.document-content h4:hover .headerlink,
+.document-content h5:hover .headerlink,
+.document-content h6:hover .headerlink {
+  visibility: visible;
+  opacity: 1;
+}
+
 .document-content h2 {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-color);
@@ -440,7 +461,15 @@ main {
 }
 .document-content p {
   margin-bottom: 16px;
-  color: var(--text-color);
+}
+
+.document-content ul,
+.document-content ol {
+  margin: 0.5rem 0 1rem 2rem;
+}
+
+.document-content li {
+  margin-bottom: 0.5rem;
 }
 
 .document-content pre,
@@ -484,7 +513,6 @@ main {
 .document-content table {
   overflow: hidden;
   width: 100%;
-  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin: 16px 0;
   border-collapse: collapse;
@@ -498,18 +526,15 @@ main {
   text-align: left;
 }
 
-.document-content th:last-child,
-.document-content td:last-child {
-  border-right: none;
+.document-content th:first-child,
+.document-content td:first-child {
+  border-left: 1px solid var(--border-color);
 }
 
 .document-content th {
   background: var(--color-gray-7);
   color: var(--text-color);
   font-weight: 600;
-}
-.document-content tbody tr:last-child td {
-  border-bottom: none;
 }
 
 /* Document navigation */
