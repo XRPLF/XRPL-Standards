@@ -563,14 +563,12 @@ The checker validates balance changes for:
 ##### 4.4.2.2. Operation Flow
 
 1. **visitEntry()**: Called for each modified ledger entry
-
    - Identifies entries that affect balances
    - Calculates balance changes (before vs after)
    - Groups changes by asset type (XRP, IOUs, MPTokens, NFTs)
    - Categorizes accounts as senders (negative changes) or receivers (positive changes)
 
 2. **finalize()**: Called after all modifications
-
    - For each asset type with transfers
    - Checks if any sender has a firewall
    - Validates all receivers are preauthorized with matching optional destination tags
@@ -624,13 +622,11 @@ Monitors balance changes in AccountRoot entries and validates them against confi
 ##### 4.4.3.2. Operation Flow
 
 1. **visitEntry()**:
-
    - Detects AccountRoot modifications
    - Calculates balance changes
    - Records changes for validation
 
 2. **finalize()**:
-
    - Retrieves firewall rules for the account
    - Evaluates each rule against balance changes
    - Handles time-based accumulation if specified
