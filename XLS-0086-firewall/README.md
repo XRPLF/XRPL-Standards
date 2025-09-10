@@ -1,14 +1,14 @@
-# XLS-86d - Firewall
-
 <pre>
   xls: 86
   title: Firewall
   description: Time-based spending limits and whitelist functionality to prevent unauthorized account drainage on the XRPL.
-  author: Kris Dangerfield (@krisdangerfield / @xrpl365), Denis Angell (@angell_denis)
+  author: Kris Dangerfield (@krisdangerfield), Denis Angell (@angell_denis)
   status: Draft
   category: Amendment
   created: 2024-11-29
 </pre>
+
+# XLS-86d - Firewall
 
 ## Abstract
 
