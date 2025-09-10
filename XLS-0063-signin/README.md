@@ -8,12 +8,6 @@
   category: Community
 </pre>
 
-Title: SignIn Transaction
-Type: Draft
-Author:
-[Denis Angell, XRPL-Labs <a href="https://github.com/dangell7/">(dangell7)</a>
-Affiliation: XRPL-Labs
-
 # Problem Statement
 
 In the XRPL ecosystem, certain wallets (Ledger) restrict users from signing arbitrary hex messages as a security measure to protect against malicious activities. This limitation poses a challenge for applications that require user authentication through signature verification. As a result, some applications resort to using low drop Payment transactions as a workaround for authentication, which is not an ideal solution and can lead to unnecessary ledger bloat. To provide a more secure and efficient method for user authentication, a dedicated transaction type for signing in is necessary.
