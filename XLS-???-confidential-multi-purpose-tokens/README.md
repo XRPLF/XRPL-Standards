@@ -720,21 +720,23 @@ Bulletproofs are a modern ZKP system designed for efficiency, with proof sizes t
 
 ##### Using 64-bit Values
 
-* Total Range Proof Size: A Bulletproof for a 64-bit value is highly compact, estimated at \~650 bytes. Equality proofs can be efficiently aggregated into this single proof.  
-* Total Crypto Payload: 198(ciphertexts)+66(keys)+650(proof)≈914 bytes.  
-* Performance Impact: An overhead of less than 1 kB is efficient and perfectly viable. The one-time computational cost to verify is a widely accepted trade-off for the enormous savings in data size.  
+* Total Range Proof Size: A Bulletproof for a 64-bit value is highly compact, estimated at \~650 bytes. 
+* Equality proofs are ~200 bytes  
+* Total Crypto Payload: 198 (ciphertexts) + 66 (keys) + 850 (proofs) ≈ 1100 bytes.  
+* Performance Impact: An overhead of ~ 1.1 kB is efficient and viable. The one-time computational cost to verify is a widely accepted trade-off for the enormous savings in data size.  
   * Note on 40-bit values: Bulletproofs require a bit length that is a power of two. A 40-bit proof would need to be padded to 64 bits, offering no size savings over a native 64-bit proof.
 
 Summary
 
-| Metric | Decomposition (64-bit) | Decomposition (40-bit) | Bulletproofs (64-bit) |
-| :---- | :---- | :---- | :---- |
-| Proof Size Complexity | O(n) \- Linear | O(n) \- Linear | O(logn) \- Logarithmic |
-| Total Crypto Payload | \~8.8 kB | \~5.7 kB | \~914 bytes |
-| Computational Complexity (Prover) | 256 scalar multiplications | 160 scalar multiplications | 128 scalar multiplications |
+| Metric | Decomposition (64-bit) | Decomposition (40-bit) | Bulletproofs (64-bit)                                                                                                                   |
+| :---- | :---- | :---- |:----------------------------------------------------------------------------------------------------------------------------------------|
+| Proof Size Complexity | O(n) \- Linear | O(n) \- Linear | O(logn) \- Logarithmic                                                                                                                  |
+| Total Crypto Payload | \~8.8 kB | \~5.7 kB | \~ 1100 bytes                                                                                                                           |
+| Computational Complexity (Prover) | 256 scalar multiplications | 160 scalar multiplications | 128 scalar multiplications                                                                                                              |
 | Computational Complexity (Verifier) | 256 separate scalar multiplications | 160 separate scalar multiplications | 2log2​(n)+c scalar multiplications (c is a small constant). For a 64-bit value, \~17 terms, plus 2-3 individual scalar multiplications. |
 
 Bulletproofs are an efficient choice. Even when reducing the bit length, the decomposition approach results in a transaction payload that is over 6 times larger than a Bulletproof.
+
 
 ## 11\. Frequently Asked Questions (FAQ)
 
