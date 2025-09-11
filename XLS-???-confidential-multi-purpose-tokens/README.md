@@ -2,7 +2,8 @@
 <pre>
     title: Amendment XLS: Confidential Multi-Purpose Tokens for XRPL
     description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
-    author: Murat Cenk and Aanchal Malhotra 
+    author: Murat Cenk <mcenk@ripple.com>  and Aanchal Malhotra <amalhotra@ripple.com>
+    Affiliation: Ripple <www.ripple.com>
     status: Discussion
     category: Amendment
     created: 2025-09-10
