@@ -48,8 +48,8 @@ This feature will require an amendment, tentatively titled `Sponsor`.
 * **Sponsor**: The account that is covering the reserve or paying the transaction fee on behalf of another account.
 * **Sponsee**: The account that the sponsor is paying a transaction fee or reserve on behalf of.
 * **Owner**: The account that owns a given object (or the account itself). This is often the same as the sponsee.
-* **Sponsored account**: An account that a sponsor is covering the reserve for (currently priced at 10 XRP).
-* **Sponsored object**: A non-account ledger object that a sponsor is covering the reserve for (currently priced at 2 XRP).
+* **Sponsored account**: An account that a sponsor is covering the reserve for (currently priced at 1 XRP).
+* **Sponsored object**: A non-account ledger object that a sponsor is covering the reserve for (currently priced at 0.2 XRP).
 * **Sponsor relationship**: The relationship between a sponsor and sponsee.
 * **Sponsorship type**: The "type" of sponsorship - sponsoring transaction fees vs. sponsoring reserves.
 
@@ -111,7 +111,10 @@ We propose this additional field:
 
 ### 4.1. Object ID
 
-The object ID for a `Sponsorship` object will be the space key (defined during implementation), plus the `Sponsor` and `Sponsee` accounts, hashed together.
+The key of the `Sponsorship` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
+* The `Sponsorship` space key (defined during implementation)
+* The `AccountID` of the `Sponsor`
+* The `AccountID` of the `Sponsee`
 
 ### 4.2. Fields
 
@@ -128,8 +131,10 @@ The object ID for a `Sponsorship` object will be the space key (defined during i
 
 There are two flags on this object:
 
-* `lsfRequireSignatureForFee`: Every use of this sponsor for sponsoring fees requires a signature from the sponsor.
-* `lsfRequireSignatureForReserve`: Every use of this sponsor for sponsoring reserves requires a signature from the sponsor.
+| Flag Name         |  Flag Value  | Modifiable? |                 Description                  |
+| ----------------- | :----------: | :---------: | :------------------------------------------: |
+| `lsfSponsorshipRequireSignForFee` | `0x00010000` |    Yes | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| `lsfSponsorshipRequireSignForReserve` | `0x00020000` |    Yes | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
 
 ### 4.4. Ownership
 
@@ -145,7 +150,7 @@ This object will be deleted any time the `FeeAmount` and `ReserveCount` are both
 
 ### 4.7. Invariant Checks
 
-* At least one of `FeeAmount` and `ReserveCount` is nonzero
+* `FeeAmount`  >=  0  ||  `ReserveCount`  >=  0
 * `SponsorAccount` != `Sponsee`
 * `FeeAmount` is nonnegative and denominated in XRP
 
@@ -258,8 +263,11 @@ This field **will** be a signing field (it will be included in transaction signa
 The `Flags` field allows the user to specify which sponsorship type(s) they wish to participate in. At least one flag **must** be specified if the `Sponsor` field is included in a transaction.
 
 There are two flag values that are supported:
-* `0x00000001`: `tfSponsorFee`, sponsoring (paying for) the fee of the transaction.
-* `0x00000002`: `tfSponsorReserve`, sponsoring the reserve for any objects created in the transaction.
+
+| Flag Name         |  Flag Value  |                 Description                  |
+| ----------------- | :----------: | :------------------------------------------: |
+| `tfSponsorFee` | `0x00000001` | Sponsoring (paying for) the fee of the transaction. |
+| `tfSponsorReserve` | `0x00000002` | Sponsoring the reserve for any objects created in the transaction. |
 
 This field **will** be a signing field (it will be included in transaction signatures).
 
@@ -316,7 +324,7 @@ All transactions (other than pseudo-transactions) may use the `tfSponsorFee` fla
 However, some transactions will not support the `tfSponsorReserve` flag.
 
 * [`Batch` transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch)
-  * It doesn't make any sense for `Batch` to support that flag. The inner transactions should use `tfSponsorReserve` instead.
+  * `Batch` does not create any objects on its own, and therefore its use in the outer transaction would be confusing, as users may think that that means that all inner transactions are sponsored. The inner transactions should use `tfSponsorReserve` instead.
 * All pseudo-transactions (currently `EnableAmendment`, `SetFee`, and `UNLModify`)
   * The reserves for those objects are covered by the network, not by any one account.
 
@@ -340,6 +348,8 @@ The `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` 
 
 ## 7. Transaction: `SponsorshipSet`
 
+This transaction creates and updates the `Sponsorship` object.
+
 ### 7.1. Fields
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
@@ -350,16 +360,28 @@ The `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` 
 |`ReserveCount`| |`number`|`UInt32`| The (remaining) amount of reserves that the sponsor has provided for the sponsee to use.|
 
 ### 7.2. Flags
-same as Sponsorship object
+
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
+| `tfSponsorshipSetRequireSignForFee` | `0x00010000` | Adds the restriction that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| `tfSponsorshipClearRequireSignForFee` | `0x00020000` |    Removes the restriction that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| `tfSponsorshipSetRequireSignForReserve` | `0x00040000` | Adds the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| `tfDeleteObject` | `0x00100000` | Removes the ledger object. |
 
 ### 7.2. Failure Conditions
 * `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee`
+* If `tfDeleteObject` is provided:
+	* `FeeAmount` is specified
+	* `ReserveCount` is specified
+	* `tfSponsorshipSetRequireSignForFee` is enabled
+	* `tfSponsorshipSetRequireSignForReserve` is enabled
 
 ### 7.3. State Changes
 
-* If the object already exists, the amounts are increased by the amounts indicated.
+* If the object already exists, `Sponsorship.Amount += tx.FeeAmount` and `Sponsorship.ReserveCount += tx.ReserveCount`.
 * If the object doesn't exist, it will be created.
-* If the `tfDeleteObject` flag is used, it will delete the object (the amount/count fields must not be specified in this case). All funds remaining in the object will be sent back to the `SponsorAccount`.
+* If the `tfDeleteObject` flag is used, it will delete the object. All funds remaining in the object will be sent back to the `SponsorAccount`.
   * Both sponsor and sponsee can delete the object.
   * Existing sponsored objects/accounts will need to go through the `SponsorshipTransfer` process.
 
