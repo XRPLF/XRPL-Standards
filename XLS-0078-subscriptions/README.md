@@ -35,6 +35,7 @@ This amendment introduces new ledger objects and transactions to support recurri
 ##### 2.1.1.1. Object Identifier
 
 The Subscription object ID is computed as the SHA-512Half of:
+
 - The Subscription space key (0x0055)
 - The Account ID
 - The Destination ID
@@ -42,28 +43,29 @@ The Subscription object ID is computed as the SHA-512Half of:
 
 ##### 2.1.1.2. Fields
 
-| Field Name | Constant | Required | Internal Type | Default Value | Description |
-|------------|----------|----------|---------------|---------------|-------------|
-| LedgerEntryType | Yes | Yes | UINT16 | 0x0055 | Identifies this as a Subscription object |
-| Flags | No | Yes | UINT32 | 0 | Reserved for future use |
-| PreviousTxnID | No | Yes | HASH256 | N/A | Hash of the transaction that most recently modified this object |
-| PreviousTxnLgrSeq | No | Yes | UINT32 | N/A | Ledger index containing the transaction that most recently modified this object |
-| Account | Yes | Yes | ACCOUNTID | N/A | The account that owns the subscription |
-| Destination | Yes | Yes | ACCOUNTID | N/A | The account authorized to receive subscription payments |
-| Data | Yes | Conditional | BLOB | N/A | Data field for payment categorization |
-| SendMax | No | Yes | AMOUNT | N/A | Maximum amount that can be withdrawn per period (XRP, IOU, or MPT) |
-| Balance | No | Yes | AMOUNT | N/A | Remaining balance available for the current period |
-| Frequency | Yes | Yes | UINT32 | N/A | Time period in seconds between consecutive payments (minimum 3600) |
-| NextClaimTime | No | Yes | UINT32 | N/A | Ripple epoch time when the next payment can be claimed |
-| StartTime | Yes | Conditional | UINT32 | N/A | Ripple epoch time when the subscription started (set at creation) |
-| Expiration | Yes | Conditional | UINT32 | N/A | Ripple epoch time when the subscription expires |
-| Sequence | Yes | Yes | UINT32 | N/A | Transaction sequence number used to create this subscription |
-| OwnerNode | No | Yes | UINT64 | N/A | Page of the source account's owner directory |
-| DestinationNode | No | Yes | UINT64 | N/A | Page of the destination account's owner directory |
+| Field Name        | Constant | Required    | Internal Type | Default Value | Description                                                                     |
+| ----------------- | -------- | ----------- | ------------- | ------------- | ------------------------------------------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes         | UINT16        | 0x0055        | Identifies this as a Subscription object                                        |
+| Flags             | No       | Yes         | UINT32        | 0             | Reserved for future use                                                         |
+| PreviousTxnID     | No       | Yes         | HASH256       | N/A           | Hash of the transaction that most recently modified this object                 |
+| PreviousTxnLgrSeq | No       | Yes         | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object |
+| Account           | Yes      | Yes         | ACCOUNTID     | N/A           | The account that owns the subscription                                          |
+| Destination       | Yes      | Yes         | ACCOUNTID     | N/A           | The account authorized to receive subscription payments                         |
+| Data              | Yes      | Conditional | BLOB          | N/A           | Data field for payment categorization                                           |
+| SendMax           | No       | Yes         | AMOUNT        | N/A           | Maximum amount that can be withdrawn per period (XRP, IOU, or MPT)              |
+| Balance           | No       | Yes         | AMOUNT        | N/A           | Remaining balance available for the current period                              |
+| Frequency         | Yes      | Yes         | UINT32        | N/A           | Time period in seconds between consecutive payments (minimum 3600)              |
+| NextClaimTime     | No       | Yes         | UINT32        | N/A           | Ripple epoch time when the next payment can be claimed                          |
+| StartTime         | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription started (set at creation)               |
+| Expiration        | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription expires                                 |
+| Sequence          | Yes      | Yes         | UINT32        | N/A           | Transaction sequence number used to create this subscription                    |
+| OwnerNode         | No       | Yes         | UINT64        | N/A           | Page of the source account's owner directory                                    |
+| DestinationNode   | No       | Yes         | UINT64        | N/A           | Page of the destination account's owner directory                               |
 
 ##### 2.1.1.3. Ownership
 
 The Subscription object is linked to two OwnerDirectory entries:
+
 - The source account's OwnerDirectory (via OwnerNode) - increments owner count
 - The destination account's OwnerDirectory (via DestinationNode) - does not increment owner count
 
@@ -71,12 +73,13 @@ Only the source account's owner count is affected because they bear the reserve 
 
 ##### 2.1.1.4. Reserves
 
-Creating a Subscription object increases the owner's XRP reserve by one increment. 
+Creating a Subscription object increases the owner's XRP reserve by one increment.
 This reserve is returned when the subscription is deleted.
 
 ##### 2.1.1.5. Deletion
 
 The Subscription can be deleted through:
+
 - `SubscriptionCancel` transaction from either the owner or destination
 - `SubscriptionClaim` transaction when the expiration time is reached and the claim is successful
 - Account deletion is blocked while any subscriptions exist (either as owner or destination)
@@ -84,16 +87,19 @@ The Subscription can be deleted through:
 ##### 2.1.1.6. Freeze/Lock Compliance
 
 For IOUs:
+
 - **Global Freeze**: Prevents creation and claims
 - **Individual Freeze**: Prevents creation and claims for frozen account
 - **Deep Freeze**: Prevents all operations
 
 For MPTs:
+
 - **Lock Conditions**: Prevent creation and claims for locked accounts
 
 ##### 2.1.1.7. Invariants
 
 Before and after any transaction:
+
 - `Balance` ≤ `SendMax`
 - `NextClaimTime` ≥ `StartTime` (if StartTime present)
 - `Expiration` > `NextClaimTime` (if Expiration present)
@@ -132,16 +138,16 @@ Creates a new subscription or updates an existing one.
 
 ##### 2.2.1.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
-|------------|-----------|-----------|---------------|---------------|-------------|
-| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionSet" |
-| Destination | Conditional | String | ACCOUNTID | N/A | Destination account (required for creation, forbidden for updates) |
-| Data | No | String | BLOB | N/A | Data field for categorization |
-| Amount | Yes | Object/String | AMOUNT | N/A | Maximum amount per period (XRP, IOU, or MPT) |
-| Frequency | Conditional | Number | UINT32 | N/A | Period in seconds between payments (required for creation, forbidden for updates) |
-| StartTime | No | Number | UINT32 | Current Time | When subscription starts (creation only) |
-| Expiration | No | Number | UINT32 | N/A | When subscription expires |
-| SubscriptionID | Conditional | String | HASH256 | N/A | ID for updates (mutually exclusive with creation fields) |
+| Field Name      | Required?   | JSON Type     | Internal Type | Default Value | Description                                                                       |
+| --------------- | ----------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------- |
+| TransactionType | Yes         | String        | UINT16        | N/A           | Value: "SubscriptionSet"                                                          |
+| Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                |
+| Data            | No          | String        | BLOB          | N/A           | Data field for categorization                                                     |
+| Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                      |
+| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates) |
+| StartTime       | No          | Number        | UINT32        | Current Time  | When subscription starts (creation only)                                          |
+| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                         |
+| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID for updates (mutually exclusive with creation fields)                          |
 
 ##### 2.2.1.2. Failure Conditions
 
@@ -184,7 +190,7 @@ Creates a new subscription or updates an existing one.
 **Update Mode (with SubscriptionID):**
 
 5. **Update Validation:**
-    - XRP, IOU and MPT Validation (as above)
+   - XRP, IOU and MPT Validation (as above)
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not owner (`tecNO_PERMISSION`)
    - Invalid Amount (`temBAD_AMOUNT`)
@@ -195,6 +201,7 @@ Creates a new subscription or updates an existing one.
 ##### 2.2.1.3. State Changes
 
 **Creation:**
+
 1. Create Subscription object with all specified fields
 2. Set Balance = Amount
 3. Set NextClaimTime = StartTime (if provided) or current ledger time
@@ -203,6 +210,7 @@ Creates a new subscription or updates an existing one.
 6. Deduct reserve from source account
 
 **Update:**
+
 1. Update Amount field
 2. If Balance > new Amount, set Balance = Amount
 3. Update Expiration if provided
@@ -210,6 +218,7 @@ Creates a new subscription or updates an existing one.
 ##### 2.2.1.4. Example JSON
 
 Creation:
+
 ```json
 {
   "TransactionType": "SubscriptionSet",
@@ -230,6 +239,7 @@ Creation:
 ```
 
 Update:
+
 ```json
 {
   "TransactionType": "SubscriptionSet",
@@ -248,10 +258,10 @@ Cancels an existing subscription.
 
 ##### 2.2.2.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
-|------------|-----------|-----------|---------------|---------------|-------------|
-| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionCancel" |
-| SubscriptionID | Yes | String | HASH256 | N/A | ID of subscription to cancel |
+| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                  |
+| --------------- | --------- | --------- | ------------- | ------------- | ---------------------------- |
+| TransactionType | Yes       | String    | UINT16        | N/A           | Value: "SubscriptionCancel"  |
+| SubscriptionID  | Yes       | String    | HASH256       | N/A           | ID of subscription to cancel |
 
 ##### 2.2.2.2. Failure Conditions
 
@@ -284,11 +294,11 @@ Claims a payment from an active subscription.
 
 ##### 2.2.3.1. Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
-|------------|-----------|-----------|---------------|---------------|-------------|
-| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionClaim" |
-| SubscriptionID | Yes | String | HASH256 | N/A | ID of subscription to claim |
-| Amount | Yes | Object/String | AMOUNT | N/A | Amount to claim (≤ available balance) |
+| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                           |
+| --------------- | --------- | ------------- | ------------- | ------------- | ------------------------------------- |
+| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"            |
+| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim           |
+| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ available balance) |
 
 ##### 2.2.3.2. Failure Conditions
 
@@ -334,17 +344,17 @@ Claims a payment from an active subscription.
      - Reset Balance to SendMax
 
 2. **Token Transfer:**
-   
+
    **For XRP:**
    - Deduct amount from source account balance
    - Add amount to destination account balance
-   
+
    **For IOUs:**
    - Auto-create trustline if needed and possible
    - Adjust source trustline balance (decrease)
    - Adjust destination trustline balance (increase)
    - Apply current TransferRate if applicable
-   
+
    **For MPTs:**
    - Auto-create MPToken if needed and possible
    - Adjust source MPToken balance (decrease)
@@ -380,16 +390,16 @@ Claims a payment from an active subscription.
 
 ## 3. Key Differences Between Token Types in Subscriptions
 
-| Aspect | XRP | IOU Tokens | Multi-Purpose Tokens (MPTs) |
-|--------|-----|------------|------------------------------|
-| **Holdings** | Native balance | Trustline required | MPToken object required |
-| **Authorization** | N/A | lsfRequireAuth flag | tfMPTRequireAuth flag |
-| **Transfer Capability** | Always allowed | Subject to freeze | Requires tfMPTCanTransfer |
-| **Freeze/Lock** | N/A | Global/Individual/Deep freeze | Lock conditions |
-| **Transfer Costs** | None | TransferRate (current) | TransferFee (current) |
-| **Auto-creation** | N/A | Trustline during claim | MPToken during claim |
-| **Reserve for Auto-creation** | N/A | Required from destination | Required from destination |
-| **Issuer Special Cases** | N/A | Can be source or destination | Doesn't hold MPToken objects |
+| Aspect                        | XRP            | IOU Tokens                    | Multi-Purpose Tokens (MPTs)  |
+| ----------------------------- | -------------- | ----------------------------- | ---------------------------- |
+| **Holdings**                  | Native balance | Trustline required            | MPToken object required      |
+| **Authorization**             | N/A            | lsfRequireAuth flag           | tfMPTRequireAuth flag        |
+| **Transfer Capability**       | Always allowed | Subject to freeze             | Requires tfMPTCanTransfer    |
+| **Freeze/Lock**               | N/A            | Global/Individual/Deep freeze | Lock conditions              |
+| **Transfer Costs**            | None           | TransferRate (current)        | TransferFee (current)        |
+| **Auto-creation**             | N/A            | Trustline during claim        | MPToken during claim         |
+| **Reserve for Auto-creation** | N/A            | Required from destination     | Required from destination    |
+| **Issuer Special Cases**      | N/A            | Can be source or destination  | Doesn't hold MPToken objects |
 
 ## 4. Arrears and Balance Management
 
@@ -402,7 +412,7 @@ The subscription system implements a specific arrears mechanism:
    - The unused Balance is forfeited
    - NextClaimTime advances by exactly one Frequency
    - Balance resets to the full SendMax
-4. **No Bulk Claims:** Only one period can be processed per claim transaction
+5. **No Bulk Claims:** Only one period can be processed per claim transaction
 
 This design prevents transaction spam while allowing flexible billing patterns.
 
@@ -411,23 +421,29 @@ This design prevents transaction spam while allowing flexible billing patterns.
 Key design decisions and their justifications:
 
 ### 5.1. Single Claim per Period
+
 Limiting to one claim per period simplifies implementation and prevents spam. Services requiring multiple payments should use appropriate frequencies (e.g., weekly instead of monthly).
 
 ### 5.2. Balance Tracking with Forfeit
+
 Tracking balance within periods allows partial claims while the forfeit mechanism prevents indefinite accumulation of claimable amounts.
 
 ### 5.3. No Transfer Rate Storage
+
 Using current transfer rates/fees at claim time (rather than storing at creation) simplifies the implementation and aligns with standard XRPL token transfer behavior.
 
 ### 5.4. Dual Ownership Model
+
 Allowing both source and destination to cancel provides flexibility for both parties while the reserve requirement remains only with the source.
 
 ### 5.5. Auto-creation of Holdings
+
 Allowing trustlines and MPTokens to be created during claims (when authorized) improves user experience for new token recipients.
 
 ## 6. Backwards Compatibility
 
 This amendment introduces:
+
 - New ledger object type (Subscription)
 - Three new transaction types
 - No modifications to existing functionality
@@ -437,6 +453,7 @@ The amendment is fully backwards compatible. Existing transactions and ledger ob
 ## 7. Security Considerations
 
 ### 7.1. Built-in Protections
+
 - **Amount Limits:** Claims cannot exceed authorized amounts
 - **Time Restrictions:** Claims limited by frequency periods
 - **Balance Tracking:** Prevents over-claiming within periods
@@ -447,23 +464,29 @@ The amendment is fully backwards compatible. Existing transactions and ledger ob
 ### 7.2. Potential Risks and Mitigations
 
 **Risk:** Services claiming maximum amounts unnecessarily
-- *Mitigation:* Users can cancel at any time
-- *Mitigation:* Services risk losing customers through abuse
+
+- _Mitigation:_ Users can cancel at any time
+- _Mitigation:_ Services risk losing customers through abuse
 
 **Risk:** Users canceling after receiving services
-- *Mitigation:* Services enforce terms of service
-- *Mitigation:* Services can implement deposit/prepayment models
+
+- _Mitigation:_ Services enforce terms of service
+- _Mitigation:_ Services can implement deposit/prepayment models
 
 **Risk:** Timing attacks on period boundaries
-- *Mitigation:* Strict time validation in claim logic
-- *Mitigation:* Atomic period advancement
+
+- _Mitigation:_ Strict time validation in claim logic
+- _Mitigation:_ Atomic period advancement
 
 **Risk:** Griefing through subscription spam
-- *Mitigation:* Reserve requirements make spam expensive
-- *Mitigation:* Both parties can cancel unwanted subscriptions
+
+- _Mitigation:_ Reserve requirements make spam expensive
+- _Mitigation:_ Both parties can cancel unwanted subscriptions
 
 ### 7.3. Compliance Features
+
 The system respects all existing XRPL compliance mechanisms:
+
 - IOU freeze capabilities remain effective
 - MPT lock capabilities remain effective
 - Authorization requirements are enforced
