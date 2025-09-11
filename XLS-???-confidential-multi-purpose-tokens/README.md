@@ -306,7 +306,7 @@ Example — Holder → Holder (with auditor)
   "SenderElGamalPublicKey":   "pkBob...",
   "ReceiverElGamalPublicKey": "pkCarol...",
   "AuditorPublicKey":         "pkAuditor...",
-  "ZKProof": "zkp_bytes_here""
+  "ZKProof": "zkp_bytes_here"
 }
 ```
 
@@ -364,8 +364,8 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 * Represents encryption of 0 under account’s key.  
 * Keeps inbox proofs well-formed.
 
-```json
 Example
+```json
 {
   "TransactionType": "ConfidentialMPTMergeInbox",
   "Account": "rBob",
