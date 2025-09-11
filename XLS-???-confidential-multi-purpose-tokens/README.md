@@ -1,9 +1,7 @@
 
-
-
 <pre>
-    title: Confidential Multi-Purpose Tokens for XRPL
-    description: This amendment introduces Confidential Multi-Purpose Tokens on the XRP Ledger.
+    title: Amendment XLS: Confidential Multi-Purpose Tokens for XRPL
+    description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk and Aanchal Malhotra 
     status: Discussion
     category: Amendment
@@ -307,7 +305,7 @@ Example — Holder → Holder (with auditor)
   "SenderElGamalPublicKey":   "pkBob...",
   "ReceiverElGamalPublicKey": "pkCarol...",
   "AuditorPublicKey":         "pkAuditor...",
-  "ZKProof": "zkp_bytes_here"
+  "ZKProof": "zkp_bytes_here""
 }
 ```
 
@@ -365,8 +363,8 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 * Represents encryption of 0 under account’s key.  
 * Keeps inbox proofs well-formed.
 
-Example
 ```json
+Example
 {
   "TransactionType": "ConfidentialMPTMergeInbox",
   "Account": "rBob",
@@ -737,138 +735,59 @@ Summary
 
 Bulletproofs are an efficient choice. Even when reducing the bit length, the decomposition approach results in a transaction payload that is over 6 times larger than a Bulletproof.
 
-
 ## 11\. Frequently Asked Questions (FAQ)
 
 This section addresses common questions about Confidential MPTs and their design choices, ranging from basic functionality to advanced research topics.  
-Q1. Can confidential and public balances coexist?
 
-* Yes. Issuers and holders may hold both public and confidential balances of the same MPT.  
-* Conversions between the two are explicit transactions (ConfidentialMPTConvert).  
-* Hybrid ecosystems are fully supported.
+Q1. Can confidential and public balances coexist?\
+Yes, both issuers and holders may simultaneously maintain both public and confidential balances of the same MPT, fully supporting hybrid ecosystems with explicit conversions between the two using ConfidentialMPTConvert transactions.
 
-Q2. Why introduce a separate Merge transaction?
+Q2. Why introduce a separate Merge transaction?\
+A separate Merge transaction is introduced because incoming transfers could cause proofs to become stale if all balances were in a single field, while split balances (CB_S and CB_IN) isolate proofs to a stable spending balance, allowing the Merge transaction to consolidate funds deterministically and update the version counter without requiring a proof, making it cheap to validate.
 
-* Incoming transfers could make proofs stale if balances were a single field.  
-* Split balances (CB\_S and CB\_IN) isolate proofs to a stable spending balance.  
-* The Merge transaction consolidates funds deterministically and bumps the version counter.  
-* It is proof-free and cheap to validate.
+Q3. What happens if a user forgets to merge their inbox?\
+If a user forgets to merge their inbox, incoming funds will accumulate in CB_IN, remaining safe but unable to be spent until they are consolidated into CB_S via a merge, therefore wallets are expected to perform this merge before a send if necessary.
 
-Q3. What happens if a user forgets to merge their inbox?
+Q4. Can confidential transactions be used in DEX, escrow, or checks?\
+No, this version of confidential MPT extensions focuses solely on regular confidential MPT payments between accounts, as integration with XRPL’s DEX, escrow, or checks would require further research into how to represent offers or locked balances without revealing their amounts.
 
-* Incoming funds accumulate in CB\_IN.  
-* They remain safe but cannot be spent until merged into CB\_S.  
-* Wallets are expected to merge before a send if needed.
+Q5. How does compliance fit in?\
+Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (EncryptedBalanceIssuer), and an optional auditor’s key (EncryptedBalanceAuditor) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
 
-Q4. Can confidential transactions be used in DEX, escrow, or checks?
+Q6. What happens if a holder loses their ElGamal private key?\
+If a holder loses their ElGamal private key, they will be unable to decrypt or spend their confidential balances, which will remain valid on-ledger but are effectively locked and irrecoverable by that holder.
 
-* Not in this version.    
-* Confidential MPT extensions focus on regular confidential MPT payments between accounts.    
-* Integration with XRPL’s DEX, escrow, or checks requires further research — e.g., how to represent offers or locked balances without leaking amounts.  
+Q7. What prevents replay or proof reuse?\
+Replay and proof reuse are prevented because all ZKPs are transcript-bound with domain separation, meaning the binding includes transaction type, issuer, currency, and version counters, so attempting to replay a proof in another context will result in a failed verification.
 
-Q5. Can the issuer disable confidential transfers after enabling them?
+Q8. Are confidential transactions more expensive than standard MPT transactions?\
+Yes, confidential transactions are more expensive than standard MPT transactions as they include extra ciphertexts and ZKPs, which increase both transaction size and verification cost, though efficiency remains a design goal with lightweight proofs and future aggregation possibilities.
 
-* If \`ConfidentialityConfigImmutable \= false\`, the issuer may enable or disable \`ConfidentialTransfersEnabled\` after issuance.    
-* If \`ConfidentialityConfigImmutable \= true\`, the setting is locked permanently and cannot be changed.    
-* This prevents issuers from weakening privacy guarantees after launch.
+Q9. What happens if validators cannot verify a ZKP?
 
-Q6. How does compliance fit in?
+If validators cannot verify a ZKP, the transaction is rejected during consensus, functioning identically to an invalid signature and thus preventing malformed or incorrect confidential balances from entering the ledger.
 
-* Each confidential balance is stored as parallel ciphertexts:  
-  * Under the holder’s key (CB\_S/CB\_IN),  
-  * Under the issuer’s key (EncryptedBalanceIssuer),  
-  * Under an auditor’s key (EncryptedBalanceAuditor), if enabled.  
-* ZKPs prove all ciphertexts encrypt the same value.  
-* Public can verify supply limits via issuer ciphertexts; auditors may decrypt balances if permitted.
+Q10. Why does the issuer need a second account?
 
-Q7. What happens if a holder loses their ElGamal private key?
+The issuer utilizes a second account as a designated holder account to convert their public reserve into the confidential supply. This approach is primarily used to keep the existing XLS-33 semantics intact, ensuring that the OutstandingAmount accurately reflects non-issuer balances. 
 
-* The holder cannot decrypt or spend their confidential balances.  
-* The funds remain valid on-ledger but are effectively locked.
+Q11. Will proofs be optimized in future versions?
 
-Q8. What prevents replay or proof reuse?
+The current design employs separate range and equality proofs for each transaction. However, future work will definitely prioritize optimizing these proofs to significantly reduce both transaction size and the associated verification cost for validators. Thorough benchmarking will be essential to find the right balance between validator performance and overall user experience.
 
-* All ZKPs are transcript-bound with domain separation.  
-* Binding includes transaction type, issuer, currency, and version counters.  
-* Replaying a proof in another context will fail verification.
+Q12. Can there be more than one auditor?
 
-Q9. Are confidential transactions more expensive than standard MPT transactions?
+At present, the protocol supports only a single, optional AuditorPolicy. Future extensions could explore multi-auditor setups, potentially leveraging advanced cryptographic techniques such as threshold encryption or more sophisticated policy-driven key distribution mechanisms.
 
-* Yes. They include extra ciphertexts and ZKPs, which increase transaction size and verification cost.  
-* Efficiency remains a design goal: proofs are lightweight (range \+ equality), and aggregation may reduce overhead in the future.
+Q13. Is the system quantum-safe?
 
-Q10. What happens if validators cannot verify a ZKP?
+Today's design relies on EC-ElGamal over secp256k1, which is not considered quantum-safe. The long-term plan includes migrating to post-quantum friendly schemes, such as those based on lattice cryptography. The specific migration path and timeline for achieving quantum resistance remain an open area of research.
 
-* The transaction is rejected during consensus, just like an invalid signature.  
-* This prevents malformed or incorrect confidential balances from entering the ledger.
+Q14. Why require explicit Merge instead of eliminating it in future?
 
-Q11. Why not just rely on client-side retry for stale proofs?
+The explicit MergeInbox transaction is currently required because it deterministically solves the issue of "staleness," ensuring that all received funds are consolidated before spending. While issuers and wallets might prefer less operational overhead, the current design offers clear, verifiable guarantees. Future designs may revisit whether the second-account model or other protocol refinements could simplify or even eliminate this explicit merge requirement.
 
-* Retry works only if the account rarely receives funds.  
-* In active accounts, constant incoming transfers can keep invalidating proofs, preventing sends entirely.  
-* The split-balance \+ merge model solves this by ensuring proofs always reference a stable spending balance.
 
-Q12. Why not auto-merge the inbox during a send?
-
-* Implicit merges would unexpectedly change version numbers, invalidating queued proofs.  
-* They also create hidden state changes that complicate audits.  
-* Explicit Merge keeps the process deterministic and user-controlled.
-
-Q13. Why not reuse Convert for merging?
-
-* Convert moves public → confidential and touches plaintext fields.  
-* It requires equality proofs and ciphertext inputs from the user.  
-* Merge is confidential → confidential, deterministic, and proof-free.
-
-Q14. Why does the issuer need a second account?
-
-* In the second-account model, issuer’s public reserve is converted into confidential supply by sending to a designated holder account (the second account).  
-* This keeps XLS-33 semantics intact: OutstandingAmount \= non-issuer balances.  
-* The downside is operational overhead: issuer must manage an additional account.
-
-Q15. Will proofs be optimized in future versions?
-
-* Current design uses per-transaction range and equality proofs.  
-* Future work will focus on optimizing proofs to reduce transaction size and verification cost.  
-* Benchmarking is needed to balance validator performance and UX.
-
-Q16. Can there be more than one auditor?
-
-* Presently, only one optional AuditorPolicy is supported.  
-* Future extensions may allow multi-auditor setups using threshold encryption or policy-driven key distribution.
-
-Q17. How will DEX and escrow support be added?
-
-* Research is needed on how to represent offers and escrows confidentially without leaking amounts.  
-* This is a research topic for future revisions.
-
-Q18. Are there edge cases mixing public and confidential balances?
-
-* Yes. Partial conversions, payment channels, or checks may create consistency edge cases.  
-* Further work is needed to guarantee consistent semantics across hybrid scenarios.
-
-Q19. Can auditors get partial/limited visibility?
-
-* Current auditor view key model is binary (full access or none).  
-* Future work may enable fine-grained selective disclosure:  
-  * Time-limited access,  
-  * Restricted access to subsets of accounts,  
-  * Policy-based encryption.
-
-Q20. Is the system quantum-safe?
-
-* Today’s design uses EC-ElGamal over secp256k1 (not PQ-safe).  
-* Future directions include PQ-friendly schemes (e.g., lattice-based).  
-* The migration path remains open research.
-
-Q21. Why require explicit Merge instead of eliminating it in future?
-
-* Merge solves staleness deterministically today.  
-* Issuers and wallets may prefer less operational overhead.  
-* Future designs may revisit whether the second-account model or protocol refinements can simplify this requirement.
-
-Q22. How does a confidential clawback work? Does it take all my confidential funds?   
-Yes, it is a total operation. The issuer initiates a single transaction that provides a ZKP to the network of your total confidential balance (both spending and inbox). If the proof is valid, the network simultaneously deletes your entire confidential balance and credits the issuer's public reserve with the exact, proven amount.
 
 ## Acknowledgements
 
