@@ -1,13 +1,12 @@
-
 <pre>
     title:  Confidential Multi-Purpose Tokens for XRPL
     description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk (mcenk@ripple.com) and Aanchal Malhotra (amalhotra@ripple.com)
-    Affiliation: Ripple (https://ripple.com) 
     status: Discussion
     category: Amendment
     created: 2025-09-12
 </pre>
+
 #  Confidential Multi-Purpose Tokens for XRPL
 ## 1\. Abstract
 
@@ -57,23 +56,23 @@ New Flags:
 New Fields:
 
 * IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the lsfConfidential flag is set.  
-* ConfidentialOutstandingAmount: (Required if lsfConfidential is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert and ConfidentialMPTClawback transaction.  
+* ConfidentialOutstandingAmount: (Required if lsfConfidential is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialMPTClawback transaction.  
 * AuditorPolicy: (Optional) An object containing the configuration for an on-chain auditor, including their public key and an immutability flag.
 
 Managing Confidentiality Settings via MPTokenIssuanceSet:
 
-The MPTokenIssuanceSet transaction is used by the issuer to manage the lsfConfidential flag and associated fields.\
-* Initial Setup: When creating an MPTokenIssuance object, the issuer defines the initial state of lsfConfidential and lsfConfidentialImmutable. If lsfConfidential is set to true, IssuerElGamalPublicKey and ConfidentialOutstandingAmount (initialized to 0) become mandatory fields.\
+The MPTokenIssuanceSet transaction is used by the issuer to manage the lsfConfidential flag and associated fields.
+* Initial Setup: When creating an MPTokenIssuance object, the issuer defines the initial state of lsfConfidential and lsfConfidentialImmutable. If lsfConfidential is set to true, IssuerElGamalPublicKey and ConfidentialOutstandingAmount (initialized to 0) become mandatory fields.
 * Modifying lsfConfidential: If lsfConfidentialImmutable is not set (false), the issuer can later use an MPTokenIssuanceSet transaction to change the lsfConfidential flag:
-  * Enabling Confidentiality (false → true): The MPTokenIssuanceSet transaction must provide the IssuerElGamalPublicKey and initialize ConfidentialOutstandingAmount if they are not already present.
-  * Disabling Confidentiality (true → false): This action is only permitted if the ConfidentialOutstandingAmount (COA) is 0. If any confidential funds are outstanding, the transaction will be rejected to prevent funds from being permanently locked. When disabling, the IssuerElGamalPublicKey and AuditorPolicy fields become optional and can be removed by a subsequent MPTokenIssuanceSettransaction.
+* Enabling Confidentiality (false → true): The MPTokenIssuanceSet transaction must provide the IssuerElGamalPublicKey and initialize ConfidentialOutstandingAmount if they are not already present.
+* Disabling Confidentiality (true → false): This action is only permitted if the ConfidentialOutstandingAmount (COA) is 0. If any confidential funds are outstanding, the transaction will be rejected to prevent funds from being permanently locked. When disabling, the IssuerElGamalPublicKey and AuditorPolicy fields become optional and can be removed by a subsequent MPTokenIssuanceSettransaction.
 
 MPToken Extensions: Extends per-account MPT objects with confidential balance fields:
 
   * ConfidentialBalance\_Spending (CB\_S): Encrypted spendable balance under the holder’s key.  
   * ConfidentialBalance\_Inbox (CB\_IN): Encrypted incoming balance under the holder’s key.  
   * CB\_S\_Version: Monotonically increasing version number for CB\_S.  
-  * EncryptedBalanceIssuer: Same spendable balance encrypted under the issuer’s key (audit consistency).  
+  * EncryptedBalanceIssuer: The issuer's confidential tracking of the total funds they have issued to this specific holder. This encrypted balance (under the IssuerElGamalPublicKey) serves as an audit-mirror, which, when decrypted by the issuer, conceptually matches the holder's total confidential balance (sum of CB_S and CB_IN). 
   * EncryptedBalanceAuditor (optional): Same balance encrypted under an auditor’s key.  
   * HolderElGamalPublicKey: Holder’s ElGamal public key.  
   * AuditorPublicKey (optional): Auditor’s ElGamal public key.  
@@ -91,15 +90,11 @@ The protocol relies on a ZKP system to validate confidential transactions withou
 * MPT (Multi-Purpose Token): A token standard defined by XLS-33. Extended here to support confidential balances and transfers.  
 * MPTokenIssuance (Object): Ledger object storing metadata for an MPT, including Currency, Issuer, MaxAmount (MA), and OutstandingAmount (OA).  
     
-* MPToken (Object): Ledger object representing a holder’s balance of a given MPT. Extended to include confidential balance fields:  
-  
-* Second Account (Issuer-as-Holder): A designated account controlled by the issuer but treated as a holder.  
-  * Included in OA (as a non-issuer balance).  
-  * Included in COA (if confidential).  
-  * Used to issue confidential balances into circulation without redefining OA.  
+* MPToken (Object): Ledger object representing a holder’s balance of a given MPT. Extended to include confidential balance fields:
+* Second Account (Issuer-as-Holder): A designated account controlled by the issuer but treated as a holder.
 * OutstandingAmount (OA): Total of all non-issuer balances (public \+ confidential), including the issuer’s second account.  
-* ConfidentialOutstandingAmount (COA): Total of all confidential balances of non-issuers, including the issuer’s second account.  
-* MaxAmount (MA): Maximum allowed token supply. Invariant: OA ≤ MA.  
+* ConfidentialOutstandingAmount (COA): Total of all confidential balances of non-issuers, including the issuer’s second account.
+* MaxAmount (MA): Maximum allowed token supply. Invariant: OA ≤ MA.
 * EC-ElGamal Encryption: Public-key encryption scheme with additive homomorphism. Used for encrypted balances and homomorphic updates.  
 * Balance Proofs: ZKPs proving that confidential transfers are valid:  
   * Equality proofs ensure ciphertexts represent the same amount under different keys.  
@@ -108,8 +103,7 @@ The protocol relies on a ZKP system to validate confidential transactions withou
   * Spending (CB\_S): Stable, used in proofs.  
   * Inbox (CB\_IN): Receives new transfers, merged into CB\_S explicitly. Prevents stale-proof rejection.  
 * Auditor Policy: Optional issuance-level configuration that allows balances to be encrypted under an auditor’s key for selective disclosure.  
-* Freeze: An issuer-initiated action using the TrustSet transaction. This action sets the ConfidentialBalanceFrozen flag on the holder's MPToken object, preventing them from executing ConfidentialMPTSend or ConfidentialMPTConvertBack transactions.  
-* Clawback: A privileged process initiated by the issuer via a ConfidentialMPTClawback transaction. It uses a ZKP to verifiably convert a holder's total confidential balance (spending \+ inbox) directly into the issuer's public reserve, ensuring the ledger's accounting remains consistent.
+* Clawback: A privileged process initiated by the issuer via a ConfidentialMPTClawback transaction. It uses a ZKP to verifiably prove a holder's total confidential balance directly into the issuer's public reserve, ensuring the ledger's accounting remains consistent.
 
 ## 5\. Protocol Overview
 
@@ -136,7 +130,9 @@ The Confidential MPT protocol is built on three core design principles: the Issu
 
 ### ConfidentialMPTConvert
 
-**Purpose**: Converts a visible (public) MPT balance into confidential form. By default, the converted amount is credited to the holder’s Inbox (CB\_IN) to avoid staleness. For issuer funding, this transaction discloses the plaintext Amount while delivering confidential value to the second account (treated as a holder). Both OA and COA remain maintained in plaintext.
+**Purpose**: It converts a visible (public) MPT balance into its confidential form. The converted amount is typically credited to the holder’s Inbox (CB_IN) to avoid immediate staleness, requiring the receiver to later merge these funds into their Spending (CB_S) balance. It acts as the mechanism for an account to "opt-in" or initialize their participation in the confidential MPT system. By executing this transaction (even with a zero-amount conversion), a holder's unique HolderElGamalPublicKey is recorded on their MPToken object, making them eligible to receive and manage confidential funds. When used by an issuer to fund their designated second account, this transaction explicitly discloses the plaintext Amount while delivering confidential value to the second account (treated as a holder). In all cases, both OutstandingAmount (OA) and ConfidentialOutstandingAmount (COA) are accurately maintained in plaintext.
+
+
 
 #### Use Cases
 
@@ -146,58 +142,55 @@ The Confidential MPT protocol is built on three core design principles: the Issu
 
 #### Transaction Fields
 
-| Field | Required | JSON Type | Description |
-| :---- | :---- | :---- | :---- |
-| TransactionType | Yes | String | Must be "ConfidentialMPTConvert". |
-| Account | Yes | String | The account initiating the conversion. |
-| MPTokenIssuanceID | Yes | String | The unique identifier for the MPT being converted. |
-| Amount | Yes | String | Public (visible) amount to convert into a confidential balance. |
-| HolderElGamalPublicKey | Conditional | String | Required if Account is not the Issuer. |
-| EncryptedAmountForHolder | Conditional | Object | Ciphertext under the holder’s key. Required if Account is not the Issuer. |
-| Receiver | Conditional | String | The issuer’s second account. Required if Account is the Issuer. |
-| ReceiverElGamalPublicKey | Conditional | String | The public key of the Receiver. Required if Account is the Issuer. |
-| EncryptedAmountForReceiver | Conditional | Object | Ciphertext under the Receiver’s key. Required if Account is the Issuer. |
-| EncryptedAmountForIssuer | Yes | Object | An audit-mirror ciphertext for the issuer, encrypted with the issuer's key. |
-| ZKProof | Yes | Object | A Zero-Knowledge Proof validating the conversion. |
+
+| Field | Required | JSON Type | Internal Type | Description                                                                                                                                                          |
+| :---- | :---- | :---- | :---- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| TransactionType | Yes | String | UInt16 | Must be "ConfidentialMPTConvert".                                                                                                                                    |
+| Account | Yes | String | AccountID | The account initiating the conversion. This is the source of the public Amount.                                                                                      |
+| MPTokenIssuanceID | Yes | String | UInt256 | The unique identifier for the MPT being converted.                                                                                                                   |
+| Amount | Yes | String | Amount | The public (visible) amount to convert into a confidential balance. Must be non-negative.                                                                            |
+| HolderElGamalPublicKey | Conditional | String | Blob (EC Point) | The public key for the receiving confidential balance. Required if the target MPToken object does not yet have a HolderElGamalPublicKey stored.                      |
+| Receiver | Conditional | String | AccountID | The recipient's account address. This field is required if and only if Account is the Issuer. In this case, Receiver must be the issuer's designated second account. |
+| EncryptedAmountForHolder | Conditional | Object | Struct (EC Point Pair) | The EC-ElGamal ciphertext for the holder (or Receiver), representing the confidential amount to be credited. Required if Account is not the Issuer.                  |
+| EncryptedAmountForIssuer | Yes | Object | Struct (EC Point Pair) | An audit-mirror ciphertext for the issuer, encrypted with the issuer's IssuerElGamalPublicKey.                                                                       |
+| ZKProof | Yes | Object | Blob | A Zero-Knowledge Proof validating the entire conversion, ensuring the plaintext Amount encrypts correctly and that all balance updates are consistent.               |
+
 
 #### Ledger Changes
 
 * Holder → self (public → confidential)  
   * MPToken.Balance \-= Amount (public ↓).  
-  * Confidential balance increases:  
-    * Else (default):  
-      * CB\_IN ⊕= EncryptedAmountForHolder  
+  * Confidential balance increases:
+    * CB\_IN ⊕= EncryptedAmountForHolder  
   * EncryptedBalanceIssuer ⊕= EncryptedAmountForIssuer  
-  * Add HolderElGamalPublicKey if absent.  
-    Public ↓, Confidential ↑, OA unchanged (plaintext), COA ↑ (plaintext).  
-* Issuer → second account (public → confidential)  
-  * IssuerPublicBalance \-= Amount (public ↓).  
+  * Add HolderElGamalPublicKey if absent.
+  * Public ↓, Confidential ↑, OA unchanged (plaintext), COA ↑ (plaintext).  
+* Issuer → second account (public → confidential)   
   * On receiver’s MPToken (second account):  
-    * CB\_IN ⊕= EncryptedAmountForReceiver  
+    * CB_IN ⊕= EncryptedAmountForHolder  
     * EncryptedBalanceIssuer ⊕= EncryptedAmountForIssuer  
-    * Add ReceiverElGamalPublicKey if absent.  
-      Issuer public ↓, Second account confidential ↑, OA ↑ (plaintext), COA ↑ (plaintext).
+    * Add ReceiverElGamalPublicKey if absent.
+  * Issuer public ↓, Second account confidential ↑, OA ↑ (plaintext), COA ↑ (plaintext).
 
-#### Validator Checks 
+#### Validator Checks
 
-Here is the unified list of checks.  
-1. Common Checks (Always Performed): These rules are validated first, regardless of the path.
-   * Verify Amount: Check that the Amount ≥ 0 and conforms to standard XRPL and XLS-33 formatting rules.  
-   * Verify Confidentiality is Enabled: Confirm that the ConfidentialTransfersEnabled flag is set to true on the token's MPTokenIssuance object.  
-   * Verify Ciphertext Formatting: Ensure all provided ciphertext fields (e.g., EncryptedAmountForIssuer, etc.) contain valid, well-formed EC points.
+The validator performs common checks first, then applies path-specific rules based on whether the Account initiating the transaction is the Issuer.
 
-2. Path-Specific Checks (Conditional): The validator then checks if the Account sending the transaction is also the Issuer to determine which path's rules to apply.  
-   * If Account ≠ Issuer (Holder Path)  
-   This path is for a regular holder converting their public tokens to confidential.
-      * Check for Required Fields: Verify that HolderElGamalPublicKey and EncryptedAmountForHolder are present in the transaction.  
-      * Check Sufficient Public Balance: Ensure the holder has enough public funds for the conversion (Amount ≤ holder's public MPToken.Balance).  
-      * Verify Zero-Knowledge Proof: The ZKProof must prove that the plaintext Amount correctly encrypts to both the EncryptedAmountForHolder and the EncryptedAmountForIssuer ciphertexts. 
-   * If Account = Issuer (Issuer Path): This path is for the issuer creating new confidential supply by funding their second account.
-     * Check for Required Fields: Verify that Receiver, ReceiverElGamalPublicKey, and EncryptedAmountForReceiver are present.  
-     * Check Supply Limit: Ensure the conversion does not exceed the token's maximum supply (Amount ≤ MaxAmount \- OutstandingAmount).  
-     * Enforce No Self-Funding: The Receiver address must not be the same as the Issuer address.  
-     * Verify Zero-Knowledge Proof: The ZKProof must prove that the plaintext Amount correctly encrypts to both the EncryptedAmountForReceiver and the EncryptedAmountForIssuer ciphertexts.
-
+1. Common Checks (Always Performed):
+    * Verify Amount: Confirm that the Amount is positive (Amount ≥ 0\) and conforms to standard XRPL and XLS-33 formatting rules.
+    * Verify Confidentiality Enabled: Confirm that the lsfConfidential flag is set to true on the token's MPTokenIssuance object.
+    * Verify Ciphertext Formatting: Ensure all provided ciphertext fields (e.g., EncryptedAmountForIssuer, EncryptedAmountForHolder) contain valid, well-formed secp256k1 elliptic curve points.
+    * Validate Auditor Fields: If an AuditorPolicy is active and EncryptedAmountForAuditor is present (assuming this field is allowed/added for this transaction type), AuditorPublicKey must be present and match the policy.
+2. Path-Specific Checks (Conditional):
+    * If Account ≠ Issuer (Holder Path):
+        * Check Required Fields: Verify that EncryptedAmountForHolder is present. HolderElGamalPublicKey must be present in the transaction if the Account's MPToken object does not yet have a HolderElGamalPublicKey stored.
+        * Check Sufficient Public Balance: Ensure the holder has enough public funds for the conversion (Amount ≤ Account's public MPToken.Balance).
+        * Verify ZKP: The ZKProof must prove that the plaintext Amount correctly encrypts to both the EncryptedAmountForHolder and the EncryptedAmountForIssuer ciphertexts. It also proves the amount is within range and the balance updates are consistent.
+    * If Account \= Issuer (Issuer Path):
+        * Check Required Fields: Verify that Receiver is present and that EncryptedAmountForHolder is present. HolderElGamalPublicKey must be present in the transaction if the Receiver's MPTokenobject does not yet have a HolderElGamalPublicKey stored.
+        * Verify Receiver is Second Account: The Receiver address must be the Issuer's designated second account.
+        * Check Supply Limit: Ensure the conversion does not exceed the token's maximum supply (Amount ≤ MaxAmount \- OutstandingAmount).
+        * Verify ZKP: The ZKProof must prove that the plaintext Amount correctly encrypts to both the EncryptedAmountForHolder (for the receiver) and the EncryptedAmountForIssuer ciphertexts. It also proves the amount is within range and the balance updates are consistent.
 #### Example A — Holder converts 150 units (default → Inbox)
 
 ```json
@@ -225,7 +218,7 @@ Here is the unified list of checks.
   "Amount": "500",
   "Receiver": "rIssuerSecondAcct",
   "ReceiverElGamalPublicKey": "pkSecond...",
-  "EncryptedAmountForReceiver": { "A": "...", "B": "..." },
+  "EncryptedAmountForHolder": { "A": "...", "B": "..." },
   "EncryptedAmountForIssuer": { "A": "...", "B": "..." },
   "ZKProof": { "zkp_bytes_here" }
 }
@@ -233,7 +226,7 @@ Here is the unified list of checks.
 
 ### ConfidentialMPTSend
 
-**Purpose:** Confidential transfer of MPT value between accounts while keeping the amount hidden. Receiver is credited to Inbox (CB\_IN) to avoid staleness; the receiver later merges to Spending (CB\_S).
+**Purpose:** Confidential transfer of MPT value between accounts while keeping the amount hidden. Receiver is credited to Inbox (CB_IN) to avoid staleness; the receiver later merges to Spending (CB_S).
 
 #### Use Cases
 
@@ -258,16 +251,18 @@ Here is the unified list of checks.
 
 #### Ledger Changes
 
-* Sender (holder)  
-  * ConfidentialBalance\_Spending ⊖= EncryptedAmountForSender  
-  * CB\_S\_Version \+= 1  
-* Receiver (holder)  
-  * ConfidentialBalance\_Inbox ⊕= EncryptedAmountForReceiver  
-  * EncryptedBalanceIssuer ⊕= EncryptedAmountForIssuer
-* OA / COA effects (plaintext accounting)  
-  * Holder ↔ holder (including second account): Public balances unchanged; OA unchanged, COA unchanged (pure redistribution inside non‑issuers).  
-  * Issuer involved as sender: Not allowed (would change OA without plaintext disclosure). Use ConfidentialMPTConvert instead.
+The ConfidentialMPTSend transaction modifies the confidential balances of both the sender and the receiver, and critically updates the issuer's confidential tracking (EncryptedBalanceIssuer) on both the sender's and receiver's MPToken objects.
 
+* Sender (Account's MPToken object):
+    * ConfidentialBalance\_Spending ⊖= EncryptedAmountForSender (Sender's confidential spending balance is homomorphically decreased by the transfer amount).
+    * CB\_S\_Version \+= 1 (The sender's confidential spending balance version is incremented to prevent replay attacks and ensure proof freshness).
+    * EncryptedBalanceIssuer ⊖= EncryptedAmountForIssuer (Issuer's confidential tracking for this specific sender is homomorphically decreased by the transfer amount, maintaining consistency with the sender's total confidential holdings).
+* Receiver (Receiver's MPToken object):
+    * ConfidentialBalance\_Inbox ⊕= EncryptedAmountForReceiver (Receiver's confidential inbox balance is homomorphically increased by the transfer amount).
+    * EncryptedBalanceIssuer ⊕= EncryptedAmountForIssuer (The issuer's confidential tracking for this specific receiver is homomorphically increased by the transfer amount, maintaining consistency with the receiver's total confidential holdings).
+* MPTokenIssuance object (Global Accounting):
+    * MPTokenIssuance.OutstandingAmount remains unchanged.
+    * MPTokenIssuance.ConfidentialOutstandingAmount remains unchanged.
 ### Validator Checks
 
 1. Prerequisites and Account Rules: These are foundational checks to ensure the transaction is valid in its context.
@@ -302,9 +297,7 @@ Example — Holder → Holder (with auditor)
   "EncryptedAmountForReceiver": { "A": "...", "B": "..." },
   "EncryptedAmountForIssuer":   { "A": "...", "B": "..." },
   "EncryptedAmountForAuditor":  { "A": "...", "B": "..." },
-
-  "SenderElGamalPublicKey":   "pkBob...",
-  "ReceiverElGamalPublicKey": "pkCarol...",
+  
   "AuditorPublicKey":         "pkAuditor...",
   "ZKProof": "zkp_bytes_here"
 }
@@ -466,19 +459,19 @@ Example — Holder converts back 75 units
 
 **Edge Case Analysis (Low-Volume Transaction Flow):** Alice, the issuer, converts 50 ConfidentialMPT into her second account, performs a single confidential send of 20 to Bob (a holder), and then executes a ConvertBack of 30\.
 
-Step 1\. Issuer Convert (Alice → second account, 50\)
+Step 1. Issuer Convert (Alice → second account, 50\)
 
 * Publicly revealed: Amount \= 50\.  
 * Ledger effect: OA ↑ 50, COA ↑ 50, IPB ↓ 50\.  
 * Outsiders now know: 50 CMPT entered confidential circulation.
 
-Step 2\. Confidential Send (Alice’s second account → Bob, amount 20\)
+Step 2. Confidential Send (Alice’s second account → Bob, amount 20\)
 
 * Public sees: sender \= Alice’s second account, receiver \= Bob, ciphertexts, ZKPs.  
 * Amount 20 is hidden.  
 * Ledger effect: OA, COA, IPB unchanged (just redistribution).
 
-Step 3\. *ConvertBack* (Alice’s second account → issuer reserve, 30\)
+Step 3. *ConvertBack* (Alice’s second account → issuer reserve, 30\)
 
 * Publicly revealed: Amount \= 30\.  
 * Ledger effect: OA ↓ 30, COA ↓ 30, IPB ↑ 30  
@@ -699,7 +692,7 @@ We will use the ConfidentialMPTSend transaction as our benchmark, as its cryptog
 * Range Proof: The proof that the hidden amount is non-negative.
 
 Option 1: Decomposition Range Proof  
-This method involves breaking the amount into its individual bits and generating a separate proof for each bit to show it is either 0 or 1\. The proof size is linear to the number of bits.
+This method involves breaking the amount into its individual bits and generating a separate proof for each bit to show it is either 0 or 1. The proof size is linear to the number of bits.
 
 1a: Using 64-bit Values
 
