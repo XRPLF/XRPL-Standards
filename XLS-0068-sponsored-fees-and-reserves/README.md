@@ -318,6 +318,8 @@ If a `Sponsorship` object does not exist:
 
 - There is no sponsor signature included.
 
+Note: if a transaction doesn't charge a fee (such as an account's first `SetRegularKey` transaction), the transaction will still succeed.
+
 #### 6.3.3. Reserve Sponsorship Failures
 
 - The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`)
@@ -332,6 +334,8 @@ If a `Sponsorship` object does not exist:
 
 - There is no sponsor signature included.
 
+Note: if a transaction doesn't charge a reserve (such as `AccountSet`), the transaction will still succeed.
+
 #### 6.3.4. Transactions that cannot be sponsored
 
 All transactions (other than pseudo-transactions) may use the `tfSponsorFee` flag, since they all have a fee.
@@ -340,8 +344,8 @@ However, some transactions will not support the `tfSponsorReserve` flag.
 
 - [`Batch` transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch)
   - `Batch` does not create any objects on its own, and therefore its use in the outer transaction would be confusing, as users may think that that means that all inner transactions are sponsored. The inner transactions should use `tfSponsorReserve` instead.
-- All pseudo-transactions (currently `EnableAmendment`, `SetFee`, and `UNLModify`)
-  - The reserves for those objects are covered by the network, not by any one account.
+- All [pseudo-transactions](https://xrpl.org/docs/references/protocol/transactions/pseudo-transaction-types/pseudo-transaction-types) (currently `EnableAmendment`, `SetFee`, and `UNLModify`)
+  - The fees and reserves for those objects are covered by the network, not by any one account.
 
 Also, many transactions, such as `AccountSet`, will have no change in output when using the `tfSponsorReserve` flag, if they do not create any new objects or accounts.
 
@@ -743,24 +747,15 @@ The primary motivation for this design is to enable companies, token issuers, an
 
 ## n+1. Remaining TODOs/Open Questions
 
-- Do I need a new type of directory nodes to keep track of sponsored objects?
-  - Clio could perhaps solve this problem
 - How will this work for objects like trustlines, where multiple accounts might be holding reserves for it?
   - Maybe a second `Sponsor` field or something?
 - How do we handle account creation? The actual account owner's signing keys aren't involved in that at all... Maybe just a new flag on the payment saying you'll pay the reserve for the account?
-- Should it be `ReserveCount` or `ReserveAmount`?
-  - If `ReserveCount`, it can be decremented to keep track of how much is left.
-    - Pro: easier to reason about how much you're giving someone.
-    - Con: sponsors have to update the number if reserves increase and your cost-benefit analysis changes.
-  - If `ReserveAmount`, you'd need a separate "`OwnerCount`" field to keep track of how many objects the thing owns. And probably a flag for whether the account itself is sponsored.
-    - Pro: people are used to thinking in terms of XRP.
-    - Con: rippled math might get more complicated. You have to keep track of potential reserve sponsorships in two places (`Sponsorship` and `AccountRoot`)
 - Should fee sponsorship allow for the existing fee paradigm that allows users to dip below the reserve?
-- Should there be a "max XRP per transaction" field in `Sponsorship`?
-- If a transaction doesn't take a fee (first `SetRegularKey`) or doesn't increase reserve (e.g. `AccountDelete`), and is sponsored, should that transaction fail or succeed.
-- Should the `Sponsorship` hold the XRP or pull from the `SponsorAccount`'s account?
-- Should we allow sponsorship of creating another account? e.g. Account A is sponsored by Sponsor, A creates B, does Sponsor also sponsor B or does this fail if A doesn't have the funds to create B?
+- Should there be a "max XRP per transaction" field in `Sponsorship`? Yes, TODO
+- Should the `Sponsorship` hold the XRP or pull from the `SponsorAccount`'s account? Pull from the `SponsorAccount`'s account, TODO
+- Should we allow sponsorship of creating another account? e.g. Account A is sponsored by Sponsor, A creates B, does Sponsor also sponsor B or does this fail if A doesn't have the funds to create B? No
 - Should `account_sponsoring` be Clio-only?
+- Should a sponsored account be prevented from sponsoring other accounts? By default the answer is no, so unless there's a reason to do so, we should leave it as is.
 
 # Appendix
 
