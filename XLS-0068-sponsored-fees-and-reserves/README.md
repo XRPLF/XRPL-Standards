@@ -375,8 +375,10 @@ This transaction creates and updates the `Sponsorship` object.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 | ---------- | --------- | --------- | ------------- | ------------ |
-| `SponsorAccount` | ✔️ | `string`  | `AccountID` | The sponsor associated with this relationship. This account also pays for the reserve of this object. |
-| `Sponsee` | ✔️ | `string`  | `AccountID` | The sponsee associated with this relationship. |
+|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`SponsorshipSet`).|
+|`Account`|✔️|`string`|`AccountID`|The account sending the transaction. This may be either the sponsor or the sponsee. |
+| `SponsorAccount` | | `string`  | `AccountID` | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`. |
+| `Sponsee` | | `string`  | `AccountID` | The sponsee associated with this relationship. If this field is included, the `Account`, is assumed to be the `SponsorAccount`. |
 | `FeeAmount`  | | `string`  | `Amount`  | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.  |
 | `ReserveCount` | | `number`  | `UInt32`  | The (remaining) amount of reserves that the sponsor has provided for the sponsee to use. |
 
@@ -393,7 +395,9 @@ This transaction creates and updates the `Sponsorship` object.
 ### 7.2. Failure Conditions
 
 - `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee`
-- If `tfDeleteObject` is provided:
+- Both `SponsorAccount` and `Sponsee` are specified
+- `SponsorAccount` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled
+- If `tfDeleteObject` is enabled:
   - `FeeAmount` is specified
   - `ReserveCount` is specified
   - `tfSponsorshipSetRequireSignForFee` is enabled
@@ -415,10 +419,10 @@ This transaction transfers a sponsor relationship for a particular ledger object
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 | ---------- | --------- | --------- | ------------- | ------------ |
-| `TransactionType` | ✔️ | `string`  | `UInt16`  |
-| `Account` | ✔️ | `string`  | `AccountID` |
-| `ObjectID` | | `string`  | `UInt256` |
-| `Sponsor` | | `object`  | `STObject`  |
+| `TransactionType` | ✔️ | `string`  | `UInt16`  | The transaction type (`SponsorshipTransfer`). |
+| `Account` | ✔️ | `string`  | `AccountID` | The account sending the transaction. This may be either the current sponsor or the current sponsee. |
+| `ObjectID` | | `string`  | `UInt256` | The 
+| `Sponsor` | | `object`  | `STObject`  | 
 
 #### 8.1.1. `ObjectID`
 
@@ -428,7 +432,7 @@ If it is not included, then it refers to the account sending the transaction.
 
 #### 8.1.2. `Sponsor`
 
-The `Sponsor` field is already added in the ledger common fields (see section [5.1.1](#511-sponsor)), but it has some additional rules associated with it on the `SponsorshipTransfer` transaction.
+The `Sponsor` field is already added in the transaction common fields (see section [6.1.1](#611-sponsor)), but it has some additional rules associated with it on the `SponsorshipTransfer` transaction.
 
 In this case, if `Sponsor` is included with the `tfSponsorReserve` flag, then the reserve sponsorship for the provided object will be transferred to the `Sponsor.Account` instead of passing back to the ledger object's owner.
 
@@ -448,14 +452,20 @@ Two accounts are allowed to submit a `SponsorshipTransfer` relationship to migra
 
 The sponsor will likely only rarely want to do this (such as if they are transferring accounts), but the sponsee may want to migrate if they change providers.
 
-### 8.4. Failure Conditions
+### 8.4. Transaction Fee
+
+The transaction fee for this transaction will be the base fee (currently 10 drops).
+
+### 8.5. Failure Conditions
+
+All failure conditions mentioned in section [6.3](#63-failure-conditions) still apply here.
 
 - If transferring the sponsorship, the new sponsor does not have enough reserve for this object/account.
 - If dissolving the sponsorship, the owner does not have enough reserve for this object/account.
 - The new sponsor does not exist.
-- The `tx.Account` neither the sponsor nor the owner of `ObjectID`.
+- The `tx.Account` neither the sponsor nor the owner (sponsee) of `ObjectID`.
 
-### 8.5. State Changes
+### 8.6. State Changes
 
 - The `Sponsor` field on the object is changed or deleted.
 - The old sponsor has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented by one.
