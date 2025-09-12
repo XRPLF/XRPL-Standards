@@ -1,4 +1,3 @@
-
 # Meta XLS: XLS Process and Guidelines
 
 <pre>
@@ -434,4 +433,3 @@ Those will remain with those discussions, to avoid confusion. The process propos
 ### B.4: What will happen to XLSes that have already been written and merged into the repo?
 
 They will be grandfathered in for now. Ideally someone (perhaps with the help of an AI) will go back and update them to match the desired format.
-
