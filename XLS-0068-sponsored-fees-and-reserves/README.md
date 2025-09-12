@@ -294,7 +294,7 @@ Either `SigningPubKey`+`Signature` or `Signers` must be included in the transact
 
 If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(\\# signatures+1)*base\textunderscore fee$.
 
-The total fee calculation for signatures will now be $( 1+\\# tx.Signers + \\# tx.Sponsor.Signers) * base\textunderscore fee$.
+The total fee calculation for signatures will now be $( 1+\\# tx.Signers + \\# tx.Sponsor.Signers) * base\textunderscore fee$ (plus transaction-specific fees).
 
 ### 6.3. Failure Conditions
 
@@ -796,10 +796,6 @@ The primary motivation for this design is to enable companies, token issuers, an
 - Should we allow sponsorship of creating another account? e.g. Account A is sponsored by Sponsor, A creates B, does Sponsor also sponsor B or does this fail if A doesn't have the funds to create B? No
 - Should `account_sponsoring` be Clio-only?
 - Should a sponsored account be prevented from sponsoring other accounts? By default the answer is no, so unless there's a reason to do so, we should leave it as is.
-
-### Answered and TODO
-
-- Should the `Sponsorship` hold the XRP or pull from the `SponsorAccount`'s account? Pull from the `SponsorAccount`'s account, TODO
 
 # Appendix
 
