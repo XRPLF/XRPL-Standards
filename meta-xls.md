@@ -1,3 +1,4 @@
+
 # Meta XLS: XLS Process and Guidelines
 
 <pre>
@@ -152,15 +153,19 @@ The technical specification describing the syntax and semantics of a new feature
 
 This will be codified in a template later.
 
-#### 4.4.3.1. Ledger Entries
+#### 4.4.3.1. STypes
+
+TODO
+
+#### 4.4.3.2. Ledger Entries
 
 `Ledger Entries` documents one or more new ledger entry objects introduced or modified by the specification. Each ledger entry must be in its own numbered section, with the following subsections:
 
-##### 4.4.3.1.1. Object Identifier
+##### 4.4.3.2.1. Object Identifier
 
 Each object on the XRP Ledger must have a unique object identifier (ID or key). The ID for a given object within the ledger is calculated using "tagged hashing". This involves hashing some object-specific parameters along with a type-specific prefix called the `key space` (a 16-bit value) to ensure that different objects have different IDs, even if they use the same set of parameters The key space is given as a `hex` representation in the specification. This section introduces the key space and the algorithm for how to calculate a unique object identifier. It is critical that the algorithm does not create collisions between two objects.
 
-##### 4.4.3.1.2. Fields
+##### 4.4.3.2.2. Fields
 
 This subsection describes the ledger entry fields in a tabular format, indicating whether a field is constant or optional, its JSON type (for reference, actual storage is binary), Internal Type, and Default Value. The field table MUST include all standard ledger entry fields (like `LedgerEntryType`, `Flags`, `PreviousTxnID`, `PreviousTxnLgrSeq`, `OwnerNode`) as well as fields unique to the ledger entry. The `Account` field is typical for objects owned by a single account.
 
@@ -181,17 +186,17 @@ These columns must all be included in the table:
 
 The table may be followed by subsections for fields requiring further details that are too long for the Description column.
 
-##### 4.4.3.1.3. Ownership
+##### 4.4.3.2.3. Ownership
 
 All XRP Ledger objects must have an owner. The owner is an `AccountRoot` object, and the ownership relationship is typically established by adding the object's ID to an `OwnerDirectory` ledger entry associated with the owner's account. This subsection captures which `AccountRoot` object's `OwnerDirectory` the ledger entry is registered. A single ledger entry may be linked from one or more unique `DirectoryNode` pages, usually under one `OwnerDirectory`.
 
 _Note: there are a handful of object types (such as `FeeSettings`) that don’t have an owner. If an amendment is of that ilk, that should be specified in this section._
 
-##### 4.4.3.1.4. Reserves
+##### 4.4.3.2.4. Reserves
 
 Creating ledger entries typically requires an increase in the owner's XRP reserve to discourage ledger bloat and account for the cost of storage. Each new ledger entry directly owned by an account typically increments the owner reserve by one unit (currently 0.2 XRP, as of last check, but subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.1.5. Deletion
+##### 4.4.3.2.5. Deletion
 
 This subsection captures the conditions under which the ledger entry can be deleted from the ledger. It should specify:
 
@@ -199,11 +204,11 @@ This subsection captures the conditions under which the ledger entry can be dele
 - Any prerequisite conditions for deletion (e.g., object state, zero balances, no linked objects).
 - Is the ledger entry a "blocker" for deleting its owner `AccountRoot` (i.e., whether it must be deleted before the account can be deleted).
 
-##### 4.4.3.1.6. Pseudo-Account
+##### 4.4.3.2.6. Pseudo-Account
 
 This section is optional. A "pseudo-account" might be associated if the newly introduced ledger entry needs to hold assets (XRP, IOUs or MPTs) or issue tokens (e.g., MPTs). A pseudo-account is a programmatically derived `Account` that cannot submit transactions, send or receive funds directly via standard payments, or have a key pair. For further details about pseudo-accounts, refer to [XLS-64](https://github.com/XRPLF/XRPL-Standards/pull/274) (or the relevant accepted standard). This section should specify if a pseudo-account is used, how its `AccountID` is derived, and its purpose.
 
-##### 4.4.3.1.7. Freeze/Lock
+##### 4.4.3.2.7. Freeze/Lock
 
 This section is optional. If the protocol holds assets on behalf of other users, it must comply with the existing compliance features `Freeze`, `Deep Freeze` for IOUs and `Locking` for MPTs. This section describes how said freezing is handled.
 
@@ -219,7 +224,7 @@ In RPCs like `account_objects` and `ledger_data`, a short, `snake_case` form of 
 
 Provide JSON examples for what the ledger object will look like.
 
-#### 4.4.3.2. Transactions
+#### 4.4.3.3. Transactions
 
 This section details new or modified transactions introduced by the specification.
 
@@ -234,7 +239,7 @@ One example of this naming convention is `ExampleSet` and `ExampleDelete`. Most 
 
 The following subsections must be included in a `Transaction` section.
 
-##### 4.4.3.2.1. Fields
+##### 4.4.3.3.1. Fields
 
 This section outlines transaction fields, provides details about them, defines special logic, failure conditions, and state changes. This table should list fields specific to this transaction. Common transaction fields (e.g., `Account`, `Fee`, `Sequence`, `Flags` (common transaction flags), `SigningPubKey`, `TxnSignature`) are assumed unless their usage has special implications for this transaction type.
 
@@ -248,11 +253,11 @@ The following columns should be included:
 - **Default Value**: If any. `N/A` if none or always required.
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.2.2. Transaction Fee
+##### 4.4.3.3.2. Transaction Fee
 
 Submitting a transaction typically requires paying a transaction fee. A typical transaction costs 10 drops as of last check (subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.2.3. Failure Conditions
+##### 4.4.3.3.3. Failure Conditions
 
 This section describes the conditions under which the transaction will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
 
@@ -262,21 +267,29 @@ In case of a transaction failure, an XRP Ledger server returns an error code ind
 
 If the new transaction logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code (usually a `tec` code) should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/TER.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific transaction logic failures.
 
-##### 4.4.3.2.4. State Changes
+##### 4.4.3.3.4. State Changes
 
 This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). Indexed for clarity. A successfully applied transaction must return a `tesSUCCESS` code.
 
-##### 4.4.3.2.5. Example JSON
+##### 4.4.3.3.5. Example JSON
 
 Provide JSON examples for transaction submission.
 
-#### 4.4.3.3. API/RPCs
+#### 4.4.3.4. Permissions
+
+This section details new or modified [granular account permissions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0074-account-permissions#23-granular-permissions) introduced by the specification.
+
+No subsections are required for this section. The section must mention what transaction type(s) this granular permission applies to, and what the scope of the granular permission is.
+
+The new transaction type permissions are implied by the addition of the transaction.
+
+#### 4.4.3.5. API/RPCs
 
 New amendments often introduce new APIs or modify existing APIs. Those API descriptions should also be outlined in a spec. APIs are how developers and users will be interacting with the new feature, so it is important to achieve consensus on the format and fields (especially since a breaking change would require bumping the API version).
 
 For each new API added (or modified), these sections should be included:
 
-##### 4.4.3.3.1. Request Fields
+##### 4.4.3.5.1. Request Fields
 
 - **Field Name:** The column indicates the field's name. Fields follow the `snake_case` naming convention. For existing field names, please refer to `jss.h`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
 - **Required?**:
@@ -284,7 +297,7 @@ For each new API added (or modified), these sections should be included:
 - **JSON Type**: The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.2. Response Fields
+##### 4.4.3.4.2. Response Fields
 
 - **Field Name:** The column indicates the field's name. Fields follow the `PascalCase` naming convention. For existing field names (and their associated types), please refer to `sfields.macro`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
 - **Always Present?**:
@@ -292,7 +305,7 @@ For each new API added (or modified), these sections should be included:
 - **JSON Type**:The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.3. Failure Conditions
+##### 4.4.3.5.3. Failure Conditions
 
 This section describes the conditions under which the API will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
 
@@ -433,3 +446,4 @@ Those will remain with those discussions, to avoid confusion. The process propos
 ### B.4: What will happen to XLSes that have already been written and merged into the repo?
 
 They will be grandfathered in for now. Ideally someone (perhaps with the help of an AI) will go back and update them to match the desired format.
+
