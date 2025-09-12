@@ -286,15 +286,15 @@ Either `Signature` or `Signers` must be included in the final transaction.
 
 There will be no additional transaction fee required for the use of the `Signature` field.
 
-If the `Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(\\#signatures+1)*base\textunderscore fee$.
-
-The total fee calculation for signatures will now be $( 1+\\# tx.Signers + \\# tx.Sponsor.Signers) * base\textunderscore fee$.
-
 `Signature` and `Signers` **will not** be signing fields (they will not be included in transaction signatures, though they will still be included in the stored transaction).
 
 Either `SigningPubKey`+`Signature` or `Signers` must be included in the transaction. There is one exception to this: if `lsfRequireSignatureForFee`/`lsfRequireSignatureForReserve` are not enabled for the type(s) of sponsorship in the transaction.
 
 ### 6.2. Transaction Fee
+
+If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(\\# signatures+1)*base\textunderscore fee$.
+
+The total fee calculation for signatures will now be $( 1+\\# tx.Signers + \\# tx.Sponsor.Signers) * base\textunderscore fee$.
 
 ### 6.3. Failure Conditions
 
