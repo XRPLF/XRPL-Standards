@@ -126,10 +126,11 @@ The key of the `Sponsorship` object is the result of [`SHA512-Half`](https://xrp
 | ---------- | --------- | --------- | ------------- | --------- | ------------- | ------------ |
 | `Owner` | ✔️ | ✔️ | N/A | `string`  | `AccountID` | The sponsor associated with this relationship. This account also pays for the reserve of this object. |
 | `Sponsee` | ✔️ | ✔️ | N/A | `string`  | `AccountID` | The sponsee associated with this relationship. |
+| `FeeAmount`  | | | `0` | `string`  | `Amount`  | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.  |
+| `MaxFee` | | | N/A | `string` | `Amount` | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool. |
+| `ReserveCount` | | | `0` | `string`  | `UInt32`  | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves. |
 | `OwnerNode`  | ✔️ | ✔️ | N/A | `string`  | `UInt64`  | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages. |
 | `SponseeNode`  | ✔️ | ✔️ | N/A | `string`  | `UInt64`  | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages. |
-| `FeeAmount`  | | | `0` | `string`  | `Amount`  | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.  |
-| `ReserveCount` | | | `0` | `string`  | `UInt32`  | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.  |
 
 ### 4.3. Flags
 
@@ -307,12 +308,13 @@ Either `SigningPubKey`+`Signature` or `Signers` must be included in the transact
 
 #### 6.3.2. Fee Sponsorship Failures
 
-- The sponsor does not have enough XRP to cover the sponsored transaction fee (`telINSUF_FEE_P`)
+- The sponsor's account does not have enough XRP to cover the sponsored transaction fee (`telINSUF_FEE_P`)
 
 If a `Sponsorship` object exists:
 
 - The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included.
 - There is not enough XRP in the `FeeAmount` to pay for the transaction.
+- The fee in `tx.Fee` is greater than `Sponsorship.MaxFee`
 
 If a `Sponsorship` object does not exist:
 
@@ -375,11 +377,12 @@ This transaction creates and updates the `Sponsorship` object.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 | ---------- | --------- | --------- | ------------- | ------------ |
-|`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`SponsorshipSet`).|
-|`Account`|✔️|`string`|`AccountID`|The account sending the transaction. This may be either the sponsor or the sponsee. |
+| `TransactionType` |✔️|`string`|`UInt16`|The transaction type (`SponsorshipSet`).|
+| `Account` |✔️|`string`|`AccountID`|The account sending the transaction. This may be either the sponsor or the sponsee. |
 | `SponsorAccount` | | `string`  | `AccountID` | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`. |
 | `Sponsee` | | `string`  | `AccountID` | The sponsee associated with this relationship. If this field is included, the `Account`, is assumed to be the `SponsorAccount`. |
-| `FeeAmount`  | | `string`  | `Amount`  | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.  |
+| `FeeAmount`  | | `string`  | `Amount`  | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees. |
+| `MaxFee` | | `string` | `Amount` | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool. |
 | `ReserveCount` | | `number`  | `UInt32`  | The (remaining) amount of reserves that the sponsor has provided for the sponsee to use. |
 
 ### 7.2. Flags
@@ -397,19 +400,24 @@ This transaction creates and updates the `Sponsorship` object.
 - `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee`
 - Both `SponsorAccount` and `Sponsee` are specified
 - `SponsorAccount` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled
+- `MaxFee` is less than the base fee or is not denominated in XRP
+- `FeeAmount` is less than the base fee or is not denominated in XRP
 - If `tfDeleteObject` is enabled:
   - `FeeAmount` is specified
+  - `MaxFee` is specified
   - `ReserveCount` is specified
   - `tfSponsorshipSetRequireSignForFee` is enabled
   - `tfSponsorshipSetRequireSignForReserve` is enabled
 
 ### 7.3. State Changes
 
-- If the object already exists, `Sponsorship.Amount += tx.FeeAmount` and `Sponsorship.ReserveCount += tx.ReserveCount`.
-- If the object doesn't exist, it will be created.
+- If the object already exists:
+  - `Sponsorship.Amount = tx.FeeAmount`
+  - `Sponsorship.MaxFee` = `tx.MaxFee`
+  - `Sponsorship.ReserveCount = tx.ReserveCount`
+- If the object doesn't exist, it will be created with the provided fields.
 - If the `tfDeleteObject` flag is used, it will delete the object. All funds remaining in the object will be sent back to the `SponsorAccount`.
-  - Both sponsor and sponsee can delete the object.
-  - Existing sponsored objects/accounts will need to go through the `SponsorshipTransfer` process.
+  - _Note: this does not affect already-sponsored entries and accounts. Existing sponsored objects/accounts will need to go through the `SponsorshipTransfer` process._
 
 ## 8. Transaction: `SponsorshipTransfer`
 
@@ -791,9 +799,7 @@ The primary motivation for this design is to enable companies, token issuers, an
 
 ### Answered and TODO
 
-- Should there be a "max XRP per transaction" field in `Sponsorship`? Yes, TODO
 - Should the `Sponsorship` hold the XRP or pull from the `SponsorAccount`'s account? Pull from the `SponsorAccount`'s account, TODO
-- 
 
 # Appendix
 
