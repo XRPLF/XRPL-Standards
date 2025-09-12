@@ -1,4 +1,3 @@
-
 <pre>
   xls: 68
   title: Sponsored Fees and Reserves
@@ -793,7 +792,6 @@ The primary motivation for this design is to enable companies, token issuers, an
   - Maybe a second `Sponsor` field or something?
 - How do we handle account creation? The actual account owner's signing keys aren't involved in that at all... Maybe just a new flag on the payment saying you'll pay the reserve for the account?
 - Should fee sponsorship allow for the existing fee paradigm that allows users to dip below the reserve?
-- Should we allow sponsorship of creating another account? e.g. Account A is sponsored by Sponsor, A creates B, does Sponsor also sponsor B or does this fail if A doesn't have the funds to create B? No
 - Should `account_sponsoring` be Clio-only?
 - Should a sponsored account be prevented from sponsoring other accounts? By default the answer is no, so unless there's a reason to do so, we should leave it as is.
 
