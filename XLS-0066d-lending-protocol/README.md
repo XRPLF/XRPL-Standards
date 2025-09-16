@@ -927,7 +927,7 @@ The account specified in the `Account` field pays the transaction fee.
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
 
-- Either of the `tfDefault`, `tfImpair` or `tfUnimpair` flags are set.
+- Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
 
 - The `Borrower` `AccountRoot` object does not exist.
 
