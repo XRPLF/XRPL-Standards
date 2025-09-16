@@ -366,6 +366,7 @@ If a `Sponsorship` object exists:
 
 - The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included.
 - There is not enough XRP in the `FeeAmount` to pay for the transaction.
+  - Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement).
 - The fee in `tx.Fee` is greater than `Sponsorship.MaxFee`
 
 If a `Sponsorship` object does not exist:
