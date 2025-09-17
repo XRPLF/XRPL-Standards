@@ -62,17 +62,17 @@ Bits in `MutableFlags` indicate specific fields or flags may be modified after i
 
 `MutableFlags` are prefixed with `tmf` to clearly distinguish them from standard `tf` prefix used for `Flags`.
 
-| Flag Name                   |  Hex Value   | Decimal Value | Description                                                                                              |
-| --------------------------- | :----------: | :-----------: | -------------------------------------------------------------------------------------------------------- |
-| [Reserved]                  |  ️`0x0001`   |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x0002`.] |
-| `tmfMPTCanMutateCanLock`     |  ️`0x0002`   |       2       | Indicates flag `lsfMPTCanLock` can be changed                                                            |
-| `tmfMPTCanMutateRequireAuth` |  ️`0x0004`   |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                                        |
-| `tmfMPTCanMutateCanEscrow`   |   `0x0008`   |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                                          |
-| `tmfMPTCanMutateCanTrade`    |   `0x0010`   |      16       | Indicates flag `lsfMPTCanTrade` can be changed                                                           |
-| `tmfMPTCanMutateCanTransfer` |  ️`0x0020`   |      32       | Indicates flag `lsfMPTCanTransfer` can be changed                                                        |
-| `tmfMPTCanMutateCanClawback` |  ️`0x0040`   |      64       | Indicates flag `lsfMPTCanClawback` can be changed                                                        |
-| `tmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                                            |
-| `tmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                                |
+| Flag Name                    |  Hex Value   | Decimal Value | Description                                                                              |
+| ---------------------------- | :----------: | :-----------: | ---------------------------------------------------------------------------------------- |
+| [Reserved]                   |  ️`0x0001`   |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x0002`.] |
+| `tmfMPTCanMutateCanLock`     |  ️`0x0002`   |       2       | Indicates flag `lsfMPTCanLock` can be changed                                            |
+| `tmfMPTCanMutateRequireAuth` |  ️`0x0004`   |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                        |
+| `tmfMPTCanMutateCanEscrow`   |   `0x0008`   |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                          |
+| `tmfMPTCanMutateCanTrade`    |   `0x0010`   |      16       | Indicates flag `lsfMPTCanTrade` can be changed                                           |
+| `tmfMPTCanMutateCanTransfer` |  ️`0x0020`   |      32       | Indicates flag `lsfMPTCanTransfer` can be changed                                        |
+| `tmfMPTCanMutateCanClawback` |  ️`0x0040`   |      64       | Indicates flag `lsfMPTCanClawback` can be changed                                        |
+| `tmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                            |
+| `tmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                |
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
@@ -99,17 +99,17 @@ A new optional field, `MutableFlags` (SField `sfMutableFlags`), is added to the 
 
 On-ledger `MutableFlags` are prefixed with `lmf` to clearly distinguish them from standard `lsf` prefix used for `Flags`.
 
-| Flag Name                    |  Hex Value   | Decimal Value | Description                                       |
-| ---------------------------- | :----------: | :-----------: | ------------------------------------------------- |
-| [Reserved]                   |  ️`0x0001`   |       1       |  [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x0002`.]                |
-| `lmfMPTCanMutateCanLock`     |  ️`0x0002`   |       2       | Indicates flag `lsfMPTCanLock` can be changed     |
-| `lmfMPTCanMutateRequireAuth` |  ️`0x0004`   |       4       | Indicates flag `lsfMPTRequireAuth` can be changed |
-| `lmfMPTCanMutateCanEscrow`   |   `0x0008`   |       8       | Indicates flag `lsfMPTCanEscrow` can be changed   |
-| `lmfMPTCanMutateCanTrade`    |   `0x0010`   |      16       | Indicates flag `lsfMPTCanTrade` can be changed    |
-| `lmfMPTCanMutateCanTransfer` |  ️`0x0020`   |      32       | Indicates flag `lsfMPTCanTransfer` can be changed |
-| `lmfMPTCanMutateCanClawback` |  ️`0x0040`   |      64       | Indicates flag `lsfMPTCanClawback` can be changed |
-| `lmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified     |
-| `lmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified         |
+| Flag Name                    |  Hex Value   | Decimal Value | Description                                                                              |
+| ---------------------------- | :----------: | :-----------: | ---------------------------------------------------------------------------------------- |
+| [Reserved]                   |  ️`0x0001`   |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x0002`.] |
+| `lmfMPTCanMutateCanLock`     |  ️`0x0002`   |       2       | Indicates flag `lsfMPTCanLock` can be changed                                            |
+| `lmfMPTCanMutateRequireAuth` |  ️`0x0004`   |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                        |
+| `lmfMPTCanMutateCanEscrow`   |   `0x0008`   |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                          |
+| `lmfMPTCanMutateCanTrade`    |   `0x0010`   |      16       | Indicates flag `lsfMPTCanTrade` can be changed                                           |
+| `lmfMPTCanMutateCanTransfer` |  ️`0x0020`   |      32       | Indicates flag `lsfMPTCanTransfer` can be changed                                        |
+| `lmfMPTCanMutateCanClawback` |  ️`0x0040`   |      64       | Indicates flag `lsfMPTCanClawback` can be changed                                        |
+| `lmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                            |
+| `lmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                |
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
@@ -151,8 +151,8 @@ Set or clear the flags which were marked as mutable.
 
 The `MutableFlags` use `tmf` as prefix.
 
-| Flag Name               | Hex Value | Decimal Value | Description                                                                                                             |
-| ----------------------- | :-------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------- |
+| Flag Name                | Hex Value | Decimal Value | Description                                                                                                             |
+| ------------------------ | :-------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------- |
 | `tmfMPTSetCanLock`       | ️`0x0001` |       1       | Sets the `lsfMPTCanLock` flag. Enables the token to be locked both individually and globally.                           |
 | `tmfMPTClearCanLock`     | ️`0x0002` |       2       | Clears the `lsfMPTCanLock` flag. Disables both individual and global locking of the token.                              |
 | `tmfMPTSetRequireAuth`   | ️`0x0004` |       4       | Sets the `lsfMPTRequireAuth` flag. Requires individual holders to be authorized.                                        |
@@ -175,22 +175,22 @@ The `MutableFlags` use `tmf` as prefix.
 
 ### 4.2. Failure Conditions
 
-| Failure Condition                                                                                                  | Error Code            |
-| ------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| `MutableFlags` contains invalid value (0 is invalid as well)                                                       | `temINVALID_FLAG`     |
-| `MPTokenHolder` is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present                    | `temMALFORMED`        |
-| `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present     | `temMALFORMED`        |
-| `TransferFee` exceeds the limit, which is 50000                                                                    | `temBAD_TRANSFER_FEE` |
-| `MPTokenMetadata` length exceeds the limit, which is 1024                                                          | `temMALFORMED`        |
+| Failure Condition                                                                                                    | Error Code            |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `MutableFlags` contains invalid value (0 is invalid as well)                                                         | `temINVALID_FLAG`     |
+| `MPTokenHolder` is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present                      | `temMALFORMED`        |
+| `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present       | `temMALFORMED`        |
+| `TransferFee` exceeds the limit, which is 50000                                                                      | `temBAD_TRANSFER_FEE` |
+| `MPTokenMetadata` length exceeds the limit, which is 1024                                                            | `temMALFORMED`        |
 | Setting and clearing the same flag simultaneously, e.g., specifying both `tmfMPTSetCanLock` and `tmfMPTClearCanLock` | `temMALFORMED`        |
-| Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not set                                            | `temMALFORMED`        |
-| Including a non-zero `TransferFee` and `tmfMPTClearCanTransfer` in the same transaction                             | `temMALFORMED`        |
-| `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled                 | `temDISABLED`         |
-| `MPTokenIssuanceID` does not exist                                                                                 | `tecOBJECT_NOT_FOUND` |
-| `Account` is not the issuer of the target `MPTokenIssuance`                                                        | `tecNO_PERMISSION`    |
-| `MutableFlags` attempts to modify flags not declared as mutable                                                    | `tecNO_PERMISSION`    |
-| `MPTokenMetadata` is present but was not marked as mutable                                                         | `tecNO_PERMISSION`    |
-| `TransferFee` is present but was not marked as mutable                                                             | `tecNO_PERMISSION`    |
+| Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not set                                              | `temMALFORMED`        |
+| Including a non-zero `TransferFee` and `tmfMPTClearCanTransfer` in the same transaction                              | `temMALFORMED`        |
+| `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled                   | `temDISABLED`         |
+| `MPTokenIssuanceID` does not exist                                                                                   | `tecOBJECT_NOT_FOUND` |
+| `Account` is not the issuer of the target `MPTokenIssuance`                                                          | `tecNO_PERMISSION`    |
+| `MutableFlags` attempts to modify flags not declared as mutable                                                      | `tecNO_PERMISSION`    |
+| `MPTokenMetadata` is present but was not marked as mutable                                                           | `tecNO_PERMISSION`    |
+| `TransferFee` is present but was not marked as mutable                                                               | `tecNO_PERMISSION`    |
 
 ### 4.3. `TransferFee` Modification Rules
 
