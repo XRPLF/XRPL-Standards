@@ -311,7 +311,7 @@ This section describes the conditions under which the API will fail. This must b
 
 In case of an API failure, an XRP Ledger server returns an error code and error message indicating the outcome. These codes and messages are crucial for clients to understand why an API was not successful. Please refer to the [documentation](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/error-formatting) for what this looks like. When defining failure conditions for a new API in an XLS, reuse existing codes whenever an existing code accurately describes the failure condition. This helps maintain consistency and avoids unnecessary proliferation of codes.
 
-If the new API logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/ErrorCodes.h.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific API logic failures.
+If the new API logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/ErrorCodes.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific API logic failures.
 
 ## 4.5. Stale Discussions/Ideas
 
