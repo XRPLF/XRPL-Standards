@@ -1,3 +1,13 @@
+---
+gists:
+  - id: 29fb92e850a527d0350aea387efeb2bb
+    url: "https://gist.github.com/mvadari/29fb92e850a527d0350aea387efeb2bb"
+    filename: Meta XLS.md
+    isPublic: false
+    baseUrl: "https://api.github.com"
+    updatedAt: "2025-09-19T16:09:16Z"
+---
+
 # Meta XLS: XLS Process and Guidelines
 
 <pre>
@@ -77,7 +87,8 @@ Every XLS must have a status included in its heading:
 - **Withdrawn**: The XLS Author(s) have withdrawn the proposed XLS. This state has finality and can no longer be resurrected using this XLS number. If the idea is pursued at a later date it is considered a new proposal.
   - If the XLS is withdrawn because it is superseded, the newer replacement XLS is linked.
 
-![][image1]
+<img width="951" height="471" alt="image" src="[https://github.com/user-attachments/assets/7371b656-023e-486b-8945-7b7581ca6927](https://github.com/user-attachments/assets/7371b656-023e-486b-8945-7b7581ca6927)" />
+
 _Note: the “Review” and “Last Call” statuses have been removed from those listed in EIP-1, as we do not have formal processes established for review for XLSes (e.g. Core EIPs need to be approved by all client implementations). This may be re-added in the future, if such processes are desired._
 
 ## 4.1. Format: Ideas
