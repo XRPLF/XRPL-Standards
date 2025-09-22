@@ -1,13 +1,3 @@
----
-gists:
-  - id: 29fb92e850a527d0350aea387efeb2bb
-    url: "https://gist.github.com/mvadari/29fb92e850a527d0350aea387efeb2bb"
-    filename: Meta XLS.md
-    isPublic: false
-    baseUrl: "https://api.github.com"
-    updatedAt: "2025-09-19T16:09:16Z"
----
-
 # Meta XLS: XLS Process and Guidelines
 
 <pre>
