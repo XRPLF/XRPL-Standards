@@ -4,7 +4,7 @@
     title: XLS Process and Guidelines
     description: Formalizes the process and structure for XRP Ledger Standards
     author: Mayukha Vadari (@mvadari), Vito Tumas (@Tapanito)
-    status: Discussion
+    status: Proposal
     category: Meta
     created: 2025-09-22
 </pre>
@@ -67,8 +67,8 @@ This category contains standards that pertain to XLSes themselves, such as this 
 
 Every XLS must have a status included in its heading:
 
-- **Idea**: An idea that is pre-draft. This is reflected by the “pre-proposal idea” category in the existing XLS discussions.
-- **Discussion**: An idea that is pre-draft. This is any other discussion in the Discussions section of the `XRPL-Standards` repo.
+- **Idea**: An idea that is pre-draft. This is currently reflected by the “Pre-Proposal Idea” category in the existing XLS discussions.
+- **Proposal**: A fairly fleshed-out proposal for an XLS. This is currently reflected by the "Standard Proposal" category in the existing XLS discussions.
 - **Draft**: The first formally tracked stage of an XLS in development. An XLS is merged by an XLS Editor into the XLS repository when properly formatted. XLS numbers will be assigned at this stage.
 - **Final**: This XLS represents the final standard. A `Final` XLS exists in a state of finality and should only be updated to correct errata and add non-normative clarifications. For rippled-related XLSes, the XLS can only be considered `Final` once the rippled PR has been merged. For other XLSes, there needs to be at least one project that has implemented full support of the Standard.
 - **Living**: A special status for XLSes that are designed to be continually updated and not reach a state of finality. This includes, for example, this XLS.
@@ -77,7 +77,7 @@ Every XLS must have a status included in its heading:
 - **Withdrawn**: The XLS Author(s) have withdrawn the proposed XLS. This state has finality and can no longer be resurrected using this XLS number. If the idea is pursued at a later date it is considered a new proposal.
   - If the XLS is withdrawn because it is superseded, the newer replacement XLS is linked.
 
-<img width="951" height="471" alt="image" src="[https://github.com/user-attachments/assets/7371b656-023e-486b-8945-7b7581ca6927](https://github.com/user-attachments/assets/7371b656-023e-486b-8945-7b7581ca6927)" />
+<img width="951" height="471" alt="image" src="https://github.com/user-attachments/assets/7371b656-023e-486b-8945-7b7581ca6927" />
 
 _Note: the “Review” and “Last Call” statuses have been removed from those listed in EIP-1, as we do not have formal processes established for review for XLSes (e.g. Core EIPs need to be approved by all client implementations). This may be re-added in the future, if such processes are desired._
 
@@ -85,9 +85,9 @@ _Note: the “Review” and “Last Call” statuses have been removed from thos
 
 There are no formatting requirements for Ideas.
 
-## 4.2. Format: Discussions
+## 4.2. Format: Proposals
 
-The only formatting requirement for a `Discussion` is that its title must include its category - e.g. `Meta XLS: XLS Process and Guidelines`. It should contain most of the sections required for `Draft`s, as this will make `Draft` generation easier later and distinguishes `Discussion`s from `Idea`s, but that is not strictly required.
+The main formatting requirement for a `Proposal` is that its title must include its category - e.g. `Meta XLS: XLS Process and Guidelines`. It must generally be in the format of a `Ddraft` and should contain most of the sections required for `Draft`s, as this will make `Draft` generation easier later and distinguishes `Proposal`s from `Idea`s, but does not need to be a full-fledged `Draft`.
 
 ## 4.3. Format: Drafts and Onward
 
@@ -106,11 +106,13 @@ Any XLS that wants to be considered for `Draft` status should have the following
   - **FAQ** (optional): A list of questions the author expects to be asked about the spec, and their answers. It is highly recommended but not required to include this section, to make it easier for spec readers to understand it.
   - **Design Discussion** (optional): An optional section that summarizes why the given design decisions were made, to avoid the need to rehash that discussion.
 
+All sections must be filled out with reasonable completeness and effort.
+
 ### 4.3.1. Preamble
 
 Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style header preamble, contained in a `<pre>` HTML block. The headers must appear in the following order.
 
-- `xls`: XLS number (assigned by the Editors - this field must not be included in `Ideas` or `Discussions`). This field should _only_ contain the number and nothing else.
+- `xls`: XLS number (assigned by the Editors - this field must not be included in `Idea`s or `Proposal`s). This field should _only_ contain the number and nothing else.
 - `title`: The XLS title is a few words, not a complete sentence. This field should _only_ contain the title, not an `XLS` prefix or the XLS number.
 - `description`: Description is one full (short) sentence
 - `implementation`: A link to the `rippled` (or other repo) PR associated with the spec, if applicable. This must be included for `Amendment` and `System` proposals for them to be considered `Final`.
@@ -118,7 +120,7 @@ Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style
 - `category`: One of `Amendment`, `System`, `Ecosystem`, or `Meta`.
 - `status`: `Draft`, `Final`, `Living`, `Deprecated`, `Stagnant`, `Withdrawn`
 - `withdrawal-reason`: A sentence explaining why the XLS was withdrawn. (Optional field, only needed when status is Withdrawn. If this proposal was superseded by another, that can be listed here.)
-- `discussion-from`: A link to the `Discussion` associated with this XLS. This field may be excluded from old standards (due to processes changing over time) but must be included in any new XLS (as there must be a `Discussion` before a PR is created).
+- `proposal-from`: A link to the `Proposal` associated with this XLS. This field may be excluded from old standards (due to processes changing over time) but must be included in any new XLS (as there must be a `Proposal` before a PR is created).
 - `requires`: XLS number(s) (Optional field)
 - `created`: The date the XLS was created on.
 - `updated`: The date the XLS was last updated.
@@ -313,7 +315,7 @@ In case of an API failure, an XRP Ledger server returns an error code and error 
 
 If the new API logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/ErrorCodes.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific API logic failures.
 
-## 4.5. Stale Discussions/Ideas
+## 4.5. Stale Proposals/Ideas
 
 All discussions will be checked for staleness after 90 days, and if no one responds for another 30 days, the discussion will be closed and locked. The author can reach out to the repo maintainers to reopen the issue at a later date, if desired.
 
@@ -441,7 +443,7 @@ They are simply skipped. This way, XLS numbers are roughly incrementing in order
 
 ### B.3: What will happen to existing XLS numbers that Discussions have already claimed?
 
-Those will remain with those discussions, to avoid confusion. The process proposed in this document will, if consensus agrees, be applied to future Discussions and Ideas.
+Those will remain with those discussions, to avoid confusion. The process proposed in this document will, if consensus agrees, be applied to future `Proposal`s and `Idea`s.
 
 ### B.4: What will happen to XLSes that have already been written and merged into the repo?
 
