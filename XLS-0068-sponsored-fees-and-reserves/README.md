@@ -453,7 +453,7 @@ This transaction creates and updates the `Sponsorship` object.
 | `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor.      |
 | `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                        |
 
-### 8.2. Failure Conditions
+### 8.3. Failure Conditions
 
 - `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee`
 - Both `SponsorAccount` and `Sponsee` are specified
@@ -467,7 +467,7 @@ This transaction creates and updates the `Sponsorship` object.
   - `tfSponsorshipSetRequireSignForFee` is enabled
   - `tfSponsorshipSetRequireSignForReserve` is enabled
 
-### 8.3. State Changes
+### 8.4. State Changes
 
 - If the object already exists:
   - `Sponsorship.Amount = tx.FeeAmount`
@@ -586,11 +586,11 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsorAccount` fie
 
 If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount` field, the `SponsorAccount`'s `SponsoringOwnerCount` is decremented by the `tx.Account`'s `SponsoredOwnerCount`.
 
-## 12. Permission: `SponsorFee`
+## 12. Granular Permission: `SponsorFee`
 
 This delegatable granular permission allows an account to sponsor fees on behalf of another account.
 
-## 13. Permission: `SponsorReserve`
+## 13. Granular Permission: `SponsorReserve`
 
 This delegatable granular permission allows an account to sponsor reserves on behalf of another account.
 
@@ -619,6 +619,10 @@ We propose this additional field:
 ### 14.2. Response Fields
 
 The response fields remain the same.
+
+### 14.3. Failure Conditions
+
+There are no additional failure conditions.
 
 ## 15. RPC: `account_sponsoring`
 
@@ -650,6 +654,13 @@ The response fields are nearly identical to `account_objects`.
 | `limit`                |                 | `number`  | The limit that was used in this request, if any.                                                                                                                                                                                                                                                                                                                                      |
 | `marker`               |                 | `any`     | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. Omitted when there are no additional pages after this one.                                                                                                                                                                                                  |
 | `validated`            |                 | `boolean` | If `true`, the information in this response comes from a validated ledger version. Otherwise, the information is subject to change.                                                                                                                                                                                                                                                   |
+
+### 15.3. Failure Conditions
+
+- Any of the [universal error types](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/error-formatting#universal-errors).
+- `invalidParams` - One or more fields are specified incorrectly, or one or more required fields are missing.
+- `actNotFound` - The [address](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#addresses) specified in the `account` field of the request does not correspond to an account in the ledger.
+- `lgrNotFound` - The ledger specified by the `ledger_hash` or `ledger_index` does not exist, or it does exist but the server does not have it.
 
 ## 16. Security
 
