@@ -293,7 +293,22 @@ If the new transaction logic introduces novel failure reasons not adequately cov
 
 This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). Indexed for clarity. A successfully applied transaction must return a `tesSUCCESS` code.
 
-##### 4.4.3.3.5. Example JSON
+##### 4.4.3.3.5. Metadata Fields
+
+This section describes any additions or modifications (synthetic or otherwise) to the transaction metadata. This section must not be included if the transaction does not make any such additions or modifications.
+
+The following columns should be included in the table:
+
+- **Field Name:** The column indicates the field's name. Validated fields follow the `PascalCase` naming convention, while synthetic fields follow the `snake_case` naming convention. For existing field names (and their associated types), please refer to `sfields.macro` and `jss.h`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
+- **Validated**:
+  - **Yes**: if the field is validated (e.g. `DeliveredAmount`)
+  - **No**: if the field is synthetic (e.g. `nftoken_id`)
+- **Always Present?**:
+  - **Yes**, **No**, or **Conditional** (with conditions explained).
+- **Type**: If the field is synthetic, this should specify the The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
+- **Description**: Succinct description of the field.
+
+##### 4.4.3.3.6. Example JSON
 
 Provide JSON examples for transaction submission.
 
