@@ -155,9 +155,29 @@ The technical specification describing the syntax and semantics of a new feature
 
 This will be codified in a template later.
 
-#### 4.4.3.1. STypes
+#### 4.4.3.1. Serialized Types
 
-TODO
+`Serialized Types` documents one or more new "serialized types" (or STypes) introduced or modified by the specification. Most specifications will not need such sections, as the[ existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally enough. Each SType must be in its own numbered section, with the following subsections:
+
+##### 4.4.3.1.1. SType value
+
+Each SType has its own unique value associated with it, so that when an object is being deserialized, the deserializer knows which decoder to use. The current values are specified [here](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/SField.h#L60).
+
+##### 4.4.3.1.2. JSON Representation
+
+This subsection describes how an instance of the new SType will be represented in JSON (which is how most users will see and interact with it). For example, an `STAccount` is represented as an r-address `string`.
+
+##### 4.4.3.1.3. Additional Accepted JSON Inputs
+
+This optional subsection describes additional JSON representations may be parsed. For example, a `UInt32` can be passed in as an `int`, a `uint`, or a `string`, even though its output is always a `uint`.
+
+##### 4.4.3.1.4. Binary Encoding
+
+This subsection describes how an instance of the new SType will be encoded or serialized in binary. For example, [this](https://xrpl.org/docs/references/protocol/binary-format#accountid-fields) describes how an `STAccount` is serialized.
+
+##### 4.4.3.1.5. Example JSON and Binary Encoding
+
+Provide JSON and binary examples for what this SType will look like.
 
 #### 4.4.3.2. Ledger Entries
 
