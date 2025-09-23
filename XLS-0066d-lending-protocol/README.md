@@ -259,23 +259,23 @@ ManagementFeeRate   = 0.1 (10%)
 
 # The Lender issues the following Loan
 -- Loan --
-LoanPrincipal       = 1,000 Tokens
-LoanInterestRate    = 0.1 (10%)
+PrincipalRequested = 1,000 Tokens
+InterestRate       = 0.1 (10%)
 
 # SIMPLIfIED
-LoanInterest        = LoanPrincipal x LoanInterestRate
+TotalInterestOutstanding        = PrincipalRequested x InterestRate
                     = 100 Tokens
 
 ** State Changes **
 
 -- Vault --
 # Increase the potential value of the Vault
-AssetsTotal     = AssetsTotal + ((LoanInterest - (LoanInterest x ManagementFeeRate)))
+AssetsTotal     = AssetsTotal + ((TotalInterestOutstanding - (TotalInterestOutstanding x ManagementFeeRate)))
                 = 100,000 + (100 - (100 x 0.1)) = 100,000 + 90
                 = 100,090 Tokens
 
 # Decrease Asset Available in the Vault
-AssetsAvailable = AssetsAvailable - LoanPrincipal
+AssetsAvailable = AssetsAvailable - PrincipalRequested
                 = 100,000 - 1,000
                 = 99,000 Tokens
 
@@ -283,7 +283,7 @@ SharesTotal     = (UNCHANGED)
 
 -- Lending Protocol --
 # Increase Lending Protocol Debt
-DebtTotal   = DebtTotal + LoanPrincipal + (LoanInterest - (LoanInterest x ManagementFeeRate))
+DebtTotal   = DebtTotal + PrincipalRequested + (TotalInterestOutstanding - (TotalInterestOutstanding x ManagementFeeRate))
             = 0 + 1,000 + (100 - (100 x 0.1)) = 1,000 + 90
             = 1,090 Tokens
 
@@ -305,14 +305,14 @@ DebtTotal           = 1,090 Tokens
 ManagementFeeRate   = 0.1 (10%)
 
 -- Loan --
-LoanPrincipal       = 1,000 Tokens
-LoanInterestRate    = 0.1 (10%)
-# SIMPLIfIED
-LoanPayments        = 2
+PrincipalRequested = 1,000 Tokens
+InterestRate       = 0.1 (10%)
+# SIMPLIFIED
+PaymentRemaining   = 2
 
-# SIMPLIfIED
-LoanInterest        = LoanPrincipal x LoanInterestRate
-                    = 100 Tokens
+# SIMPLIFIED
+TotalInterestOutstanding = PrincipalRequested x InterestRate
+                         = 100 Tokens
 
 
 # The Borrower makes a single payment
@@ -328,7 +328,7 @@ PaymentInterestPortion  = 50 Tokens
 AssetsTotal     = (UNCHANGED)
 
 # Increase Asset Available in the Vault
-AssetsAvailable = AssetsAvailable + PaymentPrincipalPortion + (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate)
+AssetsAvailable = AssetsAvailable + PaymentPrincipalPortion + (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate))
                 = 99,000 + 500 + (50 - (50 x 0.1))
                 = 99,545 Tokens
 
@@ -375,29 +375,27 @@ CoverRateLiquidation    = 0.1 (10%)
 CoverAvailable          = 1,000 Tokens
 
 -- Loan --
-AssetsAvailable       = 500 Tokens
 PrincipleOutstanding  = 1,000 Tokens
 InterestOutstanding   = 90 Tokens
 
 
 # First-Loss Capital liquidation maths
 
-DefaultAmount = PrincipleOutstanding + InterestOutstanding - AssetsAvailable
-              = 1,000 + 90 - 500
-              = 590
+DefaultAmount = PrincipleOutstanding + InterestOutstanding
+              = 1,000 + 90
+              = 1,090
 
 # The amount of the default that the first-loss capital scheme will cover
 DefaultCovered      = min((DebtTotal x CoverRateMinimum) x CoverRateLiquidation, DefaultAmount)
-                    = min((1,090 * 0.1) * 0.1, 1,090) = min(10.9, 590)
+                    = min((1,090 * 0.1) * 0.1, 1,090) = min(10.9, 1,090)
                     = 10.9 Tokens
 
 Loss                = DefaultAmount - DefaultCovered
-                    = 590 - 10.9
-                    = 579.1 Tokens
+                    = 1,090 - 10.9
+                    = 1,079.1 Tokens
 
-FundsReturned       = DefaultCovered + AssetsAvailable
-                    = 10.9 + 500
-                    = 510.9
+FundsReturned       = DefaultCovered
+                    = 10.9
 
 # Note, Loss + FundsReturned MUST be equal to PrincipleOutstanding + InterestOutstanding
 
@@ -405,12 +403,12 @@ FundsReturned       = DefaultCovered + AssetsAvailable
 
 -- Vault --
 AssetsTotal     = AssetsTotal - Loss
-                = 100,090 - 579.1
-                = 99,510.9 Tokens
+                = 100,090 - 1,079.1
+                = 99,010.9 Tokens
 
 AssetsAvailable = AssetsAvailable + FundsReturned
-                = 99,000 + 510.9
-                = 99,510.9 Tokens
+                = 99,000 + 10.9
+                = 99,010.9 Tokens
 
 SharesTotal = (UNCHANGED)
 
@@ -940,11 +938,11 @@ The account specified in the `Account` field pays the transaction fee.
 
 - Exceeds maximum Debt of the LoanBroker:
 
-  - `LoanBroker(LoanBrokerID).DebtMaximum` < `Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)`
+  - `LoanBroker(LoanBrokerID).DebtMaximum` < `Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
 
 - Insufficient First-Loss Capital:
 
-  - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
+  - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
 ##### 3.2.1.6 State Changes
 
@@ -981,11 +979,11 @@ The account specified in the `Account` field pays the transaction fee.
     - `Vault.AssetsAvailable -= Loan.PrincipalRequested`.
 
   - Increase the Total Value of the Vault:
-    - `Vault.AssetsTotal += LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)` where `LoanInterest` is the Loan's total interest.
+    - `Vault.AssetsTotal += TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`.
 
 - `LoanBroker(LoanBrokerID)` object changes:
 
-  - `LoanBroker.DebtTotal += Loan.PrincipalRequested + (LoanInterest - (LoanInterest x LoanBroker.ManagementFeeRate)`
+  - `LoanBroker.DebtTotal += Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
   - `LoanBroker.OwnerCount += 1`
 
   - Add `LoanID` to `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
@@ -1391,7 +1389,7 @@ $$
 The total loan value is simply:
 
 $$
-totalValueOutstanding = periodicPayment \times paymentsRemaining
+totalValueOutstanding = periodicPayment \times PaymentRemaining
 $$
 
 We calculate the total interest outstanding as follows:
@@ -1542,7 +1540,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
   - Decrease `Loan.PaymentRemaining` by `full_periodic_payments`.
   - Decrease `Loan.PrincipalOutstanding` by `principal_paid`.
 
-  - If `Loan.PaymentRemaining > 0` and `LoanPrincipalOutstanding > 0`:
+  - If `Loan.PaymentRemaining > 0` and `Loan.PrincipalOutstanding > 0`:
 
     - Set the next payment date: `Loan.NextPaymentDueDate += Loan.PaymentInterval * full_periodic_payments`.
     - Set the previous payment date: `Loan.PreviousPaymentDate = Loan.NextPaymentDueDate - Loan.PaymentInterval`.
