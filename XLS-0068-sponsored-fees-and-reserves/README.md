@@ -487,8 +487,8 @@ This transaction transfers a sponsor relationship for a particular ledger object
 | ----------------- | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------- |
 | `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipTransfer`).                                                       |
 | `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the current sponsor or the current sponsee. |
-| `ObjectID`        |           | `string`  | `UInt256`     | The                                                                                                 |
-| `Sponsor`         |           | `object`  | `STObject`    |
+| `ObjectID`        |           | `string`  | `UInt256`     | The ID of the object to transfer sponsorship.                                                       |
+| `Sponsor`         |           | `object`  | `STObject`    | The new sponsor of the object. This field contains the same subfields as above.                     |
 
 #### 9.1.1. `ObjectID`
 
@@ -533,7 +533,7 @@ All failure conditions mentioned in section [6.3](#63-failure-conditions) still 
 
 ### 9.6. State Changes
 
-- The `Sponsor` field on the object is changed or deleted.
+- The `Sponsor` field on the object is deleted if the `tx.Sponsor.Account` is the object's `Owner`, otherwise the `Sponsor` field is updated to the new `tx.Sponsor.Account`.
 - The old sponsor has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented by one.
 - The new sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` incremented by one.
 - If there is no new sponsor, then the owner's `SponsoredOwnerCount` will be decremented by one.
