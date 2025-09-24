@@ -5,7 +5,7 @@
   author: Mayukha Vadari (@mvadari)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   created: 2024-05-02
-  updated: 2025-09-19
+  updated: 2025-09-24
   status: Draft
   category: Amendment
   requires: 74
