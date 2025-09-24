@@ -13,7 +13,7 @@
 
 # Quickstart
 
-If you are a developer and want to get started quickly with integrating CTID, please visit [the quickstart repo](https://github.com/xrplf/ctid).
+If you are a developer and want to get started quickly with integrating CTID, please visit [the quickstart](./QUICKSTART.md).
 
 # Abstract
 
