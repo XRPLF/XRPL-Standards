@@ -468,7 +468,8 @@ The `LoanID` is calculated as follows:
 | `NextPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    | `LoanSet.StartDate + LoanSet.PaymentInterval` | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
 | `PaymentRemaining`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |            `LoanSet.PaymentTotal`             | The number of payments remaining on the Loan.                                                                                                                  |
 | `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The principal amount due to be paid by the Borrower.                                                                                                           |
-| `TotalValueOutstanding`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |           `TotalValueOutstanding()`           | THe total outstanding value of the Loan.                                                                                                                       |
+| `TotalValueOutstanding`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |           `TotalValueOutstanding()`           | The total outstanding value of the Loan.                                                                                                                       |
+| `PrincipalRequested`      |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The amount of principal requested for the Loan.                                                                                                                |
 
 ##### 2.2.2.1 Flags
 
@@ -1514,7 +1515,7 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     let loan_value_change = 0
     let total_fee_paid = loan.service_fee * full_periodic_payments
     let loan_value_change = 0
-  
+
     while full_periodic_payments > 0 {
         total_principal_paid += periodic_payment.principal
         total_interest_paid  += periodic_payment.interest
@@ -1616,7 +1617,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Decrease `Loan.PaymentRemaining` by `full_periodic_payments`.
   - Decrease `Loan.PrincipalOutstanding` by `principal_paid`.
-  - Update `Loan.TotalValueOutstanding` = `(Loan.TotalValueOutstanding + value_change) - (principal_paid + interest_paid)`. 
+  - Update `Loan.TotalValueOutstanding` = `(Loan.TotalValueOutstanding + value_change) - (principal_paid + interest_paid)`.
 
   - If `Loan.PaymentRemaining > 0` and `Loan.PrincipalOutstanding > 0`:
 
