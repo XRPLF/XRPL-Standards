@@ -1,17 +1,19 @@
-<pre class="notranslate">
-Title:       <b>Concise Transaction Identifier (CTID)</b>
-Type:        Draft
-PR:          <a href="https://github.com/XRPLF/rippled/pull/4418">4118</a>
-Author:      Richard Holland, Xaman <a href="https://github.com/RichardAH/">(RichardAH)</a>
-             Ryan Molley, Crossmark <a href="https://github.com/interc0der/">(interc0der)</a>
-Affiliation: <a href="https://xrplf.org" rel="nofollow">XRPLF</a>
+<pre>
+  xls: 37
+  title: Concise Transaction Identifier (CTID)
+  description: A way to locate validated transactions using ledger sequence number, transaction index, and network ID rather than transaction hash
+  author: Richard Holland (@RichardAH), Ryan Molley (@interc0der)
+  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/91
+  status: Final
+  category: Protocol
+  created: 2023-02-12
 </pre>
 
 > This proposal replaces the original proposal for Concise Transaction Identifiers XLS-15d
 
 # Quickstart
 
-If you are a developer and want to get started quickly with integrating CTID, please visit [the quickstart repo](https://github.com/xrplf/ctid).
+If you are a developer and want to get started quickly with integrating CTID, please visit [the quickstart](./QUICKSTART.md).
 
 # Abstract
 
@@ -96,11 +98,11 @@ CTIDs allow users to quickly and easily identify their transactions on a particu
 
 To future-proof CTID identifiers, the parameters and their sizes and lifespans are considered:
 
-| Field             | Size (bits) | Limit (decimal) | Lifespan                                                     | Explanation                                                                                                                                                                                                 |
-| ----------------- | ----------- | --------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ledger Index      | 28          | 268,435,455     | 34 years from genesis                                        | This field would otherwise be 32 bits but for the C lead-in nibble. We feel the easily identified C is more useful than an extremely long lifespan.                                                         |
+| Field             | Size (bits) | Limit (decimal) | Lifespan                                                     | Explanation                                                                                                                                                                                                  |
+| ----------------- | ----------- | --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ledger Index      | 28          | 268,435,455     | 34 years from genesis                                        | This field would otherwise be 32 bits but for the C lead-in nibble. We feel the easily identified C is more useful than an extremely long lifespan.                                                          |
 | Transaction Index | 16          | 65,535          | ∞ / until there are more than 65,535 transactions per ledger | It is very unlikely there will be more than 65535 transactions per ledger in any XRPL Protocol Chain for a long time. If there are then those above this limit still exist but cannot be identified as CTID. |
-| Network ID        | 16          | 65,535          | ∞ / until there are more than 65535 ports allowed in TCP     | In XRPL Protocol Chains the Network ID should match the chosen peer port. Thus the natural limitation on Network ID is that of the TCP port (65536).                                                        |
+| Network ID        | 16          | 65,535          | ∞ / until there are more than 65535 ports allowed in TCP     | In XRPL Protocol Chains the Network ID should match the chosen peer port. Thus the natural limitation on Network ID is that of the TCP port (65536).                                                         |
 
 ### 2.2 Extensible
 
@@ -176,7 +178,7 @@ yarn add xls-37d
 An example encoding routine in typescript follows:
 
 ```tsx
-import xls37d from 'xls-37d';
+import xls37d from "xls-37d";
 
 const { ctid } = new xls37d.encode({
   networkId,
@@ -190,7 +192,7 @@ const { ctid } = new xls37d.encode({
 An example decoding routine in typescript follows:
 
 ```tsx
-import xls37d from 'xls-37d';
+import xls37d from "xls-37d";
 
 const { networkId, lgrIndex, txnIndex } = new xls37d.decode(ctid);
 ```
