@@ -573,7 +573,8 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 
-- The `OwnerCount` field is greater than zero.
+- The `OwnerCount > 0` there are loan objects.
+- The `DebtTotal > 0` there are unpaid loans.
 
 ##### 3.1.2.2 State Changes
 
