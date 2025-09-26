@@ -1,4 +1,4 @@
-  <pre>
+<pre>
   xls: 66
   title: Lending Protocol
   description: XRP Ledger-native protocol for issuing uncollateralized, fixed-term loans using pooled funds, enabling on-chain credit origination.
@@ -140,7 +140,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - **`Repayment Schedule`**: A detailed plan that outlines when and how much a borrower must pay to repay the Loan fLoan.
 - **`Grace Period`**: A set period after the Loan's due date after which the Loan Broker can default the Loan
 
-### 1.6.2 Actors
+#### 1.6.2 Actors
 
 - **`LoanBroker`**: The entity issuing the Loan.
 - **`Borrower`**: The account that is borrowing funds.
@@ -196,7 +196,7 @@ The key of the `LoanBroker` object is the result of [`SHA512-Half`](https://xrpl
 The `LoanBroker` object has the following fields:
 
 | Field Name             | User Modifiable? | Constant? |      Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                  |
-  | ---------------------- | :--------------: | :-------: | :-----------------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ---------------------- | :--------------: | :-------: | :-----------------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `LedgerEntryType`      |       `No`       |   `Yes`   | :heavy\*check_mark: | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                          |
 | `LedgerIndex`          |       `No`       |   `Yes`   | :heavy_check_mark:  | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                    |
 | `Flags`                |      `Yes`       |   `No`    | :heavy_check_mark:  | `string`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                         |
@@ -463,11 +463,12 @@ The `LoanID` is calculated as follows:
 | `OverpaymentInterestRate` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                   |
 | `StartDate`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |           `CurrentLedgerTimestamp`            | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                 |
 | `PaymentInterval`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | Number of seconds between Loan payments.                                                                                                                       |
-| `GracePeriod`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | The number of seconds after the Payment Due Date that the Loan can be Defaulted.                                                                               |
+| `GracePeriod`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                        |
 | `PreviousPaymentDate`     |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                      `0`                      | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
 | `NextPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    | `LoanSet.StartDate + LoanSet.PaymentInterval` | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
 | `PaymentRemaining`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |            `LoanSet.PaymentTotal`             | The number of payments remaining on the Loan.                                                                                                                  |
-| `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The principal amount requested by the Borrower.                                                                                                                |
+| `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The principal amount due to be paid by the Borrower.                                                                                                           |
+| `TotalValueOutstanding`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |           `TotalValueOutstanding()`           | THe total outstanding value of the Loan.                                                                                                                       |
 
 ##### 2.2.2.1 Flags
 
@@ -490,7 +491,19 @@ The `Loan` objects are stored in the ledger and tracked in two [Owner Directorie
 
 The `Loan` object costs one owner reserve for the `Borrower`.
 
-#### 2.2.5 Impairment
+#### 2.2.5 Loan Total Value
+
+The loan's financial state is tracked through three key components:
+
+- **PrincipalOutstanding**: Represents the remaining principal balance that the borrower must repay to satisfy the original loan amount.
+- **TotalValueOutstanding**: Encompasses the complete remaining loan obligation, comprising both the outstanding principal and all scheduled interest payments based on the original amortization schedule. This value excludes any additional interest charges resulting from late payments.
+- **InterestOutstanding**: The total scheduled interest remaining on the loan, derived as `TotalValueOutstanding - PrincipalOutstanding`.
+
+**Asset-Specific Precision Handling**: For discrete asset types (MPTs and XRP denominated in drops), both `TotalValueOutstanding` and `PrincipalOutstanding` values are truncated to whole numbers to ensure compatibility with the underlying asset precision requirements.
+
+**Late Payment Interest Treatment**: Late payment penalties and additional interest charges are calculated and collected separately from the core loan value. These charges do not modify the `TotalValueOutstanding` calculation, which remains anchored to the original scheduled payment terms.
+
+#### 2.2.6 Impairment
 
 When the Loan Broker discovers that the Borower cannot make an upcoming payment, impairment allows the Loan Broker to register a "paper loss" with the Vault. The impairment mechanism moves the Next Payment Due Date to the time the Loan was impaired, allowing to default the Loan more quickly. However, if the Borrower makes a payment, the impairment status is automatically cleared.
 
@@ -511,10 +524,10 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `TransactionType`      | :heavy_check_mark: |    `No`     | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
 | `VaultID`              | :heavy_check_mark: |    `No`     | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity.                                                                               |
 | `LoanBrokerID`         |                    |    `No`     | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
-| `Flags`                |                    |    `Yes`     | `string`  |   `UINT32`    |       0       | Specifies the flags for the Lending Protocol.                                                                                                      |
-| `Data`                 |                    |    `Yes`     | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
+| `Flags`                |                    |    `Yes`    | `string`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
+| `Data`                 |                    |    `Yes`    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |                    |    `No`     | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive.                                  |
-| `DebtMaximum`          |                    |    `Yes`     | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
+| `DebtMaximum`          |                    |    `Yes`    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
@@ -749,6 +762,10 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
     - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
 
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
+
+##### 3.1.4.3 Invariants
+
+**TBD**
 
 [**Return to Index**](#index)
 
@@ -1011,6 +1028,7 @@ The transaction deletes an existing `Loan` object.
 - The Account submitting the `LoanDelete` is not the `LoanBroker.Owner` or the `Loan.Borrower`.
 - The Loan is active:
   - `Loan.PaymentRemaining > 0`
+  - `Loan.TotalValueOutstanding > 0`
 
 ##### 3.2.2.2 State Changes
 
@@ -1027,7 +1045,7 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.2.3 Invariants
 
-- If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0`
+- If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0 && Loan.TotalValueOutstanding = 0`
 
 [**Return to Index**](#index)
 
@@ -1056,7 +1074,7 @@ The transaction deletes an existing `Loan` object.
 - The `lsfLoanDefault` flag is set on the Loan object. Once a Loan is defaulted, it cannot be modified.
 
 - If `Loan(LoanID).Flags == lsfLoanImpaired` AND `tfLoanImpair` flag is provided (impairing an already impaired loan).
-- If `Loan(LoanID).Flags == 0` AND `tfLoanUnimpair` flag is provided (clearning impairment for an uninpaired loan).
+- If `Loan(LoanID).Flags == 0` AND `tfLoanUnimpair` flag is provided (clearing impairment for an unimpaired loan).
 
 - `Loan.PaymentRemaining == 0`.
 
@@ -1085,18 +1103,18 @@ The transaction deletes an existing `Loan` object.
     - If `Loan.lsfLoanImpaired` flag is set:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
 
-- Update the `LoanBroker` object:
+  - Update the `LoanBroker` object:
 
-  - Decrease the Debt of the LoanBroker:
-    - `LoanBroker(LoanBrokerID).DebtTotal -= Loan.PrincipalOutstanding + Loan.InterestOutstanding`
-  - Decrease the First-Loss Capital Cover Available:
-    - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
+    - Decrease the Debt of the LoanBroker:
+      - `LoanBroker(LoanBrokerID).DebtTotal -= Loan.PrincipalOutstanding + Loan.InterestOutstanding`
+    - Decrease the First-Loss Capital Cover Available:
+      - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
 
-- Update the `Loan` object:
+  - Update the `Loan` object:
 
-  - `Loan(LoanID).Flags |= lsfLoanDefault`
-  - `Loan(LoanID).PaymentRemaining = 0`
-  - `Loan(LoanID).PrincipalOutstanding = 0`
+    - `Loan(LoanID).Flags |= lsfLoanDefault`
+    - `Loan(LoanID).PaymentRemaining = 0`
+    - `Loan(LoanID).PrincipalOutstanding = 0`
 
   - Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
 
@@ -1185,7 +1203,7 @@ The following diagram depicts how a payment is handled based on the amount paid.
                           Payment Amount
 ```
 
-The minimum payment required is determined by whether the borrower makes the payment before or on the `NextPaymentDueDate` or if it is late. Any payment below the minimum amount required is rejected. With a single `LoanPay` transaction, the Borrower can make multiple loan payments. For example, if the periodic payment amount is 400 Tokens and the Borrower makes a payment of 900 Tokens, the payment will be treated as two periodic payments, moving the NextPaymentDueDate forward by two payment intervals, and the remaining 100 Tokens will be an overpayment.
+The minimum payment required is determined by whether the borrower makes the payment before or on the `NextPaymentDueDate` or if it is late. Any payment below the minimum amount required is rejected. With a single `LoanPay` transaction, the Borrower can make multiple loan payments. For example, if the periodic payment amount is 400 Tokens and the Borrower makes a payment of 900 Tokens, the payment will be treated as two periodic payments, moving the NextPaymentDueDate forward to two payment intervals, and the remaining 100 Tokens will be an overpayment.
 
 If the Loan Broker and the borrower have agreed to allow overpayments, any amount above the periodic payment is treated as an overpayment. However, if overpayments are not supported, the excess amount will not be charged and will remain with the borrower.
 
@@ -1219,6 +1237,34 @@ $$
 principal = periodicPayment - interest
 $$
 
+When only a single payment remains (PaymentRemaining = 1) the periodic payment MUST be set equal to the current TotalValueOutstanding (i.e. principalOutstanding + interestOutstanding before any asset-specific rounding/truncation). This overrides the standard amortization formula for the last installment. The purpose is to eliminate residual dust created by iterative rounding (e.g. integer truncation for XRP drops or whole‑unit MPTs) that could otherwise make the loan impossible to fully extinguish.
+
+Formally:
+If PaymentRemaining > 1:
+periodicPayment = formula result (rounded per asset rules)
+If PaymentRemaining = 1:
+periodicPayment = TotalValueOutstanding (rounded per asset rules; this sets TotalValueOutstanding to 0 after payment)
+
+Rationale:
+Repeated downward rounding (truncate / floor) of each scheduled payment can accumulate underpayment relative to the unrounded amortization schedule. Without this adjustment, the final formula-derived payment (after rounding) might be smaller than the remaining outstanding value, leaving a non-zero remainder that can never be cleared by any subsequent scheduled payment (because no payments remain).
+
+Example (integer-only MPT):
+
+- Initial TotalValueOutstanding = 11 MPT
+- PaymentTotal = 10
+- Amortization produces periodicPayment = 1.1 MPT
+- Asset supports only whole units ⇒ each scheduled payment is truncated to 1 MPT
+  Progress:
+  After 9 payments: Paid = 9 MPT, Remaining TotalValueOutstanding = 2 MPT
+  If we applied the formula again for the 10th payment:
+  periodicPayment (unrounded) = 1.1 MPT → truncated to 1 MPT
+  Remaining after payment = 1 MPT (cannot be repaid; no payments left)
+  Adjustment:
+  Because PaymentRemaining = 1, set periodicPayment = TotalValueOutstanding = 2 MPT
+  Final payment = 2 MPT clears the loan exactly (PrincipalOutstanding = 0, TotalValueOutstanding = 0).
+
+Therefore, implementations MUST detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
+
 ###### 3.2.4.1.2 Late Payment
 
 When a Borrower makes a payment after `NextPaymentDueDate`, they must pay a nominal late payment fee and an additional interest rate charged on the overdue amount for the unpaid period. The formula is as follows:
@@ -1245,7 +1291,7 @@ $$
 valueChange = interestLate - interestPeriodic
 $$
 
-Note that `valueChange >= 0`.
+Note that `valueChange >= 0` for late payments, i.e. a late payment increases the value of the loan.
 
 ###### 3.2.4.1.3 Loan Overpayment
 
@@ -1435,54 +1481,84 @@ function make_payment(amount, current_time) -> (principal_paid, interest_paid, v
     if amount >= full_payment && loan.payments_remaining > 1 {
         loan.payments_remaining = 0
         loan.principal_outstanding = 0
-
+        let total_interest_outstanding = loan.lotal_value_outstanding - full_payment.principal
         // A full payment decreases the value of the loan by the difference between the interest paid and the expected outstanding interest
-        return (full_payment.principal, full_payment.interest, full_payment.interest - loan.compute_current_value().interest, full_payment.fee)
+        return (full_payment.principal, full_payment.interest, full_payment.interest - total_interest_outstanding, full_payment.fee)
     }
 
-    // if the payment is not late nor if it's a full payment, then it must be a periodic once
-
+    // PERIODIC (ON‑TIME) FLOW
+    // Compute scheduled periodic payment. Override if this is the final installment to eliminate rounding dust.
     let periodic_payment = loan.compute_periodic_payment()
+    if loan.payments_remaining == 1 {
+        // Final scheduled payment: pay exactly all remaining value (principal + interest) before rounding.
+        periodic_payment.principal = loan.principal_outstanding
+        periodic_payment.interest  = loan.total_value_outstanding - loan.principal_outstanding
+    }
 
-    let full_periodic_payments = floor(amount / (periodic_payment + loan.service_fee))
+    let periodic_payment_total = periodic_payment.principal + periodic_payment.interest
+
+    // Determine how many full periodic installments this single Amount can cover (cannot exceed remaining)
+    let full_periodic_payments = floor(amount / (periodic_payment_total + loan.service_fee))
     if full_periodic_payments < 1 {
         return "insufficient amount paid" error
+    }
+    if full_periodic_payments > loan.payments_remaining {
+        full_periodic_payments = loan.payments_remaining
     }
 
     loan.next_payment_due_date = loan.next_payment_due_date + loan.payment_interval * full_periodic_payments
     loan.last_payment_date = loan.next_payment_due_date - loan.payment_interval
 
-
     let total_principal_paid = 0
     let total_interest_paid = 0
     let loan_value_change = 0
     let total_fee_paid = loan.service_fee * full_periodic_payments
-
+    let loan_value_change = 0
+  
     while full_periodic_payments > 0 {
         total_principal_paid += periodic_payment.principal
-        total_interest_paid += periodic_payment.interest
-        loan.payments_remaining -= full_periodic_payments
+        total_interest_paid  += periodic_payment.interest
+        loan.payments_remaining -= 1
         loan.principal_outstanding -= periodic_payment.principal
 
+        if loan.payments_remaining == 0 {
+            // All done; no further recomputation needed.
+            break
+        }
+
+        // Recompute next periodic payment (may change after principal reduction).
         periodic_payment = loan.compute_periodic_payment()
+
+        // If after recomputation only one payment remains, force final payoff to avoid residual dust.
+        if loan.payments_remaining == 1 {
+          periodic_payment.principal = loan.principal_outstanding
+          periodic_payment.interest  = loan.total_value_outstanding - loan.principal_outstanding
+      }
+
         full_periodic_payments -= 1
     }
 
-    let overpayment = min(loan.principal_outstanding, amount % periodic_payment)
+    let overpayment = min(loan.principal_outstanding, amount % (periodic_payment + loan.service_fee))
     if overpayment > 0 && is_set(lsfOverpayment) {
         let interest_portion = overpayment * loan.overpayment_interest_rate
         let fee_portion = overpayment * loan.overpayment_fee
         let remainder = overpayment - interest_portion - fee_portion
 
         total_principal_paid += remainder
-        total_interest_paid += interest_portion
-        total_fee_paid += fee_portion
+        total_interest_paid  += interest_portion
+        total_fee_paid       += fee_portion
 
         let current_value = loan.compute_current_value()
         loan.principal_outstanding -= remainder
         let new_value = loan.compute_current_value()
 
+        // loan_value_change: change in future interest due to principal reduction + interest just paid
         loan_value_change = (new_value.interest - current_value.interest) + interest_portion
+    }
+
+    // If final installment just executed, ensure outstanding principal hits zero (guard against residual 1-unit dust)
+    if loan.payments_remaining == 0 {
+        loan.principal_outstanding = 0
     }
 
     return (total_principal_paid, total_interest_paid, loan_value_change, total_fee_paid)
@@ -1500,7 +1576,7 @@ Assume the payment is handled by a function that implements the [Pseudo-Code](#3
 - `totalPaid = principal_paid + interest_paid + fee_paid` is the total amount the borrower paid.
 - `value_change` is the amount by which the total value of the Loan changed.
   - If `value_change` < `0`, Loan value decreased.
-  - If `value_change` > `0`, Loan value increased.
+  - If `value_change` > `0`, Loan value increased, and if `value_change` = `0` the value remained the same.
 
 Furthermore, assume `full_periodic_payments` variable represents the number of payment intervals that the payment covered.
 
@@ -1508,7 +1584,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 - The submitter `AccountRoot.Account` is not equal to `Loan.Borrower`.
 
-- `Loan.PaymentRemaining` or `Loan.PrincipalOutstanding` is `0`.
+- `Loan.PaymentRemaining` or `Loan.TotalValueOutstanding` is `0`.
 
 - The Borrower paid insufficient amount: `full_periodic_payments < 0`.
 
@@ -1516,7 +1592,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-  - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Vault _pseudo-account_ is frozen).
+  - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
@@ -1540,6 +1616,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Decrease `Loan.PaymentRemaining` by `full_periodic_payments`.
   - Decrease `Loan.PrincipalOutstanding` by `principal_paid`.
+  - Update `Loan.TotalValueOutstanding` = `(Loan.TotalValueOutstanding + value_change) - (principal_paid + interest_paid)`. 
 
   - If `Loan.PaymentRemaining > 0` and `Loan.PrincipalOutstanding > 0`:
 
