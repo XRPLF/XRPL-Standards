@@ -880,7 +880,7 @@ An inner object that contains the signature of the Lender over the transaction. 
 The final transaction must include exactly one of
 
 1. The `SigningPubKey` and `TxnSignature` fields, or
-2. The `Signers` field.
+2. The `Signers` field and, optionally, an empty `SigningPubKey`.
 
 The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
@@ -936,6 +936,7 @@ The account specified in the `Account` field pays the transaction fee.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `RippleState` between the `Vault(LoanBroker(LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+  - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set. 
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
@@ -943,7 +944,8 @@ The account specified in the `Account` field pays the transaction fee.
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the Borrower `AccountRoot` has `lsfMPTLocked` flag set.
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
-
+- The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTRequireAuth` flag set and the `MPToken`of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
+  
 - Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
 
 - The `Borrower` `AccountRoot` object does not exist.
