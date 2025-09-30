@@ -172,21 +172,33 @@
     if (numberHeader) numberHeader.classList.add("sort-desc");
 
     // Tooltip positioning functionality
-    const tooltips = document.querySelectorAll('.tooltip');
-    tooltips.forEach(tooltip => {
-      const tooltipText = tooltip.querySelector('.tooltip-text');
+    const tooltips = document.querySelectorAll(".tooltip");
+    tooltips.forEach((tooltip) => {
+      const tooltipText = tooltip.querySelector(".tooltip-text");
       if (tooltipText) {
-        tooltip.addEventListener('mouseenter', function(e) {
+        tooltip.addEventListener("mouseenter", function (e) {
           // Get the position of the tooltip trigger
           const rect = tooltip.getBoundingClientRect();
-          const tooltipRect = tooltipText.getBoundingClientRect();
-          
+
           // Position the tooltip above the trigger, centered horizontally
-          const left = rect.left + (rect.width / 2);
+          const left = rect.left + rect.width / 2 - 150; // Center the 300px wide tooltip
           const top = rect.top - 10; // 10px above the trigger
-          
-          tooltipText.style.left = left + 'px';
-          tooltipText.style.top = top + 'px';
+
+          // Ensure tooltip stays within viewport bounds
+          const adjustedLeft = Math.max(
+            10,
+            Math.min(left, window.innerWidth - 310),
+          );
+          const adjustedTop = Math.max(10, top);
+
+          tooltipText.style.left = adjustedLeft + "px";
+          tooltipText.style.top = adjustedTop + "px";
+        });
+
+        tooltip.addEventListener("mouseleave", function (e) {
+          // Reset positioning to hide tooltip properly
+          tooltipText.style.left = "";
+          tooltipText.style.top = "";
         });
       }
     });
