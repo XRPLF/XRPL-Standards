@@ -395,7 +395,7 @@ The editors’ mission is to serve the broad XRP Ledger community, both present 
 
 - **Publishing Proposals**: Making proposals, including their history and associated discussions available over the long term at no cost. By doing so, editors foster transparency and ensure that valuable insights from past proposals are accessible for future decision-making and learning.
 - **Facilitating Discussion**: Providing a forum for discussing proposals open to anyone who wants to participate civilly. By encouraging open dialogue and collaboration, we aim to harness the collective knowledge and expertise of the XRP Ledger community in shaping proposals.
-- **Upholding Quality**: Upholding a measure of minimally-subjective quality for each proposal as defined by its target audience. By adhering to defined criteria, we promote the development of high-quality and relevant proposals that drive the evolution of Ethereum.
+- **Upholding Quality**: Upholding a measure of minimally-subjective quality for each proposal as defined by its target audience. By adhering to defined criteria, we promote the development of high-quality and relevant proposals that drive the evolution of the XRP Ledger.
 
 ### 6.1.2. What Editors Don’t Do
 
