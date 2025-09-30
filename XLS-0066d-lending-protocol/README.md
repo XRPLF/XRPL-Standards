@@ -959,7 +959,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 - Exceeds maximum Debt of the LoanBroker:
 
-  - `LoanBroker(LoanBrokerID).DebtMaximum` < `Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
+  - `LoanBroker(LoanBrokerID).DebtMaximum` < `LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
 
 - Insufficient First-Loss Capital:
 
@@ -1240,16 +1240,17 @@ $$
 principal = periodicPayment - interest
 $$
 
-When only a single payment remains (PaymentRemaining = 1) the periodic payment MUST be set equal to the current TotalValueOutstanding (i.e. principalOutstanding + interestOutstanding before any asset-specific rounding/truncation). This overrides the standard amortization formula for the last installment. The purpose is to eliminate residual dust created by iterative rounding (e.g. integer truncation for XRP drops or whole‑unit MPTs) that could otherwise make the loan impossible to fully extinguish.
+When only a single payment remains (PaymentRemaining = 1) the periodic payment is set equal to the current TotalValueOutstanding (i.e. principalOutstanding + interestOutstanding before any asset-specific rounding/truncation). This overrides the standard amortization formula for the last installment. The purpose is to eliminate residual dust created by iterative rounding (e.g. integer truncation for XRP drops or whole‑unit MPTs) that could otherwise make the loan impossible to fully repay. Repeated rounding of each scheduled payment can accumulate relative to the unrounded amortization schedule. Without this adjustment, the final formula-derived payment might be smaller or greater than the remaining outstanding value, leaving a non-zero or negative remainder that can never be cleared by any subsequent scheduled payment.
+
 
 Formally:
-If PaymentRemaining > 1:
-periodicPayment = formula result (rounded per asset rules)
-If PaymentRemaining = 1:
-periodicPayment = TotalValueOutstanding (rounded per asset rules; this sets TotalValueOutstanding to 0 after payment)
 
-Rationale:
-Repeated downward rounding (truncate / floor) of each scheduled payment can accumulate underpayment relative to the unrounded amortization schedule. Without this adjustment, the final formula-derived payment (after rounding) might be smaller than the remaining outstanding value, leaving a non-zero remainder that can never be cleared by any subsequent scheduled payment (because no payments remain).
+```
+If PaymentRemaining > 1:
+  periodicPayment = formula result (rounded per asset rules)
+If PaymentRemaining = 1:
+  periodicPayment = TotalValueOutstanding (rounded per asset rules; this sets TotalValueOutstanding to 0 after payment)
+```
 
 Example (integer-only MPT):
 
@@ -1266,7 +1267,7 @@ Example (integer-only MPT):
   Because PaymentRemaining = 1, set periodicPayment = TotalValueOutstanding = 2 MPT
   Final payment = 2 MPT clears the loan exactly (PrincipalOutstanding = 0, TotalValueOutstanding = 0).
 
-Therefore, implementations MUST detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
+Therefore, implementations must detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
 
 ###### 3.2.4.1.2 Late Payment
 
