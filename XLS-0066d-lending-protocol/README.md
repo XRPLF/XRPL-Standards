@@ -931,21 +931,25 @@ The account specified in the `Account` field pays the transaction fee.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` object between the LoanBroker account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+  - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set.
+
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `RippleState` between the `Vault(LoanBroker(LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set. 
+
+  - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The borrower cannot send and receive funds).
+  - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set (The borrower cannot send funds).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the LoanBroker `AccountRoot` has `lsfMPTLocked` flag set.
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the Borrower `AccountRoot` has `lsfMPTLocked` flag set.
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
-- The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTRequireAuth` flag set and the `MPToken`of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
-  
+  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTRequireAuth` flag set and the `MPToken`of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
+
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Vault(LoanBroker(LoanBrokerID).VaultID).Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
+
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the Borrower `AccountRoot` has `lsfMPTLocked` flag set (The Borrower MPToken is locked).
+
 - Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
 
 - The `Borrower` `AccountRoot` object does not exist.
@@ -983,7 +987,15 @@ The account specified in the `Account` field pays the transaction fee.
 
   - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested`.
   - Increase the `RippleState` balance between the `Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
-  - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee`.
+
+  - If the `RippleState` object between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The LoanBroker cannot receive funds):
+
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee` (the loan origination fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `Loan.LoanOriginationFee`.
+
+  - Otherwise:
+
+    - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
 
@@ -991,7 +1003,14 @@ The account specified in the `Account` field pays the transaction fee.
 
   - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested`.
   - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
-  - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset` by `Loan.LoanOriginationFee`
+
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Owner` `AccountRoot` has `lsfMPTLocked` flag set (The LoanBroker cannot receive funds):
+
+    - Increase the `MPToken.MPTAmount` by `Loan.LoanOriginationFee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the loan origination fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `Loan.LoanOriginationFee`.
+
+  - Otherwise:
+    - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset` by `Loan.LoanOriginationFee`
 
 - `Vault(LoanBroker(LoanBrokerID).VaultID)` object state changes:
 
@@ -1241,7 +1260,6 @@ principal = periodicPayment - interest
 $$
 
 When only a single payment remains (PaymentRemaining = 1) the periodic payment is set equal to the current TotalValueOutstanding (i.e. principalOutstanding + interestOutstanding before any asset-specific rounding/truncation). This overrides the standard amortization formula for the last installment. The purpose is to eliminate residual dust created by iterative rounding (e.g. integer truncation for XRP drops or whole‑unit MPTs) that could otherwise make the loan impossible to fully repay. Repeated rounding of each scheduled payment can accumulate relative to the unrounded amortization schedule. Without this adjustment, the final formula-derived payment might be smaller or greater than the remaining outstanding value, leaving a non-zero or negative remainder that can never be cleared by any subsequent scheduled payment.
-
 
 Formally:
 
@@ -1695,14 +1713,19 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
 
-  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
-
-    - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee`.
-
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
     - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+
+  - If the `RippleState` object between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The LoanBroker cannot receive funds):
+
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+
+  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
+
+    - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee`.
 
   - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
 
@@ -1710,16 +1733,21 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
-  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
-
-    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset`.
-
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
     - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
     - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
 
-  - Decrease the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the submitter `MPToken` object for the `Vault.Asset`.
+  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Owner` `AccountRoot` has `lsfMPTLocked` flag set (The LoanBroker cannot receive funds):
+
+    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+
+  - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
+
+    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+
+  - Decrease the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the submitter `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 [**Return to Index**](#index)
 
