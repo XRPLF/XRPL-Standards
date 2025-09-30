@@ -7,6 +7,7 @@
     status: Proposal
     category: Meta
     created: 2025-09-22
+    updated: 2025-09-30
 </pre>
 
 # 1. Abstract
@@ -159,7 +160,7 @@ This will be codified in a template later.
 
 `Serialized Types` documents one or more new "serialized types" (or STypes) introduced or modified by the specification. Most specifications will not need such sections, as the[ existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally enough. Each SType must be in its own numbered section, with the following subsections:
 
-##### 4.4.3.1.1. SType value
+##### 4.4.3.1.1. `SType` value
 
 Each SType has its own unique value associated with it, so that when an object is being deserialized, the deserializer knows which decoder to use. The current values are specified [here](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/SField.h#L60).
 
