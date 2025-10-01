@@ -102,14 +102,14 @@ On-ledger `MutableFlags` are prefixed with `lmf` to clearly distinguish them fro
 | Flag Name                    |   Hex Value   | Decimal Value | Description                                                                                  |
 | ---------------------------- | :-----------: | :-----------: | -------------------------------------------------------------------------------------------- |
 | [Reserved]                   | ️`0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
-| `lmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Indicates flag `lsfMPTCanLock` can be changed                                                |
-| `lmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                            |
-| `lmfMPTCanMutateCanEscrow`   | `0x00000008`  |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                              |
-| `lmfMPTCanMutateCanTrade`    | `0x00000010`  |      16       | Indicates flag `lsfMPTCanTrade` can be changed                                               |
-| `lmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Indicates flag `lsfMPTCanTransfer` can be changed                                            |
-| `lmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Indicates flag `lsfMPTCanClawback` can be changed                                            |
-| `lmfMPTCanMutateMetadata`    | `0x00010000`  |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
-| `lmfMPTCanMutateTransferFee` | `0x00020000`  |    131072     | Allows field `TransferFee` to be modified                                                    |
+| `lsmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Indicates flag `lsfMPTCanLock` can be changed                                                |
+| `lsmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                            |
+| `lsmfMPTCanMutateCanEscrow`   | `0x00000008`  |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                              |
+| `lsmfMPTCanMutateCanTrade`    | `0x00000010`  |      16       | Indicates flag `lsfMPTCanTrade` can be changed                                               |
+| `lsmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Indicates flag `lsfMPTCanTransfer` can be changed                                            |
+| `lsmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Indicates flag `lsfMPTCanClawback` can be changed                                            |
+| `lsmfMPTCanMutateMetadata`    | `0x00010000`  |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
+| `lsmfMPTCanMutateTransferFee` | `0x00020000`  |    131072     | Allows field `TransferFee` to be modified                                                    |
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
@@ -126,7 +126,7 @@ For details on the original MPTokenIssuanceSet transaction see: [**The MPTokenIs
 | `MPTokenMetadata` |           | `string`  |    `BLOB`     |
 
 New metadata to replace the existing value.
-The transaction will be rejected if `lmfMPTCanMutateMetadata` was not set in `MutableFlags`.
+The transaction will be rejected if `lsmfMPTCanMutateMetadata` was not set in `MutableFlags`.
 Setting an empty `MPTokenMetadata` removes the field.
 
 ---
@@ -136,7 +136,7 @@ Setting an empty `MPTokenMetadata` removes the field.
 | `TransferFee` |           | `number`  |   `UINT16`    |
 
 New transfer fee value.
-The transaction will be rejected if `lmfMPTCanMutateTransferFee` was not set in `MutableFlags`.
+The transaction will be rejected if `lsmfMPTCanMutateTransferFee` was not set in `MutableFlags`.
 Setting `TransferFee` to zero removes the field.
 
 ---
@@ -199,32 +199,32 @@ Since `TransferFee` **MUST NOT** be present if `tfMPTCanTransfer` flag is not se
 The ability to modify `TransferFee` depends on two flags:
 
 - `lsfMPTCanTransfer` : must already be set to allow any non-zero `TransferFee`.
-- `lmfMPTCanMutateTransferFee`: must be set at creation (`MPTokenIssuanceCreate`) to allow any modification of the `TransferFee` field.
+- `lsmfMPTCanMutateTransferFee`: must be set at creation (`MPTokenIssuanceCreate`) to allow any modification of the `TransferFee` field.
 
-And `lsfMPTCanTransfer` can be modified through `tmfMPTSetCanTransfer`/`tmfMPTClearCanTransfer` if `lmfMPTCanMutateCanTransfer` is set.
+And `lsfMPTCanTransfer` can be modified through `tmfMPTSetCanTransfer`/`tmfMPTClearCanTransfer` if `lsmfMPTCanMutateCanTransfer` is set.
 
 #### Because these flags overlap in function, the rules break down as follows:
 
 **Case1**: `lsfMPTCanTransfer` not set:
 
 - Setting `TransferFee` to zero:
-  - If `lmfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
-  - If `lmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
+  - If `lsmfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
+  - If `lsmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
 - Setting `TransferFee` to a non-zero value:
-  - Always invalid: returns `temMALFORMED`, regardless of `lmfMPTCanMutateTransferFee`.
+  - Always invalid: returns `temMALFORMED`, regardless of `lsmfMPTCanMutateTransferFee`.
   - ❗**Note**: Even including `tmfMPTSetCanTransfer` in the same transaction returns `temMALFORMED`.
     - `lsfMPTCanTransfer` must already be set before assigning a non-zero `TransferFee`.
 
 **Case2**: `lsfMPTCanTransfer` set:
 
 - Setting `TransferFee` to a non-zero value:
-  - If `lmfMPTCanMutateTransferFee` is set: allowed; modifies the `TransferFee` field.
+  - If `lsmfMPTCanMutateTransferFee` is set: allowed; modifies the `TransferFee` field.
     - ❗**Note**: `tmfMPTClearCanTransfer` **MUST NOT** be included in the same transaction when setting a non-zero `TransferFee`: otherwise returns `temMALFORMED`.
-  - If `lmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
+  - If `lsmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
 - Setting `TransferFee` to zero:
-  - If `lmfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
-    - ❗**Note**: if `lmfMPTCanMutateCanTransfer` is set, `tmfMPTClearCanTransfer` is allowed to be included when setting to a zero `TransferFee`: it removes `TransferFee` field and clears the `lsfMPTCanTransfer`.
-  - If `lmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
+  - If `lsmfMPTCanMutateTransferFee` is set: allowed; removes the `TransferFee` field.
+    - ❗**Note**: if `lsmfMPTCanMutateCanTransfer` is set, `tmfMPTClearCanTransfer` is allowed to be included when setting to a zero `TransferFee`: it removes `TransferFee` field and clears the `lsfMPTCanTransfer`.
+  - If `lsmfMPTCanMutateTransferFee` is not set: returns `tecNO_PERMISSION`.
 
 ## 5. Examples
 
@@ -367,7 +367,7 @@ And `lsfMPTCanTransfer` can be modified through `tmfMPTSetCanTransfer`/`tmfMPTCl
 }
 ```
 
-- This will be rejected. Although `lmfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled.
+- This will be rejected. Although `lsmfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled.
 
 **Sample 2**(rejected):
 
@@ -380,7 +380,7 @@ And `lsfMPTCanTransfer` can be modified through `tmfMPTSetCanTransfer`/`tmfMPTCl
 }
 ```
 
-- This will be rejected. Even if `lmfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled, even if the transaction also includes `tmfMPTSetCanTransfer`.
+- This will be rejected. Even if `lsmfMPTCanMutateTransferFee` is set, a non-zero `TransferFee` cannot be specified unless `lsfMPTCanTransfer` is already enabled, even if the transaction also includes `tmfMPTSetCanTransfer`.
 
 **Sample 3**(successful):
 The following sequence of transactions illustrates a successful case:
@@ -395,7 +395,7 @@ The following sequence of transactions illustrates a successful case:
 }
 ```
 
-- Since `lmfMPTCanMutateCanTransfer` is set during creation, this transaction successfully sets the `lsfMPTCanTransfer` flag.
+- Since `lsmfMPTCanMutateCanTransfer` is set during creation, this transaction successfully sets the `lsfMPTCanTransfer` flag.
 
 **Step2**:
 
@@ -407,7 +407,7 @@ The following sequence of transactions illustrates a successful case:
 }
 ```
 
-- With both `lsfMPTCanTransfer` and `lmfMPTCanMutateTransferFee` set, a non-zero `TransferFee` can now be applied.
+- With both `lsfMPTCanTransfer` and `lsmfMPTCanMutateTransferFee` set, a non-zero `TransferFee` can now be applied.
 
 **Step3**:
 
@@ -419,5 +419,5 @@ The following sequence of transactions illustrates a successful case:
 }
 ```
 
-- Since `lmfMPTCanMutateCanTransfer` is set, the `lsfMPTCanTransfer` flag can be cleared.
+- Since `lsmfMPTCanMutateCanTransfer` is set, the `lsfMPTCanTransfer` flag can be cleared.
 - Clearing `lsfMPTCanTransfer` automatically removes the `TransferFee` from the `MPTokenIssuance` object.
