@@ -99,9 +99,9 @@ A new optional field, `MutableFlags` (SField `sfMutableFlags`), is added to the 
 
 On-ledger `MutableFlags` are prefixed with `lmf` to clearly distinguish them from standard `lsf` prefix used for `Flags`.
 
-| Flag Name                    |   Hex Value   | Decimal Value | Description                                                                                  |
-| ---------------------------- | :-----------: | :-----------: | -------------------------------------------------------------------------------------------- |
-| [Reserved]                   | ️`0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
+| Flag Name                     |   Hex Value   | Decimal Value | Description                                                                                  |
+| ----------------------------- | :-----------: | :-----------: | -------------------------------------------------------------------------------------------- |
+| [Reserved]                    | ️`0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
 | `lsmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Indicates flag `lsfMPTCanLock` can be changed                                                |
 | `lsmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Indicates flag `lsfMPTRequireAuth` can be changed                                            |
 | `lsmfMPTCanMutateCanEscrow`   | `0x00000008`  |       8       | Indicates flag `lsfMPTCanEscrow` can be changed                                              |
