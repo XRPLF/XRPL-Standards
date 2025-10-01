@@ -1296,24 +1296,26 @@ totalDue = periodicPayment + latePaymentFee + latePaymentInterest
 $$
 
 $$
-secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.previousPaymentDate, Loan.startDate)
+secondsOverdue = lastLedgerCloseTime - Loan.NextPaymentDueDate
 $$
 
 A special, late payment interest rate is applied for the over-due period:
 
 $$
-latePaymentInterest = principalOutstanding \times \frac{lateInterestRate \times secondsSinceLastPayment}{365 \times 24 \times 60 \times 60}
+latePeriodicRate = \frac{lateInterestRate \times secondsOverdue}{365 \times 24 \times 60 \times 60}
 $$
 
-A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetsTotal` must be recalculated.
-
-Assume the function `PeriodicPayment()` returns the expected periodic payment, split into `principalPeriodic` and `interestPeriodic`. Furthermore, assume the function `LatePayment()` that implements the Late Payment formula. The function returns the late payment split into `principalLate` and `interestLate`, where `interestLate` is calculated using the formula above. Note that `principalPeriodic == principalLate` and `interestLate > interestPeriodic` are used only when the payment is late. Otherwise, `interestLate == interestPeriodic`.
-
 $$
-valueChange = interestLate - interestPeriodic
+latePaymentInterest = principalOutstanding \times latePeriodicRate
 $$
 
-Note that `valueChange >= 0` for late payments, i.e. a late payment increases the value of the loan.
+A late payment pays more interest than calculated when increasing the Vault value in the `LoanSet` transaction. Therefore, the total Vault value captured by `Vault.AssetsTotal` must be recalculated. The increase in the `Vault.AssetsTotal` value is simply the `latePaymentInterest`.
+
+$$
+valueChange = latePaymentInterest
+$$
+
+Note that `valueChange > 0` for late payments, i.e. a late payment increases the value of the loan.
 
 ###### 3.2.4.1.3 Loan Overpayment
 
@@ -1472,133 +1474,177 @@ $$
 The following is the pseudo-code for handling a Loan payment transaction.
 
 ```
-function make_payment(amount, current_time) -> (principal_paid, interest_paid, value_change, fee_paid):
-    if loan.payments_remaining is 0 || loan.principal_outstanding is 0 {
+function compute_periodic_payment() -> (principal, interest):
+  let periodicRate = (loan.interestRate x loan.paymentInterval) / (365 * 24 * 60 * 60)
+
+  let raisedRate = (1 + periodicRate)^loan.paymentsRemaining
+  let periodicPayment = loan.principalOutstanding x (periodicRate x raisedRate) / (raisedRate - 1)
+
+  let interest = loan.principalOutstanding x periodicRate
+  let principal = periodicPayment - interest
+
+  return (principal, interest)
+
+function compute_late_payment_interest(currentTime) -> (lateInterest):
+
+    let secondsOverdue = lastLedgerClostTime() - loan.nextPaymentDueDate
+    let latePeriodicRate = (Loan.LateInterestRate x secondsOverdue) / (365 * 24 * 60 * 60)
+    let latePaymentInterest = Loan.PrincipalOutstanding x latePeriodicRate
+
+    return latePaymentInterest
+
+function compute_full_payment(currentTime) -> (principal, interest):
+  let periodicRate = (loan.interestRate x loan.paymentInterval) / (365 * 24 * 60 * 60)
+
+  let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.previousPaymentDate, loan.startDate)
+
+  let accruedInterest = loan.principalOutstanding x periodicRate x (secondsSinceLastPayment / loan.paymentInterval)
+  let prepaymentPenalty = loan.principalOutstanding x loan.closeInterestRate
+
+  return loan.principalOutstanding, accruedInterest + prepaymentPenalty
+
+function make_payment(amo unt, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
+    if loan.paymentRemaining is 0 || loan.principalOutstanding is 0 {
         return "loan complete" error
     }
 
     // the payment is late
-    if loan.next_payment_due_date < current_time {
-        let late_payment = loan.compute_late_payment(current_time)
-        if amount < late_payment {
+    if loan.nextPaymentDueDate < currentTime {
+
+        let periodicPayment = compute_periodic_payment()
+        let lateInterest = compute_late_payment_interest(currentTime)
+
+        // insufficient funds
+        if amount < (periodicPayment + loan.serviceFee + lateInterest + loan.latePaymentFee) {
             return "insufficient amount paid" error
         }
 
-        loan.payments_remaining -= 1
-        loan.principal_outstanding -= late_payment.principal
+        loan.paymentRemaining -= 1
+        loan.previousPaymentDate = loan.nextPaymentDueDate
+        loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
 
-        loan.last_payment_date = loan.next_payment_due_date
-        loan.next_payment_due_date = loan.next_payment_due_date + loan.payment_interval
+        loan.principalOutstanding -= periodicPayment.principal
 
-        let periodic_payment = loan.compute_periodic_payment()
-
-        // A late payment increases the value of the loan by the difference between periodic and late payment interest
-        return (late_payment.principal, late_payment.interest, late_payment.interest - periodic_payment.interest, loan.late_payment_fee)
+        return (
+          periodicPayment.principal,                // a late payment does not affect the principal portion due
+          periodicPayment.interest + lateInterest,  // a late payment incorporates both periodic interest and the late interest
+          lateInterest,                             // the value of the loan increases by the lateInterest amount
+          loan.serviceFee + loan.latePaymentFee     // the fee paid for a loan payment includes both: the regular service fee and the late payment fee
+          )
     }
 
-    let full_payment = loan.compute_full_payment(current_time)
+    let fullPayment = compute_full_payment(currentTime)
 
     // if the payment is equal or higher than full payment amount
     // and there is more than one payment remaining, make a full payment
-    if amount >= full_payment && loan.payments_remaining > 1 {
-        loan.payments_remaining = 0
-        loan.principal_outstanding = 0
-        let total_interest_outstanding = loan.lotal_value_outstanding - full_payment.principal
-        // A full payment decreases the value of the loan by the difference between the interest paid and the expected outstanding interest
-        return (full_payment.principal, full_payment.interest, full_payment.interest - total_interest_outstanding, full_payment.fee)
+    if amount >= fullPayment && loan.paymentRemaining > 1 {
+        let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding
+        let loanValueChange = fullPayment.interest - totalInterestOutstanding
+
+        loan.paymentRemaining = 0
+        loan.principalOutstanding = 0
+        return (
+          fullPayment.principal, // full payment repays the entire outstnading principal, i.e. equivalent to loan.principalOutstanding
+          fullPayment.interest,  // full payment repays any accrued interest since the last payment and additional full payment interest 
+          loanValueChange,       // a full payment changes the total value of the loan
+          loan.closePaymentFee   // an early payment pays a specific closePaymentFee 
+        )
     }
 
-    // PERIODIC (ON‑TIME) FLOW
     // Compute scheduled periodic payment. Override if this is the final installment to eliminate rounding dust.
-    let periodic_payment = loan.compute_periodic_payment()
-    if loan.payments_remaining == 1 {
+    let periodicPayment = compute_periodic_payment()
+    if loan.paymentRemaining == 1 {
         // Final scheduled payment: pay exactly all remaining value (principal + interest) before rounding.
-        periodic_payment.principal = loan.principal_outstanding
-        periodic_payment.interest  = loan.total_value_outstanding - loan.principal_outstanding
+        periodicPayment.principal = loan.principalOutstanding
+        periodicPayment.interest  = loan.totalValueOutstanding - loan.principalOutstanding
     }
 
-    let periodic_payment_total = periodic_payment.principal + periodic_payment.interest
+    let periodicPaymentTotal = periodicPayment.principal + periodicPayment.interest
 
     // Determine how many full periodic installments this single Amount can cover (cannot exceed remaining)
-    let full_periodic_payments = floor(amount / (periodic_payment_total + loan.service_fee))
-    if full_periodic_payments < 1 {
+    let fullPeriodicPayments = floor(amount / periodicPaymentTotal)
+    if fullPeriodicPayments < 1 {
         return "insufficient amount paid" error
     }
-    if full_periodic_payments > loan.payments_remaining {
-        full_periodic_payments = loan.payments_remaining
+
+    if fullPeriodicPayments > loan.paymentRemaining {
+        fullPeriodicPayments = loan.paymentRemaining
     }
 
-    loan.next_payment_due_date = loan.next_payment_due_date + loan.payment_interval * full_periodic_payments
-    loan.last_payment_date = loan.next_payment_due_date - loan.payment_interval
+    let totalPrincipalPaid = 0
+    let totalInterestPaid = 0
+    let loanValueChange = 0
 
-    let total_principal_paid = 0
-    let total_interest_paid = 0
-    let loan_value_change = 0
-    let total_fee_paid = loan.service_fee * full_periodic_payments
-    let loan_value_change = 0
-
-    while full_periodic_payments > 0 {
-        total_principal_paid += periodic_payment.principal
-        total_interest_paid  += periodic_payment.interest
-        loan.payments_remaining -= 1
-        loan.principal_outstanding -= periodic_payment.principal
-
-        if loan.payments_remaining == 0 {
-            // All done; no further recomputation needed.
-            break
-        }
-
-        // Recompute next periodic payment (may change after principal reduction).
-        periodic_payment = loan.compute_periodic_payment()
+    while fullPeriodicPayments > 0 {
+        let periodicPayment = compute_periodic_payment()
 
         // If after recomputation only one payment remains, force final payoff to avoid residual dust.
-        if loan.payments_remaining == 1 {
-          periodic_payment.principal = loan.principal_outstanding
-          periodic_payment.interest  = loan.total_value_outstanding - loan.principal_outstanding
-      }
+        if loan.paymentRemaining == 1 {
+          periodicPayment.principal = loan.principalOutstanding
+          periodicPayment.interest  = loan.totalValueOutstanding - loan.principalOutstanding
+        }
 
-        full_periodic_payments -= 1
+        totalPrincipalPaid += periodicPayment.principal
+        totalInterestPaid  += periodicPayment.interest
+        loan.paymentRemaining -= 1
+        loan.principalOutstanding -= periodicPayment.principal
     }
 
-    let overpayment = min(loan.principal_outstanding, amount % (periodic_payment + loan.service_fee))
+    let totalFeePaid = loan.serviceFee * fullPeriodicPayments
+    loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval * fullPeriodicPayments
+    loan.previousPaymentDate = loan.nextPaymentDueDate - loan.paymentInterval
+
+    let newTotalValue = periodicPayment x loan.paymentRemaining
+    let overpayment = min(loan.principalOutstanding, amount - (totalPrincipalPaid + totalInterestPaid + totalFeePaid));
+    let overpaymentInterestPortion = 0
+  
     if overpayment > 0 && is_set(lsfOverpayment) {
-        let interest_portion = overpayment * loan.overpayment_interest_rate
-        let fee_portion = overpayment * loan.overpayment_fee
-        let remainder = overpayment - interest_portion - fee_portion
+        overpaymentInterestPortion = overpayment * loan.overpaymentInterestRate
+        let feePortion = overpayment * loan.overpaymentFee
+        let remainder = overpayment - overpaymentInterestPortion - feePortion
 
-        total_principal_paid += remainder
-        total_interest_paid  += interest_portion
-        total_fee_paid       += fee_portion
-
-        let current_value = loan.compute_current_value()
-        loan.principal_outstanding -= remainder
-        let new_value = loan.compute_current_value()
-
-        // loan_value_change: change in future interest due to principal reduction + interest just paid
-        loan_value_change = (new_value.interest - current_value.interest) + interest_portion
+        if remainder > 0 {
+          totalPrincipalPaid += remainder
+          totalInterestPaid  += overpaymentInterestPortion
+          totalFeePaid       += feePortion
+          loan.principalOutstanding -= remainder
+        }
     }
+
+    // we are paying off principal early, we have to recompute the periodic payment
+    let totalValueAfterOverpayment = compute_periodic_payment() x loan.paymentRemaining
+
+    // loan overpayment decreases future interest, and thus decreases the overall value of the loan
+    // no assumptions should be made about the sign of loanValueChange
+    loanValueChange = (totalVaultAfterOverpayment - newTotalValue) + overpaymentInterestPortion
 
     // If final installment just executed, ensure outstanding principal hits zero (guard against residual 1-unit dust)
-    if loan.payments_remaining == 0 {
-        loan.principal_outstanding = 0
+    if loan.paymentRemaining == 0 {
+        loan.principalOutstanding = 0
+        loan.totalValueOutstanding = 0
     }
 
-    return (total_principal_paid, total_interest_paid, loan_value_change, total_fee_paid)
+    return (
+      totalPrincipalPaid, // this will include the periodicPayment principal and any overpayment
+      totalInterestPaid,  // this will include the periodicPayment interest and any overpayment
+      loanValueChange,    // valueChange in loal total value by overpayment
+      totalFeePaid        // the total fee
+    )
 ```
 
 ##### 3.2.4.4 Failure Conditions
 
 Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`. `totalDue` is the minimum payment due by the borrower.
 
-Assume the payment is handled by a function that implements the [Pseudo-Code](#3242-transaction-pseudo-code) that returns `principal_paid`, `interest_paid`, `value_change` and `fee_paid`, where:
+Assume the payment is handled by a function that implements the [Pseudo-Code](#3242-transaction-pseudo-code) that returns `principalPaid`, `interestPaid`, `valueChange` and `feePaid`, where:
 
-- `principal_paid` is the amount of principal that the payment covered.
-- `interest_paid` is the amount of interest that the payment covered.
-- `fee_paid` is the amount of fee that the payment covered.
-- `totalPaid = principal_paid + interest_paid + fee_paid` is the total amount the borrower paid.
-- `value_change` is the amount by which the total value of the Loan changed.
-  - If `value_change` < `0`, Loan value decreased.
-  - If `value_change` > `0`, Loan value increased, and if `value_change` = `0` the value remained the same.
+- `principalPaid` is the amount of principal that the payment covered.
+- `interestPaid` is the amount of interest that the payment covered.
+- `feePaid` is the amount of fee that the payment covered.
+- `totalPaid = principalPaid + interestPaid + feePaid` is the total amount the borrower paid.
+- `valueChange` is the amount by which the total value of the Loan changed.
+  - If `valueChange` < `0`, Loan value decreased.
+  - If `valueChange` > `0`, Loan value increased, and if `valueChange` = `0` the value remained the same.
 
 Furthermore, assume `full_periodic_payments` variable represents the number of payment intervals that the payment covered.
 
@@ -1637,8 +1683,8 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
     - `Loan(LoanID).Flags = 0`
 
   - Decrease `Loan.PaymentRemaining` by `full_periodic_payments`.
-  - Decrease `Loan.PrincipalOutstanding` by `principal_paid`.
-  - Update `Loan.TotalValueOutstanding` = `(Loan.TotalValueOutstanding + value_change) - (principal_paid + interest_paid)`.
+  - Decrease `Loan.PrincipalOutstanding` by `principalPaid`.
+  - Update `Loan.TotalValueOutstanding` = `(Loan.TotalValueOutstanding + valueChange) - (principalPaid + interestPaid)`.
 
   - If `Loan.PaymentRemaining > 0` and `Loan.PrincipalOutstanding > 0`:
 
@@ -1649,13 +1695,13 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Compute the management fee:
 
-    - `feeManagement = interest_paid x LoanBroker.ManagementFeeRate`
+    - `feeManagement = interestPaid x LoanBroker.ManagementFeeRate`
 
   - Total paid, and what portion goes to the vault:
 
-    - `totalPaid = principal_paid + interest_paid + fee_paid`
-    - `totalPaidToVault = principal_paid + interest_paid`
-    - `totalPaidToBroker = fee_paid`
+    - `totalPaid = principalPaid + interestPaid + feePaid`
+    - `totalPaidToVault = principalPaid + interestPaid`
+    - `totalPaidToBroker = feePaid`
 
   - Adjust the totals for the management fee:
 
@@ -1670,7 +1716,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
   - Decrease LoanBroker Debt by the amount paid:
 
-    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - (totalPaid - fee_paid)`
+    - `LoanBroker.DebtTotal = LoanBroker.DebtTotal - (totalPaid - feePaid)`
 
   - Update the LoanBroker Debt by the Loan value change:
 
@@ -1696,58 +1742,58 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
 
-  - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+  - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `principalPaid + (interestPaid - management_fee)`.
 
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `Balance` field of the `LoanBroker.Owner` `AccountRoot` by `fee_paid + management_fee`.
+    - Increase the `Balance` field of the `LoanBroker.Owner` `AccountRoot` by `feePaid + management_fee`.
 
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `fee_paid + management_fee`. (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
-    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+    - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `feePaid + management_fee`. (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `feePaid + management_fee`.
 
-  - Decrease the `Balance` field of the submitter `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
+  - Decrease the `Balance` field of the submitter `AccountRoot` by `principalPaid + interestPaid + feePaid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
 
-  - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + (interest_paid - management_fee)`.
+  - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `principalPaid + (interestPaid - management_fee)`.
 
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
-    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `feePaid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `feePaid + management_fee`.
 
   - If the `RippleState` object between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The LoanBroker cannot receive funds):
 
-    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
-    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `feePaid + management_fee` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `feePaid + management_fee`.
 
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `fee_paid + management_fee`.
+    - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `feePaid + management_fee`.
 
-  - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `principal_paid + interest_paid + fee_paid`.
+  - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `principalPaid + interestPaid + feePaid`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
 
-  - Increase the `MPToken.MPTAmount` by `principal_paid + (interest_paid - management_fee)` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+  - Increase the `MPToken.MPTAmount` by `principalPaid + (interestPaid - management_fee)` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
   - If `LoanBroker.CoverAvailable < LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
-    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+    - Increase the `MPToken.MPTAmount` by `feePaid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `feePaid + management_fee`.
 
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Owner` `AccountRoot` has `lsfMPTLocked` flag set (The LoanBroker cannot receive funds):
 
-    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
-    - Increase `LoanBroker.CoverAvailable` by `fee_paid + management_fee`.
+    - Increase the `MPToken.MPTAmount` by `feePaid + management_fee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the payment and management fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
+    - Increase `LoanBroker.CoverAvailable` by `feePaid + management_fee`.
 
   - If `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal x LoanBroker.CoverRateMinimum`:
 
-    - Increase the `MPToken.MPTAmount` by `fee_paid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+    - Increase the `MPToken.MPTAmount` by `feePaid + management_fee` of the `LoanBroker.Owner` `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
-  - Decrease the `MPToken.MPTAmount` by `principal_paid + interest_paid + fee_paid` of the submitter `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+  - Decrease the `MPToken.MPTAmount` by `principalPaid + interestPaid + feePaid` of the submitter `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 [**Return to Index**](#index)
 
