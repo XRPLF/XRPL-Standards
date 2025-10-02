@@ -349,9 +349,9 @@ Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the trans
 
 ### 7.2. Transaction Fee
 
-If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(\# signatures+1)*base	extunderscore fee$.
+If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base	extunderscore fee$.
 
-The total fee calculation for signatures will now be $( 1+\# tx.Signers + \# tx.Sponsor.Signers) * base	extunderscore fee$ (plus transaction-specific fees).
+The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Sponsor.Signers|) * base\_fee$ (plus transaction-specific fees).
 
 ### 7.3. Failure Conditions
 
