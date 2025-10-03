@@ -227,7 +227,40 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 | :------------------------: | :----------: |
 | `lsfAllowTrustLineLocking` | `0x40000000` |
 
-## 1.6. Future Considerations
+## 1.6. AccountSet Transaction Updates
+
+To enable IOU tokens to be held in escrow, issuers must set the `lsfAllowTrustLineLocking` flag on their account. This is done using the AccountSet transaction with the new `asfAllowTrustLineLocking` flag.
+
+### 1.6.1. New AccountSet Flag
+
+The following AccountSet flag is added to enable trust line locking for escrows:
+
+| Flag Name                  | Decimal Value | Description                                                                                                                                                                                                                                                |
+| :------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `asfAllowTrustLineLocking` | 17            | Allow trust line tokens (IOUs) issued by this account to be held in escrow. _(Requires the TokenEscrow amendment.)_ Can only be enabled by the issuer account. Once enabled, holders of this account's issued tokens can create escrows with those tokens. |
+
+### 1.6.2. Usage Example
+
+To enable trust line locking for an issuer account:
+
+```json
+{
+  "TransactionType": "AccountSet",
+  "Account": "rIssuerAccountAddress...",
+  "SetFlag": 17,
+  "Fee": "12",
+  "Sequence": 5
+}
+```
+
+**Important Notes:**
+
+- This flag must be set by the token issuer account before any escrows can be created with their IOUs
+- The flag applies only to IOU tokens (trust line based tokens)
+- For MPTs, escrow permissions are controlled by the `tfMPTCanEscrow` flag on the MPTokenIssuance object
+- If an issuer's account does not have this flag set, attempts to create escrows with their IOUs will fail with `tecNO_PERMISSION`
+
+## 1.7. Future Considerations
 
 1. Clawback: XLS-85d currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
 
