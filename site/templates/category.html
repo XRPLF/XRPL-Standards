@@ -1,6 +1,6 @@
-<!-- 
+<!--
     Category page template for XLS Standards website
-    
+
     Displays XLS standards filtered by category with:
     - Category-specific introduction and metadata
     - Interactive sortable table with all columns (except category since it's consistent)
@@ -73,7 +73,29 @@
         <th class="sortable" data-column="number">Number</th>
         <th class="sortable" data-column="title">Title</th>
         <th class="sortable" data-column="author">Author(s)</th>
-        <th class="sortable" data-column="status">Status</th>
+        <th class="sortable" data-column="status">
+          <span class="tooltip">
+            Status
+            <span class="tooltip-text">
+              <div class="tooltip-status">
+                <strong>Draft:</strong> Work in progress, subject to change and
+                further development.
+              </div>
+              <div class="tooltip-status">
+                <strong>Final:</strong> Completed and approved standard, ready
+                for implementation.
+              </div>
+              <div class="tooltip-status">
+                <strong>Stagnant:</strong> No longer actively developed or
+                maintained.
+              </div>
+              <div class="tooltip-status">
+                <strong>Withdrawn:</strong> Withdrawn from consideration and
+                will not be implemented.
+              </div>
+            </span>
+          </span>
+        </th>
         <th class="sortable" data-column="created">Created</th>
       </tr>
     </thead>
@@ -148,6 +170,38 @@
     // Set initial sort indicator on the Number column
     const numberHeader = table.querySelector('th[data-column="number"]');
     if (numberHeader) numberHeader.classList.add("sort-desc");
+
+    // Tooltip positioning functionality
+    const tooltips = document.querySelectorAll(".tooltip");
+    tooltips.forEach((tooltip) => {
+      const tooltipText = tooltip.querySelector(".tooltip-text");
+      if (tooltipText) {
+        tooltip.addEventListener("mouseenter", function (e) {
+          // Get the position of the tooltip trigger
+          const rect = tooltip.getBoundingClientRect();
+
+          // Position the tooltip above the trigger, centered horizontally
+          const left = rect.left + rect.width / 2 - 150; // Center the 300px wide tooltip
+          const top = rect.top - 10; // 10px above the trigger
+
+          // Ensure tooltip stays within viewport bounds
+          const adjustedLeft = Math.max(
+            10,
+            Math.min(left, window.innerWidth - 310),
+          );
+          const adjustedTop = Math.max(10, top);
+
+          tooltipText.style.left = adjustedLeft + "px";
+          tooltipText.style.top = adjustedTop + "px";
+        });
+
+        tooltip.addEventListener("mouseleave", function (e) {
+          // Reset positioning to hide tooltip properly
+          tooltipText.style.left = "";
+          tooltipText.style.top = "";
+        });
+      }
+    });
 
     // Add click event listeners to all sortable headers
     headers.forEach((header) => {
