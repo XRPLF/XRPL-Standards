@@ -3,7 +3,7 @@
   title: <The title is a few words, not a complete sentence>
   description: <Description is one full (short) sentence>
   author: <a comma separated list of the author(s) with email addresses>
-  discussion-from: [link to XRPL-Standards discussion with the same XLS number]
+  discussion-from: [link to XRPL-Standards discussion where this XLS was proposed]
   status: Discussion
   category: Meta
   requires: [optional, based on if it depends on other features]
@@ -20,7 +20,9 @@
   TODO: Remove this comment before submitting
 -->
 
-## Abstract
+# Title
+
+## 1. Abstract
 
 <!--
   The Abstract is a multi-sentence (short paragraph) technical summary. This should be a very terse and human-readable version of the specification section. Someone should be able to read only the abstract to get the gist of what this specification does.
@@ -28,7 +30,7 @@
   TODO: Remove this comment before submitting
 -->
 
-## Motivation
+## 2. Motivation
 
 <!--
   This section is optional.
@@ -155,3 +157,9 @@ Invariants are fundamental rules governing a feature's behavior that must always
 -->
 
 Needs discussion.
+
+# Appendix
+
+## Appendix A: FAQ
+
+### A.1: Question
