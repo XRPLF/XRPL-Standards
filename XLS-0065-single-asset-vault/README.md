@@ -182,7 +182,7 @@ When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XR
 
 ##### 2.1.6.1.3 `MPT`
 
-When a vault holds `MPT`, its `Scale` is fixed at **0**. This creates a 1-to-1 relationship between deposited MPT units and the shares issued (for example, depositing 10 MPTs to an empty Vault issues 10 shares). The value of a single MPT is determined at the issuer's discretion. If an MPT is set to represent a large value, the vault owner must be cautious. Because only whole MPT units can be deposited, any value that is not a multiple of a single MPT's value may be lost due to rounding during a transaction.
+When a vault holds `MPT`, its `Scale` is fixed at **0**. This creates a 1-to-1 relationship between deposited MPT units and the shares issued (for example, depositing 10 MPTs to an empty Vault issues 10 shares). The value of a single MPT is determined at the issuer's discretion. If an MPT is set to represent a large value, the vault owner and the depositor must be cautious. Since only whole MPT units are used in calculations, any value that is not a multiple of a single MPT's value may be lost due to rounding during a transaction.
 
 ##### 2.1.6.2 `MPTokenIssuance`
 
