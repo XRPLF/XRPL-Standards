@@ -168,9 +168,9 @@ Shares represent the portion of the Vault assets a depositor owns. Vault Owners 
 
 ##### 2.1.6.1 `Scale`
 
-The **`Scale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{Scale}}$, that converts a decimal asset amount into a corresponding whole number of shares. For example, with an `Scale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
+The **`Scale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{Scale}}$, that converts a decimal asset amount into a corresponding whole number of shares. For example, with a `Scale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
 
-As a general rule, all calculations involving MPTs are executed with a precision of a single MPT, treating them as indivisible units. If a calculation results in a fractional amount, it will be rounded up, down or to the nearest whole number depending on the context. Crucially, the rounding direction is determined by the protocol and is not controlled by the transaction submitter, which may lead to unexpected results for the fractional part.
+As a general rule, all calculations involving MPTs are executed with a precision of a single MPT, treating them as indivisible units. If a calculation results in a fractional amount, it will be rounded up, down or to the nearest whole number depending on the context. Crucially, the rounding direction is determined by the protocol and is not controlled by the transaction submitter, which may lead to unexpected results.
 
 ##### 2.1.6.1.1 `IOU`
 
@@ -178,7 +178,7 @@ When a vault holds an **`IOU`**, the `Scale` is configurable by the Vault Owner 
 
 ##### 2.1.6.1.2 `XRP`
 
-When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XRP's native structure, where one share represents one "drop" (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP to an empty Vault will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
+When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XRP's native structure, where one share represents one drop (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP to an empty Vault will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
 
 ##### 2.1.6.1.3 `MPT`
 
@@ -407,7 +407,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 - The `Asset` is an `IOU`:
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-    The `Scale` parameter is provided, and is less than **0** or greater than **18**.
+  - The `Scale` parameter is provided, and is less than **0** or greater than **18**.
 
 - The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
@@ -422,7 +422,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 - Create a new `MPTokenIssuance` ledger object for the vault shares.
   - If the `DomainID` is provided:
     - `MPTokenIssuance(Vault.MPTokenIssuanceID).DomainID = DomainID` (Set the Permissioned Domain ID).
-  - Create an `MPToken` object for the Vault Owner.
+  - Create an `MPToken` object for the Vault Owner to hold Vault Shares.
 - Create a new `AccountRoot`[_pseudo-account_](https://github.com/XRPLF/XRPL-Standards/discussions/191) object setting the `PseudoOwner` to `VaultID`.
 
 - If `Vault.Asset` is an `IOU`:
