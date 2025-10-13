@@ -60,7 +60,7 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
     patterns = {
         "title": r"[tT]itle:\s*(.*?)(?:\n|$)",
         "description": r"[dD]escription:\s*(.*?)(?:\n|$)",
-        "authors": r"[aA]uthor:\s*(.*?)(?:\n|$)",
+        "authors": r"[aA]uthors?:\s*(.*?)(?:\n|$)",
         "status": r"[sS]tatus:\s*(.*?)(?:\n|$)",
         "category": r"[cC]ategory:\s*(.*?)(?:\n|$)",
         "created": r"[cC]reated:\s*(.*?)(?:\n|$)",
