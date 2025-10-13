@@ -197,7 +197,7 @@ Here’s the table with the headings "Field," "Description," and "Value":
 | `MaximumAmount`   | No limit to the number of shares that can be issued.                                            | `0xFFFFFFFFFFFFFFFF` |
 | `TransferFee`     | The fee paid to transfer the shares.                                                            | 0                    |
 | `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format.                                          | -                    |
-| `AssetScale`      | Metadata representing the number of orders of magnitude between a standard unit and an MPT unit | `Vault.Scale`        |
+| `AssetScale`      | Represents orders of magnitude between the standard and the MPT unit. For IOUs it is set to `Vault.Scale`, otherwise it is `0`. | `Vault.Scale`        |
 
 ###### Flags
 
