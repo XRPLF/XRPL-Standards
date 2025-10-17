@@ -146,7 +146,8 @@ A section to succinctly introduce the protocol that the amendment introduces.
 - **Terminology** (optional): A section to provide a glossary of terms used across the specification.
 - **System Diagram** (optional): For complex protocols a system diagram that describes the relationship between different components of the system.
 - **Summary**
-  - **Ledger Objects**: A list of ledger objects and their purpose introduced by the amendment.
+  - **Serialized Types**: A list of serialized types and their purpose introduced by the amendment.
+  - **Ledger Entries**: A list of ledger entries and their purpose introduced by the amendment.
   - **Transactions**: A list of transactions and their purpose introduced by the amendment.
   - **API**: A list of RPCs and their purpose introduced by the amendment (if applicable).
 
