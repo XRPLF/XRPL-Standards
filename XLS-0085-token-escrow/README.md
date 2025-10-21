@@ -45,10 +45,9 @@ This amendment extends the functionality of escrows to support both IOUs and MPT
 
 The `EscrowCreate` transaction is modified as follows:
 
-| Field         | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Amount`      | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
-| `CancelAfter` | False     | Number           | UInt32        | (Optional) The time, in seconds since the Ripple Epoch, when this escrow expires. This value is immutable; the funds can only be returned to the sender after this time. Required when creating an Escrow with IOU or MPT                                                                                                                                                                                                                                                                                                                                                                                     |
+| Field    | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount` | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
 
 **Failure Conditions:**
 
@@ -78,7 +77,7 @@ The `EscrowCreate` transaction is modified as follows:
 
 - **Adjustment from Source to Issuer:**
   - **IOU Tokens**: The escrow `Amount` is deducted from the source's trustline balance.
-  - **MPTs**: The escrow `Amount` is deducted from the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is increased on both the source's MPT and the MPT issuance.
+  - **MPTs**: The escrow `Amount` is deducted from the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfLockedAmount` is increased on both the source's MPT and the MPT issuance.
 - **Escrow Object Creation:**
   - The `Escrow` ledger object includes:
     - `CancelAfter`: When the Escrow Expires (Required on IOU/MPT)
@@ -117,16 +116,16 @@ The `EscrowCreate` transaction is modified as follows:
   - **IOU Tokens**: The escrow `Amount` is added to the destination's trustline balance.
   - **MPTs**:
     - If the escrow sender is the issuer of the asset that was escrowed and the destination is not the issuer, then:
-      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
+      1. The `LockedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
       2. The `Amount` on the destination's `MPToken` is increased by the escrow's `Amount`.
       3. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is unchanged.
     - If the escrow sender is not the issuer of the asset that was escrowed but the destination is the issuer of the asset, then:
-      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
+      1. The `LockedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount`.
       2. No `MPToken` objects are changed because MPT issuers may not hold MPTokens.
       3. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by `Amount` (i.e., this escrow finish is a "redemption").
     - If neither the escrow source nor destination is the issuer of the asset that was escrowed, then
-      1. The `EscrowedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by the escrow `Amount`.
-      2. The `EscrowedAmount` on the source's `MPToken` is decreased by the escrow `Amount`.
+      1. The `LockedAmount` on the `MPTokenIssuance` of the asset that was held in escrow is decreased by the escrow `Amount`.
+      2. The `LockedAmount` on the source's `MPToken` is decreased by the escrow `Amount`.
       3. The `Amount` on the destination's `MPToken` is increased by the escrow `Amount`.
       4. The `OutstandingAmount` on the `MPTokenIssuance` of the asset that was held in escrow is unchanged.
 - **Deletion of Escrow Object:**
@@ -161,7 +160,7 @@ The `EscrowCreate` transaction is modified as follows:
   - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the recipient, then the MPT will be created.
 - **Adjustment from Issuer to Source:**
   - **IOU Tokens**: The escrow `Amount` is added to the source's trustline balance.
-  - **MPTs**: The escrow `Amount` is added to the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfEscrowAmount` is decreased on both the source's MPT and the MPT issuance.
+  - **MPTs**: The escrow `Amount` is added to the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfLockedAmount` is decreased on both the source's MPT and the MPT issuance.
 - **Deletion of Escrow Object:**
   - The `Escrow` object is deleted after successful cancellation.
 
@@ -210,7 +209,7 @@ The `MPToken` ledger object is updated as follows:
 
 | Field Name       | JSON Type | Internal Type | Description                                                          |
 | ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfEscrowAmount` | Object    | Amount        | _(Optional)_ The total of all outstanding escrows for this issuance. |
+| `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows for this issuance. |
 
 ### 1.5.3 `MPTokenIssuance` Ledger Object
 
@@ -218,7 +217,7 @@ The `MPTokenIssuance` ledger object is updated as follows:
 
 | Field Name       | JSON Type | Internal Type | Description                                                          |
 | ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfEscrowAmount` | Object    | Amount        | _(Optional)_ The total of all outstanding escrows for this issuance. |
+| `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows for this issuance. |
 
 ### 1.5.4 `AccountRoot` Ledger Object
 
@@ -228,7 +227,40 @@ This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot
 | :------------------------: | :----------: |
 | `lsfAllowTrustLineLocking` | `0x40000000` |
 
-## 1.6. Future Considerations
+## 1.6. AccountSet Transaction Updates
+
+To enable IOU tokens to be held in escrow, issuers must set the `lsfAllowTrustLineLocking` flag on their account. This is done using the AccountSet transaction with the new `asfAllowTrustLineLocking` flag.
+
+### 1.6.1. New AccountSet Flag
+
+The following AccountSet flag is added to enable trust line locking for escrows:
+
+| Flag Name                  | Decimal Value | Description                                                                                                                                                                                                                                                |
+| :------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `asfAllowTrustLineLocking` | 17            | Allow trust line tokens (IOUs) issued by this account to be held in escrow. _(Requires the TokenEscrow amendment.)_ Can only be enabled by the issuer account. Once enabled, holders of this account's issued tokens can create escrows with those tokens. |
+
+### 1.6.2. Usage Example
+
+To enable trust line locking for an issuer account:
+
+```json
+{
+  "TransactionType": "AccountSet",
+  "Account": "rIssuerAccountAddress...",
+  "SetFlag": 17,
+  "Fee": "12",
+  "Sequence": 5
+}
+```
+
+**Important Notes:**
+
+- This flag must be set by the token issuer account before any escrows can be created with their IOUs
+- The flag applies only to IOU tokens (trust line based tokens)
+- For MPTs, escrow permissions are controlled by the `tfMPTCanEscrow` flag on the MPTokenIssuance object
+- If an issuer's account does not have this flag set, attempts to create escrows with their IOUs will fail with `tecNO_PERMISSION`
+
+## 1.7. Future Considerations
 
 1. Clawback: XLS-85d currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
 
