@@ -1193,13 +1193,20 @@ The transaction deletes an existing `Loan` object.
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `83`      | The transaction type.                    |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to. |
-| `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.              |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                               |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `83`      | The transaction type.                     |
+| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
+| `Amount`          | :heavy_check_mark: | `number`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
+| `Flags`           |                    | `string`  |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
 
-##### 3.2.4.1 Payment Types
+##### 3.2.4.1 `Flags`
+
+| Flag Name           |  Flag Value  | Description                                                                  |
+| ------------------- | :----------: | :--------------------------------------------------------------------------- |
+| `tfLoanOverpayment` | `0x00010000` | Indicates that remaining payment amount should be treated as an overpayment. |
+
+##### 3.2.4.2 Payment Types
 
 A Loan payment has four types:
 
@@ -1231,7 +1238,7 @@ If the Loan Broker and the borrower have agreed to allow overpayments, any amoun
 
 Each payment comprises three parts, `principal`, `interest` and `fee`. The `principal` is an amount paid against the principal of the Loan, `interest` is the interest portion of the Loan, and `fee` is the fee part paid by the Borrower on top of `principal` and `interest`.
 
-###### 3.2.4.1.1 Regular Payment
+###### 3.2.4.2.1 Regular Payment
 
 A periodic payment amount is calculated using the amortization payment formula:
 
@@ -1287,7 +1294,7 @@ Example (integer-only MPT):
 
 Therefore, implementations must detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
 
-###### 3.2.4.1.2 Late Payment
+###### 3.2.4.2.2 Late Payment
 
 When a Borrower makes a payment after `NextPaymentDueDate`, they must pay a nominal late payment fee and an additional interest rate charged on the overdue amount for the unpaid period. The formula is as follows:
 
@@ -1317,7 +1324,7 @@ $$
 
 Note that `valueChange > 0` for late payments, i.e. a late payment increases the value of the loan.
 
-###### 3.2.4.1.3 Loan Overpayment
+###### 3.2.4.2.3 Loan Overpayment
 
 - Let $\mathcal{P}$ and $\mathcal{p}$ represent the total and outstanding Loan principal.
 - Let $\mathcal{I}$ and $\mathcal{i}$ represent the total and outstanding Loan interest computed from $\mathcal{P}$ and $\mathcal{p}$ respectively.
@@ -1348,7 +1355,7 @@ $$
 valueChange =  \mathcal{i} - \mathcal{i'}
 $$
 
-###### 3.2.4.1.4 Early Full Repayment
+###### 3.2.4.2.4 Early Full Repayment
 
 A Borrower can close a Loan early by submitting the total amount needed to do so. This amount is the sum of the remaining balance, any accrued interest, a prepayment penalty, and a prepayment fee.
 
@@ -1382,7 +1389,7 @@ $$
 valueChange = (prepaymentPenalty) - (interestOutstanding - accruedInterest)
 $$
 
-###### 3.2.4.1.5 Management Fee Calculations
+###### 3.2.4.2.5 Management Fee Calculations
 
 The `LoanBroker` Management fee is charged against the interest portion of the Loan and subtracted from the total Loan value at Loan creation. However, the fee is charged only during Loan payments. Early and Late payments change the total value of the Loan by decreasing or increasing the value of total interest. Therefore, when an early, late or an overpayment payment is made, the management fee must be updated.
 
@@ -1441,7 +1448,7 @@ $$
 LoanBroker.DebtTotal = LoanBroker.DebtTotal - managementFeeChange
 $$
 
-##### 3.2.4.2 Total Loan Value Calculation
+##### 3.2.4.3 Total Loan Value Calculation
 
 At any point in time the following formulae can be used to calculate the total remaining value of the loan.
 
@@ -1469,7 +1476,7 @@ $$
 totalInterestOutstanding = totalValueOutstanding - principalOutstanding
 $$
 
-##### 3.2.4.3 Transaction Pseudo-code
+##### 3.2.4.4 Transaction Pseudo-code
 
 The following is the pseudo-code for handling a Loan payment transaction.
 
@@ -1545,9 +1552,9 @@ function make_payment(amo unt, currentTime) -> (principalPaid, interestPaid, val
         loan.principalOutstanding = 0
         return (
           fullPayment.principal, // full payment repays the entire outstnading principal, i.e. equivalent to loan.principalOutstanding
-          fullPayment.interest,  // full payment repays any accrued interest since the last payment and additional full payment interest 
+          fullPayment.interest,  // full payment repays any accrued interest since the last payment and additional full payment interest
           loanValueChange,       // a full payment changes the total value of the loan
-          loan.closePaymentFee   // an early payment pays a specific closePaymentFee 
+          loan.closePaymentFee   // an early payment pays a specific closePaymentFee
         )
     }
 
@@ -1597,8 +1604,8 @@ function make_payment(amo unt, currentTime) -> (principalPaid, interestPaid, val
     let newTotalValue = periodicPayment x loan.paymentRemaining
     let overpayment = min(loan.principalOutstanding, amount - (totalPrincipalPaid + totalInterestPaid + totalFeePaid));
     let overpaymentInterestPortion = 0
-  
-    if overpayment > 0 && is_set(lsfOverpayment) {
+
+    if overpayment > 0 && is_set(lsfLoanOverpayment) && is_set(tfLoanOverpayment) {
         overpaymentInterestPortion = overpayment * loan.overpaymentInterestRate
         let feePortion = overpayment * loan.overpaymentFee
         let remainder = overpayment - overpaymentInterestPortion - feePortion
@@ -1632,7 +1639,7 @@ function make_payment(amo unt, currentTime) -> (principalPaid, interestPaid, val
     )
 ```
 
-##### 3.2.4.4 Failure Conditions
+##### 3.2.4.5 Failure Conditions
 
 Assume the payment is split into `principal`, `interest` and `fee`, and `totalDue = principal + interest + fee`. `totalDue` is the minimum payment due by the borrower.
 
@@ -1651,6 +1658,8 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 - A `Loan` object with specified `LoanID` does not exist on the ledger.
 
 - The submitter `AccountRoot.Account` is not equal to `Loan.Borrower`.
+
+- The `Loan.lsfLoanOverpayment` flag is not set, and the user set the `tfLoanOverpayment` flag.
 
 - `Loan.PaymentRemaining` or `Loan.TotalValueOutstanding` is `0`.
 
@@ -1674,7 +1683,7 @@ Furthermore, assume `full_periodic_payments` variable represents the number of p
 
 - If `LastClosedLedger.CloseTime < Loan.NextPaymentDueDate` and `Amount` < `PeriodicPaymentAmount()`
 
-##### 3.2.4.5 State Changes
+##### 3.2.4.6 State Changes
 
 - `Loan` object state changes:
 
