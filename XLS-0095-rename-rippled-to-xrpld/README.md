@@ -1,7 +1,7 @@
 <pre>
   xls: 95
   title: Rename ripple(d) to xrpl(d)
-  description: Renames references of "ripple(d)" to "xrpl(d)" in the documentation and codebase.
+  description: Renames references of "ripple(d)" to "xrpl(d)" in the documentation and codebase, and other downstream changes.
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/384
   author: Bart Thomee (@bthomee)
   status: Draft
