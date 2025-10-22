@@ -440,36 +440,38 @@ The `LoanID` is calculated as follows:
 
 #### 2.2.2 Fields
 
-| Field Name                | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type |                 Default Value                 | Description                                                                                                                                                    |
-| ------------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-------------------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`         |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                   `0x0089`                    | Ledger object type.                                                                                                                                            |
-| `LedgerIndex`             |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                     `N/A`                     | Ledger object identifier.                                                                                                                                      |
-| `Flags`                   |      `Yes`       |   `No`    |                    | `string`  |   `UINT32`    |                       0                       | Ledger object flags.                                                                                                                                           |
-| `PreviousTxnID`           |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |                     `N/A`                     | The ID of the transaction that last modified this object.                                                                                                      |
-| `PreviousTxnLgrSeq`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | The ledger sequence containing the transaction that last modified this object.                                                                                 |
-| `LoanSequence`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | The sequence number of the Loan.                                                                                                                               |
-| `OwnerNode`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                     `N/A`                     | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                         |
-| `LoanBrokerNode`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                     `N/A`                     | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
-| `LoanBrokerID`            |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                     `N/A`                     | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
-| `Borrower`                |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |                     `N/A`                     | The address of the account that is the borrower.                                                                                                               |
-| `LoanOriginationFee`      |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                     `N/A`                     | A nominal nds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                  |
-| `LoanServiceFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                     `N/A`                     | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                 |
-| `LatePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                     `N/A`                     | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                  |
-| `ClosePaymentFee`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                     `N/A`                     | A nominal funds amount paid to the `LoanBroker.Owner` when a payment full payment is made.                                                                     |
-| `OverpaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                              |
-| `InterestRate`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | Annualized interest rate of the Loan in 1/10th basis points.                                                                                                   |
-| `LateInterestRate`        |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
-| `CloseInterestRate`       |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | An interest rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                       |
-| `OverpaymentInterestRate` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                   |
-| `StartDate`               |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |           `CurrentLedgerTimestamp`            | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                 |
-| `PaymentInterval`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | Number of seconds between Loan payments.                                                                                                                       |
-| `GracePeriod`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                     `N/A`                     | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                        |
-| `PreviousPaymentDate`     |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                      `0`                      | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
-| `NextPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    | `LoanSet.StartDate + LoanSet.PaymentInterval` | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
-| `PaymentRemaining`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |            `LoanSet.PaymentTotal`             | The number of payments remaining on the Loan.                                                                                                                  |
-| `PrincipalOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The principal amount due to be paid by the Borrower.                                                                                                           |
-| `TotalValueOutstanding`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |           `TotalValueOutstanding()`           | The total outstanding value of the Loan.                                                                                                                       |
-| `PrincipalRequested`      |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |         `LoanSet.PrincipalRequested`          | The amount of principal requested for the Loan.                                                                                                                |
+| Field Name                 | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type |                                   Default Value                                   | Description                                                                                                                                                    |
+| -------------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-------------------------------------------------------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                                     `0x0089`                                      | Ledger object type.                                                                                                                                            |
+| `LedgerIndex`              |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                                       `N/A`                                       | Ledger object identifier.                                                                                                                                      |
+| `Flags`                    |      `Yes`       |   `No`    |                    | `string`  |   `UINT32`    |                                         0                                         | Ledger object flags.                                                                                                                                           |
+| `PreviousTxnID`            |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the transaction that last modified this object.                                                                                                      |
+| `PreviousTxnLgrSeq`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The ledger sequence containing the transaction that last modified this object.                                                                                 |
+| `LoanSequence`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The sequence number of the Loan.                                                                                                                               |
+| `OwnerNode`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                         |
+| `LoanBrokerNode`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                        |
+| `LoanBrokerID`             |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                 |
+| `Borrower`                 |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                               |
+| `LoanOriginationFee`       |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                                       `N/A`                                       | A nominal nds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                  |
+| `LoanServiceFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                 |
+| `LatePaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                  |
+| `ClosePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment full payment is made.                                                                     |
+| `OverpaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                              |
+| `InterestRate`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Annualized interest rate of the Loan in 1/10th basis points.                                                                                                   |
+| `LateInterestRate`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
+| `CloseInterestRate`        |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                       |
+| `OverpaymentInterestRate`  |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                   |
+| `StartDate`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                             `CurrentLedgerTimestamp`                              | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                 |
+| `PaymentInterval`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Number of seconds between Loan payments.                                                                                                                       |
+| `GracePeriod`              |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                        |
+| `PreviousPaymentDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time). |
+| `NextPaymentDueDate`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                   `LoanSet.StartDate + LoanSet.PaymentInterval`                   | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).       |
+| `PaymentRemaining`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                              `LoanSet.PaymentTotal`                               | The number of payments remaining on the Loan.                                                                                                                  |
+| `TotalValueOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |                             `TotalValueOutstanding()`                             | The total outstanding value of the Loan, including all fees and interest.                                                                                      |
+| `PrincipalOutstanding`     |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |                           `LoanSet.PrincipalRequested`                            | The principal amount that the Borrower still owes.                                                                                                             |
+| `ManagementFeeOutstanding` |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    | `(TotalValueOutstanding() - PrincipalOutstanding) x LoanBroker.ManagementFeeRate` | The remaining Management Fee owed to the LoanBroker.                                                                                                           |
+| `PeriodicPayment`          |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |                              `LoanPeriodicPayment()`                              | The calculated periodic payment amount for each payment interval.                                                                                              |
+| `PrincipalRequested`       |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `NUMBER`    |                           `LoanSet.PrincipalRequested`                            | The amount of principal requested for the Loan.                                                                                                                |
 
 ##### 2.2.2.1 Flags
 
@@ -480,6 +482,22 @@ The `Loan` object supports the following flags:
 | `lsfLoanDefault`     | `0x00010000` |    `No`     |     If set, indicates that the Loan is defaulted.      |
 | `lsfLoanImpaired`    | `0x00020000` |    `Yes`    |      If set, indicates that the Loan is impaired.      |
 | `lsfLoanOverpayment` | `0x00040000` |    `No`     | If set, indicates that the Loan supports overpayments. |
+
+##### 2.2.2.2 TotalValueOutstanding
+
+The total outstanding value of the Loan, including all fees. To calculate the outstanding interest portion, use this formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
+
+##### 2.2.2.3 PrincipalOutstanding
+
+The principal amount that the Borrower still owes. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
+
+##### 2.2.2.4 ManagementFeeOutstanding
+
+The remaining Management Fee owed to the LoanBroker. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
+
+##### 2.2.2.5 PeriodicPayment
+
+The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `12` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
 
 #### 2.2.3 Ownership
 
@@ -1481,161 +1499,301 @@ $$
 The following is the pseudo-code for handling a Loan payment transaction.
 
 ```
-function compute_periodic_payment() -> (principal, interest):
-  let periodicRate = (loan.interestRate x loan.paymentInterval) / (365 * 24 * 60 * 60)
+function compute_periodic_payment(principalOutstanding) -> (periodicPayment):
+    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let raisedRate = (1 + periodicRate)^loan.paymentsRemaining
+    
+    return principalOutstanding * (periodicRate * raisedRate) / (raisedRate - 1)
 
-  let raisedRate = (1 + periodicRate)^loan.paymentsRemaining
-  let periodicPayment = loan.principalOutstanding x (periodicRate x raisedRate) / (raisedRate - 1)
+function compute_late_payment_interest(currentTime) -> (lateInterest, managementFee):
+    let secondsOverdue = lastLedgerCloseTime() - loan.nextPaymentDueDate
+    let latePeriodicRate = (loan.lateInterestRate * secondsOverdue) / (365 * 24 * 60 * 60)
+    let latePaymentInterest = loan.principalOutstanding * latePeriodicRate
+    
+    let fee = (latePaymentInterest * loan.loanbroker.managementFeeRate).round(asset_scale, DOWN)
+    
+    return (latePaymentInterest - fee, fee)
 
-  let interest = loan.principalOutstanding x periodicRate
-  let principal = periodicPayment - interest
+function compute_full_payment(currentTime) -> (principal, interest, fee):
+    let rawPrincipalOutstanding = principal_outstanding_from_periodic()
+    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.previousPaymentDate, loan.startDate)
+    
+    let accruedInterest = rawPrincipalOutstanding * periodicRate * (secondsSinceLastPayment / loan.paymentInterval)
+    let prepaymentPenalty = rawPrincipalOutstanding * loan.closeInterestRate
+    let interest = (accruedInterest + prepaymentPenalty).round(asset_scale, DOWN)
+    
+    let managementFee = (interest * loan.loanbroker.managementFeeRate).round(asset_scale, DOWN)
+    interest = interest - managementFee
+    
+    if managementFee <= loan.managementFeeOutstanding:
+        return (loan.principalOutstanding, interest, managementFee)
+    
+    return (loan.principalOutstanding, accruedInterest + prepaymentPenalty, managementFee)
 
-  return (principal, interest)
+function principal_outstanding_from_periodic() -> (principalOutstanding):
+    # Given the outstanding principal we can calculate the periodic payment
+    # Equally, given the periodic payment we can calculate the principal outstanding at the current time
+    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    
+    # If the loan is zero-interest, the outstanding principal is simply periodicPayment * paymentsRemaining
+    if periodicRate == 0:
+        return loan.periodicPayment * loan.paymentsRemaining
+    
+    let raisedRate = (1 + periodicRate)^loan.paymentsRemaining
+    let factor = (periodicRate * raisedRate) / (raisedRate - 1)
+    
+    return loan.periodicPayment / factor
 
-function compute_late_payment_interest(currentTime) -> (lateInterest):
+# This function calculates what the loan state should be given the periodic payment and remaining payments
+function calculate_true_loan_state() -> (principalOutstanding, interestOutstanding, managementFeeOutstanding):
+    let rawPrincipalOutstanding = principal_outstanding_from_periodic()
+    let rawInterestOutstanding = (loan.periodicPayment * loan.paymentsRemaining) - rawPrincipalOutstanding
+    let rawManagementFeeOutstanding = (rawInterestOutstanding * loan.loanbroker.managementFeeRate)
+    
+    # Exclude the management fee from the interest rate
+    rawInterestOutstanding = rawInterestOutstanding - rawManagementFeeOutstanding
+    
+    return (rawPrincipalOutstanding, rawInterestOutstanding, rawManagementFeeOutstanding)
 
-    let secondsOverdue = lastLedgerClostTime() - loan.nextPaymentDueDate
-    let latePeriodicRate = (Loan.LateInterestRate x secondsOverdue) / (365 * 24 * 60 * 60)
-    let latePaymentInterest = Loan.PrincipalOutstanding x latePeriodicRate
+function calculate_payment_breakdown(principalOutstanding) -> (principal, interest):
+    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    
+    if periodicRate == 0:
+        return (principalOutstanding / loan.paymentsRemaining, 0)
+    
+    let interest = principalOutstanding * periodicRate
+    let principal = loan.periodicPayment - interest
+    
+    return (principal, interest)
 
-    return latePaymentInterest
+function calculate_rounded_principal_payment(unroundedPrincipalOutstanding, unroundedPrincipalPayment) -> (principal):
+    # The diff captures by how much we deviated from the true principal value
+    # If the diff is negative, we need to slow down repayment as we overpaid principalOutstanding
+    # If the diff is positive, we need to speed up the repayment as we underpaid the principalOutstanding
+    let diff = (loan.principalOutstanding - unroundedPrincipalOutstanding).round(asset_scale, DOWN)
+    let roundedPrincipalPayment = (unroundedPrincipalPayment + diff).round(asset_scale, DOWN)
+    
+    # Ensure we do not have a negative principal payment
+    roundedPrincipalPayment = max(0, roundedPrincipalPayment)
+    
+    return min(roundedPrincipalPayment, loan.principalOutstanding)
 
-function compute_full_payment(currentTime) -> (principal, interest):
-  let periodicRate = (loan.interestRate x loan.paymentInterval) / (365 * 24 * 60 * 60)
+function calculate_rounded_interest_breakdown(roundedPrincipalPayment, unroundedInterestOutstanding, unroundedManagementFeeOutstanding, amount) -> (interest, fee):
+    if loan.interestRate == 0:
+        return (0, 0)
+    
+    let loanInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
+    
+    # If diffInterest is negative, we are overpaying the interest portion of the loan, we need to slow down
+    # If the diffInterest is positive, we are underpaying the interest portion, we need to speed up
+    let diffInterest = (loanInterestOutstanding - unroundedInterestOutstanding).round(asset_scale, DOWN)
+    let roundedInterestPayment = amount - roundedPrincipalPayment
+    
+    roundedInterestPayment = roundedInterestPayment + diffInterest
+    
+    # Ensure that we do not overpay the periodic payment amount
+    roundedInterestPayment = min(amount - roundedPrincipalPayment, roundedInterestPayment)
+    
+    # Since in the previous step we perform a subtraction, we need to ensure that we don't end up with a negative interest payment
+    roundedInterestPayment = max(0, roundedInterestPayment)
+    
+    # We have calculated the interest payment, we can now calculate the management fee portion
+    
+    # If diffManagementFee is negative, we are overpaying the fee portion, slow down
+    # If the diffManagementFee is positive, we are underpaying the fee portion, speed up
+    let diffManagementFee = (loan.managementFeeOutstanding - unroundedManagementFeeOutstanding).round(asset_scale, DOWN)
+    let roundedManagementFee = (roundedInterestPayment * loan.loanbroker.managementFeeRate).round(asset_scale, DOWN)
+    
+    roundedManagementFee = roundedManagementFee + diffManagementFee
+    
+    # Since the diffManagementFee can be negative, managementFee may end up negative, ensure that does not happen
+    roundedManagementFee = max(0, roundedManagementFee)
+    
+    # Finally, ensure that the management fee does not exceed the outstanding management fee
+    roundedManagementFee = min(roundedManagementFee, loan.managementFeeOutstanding)
+    
+    # Subtract the fee from interest, ensuring the interest portion is not negative
+    roundedInterestPayment = max(0, roundedInterestPayment - roundedManagementFee)
+    
+    # Finally, ensure the interest payment does not exceed the outstanding interest
+    roundedInterestPayment = min(loanInterestOutstanding, roundedInterestPayment)
+    
+    let excess = (amount - roundedPrincipalPayment - roundedInterestPayment - roundedManagementFee)
+    
+    # If we exceed the payment amount, take as much excess as possible from the interest
+    if excess < 0:
+        let part = min(roundedInterestPayment, abs(excess))
+        roundedInterestPayment = roundedInterestPayment - part
+        excess = excess + part
+    
+    # If there is any left, take as much as possible from the fee
+    if excess < 0:
+        let part = min(roundedManagementFee, abs(excess))
+        roundedManagementFee = roundedManagementFee - part
+        excess = excess + part
+    
+    return (roundedInterestPayment, roundedManagementFee)
 
-  let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.previousPaymentDate, loan.startDate)
+function compute_payment_due(amount) -> (principal, interest, managementFee):
+    # If this is the final payment, simply settle any outstanding amounts
+    if loan.paymentsRemaining == 1:
+        let outstandingInterest = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
+        return (loan.principalOutstanding, outstandingInterest, loan.managementFeeOutstanding)
+    
+    # Determine the true, unrounded state of the loan
+    let (unroundedPrincipalOutstanding, unroundedInterestOutstanding, unroundedManagementFeeOutstanding) = calculate_true_loan_state()
+    
+    # We do not need to know the interest portion
+    let (unroundedPrincipalPayment, _) = calculate_payment_breakdown(unroundedPrincipalOutstanding)
+    
+    # Given the true state we can calculate the rounded principal that accounts for deviation from the true state
+    let roundedPrincipalPayment = calculate_rounded_principal_payment(unroundedPrincipalOutstanding, unroundedPrincipalPayment)
+    
+    let (roundedInterestPayment, roundedManagementFee) = calculate_rounded_interest_breakdown(
+        roundedPrincipalPayment,
+        unroundedInterestOutstanding,
+        unroundedManagementFeeOutstanding,
+        amount
+    )
+    
+    return (roundedPrincipalPayment, roundedInterestPayment, roundedManagementFee)
 
-  let accruedInterest = loan.principalOutstanding x periodicRate x (secondsSinceLastPayment / loan.paymentInterval)
-  let prepaymentPenalty = loan.principalOutstanding x loan.closeInterestRate
+function do_overpayment(amount) -> (valueChange):
+    # Calculate true principal and interest outstanding
+    let (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding) = calculate_true_loan_state()
+    
+    # For an accurate overpayment we need to preserve rounding errors
+    # diffTotal incorporates rounding errors from principal and interest fee, note there is no interest rounding error as this value is derived
+    let diffTotal = loan.totalValueOutstanding - (truePrincipalOutstanding + trueInterestOutstanding + trueManagementFeeOutstanding)
+    let diffPrincipal = loan.principalOutstanding - truePrincipalOutstanding
+    let diffManagementFee = loan.managementFeeOutstanding - trueManagementFeeOutstanding
+    
+    let newPrincipalOutstanding = truePrincipalOutstanding - amount
+    let newPeriodicPayment = compute_periodic_payment(newPrincipalOutstanding)
+    
+    # From the given periodic payment, calculate the new total value outstanding
+    let newTotalValueOutstanding = (newPeriodicPayment * loan.paymentsRemaining).round(asset_scale, HALF_EVEN)
+    
+    # From the new total value, calculate the new interest outstanding and management fee outstanding
+    let newInterestOutstanding = newTotalValueOutstanding - newPrincipalOutstanding
+    let newManagementFeeOutstanding = (newInterestOutstanding * loan.loanbroker.managementFeeRate).round(asset_scale, HALF_EVEN)
+    
+    newInterestOutstanding = newInterestOutstanding - newManagementFeeOutstanding
+    
+    let roundedValueChange = newTotalValueOutstanding + diffTotal - (loan.totalValueOutstanding - amount)
+    
+    # Update loan state
+    loan.totalValueOutstanding = newTotalValueOutstanding + diffTotal
+    loan.principalOutstanding = (newPrincipalOutstanding + diffPrincipal).round(asset_scale, DOWN)
+    loan.managementFeeOutstanding = (newManagementFeeOutstanding + diffManagementFee).round(asset_scale, DOWN)
+    
+    return roundedValueChange
 
-  return loan.principalOutstanding, accruedInterest + prepaymentPenalty
-
-function make_payment(amo unt, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
-    if loan.paymentRemaining is 0 || loan.principalOutstanding is 0 {
+function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
+    if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
-    }
-
-    // the payment is late
-    if loan.nextPaymentDueDate < currentTime {
-
-        let periodicPayment = compute_periodic_payment()
-        let lateInterest = compute_late_payment_interest(currentTime)
-
-        // insufficient funds
-        if amount < (periodicPayment + loan.serviceFee + lateInterest + loan.latePaymentFee) {
+    
+    # The payment is late
+    if loan.nextPaymentDueDate < currentTime:
+        let (principal, interest, managementFee) = compute_payment_due(amount)
+        let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
+        
+        let totalManagementFee = managementFee + lateManagementFee
+        let totalDue = principal + interest + lateInterest + totalManagementFee + loan.serviceFee + loan.latePaymentFee
+        
+        # Insufficient funds
+        if amount < totalDue:
             return "insufficient amount paid" error
-        }
-
-        loan.paymentRemaining -= 1
+        
+        loan.paymentsRemaining = loan.paymentsRemaining - 1
         loan.previousPaymentDate = loan.nextPaymentDueDate
         loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
-
-        loan.principalOutstanding -= periodicPayment.principal
-
+        loan.principalOutstanding = loan.principalOutstanding - principal
+        loan.managementFeeOutstanding = loan.managementFeeOutstanding - managementFee
+        
         return (
-          periodicPayment.principal,                // a late payment does not affect the principal portion due
-          periodicPayment.interest + lateInterest,  // a late payment incorporates both periodic interest and the late interest
-          lateInterest,                             // the value of the loan increases by the lateInterest amount
-          loan.serviceFee + loan.latePaymentFee     // the fee paid for a loan payment includes both: the regular service fee and the late payment fee
-          )
-    }
-
-    let fullPayment = compute_full_payment(currentTime)
-
-    // if the payment is equal or higher than full payment amount
-    // and there is more than one payment remaining, make a full payment
-    if amount >= fullPayment && loan.paymentRemaining > 1 {
-        let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding
-        let loanValueChange = fullPayment.interest - totalInterestOutstanding
-
-        loan.paymentRemaining = 0
-        loan.principalOutstanding = 0
-        return (
-          fullPayment.principal, // full payment repays the entire outstnading principal, i.e. equivalent to loan.principalOutstanding
-          fullPayment.interest,  // full payment repays any accrued interest since the last payment and additional full payment interest
-          loanValueChange,       // a full payment changes the total value of the loan
-          loan.closePaymentFee   // an early payment pays a specific closePaymentFee
+            principal,                                                    # A late payment does not affect the principal portion due
+            interest + lateInterest,                                      # A late payment incorporates both periodic interest and the late interest
+            lateInterest,                                                 # The value of the loan increases by the lateInterest amount
+            totalManagementFee + loan.serviceFee + loan.latePaymentFee   # The total fee paid for a loan payment
         )
-    }
-
-    // Compute scheduled periodic payment. Override if this is the final installment to eliminate rounding dust.
-    let periodicPayment = compute_periodic_payment()
-    if loan.paymentRemaining == 1 {
-        // Final scheduled payment: pay exactly all remaining value (principal + interest) before rounding.
-        periodicPayment.principal = loan.principalOutstanding
-        periodicPayment.interest  = loan.totalValueOutstanding - loan.principalOutstanding
-    }
-
-    let periodicPaymentTotal = periodicPayment.principal + periodicPayment.interest
-
-    // Determine how many full periodic installments this single Amount can cover (cannot exceed remaining)
-    let fullPeriodicPayments = floor(amount / periodicPaymentTotal)
-    if fullPeriodicPayments < 1 {
-        return "insufficient amount paid" error
-    }
-
-    if fullPeriodicPayments > loan.paymentRemaining {
-        fullPeriodicPayments = loan.paymentRemaining
-    }
-
-    let totalPrincipalPaid = 0
-    let totalInterestPaid = 0
-    let loanValueChange = 0
-
-    while fullPeriodicPayments > 0 {
-        let periodicPayment = compute_periodic_payment()
-
-        // If after recomputation only one payment remains, force final payoff to avoid residual dust.
-        if loan.paymentRemaining == 1 {
-          periodicPayment.principal = loan.principalOutstanding
-          periodicPayment.interest  = loan.totalValueOutstanding - loan.principalOutstanding
-        }
-
-        totalPrincipalPaid += periodicPayment.principal
-        totalInterestPaid  += periodicPayment.interest
-        loan.paymentRemaining -= 1
-        loan.principalOutstanding -= periodicPayment.principal
-    }
-
-    let totalFeePaid = loan.serviceFee * fullPeriodicPayments
-    loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval * fullPeriodicPayments
-    loan.previousPaymentDate = loan.nextPaymentDueDate - loan.paymentInterval
-
-    let newTotalValue = periodicPayment x loan.paymentRemaining
-    let overpayment = min(loan.principalOutstanding, amount - (totalPrincipalPaid + totalInterestPaid + totalFeePaid));
-    let overpaymentInterestPortion = 0
-
-    if overpayment > 0 && is_set(lsfLoanOverpayment) && is_set(tfLoanOverpayment) {
-        overpaymentInterestPortion = overpayment * loan.overpaymentInterestRate
-        let feePortion = overpayment * loan.overpaymentFee
-        let remainder = overpayment - overpaymentInterestPortion - feePortion
-
-        if remainder > 0 {
-          totalPrincipalPaid += remainder
-          totalInterestPaid  += overpaymentInterestPortion
-          totalFeePaid       += feePortion
-          loan.principalOutstanding -= remainder
-        }
-    }
-
-    // we are paying off principal early, we have to recompute the periodic payment
-    let totalValueAfterOverpayment = compute_periodic_payment() x loan.paymentRemaining
-
-    // loan overpayment decreases future interest, and thus decreases the overall value of the loan
-    // no assumptions should be made about the sign of loanValueChange
-    loanValueChange = (totalVaultAfterOverpayment - newTotalValue) + overpaymentInterestPortion
-
-    // If final installment just executed, ensure outstanding principal hits zero (guard against residual 1-unit dust)
-    if loan.paymentRemaining == 0 {
+    
+    let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
+    let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + loan.closePaymentFee
+    
+    # If the payment is equal or higher than full payment amount and there is more than one payment remaining, make a full payment
+    if amount >= fullPaymentAmount && loan.paymentsRemaining > 1:
+        let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
+        let loanValueChange = fullInterest - totalInterestOutstanding
+        
+        loan.paymentsRemaining = 0
         loan.principalOutstanding = 0
+        loan.managementFeeOutstanding = 0
         loan.totalValueOutstanding = 0
-    }
-
+        
+        return (
+            fullPrincipal,                      # Full payment repays the entire outstanding principal
+            fullInterest,                       # Full payment repays any accrued interest since the last payment and additional full payment interest
+            loanValueChange,                    # A full payment changes the total value of the loan
+            fullManagementFee + loan.closePaymentFee   # An early payment pays a specific closePaymentFee
+        )
+    
+    # Handle regular payments and overpayments
+    let totalPaid = 0
+    let (totalPrincipalPaid, totalInterestPaid, totalFeePaid) = (0, 0, 0)
+    
+    # Process regular periodic payments
+    while totalPaid < amount && loan.paymentsRemaining > 0:
+        let (principal, interest, managementFee) = compute_payment_due(loan.periodicPayment.round(asset_scale, UP))
+        let paymentAmount = principal + interest + managementFee + loan.serviceFee
+        
+        # Check if we have enough funds for this payment
+        if totalPaid + paymentAmount > amount:
+            break
+        
+        # Apply the payment
+        loan.totalValueOutstanding = loan.totalValueOutstanding - (principal + interest + managementFee)
+        loan.principalOutstanding = loan.principalOutstanding - principal
+        loan.managementFeeOutstanding = loan.managementFeeOutstanding - managementFee
+        loan.paymentsRemaining = loan.paymentsRemaining - 1
+        
+        loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
+        loan.previousPaymentDate = loan.nextPaymentDueDate - loan.paymentInterval
+        
+        totalPaid = totalPaid + paymentAmount
+        totalPrincipalPaid = totalPrincipalPaid + principal
+        totalInterestPaid = totalInterestPaid + interest
+        totalFeePaid = totalFeePaid + managementFee + loan.serviceFee
+    
+    let loanValueChange = 0
+    # Handle overpayment if there are remaining payments, the loan supports overpayments, and there are funds remaining
+    if loan.paymentsRemaining > 0 && is_set(loan.lsfLoanOverpayment) && is_set(tfLoanOverpayment) && totalPaid < amount:
+        let overpaymentAmount = min(loan.principalOutstanding, amount - totalPaid)
+        
+        let overpaymentInterest = overpaymentAmount * loan.overpaymentInterestRate
+        let overpaymentManagementFee = overpaymentInterest * loan.loanbroker.managementFeeRate
+        let overpaymentFee = overpaymentAmount * loan.overpaymentFee
+        
+        overpaymentInterest = overpaymentInterest - overpaymentManagementFee
+        loanValueChange = loanValueChange + overpaymentInterest
+        
+        let overpaymentPrincipal = overpaymentAmount - overpaymentInterest - overpaymentManagementFee - overpaymentFee
+        
+        if overpaymentPrincipal > 0:
+            let valueChange = do_overpayment(overpaymentPrincipal)
+            loanValueChange = loanValueChange + valueChange
+            
+            totalPaid = totalPaid + overpaymentAmount
+            totalPrincipalPaid = totalPrincipalPaid + overpaymentPrincipal
+            totalInterestPaid = totalInterestPaid + overpaymentInterest
+            totalFeePaid = totalFeePaid + overpaymentManagementFee + overpaymentFee
+    
     return (
-      totalPrincipalPaid, // this will include the periodicPayment principal and any overpayment
-      totalInterestPaid,  // this will include the periodicPayment interest and any overpayment
-      loanValueChange,    // valueChange in loal total value by overpayment
-      totalFeePaid        // the total fee
+        totalPrincipalPaid,     # This will include the periodicPayment principal and any overpayment
+        totalInterestPaid,      # This will include the periodicPayment interest and any overpayment
+        loanValueChange,        # Value change in loan total value by overpayment
+        totalFeePaid            # The total fee
     )
 ```
 
