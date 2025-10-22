@@ -5,7 +5,7 @@
 	description: An offline non-interactive cryptographic proof that a transaction was successfully submitted to the XRP Ledger and what its impact (metadata) was
     created: 2023-05-04
     status: Final
-    category: Community
+    category: Ecosystem
 </pre>
 
 # XLS-41d

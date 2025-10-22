@@ -5,7 +5,7 @@
   author: Mayukha Vadari <mvadari@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/116
   status: Stagnant
-  category: Protocol
+  category: System
   created: 2023-06-26
 </pre>
 
