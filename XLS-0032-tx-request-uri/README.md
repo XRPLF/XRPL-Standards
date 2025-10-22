@@ -59,7 +59,7 @@ The absolute URI of the XRPL URI standard may be written as follows:
       <protocol>:<type><query>
 ```
 
-### 2.3 Protocol
+### 2.3 System
 
 The protocol component defines the scheme name for the URI. Per RFC 3986, “the scheme name refers to the specification for the assigning identifier within that scheme.” For this standard, and the scheme within, the protocol shall be defined as follows:
 
@@ -540,7 +540,7 @@ https://github.com/standardconnect/xls-32d
     <code>npm install xls-32d@latest</code>
   </p>
   <p>or</p>
-  <p> 
+  <p>
     <code>yarn add xls-32d@latest</code>
   </p>
 
