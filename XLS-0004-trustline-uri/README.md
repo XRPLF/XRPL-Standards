@@ -5,7 +5,7 @@
   author: Richard Holland (@RichardAH)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/25
   status: Stagnant
-  category: Community
+  category: Ecosystem
   created: 2019-03-06
 </pre>
 

@@ -5,7 +5,7 @@
     description: A standard URI schema for making payments and sharing data between platforms on the XRP Ledger
     created: 2022-07-28
     status: Stagnant
-    category: Community
+    category: Ecosystem
 </pre>
 
 # Abstract
