@@ -26,7 +26,7 @@ class XLSDocument:
     folder: str
     filename: str
     status: str  # draft, final, stagnant, withdrawn, etc.
-    category: str  # amendment, community, protocol, etc.
+    category: str  # amendment, ecosystem, system, etc.
     created: str  # YYYY-MM-DD format
 
     def to_dict(self):
