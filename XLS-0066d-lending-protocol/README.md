@@ -975,6 +975,11 @@ The account specified in the `Account` field pays the transaction fee.
 - `PaymentInterval` is less than `60` seconds.
 - `GracePeriod` is greater than the `PaymentInterval`.
 
+- The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. This can happen if the loan term is too short or the principal is too small for any interest to accrue to a representable value.
+- The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. This prevents the loan from being amortized correctly.
+- The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision (e.g., drops for XRP, or the smallest unit of an IOU/MPT).
+- The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan is less than the specified `PaymentTotal`.
+
 - Insufficient assets in the Vault:
 
   - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable` < `Loan.PrincipalRequested`.
@@ -1231,15 +1236,14 @@ A `LoanPay` transaction is processed according to a defined workflow that evalua
 
 **Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#3244-transaction-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
 
-
 **Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
 
 For example:
+
 - If a loan is denominated in an asset that only supports whole numbers (like an MPT) and the calculated `Loan.PeriodicPayment` is `10.12345`, the borrower is expected to pay `11`.
 - If a loan is denominated in a USD IOU with two decimal places of precision and the `Loan.PeriodicPayment` is `25.54321`, the borrower is expected to pay `25.55`.
 
 This rounded-up value, plus any applicable service fees, constitutes the minimum payment for a single period.
-
 
 Each payment consists of three components:
 
