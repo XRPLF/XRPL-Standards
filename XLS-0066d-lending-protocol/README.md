@@ -1750,7 +1750,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + loan.closePaymentFee
 
     # If the payment is equal or higher than full payment amount and there is more than one payment remaining, make a full payment
-    if amount >= fullPaymentAmount && loan.paymentsRemaining > 1:
+    if is_set(tfLoanFullPayment) && amount >= fullPaymentAmount && loan.paymentsRemaining > 1:
         let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
         let loanValueChange = fullInterest - totalInterestOutstanding
 
