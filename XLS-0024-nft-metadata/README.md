@@ -5,7 +5,7 @@
     author: X-Tokenize (@x-Tokenize)
     created: 2022-02-16
     status: Final
-    category: Community
+    category: Ecosystem
 </pre>
 
 ## Introduction

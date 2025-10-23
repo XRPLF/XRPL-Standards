@@ -211,7 +211,7 @@ def validate_xls_documents(root_dir: Path) -> bool:
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required category metadata"
                 )
-            elif doc.category not in ["Amendment", "Community", "Protocol", "Meta"]:
+            elif doc.category not in ["Amendment", "Ecosystem", "System", "Meta"]:
                 validation_errors.append(
                     f"Error: {doc.folder} has an invalid category: {doc.category}"
                 )

@@ -5,7 +5,7 @@
   author: Ed Hennis <ed@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/pull/124
   status: Final
-  category: Protocol
+  category: System
   created: 2020-06-17
 </pre>
 
