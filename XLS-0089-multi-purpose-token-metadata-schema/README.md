@@ -89,9 +89,24 @@ MPTs include a 1024-byte field for arbitrary metadata. The metadata field is par
 
 ---
 
-### JSON Metadata example
+## 3. Field Name Format
 
-Note: The Key values from the tables above are used as the property names in the JSON metadata object.
+The metadata schema supports JSON objects with both long field names (e.g., `ticker`, `name`, `desc`) and short key names (e.g., `t`, `n`, `d`). However, it is recommended to use short key names to reduce storage requirements of the ledger. The MPT metadata field has a 1024-byte limit, and using compact keys can reduce the metadata size and allow more information to be stored within the available space.
+
+### 3.1 Client Library Support
+
+XRPL client libraries will provide utility functions to facilitate working with metadata in both formats:
+
+- **Encoding utility**: Converts JSON metadata to hexadecimal format for on-ledger storage. If long field names are provided, the utility will automatically shorten them to their compact key equivalents before encoding.
+- **Decoding utility**: Converts hexadecimal metadata from the ledger back to JSON format. The utility will expand short keys back to their full field names for improved readability.
+
+This approach provides flexibility for developers while ensuring efficient on-ledger storage. Developers can work with human-readable long field names in their applications, and the client libraries will handle the conversion to compact format automatically.
+
+---
+
+### 3.2 JSON Metadata Example
+
+The example below demonstrates the recommended format using short key names. Note that the **Key** values from the tables in Section 2 are used as the property names in the JSON metadata object.
 
 ```json
 {
