@@ -5,7 +5,7 @@
   author: Shawn Xie <shawnxie@ripple.com>, Greg Tsipenyuk <gtsipenyuk@ripple.com>, Shashwat Mittal <smittal@ripple.com>, Julian Berridi <jberridi@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
   status: Draft
-  category: Community
+  category: Ecosystem
   requires: XLS-33
   created: 2025-01-27
 </pre>
