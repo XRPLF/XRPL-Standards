@@ -1498,7 +1498,20 @@ $$
 And the theoretical `totalInterestOutstanding` is the portion of that total value that is not principal.
 
 $$
-\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalValueOutstanding - principalOutstanding - managementFeeOutstanding
+\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalValueOutstanding - principalOutstanding
+$$
+
+And the theoretical `managementFeeOutstanding` is the portion of the interest that is due to the loan broker.
+
+$$
+\text{Theoretical } managementFeeOutstanding = \text{Theoretical } totalInterestOutstanding \times managementFeeRate
+$$
+
+The true `totalInterestOutstanding` is then updated to reflect this.
+
+
+$$
+\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalInterestOutstanding - managementFeeOutstanding
 $$
 
 **Important Note**: These formulas describe the theoretical financial model. The actual values stored on the `Loan` ledger object (`TotalValueOutstanding`, `PrincipalOutstanding`, `ManagementFeeOutstanding`) are continuously adjusted during payment processing to account for asset-specific rounding rules. Therefore, implementations **must not** rely on these formulas to derive the live state of a loan. The stored ledger fields are the single source of truth.
