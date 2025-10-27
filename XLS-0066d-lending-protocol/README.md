@@ -1851,6 +1851,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 - The loan is already fully paid (`Loan.PaymentRemaining` is `0` or `Loan.TotalValueOutstanding` is `0`).
 - The `tfLoanOverpayment` flag is set on the transaction, but the `lsfLoanOverpayment` flag is not set on the `Loan` object.
 - The `tfLoanFullPayment` flag is set, but only one payment remains on the loan (`Loan.PaymentRemaining` is `1`).
+- Both `tfLoanOverpayment` and `tfLoanFullPayment` transaction flags are specified.
 
 - If the payment is late (`LastLedgerCloseTime >= Loan.NextPaymentDueDate`):
 
