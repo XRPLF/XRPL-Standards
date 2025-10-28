@@ -31,7 +31,7 @@ Smart Escrows are a first step toward expanding XRPL’s on-ledger functionality
 - **Auction Mechanisms**: Lock funds for auction participants, with conditions for finalization based on bid outcomes.
 - **Treasury Management**: Structure conditions for internal treasury and custodial operations.
 
-## 1. Overview
+## 3. Overview
 
 The design involves a minimal, programmable code block attached to an Escrow object that executes logic to determine whether the Escrow can be completed. This follows the model of a restricted, on-ledger “smart contract,” where conditions can be coded and verified directly on-chain. This is an incremental extension of XRPL's CryptoConditions, enhancing flexibility with custom validation while maintaining computational limits and simplicity.
 
@@ -48,7 +48,7 @@ This proposal involves:
 
 This feature will require an amendment, tentatively titled `SmartEscrow`.
 
-### 1.1. Background: XRPL Escrows
+### 3.1. Background: XRPL Escrows
 
 There are currently two ways to release an escrow: **Time-based** and **Condition-based.**
 
@@ -56,7 +56,7 @@ A **time-based** escrow releases its funds after a certain specified time. In mo
 
 A **condition-based** escrow essentially only releases its funds if a password is provided. In more technical terms, a condition-based escrow has the `Condition` field and can be released if the matching `Fulfillment` field (essentially the reverse of a hash) is provided on the `EscrowFinish` transaction.
 
-#### 1.1.1. Table of Allowed Options
+#### 3.1.1. Table of Allowed Options
 
 Currently, these are the combinations of allowed escrow options:
 
@@ -68,48 +68,48 @@ Currently, these are the combinations of allowed escrow options:
 | Timed conditional with expiration | ✔️            | ✔️          | ✔️            |
 | Conditional with expiration       |               | ✔️          | ✔️            |
 
-### 1.2. Background: Crypto-Conditions
+### 3.2. Background: Crypto-Conditions
 
 Crypto conditions are a standardized way to express a wide range of conditional requirements. These include something like hashlocks (essentially a password), but crypto-conditions also support more complex constructions like multi-signature requirements (note: this is different from the [existing XRPL multi-signature design](https://xrpl.org/docs/concepts/accounts/multi-signing)) or conditions involving specific data. When used to execute Escrows, the XRP Ledger currently only supports hashlock-like conditions, and not the full suite of available [Crypto Conditions](https://github.com/rfcs/crypto-conditions).
 
 For more information around how crypto-conditions work with escrows, see [here](https://xrpl.org/docs/use-cases/payments/smart-contracts-uc#conditionally-held-escrow).
 
-### 1.3. Background: XRPL Extensions
+### 3.3. Background: XRPL Extensions
 
 An **XRPL Extension** is a small piece of code attached to an XRPL building block, which allows users to add some custom logic to the existing primitives. This can be very useful for projects that like the existing features of the XRPL, but need a minor modification to a feature to be able to use it.
 
 See [the blog post here](https://dev.to/ripplexdev/a-proposed-vision-for-xrp-ledger-programmability-1gdj) for more details.
 
-## 2. Serialized Type: `STInt32`
+## 4. Serialized Type: `STInt32`
 
-### 2.1. `SType` Value
+### 4.1. `SType` Value
 
 The `SType` value for `Int32` is `12`.
 
-### 2.2. JSON Representation
+### 4.2. JSON Representation
 
 An `Int32` will be represented as a `number` (or `int`) in JSON, in a fairly standard manner.
 
-### 2.3. Additional Accepted JSON Inputs
+### 4.3. Additional Accepted JSON Inputs
 
 Alternate inputs include:
 
 - `uint` (if the value is less than `int32::max`)
 - `string` (decimal unless a `0x` or `0b` prefix is used)
 
-### 2.4. Binary Encoding
+### 4.4. Binary Encoding
 
 An `Int32` will be encoded in standard `int` [two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) encoding.
 
-### 2.5. Example JSON and Binary Encoding
+### 4.5. Example JSON and Binary Encoding
 
 `1` will be encoded as `0001`. `-1` will be encoded as `ffff`.
 
-## 3. Ledger Entry: `Escrow`
+## 5. Ledger Entry: `Escrow`
 
 The [`Escrow` object](https://xrpl.org/escrow-object.html) already exists on the XRPL. We propose a slight modification to support Smart Escrows.
 
-### 3.1. Fields
+### 5.1. Fields
 
 <details>
 <summary>
@@ -143,21 +143,21 @@ We propose two additional fields:
 | `FinishFunction` |           | `string`  | `Blob`        | Compiled WebAssembly (WASM) code that must execute correctly for the escrow to finish (size limits TBD). |
 | `Data`           |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `FinishFunction` (size limits TBD).     |
 
-#### 3.1.1. `FinishFunction`
+#### 5.1.1. `FinishFunction`
 
 The compiled WASM code included in this field must contain a function named `finish` that takes no parameters and returns a signed integer (`int32`). If the function returns a value greater than 0, the escrow can be finished. Otherwise, the escrow cannot be finished. The function is triggered by an `EscrowFinish` transaction.
 
 See Section 7 for more details.
 
-### 3.2. Reserves
+### 5.2. Reserves
 
-An `Escrow` object with a `FinishFunction` will cost 1 additional object reserve per 500 bytes (beyond the first 500 bytes, which are included in the first object reserve).
+An `Escrow` object with a `FinishFunction` will cost 1. additional object reserve per 500 bytes (beyond the first 500 bytes, which are included in the first object reserve).
 
-## 4. Transaction: `EscrowCreate`
+## 6. Transaction: `EscrowCreate`
 
 The [`EscrowCreate` transaction](https://xrpl.org/escrowcreate.html) already exists on the XRPL. We propose a slight modification to support Smart Escrows.
 
-### 4.1. Fields
+### 6.1. Fields
 
 <details>
 <summary>
@@ -206,11 +206,11 @@ _This table format is taken from [here](https://xrpl.org/docs/references/protoco
 | **Conditional Function with expiration**            |               | ✔️          | ✔️            | ✔️               |
 | **Time-based Conditional Function with expiration** | ✔️            | ✔️          | ✔️            | ✔️               |
 
-### 4.2. Transaction Fee
+### 6.2. Transaction Fee
 
-An `EscrowCreate` with a `FinishFunction` costs costs 100 drops ($base\_fee * 10$) + 5 drops per byte in the `FinishFunction`.
+An `EscrowCreate` with a `FinishFunction` costs costs 100 drops ($base\_fee * 10$) + 5. drops per byte in the `FinishFunction`.
 
-### 4.3. Failure Conditions
+### 6.3. Failure Conditions
 
 The existing failure conditions still apply.
 
@@ -220,15 +220,15 @@ These failure conditions are added, if `FinishFunction` is included:
 - The hex code specified in `FinishFunction` is not valid WASM, or does not follow the specifications of the `FinishFunction` (specified in section 7).
 - The length of `FinishFunction` is greater than the size limit (specified in `FeeSettings` below)
 
-### 4.4. State Changes
+### 6.4. State Changes
 
 There are no additional state changes, other than adding the new fields to the `Escrow` object.
 
-## 5. Transaction: `EscrowFinish`
+## 7. Transaction: `EscrowFinish`
 
 The [`EscrowFinish` transaction](https://xrpl.org/docs/references/protocol/transactions/types/escrowfinish) already exists on the XRPL. We propose a slight modification to support Smart Escrows.
 
-### 5.1. Fields
+### 7.1. Fields
 
 <details>
 <summary>
@@ -240,7 +240,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 | Field           | Required? | JSON Type | Internal Type | Description                                                                                                                                                         |
 | :-------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Owner`         | ✔️        | `string`  | `AccountID`   | The source account that funded the escrow.                                                                                                                          |
-| `OfferSequence` | ✔️        | `number`  | `UInt32`      | Transaction sequence of 1EscrowCreate1 transaction that created the escrow to finish.                                                                               |
+| `OfferSequence` | ✔️        | `number`  | `UInt32`      | Transaction sequence of `EscrowCreate` transaction that created the escrow to finish.                                                                               |
 | `Condition`     |           | `string`  | `Blob`        | The (previously-supplied) [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1) of the escrow.             |
 | `CredentialIDs` |           | `array`   | `Vector256`   | Set of Credentials to authorize a deposit made by this transaction. Each member of the array must be the ledger entry ID of a Credential entry in the ledger.       |
 | `Fulfillment`   |           | `string`  | `Blob`        | The [PREIMAGE-SHA-256 crypto-condition fulfillment](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1.4) matching the escrow's `Condition`. |
@@ -253,11 +253,11 @@ We propose one additional field:
 | :--------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ComputationAllowance` |           | `number`  | `UInt32`      | The amount of gas the user is willing to pay for the execution of the Smart Escrow. Required if the `Escrow` object has a `FinishFunction` field. |
 
-### 5.2. Transaction Fee
+### 7.2. Transaction Fee
 
 There will be a higher transaction fee for executing an `EscrowFinish` transaction when there is a `FinishFunction` attached to the escrow. The exact amounts will be determined during the implementation process (and added to the spec here).
 
-### 5.3. Failure Conditions
+### 7.3. Failure Conditions
 
 The existing failure conditions still apply.
 
@@ -268,11 +268,11 @@ These failure conditions are added:
 - The `ComputationAllowance` provided is not enough gas to complete the processing of the `FinishFunction`.
 - The `FinishFunction` returns a `0` or negative number.
 
-### 5.4. State Changes
+### 7.4. State Changes
 
 There are no additional state changes.
 
-### 5.5. Metadata Changes
+### 7.5. Metadata Changes
 
 There are two additional metadata fields:
 
@@ -281,13 +281,13 @@ There are two additional metadata fields:
 | `GasUsed`        | Yes        | Conditional     | `UInt32` | The amount of gas actually used by the computation of the `FinishFunction` in the escrow. |
 | `WasmReturnCode` | Yes        | Conditional     | `Int32`  | The integer code returned by the `FinishFunction`.                                        |
 
-## 6. Ledger Object: `FeeSettings`
+## 8. Ledger Object: `FeeSettings`
 
 The [`FeeSettings` ledger object](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/feesettings) already exists on the XRPL. The `FeeSettings` entry contains the current base transaction and reserve amounts as determined by [fee voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting).
 
 We propose a slight modification to support Smart Escrows. This will allow the UNL to vote on limits and prices of Smart Escrow execution, so that the network does not need a separate amendment to adjust them, and they can be adjusted on an as-needed basis (e.g. increasing caps and lowering fees as performance improvements are made).
 
-### 6.1. Fields
+### 8.1. Fields
 
 <details>
 <summary>
@@ -310,19 +310,19 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 We propose three additional fields:
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                    |
-| :---------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------- |
-| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                        |
-| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb).                     |
-| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
+| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                     |
+| :---------------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------- |
+| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                         |
+| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100,000 (100kb).                     |
+| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1,000 (1 thousandth of a drop). |
 
-## 7. Transaction: `SetFee`
+## 9. Transaction: `SetFee`
 
 A `SetFee` pseudo-transaction marks a change in transaction cost or reserve requirements as a result of [fee voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting).
 
 We propose a slight modification to support Smart Escrows. This will allow the UNL to vote on limits and prices of Smart Escrow execution, so that the network does not need a separate amendment to adjust them, and they can be adjusted on an as-needed basis (e.g. increasing caps and lowering fees as performance improvements are made).
 
-### 7.1. Fields
+### 9.1. Fields
 
 <details>
 <summary>
@@ -348,7 +348,7 @@ We propose three additional fields:
 | `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb).                     |
 | `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
 
-## 8. How the `FinishFunction` Field Works
+## 10. How the `FinishFunction` Field Works
 
 The `FinishFunction` field will contain compiled WebAssembly (WASM) code that is uploaded to the XRPL. The details of how the WASM engine will execute the code will be provided in a separate XLS.
 
@@ -361,17 +361,52 @@ Some guidelines on what you can/cannot do in the WASM code:
 - No write access of other ledger objects (only to the `Data` field of the `Escrow`)
 - No transaction emission / creation
 
-## 9. Invariants
+## 11. Invariants
 
 Any escrow with a `FinishFunction` field must have a `CancelAfter` field. This provides better security in case something goes wrong with the `FinishFunction`, either due to user error or due to a bug. This restriction may be relaxed in the future.
 
-## 10. Security
+## 12. Security
 
 The implementation will undergo rigorous testing and security audits to ensure that smart escrow developers cannot edit any other ledger object, and continue to obey all other rules of the XRPL.
 
-## 11. Code Examples
+## 13. Rationale
 
-### 11.1. Notary Release
+Smart Escrows are designed to address the limitations of XRPL’s current escrow mechanisms, which only support time-based and hashlock (crypto-condition) releases. The idea is to enable more expressive, programmable conditions for escrow release, unlocking use cases such as notary approvals, compliance holds, and oracle-driven transactions directly on XRPL.
+
+### 13.1. Design Choices
+
+- **WebAssembly (WASM) as the Execution Environment:** WASM was chosen for its portability, security, and deterministic execution. It is widely used in blockchain environments (e.g., Polkadot, Ethereum’s eWASM, Solana) and allows for safe, resource-limited execution of user code. Alternatives like Lua, JavaScript, or custom DSLs were considered but rejected due to WASM’s maturity and tooling. The full analysis is available [here](https://dev.to/ripplexdev/a-survey-of-vms-for-xrpl-programmability-eoa).
+- **Minimal ABI and Data Access:** The ABI is intentionally simple, requiring only a `finish()` function with limited access to ledger data and a small, escrow-local `Data` field. This reduces attack surface and complexity, while still enabling meaningful programmability.
+- **Mandatory `CancelAfter` for Smart Escrows:** To mitigate risks of stuck funds due to buggy or malicious WASM code, every Smart Escrow must be cancellable. This was debated, but consensus was that safety outweighs flexibility for initial deployment.
+- **Fee and Resource Controls:** Gas limits, size caps, and fee voting via `FeeSettings` and `SetFee` allow the network to dynamically adjust resource usage and pricing, preventing abuse and adapting to future improvements.
+
+### 13.2. Alternatives Considered
+
+- **Expanding CryptoConditions:** Supporting the full CryptoConditions spec (multi-sig, threshold, etc.) was considered, but would not provide general programmability or support for external data/oracles.
+- **On-Ledger Scripting Languages:** Custom scripting languages were rejected due to maintenance burden and lack of ecosystem support.
+- **External Oracles or Sidechains:** Relying on external systems for conditional logic was deemed less secure and less integrated than on-ledger WASM execution.
+
+### 13.3. Related Work
+
+Other blockchains support similar programmable escrow mechanisms:
+
+- **Ethereum:** Escrow logic is implemented via smart contracts, but with higher complexity and cost.
+- **Polkadot:** Uses WASM for on-chain logic, including custom escrow pallets.
+- **Solana:** Allows custom escrow programs in Rust, compiled to BPF.
+
+XRPL’s approach is intentionally minimal and tightly scoped to maintain performance and security.
+
+### 13.4. Objections and Concerns
+
+- **Security Risks of On-Ledger Code Execution:** Concerns were raised about the risk of denial-of-service or infinite loops. These are mitigated by strict gas limits, code size caps, and mandatory cancellation.
+- **Complexity vs. Simplicity:** Some community members preferred expanding existing CryptoConditions rather than introducing WASM. The design team determined that WASM provides greater flexibility and future extensibility.
+- **Ledger Bloat:** The addition of code and data fields could increase ledger size. This is managed via reserve requirements and size limits.
+
+Overall, Smart Escrows balance programmability, safety, and simplicity, providing a foundation for future XRPL extensions.
+
+## 14. Code Examples
+
+### 14.1. Notary Release
 
 Only one notary account may release the escrow.
 
@@ -389,7 +424,7 @@ pub extern "C" fn finish() -> i32 {
 }
 ```
 
-### 11.2. Temporary Hold
+### 14.2. Temporary Hold
 
 The escrow can only be released if the destination holds a specific [credential](https://opensource.ripple.com/docs/xls-70d-credentials/reference/credential).
 
@@ -422,7 +457,7 @@ pub extern "C" fn finish() -> i32 {
 }
 ```
 
-### 11.3. Pseudo-Options
+### 14.3. Pseudo-Options
 
 The escrow can only be released if the price of an [oracle](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/oracle) says that a token is at least $1.
 
