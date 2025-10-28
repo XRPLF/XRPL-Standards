@@ -464,7 +464,7 @@ The `LoanID` is calculated as follows:
 | `StartDate`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                             `CurrentLedgerTimestamp`                              | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                        |
 | `PaymentInterval`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Number of seconds between Loan payments.                                                                                                                              |
 | `GracePeriod`              |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                               |
-| `PreviousPaymentDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
+| `PreviousPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
 | `NextPaymentDueDate`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                   `LoanSet.StartDate + LoanSet.PaymentInterval`                   | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).              |
 | `PaymentRemaining`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                              `LoanSet.PaymentTotal`                               | The number of payments remaining on the Loan.                                                                                                                         |
 | `TotalValueOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |                             `TotalValueOutstanding()`                             | The total outstanding value of the Loan, including all fees and interest.                                                                                             |
@@ -1196,15 +1196,15 @@ The transaction deletes an existing `Loan` object.
 
     - Update the `Loan` object:
 
-    - `Loan(LoanID).Flags &= ~lsfLoanImpaired`
-    - `CandidateDueDate = max(Loan.PreviousPaymentDate, Loan.StartDate) + Loan.PaymentInterval`
+      - Unset `lsfLoanImpaired` flag
+      - `CandidateDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`
 
-    - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
+      - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
 
-      - `Loan(LoanID).NextPaymentDueDate = CandidateDueDate`
+        - `Loan(LoanID).NextPaymentDueDate = CandidateDueDate`
 
-    - If `CandidateDueDate <= currentTime` (the loan was unimpaired after the original payment due date):
-      - `Loan(LoanID).NextPaymentDueDate = currentTime + Loan(LoanID).PaymentInterval`
+      - If `CandidateDueDate <= currentTime` (the loan was unimpaired after the original payment due date):
+        - `Loan(LoanID).NextPaymentDueDate = currentTime + Loan(LoanID).PaymentInterval`
 
 ##### 3.2.3.3 Invariants
 
@@ -1449,7 +1449,7 @@ $$
 The interest accrued since the last payment is calculated pro-rata:
 
 $$
-secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.previousPaymentDate, Loan.startDate)
+secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.PreviousPaymentDueDate, Loan.startDate)
 $$
 
 $$
@@ -1539,7 +1539,7 @@ function compute_late_payment_interest(currentTime) -> (lateInterest, management
 function compute_full_payment(currentTime) -> (principal, interest, fee):
     let truePrincipalOutstanding = principal_outstanding_from_periodic()
     let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
-    let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.previousPaymentDate, loan.startDate)
+    let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.PreviousPaymentDueDate, loan.startDate)
 
     let accruedInterest = truePrincipalOutstanding * periodicRate * (secondsSinceLastPayment / loan.paymentInterval)
     let prepaymentPenalty = truePrincipalOutstanding * loan.closeInterestRate
@@ -1745,7 +1745,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             return "insufficient amount paid" error
 
         loan.paymentsRemaining = loan.paymentsRemaining - 1
-        loan.previousPaymentDate = loan.nextPaymentDueDate
+        loan.PreviousPaymentDueDate = loan.nextPaymentDueDate
         loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
         loan.principalOutstanding = loan.principalOutstanding - principal
         loan.managementFeeOutstanding = loan.managementFeeOutstanding - managementFee
@@ -1799,7 +1799,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         loan.paymentsRemaining = loan.paymentsRemaining - 1
 
         loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
-        loan.previousPaymentDate = loan.nextPaymentDueDate - loan.paymentInterval
+        loan.PreviousPaymentDueDate = loan.nextPaymentDueDate - loan.paymentInterval
 
         totalPaid = totalPaid + paymentAmount
         totalPrincipalPaid = totalPrincipalPaid + principal
@@ -1853,11 +1853,11 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 - The `tfLoanFullPayment` flag is set, but only one payment remains on the loan (`Loan.PaymentRemaining` is `1`).
 - Both `tfLoanOverpayment` and `tfLoanFullPayment` transaction flags are specified.
 
-- If the payment is late (`LastLedgerCloseTime >= Loan.NextPaymentDueDate`):
+- If the payment is late (`LastLedgerCloseTime > Loan.NextPaymentDueDate`):
 
   - The `Amount` is less than the calculated `totalDue` for a late payment, which is `periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`.
 
-- If the payment is on-time (`LastLedgerCloseTime < Loan.NextPaymentDueDate`):
+- If the payment is on-time (`LastLedgerCloseTime <= Loan.NextPaymentDueDate`):
 
   - The `Amount` is less than the calculated `totalDue` for a periodic payment, which is `periodicPayment + loanServiceFee`.
 
@@ -1906,7 +1906,8 @@ First, the system determines the final destination of all funds.
 
 **2. `Loan` Object State Changes**
 
-The `Loan` object is updated to reflect the payment.
+The `Loan` object is updated to reflect the payment
+.
 
 - If the loan was impaired (`lsfLoanImpaired` flag was set), the flag is cleared.
 
@@ -1923,7 +1924,7 @@ The `Loan` object is updated to reflect the payment.
   - If an overpayment occurred, `TotalValueOutstanding` is further adjusted by the `valueChange` resulting from re-amortization. It is **not** adjusted for `valueChange` from late payment interest, as that interest was not part of the original loan value.
   - `PaymentRemaining` is decreased by `1` for each full periodic payment cycle covered.
   - `NextPaymentDueDate` is advanced by `Loan.PaymentInterval` for each periodic payment cycle covered.
-  - `PreviousPaymentDate` is updated.
+  - `PreviousPaymentDueDate` is updated.
   - If an overpayment was made:
     - `PeriodicPayment` is recalculated based on the new outstanding principal and remaining term.
 
@@ -1935,6 +1936,7 @@ The `LoanBroker` and `Vault` objects are updated to reflect the new accounting s
 
   - `LoanBroker.DebtTotal` is decreased by `totalToVault` (the principal and interest paid back).
   - If the payment resulted in a `valueChange` from an overpayment or early full repayment, `LoanBroker.DebtTotal` is adjusted by that `valueChange`. It is **not** adjusted for `valueChange` from late payment interest, as this represents a penalty paid directly to the vault, not an alteration of the original debt schedule.
+    - `LoanBroker.DebtToal + valueChange`
   - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
 
 - **`Vault` Updates**:
