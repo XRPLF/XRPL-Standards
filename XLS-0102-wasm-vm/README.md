@@ -1,6 +1,6 @@
 <pre>
-  title: Title
-  description: Description
+  title: WASM VM
+  description: WebAssembly VM integration into rippled
   created: 2025-08-08
   author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuellling (@sappenin)
   status: Draft
