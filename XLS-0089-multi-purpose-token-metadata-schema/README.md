@@ -4,7 +4,7 @@
   description: Standardized metadata schema for Multi-Purpose Tokens to improve discoverability, comparability, and interoperability
   author: Shawn Xie <shawnxie@ripple.com>, Greg Tsipenyuk <gtsipenyuk@ripple.com>, Shashwat Mittal <smittal@ripple.com>, Julian Berridi <jberridi@ripple.com>, Kuan Lin <klin@ripple.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/264
-  status: Draft
+  status: Final
   category: Ecosystem
   requires: XLS-33
   created: 2025-01-27
