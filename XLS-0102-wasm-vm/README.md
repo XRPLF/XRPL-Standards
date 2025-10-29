@@ -1,13 +1,10 @@
 <pre>
-Title:       <b>WASM VM</b>
-Revision:    <b>1</b> (2025-08-08)
-
-Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
-             <a href="mailto:pwang@ripple.com">Peng Wang</a>
-             <a href="mailto:opidskopnyi@ripple.com">Oleksandr Pidskopnyi</a>
-             <a href="mailto:fuelling@ripple.com">David Fuelling</a>
-
-Affiliation: <a href="https://ripple.com">Ripple</a>
+  title: Title
+  description: Description
+  created: 2025-08-08
+  author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuellling (@sappenin)
+  status: Draft
+  category: Amendment
 </pre>
 
 # WASM VM Configuration
