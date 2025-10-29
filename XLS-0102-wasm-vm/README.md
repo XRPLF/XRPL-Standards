@@ -109,15 +109,13 @@ Note: all these functions return an `i32`, unless otherwise noted (or there is n
 
 This section includes ledger header data, amendments, and fees.
 
-| Function Signature                                                                                   | Description                                       | Gas Cost |
-| :--------------------------------------------------------------------------------------------------- | :------------------------------------------------ | :------- |
-| `get_ledger_sqn()`                                                                                   | Get the sequence number of the last ledger.       | 60       |
-| `get_parent_ledger_time()`                                                                           | Get the time (in Ripple Time) of the last ledger. | 60       |
-| `get_parent_ledger_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`      | Get the hash of the last ledger.                  | 60       |
-| `get_ledger_account_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`     | Get the account hash of the current ledger.       | 60       |
-| `get_ledger_transaction_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the transaction hash of the current ledger.   | 60       |
-| `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)`         | Check if a given amendment is enabled.            | 60       |
-| `get_base_fee()`                                                                                     | Get the current transaction base fee.             | 60       |
+| Function Signature                                                                              | Description                                       | Gas Cost |
+| :---------------------------------------------------------------------------------------------- | :------------------------------------------------ | :------- |
+| `get_ledger_sqn()`                                                                              | Get the sequence number of the last ledger.       | 60       |
+| `get_parent_ledger_time()`                                                                      | Get the time (in Ripple Time) of the last ledger. | 60       |
+| `get_parent_ledger_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the last ledger.                  | 60       |
+| `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)`    | Check if a given amendment is enabled.            | 60       |
+| `get_base_fee()`                                                                                | Get the current transaction base fee.             | 60       |
 
 ### 5.2. Current Ledger Object data
 
