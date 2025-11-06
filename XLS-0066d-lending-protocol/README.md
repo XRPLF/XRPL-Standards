@@ -464,7 +464,7 @@ The `LoanID` is calculated as follows:
 | `StartDate`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                             `CurrentLedgerTimestamp`                              | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                        |
 | `PaymentInterval`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Number of seconds between Loan payments.                                                                                                                              |
 | `GracePeriod`              |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                               |
-| `PreviousPaymentDueDate`      |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
+| `PreviousPaymentDueDate`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
 | `NextPaymentDueDate`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                   `LoanSet.StartDate + LoanSet.PaymentInterval`                   | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).              |
 | `PaymentRemaining`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                              `LoanSet.PaymentTotal`                               | The number of payments remaining on the Loan.                                                                                                                         |
 | `TotalValueOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `NUMBER`    |                             `TotalValueOutstanding()`                             | The total outstanding value of the Loan, including all fees and interest.                                                                                             |
@@ -485,7 +485,7 @@ The `Loan` object supports the following flags:
 
 ##### 2.2.2.2 TotalValueOutstanding
 
-The total outstanding value of the Loan, including all fees. To calculate the outstanding interest portion, use this formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
+The total outstanding value of the Loan, including management fee charges against the interest. To calculate the outstanding interest portion, use this formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
 
 ##### 2.2.2.3 PrincipalOutstanding
 
@@ -497,7 +497,7 @@ The remaining Management Fee owed to the LoanBroker. This amount decreases each 
 
 ##### 2.2.2.5 PeriodicPayment
 
-The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `12` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
+The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `11` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
 
 #### 2.2.3 Ownership
 
@@ -515,10 +515,24 @@ The `Loan` object costs one owner reserve for the `Borrower`.
 The loan's financial state is tracked through three key components:
 
 - **PrincipalOutstanding**: Represents the remaining principal balance that the borrower must repay to satisfy the original loan amount.
-- **TotalValueOutstanding**: Encompasses the complete remaining loan obligation, comprising both the outstanding principal and all scheduled interest payments based on the original amortization schedule. This value excludes any additional interest charges resulting from late payments.
-- **InterestOutstanding**: The total scheduled interest remaining on the loan, derived as `TotalValueOutstanding - PrincipalOutstanding`.
+- **TotalValueOutstanding**: Encompasses the complete remaining loan obligation, comprising the outstanding principal, all scheduled interest payments based on the original amortization schedule and the management fee paid on the interest. This value excludes any additional interest charges resulting from late payments, overpayments of full payments.
+- **InterestOutstanding**: The total scheduled interest (including fee) remaining on the loan, derived as `TotalValueOutstanding - PrincipalOutstanding`.
 
-**Asset-Specific Precision Handling**: For discrete asset types (MPTs and XRP denominated in drops), both `TotalValueOutstanding` and `PrincipalOutstanding` values are truncated to whole numbers to ensure compatibility with the underlying asset precision requirements.
+**Asset-Specific Precision Handling**: Different asset types on the XRP Ledger have varying levels of precision that directly impact loan value calculations:
+
+- **XRP (Drops)**: Only supports whole number values (1 drop = 0.000001 XRP)
+- **MPTs (Multi-Purpose Tokens)**: Only support whole number values
+- **IOUs**: Support up to 16 significant decimal digits
+
+For loans denominated in discrete asset types (XRP drops and MPTs), all monetary values must be rounded to whole numbers. This rounding requirement means that:
+
+1. **`TotalValueOutstanding`** is always rounded **up** to the nearest precision unit of an asset. This ensures the borrower pays at least the full theoretical value, preventing the loan from becoming underfunded due to rounding losses.
+
+2. **`PrincipalOutstanding`** and **`ManagementFeeOutstanding`** are rounded to the nearest even number after each payment to avoid over-deducting from the borrower.
+
+3. Due to the cumulative effect of rounding across multiple payment cycles, these on-ledger values may deviate by up to one asset unit from their theoretical mathematical values at any given time.
+
+**Important**: Implementations must **not** recalculate these values from the theoretical formulas during payment processing. The stored ledger values are the authoritative source of truth. The pseudo-code in [Section 3.2.4.4](#3244-transaction-pseudo-code) demonstrates how to properly handle these rounding discrepancies while maintaining loan integrity.
 
 **Late Payment Interest Treatment**: Late payment penalties and additional interest charges are calculated and collected separately from the core loan value. These charges do not modify the `TotalValueOutstanding` calculation, which remains anchored to the original scheduled payment terms.
 
@@ -545,7 +559,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `LoanBrokerID`         |                    |    `No`     | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
 | `Flags`                |                    |    `Yes`    | `string`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
 | `Data`                 |                    |    `Yes`    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
-| `ManagementFeeRate`    |                    |    `No`     | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive.                                  |
+| `ManagementFeeRate`    |                    |    `No`     | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
 | `DebtMaximum`          |                    |    `Yes`    | `number`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
@@ -1509,7 +1523,6 @@ $$
 
 The true `totalInterestOutstanding` is then updated to reflect this.
 
-
 $$
 \text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalInterestOutstanding - managementFeeOutstanding
 $$
@@ -1521,8 +1534,15 @@ $$
 The following is the pseudo-code for handling a Loan payment transaction.
 
 ```
+function get_periodic_rate() -> (periodicRate):
+  # Convert annual rate to rate per payment interval
+  let SECONDS_PER_YEAR = 365 * 24 * 60 * 60
+  let periodicRate = (loan.interestRate * loan.paymentInterval) / SECONDS_PER_YEAR
+
+  return periodicRate
+
 function compute_periodic_payment(principalOutstanding) -> (periodicPayment):
-    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let periodicRate = get_periodic_rate()
     let raisedRate = (1 + periodicRate)^loan.paymentsRemaining
 
     return principalOutstanding * (periodicRate * raisedRate) / (raisedRate - 1)
@@ -1538,7 +1558,7 @@ function compute_late_payment_interest(currentTime) -> (lateInterest, management
 
 function compute_full_payment(currentTime) -> (principal, interest, fee):
     let truePrincipalOutstanding = principal_outstanding_from_periodic()
-    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let periodicRate = get_periodic_rate()
     let secondsSinceLastPayment = lastLedgerCloseTime() - max(loan.PreviousPaymentDueDate, loan.startDate)
 
     let accruedInterest = truePrincipalOutstanding * periodicRate * (secondsSinceLastPayment / loan.paymentInterval)
@@ -1553,7 +1573,7 @@ function compute_full_payment(currentTime) -> (principal, interest, fee):
 function principal_outstanding_from_periodic() -> (principalOutstanding):
     # Given the outstanding principal we can calculate the periodic payment
     # Equally, given the periodic payment we can calculate the principal outstanding at the current time
-    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let periodicRate = get_periodic_rate()
 
     # If the loan is zero-interest, the outstanding principal is simply periodicPayment * paymentsRemaining
     if periodicRate == 0:
@@ -1565,9 +1585,9 @@ function principal_outstanding_from_periodic() -> (principalOutstanding):
     return loan.periodicPayment / factor
 
 # This function calculates what the loan state should be given the periodic payment and remaining payments
-function calculate_true_loan_state() -> (principalOutstanding, interestOutstanding, managementFeeOutstanding):
+function calculate_true_loan_state(paymentsRemaining) -> (principalOutstanding, interestOutstanding, managementFeeOutstanding):
     let truePrincipalOutstanding = principal_outstanding_from_periodic()
-    let trueInterestOutstanding = (loan.periodicPayment * loan.paymentsRemaining) - truePrincipalOutstanding
+    let trueInterestOutstanding = (loan.periodicPayment * paymentsRemaining) - truePrincipalOutstanding
     let trueManagementFeeOutstanding = (trueInterestOutstanding * loan.loanbroker.managementFeeRate)
 
     # Exclude the management fee from the interest rate
@@ -1576,26 +1596,23 @@ function calculate_true_loan_state() -> (principalOutstanding, interestOutstandi
     return (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding)
 
 function calculate_payment_breakdown(principalOutstanding) -> (principal, interest):
-    let periodicRate = (loan.interestRate * loan.paymentInterval) / (365 * 24 * 60 * 60)
+    let periodicRate = get_periodic_rate()
 
     if periodicRate == 0:
-        return (principalOutstanding / loan.paymentsRemaining, 0)
+        return (principalOutstanding / paymentsRemaining, 0)
 
     let interest = principalOutstanding * periodicRate
     let principal = loan.periodicPayment - interest
 
     return (principal, interest)
 
-function calculate_rounded_principal_payment(truePrincipalOutstanding, truePrincipalPayment) -> (principal):
-    # The diff captures by how much we deviated from the true principal value
-    # If the diff is negative, we need to slow down repayment as we overpaid principalOutstanding
-    # If the diff is positive, we need to speed up the repayment as we underpaid the principalOutstanding
-    let diff = (loan.principalOutstanding - truePrincipalOutstanding).round(loan.loanScale, DOWN)
-    let roundedPrincipalPayment = (truePrincipalPayment + diff).round(loan.loanScale, DOWN)
+function calculate_rounded_principal_payment(truePrincipalOutstanding) -> (principal):
+    let roundedPrincipalPayment = (loan.principalOutstanding - truePrincipalOutstanding).round(loan.loanScale, DOWN)
 
     # Ensure we do not have a negative principal payment
     roundedPrincipalPayment = max(0, roundedPrincipalPayment)
 
+    # Ensure we do not exceed the outstanding principal amount
     return min(roundedPrincipalPayment, loan.principalOutstanding)
 
 
@@ -1605,64 +1622,23 @@ function calculate_rounded_interest_breakdown(roundedPrincipalPayment, trueInter
 
     let loanInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
 
-    # Calculate the accumulated rounding error for the interest portion.
-    # If diffInterest is negative, we have historically overpaid interest; we need to pay less now.
-    # If diffInterest is positive, we have historically underpaid interest; we need to pay more now to catch up.
-    let diffInterest = (loanInterestOutstanding - trueInterestOutstanding).round(loan.loanScale, DOWN)
-    let roundedInterestPayment = roundedPeriodicPayment - roundedPrincipalPayment
-
-    # Apply historical rounding error: if we underpaid interest previously (positive diff), pay more now.
-    roundedInterestPayment = roundedInterestPayment + diffInterest
-
-    # Ensure the adjusted interest payment doesn't cause the total payment to exceed the periodic amount.
-    # This caps the interest at the remaining portion of the periodic payment.
-    roundedInterestPayment = min(roundedPeriodicPayment - roundedPrincipalPayment, roundedInterestPayment)
+    # The interest due is the difference between our current value, and the future value after the next payment
+    let roundedInterestPayment = (loanInterestOutstanding - trueInterestOutstanding).round(loan.loanScale, HALF_EVEN)
 
     # Since diffInterest can be negative, ensure the interest payment itself is not negative.
     roundedInterestPayment = max(0, roundedInterestPayment)
 
-    # We have calculated the gross interest payment, we can now calculate the management fee portion.
+    # This caps the interest at the remaining portion of the periodic payment.
+    roundedInterestPayment = min(roundedPeriodicPayment - roundedPrincipalPayment, roundedInterestPayment)
 
-    # Calculate the accumulated rounding error for the management fee portion.
-    # If diffManagementFee is negative, we have overpaid the fee; pay less now.
-    # If diffManagementFee is positive, we have underpaid the fee; pay more now.
-    let diffManagementFee = (loan.managementFeeOutstanding - trueManagementFeeOutstanding).round(loan.loanScale, DOWN)
-    let roundedManagementFee = (roundedInterestPayment * loan.loanbroker.managementFeeRate).round(loan.loanScale, DOWN)
-
-    # Apply historical rounding error to the current fee payment.
-    roundedManagementFee = roundedManagementFee + diffManagementFee
+    # The Management Fee is the difference between our current value, and the future value after the next payment
+    let roundedManagementFee = (loan.managementFeeOutstanding - trueManagementFeeOutstanding).round(loan.loanScale, HALF_EVEN)
 
     # Since diffManagementFee can be negative, ensure the final fee payment is not negative.
     roundedManagementFee = max(0, roundedManagementFee)
 
     # Ensure the fee payment does not exceed the total outstanding management fee.
     roundedManagementFee = min(roundedManagementFee, loan.managementFeeOutstanding)
-
-    # The final net interest payment is the gross interest minus the management fee. Ensure it's not negative.
-    roundedInterestPayment = max(0, roundedInterestPayment - roundedManagementFee)
-
-    # Finally, ensure the net interest payment does not exceed the total outstanding interest.
-    roundedInterestPayment = min(loanInterestOutstanding, roundedInterestPayment)
-
-    # --- Final Safety Check ---
-    # Compute if the sum of components exceeds the periodic payment amount due to rounding adjustments.
-    let excess = (roundedPeriodicPayment - roundedPrincipalPayment - roundedInterestPayment - roundedManagementFee)
-
-    # If the sum is too large (excess is negative), reduce the components to match the total.
-    # First, take as much excess as possible from the interest portion.
-    if excess < 0:
-        let part = min(roundedInterestPayment, abs(excess))
-        roundedInterestPayment = roundedInterestPayment - part
-        excess = excess + part
-
-    # If there is still an excess, take as much as possible from the fee portion.
-    if excess < 0:
-        let part = min(roundedManagementFee, abs(excess))
-        roundedManagementFee = roundedManagementFee - part
-        excess = excess + part
-
-    # if excess is still negative, this implies that the principal was calculated wrong.
-    # it should not happen, but if it does this is a critical failure.
 
     return (roundedInterestPayment, roundedManagementFee)
 
@@ -1672,14 +1648,15 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
         let outstandingInterest = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
         return (loan.principalOutstanding, outstandingInterest, loan.managementFeeOutstanding)
 
-    # Determine the true state of the loan, excluding rounding errors
-    let (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding) = calculate_true_loan_state()
-
-    # We do not need to know the interest portion
-    let (truePrincipalPayment, _) = calculate_payment_breakdown(truePrincipalOutstanding)
+    # Determine the true state of the loan, excluding rounding errors. This calculation gives where the loan state is meant to be
+    let (
+      truePrincipalOutstanding,
+      trueInterestOutstanding,
+      trueManagementFeeOutstanding
+    ) = calculate_true_loan_state(loan.paymentsRemaining - 1)
 
     # Given the true state we can calculate the rounded principal that accounts for deviation from the true state
-    let roundedPrincipalPayment = calculate_rounded_principal_payment(truePrincipalOutstanding, truePrincipalPayment)
+    let roundedPrincipalPayment = calculate_rounded_principal_payment(truePrincipalOutstanding)
 
     let (roundedInterestPayment, roundedManagementFee) = calculate_rounded_interest_breakdown(
         roundedPrincipalPayment,
@@ -1692,7 +1669,7 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
 
 function do_overpayment(amount) -> (valueChange):
     # Calculate the ideal, unrounded ("true") state of the loan before the overpayment.
-    let (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding) = calculate_true_loan_state()
+    let (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding) = calculate_true_loan_state(loan.paymetsRemaining)
 
     # For an accurate overpayment, we must preserve historical rounding errors.
     # These 'diff' variables capture the difference between the on-ledger rounded state and the ideal 'true' state.
@@ -1732,7 +1709,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
 
-    # The payment is late
+    # ======== STEP 1: Process Late Payment ======== #
     if loan.nextPaymentDueDate < currentTime:
         let (principal, interest, managementFee) = compute_payment_due(amount)
         let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
@@ -1749,6 +1726,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
         loan.principalOutstanding = loan.principalOutstanding - principal
         loan.managementFeeOutstanding = loan.managementFeeOutstanding - managementFee
+        
         # we do not adjust the total value by late interst or late managementFee as these were not included in the initial total value
         loan.totalValueOutstanding = loan.totalValueOutstanding - (principal + interest + managementFee)
 
@@ -1758,7 +1736,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             lateInterest,                                                 # The value of the loan increases by the lateInterest amount
             totalManagementFee + loan.serviceFee + loan.latePaymentFee    # The total fee paid for a loan payment
         )
-
+    # ======== STEP 2: Process Full Payment ======== #
     let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
     let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + loan.closePaymentFee
 
@@ -1778,13 +1756,13 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             loanValueChange,                    # A full payment changes the total value of the loan
             fullManagementFee + loan.closePaymentFee   # An early payment pays a specific closePaymentFee
         )
-
+    # ======== STEP 3: Process Regular Payment(s) ======== #
     # Handle regular payments and overpayments
     let totalPaid = 0
     let (totalPrincipalPaid, totalInterestPaid, totalFeePaid) = (0, 0, 0)
 
-    # Process regular periodic payments
     while totalPaid < amount && loan.paymentsRemaining > 0:
+        # calculate the payment principal, interest and fee
         let (principal, interest, managementFee) = compute_payment_due(loan.periodicPayment.round(loan.loanScale, UP))
         let paymentAmount = principal + interest + managementFee + loan.serviceFee
 
@@ -1806,21 +1784,29 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalInterestPaid = totalInterestPaid + interest
         totalFeePaid = totalFeePaid + managementFee + loan.serviceFee
 
+    # ======== STEP 4: Process Overpayment ======== #
     let loanValueChange = 0
     # Handle overpayment if there are remaining payments, the loan supports overpayments, and there are funds remaining
     if loan.paymentsRemaining > 0 && is_set(loan.lsfLoanOverpayment) && is_set(tfLoanOverpayment) && totalPaid < amount:
         let overpaymentAmount = min(loan.principalOutstanding, amount - totalPaid)
-
+    
+        # ======== STEP 4.1: Determine Interest and Fee on Overpayment ======== #
+  
+        # overpayment amount is charged an interest that goes to the vault
         let overpaymentInterest = overpaymentAmount * loan.overpaymentInterestRate
-        let overpaymentManagementFee = overpaymentInterest * loan.loanbroker.managementFeeRate
+        # and a management fee that goes to the broker charged on the interest
+        
+        let overpaymentManagementFee = overpaymentInterest * loan.loanbroker.managementFeeRate        
         overpaymentInterest = overpaymentInterest - overpaymentManagementFee
 
+        # there is a second overpayment fee that goes to the broker
         let overpaymentFee = overpaymentAmount * loan.overpaymentFee
 
         # the value of the loan will increase by the overpayment interest portion
         loanValueChange = loanValueChange + overpaymentInterest
         let overpaymentPrincipal = overpaymentAmount - overpaymentInterest - overpaymentManagementFee - overpaymentFee
 
+        # ======== STEP 4.2: Determine how the overpayment changes the value of the Loan ======== #
         # if the overpayment was not eaten by fees and interest, then apply it
         if overpaymentPrincipal > 0:
             # the valueChange is the decrease in the total interest caused by overpaying the principal
@@ -1949,7 +1935,7 @@ Finally, the actual asset transfers are executed on the ledger.
 
 - The borrower's balance is **decreased** by `totalPaidByBorrower`.
 - The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
-- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
+- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increawsed** by `totalToBroker`, depending on the fee destination.
 
 These transfers are performed according to the asset type:
 
