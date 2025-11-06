@@ -570,6 +570,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
   - `Vault` object with the specified `VaultID` does not exist on the ledger.
   - The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
+  - One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
 
 - If `LoanBrokerID` is specified:
 
