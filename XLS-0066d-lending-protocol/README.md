@@ -1666,6 +1666,33 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
         roundedPeriodicPayment
     )
 
+    # --- Final Safety Check ---
+    # Compute if the sum of components exceeds the periodic payment amount due to rounding adjustments.
+
+    let excess = (roundedPeriodicPayment - roundedPrincipalPayment - roundedInterestPayment - roundedManagementFee)
+
+    # If the sum is too large (excess is negative), reduce the components to match the total.
+    # First, take as much excess as possible from the interest portion.
+    if excess < 0:
+        let part = min(roundedInterestPayment, abs(excess))
+        roundedInterestPayment = roundedInterestPayment - part
+        excess = excess + part
+
+    # If there is still an excess, take as much as possible from the fee portion.
+    if excess < 0:
+        let part = min(roundedManagementFee, abs(excess))
+        roundedManagementFee = roundedManagementFee - part
+        excess = excess + part
+    
+    # Finally, take as much as possible from the principal portion.
+    if excess < 0:
+        let part = min(roundedPrincipalPayment, abs(excess))
+        roundedPrincipalPayment = roundedPrincipalPayment - part
+        excess = excess + part
+
+    # if excess is still negative, this implies that the principal was calculated wrong.
+    # it should not happen, but if it does this is a critical failure.
+
     return (roundedPrincipalPayment, roundedInterestPayment, roundedManagementFee)
 
 function do_overpayment(amount) -> (valueChange):
