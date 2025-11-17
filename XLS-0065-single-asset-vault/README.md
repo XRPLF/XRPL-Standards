@@ -614,8 +614,8 @@ In sections below assume the following variables:
     - `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
 - The `Destination` account is specified:
-    - The account does not have permission to receive the asset.
-    - The account does not have a `RippleState` or `MPToken` object for the asset.
+  - The account does not have permission to receive the asset.
+  - The account does not have a `RippleState` or `MPToken` object for the asset.
 
 ##### 3.2.2.2 State Changes
 
