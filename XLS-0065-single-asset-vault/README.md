@@ -283,9 +283,9 @@ The calculation depends on whether the vault is empty.
 - **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
   $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets}}$$
 
-Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated. This step ensures the user isn't overcharged and that the new shares are valued against the vault's real assets, accounting for any unrealized loss ($\iota$).
+Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated.
 
-$$\Delta_{assets'} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+$$\Delta_{assets'} = \frac{\Delta_{shares} \times \Gamma_{assets}}{\Gamma_{shares}}$$
 
 #### Vault State Update
 
