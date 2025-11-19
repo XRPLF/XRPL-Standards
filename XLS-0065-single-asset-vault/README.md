@@ -8,6 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
+  updated: 2025-10-13
 </pre>
 
 # Single Asset Vault
@@ -110,32 +111,33 @@ The **`Vault`** ledger entry describes the state of the tokenized vault.
 The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
 - The `Vault` space key `0x0056` (capital V)
-- The `AccountID`(<https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields>) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
+- The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
 #### 2.1.2 Fields
 
 A vault has the following fields:
 
-| Field Name          | Modifiable? |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                       |
-| ------------------- | :---------: | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------ |
-| `LedgerEntryType`   |    `N/A`    | :heavy_check_mark: | `string`  |   `UINT16`    |   `0x0081`    | Ledger object type.                                                                               |
-| `LedgerIndex`       |    `N/A`    | :heavy_check_mark: | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                         |
-| `Flags`             |    `Yes`    | :heavy_check_mark: | `string`  |   `UINT32`    |       0       | Ledger object flags.                                                                              |
-| `PreviousTxnID`     |    `N/A`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                            |
-| `PreviousTxnLgrSeq` |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object. |
-| `Sequence`          |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                           |
-| `OwnerNode`         |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                       |
-| `Owner`             |    `No`     | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The account address of the Vault Owner.                                                           |
-| `Account`           |    `N/A`    | :heavy_check_mark: | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                       |
-| `Data`              |    `Yes`    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                         |
-| `Asset`             |    `No`     | :heavy_check_mark: | `object`  |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                |
-| `AssetsTotal`       |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The total value of the vault.                                                                     |
-| `AssetsAvailable`   |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                  |
-| `LossUnrealized`    |    `N/A`    | :heavy_check_mark: | `number`  |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                 |
-| `AssetsMaximum`     |    `Yes`    |                    | `number`  |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap. |
-| `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: | `number`  |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                               |
-| `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: | `string`  |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                              |
+| Field Name          | Modifiable? |     Required?      |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                            |
+| ------------------- | :---------: | :----------------: | :----------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`   |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |   `0x0081`    | Ledger object type.                                                                                                                                    |
+| `LedgerIndex`       |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                              |
+| `Flags`             |    `Yes`    | :heavy_check_mark: |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                   |
+| `PreviousTxnID`     |    `N/A`    | :heavy_check_mark: |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                 |
+| `PreviousTxnLgrSeq` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
+| `Sequence`          |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
+| `OwnerNode`         |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
+| `Owner`             |    `No`     | :heavy_check_mark: |      `string`      |  `AccountID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
+| `Account`           |    `N/A`    | :heavy_check_mark: |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
+| `Data`              |    `Yes`    |                    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
+| `Asset`             |    `No`     | :heavy_check_mark: | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
+| `AssetTotal`        |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
+| `AssetAvailable`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
+| `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
+| `AssetsMaximum`     |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
+| `MPTokenIssuanceID` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
+| `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
+| `Scale`             |    `No`     | :heavy_check_mark: |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 2.1.2.1 Flags
 
@@ -164,22 +166,41 @@ The `Vault` object costs one reserve fee per object created:
 
 Shares represent the portion of the Vault assets a depositor owns. Vault Owners set the currency code of the share and whether the token is transferable during the vault's creation. These two values are immutable. The share is represented by a [Multi-Purpose Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens). The MPT is issued by the vault's pseudo-account.
 
-##### 2.1.6.1 `MPTokenIssuance`
+##### 2.1.6.1 `Scale`
+
+The **`Scale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{Scale}}$, that converts a decimal asset amount into a corresponding whole number of shares. For example, with a `Scale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
+
+As a general rule, all calculations involving MPTs are executed with a precision of a single MPT, treating them as indivisible units. If a calculation results in a fractional amount, it will be rounded up, down or to the nearest whole number depending on the context. Crucially, the rounding direction is determined by the protocol and is not controlled by the transaction submitter, which may lead to unexpected results.
+
+##### 2.1.6.1.1 `IOU`
+
+When a vault holds an **`IOU`**, the `Scale` is configurable by the Vault Owner at the time of the vault's creation. The value can range from **0** to a maximum of **18**, with a default of **6**. This flexibility allows issuers to set a level of precision appropriate for their specific token.
+
+##### 2.1.6.1.2 `XRP`
+
+When a vault holds **`XRP`**, the `Scale` is fixed at **0**. This aligns with XRP's native structure, where one share represents one drop (the smallest unit of XRP), and one XRP equals 1,000,000 drops. Therefore, a deposit of 10 XRP to an empty Vault will result in the issuance of 10,000,000 shares ($10 \times 10^6$).
+
+##### 2.1.6.1.3 `MPT`
+
+When a vault holds `MPT`, its `Scale` is fixed at **0**. This creates a 1-to-1 relationship between deposited MPT units and the shares issued (for example, depositing 10 MPTs to an empty Vault issues 10 shares). The value of a single MPT is determined at the issuer's discretion. If an MPT is set to represent a large value, the vault owner and the depositor must be cautious. Since only whole MPT units are used in calculations, any value that is not a multiple of a single MPT's value may be lost due to rounding during a transaction.
+
+##### 2.1.6.2 `MPTokenIssuance`
 
 The `MPTokenIssuance` object represents the share on the ledger. It is created and deleted together with the `Vault` object.
 
-###### 2.1.6.1.1 `MPTokenIssuance` Values
+###### 2.1.6.2.1 `MPTokenIssuance` Values
 
 Here’s the table with the headings "Field," "Description," and "Value":
 
-| **Field**         | **Description**                                        | **Value**            |
-| ----------------- | ------------------------------------------------------ | -------------------- |
-| `Issuer`          | The AccountID of the Vault's _pseudo-account_.         | _pseudo-account_ ID  |
-| `MaximumAmount`   | No limit to the number of shares that can be issued.   | `0xFFFFFFFFFFFFFFFF` |
-| `TransferFee`     | The fee paid to transfer the shares.                   | 0                    |
-| `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format. | -                    |
+| **Field**         | **Description**                                                                                                                 | **Value**            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `Issuer`          | The AccountID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID  |
+| `MaximumAmount`   | No limit to the number of shares that can be issued.                                                                            | `0xFFFFFFFFFFFFFFFF` |
+| `TransferFee`     | The fee paid to transfer the shares.                                                                                            | 0                    |
+| `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format.                                                                          | -                    |
+| `AssetScale`      | Represents orders of magnitude between the standard and the MPT unit. For IOUs it is set to `Vault.Scale`, otherwise it is `0`. | `Vault.Scale`        |
 
-**Flags**
+###### Flags
 
 The following flags are set based on whether the shares are transferable and if the vault is public or private.
 
@@ -188,11 +209,11 @@ The following flags are set based on whether the shares are transferable and if 
 | **Public Vault**  | `lsfMPTCanEscrow` <br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer`                        | No Flags             |
 | **Private Vault** | `lsfMPTCanEscrow`<br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer`<br> `lsfMPTRequireAuth` | `lsfMPTRequireAuth`  |
 
-##### 2.1.6.2 `MPToken`
+##### 2.1.6.3 `MPToken`
 
 The `MPToken` object represents the amount of shares held by a depositor. It is created when the account deposits liquidity into the vault and is deleted when a depositor redeems (or transfers) all shares.
 
-###### 2.1.6.2.1 `MPToken` Values
+###### 2.1.6.3.1 `MPToken` Values
 
 The `MPToken` values should be set as per the `MPT` [specification](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2112-fields).
 
@@ -235,52 +256,83 @@ A depositor could deposit $100k assets at a 0.1 exchange rate and get 1.0m share
 
 To account for this problem, the Vault must use two different exchange rate models: one for depositing assets and one for withdrawing them.
 
-##### 2.1.7.2 Exchange Rate Algorithms
+### 2.1.7.2 Exchange Rate Algorithms
 
-**Variables**
+This section details the algorithms used to calculate the exchange between assets and shares for deposits, redemptions, and withdrawals.
 
-The following variables define the Vault balance:
+#### Key Variables
 
-- $\Gamma_{share}$ - the total number of shares issued by the vault.
-- $\Gamma_{asset}$ - the total assets in the vault, including any future yield.
+- **$\Gamma_{assets}$**: The total balance of assets held within the vault.
+- **$\Gamma_{shares}$**: The total number of shares currently issued by the vault.
+- **$\Delta_{assets}$**: The amount of assets being deposited, withdrawn, or redeemed.
+- **$\Delta_{shares}$**: The number of shares being issued or burned.
+- **$\iota$**: The vault's total **unrealized loss**.
+- **$\sigma$**: The scaling factor derived from `Scale`, used to convert fractional assets into integer shares.
 
-- $\Delta_{asset}$ - the change in the total amount of assets after a deposit, withdrawal, or redemption.
-- $\Delta_{share}$ - che change in the total amount of shares after a deposit, withdrawal, or redemption.
+### 2.1.7.2.1 Deposit
 
-- $\iota$ - the unrealized loss of the vault.
+The deposit function calculates the number of shares a user receives for their assets.
 
-###### 2.1.7.2.1 **Deposit**
+**Calculation Logic**
 
-We compute the number of shares ($\Delta_{share}$) a depositor will receive as follows:
+The calculation depends on whether the vault is empty.
 
-$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} + 0^{\Gamma_{asset}}} $$
+- **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{Scale}}$, to properly represent fractional assets as whole numbers.
+  $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
-The following equations govern the updated vault composition after a successful deposit:
+- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
+  $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets}}$$
 
-- $\Gamma_{asset} = \Gamma_{asset} + \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} + \Delta_{share}$ New share balance in the vault.
+Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated. This step ensures the user isn't overcharged and that the new shares are valued against the vault's real assets, accounting for any unrealized loss ($\iota$).
 
-###### 2.1.7.2.2 **Redeem**
+$$\Delta_{assets'} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
 
-We compute the number of assets ($\Delta_{asset}$) returned by burning $\Delta_{share}$ as follows:
+#### Vault State Update
 
-$$\Delta_{asset} = \Delta_{share} \times \frac{\Gamma_{asset} - \iota}{\Gamma_{share} + 0^{\Gamma_{share}}} $$
+The vault's totals are updated with the final calculated amounts.
 
-The following equations govern the updated vault composition after a successful redemption:
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} + \Delta_{assets'}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} + \Delta_{shares}$
 
-- $\Gamma_{asset} = \Gamma_{asset} - \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} - \Delta_{share}$ New share balance in the vault.
+### 2.1.7.2.2 Redeem
 
-###### 2.1.7.2.3 **Withdraw**
+The redeem function calculates the asset payout for a user burning a specific number of shares.
 
-We compute the number of shares to burn to withdraw $\Delta_{asset}$ as follows:
+**Calculation Logic**
 
-$$\Delta_{share} = \Delta_{asset} \times \frac{\Gamma_{share}}{\Gamma_{asset} - \iota + 0^{\Gamma_{asset}}} $$
+The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's total holdings, accounting for any unrealized loss ($\iota$).
 
-The following equations govern the updated vault composition after a successful withdrawal:
+$$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
 
-- $\Gamma_{asset} = \Gamma_{asset} - \Delta_{asset}$ New balance of assets in the vault.
-- $\Gamma_{share} = \Gamma_{share} - \Delta_{share}$ New share balance in the vault.
+**Vault State Update**
+
+The vault's totals are reduced after the redemption.
+
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} - \Delta_{shares}$
+
+### 2.1.7.2.3 Withdraw
+
+The withdraw function handles a request for a specific amount of assets, which involves a two-step process to determine the final payout.
+
+First, the requested asset amount ($\Delta_{assets\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's real value.
+
+$$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \iota)}$$
+
+This calculated $\Delta_{shares}$ amount is **rounded to the nearest whole number**.
+
+Next, the rounded number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
+
+$$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+
+Due to the rounding in Step 1, this final payout may differ slightly from the user's requested amount.
+
+**Vault State Update**
+
+The vault's totals are reduced by the final calculated amounts.
+
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets\_out}$
+- **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} - \Delta_{shares}$
 
 ##### 2.1.7.3 Withdrawal Policy
 
@@ -312,16 +364,17 @@ The `Vault` object is managed with `VaultCreate`, `VaultSet` and `VaultDelete` t
 
 The `VaultCreate` transaction creates a new `Vault` object.
 
-| Field Name         |     Required?      | JSON Type | Internal Type |           Default Value            | Description                                                                     |
-| ------------------ | :----------------: | :-------: | :-----------: | :--------------------------------: | :------------------------------------------------------------------------------ |
-| `TransactionType`  | :heavy_check_mark: | `string`  |   `Uint16`    |                `58`                | The transaction type.                                                           |
-| `Flags`            | :heavy_check_mark: | `number`  |   `Uint32`    |                 0                  | Specifies the flags for the Vault.                                              |
-| `Data`             |                    | `string`  |    `Blob`     |                                    | Arbitrary Vault metadata, limited to 256 bytes.                                 |
-| `Asset`            | :heavy_check_mark: | `object`  |    `Issue`    |               `N/A`                | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                 |
-| `AssetsMaximum`    |                    | `number`  |   `Uint64`    |                 0                  | The maximum asset amount that can be held in a vault.                           |
-| `MPTokenMetadata`  |                    | `string`  |    `Blob`     |                                    | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes. |
-| `WithdrawalPolicy` |                    | `number`  |    `UINT8`    | `vaultStrategyFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                            |
-| `DomainID`         |                    | `string`  |   `Hash256`   |                                    | The `PermissionedDomain` object ID associated with the shares of this Vault.    |
+| Field Name         |     Required?      |     JSON Type      | Internal Type |      Default Value       | Description                                                                                                                                            |
+| ------------------ | :----------------: | :----------------: | :-----------: | :----------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`  | :heavy_check_mark: |      `string`      |   `UINT16`    |           `58`           | The transaction type.                                                                                                                                  |
+| `Flags`            | :heavy_check_mark: |      `number`      |   `UINT32`    |            0             | Specifies the flags for the Vault.                                                                                                                     |
+| `Data`             |                    |      `string`      |    `BLOB`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
+| `Asset`            | :heavy_check_mark: | `string or object` |    `ISSUE`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
+| `AssetsMaximum`    |                    |      `number`      |   `NUMBER`    |            0             | The maximum asset amount that can be held in a vault.                                                                                                  |
+| `MPTokenMetadata`  |                    |      `string`      |    `BLOB`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
+| `WithdrawalPolicy` |                    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
+| `DomainID`         |                    |      `string`      |   `HASH256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
+| `Scale`            |                    |      `number`      |    `UINT8`    |            6             | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 3.1.1.1 Flags
 
@@ -344,12 +397,17 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.1.1.4 Failure Conditions
 
+- The `Asset` is `XRP`:
+  - The `Scale` parameter is provided.
+
 - The `Asset` is `MPT`:
+  - The `Scale` parameter is provided.
   - The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
   - The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
 
 - The `Asset` is an `IOU`:
   - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+  - The `Scale` parameter is provided, and is less than **0** or greater than **18**.
 
 - The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
@@ -364,6 +422,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 - Create a new `MPTokenIssuance` ledger object for the vault shares.
   - If the `DomainID` is provided:
     - `MPTokenIssuance(Vault.MPTokenIssuanceID).DomainID = DomainID` (Set the Permissioned Domain ID).
+  - Create an `MPToken` object for the Vault Owner to hold Vault Shares.
 - Create a new `AccountRoot`[_pseudo-account_](https://github.com/XRPLF/XRPL-Standards/discussions/191) object setting the `PseudoOwner` to `VaultID`.
 
 - If `Vault.Asset` is an `IOU`:
@@ -387,7 +446,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `59`      | The transaction type.                                                                                                                   |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
-| `AssetsMaximum`   |                    | `number`  |   `Uint64`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
+| `AssetsMaximum`   |                    | `number`  |   `Number`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
 | `DomainID`        |                    | `string`  |   `Hash256`   |               | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                            |
 
 ##### 3.1.2.1 Failure Conditions
@@ -509,12 +568,13 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 The `VaultWithdraw` transaction withdraws assets in exchange for the vault's shares.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                       |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                    |
-| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                            |
-| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                 |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
+| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
+| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
+| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
+| `DestinationTag`  |                    | `number`  |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination. |
 
 - If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
 - If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21722-redeem).
@@ -689,39 +749,38 @@ We propose adding the following fields to the `ledger_entry` method:
 
 #### 4.1.2 Response
 
-Here’s the updated table with your requested modifications:
-
-| Field Name                       | Required? | JSON Type | Description                                                                            |
-| -------------------------------- | --------- | --------- | -------------------------------------------------------------------------------------- |
-| `vault`                          | `yes`     | `object`  | Root object representing the vault.                                                    |
-| `vault.Account`                  | `yes`     | `string`  | The pseudo-account ID of the vault.                                                    |
-| `vault.Asset`                    | `yes`     | `object`  | Object representing the asset held in the vault.                                       |
-| `vault.Asset.currency`           | `yes`     | `string`  | Currency code of the asset stored in the vault.                                        |
-| `vault.Asset.issuer`             | `no`      | `string`  | Issuer address of the asset.                                                           |
-| `vault.AssetsAvailable`          | `yes`     | `string`  | Amount of assets currently available for withdrawal.                                   |
-| `vault.AssetsTotal`              | `yes`     | `string`  | Total amount of assets in the vault.                                                   |
-| `vault.Flags`                    | `no`      | `number`  | Bit-field flags associated with the vault.                                             |
-| `vault.LedgerEntryType`          | `yes`     | `string`  | Ledger entry type, always "Vault".                                                     |
-| `vault.LossUnrealized`           | `no`      | `string`  | Unrealized loss associated with the vault.                                             |
-| `vault.Owner`                    | `yes`     | `string`  | ID of the Vault Owner account.                                                         |
-| `vault.OwnerNode`                | `no`      | `string`  | Identifier for the owner node in the ledger tree.                                      |
-| `vault.PreviousTxnID`            | `yes`     | `string`  | Transaction ID of the last modification to this vault.                                 |
-| `vault.PreviousTxnLgrSeq`        | `yes`     | `number`  | Ledger sequence number of the last transaction modifying this vault.                   |
-| `vault.Sequence`                 | `yes`     | `number`  | Sequence number of the vault entry.                                                    |
-| `vault.ShareMPTID`               | `no`      | `string`  | Multi-purpose token ID associated with this vault.                                     |
-| `vault.WithdrawalPolicy`         | `no`      | `number`  | Policy defining withdrawal conditions.                                                 |
-| `vault.index`                    | `yes`     | `string`  | Unique index of the vault ledger entry.                                                |
-| `vault.shares`                   | `yes`     | `object`  | Object containing details about issued shares.                                         |
-| `vault.shares.Flags`             | `no`      | `number`  | Bit-field flags associated with the shares issuance.                                   |
-| `vault.shares.Issuer`            | `yes`     | `string`  | The ID of the Issuer of the Share. It will always be the pseudo-account ID.            |
-| `vault.shares.LedgerEntryType`   | `yes`     | `string`  | Ledger entry type, always "MPTokenIssuance".                                           |
-| `vault.shares.OutstandingAmount` | `yes`     | `string`  | Total outstanding shares issued.                                                       |
-| `vault.shares.OwnerNode`         | `no`      | `string`  | Identifier for the owner node of the shares.                                           |
-| `vault.shares.PreviousTxnID`     | `yes`     | `string`  | Transaction ID of the last modification to the shares issuance.                        |
-| `vault.shares.PreviousTxnLgrSeq` | `yes`     | `number`  | Ledger sequence number of the last transaction modifying the shares issuance.          |
-| `vault.shares.Sequence`          | `yes`     | `number`  | Sequence number of the shares issuance entry.                                          |
-| `vault.shares.index`             | `yes`     | `string`  | Unique index of the shares ledger entry.                                               |
-| `vault.shares.mpt_issuance_id`   | `no`      | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`. |
+| Field Name                       | Required? | JSON Type | Description                                                                                                                                            |
+| -------------------------------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vault`                          | `yes`     | `object`  | Root object representing the vault.                                                                                                                    |
+| `vault.Account`                  | `yes`     | `string`  | The pseudo-account ID of the vault.                                                                                                                    |
+| `vault.Asset`                    | `yes`     | `object`  | Object representing the asset held in the vault.                                                                                                       |
+| `vault.Asset.currency`           | `yes`     | `string`  | Currency code of the asset stored in the vault.                                                                                                        |
+| `vault.Asset.issuer`             | `no`      | `string`  | Issuer address of the asset.                                                                                                                           |
+| `vault.AssetsAvailable`          | `yes`     | `string`  | Amount of assets currently available for withdrawal.                                                                                                   |
+| `vault.AssetsTotal`              | `yes`     | `string`  | Total amount of assets in the vault.                                                                                                                   |
+| `vault.Flags`                    | `no`      | `number`  | Bit-field flags associated with the vault.                                                                                                             |
+| `vault.LedgerEntryType`          | `yes`     | `string`  | Ledger entry type, always "Vault".                                                                                                                     |
+| `vault.LossUnrealized`           | `no`      | `string`  | Unrealized loss associated with the vault.                                                                                                             |
+| `vault.Owner`                    | `yes`     | `string`  | ID of the Vault Owner account.                                                                                                                         |
+| `vault.OwnerNode`                | `no`      | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
+| `vault.PreviousTxnID`            | `yes`     | `string`  | Transaction ID of the last modification to this vault.                                                                                                 |
+| `vault.PreviousTxnLgrSeq`        | `yes`     | `number`  | Ledger sequence number of the last transaction modifying this vault.                                                                                   |
+| `vault.Sequence`                 | `yes`     | `number`  | Sequence number of the vault entry.                                                                                                                    |
+| `vault.ShareMPTID`               | `no`      | `string`  | Multi-purpose token ID associated with this vault.                                                                                                     |
+| `vault.WithdrawalPolicy`         | `no`      | `number`  | Policy defining withdrawal conditions.                                                                                                                 |
+| `vault.index`                    | `yes`     | `string`  | Unique index of the vault ledger entry.                                                                                                                |
+| `vault.shares`                   | `yes`     | `object`  | Object containing details about issued shares.                                                                                                         |
+| `vault.shares.Flags`             | `no`      | `number`  | Bit-field flags associated with the shares issuance.                                                                                                   |
+| `vault.shares.Issuer`            | `yes`     | `string`  | The ID of the Issuer of the Share. It will always be the pseudo-account ID.                                                                            |
+| `vault.shares.LedgerEntryType`   | `yes`     | `string`  | Ledger entry type, always "MPTokenIssuance".                                                                                                           |
+| `vault.shares.OutstandingAmount` | `yes`     | `string`  | Total outstanding shares issued.                                                                                                                       |
+| `vault.shares.OwnerNode`         | `no`      | `string`  | Identifier for the owner node of the shares.                                                                                                           |
+| `vault.shares.PreviousTxnID`     | `yes`     | `string`  | Transaction ID of the last modification to the shares issuance.                                                                                        |
+| `vault.shares.PreviousTxnLgrSeq` | `yes`     | `number`  | Ledger sequence number of the last transaction modifying the shares issuance.                                                                          |
+| `vault.shares.Sequence`          | `yes`     | `number`  | Sequence number of the shares issuance entry.                                                                                                          |
+| `vault.shares.index`             | `yes`     | `string`  | Unique index of the shares ledger entry.                                                                                                               |
+| `vault.shares.mpt_issuance_id`   | `no`      | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
+| `vault.Scale`                    | `yes`     | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 4.1.2.1 Example
 
@@ -767,7 +826,8 @@ Vault holding an `IOU`:
     "Sequence" : 1,
     "index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
     "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
-   }
+   },
+   "Scale": 6,
   }
  }
 ```
@@ -776,54 +836,38 @@ Vault holding an `MPT`:
 
 ```
 {
- "result" :
- {
-  "ledger_hash" : "31E9E3738E9A07219E49BC7B71E2CD9490AC3CDFB6CB2FD4F173FB8AE1619B34",
-  "ledger_index" : 11,
-  "status" : "success",
-  "validated" : true,
-  "vault" :
-  {
-   "Account" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
-   "Asset" :
-   {
-    "mpt_issuance_id" : "000000065E7AE0F677CFC3478DD710CD900EE92B99AB5B7A"
-   },
-   "AssetsAvailable" : "0",
-   "AssetsTotal" : "0",
-   "Flags" : 0,
-   "LedgerEntryType" : "Vault",
-   "LossUnrealized" : "0",
-   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-   "OwnerNode" : "0",
-   "PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
-   "PreviousTxnLgrSeq" : 10,
-   "Sequence" : 4,
-   "ShareMPTID" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D",
-   "WithdrawalPolicy" : 1,
-   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
-   "shares" :
-   {
-    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
-    "Flags" : 56,
-    "Issuer" : "rhXGX3ecZ8Gqxj9cCZBnJHzcoHfzMJijtV",
-    "LedgerEntryType" : "MPTokenIssuance",
-    "OutstandingAmount" : "0",
-    "OwnerNode" : "0",
-    "PreviousTxnID" : "B1F81724FA751966AC1B6A257815D8135F608A74A75C6ED3E29C3E9F5D8DB2D7",
-    "PreviousTxnLgrSeq" : 10,
-    "Sequence" : 1,
-    "index" : "5D316FC6A8C5D2344F5A85E256DCBF06A9596C79B2F450ED7BF4E7E8442F8668",
-    "mpt_issuance_id" : "0000000126A1CFADAB543B2A1D81D2ACC22FBEC14231F81D"
-   }
-  }
- }
+  "LedgerEntryType": "Vault",
+  "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
+  "Flags": "0",
+  "PreviousTxnID": "9A8765B4321CDE987654321CDE987654321CDE987654321CDE987654321CDE98",
+  "PreviousTxnLgrSeq": 12345678,
+  "Sequence": 1,
+  "OwnerNode": 2,
+  "Owner": "rEXAMPLE9AbCdEfGhIjKlMnOpQrStUvWxYz",
+  "Account": "rPseudoAcc1234567890abcdef1234567890abcdef",
+  "Data": "5468697320697320617262697472617279206D657461646174612061626F757420746865207661756C742E",
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rIssuer1234567890abcdef1234567890abcdef",
+    "value": "1000"
+  },
+  "AssetTotal": 1000000,
+  "AssetAvailable": 800000,
+  "LossUnrealized": 200000,
+  "AssetsMaximum": 0,
+  "Share": {
+    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    "value": "1",
+  },
+  "ShareTotal": 5000,
+  "WithdrawalPolicy": "0x0001",
+  "Scale": 0
 }
 ```
 
 Vault holding `XRP`:
 
-```
+```type-script
 {
  "result" :
  {
@@ -864,7 +908,8 @@ Vault holding `XRP`:
     "Sequence" : 1,
     "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
     "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
-   }
+   },
+   "Scale": 0
   }
  }
 }

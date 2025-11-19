@@ -5,7 +5,7 @@
     description: A standard URI schema for making payments and sharing data between platforms on the XRP Ledger
     created: 2022-07-28
     status: Stagnant
-    category: Community
+    category: Ecosystem
 </pre>
 
 # Abstract
@@ -540,7 +540,7 @@ https://github.com/standardconnect/xls-32d
     <code>npm install xls-32d@latest</code>
   </p>
   <p>or</p>
-  <p> 
+  <p>
     <code>yarn add xls-32d@latest</code>
   </p>
 
