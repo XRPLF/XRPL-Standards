@@ -208,7 +208,7 @@ _This table format is taken from [here](https://xrpl.org/docs/references/protoco
 
 ### 6.2. Transaction Fee
 
-An `EscrowCreate` with a `FinishFunction` costs costs 100 drops ($base\_fee * 10$) + 5. drops per byte in the `FinishFunction`.
+An `EscrowCreate` with a `FinishFunction` costs costs 100 drops ($base\_fee * 10$) + 5 drops per byte in the `FinishFunction`.
 
 ### 6.3. Failure Conditions
 
