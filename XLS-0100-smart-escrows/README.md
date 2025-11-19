@@ -2,7 +2,7 @@
   title: Smart Escrows
   description: Custom release conditions for escrows written in WebAssembly (WASM)
   created: 2025-02-25
-  updated: 2025-09-26
+  updated: 2025-11-20
   author: Mayukha Vadari (@mvadari), David Fuelling (@sappenin)
   status: Draft
   category: Amendment
