@@ -1265,6 +1265,7 @@ Each payment consists of three components:
 - **Principal**: The portion that reduces the outstanding loan principle.
 - **Interest**: The portion that covers the cost of borrowing for the period.
 - **Fees**: The portion that covers any applicable `serviceFee`, `managementFee`, `latePaymentFee`, or other charges.
+- **ValueChange**: The amount by which the payment changed the value of the Loan.
 
 The system follows these steps to process a payment:
 
