@@ -4,7 +4,7 @@
   created: 2025-02-25
   updated: 2025-09-26
   author: Mayukha Vadari (@mvadari), David Fuelling (@sappenin)
-  status: Proposal
+  status: Draft
   category: Amendment
 </pre>
 
