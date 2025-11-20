@@ -6,7 +6,7 @@
   created: 2021-03-09
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/34
   status: Withdrawn
-  category: Protocol
+  category: System
 </pre>
 
 ## Change Log

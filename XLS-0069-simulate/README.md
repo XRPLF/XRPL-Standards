@@ -5,7 +5,7 @@
   author: Mayukha Vadari <mvadari@ripple.com>, Elliot Lee (@intelliot)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/199
   status: Final
-  category: Protocol
+  category: System
   created: 2024-03-22
 </pre>
 

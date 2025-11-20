@@ -5,7 +5,7 @@
     author: Rome Reginelli (@mDuo13)
     created: 2021-07-28
     status: Stagnant
-    category: Community
+    category: Ecosystem
 </pre>
 
 # Proposal for Allocating Asset Code Prefixes
