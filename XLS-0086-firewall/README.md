@@ -1,420 +1,792 @@
 <pre>
   xls: 86
   title: Firewall
-  description: Time-based spending limits and whitelist functionality to prevent unauthorized account drainage on the XRPL.
+  description: Destination-based security through whitelisted recipients with counterparty authorization and rule-based safeguards
   author: Kris Dangerfield (@krisdangerfield), Denis Angell (@angell_denis)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/255
   status: Draft
   category: Amendment
   created: 2024-11-29
+  updated: 2025-09-19
 </pre>
 
-# XLS-86d - Firewall
+# Amendment XLS: Firewall
 
-## Abstract
+## Index
 
-This proposal introduces a new security feature for the XRP Ledger, referred to as the "Firewall."
+1. [Abstract](#1-abstract)
+2. [Motivation](#2-motivation)
+3. [Introduction](#3-introduction)
+4. [Specification](#4-specification)
+   - 4.1. [Ledger Entries](#41-ledger-entries)
+   - 4.2. [Transactions](#42-transactions)
+   - 4.3. [Firewall Check Implementation](#43-firewall-check-implementation)
+   - 4.4. [Transaction Firewall Actions](#44-transaction-firewall-actions)
+5. [Rationale](#5-rationale)
+6. [Backwards Compatibility](#6-backwards-compatibility)
+7. [Security Considerations](#7-security-considerations)
+8. [Appendix](#8-appendix)
 
-The proposed Firewall feature allows account owners to configure time-based, value-limited safeguards on outgoing transactions. These restrictions ensure that even if a private key is compromised, an attacker cannot immediately drain the account, giving the owner time to secure their assets. The Firewall will integrate seamlessly with existing transaction flows and is an optional feature that users can enable at their discretion. Additionally, the proposal outlines the creation of a whitelist mechanism, allowing trusted accounts to bypass the firewall restrictions, to strike a balance between security and usability, allowing the feature to be configured so that it does not interfere with genuine day-to-day transactions.
+## 1. Abstract
 
-This feature is particularly beneficial for retail users and small enterprises, offering a simpler alternative or complement to multisig protection.
+This amendment introduces a comprehensive Firewall framework for the XRP Ledger, providing destination-based security through whitelisted recipients (WithdrawPreauth) with counterparty authorization. The system provides multi-layered protection through:
 
-## Rationale
+1. A whitelist that restricts outgoing payments to pre-approved recipients
+2. A counterparty authorization system that adds an additional security layer, preventing single points of failure in account security
+3. A transaction classification system that determines which transactions are subject to firewall checks
+4. Fee drain protection that prevents account draining through excessive transaction fees
 
-The XRPL protocol currently does not have a native mechanism to prevent a compromised account from being instantly drained by an attacker. This risk is a substantial deterrent to the mainstream adoption of self-custody solutions.
+## 2. Motivation
 
-Multisignature (multisig) functionality was introduced to mitigate this risk by adding additional layers of authorization. However, in practice, this solution has not been widely adopted. Major XRP Ledger wallets do not support multisig in a way that allows average users to easily benefit from the functionality; also the complexity of setting up and managing multisig accounts makes it inaccessible for many users. Additionally, even multisig protected accounts can be drained if multiple private keys are compromised by a malicious actor.
+The XRPL protocol currently lacks native mechanisms to prevent compromised accounts from being instantly drained. While multi-signature functionality exists, its complexity and limited wallet support have prevented widespread adoption.
 
-The objective of this amendment is to propose a user-friendly and secure mechanism that can be easily implemented as an alternative to multisig or used in combination with multisig to further enhance security.
+Current security options are insufficient:
 
-When enabled on an account, it will prevent an attacker from instantly draining an account and provide the user with an opportunity to move their funds to an alternative authorized backup account.
+- Single-key accounts provide no protection against key compromise
+- Multisig requires complex coordination and lacks widespread wallet support
+- No native mechanism exists to restrict outgoing payments to trusted addresses
+- Zero protection against malicious account draining
+- No defense against fee-based drain attacks
 
-The system will seamlessly integrate with the current transaction flow and activate only when the user's predefined rules are triggered. Additionally, the amendment is entirely optional, requiring users to opt-in to benefit from its features.
+This amendment addresses these gaps by providing:
 
-## Overhead
+- Simple whitelist-based protection accessible to all users
+- Dual-control security without multisig complexity
+- Protection against unauthorized withdrawal
+- Transaction-level control over which operations require authorization
+- Fee drain protection through maximum fee limits
 
-- It is anticipated that there will need to be an efficient test at the start of each transaction to check if the firewall is active on an account.
-- If not active, the amendment would add no further overhead.
-- If the firewall is active, the rules would be applied as guards which return to the normal flow as early as possible, adding the least overhead possible to a transaction.
-- When all guards are satisfied, there is a need for an efficient mechanism to track a value total within a defined time period.
-- The amount tests are very simple and should add little overhead, as it is a simple operator test of `(tx.Amount + firewall.runningTotal) > firewall.Amount`.
+## 3. Introduction
 
-## Basic Flows
+The Firewall system introduces a new security paradigm for the XRP Ledger based on destination whitelisting and fee protection. Once enabled, an account can only send value to pre-authorized recipients for transactions that are subject to firewall checks, and all transactions are subject to maximum fee limits.
 
-**Account compromise without firewall engaged**
+### 3.1. Terminology
 
-1. A user has their private key compromised.
-2. The attacker adds a new regular key and disables the master key, thus locking the user out of the account.
-3. The attacker now moves the entire balance to their own wallet.
-4. The assets are lost.
+**Core Components:**
 
-**Account compromise with firewall engaged**
+- **Firewall**: A ledger object that enables destination-based restrictions and fee limits on an account
+- **Counterparty**: A trusted account that must co-sign changes to firewall settings
+- **Backup**: A mandatory preauthorized account where assets can be sent without restriction, in the event of key compromise
+- **MaxFee**: Optional maximum transaction fee limit to prevent fee-based drain attacks
 
-1. A user has their private key compromised.
-2. The attacker adds a new regular key and attempts to disabled the master key, but since the firewall is engaged the master key cannot be disabled; this is part of the spec.
-3. The attacker has account access via the PK, so attempts to send the entire balance to another account, which is then blocked because the account is not on the whitelist and either a) the user has not set an optional maximum value or b) the user set an appropriate value of say 500 XRP as the limit. In either scenario the transaction fails and any further drain attempt is limited to the configured maximum value.
-4. The attacker tries to add their account to the whitelist, but this fails because the Firewall is already engaged and changes to `FirewallWhitelistSet` transaction now require the transaction to be signed by the account specified in `sfPublicKey`.
-5. The attacker decides to get value out of the account via another transaction: eg... They mint an NFT and list for sale for the entire account balance, create an offer and then attempt to drain the wallet by accepting such an offer. The transaction is blocked by the Firewall on the basis that the Firewall protects any transaction against value moving from an account, not just a Payment. All other attempts to do this by Escrow, Offer, etc will be blocked by applying the same logic over max value within defined period where destination is not on the Whitelist.
-6. As a last ditch attempt, the attacker attempts to delete the account, setting their own account as the destination for the balance, but this fails because the Account cannot be deleted with the `AccountDelete` transaction when the `Firewall` is enabled.
-7. The account owner can now move the entire balance to their designated backup account and there is nothing the attacker can do to stop it.
+**WithdrawPreauth Features:**
 
-**Owner wants to delete their account**
+- **WithdrawPreauth**: Authorization for a specific account to receive assets from a firewall protected account
+- **DestinationTag**: Optional tag that can be required for preauthorized transfers
 
-1. The user attempts to delete their account, but this fails with error informing that account delete cannot complete, if the Firewall is engaged.
-2. The user deletes the Firewall.
-3. The account can be deleted in the normal way.
+**Transaction Control:**
 
-**Day to Day use**
+- **FirewallAction**: Classification of how each transaction type interacts with the firewall (allow, check, or block)
 
-1. A user engages the Firewall with the optional time-period of 24 hours and value limit of 500 XRP.
-2. The user wants to send 5000 XRP to Bitstamp; Bitstamp is a trusted account (with Destination Tag) set on the `FirewallWhitelist`. The payment is sent as normal and the firewall allows the payment to proceed with no noticeable difference.
-3. The user wants to send a payment to a `SuperCoolNewProject` to subscribe to a new app. The payment is for 75 XRP. The payment is sent as normal because the payment expends 75 XRP of the users defined 500 XRP daily limit (within the 24 hours period). The firewall allows the payment to proceed as normal.
-4. The user makes 2 more payments successfully a few hours later, both for 100 XRP each. The user has now expended 275 XRP of the 500 XRP limit.
-5. The user makes a payment of 250 XRP, 23 hours from the time of the 75 XRP subscription. The payment is rejected because a) the payment is going to an account that is not on the whitelist and; b) the payment total plus the current running total now exceeds the 500 XRP limit set by the user within a 24 hour period.
-6. In this Day-to-Day scenario; the Firewall is acting like a current banking app that has a maximum daily spend value set. The user _COULD_ choose to override this and allow the payment to proceed; and there are different ways to do this. One way is to increase the limit; another would be to shorten the time-period; another would be to add the destination account to the whitelist; another would be to delete the firewall entirely; a pretty cool way (if XLS 56 is enabled) would be to do a batch transaction that adds the account to the firewall long enough for the transaction to proceed and then immediately removes it.
-7. This may be considered a frustration to the user, however it is how most current bank accounts work and this is the firewall in action but considering the alternative, which is that an attacker now has their private key; this is a small price to pay for being able to sleep well at night.
-8. The user is not prevented from spending their money; the worst case outcome for the user is a mild amount of frustration; AND this could be limited by UI/UX as a simple check on the Firewall would inform them that a payment would fail, thus preventing a failed transaction and with XLS 56 enabled its possible a user experience would evolve that totally mitigates the frustration.
+### 3.2. Summary
 
-## Limitations
+**Ledger Objects:**
 
-This proposal only protects XRP; it does not prevent the draining of any other asset held on an account. However, with broad support, the specification could be updated to include protection for issued assets and potentially other assets like NFTs.
+- `Firewall`: Stores the counterparty relationship, security configuration, and fee limits
+- `WithdrawPreauth`: Represents authorization for specific recipients with optional destination tag
 
-## Audience
+**Transactions:**
 
-This proposal is not a replacement for multisig; it is proposed as an easier alternative for retail and small enterprises and as an additional feature that could be used to further enhance multisig-protected accounts.
+- `FirewallSet`: Creates or Updates a firewall configuration including fee limits (update requires counterparty approval)
+- `FirewallDelete`: Removes a firewall (requires counterparty approval)
+- `WithdrawPreauth`: Adds or removes authorized recipients with optional destination tags (requires counterparty approval)
 
-## Amendment
+## 4. Specification
 
-The proposed amendment introduces a new feature that allows for configuration of time based, value limits on outgoing transactions.
+### 4.1. Ledger Entries
 
-When a transaction is submitted, it will only be accepted if the value (including the SUM of all other successful transactions, within the defined time-period), is less than the amount defined on the firewall; OR the transaction destination is listed on the firewall whitelist OR the transaction destination is the BackupAccount on the firewall ledger entry.
+#### 4.1.1. Firewall
 
-The amendment adds the following:
+##### 4.1.1.1. Object Identifier
 
-- A new ledger entry: `Firewall`
-- A new transaction type: `FirewallSet`
-- A new transaction type: `FirewallDelete`
-- A new ledger entry: `FirewallWhitelist`
-- A new transaction type: `FirewallWhitelistSet`
+**Key Space**: `0x0046` (hex representation)
 
-## New Ledger Entry: `Firewall`
+The Firewall object ID is calculated as:
 
-The `Firewall` ledger entry is a new on-ledger object that stores the rules to be applied to all outgoing transactions, as well as a safeguard for authorization of updates to the object once set.
+```
+SHA512Half(KeySpace || AccountID)
+```
 
-The object has the following fields:
+Where:
 
-| Field             | Type      | Required | Description                                                                                                                                                                |
-| ----------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| sfAccount         | AccountID | ✔️       | The account for which the`Firewall` is set.                                                                                                                                |
-| sfPublicKey       | PublicKey | ✔️       | A required public key to an account that is allowed to update the`Firewall` and `FirewallWhitelist`.                                                                       |
-| sfBackupAccount   | AccountID | ✔️       | A required account authorized to receive funds (without restriction) in the event of compromise.                                                                           |
-| sfTimePeriod      | UInt64    |          | Time period in seconds (e.g., 86400 seconds = 24 hours)                                                                                                                    |
-| sfTimePeriodStart | UInt32    |          | The starting time (Ripple epoch time) that is used with sfTimePeriod to create a window of time for tracking total.<br />This field is only updatable from within rippled. |
-| sfAmount          | Amount    |          | Firewall Amount in drops (1 XRP = 1,000,000 drops)                                                                                                                         |
-| sfTotalOut        | Amount    |          | Total amount (in drops) in a specific time period. Is reset at the end of the period.<br />This field is only updatable from within rippled.                               |
+- `KeySpace` = `0x0046`
+- `AccountID` = The account that owns the firewall
 
-Example `Firewall` object:
+##### 4.1.1.2. Fields
+
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                |
+| ----------------- | -------- | -------- | ------------- | ------------- | ---------------------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x0085        | Identifies this as a Firewall object                       |
+| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                    |
+| Owner             | Yes      | Yes      | ACCOUNT       | N/A           | Account that owns this firewall                            |
+| Counterparty      | No       | Yes      | ACCOUNT       | N/A           | Account authorized to countersign firewall updates         |
+| MaxFee            | No       | No       | AMOUNT        | N/A           | Maximum transaction fee allowed (in drops)                 |
+| OwnerNode         | Yes      | Yes      | UINT64        | N/A           | Directory page storing this object                         |
+| PreviousTxnID     | Yes      | Yes      | HASH256       | N/A           | Hash of the previous transaction that modified this object |
+| PreviousTxnLgrSeq | Yes      | Yes      | UINT32        | N/A           | Ledger sequence of the previous transaction                |
+
+##### 4.1.1.3. Ownership
+
+The Firewall object is owned by the account specified in the `Owner` field and is linked in that account's OwnerDirectory.
+
+##### 4.1.1.4. Reserves
+
+Creating a Firewall increments the owner's reserve by one unit.
+
+##### 4.1.1.5. Deletion
+
+The Firewall can only be deleted via the FirewallDelete transaction when:
+
+- The deletion transaction includes a valid counterparty signature
+- This is a blocker for deleting the owner AccountRoot
+
+##### 4.1.1.6. Example JSON
 
 ```json
 {
   "LedgerEntryType": "Firewall",
-  "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "PublicKey": "EDPUBLICKEY",
-  "BackupAccount": "YourBackupAddress",
-  "TimePeriod": 86400,
-  "TimePeriodStart": 123412345,
-  "Amount": "100000000",
-  "TotalOut": "5000000"
+  "Flags": 0,
+  "Owner": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
+  "Counterparty": "raKG2uCwu71ohFGo1BJr7xqeGfWfYWZeh3",
+  "MaxFee": "100000",
+  "OwnerNode": "0000000000000000",
+  "PreviousTxnID": "ABC123DEF456789ABC123DEF456789ABC123DEF456789ABC123DEF456789AB",
+  "PreviousTxnLgrSeq": 1234567
 }
 ```
 
-## New Transaction Type: `FirewallSet`
+#### 4.1.2. WithdrawPreauth
 
-The `FirewallSet` transaction is used to set and update the `Firewall`.
+##### 4.1.2.1. Object Identifier
 
-To set the `Firewall` the `sfPublicKey` and `sfBackupAccount` are required.
+**Key Space**: `0x0047` (hex representation)
 
-To update the `Firewall` `sfSignature` field is required, which will be validated against the `sfPublicKey` on the firewall ledger entry object.
+The WithdrawPreauth object ID is calculated as:
 
-| Field             | Type      | Required | Description                                                                                                                                     |
-| ----------------- | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| sfTransactionType | String    | ✔️       | The type of transaction:`FirewallSet`.                                                                                                          |
-| sfAccount         | AccountID | ✔️       | The account for which the`Firewall` is set.                                                                                                     |
-| sfPublicKey       | PublicKey |          | The PublicKey set during initialization that will be used later to validate the signature for updates to the `Firewall` and `FirewallWhitelist` |
-| sfBackupAccount   | AccountID |          | The Backup account set during initialization that can be used to bypass the firewall.                                                           |
-| sfTimePeriod      | UInt64    |          | Time period in seconds (e.g., 86400 seconds = 24 hours)                                                                                         |
-| sfAmount          | Amount    |          | Firewall Amount in drops (1 XRP = 1,000,000 drops)                                                                                              |
-| sfSignature       | Blob      |          | The signature that will be validated against the`PublicKey` on the firewall ledger entry object.                                                |
+```
+SHA512Half(KeySpace || OwnerAccountID || AuthorizedAccountID || DestinationTag)
+```
 
-### `FirewallSet` - Create
+##### 4.1.2.2. Fields
+
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                                 |
+| ----------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x0856        | Identifies as WithdrawPreauth               |
+| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                     |
+| Account           | Yes      | Yes      | ACCOUNT       | N/A           | Account that owns this preauth              |
+| Authorize         | Yes      | Yes      | ACCOUNT       | N/A           | Account authorized to receive assets        |
+| DestinationTag    | No       | No       | UINT32        | N/A           | Optional destination tag                    |
+| OwnerNode         | Yes      | Yes      | UINT64        | N/A           | Directory page storing this                 |
+| PreviousTxnID     | Yes      | Yes      | HASH256       | N/A           | Hash of the previous transaction            |
+| PreviousTxnLgrSeq | Yes      | Yes      | UINT32        | N/A           | Ledger sequence of the previous transaction |
+
+##### 4.1.2.3. Ownership
+
+Owned by the `Account` field and linked in that account's OwnerDirectory.
+
+##### 4.1.2.4. Reserves
+
+Each WithdrawPreauth entry increments the owner's reserve by one unit.
+
+##### 4.1.2.5. Deletion
+
+Can be deleted via WithdrawPreauth transaction with counterparty signature.
+
+##### 4.1.2.6. Example JSON
+
+```json
+{
+  "LedgerEntryType": "WithdrawPreauth",
+  "Flags": 0,
+  "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
+  "Authorize": "rVendorAddress123456789",
+  "DestinationTag": 42,
+  "OwnerNode": "0000000000000001",
+  "PreviousTxnID": "DEF456789ABC123DEF456789ABC123DEF456789ABC123DEF456789ABC123DE",
+  "PreviousTxnLgrSeq": 1234568
+}
+```
+
+### 4.2. Transactions
+
+#### 4.2.1. FirewallSet
+
+##### 4.2.1.1. Fields
+
+| Field Name            | Required?   | JSON Type | Internal Type | Default Value | Description                                 |
+| --------------------- | ----------- | --------- | ------------- | ------------- | ------------------------------------------- |
+| TransactionType       | Yes         | string    | BLOB          | N/A           | Value: "FirewallSet"                        |
+| Counterparty          | Conditional | string    | ACCOUNT       | N/A           | Required for creation, Optional for updates |
+| Backup                | Conditional | string    | ACCOUNT       | N/A           | Required for creation                       |
+| MaxFee                | No          | string    | AMOUNT        | N/A           | Maximum transaction fee allowed (in drops)  |
+| DestinationTag        | No          | number    | UINT32        | N/A           | Tag for backup preauth                      |
+| FirewallID            | Conditional | string    | HASH256       | N/A           | Required for updates                        |
+| CounterpartySignature | Conditional | array     | ARRAY         | N/A           | Required for updates                        |
+
+**Conditional Requirements:**
+
+- For creation: `Counterparty` and `Backup` are required, `FirewallID` and `CounterpartySignature` must be absent
+- For updates: `FirewallID` and `CounterpartySignature` are required
+- `MaxFee` can be set on creation or updated later (update requires counterparty approval)
+
+##### 4.2.1.2. Failure Conditions
+
+**For Creation (when sfFirewallID is absent):**
+
+1. `temDISABLED`: Amendment not enabled
+2. `temINVALID_FLAG`: Invalid transaction flags set
+3. `temMALFORMED`: Missing sfCounterparty field
+4. `temMALFORMED`: Missing sfBackup field
+5. `temMALFORMED`: sfCounterparty same as Account
+6. `temMALFORMED`: sfBackup same as Account
+7. `temMALFORMED`: sfCounterpartySignature present (forbidden for creation)
+8. `temMALFORMED`: Invalid MaxFee amount (if present)
+9. `temMALFORMED`: Invalid fee amount
+10. `tecDUPLICATE`: Firewall already exists for account
+11. `tecNO_DST`: Counterparty account doesn't exist
+12. `tecNO_DST`: Backup account doesn't exist
+13. `tecINSUFFICIENT_RESERVE`: Insufficient XRP for reserve (needs 2 objects worth)
+14. `tecDIR_FULL`: Owner directory full
+
+**For Updates (when sfFirewallID is present):**
+
+1. `temDISABLED`: Amendment not enabled
+2. `temINVALID_FLAG`: Invalid transaction flags set
+3. `temMALFORMED`: Missing sfCounterpartySignature field
+4. `temMALFORMED`: Invalid MaxFee amount (if present)
+5. `tecNO_DST`: New Counterparty account doesn't exist (if changing)
+6. `tecDUPLICATE`: New Counterparty same as existing Counterparty
+7. `temMALFORMED`: sfBackup present (forbidden for updates)
+8. `temMALFORMED`: sfCounterparty same as Account
+9. `temMALFORMED`: CounterpartySignature includes the outer Account
+10. `temBAD_SIGNATURE`: Invalid counterparty signature in CounterpartySignature
+11. `tecNO_TARGET`: Referenced firewall not found
+12. `tecNO_PERMISSION`: Account not the firewall owner
+
+##### 4.2.1.3. State Changes
+
+**On Creation:**
+
+1. Create Firewall ledger entry with specified Counterparty
+2. Set MaxFee if provided
+3. Create WithdrawPreauth entry for Backup account with optional DestinationTag
+4. Increment owner's reserve count by 2
+5. Add both objects to owner's directory
+6. Prevent future master key disable
+
+**On Update:**
+
+1. Verify counterparty signature
+2. Update Counterparty if specified
+3. Update MaxFee if specified (or remove if set to 0)
+
+##### 4.2.1.4. Example JSON
+
+**Creation:**
 
 ```json
 {
   "TransactionType": "FirewallSet",
   "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "PublicKey": "EDPUBLICKEY",
-  "BackupAccount": "rY6CEmcZiJXp5L4LDJq3gZFujU6Wwn7xH3",
-  "TimePeriod": 86400,
-  "Amount": "1000000000"
+  "Counterparty": "raKG2uCwu71ohFGo1BJr7xqeGfWfYWZeh3",
+  "Backup": "rBackupAccount123456789",
+  "MaxFee": "100000",
+  "DestinationTag": 12345,
+  "Fee": "36",
+  "Sequence": 10
 }
 ```
 
-#### Failure Conditions
-
-- BackupAccount == Account
-- PublicKey (AccountID) == Account
-- PublicKey (AccountID) == BackupAccount
-- Missing PublicKey Field
-- Missing BackupAccount Field
-- TimePeriod <= 0
-- Amount <= 0
-
-#### State Changes
-
-- Creates the `Firewall` Ledger Entry, setting the fields.
-
-### `FirewallSet` - Update
+**Update:**
 
 ```json
 {
   "TransactionType": "FirewallSet",
   "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "TimePeriod": 43200,
-  "Amount": "2000000000",
-  "Signature": "xxxxxxxSomeSignatureVerifiableAgainstThePublicKeyStoredOnTheFirewallObjectXxxxxxxx"
+  "Counterparty": "rNewCounterparty123456",
+  "MaxFee": "50000",
+  "FirewallID": "ABC123DEF456789",
+  "CounterpartySignature": {
+    "SigningPubKey": "ED74D4036C6591A4BDF9C54CEFA39B996A5DCE5F86D11FDA1874481CE9D5A1CDC1",
+    "TxnSignature": "C3646313B08EED6AF4392261A31B961F10C66CB733DB7F6CD9EAB079857834C8B0E1DDC877E39D96A18223B985D9F75DDD2D2AB5B2D0A26E8A87B6D0A716D607"
+  },
+  "Fee": "36",
+  "Sequence": 11
 }
 ```
 
-#### Failure Conditions
+#### 4.2.2. FirewallDelete
 
-- BackupAccount == Account
-- PublicKey (AccountID) == Account
-- PublicKey (AccountID) == BackupAccount
-- Missing Signature Field
-- Signature is invalid
+##### 4.2.2.1. Fields
 
-#### State Changes
+| Field Name            | Required? | JSON Type | Internal Type | Default Value | Description             |
+| --------------------- | --------- | --------- | ------------- | ------------- | ----------------------- |
+| TransactionType       | Yes       | string    | BLOB          | N/A           | Value: "FirewallDelete" |
+| FirewallID            | Yes       | string    | HASH256       | N/A           | Firewall to delete      |
+| CounterpartySignature | Yes       | array     | ARRAY         | N/A           | Counterparty signatures |
 
-- Updates the `Firewall` Ledger Entry, setting the fields.
+##### 4.2.2.2. Failure Conditions
 
-## New Transaction Type: `FirewallDelete`
+1. `temDISABLED`: Amendment not enabled
+2. `temINVALID_FLAG`: Invalid transaction flags set
+3. `temMALFORMED`: Missing sfFirewallID field
+4. `temMALFORMED`: Missing sfCounterpartySignature field
+5. `temMALFORMED`: CounterpartySignature includes the outer Account
+6. `temBAD_SIGNATURE`: Invalid counterparty signature
+7. `tecNO_TARGET`: Firewall doesn't exist
+8. `tecNO_PERMISSION`: Account not the firewall owner
 
-The `FirewallDelete` transaction is used to delete the `Firewall` object.
+##### 4.2.2.3. State Changes
 
-To delete the `Firewall` the transaction must include `sfSignature` of the transaction which will be validated against the `sfPublicKey` on the firewall ledger entry object.
+1. Remove all WithdrawPreauth entries for the account
+2. Remove Firewall ledger entry
+3. Remove from owner's directory
+4. Decrement owner's reserve count
 
-| Field             | Type      | Required | Description                                                                                      |
-| ----------------- | --------- | -------- | ------------------------------------------------------------------------------------------------ |
-| sfTransactionType | String    | ✔️       | The type of transaction:`FirewallDelete`.                                                        |
-| sfAccount         | AccountID | ✔️       | The account for which the`Firewall` is set.                                                      |
-| sfSignature       | Blob      |          | The signature that will be validated against the`PublicKey` on the firewall ledger entry object. |
-
-### `FirewallDelete`
+##### 4.2.2.4. Example JSON
 
 ```json
 {
   "TransactionType": "FirewallDelete",
   "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "Signature": "xxxxxxxSomeSignatureVerifiableAgainstThePublicKeyStoredOnTheFirewallObjectXxxxxxxx"
+  "FirewallID": "ABC123DEF456789",
+  "CounterpartySignature": {
+    "SigningPubKey": "ED74D4036C6591A4BDF9C54CEFA39B996A5DCE5F86D11FDA1874481CE9D5A1CDC1",
+    "TxnSignature": "C3646313B08EED6AF4392261A31B961F10C66CB733DB7F6CD9EAB079857834C8B0E1DDC877E39D96A18223B985D9F75DDD2D2AB5B2D0A26E8A87B6D0A716D607"
+  },
+  "Fee": "36",
+  "Sequence": 10
 }
 ```
 
-#### Failure Conditions
+#### 4.2.3. WithdrawPreauth
 
-- Firewall Object Does Not Exist
-- Missing Signature Field
+##### 4.2.3.1. Fields
 
-#### State Changes
+| Field Name            | Required?   | JSON Type | Internal Type | Default Value | Description              |
+| --------------------- | ----------- | --------- | ------------- | ------------- | ------------------------ |
+| TransactionType       | Yes         | string    | BLOB          | N/A           | Value: "WithdrawPreauth" |
+| Authorize             | Conditional | string    | ACCOUNT       | N/A           | Account to authorize     |
+| Unauthorize           | Conditional | string    | ACCOUNT       | N/A           | Account to unauthorize   |
+| DestinationTag        | No          | number    | UINT32        | N/A           | Optional destination tag |
+| FirewallID            | Yes         | string    | HASH256       | N/A           | Associated firewall      |
+| CounterpartySignature | Yes         | array     | ARRAY         | N/A           | Counterparty signatures  |
 
-- Removes the `Firewall` ledger entry.
-- Removes all `FirewallWhitelist` entries.
+**Conditional Requirements:**
 
-## New Ledger Entry: `FirewallWhitelist`
+- Exactly one of `Authorize` or `Unauthorize` must be present
 
-The `FirewallWhitelist` ledger entry is a new on-ledger object that stores the accountID of an account that is authorized to bypass the configured rules of the firewall.
-It closely mirrors the implementation of `DepositPreauth` in reverse.
+##### 4.2.3.2. Failure Conditions
 
-The object has the following fields:
+1. `temDISABLED`: Amendment not enabled
+2. `temINVALID_FLAG`: Invalid transaction flags set
+3. `temMALFORMED`: Both sfAuthorize and sfUnauthorize present
+4. `temMALFORMED`: Neither sfAuthorize nor sfUnauthorize present
+5. `temMALFORMED`: Missing sfFirewallID field
+6. `temMALFORMED`: Missing sfCounterpartySignature field
+7. `temMALFORMED`: CounterpartySignature includes the outer Account
+8. `temINVALID_ACCOUNT_ID`: Zero account in Authorize/Unauthorize field
+9. `temCANNOT_PREAUTH_SELF`: Attempting to authorize own account
+10. `temBAD_SIGNATURE`: Invalid counterparty signature
+11. `tecNO_TARGET`: Firewall doesn't exist
+12. `tecNO_TARGET`: Authorize account doesn't exist (for authorize operation)
+13. `tecDUPLICATE`: Preauth already exists (for authorize operation)
+14. `tecNO_ENTRY`: Preauth doesn't exist (for unauthorize operation)
+15. `tecNO_PERMISSION`: Account not the firewall owner
+16. `tecINSUFFICIENT_RESERVE`: Insufficient reserve (for authorize operation)
+17. `tecDIR_FULL`: Owner directory full (for authorize operation)
 
-| Field               | Type      | Required | Description                                                                                                          |
-| ------------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
-| sfAuthorize         | AccountID | ✔️       | The account being authorized to bypass the firewall.                                                                 |
-| sfDestTag           | UInt32    |          | To support the sending of funds to a specific wallet that uses Destination Tags to segregate funds. ie: An Exchange. |
-| sfOwnerNode         | UInt64    | ✔️       | The owner node of the account authorizing the outgoing transaction.                                                  |
-| sfPreviousTxnID     | Hash256   | ✔️       | The ID of the previous transaction that modified this ledger entry.                                                  |
-| sfPreviousTxnLgrSeq | UInt32    | ✔️       | The ledger sequence number of the previous transaction that modified this ledger entry.                              |
+##### 4.2.3.3. State Changes
 
-Example `FirewallWhitelist` object:
+**On Authorize:**
 
-```json
-{
-  "LedgerEntryType": "FirewallWhitelist",
-  "Authorize": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "OwnerNode": "0000000000000000",
-  "PreviousTxnID": "5DB01B7E2D4E5F6A3B3E2D4E5F6A3B3E2D4E5F6A3B3E2D4E5F6A3B3E2D4E5F6A",
-  "PreviousTxnLgrSeq": 12345678
-}
-```
+1. Verify counterparty signature
+2. Create WithdrawPreauth entry with optional DestinationTag
+3. Add to owner's directory
+4. Increment owner's reserve count
 
-## New Transaction Type: `FirewallWhitelistSet`
+**On Unauthorize:**
 
-The `FirewallWhitelistSet` transaction is used to authorize specific accounts to bypass the configured firewall rules.
+1. Verify counterparty signature
+2. Remove WithdrawPreauth entry
+3. Remove from owner's directory
+4. Decrement owner's reserve count
 
-- To authorize an account, populate the sfAuthorize field.
-- To unauthorize an account, populate the sfUnauthorize field.
-
-To be a valid transaction one of these fields must contain a valid active accountID.
-
-**Security:**
-
-To add an account to the whitelist or remove an account from the whitelist the transaction must include a signature of the transaction which will be validated against the `PublicKey` on the firewall ledger entry object.
-
-| Field             | Type      | Required | Description                                                                                                          |
-| :---------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
-| sfTransactionType | String    | ✔️       | The type of transaction:`FirewallWhitelistSet`.                                                                      |
-| sfAccount         | AccountID | ✔️       | The account authorizing the outgoing transaction.                                                                    |
-| sfAuthorize       | AccountID |          | The account being authorized.                                                                                        |
-| sfDestTag         | UInt32    |          | To support the sending of funds to a specific wallet that uses Destination Tags to segregate funds. ie: An Exchange. |
-| sfUnauthorize     | AccountID |          | The account being unauthorized.                                                                                      |
-| sfSignature       | Blob      | ✔️       | The signature that will be validated against the`PublicKey` on the firewall ledger entry object.                     |
-
-### `FirewallWhitelistSet` - Authorize
+##### 4.2.3.4. Example JSON
 
 ```json
 {
-  "TransactionType": "FirewallWhitelistSet",
+  "TransactionType": "WithdrawPreauth",
   "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "Authorize": "rWhitelisted1",
-  "Signature": "xxxxxxxSomeSignatureVerifiableAgainstThePublicKeyStoredOnTheFirewallObjectXxxxxxxx"
+  "Authorize": "rNewVendorAddress123456",
+  "DestinationTag": 555,
+  "FirewallID": "ABC123DEF456789",
+  "CounterpartySignature": {
+    "SigningPubKey": "ED74D4036C6591A4BDF9C54CEFA39B996A5DCE5F86D11FDA1874481CE9D5A1CDC1",
+    "TxnSignature": "C3646313B08EED6AF4392261A31B961F10C66CB733DB7F6CD9EAB079857834C8B0E1DDC877E39D96A18223B985D9F75DDD2D2AB5B2D0A26E8A87B6D0A716D607"
+  },
+  "Fee": "36",
+  "Sequence": 11
 }
 ```
 
-### `FirewallWhitelistSet` - Unauthorize
+### 4.3. Firewall Check Implementation
 
-```json
+The firewall system integrates into the transaction processing pipeline through a preclaim check that validates transactions against the firewall configuration before they are applied.
+
+#### 4.3.1. Architecture
+
+The firewall check is implemented in the `Transactor::checkFirewall` method which is called during the preclaim phase of transaction processing.
+
+#### 4.3.2. Check Flow
+
+```cpp
+NotTEC
+Transactor::checkFirewall(PreclaimContext const& ctx)
 {
-  "TransactionType": "FirewallWhitelistSet",
-  "Account": "rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9",
-  "Unauthorize": "rWhitelisted1",
-  "Signature": "xxxxxxxSomeSignatureVerifiableAgainstThePublicKeyStoredOnTheFirewallObjectXxxxxxxx"
+    // Get the account (handle delegation)
+    auto const account = ctx.tx.isFieldPresent(sfDelegate)
+        ? ctx.tx.getAccountID(sfDelegate)
+        : ctx.tx.getAccountID(sfAccount);
+
+    // Check if firewall exists
+    auto const sleFirewall = ctx.view.read(keylet::firewall(account));
+    if (!sleFirewall)
+        return tesSUCCESS;  // No firewall, proceed normally
+
+    // Check fee limit if MaxFee is set (most efficient check first)
+    if (sleFirewall.isFieldPresent(sfMaxFee) &&
+        ctx.tx.getFieldAmount(sfFee) > sleFirewall.getFieldAmount(sfMaxFee))
+        return tefFIREWALL_BLOCK;  // Fee exceeds maximum allowed
+
+    // Check transaction classification
+    auto const txType = ctx.tx.getFieldU16(sfTransactionType);
+
+    if (Firewall::getInstance().isAllowed(txType))
+        return tesSUCCESS;  // Transaction type is allowed
+
+    if (Firewall::getInstance().isBlocked(txType))
+        return tefFIREWALL_BLOCK;  // Transaction type is blocked
+
+    // Transaction requires check
+    // Special handling for Payment transactions
+    if (ctx.tx.getTxnType() == ttPAYMENT)
+    {
+        // Block self-payments and payments with paths
+        if (ctx.tx.getAccountID(sfDestination) == account ||
+            ctx.tx.isFieldPresent(sfPaths))
+            return tefFIREWALL_BLOCK;
+    }
+
+    // Verify destination is present
+    if (!ctx.tx.isFieldPresent(sfDestination))
+        return tefFIREWALL_BLOCK;
+
+    // Check WithdrawPreauth
+    auto const destination = ctx.tx.getAccountID(sfDestination);
+    auto const destinationTag = ctx.tx.isFieldPresent(sfDestinationTag)
+        ? ctx.tx.getFieldU32(sfDestinationTag)
+        : 0;
+
+    if (!ctx.view.exists(keylet::withdrawPreauth(account, destination, destinationTag)))
+        return tefFIREWALL_BLOCK;
+
+    return tesSUCCESS;
 }
 ```
 
-#### Failure Conditions
+#### 4.3.3. Integration Points
 
-- Authorize and Unauthorize fields missing
-- Authorize already exists
-- ~~Authorize account is not active~~ _(removed on the basis you may want to register an account to activate)_
-- Unauthorize does not exist
-- Missing Signature Field
-- Signature is invalid
+The `checkFirewall` function is called in the transaction processing pipeline:
 
-#### State Changes
+1. After signature validation (`checkSign`)
+2. Before the transaction-specific preclaim checks
+3. Returns `tefFIREWALL_BLOCK` if the transaction violates firewall rules or exceeds fee limits
 
-- Updates the `FirewallWhitelist` Ledger Entry, setting the fields.
+### 4.4. Transaction Firewall Actions
 
-## Transaction Processing
+Each transaction type is classified with a `FirewallAction` enum value that determines how it interacts with the firewall system:
 
-When a transaction is submitted from an account with the firewall enabled, the following rules apply:
-
-- **Transaction Type**: The Firewall blocks various transaction types, e.g., Payment, EscrowCreate, NFTokenCreateOffer, and any other transaction that results in XRP leaving an account because a payment is not the only way an attacker can effectively drain an account.
-- **Currency Type**: The Firewall will only apply rules to transactions involving XRP. Limits on trustlines, issued currencies or other asset types, could be included in an upgraded specification.
-- **Transaction Rules**:
-  - If the destination is the `BackupAccount` set on the firewall ledger entry, the transaction is successful (`tesSUCCESS`).
-  - If the destination is authorized, the transaction is successful (`tesSUCCESS`).
-  - If the `TotalOut`, is less than the configured firewall amount, the transaction is successful (`tesSUCCESS`)
-  - Else the transaction is rejected (`tecFIREWALL_REJECTION`)
-
-### Calculating `TotalOut`
-
-To implement the time based amount limit, we must have access to a total amount of XRP that has already left the account within the defined time period and this method must be very efficient.
-
-First: The calculation of total amount should be deferred, so it only runs, after all other guards have passed and it is now required.
-
-**Proposed Algorithm**
-
-```
-BEGIN
-    current_time = GET current time
-    start_time = GET start time from firewall
-    time_period = GET time period from firewall
-    transaction_amount = GET transaction amount
-
-    IF start_time IS NOT_SET THEN
-        // No transactions have been tracked in the current time period
-        SET firewall start time TO current_time
-        ADD transaction_amount TO firewall total out // This will currently be 0
-    ELSE
-        IF current_time - start_time > time_period THEN
-            // The monitoring period has expired, so reset
-            SET firewall total out TO 0
-            SET firewall start time TO current_time
-            ADD transaction_amount TO firewall total out // which will be 0 after reset
-        ELSE
-            // Add the transaction amount to the ongoing total
-            ADD transaction_amount TO firewall total out
-        END IF
-    END IF
-END
+```cpp
+enum FirewallAction { check, allow, block };
 ```
 
-**Key Points to Understand**
+The classification is embedded in the transaction definition macro system:
 
-- **Monitoring Period:** The firewall tracks transactions within a specific time period calculated between the time of the first transaction (`start time`) within a new period and the length of the user-defined (`time period`). When the period expires, the (`total out`) is reset, and a new period begins on the next successful transaction.
-- **Transaction Tracking:** Each transaction amount is added to a running total (`total out`), which helps in tracking the total outgoing amount within the defined period.
-- **Total Reset:** When a transaction occurs and the time period has expired, the start time is set to the current time, and the (`total out`) is set to 0 to ensure that the firewall only considers transactions within the new current period.
-- **Effects of Whitelist:** Any transaction to a whitelisted account has no effect on the calculation of the running total (`total out`) and this code would never run.
+| Transaction Type            | FirewallAction | Rationale                                          |
+| --------------------------- | -------------- | -------------------------------------------------- |
+| **Payment**                 | check          | Must validate destination is preauthorized         |
+| **EscrowCreate**            | check          | Creates future payment obligation                  |
+| **EscrowFinish**            | check          | Releases funds to destination                      |
+| **EscrowCancel**            | check          | Returns funds (may have different destination)     |
+| **AccountSet**              | allow          | Only modifies account settings                     |
+| **SetRegularKey**           | allow          | Key management (requires counterparty for changes) |
+| **OfferCreate**             | block          | Could result in uncontrolled asset exchange        |
+| **OfferCancel**             | allow          | Only cancels existing offers                       |
+| **TicketCreate**            | allow          | Only reserves sequence numbers                     |
+| **SignerListSet**           | allow          | Signer management (requires counterparty)          |
+| **PaymentChannelCreate**    | check          | Creates payment channel to destination             |
+| **PaymentChannelFund**      | block          | Adds funds to existing channel                     |
+| **PaymentChannelClaim**     | allow          | Claims from existing channel                       |
+| **CheckCreate**             | check          | Creates check for destination                      |
+| **CheckCash**               | allow          | Cashes existing check                              |
+| **CheckCancel**             | allow          | Cancels existing check                             |
+| **DepositPreauth**          | allow          | Manages incoming payment authorization             |
+| **TrustSet**                | allow          | Trust line management                              |
+| **AccountDelete**           | allow          | Account deletion (significant action)              |
+| **NFTokenMint**             | check          | May have destination                               |
+| **NFTokenBurn**             | allow          | Destroys token                                     |
+| **NFTokenCreateOffer**      | check          | Creates offer with potential destination           |
+| **NFTokenCancelOffer**      | allow          | Cancels existing offer                             |
+| **NFTokenAcceptOffer**      | allow          | Accepts existing offer                             |
+| **Clawback**                | allow          | Issuer right (cannot be blocked)                   |
+| **AMMClawback**             | allow          | Issuer right for AMM                               |
+| **AMMCreate**               | block          | Creates AMM with uncontrolled trading              |
+| **AMMDeposit**              | block          | Adds liquidity to AMM                              |
+| **AMMWithdraw**             | block          | Removes liquidity from AMM                         |
+| **AMMVote**                 | block          | Participates in AMM governance                     |
+| **AMMBid**                  | block          | Bids for AMM auction slot                          |
+| **AMMDelete**               | block          | Deletes empty AMM                                  |
+| **XChain\*** (all)          | block          | Cross-chain operations too complex to validate     |
+| **DIDSet/Delete**           | allow          | DID management                                     |
+| **OracleSet/Delete**        | allow          | Oracle management                                  |
+| **LedgerStateFix**          | allow          | System operation                                   |
+| **MPTokenIssuance\***       | allow          | Token issuance management                          |
+| **MPTokenAuthorize**        | allow          | Token authorization                                |
+| **Credential\***            | allow          | Credential management                              |
+| **NFTokenModify**           | allow          | Modifies existing NFT                              |
+| **PermissionedDomain\***    | allow          | Domain management                                  |
+| **DelegateSet**             | allow          | Delegation management                              |
+| **VaultCreate/Set/Delete**  | block          | Vault management                                   |
+| **VaultDeposit**            | block          | Adds assets to vault                               |
+| **VaultWithdraw**           | block          | Withdraws to destination                           |
+| **VaultClawback**           | block          | Issuer right                                       |
+| **Batch**                   | allow          | Batch processing (individual txns checked)         |
+| **WithdrawPreauth**         | allow          | Firewall preauth management                        |
+| **FirewallSet/Delete**      | allow          | Firewall management                                |
+| **Amendment/Fee/UNLModify** | allow          | System transactions                                |
 
-## Compromised Account Protection
+## 5. Rationale
 
-Upon enabling the firewall feature, the following measures are implemented:
+**Simplified Architecture**: The removal of the complex rule system and post-application checking in favor of preclaim validation significantly reduces implementation complexity while maintaining security guarantees. The invariant-style checker pattern was eliminated because:
 
-- **Public Key and Signature Verification**: All updates to the Firewall OR FirewallWhitelist must include the signature of the Account specified in the firewall field sfPublicKey; this ensures that if an account is compromised the attacker cannot remove the firewall or add another account to the whitelist.
-- **Master Key Protection**: Upon setting the Firewall feature, the master key cannot be disabled. If an `AccountSet` transaction attempts to disable the master key (`tfDisableMaster`), the transaction is rejected. This is to prevent an attacker from locking the owner out of their account.
-- **Account deletion:** An account may not be deleted once the Firewall is engaged as this is a potential exploit for an attacker to drain an account.
+- Preclaim checking is more efficient
+- Simpler to reason about and audit
+- Prevents wasted computation on invalid transactions
 
-The combination of requiring a second level of security to modify the firewall feature, along with the prevention of an attacker from locking a user out of their account, means that while an attacker may have the private key, the maximum damage they can do is drain the account of an amount less than that configured by the user within their given timeframe. The account owner can at any time instigate a payment of their full account balance to either their chosen backup account or any other account on their whitelist.
+**Fee Drain Protection**: The MaxFee field provides critical protection against fee-based drain attacks where a compromised key could execute many high-fee transactions to drain an account. This feature:
 
-## Ideas
+- Prevents rapid draining through excessive fees
+- Is configurable based on user needs
+- Requires counterparty approval to change
+- Applies uniformly to all transactions
+- Is checked first for maximum efficiency
 
-**Use with Batch (XLS 56)**
+**Transaction Classification**: The three-tier classification system (allow/check/block) provides clear semantics for how each transaction type interacts with the firewall:
 
-One interesting use case could be with combining Firewall with Batch (XLS 56) on high balance accounts that make regular automated payments.
+- **allow**: Transaction poses no risk of unauthorized value transfer
+- **check**: Transaction may transfer value and requires destination validation
+- **block**: Transaction involves complex operations that could bypass simple checks
 
-Consider an account essentially locked down by enabling firewall with an Amount of zero. The only way to make a payment is to a whitelisted account.
+**Preclaim Validation**: Checking firewall constraints during the preclaim phase:
 
-Create a batch TX.
+- Prevents invalid transactions from consuming computational resources
+- Provides clear, early feedback on transaction validity
+- Integrates cleanly with existing validation pipeline
 
-1. Add destination account to whitelist
-2. Send payment
-3. Remove destination account from whitelist
+**Whitelist Model**: Chosen over blacklist as it's more secure by default - new threats are automatically blocked rather than requiring updates to block them.
 
-The balance cannot be drained even if the private key is compromised.
+**Counterparty System**: Provides a second layer of security for firewall changes, preventing single points of failure. Even with master key compromise, an attacker cannot disable protections.
 
-Implementing a design pattern where the signature account `sfPublicKey` is sufficiently segregated from the main account would result in a lightweight form of multiSig.
+**Enforced Backup Account**: Ensures users cannot lock themselves out during initial setup, addressing common security configuration errors.
 
-## FAQ
+**Destination Tag Support**: Allows fine-grained control over authorized destinations, supporting exchange accounts and service providers that require specific tags.
 
-### A.1 What happens if my seed/private key is compromised?
+**Path Payment Blocking**: Payments with paths are blocked because path-finding could route through intermediate accounts, making destination validation complex and potentially bypassable.
 
-If you keys are compromised then you would want to move your funds from your account to a whitelisted account.
+**Self-Payment Blocking**: Self-payments are blocked to prevent potential bypass scenarios and maintain consistent security semantics.
 
-### A.2 Can the attacker disable my keys?
+**AMM and Cross-Chain Blocking**: These complex multi-party operations are blocked entirely rather than attempting partial validation that could miss edge cases.
 
-No, with firewall the disable master key functionality is disabled
+## 6. Backwards Compatibility
 
-### A.3 Can the attacker add themselves as a whitelisted account?
+This amendment introduces no backwards incompatibilities:
 
-No, not without approval from the account that you intrusted during setup.
+- Accounts without firewalls continue operating normally
+- All existing transaction types remain functional
+- The feature is entirely opt-in
+- No changes to existing ledger entries or transaction formats
+- Existing destination tag functionality is preserved and enhanced
+- Delegated transactions are properly handled
+- Fee limits are optional and do not affect accounts without firewalls
 
-### A.4 Does the PublicKey that is signing firewall updates need to be a 3rd party?
+## 7. Security Considerations
 
-No, this could be another account that you own or a 3rd party you trust
+### 7.1. Key Compromise Protection
 
-### A.5 Do I need to set an `BackupAccount`?
+Even with full key compromise, attackers cannot:
 
-Yes, you are required to set the backup account when you setup the firewall for the first time.
+- Send assets to unauthorized addresses
+- Disable the firewall without counterparty approval
+- Add or remove existing preauthorizations without counterparty approval
+- Exceed the maximum fee limit set on the firewall
+- Disable master key while firewall is active
+- Set a new regular key or signers list without counterparty approval
+- Bypass destination tag requirements
+- Use complex transactions (AMM, cross-chain) to bypass restrictions
+- Drain the account through excessive transaction fees
 
-### A.6 Do I need to set an `Amount` and a `TimePeriod`?
+Attackers can only:
 
-No, this is optional functionality to allow you to send small amounts without having to add the account to the whitelist.
+- Send assets to already-authorized addresses with matching tags
+- Perform allowed account management operations within fee limits
+- Cancel existing obligations
+- Submit transactions with fees up to the MaxFee limit
+
+### 7.2. Counterparty Risk
+
+A compromised counterparty cannot change anything alone. Both master key and counterparty signatures are required for:
+
+- Adding/removing preauthorizations
+- Changing counterparty
+- Modifying fee limits
+- Deleting firewall
+
+Mitigation: Choose counterparty carefully, consider using a second account you control with separated key hygiene.
+
+### 7.3. Denial of Service
+
+A malicious counterparty cannot:
+
+- Prevent transfers to already-authorized addresses
+- Lock the account permanently
+- Delete the firewall unilaterally
+- Change firewall settings unilaterally
+- Modify destination tag requirements without authorization
+- Change fee limits without authorization
+
+The worst a malicious counterparty can do is refuse to sign legitimate changes, preventing new authorizations or fee limit adjustments.
+
+### 7.4. Transaction Type Coverage
+
+The transaction classification system ensures:
+
+- Value-transferring transactions are appropriately restricted
+- Account management operations remain available
+- Complex transactions that could bypass simple checks are blocked
+- Cancellation and cleanup operations are generally allowed
+- Issuer rights (clawback) cannot be blocked
+- All transactions respect fee limits when set
+
+### 7.5. Fee Drain Attack Prevention
+
+The MaxFee protection prevents several attack vectors:
+
+**Attack Scenarios Prevented:**
+
+1. **Rapid small-fee drain**: Attacker submits thousands of minimum-value transactions with maximum fees
+2. **Network congestion exploit**: Attacker uses high fees during network congestion to accelerate draining
+3. **Failed transaction drain**: Attacker submits deliberately failing transactions with high fees
+4. **Batch fee attacks**: Multiple high-fee transactions submitted simultaneously
+
+**Protection Characteristics:**
+
+- Fee limit applies to ALL transactions from the protected account
+- Cannot be bypassed even with valid destinations
+- Cannot be changed without counterparty approval
+- Provides predictable maximum loss rate
+- Checked before any other validation for efficiency
+
+**Recommended Settings:**
+
+- Regular users: 10,000-100,000 drops (0.01-0.1 XRP)
+- High-volume users: 1,000,000 drops (1 XRP)
+- Payment processors: 5,000,000 drops (5 XRP)
+- During network congestion: Temporary increase with counterparty approval
+
+### 7.6. Implementation Security
+
+- Preclaim checking prevents resource exhaustion attacks
+- Clear error codes (`tefFIREWALL_BLOCK`) for debugging
+- No complex state tracking or accumulation
+- Deterministic validation across all validators
+- No external dependencies or oracle requirements
+- Fee checks occur first to minimize computation on invalid transactions
+
+## 8. Appendix
+
+### 8.1. FAQ
+
+**Q: Can incoming payments be blocked?**
+A: No, this system only restricts outgoing payments. Incoming payments are always allowed.
+
+**Q: What if my counterparty becomes unavailable?**
+A: Existing preauthorized addresses continue working. You cannot add new ones or change fee limits without counterparty cooperation.
+
+**Q: Can I remove the firewall?**
+A: Yes, with counterparty approval using FirewallDelete transaction. All WithdrawPreauth entries are automatically removed.
+
+**Q: How many addresses can I preauthorize?**
+A: Limited only by reserve requirements and directory size limits.
+
+**Q: Can I use destination tags with the firewall?**
+A: Yes, WithdrawPreauth entries can specify required destination tags, providing fine-grained control over authorized destinations.
+
+**Q: What happens if network fees exceed my MaxFee limit?**
+A: All transactions will be blocked until you increase the limit with counterparty approval. Plan for network congestion by setting reasonable buffers.
+
+**Q: Can I remove the fee limit after setting it?**
+A: Yes, set MaxFee to 0 or omit it in an update transaction (requires counterparty signature).
+
+**Q: What's a reasonable MaxFee setting?**
+A: For most users, 100,000 drops (0.1 XRP) provides good protection while allowing for moderate network congestion. High-volume users may need 1,000,000 drops (1 XRP).
+
+**Q: Does MaxFee affect incoming transactions?**
+A: No, it only limits fees on outgoing transactions from your account.
+
+**Q: Can different transaction types have different fee limits?**
+A: No, MaxFee applies uniformly to all transactions. For granular control, use separate accounts.
+
+**Q: Why are AMM operations blocked?**
+A: AMM operations involve complex multi-party trading that could potentially bypass simple destination checks. They are blocked entirely for security.
+
+**Q: Can complex DEX trades bypass the firewall?**
+A: No, OfferCreate is blocked entirely to prevent any DEX trading that could result in unauthorized asset transfers.
+
+**Q: Can I use my own account as counterparty?**
+A: Yes, but it must be a different account than the one being protected. This provides security through key separation.
+
+**Q: What happens to existing Escrows or Payment Channels?**
+A: Existing obligations created before firewall activation continue to function. The firewall only affects new transactions.
+
+**Q: Why are path payments blocked?**
+A: Path payments can route through multiple intermediate accounts, making destination validation complex and potentially bypassable.
+
+**Q: Can I pay myself with a firewall enabled?**
+A: No, self-payments are blocked to maintain consistent security semantics and prevent potential bypass scenarios.
+
+**Q: What's the difference between check, allow, and block?**
+A:
+
+- **allow**: Transaction proceeds without firewall checks
+- **check**: Transaction must have an authorized destination
+- **block**: Transaction is always rejected if firewall is active
+
+**Q: Are batch transactions affected?**
+A: The Batch transaction itself is allowed, but each inner transaction is evaluated according to its own FirewallAction classification.
+
+**Q: Can I still use regular keys with a firewall?**
+A: Yes, but changes to regular keys require counterparty approval once a firewall is active.
+
+**Q: What if my counterparty is unavailable during network congestion?**
+A: You cannot increase the fee limit without counterparty approval. This is by design - security over convenience. Maintain appropriate buffers.
+
+**Q: Are reserve fees affected by MaxFee?**
+A: No, MaxFee only applies to transaction fees, not reserve requirements.
+
+**Q: Can I set MaxFee without setting up full firewall protection?**
+A: No, MaxFee is part of the Firewall object. You must enable the full firewall system.
+
+### 8.3. Reference Implementation
+
+The reference implementation will be provided as a pull request to the rippled repository upon advancement to Final status.
