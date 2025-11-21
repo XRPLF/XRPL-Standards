@@ -425,7 +425,6 @@ The current XLS editors are:
 
 - Mayukha Vadari ([@mvadari](https://github.com/mvadari))
 - David Fuelling ([@sappenin](https://github.com/sappenin))
-- Elliot Lee ([@intelliot](https://github.com/intelliot))
 - Vito Tumas ([@Tapanito](https://github.com/Tapanito))
 
 # 7. Rationale
