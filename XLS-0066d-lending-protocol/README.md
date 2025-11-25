@@ -434,7 +434,6 @@ The `LoanID` is calculated as follows:
 
 - Calculate [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values:
   - The `Loan` space key `0x004C` (capital L)
-  - The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the Borrower account.
   - The `LoanBrokerID` of the associated `LoanBroker` object.
   - The `LoanSequence` of the `LoanBroker` object.
 
