@@ -1,30 +1,28 @@
-## 1. Serialized Types
+## 1. SType: `[STypeName]`
 
 > **Note:** Most specifications will not need this section, as the [existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally sufficient. Only include this section if your specification introduces new serialized types (STypes).
 
 _[If your specification introduces new serialized types, document each SType in its own numbered subsection below. Otherwise, delete this entire section.]_
 
-### 1.1. `[STypeName]`
-
-#### 1.1.1. SType Value
+### 1. SType Value
 
 **Value:** `[Unique numeric value - see current values [here](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/SField.h#L60)]`
 
 _[Specify the unique numeric value for this SType]_
 
-#### 1.1.2. JSON Representation
+### 1.2. JSON Representation
 
 _[Describe how instances of this SType are represented in JSON. For example: "Represented as a string in base64 format" or "Represented as an object with fields X, Y, Z"]_
 
-#### 1.1.3. Additional Accepted JSON Inputs _(Optional)_
+### 1.3. Additional Accepted JSON Inputs _(Optional)_
 
 _[If applicable, describe alternative JSON input formats that may be parsed. For example: "Can accept either a string or numeric format"]_
 
-#### 1.1.4. Binary Encoding
+### 1.4. Binary Encoding
 
 _[Describe how this SType is encoded in binary format, including byte order, length prefixes, etc.]_
 
-#### 1.1.5. Example JSON and Binary Encoding
+### 1.5. Example JSON and Binary Encoding
 
 **JSON Example:**
 
@@ -38,20 +36,18 @@ _[Describe how this SType is encoded in binary format, including byte order, len
 [Provide hexadecimal representation of binary encoding]
 ```
 
-## 2. Ledger Entries
+## 2. Ledger Entry: `[LedgerEntryName]`
 
-_[If your specification introduces new ledger entry objects, document each entry in its own numbered subsection below. Otherwise, delete this entire section.]_
+_[If your specification introduces new ledger entry objects, document each entry in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-### 2.1. `[LedgerEntryName]`
-
-#### 2.1.1. Object Identifier
+### 2.1. Object Identifier
 
 **Key Space:** `0x[XXXX]` _[Specify the 16-bit hex value for the key space]_
 
 **ID Calculation Algorithm:**
 _[Describe the algorithm for calculating the unique object identifier. Include the parameters used in the tagged hashing and ensure no collisions are possible. Example: "The ID is calculated by hashing [specific parameters] with the key space prefix 0xXXXX"]_
 
-#### 2.1.2. Fields
+### 2.2. Fields
 
 | Field Name        | Constant   | Required               | Internal Type | Default Value      | Description                                                           |
 | ----------------- | ---------- | ---------------------- | ------------- | ------------------ | --------------------------------------------------------------------- |
@@ -71,7 +67,7 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
-#### 2.1.3. Ownership
+### 2.3. Ownership
 
 _[Specify which AccountRoot object owns this ledger entry and how the ownership relationship is established.]_
 
@@ -79,7 +75,7 @@ _[Specify which AccountRoot object owns this ledger entry and how the ownership 
 
 **Directory Registration:** `[Describe how this object is registered in the owner's directory, or specify if it's a special case]`
 
-#### 2.1.4. Reserves
+### 2.4. Reserves
 
 **Reserve Requirement:** `[Standard/Custom/None]`
 
@@ -89,21 +85,21 @@ _[If Custom]: This ledger entry requires `[X]` reserve units because `[reason]`.
 
 _[If None]: This ledger entry does not require additional reserves because `[reason]`._
 
-#### 2.1.5. Deletion
+### 2.5. Deletion
 
 **Deletion Transactions:** `[List transaction types that can delete this object]`
 
 **Deletion Conditions:**
 
-1. `[Condition 1, e.g., "Object balance must be zero"]`
-2. `[Condition 2, e.g., "No linked objects must exist"]`
-3. `[Additional conditions as needed]`
+- `[Condition 1, e.g., "Object balance must be zero"]`
+- `[Condition 2, e.g., "No linked objects must exist"]`
+- `[Additional conditions as needed]`
 
 **Account Deletion Blocker:** `[Yes/No]`
 _[If Yes]: This object must be deleted before its owner account can be deleted._
 _[If No]: This object does not prevent its owner account from being deleted._
 
-#### 2.1.6. Pseudo-Account _(Optional)_
+### 2.6. Pseudo-Account _(Optional)_
 
 _[Only include this section if your ledger entry uses a pseudo-account. Otherwise, delete this subsection.]_
 
@@ -115,7 +111,7 @@ _[If Yes]:_
 - **AccountID Derivation:** `[Describe the algorithm for deriving the pseudo-account's AccountID]`
 - **Capabilities:** `[List what the pseudo-account can/cannot do]`
 
-#### 2.1.7. Freeze/Lock _(Optional)_
+### 2.7. Freeze/Lock _(Optional)_
 
 _[Only include this section if your ledger entry holds assets that can be frozen/locked. Otherwise, delete this subsection.]_
 
@@ -124,21 +120,21 @@ _[Only include this section if your ledger entry holds assets that can be frozen
 
 _[If applicable, describe how freeze/lock functionality is implemented for assets held by this object]_
 
-#### 2.1.8. Invariants
+### 2.8. Invariants
 
 _[List logical statements that must always be true for this ledger entry. Use `<object>` for before-state and `<object>'` for after-state.]_
 
-1. `[Invariant 1, e.g., "<object>.Balance >= 0 AND <object>'.Balance >= 0"]`
-2. `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
-3. `[Additional invariants as needed]`
+- `[Invariant 1, e.g., "<object>.Balance >= 0 AND <object>'.Balance >= 0"]`
+- `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
+- `[Additional invariants as needed]`
 
-#### 2.1.9. RPC Name
+### 2.9. RPC Name
 
 **RPC Type Name:** `[snake_case_name]`
 
 _[This is the name used in `account_objects` and `ledger_data` RPC calls to filter for this object type]_
 
-#### 2.1.10. Example JSON
+### 2.10. Example JSON
 
 ```json
 {
@@ -153,18 +149,16 @@ _[This is the name used in `account_objects` and `ledger_data` RPC calls to filt
 }
 ```
 
-## 3. Transactions
+## 3. Transaction: `[TransactionName]`
 
-_[If your specification introduces new transactions, document each transaction in its own numbered subsection below. Otherwise, delete this entire section.]_
+_[If your specification introduces new transactions, document each transaction in its own numbered section following this part of the template. Otherwise, delete this entire section.]_
 
 > **Naming Convention:** Transaction names should follow the pattern `<LedgerEntryName><Verb>` (e.g., `ExampleSet`, `ExampleDelete`). Most specifications will need at least:
 >
 > - `[Object]Set` or `[Object]Create`: Creates or updates the object
 > - `[Object]Delete`: Deletes the object
 
-### 3.1. `[TransactionName]`
-
-#### 3.1.1. Fields
+### 3.1. Fields
 
 | Field Name       | Required?              | JSON Type                      | Internal Type | Default Value       | Description                                          |
 | ---------------- | ---------------------- | ------------------------------ | ------------- | ------------------- | ---------------------------------------------------- |
@@ -180,7 +174,7 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
-#### 3.1.2. Transaction Fee
+### 3.2. Transaction Fee
 
 **Fee Structure:** `[Standard/Custom]`
 
@@ -188,27 +182,27 @@ _[If Standard]: This transaction uses the standard transaction fee (currently 10
 
 _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
-#### 3.1.3. Failure Conditions
+### 3.3. Failure Conditions
 
 _[List all conditions that cause the transaction to fail, with corresponding error codes]_
 
-1. **`[ERROR_CODE]`**: `[Description of failure condition]`
-2. **`[ERROR_CODE]`**: `[Description of failure condition]`
-3. **`[ERROR_CODE]`**: `[Description of failure condition]`
+- **`[ERROR_CODE]`**: `[Description of failure condition]`
+- **`[ERROR_CODE]`**: `[Description of failure condition]`
+- **`[ERROR_CODE]`**: `[Description of failure condition]`
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
-#### 3.1.4. State Changes
+### 3.4. State Changes
 
 _[Describe the ledger state changes when the transaction executes successfully. Omit standard changes like fee processing and sequence increment.]_
 
 **On Success (`tesSUCCESS`):**
 
-1. `[State change 1, e.g., "Create new [ObjectName] ledger entry"]`
-2. `[State change 2, e.g., "Update Account's OwnerCount"]`
-3. `[Additional changes as needed]`
+- `[State change 1, e.g., "Create new [ObjectName] ledger entry"]`
+- `[State change 2, e.g., "Update Account's OwnerCount"]`
+- `[Additional changes as needed]`
 
-#### 3.1.5. Metadata Fields _(Optional)_
+### 3.5. Metadata Fields _(Optional)_
 
 _[Only include this section if the transaction adds or modifies metadata fields. Otherwise, delete this subsection.]_
 
@@ -216,7 +210,7 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 | -------------- | ---------- | ---------------------- | ------------------------------ | --------------- |
 | `[field_name]` | `[Yes/No]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description]` |
 
-#### 3.1.6. Example JSON
+### 3.6. Example JSON
 
 ```json
 {
@@ -229,45 +223,47 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 }
 ```
 
-## 4. Permissions _(Optional)_
+## 4. Permission: `[PermissionName]`
 
-_[Only include this section if your specification introduces new granular account permissions. Otherwise, delete this entire section.]_
+_[If your specification introduces new permissions, document each permission in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-**Transaction Types Affected:** `[List transaction types that this permission applies to]`
+### 4.1. Transaction Types Affected
 
-**Permission Scope:** `[Describe what the granular permission controls]`
+_[List transaction types that this permission applies to]_
 
-**Permission Name:** `[Name of the new permission]`
+### 4.2. Permission Scope
+
+_[Describe what the granular permission controls]_
+
+### 4.3. Permission Description
 
 _[Describe how this permission interacts with existing permissions and what it allows/restricts]_
 
-## 5. API/RPCs _(Optional)_
+## 5. RPC: `[rpc_method_name]`
 
-_[If your specification introduces new APIs or modifies existing ones, document each API in its own numbered subsection below. Otherwise, delete this entire section.]_
+_[If your specification introduces new APIs or modifies existing ones, document each API in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-### 5.1. `[api_method_name]`
-
-#### 5.1.1. Request Fields
+### 5.1. Request Fields
 
 | Field Name     | Required?              | JSON Type                      | Description                   |
 | -------------- | ---------------------- | ------------------------------ | ----------------------------- |
 | command        | Yes                    | string                         | Must be `"[api_method_name]"` |
 | `[field_name]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]`      |
 
-#### 5.1.2. Response Fields
+### 5.2. Response Fields
 
 | Field Name        | Always Present?        | JSON Type                      | Description                          |
 | ----------------- | ---------------------- | ------------------------------ | ------------------------------------ |
 | status            | Yes                    | string                         | `"success"` if the request succeeded |
 | `[ResponseField]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]`             |
 
-#### 5.1.3. Failure Conditions
+### 5.3. Failure Conditions
 
-1. **`[ERROR_CODE]`**: `[Description of failure condition]`
-2. **`[ERROR_CODE]`**: `[Description of failure condition]`
-3. **`[ERROR_CODE]`**: `[Description of failure condition]`
+- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
+- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
+- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
 
-#### 5.1.4. Example Request
+### 5.4. Example Request
 
 ```json
 {
@@ -276,7 +272,7 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 }
 ```
 
-#### 5.1.5. Example Response
+### 5.5. Example Response
 
 ```json
 {
