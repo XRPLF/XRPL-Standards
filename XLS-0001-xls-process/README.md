@@ -359,6 +359,10 @@ All discussions will be checked for staleness after 90 days, and if no one respo
 
 The repo could use [this Github Action](https://github.com/marketplace/actions/stalesweeper) to enforce this rule automatically.
 
+# 5. Writing Specs for Already-Implemented Features
+
+Many parts of the XRP Ledger are currently undocumented and un-specced. Giving them a new XLS number would make it seem like said feature is new, which is not the case. Therefore, these specs will be given a slightly different prefix, `CXLS`, to indicate that it is a "Classical" XLS.
+
 # 5. XLS Ownership
 
 The XLS author writes the XLS. By default, the author is also the owner and champion, who shepherds the discussions and builds community consensus around the idea. At any time, the author can choose a different champion for the XLS.

@@ -19,7 +19,7 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install -g prettier
+        run: npm install -g prettier@3.6.2 # match version in pre-commit-config.yaml
 
       - name: Run Prettier
         run: prettier --check .
