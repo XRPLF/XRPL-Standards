@@ -45,3 +45,44 @@ jobs:
           echo "XLS validation completed"
           echo "This pipeline validates that all XLS documents can be parsed correctly"
           echo "If this fails, it indicates issues with XLS document formatting or metadata"
+
+  validate-amendment-template:
+    runs-on: ubuntu-latest
+    name: Validate Amendment Template Compliance
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Fetch full history for git diff
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/site/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r site/requirements.txt
+
+      - name: Validate Amendment template compliance
+        run: |
+          echo "Running Amendment template validation..."
+          python site/validate_amendment_template.py
+
+      - name: Report validation results
+        if: always()
+        run: |
+          echo "Amendment template validation completed"
+          echo "This validates that new/modified Amendment specs follow AMENDMENT_TEMPLATE.md"
+          echo "If this fails, check the error messages for missing sections or placeholders"
