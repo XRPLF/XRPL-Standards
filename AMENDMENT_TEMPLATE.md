@@ -4,7 +4,7 @@
 
 _[If your specification introduces new serialized types, document each SType in its own numbered subsection below. Otherwise, delete this entire section.]_
 
-### 1. SType Value
+### 1.1. SType Value
 
 **Value:** `[Unique numeric value - see current values [here](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/SField.h#L60)]`
 
@@ -65,7 +65,7 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 **Field Details:** _[Include subsections below for any fields requiring detailed explanation]_
 
-#### 2.1.1. `[FieldName]` _(If needed)_
+#### 2.2.1. `[FieldName]` _(If needed)_
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
