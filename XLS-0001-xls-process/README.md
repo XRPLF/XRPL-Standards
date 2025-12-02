@@ -361,23 +361,23 @@ The repo could use [this Github Action](https://github.com/marketplace/actions/s
 
 # 5. Writing Specs for Already-Implemented Features
 
-Many parts of the XRP Ledger are currently undocumented and un-specced. Giving them a new XLS number would make it seem like said feature is new, which is not the case. Therefore, these specs will be given a slightly different prefix, `CXLS`, to indicate that it is a "Classical" XLS.
+Many parts of the XRP Ledger are currently undocumented and un-specced. Giving them a new XLS number would make it seem like said feature is new, which is not the case. Therefore, these specs will be given a slightly different prefix, `PXLS`, to indicate that it is a "Preceding" XLS.
 
-# 5. XLS Ownership
+# 6. XLS Ownership
 
 The XLS author writes the XLS. By default, the author is also the owner and champion, who shepherds the discussions and builds community consensus around the idea. At any time, the author can choose a different champion for the XLS.
 
-## 5.1. Transferring XLS Ownership
+## 6.1. Transferring XLS Ownership
 
 It occasionally becomes necessary to transfer ownership of XLSes to a new champion. In general, we’d like to retain the original author as a co-author of the transferred XLS, but that’s really up to the original author. A good reason to transfer ownership is because the original author no longer has the time or interest in updating it or following through with the XLS process, or has fallen off the face of the 'net (i.e. is unreachable or isn’t responding to email). A bad reason to transfer ownership is because you don’t agree with the direction of the XLS. We try to build consensus around an XLS, but if that’s not possible, you can always submit a competing XLS.
 
 If you are interested in assuming ownership of an XLS, send a message asking to take over, addressed to both the original author and the XLS editor. If the original author doesn’t respond to the email in a timely manner, the XLS editor will make a unilateral decision, which can be reversed if needed.
 
-# 6. XLS Editors
+# 7. XLS Editors
 
 XLS Editors are those that have at least “write” access to the XRPL-Standards repository.
 
-## 6.1. XLS Editor Responsibilities
+## 7.1. XLS Editor Responsibilities
 
 The editors don’t pass judgment on XLSes. They merely do the administrative & editorial part.
 
@@ -396,7 +396,7 @@ Once the XLS is ready to be merged, the XLS editor will:
 
 The following is a non-exhaustive list of what editors do and don’t:
 
-### 6.1.1. What Editors Do
+### 7.1.1. What Editors Do
 
 The editors’ mission is to serve the broad XRP Ledger community, both present and future, by:
 
@@ -404,7 +404,7 @@ The editors’ mission is to serve the broad XRP Ledger community, both present 
 - **Facilitating Discussion**: Providing a forum for discussing proposals open to anyone who wants to participate civilly. By encouraging open dialogue and collaboration, we aim to harness the collective knowledge and expertise of the XRP Ledger community in shaping proposals.
 - **Upholding Quality**: Upholding a measure of minimally-subjective quality for each proposal as defined by its target audience. By adhering to defined criteria, we promote the development of high-quality and relevant proposals that drive the evolution of the XRP Ledger.
 
-### 6.1.2. What Editors Don’t Do
+### 7.1.2. What Editors Don’t Do
 
 On the other hand, editors do not:
 
@@ -414,7 +414,7 @@ On the other hand, editors do not:
 - **Track Registries**: They want all proposals to eventually become immutable, but a registry will never get there if anyone can keep adding items. To be clear, exhaustive and/or static lists are fine.
 - **Provide Legal Advice**: Trademarks, copyrights, patents, prior art, and other legal matters are the responsibility of authors and implementers, not XLS Editors. They are not lawyers, and while they may occasionally make comments touching on these areas, they cannot guarantee any measure of correctness.
 
-### 6.1.3. Membership
+### 7.1.3. Membership
 
 Anyone may apply to join as an XLS Editor. Specific eligibility requirements are left to individual current XLS Editors, but the general requirements are:
 
@@ -424,7 +424,7 @@ Anyone may apply to join as an XLS Editor. Specific eligibility requirements are
 
 XLS Editors are expected to meet these requirements throughout their tenure, and not doing so is grounds for removal. Any member may delegate some or all of their responsibilities/powers to tools and/or to other people.
 
-## 6.2. Current Editors
+## 7.2. Current Editors
 
 The current XLS editors are:
 
@@ -432,7 +432,7 @@ The current XLS editors are:
 - David Fuelling ([@sappenin](https://github.com/sappenin))
 - Vito Tumas ([@Tapanito](https://github.com/Tapanito))
 
-# 7. Rationale
+# 8. Rationale
 
 The design of this process balances familiarity with existing standards frameworks and the specific needs of the XRPL community.
 
@@ -444,13 +444,13 @@ Automatic closure of inactive discussions ensures the process remains active and
 
 Editors are now explicitly not decision-makers but facilitators, ensuring decentralization and preventing gatekeeping.
 
-# 8. Security Considerations
+# 9. Security Considerations
 
 This proposal does not directly alter XRPL consensus or protocol behavior and therefore carries minimal direct security risks.
 
 However, governance processes themselves can affect the security of the ecosystem. By formalizing categories, statuses, and editor responsibilities, this document mitigates risks of ambiguity, miscommunication, and fragmentation that could otherwise lead to competing or unclear implementations. Transparent rules for authorship, ownership transfer, and editor conduct further reduce the risk of malicious exploitation of unclear standards governance.
 
-# 9. History
+# 10. History
 
 This document was derived heavily from Ethereum’s [EIP-1](https://eips.ethereum.org/EIPS/eip-1) (written by Martin Becze and Hudson Jameson et al) and [EIP-5069](https://eips.ethereum.org/EIPS/eip-5069) (written by Pooja Ranjan, Gavin John, Sam Wilson, et al), which in turn was derived from Bitcoin’s [BIP-0001](https://github.com/bitcoin/bips/blob/master/bip-0001.mediawiki) and Python’s [PEP-0001](https://peps.python.org/pep-0001/). In many places text was simply copied and modified. None of the people involved with those precursors are responsible for its use in the XRP Ledger Standards process, and should not be bothered with technical questions specific to the XRPL or the XLS. Please direct all comments to the XLS editors.
 
