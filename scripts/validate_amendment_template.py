@@ -8,13 +8,13 @@ new or modified specs.
 
 Usage:
     # Validate specific files
-    python site/validate_amendment_template.py XLS-0070-credentials/README.md
+    python scripts/validate_amendment_template.py XLS-0070-credentials/README.md
 
     # Validate all Amendment specs
-    python site/validate_amendment_template.py --all
+    python scripts/validate_amendment_template.py --all
 
     # Auto-detect changed files (for CI)
-    python site/validate_amendment_template.py
+    python scripts/validate_amendment_template.py
 
 Validation Rules:
     - Only validates specs with category: Amendment

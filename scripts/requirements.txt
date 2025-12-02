@@ -1,5 +1,5 @@
 # Python dependencies for XLS Standards site generation and validation
-# 
+#
 # Core site generation dependencies
 markdown>=3.4.4,<4.0.0    # Markdown to HTML conversion with extensions
 jinja2>=3.1.2,<4.0.0      # HTML template engine
@@ -9,6 +9,6 @@ pyyaml>=6.0,<7.0          # YAML configuration parsing
 # Additional dependencies for enhanced markdown processing
 # Note: These are included automatically with markdown[extra] but listed for clarity
 # - tables: GitHub-flavored markdown tables
-# - codehilite: Syntax highlighting for code blocks  
+# - codehilite: Syntax highlighting for code blocks
 # - toc: Table of contents generation
 # - extra: Additional markdown extensions bundle
