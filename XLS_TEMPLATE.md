@@ -124,17 +124,6 @@ No backward compatibility issues found.
   TODO: Remove this comment before submitting
 -->
 
-## Invariants
-
-<!--
-  This section is optional, but recommended.
-
-Invariants are fundamental rules governing a feature's behavior that must always hold true. They define the boundaries of expected behavior and the underlying assumptions of the design. If a situation violates an invariant, it can be classified as unintended behavior, aiding in bug detection and prevention. The XRP Ledger's code incorporates invariant checks to prevent transactions from executing if they would violate an invariant rule, thereby safeguarding the ledger's immutable history from erroneous or corrupted data. While the invariants specified here can be used to create invariant checks, some may be impractical to verify at runtime.
-
-  TODO: Remove this comment before submitting
-
--->
-
 ## Reference Implementation
 
 <!--

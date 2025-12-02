@@ -40,6 +40,8 @@ _[Describe how this SType is encoded in binary format, including byte order, len
 
 _[If your specification introduces new ledger entry objects, document each entry in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
+_[If your specification introduces new ledger entry common fields, you can have a section called `Transaction: Common Fields` before listing out any specific transactions.]_
+
 ### 2.1. Object Identifier
 
 **Key Space:** `0x[XXXX]` _[Specify the 16-bit hex value for the key space]_
@@ -63,7 +65,7 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 **Field Details:** _[Include subsections below for any fields requiring detailed explanation]_
 
-#### `[FieldName]` _(If needed)_
+#### 2.1.1. `[FieldName]` _(If needed)_
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
@@ -153,6 +155,8 @@ _[This is the name used in `account_objects` and `ledger_data` RPC calls to filt
 
 _[If your specification introduces new transactions, document each transaction in its own numbered section following this part of the template. Otherwise, delete this entire section.]_
 
+_[If your specification introduces new transaction common fields, you can have a section called `Transaction: Common Fields` before listing out any specific transactions.]_
+
 > **Naming Convention:** Transaction names should follow the pattern `<LedgerEntryName><Verb>` (e.g., `ExampleSet`, `ExampleDelete`). Most specifications will need at least:
 >
 > - `[Object]Set` or `[Object]Create`: Creates or updates the object
@@ -170,7 +174,7 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 **Field Details:** _[Include subsections below for any fields requiring detailed explanation]_
 
-#### `[FieldName]` _(If needed)_
+#### 3.1.1. `[FieldName]` _(If needed)_
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
@@ -186,9 +190,9 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 _[List all conditions that cause the transaction to fail, with corresponding error codes]_
 
-- **`[ERROR_CODE]`**: `[Description of failure condition]`
-- **`[ERROR_CODE]`**: `[Description of failure condition]`
-- **`[ERROR_CODE]`**: `[Description of failure condition]`
+- `[Description of failure condition]` (`[ERROR_CODE]`)
+- `[Description of failure condition]` (`[ERROR_CODE]`)
+- `[Description of failure condition]` (`[ERROR_CODE]`)
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
@@ -259,9 +263,9 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.3. Failure Conditions
 
-- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
-- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
-- **\*`[ERROR_CODE]`**: `[Description of failure condition]`
+- `[Description of failure condition]` (`[ERROR_CODE]`)
+- `[Description of failure condition]` (`[ERROR_CODE]`)
+- `[Description of failure condition]` (`[ERROR_CODE]`)
 
 ### 5.4. Example Request
 
