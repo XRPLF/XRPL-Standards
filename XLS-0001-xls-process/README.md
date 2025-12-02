@@ -1,13 +1,14 @@
 # Meta XLS: XLS Process and Guidelines
 
 <pre>
-    title: XLS Process and Guidelines
-    description: Formalizes the process and structure for XRP Ledger Standards
-    author: Mayukha Vadari (@mvadari), Vito Tumas (@Tapanito)
-    status: Proposal
-    category: Meta
-    created: 2025-09-22
-    updated: 2025-09-30
+  xls: 1
+  title: XLS Process and Guidelines
+  description: Formalizes the process and structure for XRP Ledger Standards
+  author: Mayukha Vadari (@mvadari), Vito Tumas (@Tapanito)
+  status: Proposal
+  category: Meta
+  created: 2025-09-22
+  updated: 2025-12-02
 </pre>
 
 # 1. Abstract
