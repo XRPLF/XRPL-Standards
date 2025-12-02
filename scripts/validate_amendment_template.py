@@ -64,10 +64,11 @@ class Section:
 class AmendmentTemplateValidator:
     """Validates Amendment specs against the template structure."""
 
-    # Map section titles to their expected subsections
-    # Key is the section title, value is dict of subsection numbers to titles
+    # Map section title patterns to their expected subsections
+    # Key is a regex pattern to match section titles,
+    # value is dict of subsection numbers to titles
     SECTION_TEMPLATES = {
-        "Serialized Types": {
+        r"SType:": {
             "required_subsections": {
                 "1": "SType Value",
                 "2": "JSON Representation",
@@ -78,7 +79,7 @@ class AmendmentTemplateValidator:
                 "3": "Additional Accepted JSON Inputs",
             }
         },
-        "Ledger Entries": {
+        r"Ledger Entry:": {
             "required_subsections": {
                 "1": "Object Identifier",
                 "2": "Fields",
@@ -94,7 +95,7 @@ class AmendmentTemplateValidator:
                 "7": "Freeze/Lock",
             }
         },
-        "Transactions": {
+        r"Transaction:": {
             "required_subsections": {
                 "1": "Fields",
                 "2": "Transaction Fee",
@@ -106,37 +107,46 @@ class AmendmentTemplateValidator:
                 "5": "Metadata Fields",
             }
         },
-        "Permissions": {
+        r"Permission:": {
             "required_subsections": {},
             "optional_subsections": {}
         },
-        "API/RPCs": {
+        r"RPC:": {
             "required_subsections": {},
             "optional_subsections": {}
         },
     }
 
     # Placeholder patterns that should not appear in final specs
+    # These are now in italicized bracket format: _[...]_
     PLACEHOLDER_PATTERNS = [
         r'\[STypeName\]',
         r'\[LedgerEntryName\]',
         r'\[TransactionName\]',
-        r'\[XXXX\]',
+        r'\[PermissionName\]',
+        r'\[rpc_method_name\]',
+        r'0x\[XXXX\]',
         r'\[field_name\]',
+        r'\[FieldName\]',
         r'\[api_method_name\]',
         r'\[CustomField\d+\]',
         r'\[EntryTypeValue\]',
         r'\[TYPE\]',
-        r'\[Yes/No\]',
+        r'\[Yes/No(?:/Conditional)?\]',
+        r'\[Standard/Custom(?:/None)?\]',
         r'\[Value/N/A\]',
-        r'\[Description.*?\]',
-        r'\[Provide.*?\]',
-        r'\[Specify.*?\]',
-        r'\[Describe.*?\]',
-        r'\[List.*?\]',
-        r'\[If.*?\]',
-        r'\[Add more.*?\]',
-        r'\[Remove example.*?\]',
+        r'\[r-address\]',
+        r'\[example value\]',
+        r'_\[Description.*?\]',
+        r'_\[Provide.*?\]',
+        r'_\[Specify.*?\]',
+        r'_\[Describe.*?\]',
+        r'_\[List.*?\]',
+        r'_\[If .*?\]',
+        r'_\[Add more.*?\]',
+        r'_\[Remove example.*?\]',
+        r'_\[Any explanatory.*?\]',
+        r'_\[Detailed explanation.*?\]',
     ]
 
     def __init__(self, file_path: Path):
@@ -219,12 +229,15 @@ class AmendmentTemplateValidator:
         """Validate that at least one template section exists."""
         main_sections = [s for s in self.sections if s.level == 2]
 
-        # Get titles of main sections
-        section_titles = {s.title for s in main_sections}
-
         # Check if at least one template section exists
-        template_sections = set(self.SECTION_TEMPLATES.keys())
-        has_template_section = bool(section_titles & template_sections)
+        has_template_section = False
+        for section in main_sections:
+            for pattern in self.SECTION_TEMPLATES.keys():
+                if re.search(pattern, section.title):
+                    has_template_section = True
+                    break
+            if has_template_section:
+                break
 
         if not has_template_section:
             # No template sections found - this might be an old spec
@@ -236,13 +249,15 @@ class AmendmentTemplateValidator:
         # Check each main section that matches a template
         for section in self.sections:
             if section.level == 2:
-                # Check if this section matches a template
-                if section.title in self.SECTION_TEMPLATES:
-                    self._validate_subsections(section)
+                # Check if this section matches a template pattern
+                for pattern in self.SECTION_TEMPLATES.keys():
+                    if re.search(pattern, section.title):
+                        self._validate_subsections(section, pattern)
+                        break
 
-    def _validate_subsections(self, parent_section: Section):
+    def _validate_subsections(self, parent_section: Section, pattern: str):
         """Validate subsections for a given parent section."""
-        template = self.SECTION_TEMPLATES.get(parent_section.title)
+        template = self.SECTION_TEMPLATES.get(pattern)
         if not template:
             return
 
@@ -253,39 +268,26 @@ class AmendmentTemplateValidator:
             if s.number.startswith(parent_num + ".") and s.level == 3
         ]
 
-        # Group subsections by their first-level parent (e.g., 2.1, 2.2)
-        # This handles cases where there are multiple instances
-        # (e.g., multiple ledger entries or transactions)
-        first_level_groups = {}
-        for s in subsections:
-            parts = s.number.split('.')
-            if len(parts) >= 2:
-                first_level = f"{parts[0]}.{parts[1]}"
-                if first_level not in first_level_groups:
-                    first_level_groups[first_level] = []
-                first_level_groups[first_level].append(s)
-
-        # For each first-level group, validate required subsections
+        # For template sections, subsections are directly under the parent
+        # (e.g., 1.1, 1.2, 1.3 for SType section 1)
+        # Check each required subsection
         required_subs = template["required_subsections"]
 
-        for first_level in first_level_groups:
-            # Check each required subsection
-            for sub_num, sub_title in required_subs.items():
-                expected_num = f"{first_level}.{sub_num}"
+        for sub_num, sub_title in required_subs.items():
+            expected_num = f"{parent_num}.{sub_num}"
 
-                # Find this subsection in the group
-                found = any(
-                    s.number == expected_num
-                    for s in self.sections
-                    if s.level == 4
-                )
+            # Find this subsection
+            found = any(
+                s.number == expected_num and s.title == sub_title
+                for s in subsections
+            )
 
-                if not found:
-                    self.errors.append(ValidationError(
-                        str(self.file_path), parent_section.line_number,
-                        f"Missing required subsection {expected_num} "
-                        f"'{sub_title}' under {parent_section.title}"
-                    ))
+            if not found:
+                self.errors.append(ValidationError(
+                    str(self.file_path), parent_section.line_number,
+                    f"Missing required subsection {expected_num} "
+                    f"'{sub_title}' under {parent_section.title}"
+                ))
 
     def _validate_no_placeholders(self):
         """Check for template placeholder text that should be replaced."""
