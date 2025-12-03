@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2025-10-13
+  updated: 2025-11-17
 </pre>
 
 # Single Asset Vault
@@ -283,9 +283,9 @@ The calculation depends on whether the vault is empty.
 - **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
   $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets}}$$
 
-Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated. This step ensures the user isn't overcharged and that the new shares are valued against the vault's real assets, accounting for any unrealized loss ($\iota$).
+Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated.
 
-$$\Delta_{assets'} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+$$\Delta_{assets'} = \frac{\Delta_{shares} \times \Gamma_{assets}}{\Gamma_{shares}}$$
 
 #### Vault State Update
 
@@ -613,7 +613,9 @@ In sections below assume the following variables:
     - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
     - `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
-- The `Destination` account is specified and it does not have permission to receive the asset.
+- The `Destination` account is specified:
+  - The account does not have permission to receive the asset.
+  - The account does not have a `RippleState` or `MPToken` object for the asset.
 
 ##### 3.2.2.2 State Changes
 
@@ -622,13 +624,13 @@ In sections below assume the following variables:
   - Increase the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
 
 - If the `Vault.Asset` is an `IOU`:
-  - If the Depositor (or Destination) account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
+  - If the Depositor account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
 
   - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
   - Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
 - If the `Vault.Asset` is an `MPT`:
-  - If the Depositor (or Destination) account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
+  - If the Depositor account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
 
   - Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
