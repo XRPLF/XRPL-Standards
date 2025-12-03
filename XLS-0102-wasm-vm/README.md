@@ -224,7 +224,7 @@ Helper functions for working with rippled-encoded floats (e.g. IOU amounts).
 
 ### 5.9. Trace
 
-Output debug info to the `rippled` debug log.
+Output debug info to the `rippled` debug log. The maximum size of data that can be passed into these functions is 1024 bytes.
 
 | Function Signature                                                                                                                                      | Description                                             | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------ | :------- |
