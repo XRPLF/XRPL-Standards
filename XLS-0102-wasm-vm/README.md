@@ -45,19 +45,19 @@ In other words, it’s basically an API call that fetches/interacts with data or
 
 There are only 4 native types in the [WASM spec](https://webassembly.github.io/spec/core/syntax/types.html): `i32` (a signed 32-bit integer), `i64` (a signed 64-bit integer), `f32` (a 32-bit floating point number), and `f64` (a 64-bit floating point number). However, the floating point numbers use a different encoding from what `rippled` uses.
 
-So essentially, we only have `i32` and `i64` in terms of useful types. **Every parameter and return type must be represented as these two types.** This is manifested as [pointers](https://en.wikipedia.org/wiki/Pointer_%28computer_programming%29) and lengths. _Note that any language that has full support for extensions will have helper functions to abstract away most of the complexity (especially involving pointers and lengths)._
+So essentially, we only have `i32` and `i64` in terms of useful types. **Every parameter and return type must be represented as these two types.** This is manifested as [pointers](https://en.wikipedia.org/wiki/Pointer_%28computer_programming%29) and lengths. _Note that any language that has full support for XRPL extensions will have helper functions to abstract away most of the complexity (especially involving pointers and lengths)._
 
 ## 2. VM Runtime Choice
 
 While WebAssembly has a [core specification](https://webassembly.github.io/spec/), different runtimes have flexibility in how they implement certain features that are not a part of the formal specification. For example, not all WASM runtimes can easily be embedded in a C++ project (such as `rippled`).
 
-The most relevant part for the purpose of consensus is the gas cost for any operation or function. Different implementations may have different gas costs for executing a given function, due to implementation differences - e.g. some calculate gas costs by inserting additional instructions, while others have a counter in the VM logic. For instance, one basic Smart Escrow function cost 110 gas to run with [WasmEdge](https://wasmedge.org/), while it only cost 4 gas with [WAMR](https://github.com/bytecodealliance/wasm-micro-runtime). This would cause consensus issues if the computation limit was set at 100, for example - one runtime would succeed, while the other would fail.
+The most relevant part for the purpose of consensus is the gas cost for any operation or function. Different implementations may have different gas costs for executing a given function, due to implementation differences - e.g. some calculate gas costs by inserting additional instructions, while others have a counter in the VM logic. For instance, one basic Smart Escrow function cost 110 gas to run with [WasmEdge](https://wasmedge.org/), while it only cost 5 gas with [Wasmi](https://github.com/wasmi-labs/wasmi). This would cause consensus issues if the computation limit was set at 100, for example - one runtime would succeed, while the other would fail.
 
 There are other metrics that are important as well, such as performance considerations. See Appendix A for the full analysis comparing different runtimes.
 
 ### 2.1. Gas
 
-Gas consumption is determined by the WASM runtime used for execution. Different implementations may use different metering strategies, which yields different gas costs for identical WASM code. For example, [this issue](https://github.com/bytecodealliance/wasm-micro-runtime/issues/3927) discusses how WAMR measures gas consumption.
+Gas consumption is determined by the WASM runtime used for execution. Different implementations may use different metering strategies, which yields different gas costs for identical WASM code. [This blog post](https://agryaznov.com/posts/wasm-gas-metering/) discusses several of the different strategies.
 
 Gas will accumulate from:
 
@@ -254,7 +254,7 @@ WebAssembly is designed with deterministic execution in mind, and the specificat
 
 To that end:
 
-- The runtime environment is fixed across all validator nodes, with an agreed-upon WebAssembly implementation (WAMR), WAMR version and a deterministic configuration (interpreted compile mode).
+- The runtime environment is fixed across all validator nodes, with an agreed-upon WebAssembly implementation (Wasmi), the Wasmi version, and a deterministic configuration (interpreted compile mode).
 - Non-deterministic WASM features, such as floating point operations, access to time, randomness, or host system I/O, are explicitly disallowed or omitted from the runtime.
 - A fixed, deterministic gas cost model is applied to all instructions, with enforced gas limits and metering to ensure bounded execution.
 
@@ -280,7 +280,7 @@ These constraints prevent denial-of-service attacks and ensure that WASM executi
 
 ### 6.5. Future-Proofing
 
-All future changes to this spec (even just a simple change to the gas cost of a host function) will need to be gated by an amendment. Updates to the `wamr` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
+All future changes to this spec (even just a simple change to the gas cost of a host function) will need to be gated by an amendment. Updates to the `wasmi` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
 
 For example, this is what it might look like to add a new host function:
 
@@ -337,11 +337,15 @@ The 5 WASM VM implementations we investigated were:
 
 Based on these findings, we narrowed down the search to **WasmEdge** and **WAMR**, which we then did further performance testing and analysis on.
 
-#### A.2.2. Performance Analysis
+##### A.2.1.1. Performance Analysis
 
 <img width="400" height="300" alt="image4" src="https://github.com/user-attachments/assets/7b82dfaa-e70a-4829-a987-20e6ae9ebb16" /><img width="400" height="300" alt="image2" src="https://github.com/user-attachments/assets/438255a5-cdae-4731-8f1a-0fe7218cb6ae" /><img width="400" height="300" alt="image1" src="https://github.com/user-attachments/assets/76fac8b0-63f6-43b1-b766-8a67799f5f59" />
 
 These graphs clearly show that WAMR is much more performant.
+
+#### A.2.2. Revisit
+
+Several months later, we revisited the VM runtime decision. We found that Wasmi was a better fit for our needs than WAMR. See [this blog post](https://dev.to/ripplexdev/xrpl-programmability-wasm-runtime-revisit-2ak0) for more details.
 
 ## Appendix B: Other Memory Management Strategies Considered
 
