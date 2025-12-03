@@ -79,7 +79,7 @@ All of these parameters will be UNL-votable, so that they do not need a separate
 
 ## 4. Memory Management Strategies
 
-WebAssembly does not include built-in memory management - there is no garbage collector or automatic heap allocation. Instead, memory is a contiguous linear buffer that can only grow (in fixed 64 KiB pages) and never shrink. That means WASM code must allocate and manage its own memory, typically via a custom allocator or language runtime, and explicitly track when memory is no longer needed. While there is [progress](https://developer.chrome.com/blog/wasmgc) on this front with WasmGC, it does not have full-fledged tooling support yet, and is currently only really useful for browser applications of WASM.
+WebAssembly 1.0 (which is the WASM profile that the XRPL will support) does not include built-in memory management - there is no garbage collector or automatic heap allocation. Instead, memory is a contiguous linear buffer that can only grow (in fixed 64 KiB pages) and never shrink. That means WASM code must allocate and manage its own memory, typically via a custom allocator or language runtime, and explicitly track when memory is no longer needed. While there is [progress](https://developer.chrome.com/blog/wasmgc) on this front with WasmGC, it does not have full-fledged tooling support yet, and is currently only really useful for browser applications of WASM.
 
 This is a bit of a problem for host functions, since data has to go back and forth between the caller (WASM dev) and the engine (`rippled`). Some data (e.g. parameters) may be generated on the WASM side, while some data (e.g. the return data) may be generated on the rippled side.
 
@@ -127,7 +127,7 @@ The current ledger object is the ledger object that the extension lives on - for
 
 #### 5.2.1. Locators
 
-A Locator allows a WASM developer located any field in any object (even nested fields) by specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4 bytes) or an `index` (4 bytes).
+A Locator allows a WASM developer to reference any field in any object (even nested fields) by specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4 bytes) or an `index` (4 bytes).
 
 ### 5.3. Current Transaction Data
 
@@ -178,7 +178,7 @@ A keylet is a unique hash that represents a ledger object on the XRP Ledger. It 
 | `ticket_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                    | Calculate a `Ticket`'s keylet from its pieces.             | 350      |
 | `vault_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                     | Calculate a `Vault`’s keylet from its pieces.              | 350      |
 
-The singleton keylets (e.g. `Amendments`) are a bit unnecessary to include, as a dev can simply copy the keylet directly instead. They will be included as constants in `craft` as well.
+The singleton keylets (e.g. `Amendments`) are a bit unnecessary to include, as a dev can simply copy the keylet directly instead. They will be included as constants in `xrpl-wasm-stdlib` as well.
 
 The directory keylets and `NFTokenPage` were not included, since they are a bit more complex to parse through and it seemed unnecessary for now. These can always be added in the future.
 
@@ -268,6 +268,8 @@ If there happens to be a bug in the WASM execution layer, the UNL can shut down 
 
 User-provided WASM code is executed within a strict sandbox. It has no access to system-level resources and can only interact with the XRP Ledger via an explicitly defined host function interface. These host functions enforce strict boundaries on what ledger data is visible and what operations are permitted. For example, there is no way for user-provided WASM code to directly modify a ledger object (to e.g. transfer XRP between accounts without permission).
 
+A new WASM VM instance will be created for each WASM module execution. This ensures that there is no state that can be leaked between different executions, and that memory cannot be corrupted between runs.
+
 WASM code cannot directly traverse arbitrary ledger directories or iterate through global ledger state. All access must be via bounded, predefined inputs (e.g., keylets or account IDs passed into the subroutine). This design ensures that malicious WASM code cannot manipulate or exfiltrate ledger state beyond the narrow scope allowed by the host API.
 
 ### 6.4. Resource Limiting
@@ -335,7 +337,7 @@ The 5 WASM VM implementations we investigated were:
 
 <img width="768" height="381" alt="image" src="https://github.com/user-attachments/assets/c3e4255c-f956-41f2-941f-90b643b3d567" />
 
-Based on these findings, we narrowed down the search to **WasmEdge** and **WAMR**, which we then did further performance testing and analysis on.
+Based on these findings, we narrowed down the search to **WasmEdge** and **WAMR**, and we then conducted further performance testing and analysis on those two options.
 
 ##### A.2.1.1. Performance Analysis
 
@@ -347,14 +349,14 @@ These graphs clearly show that WAMR is much more performant.
 
 Several months later, we revisited the VM runtime decision. We found that Wasmi was a better fit for our needs than WAMR. See [this blog post](https://dev.to/ripplexdev/xrpl-programmability-wasm-runtime-revisit-2ak0) for more details.
 
-## Appendix B: Other Memory Management Strategies Considered
+## Appendix B: Memory Management Strategies Considered
 
 Options:
 
 1. Caller-Allocated: The contract developer (on the WASM side) allocates fixed size arrays for returning data. The user knows the pointer and the length.
    - This is really easy to implement, but means that the WASM dev needs to do their own memory allocation.
 2. Host-Allocated: The host (rippled) allocates WASM memory in host functions and passes the pointer and the length to the WASM program.
-   - This is super easy to use for devs, as they don’t need to worry about allocation and all of that. However, more research is needed to determine how possible it is, because currently the only way that we know how to do this involves allocating a new page every time (to ensure the host isn’t overwriting addresses in use).
+   - This is super easy to use for devs, as they don’t need to worry about allocation. However, more research is needed to determine how possible it is, because currently the only way that we know how to do this involves allocating a new page every time (to ensure the host isn’t overwriting addresses in use).
 3. Static Allocation: There is a static 4KB array in wasm that holds all output data. The pointer and length are fixed.
    - Pros
      1. This is pretty simple and clean to use
