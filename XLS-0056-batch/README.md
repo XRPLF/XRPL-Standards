@@ -47,7 +47,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 | Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                        |
 | ----------------- | --------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `Flags`           | ✔️        | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. These flags represent the batch mode of the transaction.                  |
-| `RawTransactions` | ✔️        | `array`   | `STArray`     | The list of inner transactions that will be applied.                                                                               |
+| `RawTransactions` | ✔️        | `array`   | `STArray`     | The list of inner transactions that will be applied. (Minimum 2, Maximum 8)                                                        |
 | `BatchSigners`    |           | `array`   | `STArray`     | An array of objects that represent signatures for a multi-account Batch transaction, signifying authorization of this transaction. |
 
 #### 2.1.1. `Flags`
@@ -83,7 +83,7 @@ All transactions will be applied, regardless of failure.
 
 #### 2.1.2. `RawTransactions`
 
-`RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. These transactions can come from one account or multiple accounts.
+`RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. There must be at least 2 transactions. These transactions can come from one account or multiple accounts.
 
 Each inner transaction:
 
