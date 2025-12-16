@@ -1325,7 +1325,7 @@ $$
 managementFee_{late} = latePaymentInterest_{gross} \times managementFeeRate
 $$
 
-The change in the total loan value is equent to the late payment interest, excluding any fees.
+The change in the total loan value is equal to the late payment interest, excluding any fees.
 
 $$
 valueChange = latePaymentInterest_{gross} - managementFee_{late}
