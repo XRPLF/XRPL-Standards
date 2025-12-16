@@ -566,13 +566,11 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 ##### 3.1.1.1 Failure Conditions
 
 - If `LoanBrokerID` is not specified:
-
   - `Vault` object with the specified `VaultID` does not exist on the ledger.
   - The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
   - One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
 
 - If `LoanBrokerID` is specified:
-
   - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
   - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
   - The submitter is attempting to modify fixed fields.
@@ -582,17 +580,13 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 ##### 3.1.1.2 State Changes
 
 - If `LoanBrokerID` is not specified:
-
   - Create a new `LoanBroker` ledger object.
 
   - Create a new `AccountRoot` _pseudo-account_ object, setting the `AccountRoot.LoanBrokerID` to `LoanBrokerID`.
-
     - If the `Vault(VaultID).Asset` is an `IOU`:
-
       - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
 
     - If the `Vault(VaultID).Asset` is an `MPT`:
-
       - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
 
   - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account.
@@ -628,17 +622,14 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 - Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
   - Increase the `Balance` field of the submitter `AccountRoot` by `CoverAvailable`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
   - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Increase the `MPToken.MPTAmount` by `CoverAvailable` of the submitter `MPToken` object for the `Vault.Asset`.
 
@@ -667,18 +658,15 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - `AccountRoot(LoanBroker.Owner).Balance - Reserve(AccountRoot(LoanBroker.Owner).OwnerCount) < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
   - The `RippleState` object `Balance` < `Amount` (Depositor has insufficient funds).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
     - Has `lsfMPTLocked` flag set.
     - `MPTAmount` < `Amount`.
@@ -689,17 +677,14 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 ##### 3.1.3.2 State Changes
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - Increase the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - Decrease the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - Increase the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - Decrease the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
@@ -730,13 +715,10 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 - The `Destination` account is specified and it does not have permission to receive the asset.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - If the `Destination` field is not specified:
-
     - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
 
   - If the `Destination` field is specified:
-
     - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
     - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
 
@@ -744,13 +726,10 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - If the `Destination` field is not specified:
-
     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
 
   - If the `Destination` field specified:
-
     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
     - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
 
@@ -765,30 +744,24 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 ##### 3.1.4.2 State Changes
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
   - If `Destination` field is not specified:
-
     - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
 
   - If `Destination` field is specified:
     - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
   - If `Destination` field is not specified:
-
     - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
   - If `Destination` field is specified:
     - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
   - If `Destination` field is not specified:
-
     - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
 
   - If `Destination` field is specified:
@@ -822,14 +795,12 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
   - `Amount` specifies an MPT.
   - `Amount` specifies an IOU, and the `issuer` value is _not_ a pseudo-account with `Account(Amount.issuer).LoanBrokerID` set. If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
 - If both the `LoanBrokerID` and `Amount` are specified, and:
-
   - The `Amount.issuer` value does not match the submitter `Account` of the transaction or `LoanBroker(LoanBrokerID).Account` (the pseudo-account of the LoanBroker).
   - The `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is not the same asset type as `Amount`, allowing for an IOU `Amount.issuer` to specify `LoanBroker(LoanBrokerID).Account` instead of `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
 
 - If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU` and:
-
   - The Issuer account is not the submitter of the transaction.
   - `Amount.issuer` value is not one of
     - The submitter of the transaction
@@ -838,7 +809,6 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
   - If the `AccountRoot(Issuer)` has the lsfNoFreeze flag set (the asset cannot be frozen).
 
 - If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT` and:
-
   - MPTokenIssuance.Issuer is not the submitter of the transaction.
   - If the `LoanBrokerID` is not specified.
   - MPTokenIssuance.lsfMPTCanClawback flag is not set (the asset does not support clawback).
@@ -852,11 +822,9 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 - Otherwise set `Amount` to `min(Amount,`LoanBroker.CoverAvailable - LoanBroker.DebtTotal \* LoanBroker.CoverRateMinimum`).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
@@ -927,9 +895,7 @@ The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `
 Either of the parties (Borrower or Loan Issuer) may initiate the transaction. The user flow is as follows:
 
 - `Borrower` initiates the transaction:
-
   1. The `Borrower` creates the transaction from their account, setting the pre-agreed terms.
-
      - Optionally, the `Borrower` may set the `Counterparty` to `LoanBroker.Owner`. In case the `Counterparty` field is not set, it is assumed to be the `LoanBroker.Owner`.
 
   2. The `Borrower` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
@@ -939,9 +905,7 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
   6. The `Loan Issuer` submits the transaction.
 
 - `Loan Issuer` initiates the transaction:
-
   1. The `Loan Issuer` creates the transaction from their account setting the pre-agreed terms.
-
      - The `Loan Issuer` must set the `Counterparty` to the `Borrower` account ID.
 
   2. The `Loan Issuer` signs the transaction setting the `SigningPubKey`, `TxnSignature`, `Signers`, `Account`, `Fee`, `Sequence` fields.
@@ -962,7 +926,6 @@ The account specified in the `Account` field pays the transaction fee.
 - If the `Counterparty.TxnSignature` is invalid.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
   - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set.
 
@@ -973,7 +936,6 @@ The account specified in the `Account` field pays the transaction fee.
   - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set (The borrower cannot send funds).
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTRequireAuth` flag set and the `MPToken`of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
 
@@ -995,15 +957,12 @@ The account specified in the `Account` field pays the transaction fee.
 - The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan is less than the specified `PaymentTotal`.
 
 - Insufficient assets in the Vault:
-
   - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable` < `Loan.PrincipalRequested`.
 
 - Exceeds maximum Debt of the LoanBroker:
-
   - `LoanBroker(LoanBrokerID).DebtMaximum` < `LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
 
 - Insufficient First-Loss Capital:
-
   - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
 ##### 3.2.1.6 State Changes
@@ -1013,36 +972,30 @@ The account specified in the `Account` field pays the transaction fee.
 - Increment `LoanBroker.LoanSequence` by `1`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalRequested`.
   - Increase the `Balance` field of `Borrower` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
   - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `Loan.LoanOriginationFee`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - Create a `RippleState` object between the `Issuer` and the `Borrower` if one does not exist.
 
   - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested`.
   - Increase the `RippleState` balance between the `Borrower` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
 
   - If the `RippleState` object between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The LoanBroker cannot receive funds):
-
     - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee` (the loan origination fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
     - Increase `LoanBroker.CoverAvailable` by `Loan.LoanOriginationFee`.
 
   - Otherwise:
-
     - Increase the `RippleState` balance between the `LoanBroker.Owner` `AccountRoot` and the `Issuer` `AccountRoot` by `Loan.LoanOriginationFee`.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - Create an `MPToken` object for the `Borrower` if one does not exist.
 
   - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested`.
   - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object for the `Vault.Asset` by `Loan.PrincipalRequested - Loan.LoanOriginationFee`.
 
   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Owner` `AccountRoot` has `lsfMPTLocked` flag set (The LoanBroker cannot receive funds):
-
     - Increase the `MPToken.MPTAmount` by `Loan.LoanOriginationFee` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` (the loan origination fee was added to First Loss Capital, and thus transfered to the `LoanBroker` _pseudo-account_).
     - Increase `LoanBroker.CoverAvailable` by `Loan.LoanOriginationFee`.
 
@@ -1050,16 +1003,13 @@ The account specified in the `Account` field pays the transaction fee.
     - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object for the `Vault.Asset` by `Loan.LoanOriginationFee`
 
 - `Vault(LoanBroker(LoanBrokerID).VaultID)` object state changes:
-
   - Decrease Asset Available in the Vault:
-
     - `Vault.AssetsAvailable -= Loan.PrincipalRequested`.
 
   - Increase the Total Value of the Vault:
     - `Vault.AssetsTotal += TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`.
 
 - `LoanBroker(LoanBrokerID)` object changes:
-
   - `LoanBroker.DebtTotal += Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)`
   - `LoanBroker.OwnerCount += 1`
 
@@ -1095,7 +1045,6 @@ The transaction deletes an existing `Loan` object.
 
 - Remove `LoanID` from `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
 - If `LoanBroker.OwnerCount = 0`
-
   - Delete the `LoanBroker` _pseudo-account_ `DirectoryNode`.
 
 - Remove `LoanID` from `DirectoryNode.Indexes` of the `Borrower` `AccountRoot`.
@@ -1143,9 +1092,7 @@ The transaction deletes an existing `Loan` object.
 ##### 3.2.3.2 State Changes
 
 - If the `tfLoanDefault` flag is specified:
-
   - Calculate the amount of the Default that First-Loss Capital covers:
-
     - The default Amount equals the outstanding principal and interest, excluding any funds unclaimed by the Borrower.
       - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding)`.
     - Apply the First-Loss Capital to the Default Amount
@@ -1154,7 +1101,6 @@ The transaction deletes an existing `Loan` object.
     - `ReturnToVault = DefaultCovered`
 
   - Update the `Vault` object:
-
     - Decrease the Total Value of the Vault:
       - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsTotal -= DefaultAmount`.
     - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
@@ -1163,39 +1109,31 @@ The transaction deletes an existing `Loan` object.
       - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
 
   - Update the `LoanBroker` object:
-
     - Decrease the Debt of the LoanBroker:
       - `LoanBroker(LoanBrokerID).DebtTotal -= Loan.PrincipalOutstanding + Loan.InterestOutstanding`
     - Decrease the First-Loss Capital Cover Available:
       - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
 
   - Update the `Loan` object:
-
     - `Loan(LoanID).Flags |= lsfLoanDefault`
     - `Loan(LoanID).PaymentRemaining = 0`
     - `Loan(LoanID).PrincipalOutstanding = 0`
 
   - Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
-
     - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-
       - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
       - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
 
     - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-
       - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
       - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
 
     - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-
       - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
       - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
 
   - If `tfLoanImpair` flag is specified:
-
     - Update the `Vault` object (set "paper loss"):
-
       - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
     - Update the `Loan` object:
@@ -1204,17 +1142,14 @@ The transaction deletes an existing `Loan` object.
         - `Loan(LoanID).NextPaymentDueDate = currentTime` (move the next payment due date to now)
 
   - If the `tfLoanUnimpair` flag is specified:
-
     - Update the `Vault` object (clear "paper loss"):
     - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
 
     - Update the `Loan` object:
-
       - Unset `lsfLoanImpaired` flag
       - `CandidateDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`
 
       - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
-
         - `Loan(LoanID).NextPaymentDueDate = CandidateDueDate`
 
       - If `CandidateDueDate <= currentTime` (the loan was unimpaired after the original payment due date):
@@ -1243,6 +1178,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 | ------------------- | :----------: | :--------------------------------------------------------------------------- |
 | `tfLoanOverpayment` | `0x00010000` | Indicates that remaining payment amount should be treated as an overpayment. |
 | `tfLoanFullPayment` | `0x00020000` | Indicates that the borrower is making a full early repayment.                |
+| `tfLoanLatePayment` | `0x00040000` | Indicates that the borrower is making a late loan payment.                   |
 
 ##### 3.2.4.2 Payment Processing
 
@@ -1271,14 +1207,11 @@ The system follows these steps to process a payment:
 1.  **Timing Verification**: The transaction is first classified as either **On-time** or **Late** by comparing the ledger's close time to the `Loan.NextPaymentDueDate`.
 
 2.  **Minimum Amount Validation**: The payment is checked against the minimum amount required for its timing classification. If the amount is insufficient, the transaction is rejected.
-
     - **Late Minimum**: `periodicPayment + serviceFee + latePaymentFee + lateInterest`
     - **On-time Minimum**: `periodicPayment + serviceFee`
 
 3.  **Scenario Handling**: Based on the timing and transaction flags, the system proceeds with one of the following paths:
-
     - **A) Late Payment Processing**: If the payment is late, it must be for the exact amount calculated by the [late payment formula](#32422-late-payment).
-
       - **Constraint**: Overpayments are not permitted on late payments. Any amount paid beyond the exact total due will be ignored.
 
     - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
@@ -1683,7 +1616,7 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
         let part = min(roundedManagementFee, abs(excess))
         roundedManagementFee = roundedManagementFee - part
         excess = excess + part
-    
+
     # Finally, take as much as possible from the principal portion.
     if excess < 0:
         let part = min(roundedPrincipalPayment, abs(excess))
@@ -1736,9 +1669,12 @@ function do_overpayment(amount) -> (valueChange):
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
+    
+    if loan.nextPaymentDueDate < currentTime and not is_set(tfLoanLatePayment):
+        return "loan payment is late" error
 
     # ======== STEP 1: Process Late Payment ======== #
-    if loan.nextPaymentDueDate < currentTime:
+    if loan.nextPaymentDueDate < currentTime and is_set(tfLoanLatePayment):
         let (principal, interest, managementFee) = compute_payment_due(amount)
         let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
 
@@ -1754,7 +1690,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         loan.nextPaymentDueDate = loan.nextPaymentDueDate + loan.paymentInterval
         loan.principalOutstanding = loan.principalOutstanding - principal
         loan.managementFeeOutstanding = loan.managementFeeOutstanding - managementFee
-        
+
         # we do not adjust the total value by late interst or late managementFee as these were not included in the initial total value
         loan.totalValueOutstanding = loan.totalValueOutstanding - (principal + interest + managementFee)
 
@@ -1817,14 +1753,14 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     # Handle overpayment if there are remaining payments, the loan supports overpayments, and there are funds remaining
     if loan.paymentsRemaining > 0 && is_set(loan.lsfLoanOverpayment) && is_set(tfLoanOverpayment) && totalPaid < amount:
         let overpaymentAmount = min(loan.principalOutstanding, amount - totalPaid)
-    
+
         # ======== STEP 4.1: Determine Interest and Fee on Overpayment ======== #
-  
+
         # overpayment amount is charged an interest that goes to the vault
         let overpaymentInterest = overpaymentAmount * loan.overpaymentInterestRate
         # and a management fee that goes to the broker charged on the interest
-        
-        let overpaymentManagementFee = overpaymentInterest * loan.loanbroker.managementFeeRate        
+
+        let overpaymentManagementFee = overpaymentInterest * loan.loanbroker.managementFeeRate
         overpaymentInterest = overpaymentInterest - overpaymentManagementFee
 
         # there is a second overpayment fee that goes to the broker
@@ -1865,26 +1801,22 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 - The loan is already fully paid (`Loan.PaymentRemaining` is `0` or `Loan.TotalValueOutstanding` is `0`).
 - The `tfLoanOverpayment` flag is set on the transaction, but the `lsfLoanOverpayment` flag is not set on the `Loan` object.
 - The `tfLoanFullPayment` flag is set, but only one payment remains on the loan (`Loan.PaymentRemaining` is `1`).
-- Both `tfLoanOverpayment` and `tfLoanFullPayment` transaction flags are specified.
+- More than one of `LoanPay` transaction flags are specified.
 
 - If the payment is late (`LastLedgerCloseTime > Loan.NextPaymentDueDate`):
-
+  - The `tfLoanLatePayment` is not specified in the transaction.
   - The `Amount` is less than the calculated `totalDue` for a late payment, which is `periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`.
 
 - If the payment is on-time (`LastLedgerCloseTime <= Loan.NextPaymentDueDate`):
-
   - The `Amount` is less than the calculated `totalDue` for a periodic payment, which is `periodicPayment + loanServiceFee`.
 
 - If the `tfLoanFullPayment` flag is specified:
-
   - The `Amount` is less than the calculated `totalDue` for a full early payment, which is `principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-
   - The `Balance` of the `AccountRoot` object of the Borrower is less than `totalDue`.
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-
   - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
   - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
@@ -1892,7 +1824,6 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
   - The `RippleState` object `Balance` < `totalDue` (Borrower has insufficient funds).
 
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-
   - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has
     - `lsfMPTLocked` flag set.
     - `MPTAmount` < `totalDue` (inssuficient funds).
@@ -1909,7 +1840,6 @@ Upon successful validation, the `LoanPay` transaction is processed according to 
 First, the system determines the final destination of all funds.
 
 1.  **Determine Fee Destination**: All collected fees are directed to one of two places:
-
     - **If First-Loss Capital is sufficient** (`LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`): The fees are paid to the `LoanBroker.Owner`.
     - **If First-Loss Capital is insufficient**: The fees are added to the first-loss pool to cover the deficit.
 
@@ -1926,12 +1856,10 @@ The `Loan` object is updated to reflect the payment
 - If the loan was impaired (`lsfLoanImpaired` flag was set), the flag is cleared.
 
 - **For a Full Repayment**:
-
   - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
   - `PaymentRemaining` is set to `0`.
 
 - **For Other Payments**:
-
   - `PrincipalOutstanding` is decreased by the `principal` portion of each periodic payment settled.
   - `ManagementFeeOutstanding` is decreased by the `managementFee` portion of each periodic payment settled.
   - `TotalValueOutstanding` is decreased by the sum of the `principal`, `interest`, and `managementFee` portions of each periodic payment settled.
@@ -1947,7 +1875,6 @@ The `Loan` object is updated to reflect the payment
 The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
 
 - **`LoanBroker` Updates**:
-
   - `LoanBroker.DebtTotal` is decreased by `totalToVault` (the principal and interest paid back).
   - If the payment resulted in a `valueChange` from an overpayment or early full repayment, `LoanBroker.DebtTotal` is adjusted by that `valueChange`. It is **not** adjusted for `valueChange` from late payment interest, as this represents a penalty paid directly to the vault, not an alteration of the original debt schedule.
     - `LoanBroker.DebtToal + valueChange`
@@ -2043,7 +1970,8 @@ $$
 
 **Usage:** Calculates the time elapsed since the last payment was due (or since loan origination, whichever is later). Used in early full payment calculations ([Section 5.1](#51-total-due-components)).
 
-**Why `max()`?** 
+**Why `max()`?**
+
 - For the first payment period, `PreviousPaymentDueDate = 0` (undefined)
 - Taking `max(0, StartDate)` ensures we use `StartDate` for the first calculation
 - For subsequent payments, `PreviousPaymentDueDate > StartDate`, so it's used instead
@@ -2085,7 +2013,7 @@ $$
 principal = periodicPayment - interest \quad \text{(9)}
 $$
 
-To 
+To
 **Note:** For zero-interest loans, `principal = PrincipalOutstanding / paymentsRemaining` and `interest = 0`.
 
 #### 2.3 Reverse Calculation: Principal from Payment
@@ -2342,10 +2270,10 @@ valueChange = (accruedInterest + prepaymentPenalty) - totalInterestOutstanding_{
 $$
 
 **Where:**
+
 - `InterestOutstanding_{net}` = Remaining net interest from ledger values:
-  - $$totalInterestOutstanding_{net} = The total interest outstanding for the Loan
-- 
-**Note:**
+  - $$totalInterestOutstanding\_{net} = The total interest outstanding for the Loan
+- **Note:**
 
 - Can be positive or negative depending on penalty size
 - Negative if `(accruedInterest + prepaymentPenalty) < InterestOutstanding_{net}` (vault loses future interest)
@@ -2409,4 +2337,3 @@ $$
 2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
-
