@@ -100,9 +100,9 @@ Freeze is a mechanism by which an asset Issuer (IOU or MPT, not XRP) freezes an 
 
 If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Borrower cannot make loan payments.
 
-A Deep Freeze does not affect the Loan Broker's functions. However, a Deep Freeze will prevent the Loan Broker from receing any Lending Protocol Fees.
+A Deep Freeze does not affect the Loan Broker's functions. However, a Deep Freeze will prevent the Loan Broker from receiving any Lending Protocol Fees.
 
-The Issuer may also Freeze of Deep Freeze the `_pseudo-account_` of the Loan Broker. A Freeze on the `_pseudo-account_` will prevent the Loan Broker from creating new Loans. However existing Loans will not be affected. In contrast, a Deep Freeze, will also prevent the Loans from being paid.
+The Issuer may also Freeze or Deep Freeze the `_pseudo-account_` of the Loan Broker. A Freeze on the `_pseudo-account_` will prevent the Loan Broker from creating new Loans. However existing Loans will not be affected. In contrast, a Deep Freeze, will also prevent the Loans from being paid.
 
 ### 1.3 Risk Management
 
@@ -137,7 +137,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - **`First-Loss Capital`**: The portion of capital that absorbs initial losses in case of a Default, protecting the Vault from loss.
 - **`Term`**: The period over which a Borrower must repay the Loan.
 - **`Amortization`**: The gradual repayment of a loan through scheduled payments that cover both interest and principal over time.
-- **`Repayment Schedule`**: A detailed plan that outlines when and how much a borrower must pay to repay the Loan fLoan.
+- **`Repayment Schedule`**: A detailed plan that outlines when and how much a borrower must pay to repay the Loan funds.
 - **`Grace Period`**: A set period after the Loan's due date after which the Loan Broker can default the Loan
 
 #### 1.6.2 Actors
