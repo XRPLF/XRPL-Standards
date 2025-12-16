@@ -290,11 +290,11 @@ The following columns should be included:
 
 ##### 4.4.3.3.2. Flags
 
-This subsection describes all the ledger entry `lsf` flags in a tabular format.
+This subsection describes all the ledger entry `tf` flags in a tabular format.
 
 These columns must all be included in the table:
 
-- **Flag Name**: The column indicates the flag's name. Flags follow the `lsfPascalCase` naming convention.
+- **Flag Name**: The column indicates the flag's name. Flags follow the `tfPascalCase` naming convention.
 - **Flag Value**: The column indicates the flag's value. Flag values are 32-bit integers, written in hexadecimal with a `0x` prefix (e.g., `0x00010000`).
 - **Description**: A brief description of the flag. Further details can be written in a subsection of **Flags**.
 

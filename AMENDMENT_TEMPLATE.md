@@ -186,9 +186,9 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 
 ### 3.2. Flags
 
-| Flag Name        | Flag Value   | Description      |
-| ---------------- | ------------ | ---------------- |
-| `[lsfFlagName1]` | `0x[Value1]` | `[Description1]` |
+| Flag Name       | Flag Value   | Description      |
+| --------------- | ------------ | ---------------- |
+| `[tfFlagName1]` | `0x[Value1]` | `[Description1]` |
 
 ### 3.3. Transaction Fee
 
