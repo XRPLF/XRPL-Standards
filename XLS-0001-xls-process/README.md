@@ -211,17 +211,27 @@ These columns must all be included in the table:
 
 The table may be followed by subsections for fields requiring further details that are too long for the Description column.
 
-##### 4.4.3.2.3. Ownership
+##### 4.4.3.2.3. Flags
+
+This subsection describes all the ledger entry `lsf` flags in a tabular format.
+
+These columns must all be included in the table:
+
+- **Flag Name**: The column indicates the flag's name. Flags follow the `lsfPascalCase` naming convention.
+- **Flag Value**: The column indicates the flag's value. Flag values are 32-bit integers, written in hexadecimal with a `0x` prefix (e.g., `0x00010000`).
+- **Description**: A brief description of the flag. Further details can be written in a subsection of **Flags**.
+
+##### 4.4.3.2.4. Ownership
 
 All XRP Ledger objects must have an owner. The owner is an `AccountRoot` object, and the ownership relationship is typically established by adding the object's ID to an `OwnerDirectory` ledger entry associated with the owner's account. This subsection captures which `AccountRoot` object's `OwnerDirectory` the ledger entry is registered. A single ledger entry may be linked from one or more unique `DirectoryNode` pages, usually under one `OwnerDirectory`.
 
 _Note: there are a handful of object types (such as `FeeSettings`) that don’t have an owner. If an amendment is of that ilk, that should be specified in this section._
 
-##### 4.4.3.2.4. Reserves
+##### 4.4.3.2.5. Reserves
 
 Creating ledger entries typically requires an increase in the owner's XRP reserve to discourage ledger bloat and account for the cost of storage. Each new ledger entry directly owned by an account typically increments the owner reserve by one unit (currently 0.2 XRP, as of last check, but subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.2.5. Deletion
+##### 4.4.3.2.6. Deletion
 
 This subsection captures the conditions under which the ledger entry can be deleted from the ledger. It should specify:
 
@@ -229,23 +239,23 @@ This subsection captures the conditions under which the ledger entry can be dele
 - Any prerequisite conditions for deletion (e.g., object state, zero balances, no linked objects).
 - Is the ledger entry a "blocker" for deleting its owner `AccountRoot` (i.e., whether it must be deleted before the account can be deleted).
 
-##### 4.4.3.2.6. Pseudo-Account
+##### 4.4.3.2.7. Pseudo-Account
 
 This section is optional. A "pseudo-account" might be associated if the newly introduced ledger entry needs to hold assets (XRP, IOUs or MPTs) or issue tokens (e.g., MPTs). A pseudo-account is a programmatically derived `Account` that cannot submit transactions, send or receive funds directly via standard payments, or have a key pair. For further details about pseudo-accounts, refer to [XLS-64](https://github.com/XRPLF/XRPL-Standards/pull/274) (or the relevant accepted standard). This section should specify if a pseudo-account is used, how its `AccountID` is derived, and its purpose.
 
-##### 4.4.3.2.7. Freeze/Lock
+##### 4.4.3.2.8. Freeze/Lock
 
 This section is optional. If the protocol holds assets on behalf of other users, it must comply with the existing compliance features `Freeze`, `Deep Freeze` for IOUs and `Locking` for MPTs. This section describes how said freezing is handled.
 
-##### 4.4.3.2.8. Invariants
+##### 4.4.3.2.9. Invariants
 
 Invariants are logical statements that MUST be true of a ledger entry's state before and after the execution of any transaction (whether successful or not). They help ensure that no transaction leads to an invalid or inconsistent ledger state. Use `<object>` for the state before and `<object>'` (see the added grave) for the state after.
 
-##### 4.4.3.2.9. RPC Name
+##### 4.4.3.2.10. RPC Name
 
 In RPCs like `account_objects` and `ledger_data`, a short, `snake_case` form of the name of a ledger entry is accepted in the `type` parameter, to filter the ledger entries returned by type. This section should specify that version of the entry's name.
 
-##### 4.4.3.2.10. Example JSON
+##### 4.4.3.2.11. Example JSON
 
 Provide JSON examples for what the ledger object will look like.
 
@@ -278,11 +288,21 @@ The following columns should be included:
 - **Default Value**: If any. `N/A` if none or always required.
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.2. Transaction Fee
+##### 4.4.3.3.2. Flags
+
+This subsection describes all the ledger entry `lsf` flags in a tabular format.
+
+These columns must all be included in the table:
+
+- **Flag Name**: The column indicates the flag's name. Flags follow the `lsfPascalCase` naming convention.
+- **Flag Value**: The column indicates the flag's value. Flag values are 32-bit integers, written in hexadecimal with a `0x` prefix (e.g., `0x00010000`).
+- **Description**: A brief description of the flag. Further details can be written in a subsection of **Flags**.
+
+##### 4.4.3.3.3. Transaction Fee
 
 Submitting a transaction typically requires paying a transaction fee. A typical transaction costs 10 drops as of last check (subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.3.3. Failure Conditions
+##### 4.4.3.3.4. Failure Conditions
 
 This section describes the conditions under which the transaction will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
 
@@ -292,11 +312,11 @@ In case of a transaction failure, an XRP Ledger server returns an error code ind
 
 If the new transaction logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code (usually a `tec` code) should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/TER.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific transaction logic failures.
 
-##### 4.4.3.3.4. State Changes
+##### 4.4.3.3.5. State Changes
 
 This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). Indexed for clarity. A successfully applied transaction must return a `tesSUCCESS` code.
 
-##### 4.4.3.3.5. Metadata Fields
+##### 4.4.3.3.6. Metadata Fields
 
 This section describes any additions or modifications (synthetic or otherwise) to the transaction metadata. This section must not be included if the transaction does not make any such additions or modifications.
 
@@ -311,7 +331,7 @@ The following columns should be included in the table:
 - **Type**: If the field is synthetic, this should specify the The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.6. Example JSON
+##### 4.4.3.3.7. Example JSON
 
 Provide JSON examples for transaction submission.
 
