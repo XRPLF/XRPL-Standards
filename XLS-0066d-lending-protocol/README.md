@@ -1669,7 +1669,7 @@ function do_overpayment(amount) -> (valueChange):
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
-    
+
     if loan.nextPaymentDueDate < currentTime and not is_set(tfLoanLatePayment):
         return "loan payment is late" error
 
