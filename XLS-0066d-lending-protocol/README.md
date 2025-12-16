@@ -96,9 +96,9 @@ Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws bac
 
 ### 1.2.2 Freeze
 
-Freeze is a mechanism by which an asset Issuer (IOUT or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents and `Account` from both sending and receiving and Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
+Freeze is a mechanism by which an asset Issuer (IOU or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents an `Account` from both sending and receiving an Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
 
-If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Brrower cannot make loan payments.
+If the Issuer freezes a Borrower's account, the Borrower cannot make loan payments. However, a frozen account does not lift the obligation to repay a Loan. If the Issuer Deep Freezes a Borrower's account, the Borrower cannot make loan payments.
 
 A Deep Freeze does not affect the Loan Broker's functions. However, a Deep Freeze will prevent the Loan Broker from receing any Lending Protocol Fees.
 
@@ -262,7 +262,7 @@ ManagementFeeRate   = 0.1 (10%)
 PrincipalRequested = 1,000 Tokens
 InterestRate       = 0.1 (10%)
 
-# SIMPLIfIED
+# SIMPLIFIED
 TotalInterestOutstanding        = PrincipalRequested x InterestRate
                     = 100 Tokens
 
@@ -1826,7 +1826,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
   - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has
     - `lsfMPTLocked` flag set.
-    - `MPTAmount` < `totalDue` (inssuficient funds).
+    - `MPTAmount` < `totalDue` (insufficient funds).
   - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
   - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
   - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
@@ -1890,7 +1890,7 @@ Finally, the actual asset transfers are executed on the ledger.
 
 - The borrower's balance is **decreased** by `totalPaidByBorrower`.
 - The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
-- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increawsed** by `totalToBroker`, depending on the fee destination.
+- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
 
 These transfers are performed according to the asset type:
 
