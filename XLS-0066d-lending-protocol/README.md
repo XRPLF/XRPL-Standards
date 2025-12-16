@@ -965,6 +965,9 @@ The account specified in the `Account` field pays the transaction fee.
 - Insufficient First-Loss Capital:
   - `LoanBroker(LoanBrokerID).CoverAvailable` < `(LoanBroker(LoanBrokerID).DebtTotal + Loan.PrincipalRequested + (TotalInterestOutstanding() - (TotalInterestOutstanding() x LoanBroker.ManagementFeeRate)) x LoanBroker(LoanBrokerID).CoverRateMinimum`
 
+- The interest from the Loan would exceed the Vault assets cap:
+  - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable + Loan.InterestOutstanding` > `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsMaximum`
+
 ##### 3.2.1.6 State Changes
 
 - Create the `Loan` object.
