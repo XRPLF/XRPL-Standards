@@ -6,7 +6,7 @@
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/88
   status: Withdrawn
   withdrawal-reason: Superseded by XLS-85
-  category: Community
+  category: Ecosystem
   created: 2023-01-23
 </pre>
 
