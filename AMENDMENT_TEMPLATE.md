@@ -71,6 +71,8 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 
 ### 2.3. Flags
 
+\_[Describe any ledger entry-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
+
 | Flag Name        | Flag Value   | Description      |
 | ---------------- | ------------ | ---------------- |
 | `[lsfFlagName1]` | `0x[Value1]` | `[Description1]` |
@@ -185,6 +187,8 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
 ### 3.2. Flags
+
+\_[Describe any transaction-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
 
 | Flag Name       | Flag Value   | Description      |
 | --------------- | ------------ | ---------------- |
