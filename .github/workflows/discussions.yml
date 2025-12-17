@@ -21,7 +21,7 @@ jobs:
         run: |
           # Calculate date one year ago (365 days)
           ONE_YEAR_AGO=$(date -u -d "@$(($(date +%s) - 31536000))" '+%Y-%m-%dT%H:%M:%SZ')
-          echo "Fetching discussions older than: $ONE_YEAR_AGO"
+          echo "Fetching discussions not updated in over a year (before: $ONE_YEAR_AGO)"
 
           # Fetch discussions using GitHub GraphQL API
           gh api graphql -f query='
@@ -46,10 +46,10 @@ jobs:
             }
           ' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" > discussions.json
 
-          # Parse and filter discussions older than 1 year
-          echo "=== Discussions older than 1 year ==="
+          # Parse and filter discussions not updated in over 1 year (exclude closed)
+          echo "=== Open discussions not updated in over 1 year ==="
           jq -r --arg cutoff "$ONE_YEAR_AGO" '
             .data.repository.discussions.nodes[] |
-            select(.updatedAt < $cutoff) |
-            "Number: \(.number)\nTitle: \(.title)\nURL: \(.url)\nCreated: \(.createdAt)\nUpdated: \(.updatedAt)\nClosed: \(.closed)\nLocked: \(.locked)\n---"
+            select(.updatedAt < $cutoff and .closed == false) |
+            "Number: \(.number)\nTitle: \(.title)\nURL: \(.url)\nCreated: \(.createdAt)\nUpdated: \(.updatedAt)\nLocked: \(.locked)\n---"
           ' discussions.json
