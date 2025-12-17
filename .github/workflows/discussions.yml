@@ -6,6 +6,18 @@ on:
   schedule:
     - cron: "0 6 * * 1" # Every Monday at 6:00 AM UTC (8:00 AM CET)
 
+env:
+  STALE_DAYS: 365 # Number of days without updates to consider a discussion stale
+  WARNING_DAYS: 30 # Number of days to wait after warning before closing
+  WARNING_MESSAGE: |
+    This discussion has not been updated in over a year and will be closed in 30 days if there is no further activity.
+
+    If you would like to continue this discussion, please add a comment. Otherwise, this discussion will be automatically closed and locked.
+  CLOSE_MESSAGE: |
+    This discussion has been automatically closed and locked due to inactivity.
+
+    If you would like to reopen this discussion, please reach out to the repository editors.
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -15,13 +27,17 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v5
 
-      - name: Fetch old discussions
+      - name: Fetch and process stale discussions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Calculate date one year ago (365 days)
-          ONE_YEAR_AGO=$(date -u -d "@$(($(date +%s) - 31536000))" '+%Y-%m-%dT%H:%M:%SZ')
-          echo "Fetching discussions not updated in over a year (before: $ONE_YEAR_AGO)"
+          # Calculate cutoff dates
+          SECONDS_IN_DAY=86400
+          STALE_CUTOFF=$(date -u -d "@$(($(date +%s) - ${{ env.STALE_DAYS }} * SECONDS_IN_DAY))" '+%Y-%m-%dT%H:%M:%SZ')
+          CLOSE_CUTOFF=$(date -u -d "@$(($(date +%s) - (${{ env.STALE_DAYS }} + ${{ env.WARNING_DAYS }}) * SECONDS_IN_DAY))" '+%Y-%m-%dT%H:%M:%SZ')
+
+          echo "Stale cutoff (for warnings): $STALE_CUTOFF"
+          echo "Close cutoff (for closing): $CLOSE_CUTOFF"
 
           # Fetch discussions using GitHub GraphQL API
           gh api graphql -f query='
@@ -33,6 +49,7 @@ jobs:
                     endCursor
                   }
                   nodes {
+                    id
                     number
                     title
                     url
@@ -40,16 +57,123 @@ jobs:
                     updatedAt
                     closed
                     locked
+                    comments(last: 10) {
+                      nodes {
+                        body
+                        createdAt
+                        author {
+                          login
+                        }
+                      }
+                    }
                   }
                 }
               }
             }
           ' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" > discussions.json
 
-          # Parse and filter discussions not updated in over 1 year (exclude closed)
-          echo "=== Open discussions not updated in over 1 year ==="
-          jq -r --arg cutoff "$ONE_YEAR_AGO" '
+          # Process discussions to close (stale + warning period passed)
+          # A discussion should be closed if it has a warning comment from github-actions bot
+          # that is older than WARNING_DAYS
+          echo ""
+          echo "=== Discussions to close (warned ${{ env.WARNING_DAYS }}+ days ago with no activity) ==="
+          jq -r --arg warningCutoff "$CLOSE_CUTOFF" '
             .data.repository.discussions.nodes[] |
-            select(.updatedAt < $cutoff and .closed == false) |
-            "Number: \(.number)\nTitle: \(.title)\nURL: \(.url)\nCreated: \(.createdAt)\nUpdated: \(.updatedAt)\nLocked: \(.locked)\n---"
-          ' discussions.json
+            select(.closed == false) |
+            # Find the most recent warning comment from github-actions bot
+            . as $discussion |
+            (.comments.nodes | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
+            select($warningComment != null) |
+            # Check if warning comment is old enough AND no updates since warning
+            select($warningComment.createdAt < $warningCutoff) |
+            select($discussion.updatedAt <= $warningComment.createdAt or ($discussion.updatedAt < $warningCutoff)) |
+            @json
+          ' discussions.json | while IFS= read -r discussion; do
+            if [ -n "$discussion" ]; then
+              DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
+              DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
+              DISCUSSION_TITLE=$(echo "$discussion" | jq -r '.title')
+              DISCUSSION_URL=$(echo "$discussion" | jq -r '.url')
+              DISCUSSION_UPDATED=$(echo "$discussion" | jq -r '.updatedAt')
+
+              echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
+              echo "  URL: $DISCUSSION_URL"
+              echo "  Last updated: $DISCUSSION_UPDATED"
+              echo "  Action: Would close and lock"
+
+              # COMMENTED OUT FOR TESTING
+              # echo "  Adding close comment..."
+              # gh api graphql -f query='
+              #   mutation($discussionId: ID!, $body: String!) {
+              #     addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+              #       comment { id }
+              #     }
+              #   }
+              # ' -f discussionId="$DISCUSSION_ID" -f body="${{ env.CLOSE_MESSAGE }}"
+
+              # echo "  Closing discussion..."
+              # gh api graphql -f query='
+              #   mutation($discussionId: ID!) {
+              #     closeDiscussion(input: {discussionId: $discussionId}) {
+              #       discussion { id }
+              #     }
+              #   }
+              # ' -f discussionId="$DISCUSSION_ID"
+
+              # echo "  Locking discussion..."
+              # gh api graphql -f query='
+              #   mutation($discussionId: ID!) {
+              #     lockLockable(input: {lockableId: $discussionId}) {
+              #       lockedRecord { locked }
+              #     }
+              #   }
+              # ' -f discussionId="$DISCUSSION_ID"
+
+              echo ""
+            fi
+          done
+
+          # Process discussions to warn (stale but not yet warned)
+          # A discussion should be warned if:
+          # 1. It hasn't been updated in STALE_DAYS
+          # 2. It doesn't already have a warning comment
+          # 3. OR it has a warning comment but has been updated since then (meaning user responded)
+          echo ""
+          echo "=== Discussions to warn (stale for ${{ env.STALE_DAYS }}+ days, not yet warned) ==="
+          jq -r --arg staleCutoff "$STALE_CUTOFF" '
+            .data.repository.discussions.nodes[] |
+            select(.closed == false) |
+            # Check if discussion is stale
+            select(.updatedAt < $staleCutoff) |
+            # Find any existing warning comment
+            . as $discussion |
+            (.comments.nodes | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
+            # Only warn if: no warning exists OR discussion was updated after the last warning
+            select($warningComment == null or $discussion.updatedAt > $warningComment.createdAt) |
+            @json
+          ' discussions.json | while IFS= read -r discussion; do
+            if [ -n "$discussion" ]; then
+              DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
+              DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
+              DISCUSSION_TITLE=$(echo "$discussion" | jq -r '.title')
+              DISCUSSION_URL=$(echo "$discussion" | jq -r '.url')
+              DISCUSSION_UPDATED=$(echo "$discussion" | jq -r '.updatedAt')
+
+              echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
+              echo "  URL: $DISCUSSION_URL"
+              echo "  Last updated: $DISCUSSION_UPDATED"
+              echo "  Action: Would add warning comment"
+
+              # COMMENTED OUT FOR TESTING
+              # echo "  Adding warning comment..."
+              # gh api graphql -f query='
+              #   mutation($discussionId: ID!, $body: String!) {
+              #     addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+              #       comment { id }
+              #     }
+              #   }
+              # ' -f discussionId="$DISCUSSION_ID" -f body="${{ env.WARNING_MESSAGE }}"
+
+              echo ""
+            fi
+          done
