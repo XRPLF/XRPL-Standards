@@ -5,7 +5,7 @@
   author: Nikolaos D. Bougalis <nikb@bougalis.net>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/142
   status: Final
-  category: Community
+  category: Ecosystem
   created: 2019-06-04
 </pre>
 

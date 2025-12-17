@@ -5,7 +5,7 @@
   author: Wietse Wind <w@xrpl-labs.com>
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/27
   status: Stagnant
-  category: Community
+  category: Ecosystem
   created: 2019-02-25
 </pre>
 
