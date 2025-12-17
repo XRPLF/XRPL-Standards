@@ -80,13 +80,11 @@ jobs:
           jq -r --arg warningCutoff "$CLOSE_CUTOFF" '
             .data.repository.discussions.nodes[] |
             select(.closed == false) |
-            # Find the most recent warning comment from github-actions bot
             . as $discussion |
             (.comments.nodes | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
             select($warningComment != null) |
-            # Check if warning comment is old enough AND no updates since warning
             select($warningComment.createdAt < $warningCutoff) |
-            select($discussion.updatedAt <= $warningComment.createdAt or ($discussion.updatedAt < $warningCutoff)) |
+            select($discussion.updatedAt <= $warningComment.createdAt or $discussion.updatedAt < $warningCutoff) |
             @json
           ' discussions.json | while IFS= read -r discussion; do
             if [ -n "$discussion" ]; then
