@@ -22,7 +22,7 @@ jobs:
 
       - name: Cache Python dependencies
         id: cache-deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/site/requirements.txt') }}
