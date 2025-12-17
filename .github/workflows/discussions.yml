@@ -72,21 +72,18 @@ jobs:
             }
           ' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" > discussions.json
 
-          # Process discussions to close (stale + warning period passed)
-          # A discussion should be closed if it has a warning comment from github-actions bot
-          # that is older than WARNING_DAYS
           echo ""
           echo "=== Discussions to close (warned ${{ env.WARNING_DAYS }}+ days ago with no activity) ==="
-          jq -r --arg warningCutoff "$CLOSE_CUTOFF" '
-            .data.repository.discussions.nodes[] |
+          jq -r --arg warningCutoff "$CLOSE_CUTOFF" \
+            '.data.repository.discussions.nodes[] |
             select(.closed == false) |
             . as $discussion |
-            (.comments.nodes | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
+            ((.comments.nodes // []) | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
             select($warningComment != null) |
             select($warningComment.createdAt < $warningCutoff) |
             select($discussion.updatedAt <= $warningComment.createdAt or $discussion.updatedAt < $warningCutoff) |
-            @json
-          ' discussions.json | while IFS= read -r discussion; do
+            @json' \
+            discussions.json | while IFS= read -r discussion; do
             if [ -n "$discussion" ]; then
               DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
               DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
@@ -131,25 +128,17 @@ jobs:
             fi
           done
 
-          # Process discussions to warn (stale but not yet warned)
-          # A discussion should be warned if:
-          # 1. It hasn't been updated in STALE_DAYS
-          # 2. It doesn't already have a warning comment
-          # 3. OR it has a warning comment but has been updated since then (meaning user responded)
           echo ""
           echo "=== Discussions to warn (stale for ${{ env.STALE_DAYS }}+ days, not yet warned) ==="
-          jq -r --arg staleCutoff "$STALE_CUTOFF" '
-            .data.repository.discussions.nodes[] |
+          jq -r --arg staleCutoff "$STALE_CUTOFF" \
+            '.data.repository.discussions.nodes[] |
             select(.closed == false) |
-            # Check if discussion is stale
             select(.updatedAt < $staleCutoff) |
-            # Find any existing warning comment
             . as $discussion |
-            (.comments.nodes | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
-            # Only warn if: no warning exists OR discussion was updated after the last warning
+            ((.comments.nodes // []) | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment |
             select($warningComment == null or $discussion.updatedAt > $warningComment.createdAt) |
-            @json
-          ' discussions.json | while IFS= read -r discussion; do
+            @json' \
+            discussions.json | while IFS= read -r discussion; do
             if [ -n "$discussion" ]; then
               DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
               DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
