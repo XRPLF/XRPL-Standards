@@ -13,22 +13,43 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
-      - name: Set up python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install pip packages
-        run: |
-          pip install python-graphql-client
-          pip install python-dateutil
-        working-directory: ${{ github.workspace }}
-
-      - name: Run script comment-close-old-discussions.py
-        run: |
-          python .github/comment-close-old-discussions.py
-        working-directory: ${{ github.workspace }}
+      - name: Fetch old discussions
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Calculate date one year ago (365 days)
+          ONE_YEAR_AGO=$(date -u -d "@$(($(date +%s) - 31536000))" '+%Y-%m-%dT%H:%M:%SZ')
+          echo "Fetching discussions older than: $ONE_YEAR_AGO"
+
+          # Fetch discussions using GitHub GraphQL API
+          gh api graphql -f query='
+            query($owner: String!, $repo: String!, $cursor: String) {
+              repository(owner: $owner, name: $repo) {
+                discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                  nodes {
+                    number
+                    title
+                    url
+                    createdAt
+                    updatedAt
+                    closed
+                    locked
+                  }
+                }
+              }
+            }
+          ' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" > discussions.json
+
+          # Parse and filter discussions older than 1 year
+          echo "=== Discussions older than 1 year ==="
+          jq -r --arg cutoff "$ONE_YEAR_AGO" '
+            .data.repository.discussions.nodes[] |
+            select(.updatedAt < $cutoff) |
+            "Number: \(.number)\nTitle: \(.title)\nURL: \(.url)\nCreated: \(.createdAt)\nUpdated: \(.updatedAt)\nClosed: \(.closed)\nLocked: \(.locked)\n---"
+          ' discussions.json
