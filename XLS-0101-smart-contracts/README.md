@@ -815,10 +815,13 @@ These will need to be guarded against in this design. One option for this is to 
 - Pre-load all the contract instance params when opening the VM so it’s not expensive to fetch them?
 - How should a contract handle if someone sends a token they don’t have a trustline for?
 - [Borsh](https://borsh.io/) instead of JSON for `STData`?
+  - Consider other binary encodings alongside consideration of Borsh (e.g., maybe [SSZ](https://ethereum.org/developers/docs/data-structures-and-encoding/ssz/) or [SCALE](https://github.com/paritytech/parity-scale-codec))
 - Readonly contract functions like EVM? Might be for v2, or might be unnecessary given the human-readability of the `STData` type
 - Should `ContractData` objects be stored in a separate directory structure (e.g. a new one, not the standard owner directory)?
 - What should happen if `user_delete` or `clawback` fails or crashes in some way?
   - If it crashes due to running out of `ComputationAmount` the transaction should probably fail, if it crashes/fails for anything else (that is a result of the WASM code) the transaction should probably succeed
+- Consider a separate data spec, possibly including the concept of Rent.
+- What should happen to Gas fees -- burn them? Pay them out? something else?
 
 ## Reserves
 
