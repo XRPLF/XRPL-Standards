@@ -949,7 +949,9 @@ The account specified in the `Account` field pays the transaction fee.
 - The `Borrower` `AccountRoot` object does not exist.
 
 - `PaymentInterval` is less than `60` seconds.
-- `GracePeriod` is greater than the `PaymentInterval`.
+- `GracePeriod` is:
+  - Less than `60` seconds.
+  - Greater than the `PaymentInterval`.
 
 - The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. This can happen if the loan term is too short or the principal is too small for any interest to accrue to a representable value.
 - The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. This prevents the loan from being amortized correctly.
