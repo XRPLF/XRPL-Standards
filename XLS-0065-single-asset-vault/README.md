@@ -689,16 +689,15 @@ When `Amount` is `0`, the transaction will clawback/burn all funds, up to the to
   - `Vault.AssetsTotal != 0` OR `Vault.AssetsAvailable != 0` (Vault Owner can only burn worthless shares).
   - `Amount != 0` AND `Amount != MPToken(Vault.MPTokenIssuanceID, Holder).MPTAmount` (partial burns are not allowed).
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `XRP`.
+- If the submitter is the **Asset Issuer** and `Vault.Asset` is `XRP`.
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `IOU`:
+- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `IOU` and:
   - If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
   - If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `MPT`:
+- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `MPT` and:
   - `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
-  - If the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
-
+  
 - The `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
 ##### 3.3.1.3 State Changes
