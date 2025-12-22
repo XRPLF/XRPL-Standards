@@ -22,6 +22,11 @@ CLOSE_CUTOFF=$(date -u -d "@$(($(date +%s) - (STALE_DAYS + WARNING_DAYS) * SECON
 echo "Stale cutoff (for warnings): $STALE_CUTOFF"
 echo "Close cutoff (for closing): $CLOSE_CUTOFF"
 
+# Debug: Check token permissions
+echo ""
+echo "Checking GitHub token permissions..."
+gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME --jq '.permissions' || echo "Could not fetch repo permissions"
+
 # Fetch discussions using GitHub GraphQL API
 gh api graphql -f query='
   query($owner: String!, $repo: String!, $cursor: String) {
