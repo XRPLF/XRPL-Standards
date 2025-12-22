@@ -7,7 +7,7 @@ on:
     - cron: "0 6 * * 1" # Every Monday at 6:00 AM UTC (8:00 AM CET)
 
 env:
-  STALE_DAYS: 365 # Number of days without updates to consider a discussion stale
+  STALE_DAYS: 1095 # 365 * 3 # Number of days without updates to consider a discussion stale
   WARNING_DAYS: 30 # Number of days to wait after warning before closing
   WARNING_MESSAGE: |
     This discussion has not been updated in over a year and will be closed in 30 days if there is no further activity.
