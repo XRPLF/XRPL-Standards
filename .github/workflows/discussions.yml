@@ -33,7 +33,7 @@ jobs:
 
       - name: Fetch and process stale discussions
         env:
-          GH_TOKEN: ${{ secrets.DISCUSSIONS_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN || secrets.GITHUB_TOKEN }}
           STALE_DAYS: ${{ env.STALE_DAYS }}
           WARNING_DAYS: ${{ env.WARNING_DAYS }}
           WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}
