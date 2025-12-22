@@ -73,20 +73,19 @@ cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" '.data.reposito
     echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
     echo "  URL: $DISCUSSION_URL"
     echo "  Last updated: $DISCUSSION_UPDATED"
-    echo "  Action: Would close and lock"
+    echo "  Action: Closing and locking"
 
-    # COMMENTED OUT FOR TESTING - Uncomment the lines below to enable actual closing
     # Step 1: Add a closing comment explaining why the discussion was closed
-    # echo "  Adding close comment..."
-    # gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"
+    echo "  Adding close comment..."
+    gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"
 
     # Step 2: Close the discussion
-    # echo "  Closing discussion..."
-    # gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"
+    echo "  Closing discussion..."
+    gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"
 
     # Step 3: Lock the discussion to prevent further comments
-    # echo "  Locking discussion..."
-    # gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"
+    echo "  Locking discussion..."
+    gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"
 
     echo ""
   fi
@@ -111,12 +110,11 @@ cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" '.data.repository
     echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
     echo "  URL: $DISCUSSION_URL"
     echo "  Last updated: $DISCUSSION_UPDATED"
-    echo "  Action: Would add warning comment"
+    echo "  Action: Adding warning comment"
 
-    # COMMENTED OUT FOR TESTING - Uncomment the lines below to enable actual warnings
     # Add a warning comment to the discussion
-    # echo "  Adding warning comment..."
-    # gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"
+    echo "  Adding warning comment..."
+    gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"
 
     echo ""
   fi
