@@ -31,9 +31,16 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v5
 
+      - name: Generate token from GitHub App
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Fetch and process stale discussions
         env:
-          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           STALE_DAYS: ${{ env.STALE_DAYS }}
           WARNING_DAYS: ${{ env.WARNING_DAYS }}
           WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}
@@ -42,7 +49,7 @@ jobs:
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "ERROR: GH_TOKEN is not set. Make sure the DISCUSSION_TOKEN secret is configured."
+            echo "ERROR: GH_TOKEN is not set. Make sure the GitHub App is configured correctly."
             exit 1
           fi
           echo "GH_TOKEN is set (length: ${#GH_TOKEN})"
