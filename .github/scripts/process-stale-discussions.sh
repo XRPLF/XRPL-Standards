@@ -13,6 +13,7 @@ set -e
 # - GITHUB_REPOSITORY_OWNER: Owner of the repository
 # - GITHUB_REPOSITORY_NAME: Name of the repository
 # - GH_TOKEN: GitHub token for API access
+# - DRY_RUN: Set to "true" to only print what would happen without making changes (optional)
 
 # Calculate cutoff dates
 SECONDS_IN_DAY=86400
@@ -21,6 +22,11 @@ CLOSE_CUTOFF=$(date -u -d "@$(($(date +%s) - (STALE_DAYS + WARNING_DAYS) * SECON
 
 echo "Stale cutoff (for warnings): $STALE_CUTOFF"
 echo "Close cutoff (for closing): $CLOSE_CUTOFF"
+
+if [ "$DRY_RUN" = "true" ]; then
+  echo ""
+  echo "*** DRY RUN MODE - No actual changes will be made ***"
+fi
 
 # Debug: Check token permissions
 echo ""
@@ -78,19 +84,23 @@ cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" '.data.reposito
     echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
     echo "  URL: $DISCUSSION_URL"
     echo "  Last updated: $DISCUSSION_UPDATED"
-    echo "  Action: Closing and locking"
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "  Action: Would close and lock (DRY RUN)"
+    else
+      echo "  Action: Closing and locking"
 
-    # Step 1: Add a closing comment explaining why the discussion was closed
-    echo "  Adding close comment..."
-    gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"
+      # Step 1: Add a closing comment explaining why the discussion was closed
+      echo "  Adding close comment..."
+      gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"
 
-    # Step 2: Close the discussion
-    echo "  Closing discussion..."
-    gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"
+      # Step 2: Close the discussion
+      echo "  Closing discussion..."
+      gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"
 
-    # Step 3: Lock the discussion to prevent further comments
-    echo "  Locking discussion..."
-    gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"
+      # Step 3: Lock the discussion to prevent further comments
+      echo "  Locking discussion..."
+      gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"
+    fi
 
     echo ""
   fi
@@ -115,11 +125,15 @@ cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" '.data.repository
     echo "Discussion #$DISCUSSION_NUMBER: $DISCUSSION_TITLE"
     echo "  URL: $DISCUSSION_URL"
     echo "  Last updated: $DISCUSSION_UPDATED"
-    echo "  Action: Adding warning comment"
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "  Action: Would add warning comment (DRY RUN)"
+    else
+      echo "  Action: Adding warning comment"
 
-    # Add a warning comment to the discussion
-    echo "  Adding warning comment..."
-    gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"
+      # Add a warning comment to the discussion
+      echo "  Adding warning comment..."
+      gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"
+    fi
 
     echo ""
   fi
