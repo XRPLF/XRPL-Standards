@@ -25,6 +25,7 @@ echo "Close cutoff (for closing): $CLOSE_CUTOFF"
 # Debug: Check token permissions
 echo ""
 echo "Checking GitHub token permissions..."
+echo "Token: $GH_TOKEN"
 gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME --jq '.permissions' || echo "Could not fetch repo permissions"
 
 # Fetch discussions using GitHub GraphQL API
