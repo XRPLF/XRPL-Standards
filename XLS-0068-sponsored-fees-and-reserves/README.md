@@ -868,13 +868,13 @@ The primary motivation for this design is to enable companies, token issuers, an
 
 # Appendix
 
-## 1. Appendix A: FAQ
+## Appendix A: FAQ
 
-### 1.1. A.1: Does the sponsee receive any XRP for the reserve?
+### A.1: Does the sponsee receive any XRP for the reserve?
 
 No, there is no XRP transfer in a sponsorship relationship - the XRP stays in the sponsor's account. The burden of the reserve for that object/account is just transferred to the sponsor.
 
-### 1.2. A.2: What happens if you try to delete your account and you have sponsored objects?
+### A.2: What happens if you try to delete your account and you have sponsored objects?
 
 If the account itself is sponsored, then it can be deleted, but the destination of the `AccountDelete` transaction (in other words, where the leftover XRP goes) **must** be the sponsor's account. This ensures that the sponsor gets their reserve back, and the sponsee cannot run away with those funds.
 
@@ -882,27 +882,27 @@ If the sponsee still has sponsored objects, those objects will follow the same r
 
 If a sponsored object is deleted (either due to normal object deletion processes or, in the case of objects that aren't deletion blockers, because the owner account is deleted), the sponsor's reserve becomes available again.
 
-### 1.3. A.3: What if a sponsor that is sponsoring a few objects wants to delete their account?
+### A.3: What if a sponsor that is sponsoring a few objects wants to delete their account?
 
 An account cannot be deleted if it is sponsoring **any** existing accounts or objects. They will need to either delete those objects (by asking the owner to do so, as they cannot do so directly) or use the `SponsorshipTransfer` transaction to relinquish control of them.
 
-### 1.4. A.4: Does a sponsor have any powers over an object they pay the reserve for? I.e. can they delete the object?
+### A.4: Does a sponsor have any powers over an object they pay the reserve for? I.e. can they delete the object?
 
 No. If a sponsor no longer wants to support an object, they can always use the `SponsorshipTransfer` transaction instead to transfer the reserve burden back to the sponsee.
 
-### 1.5. A.5: What if a sponsee refuses to delete their account when a sponsor wants to stop supporting their account?
+### A.5: What if a sponsee refuses to delete their account when a sponsor wants to stop supporting their account?
 
 The sponsor will have the standard problem of trying to get ahold of a debtor to make them pay. They may use the `SponsorshipTransfer` transaction to put the onus on the sponsee. If the sponsee does not have enough XRP to cover the reserve for those objects, they will not be able to create any more objects until they do so.
 
-### 1.6. A.6: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
+### A.6: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
 
 If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), to ensure that the sponsee can't do something else with the funds before the `SponsorshipTransfer` transaction is validated.
 
-### 1.7. A.7: Would sponsored accounts carry a lower reserve?
+### A.7: Would sponsored accounts carry a lower reserve?
 
 No, they would still carry a reserve of 1 XRP at current levels.
 
-### 1.8. A.8: Can an existing unsponsored ledger object/account be sponsored?
+### A.8: Can an existing unsponsored ledger object/account be sponsored?
 
 Yes, with the `SponsorshipTransfer` transaction.
 
@@ -940,9 +940,9 @@ The answer to this question is still being explored. One possible solution is to
 
 Currently, only the global signer list is supported. Another `SignerListID` value could be added to support sponsorship. Transaction values can only go up to $2^{16}$, since the `TransactionType` field is a `UInt16`, but the `SignerListID` field goes up to $2^{32}$, so there is room in the design for additional values that do not correlate to a specific transaction type.
 
-## 2. Appendix B: Alternate Designs
+## Appendix B: Alternate Designs
 
-### 2.1. B.1: Add a `Sponsor` to the account
+### B.1: Add a `Sponsor` to the account
 
 This design involved updating `AccountSet` to allow users to add a `Sponsor` to their account (with a signature from the sponsor as well). The sponsor would then sponsor every object from that account while the field was active, and either the sponsor or the account could remove the sponsorship at any time.
 
@@ -952,7 +952,7 @@ The current design also supports having different sponsors for different objects
 
 <!--Stellar uses this philosophy ("the relationship should be ephemeral to prevent abuse") for their sponsored reserves design, which I like.-->
 
-### 2.2. B.2: A Wrapper Transaction
+### B.2: A Wrapper Transaction
 
 There would be a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
 
@@ -969,7 +969,7 @@ This was a part of a previous version of the spec (inspired by Stellar's [sandwi
 
 In addition, the signing process becomes complicated (as discovered in the process of developing XLS-56). You have to somehow prevent the sponsor from submitting the as-is signed transaction to the network, without including it in the wrapper transaction.
 
-### 2.3. B.3: A Create-Accept-Cancel Flow
+### B.3: A Create-Accept-Cancel Flow
 
 The rough idea of this design was to have a new set of transactions (e.g. `SponsorCreate`/`SponsorAccept`/`SponsorCancel`/`SponsorFinish`) where a sponsor could take on the reserve for an existing object.
 
