@@ -951,7 +951,59 @@ The only way an account can be created is via a `Payment` transaction. So the sp
 
 ## 20. Rationale
 
-The primary motivation for this design is to enable companies, token issuers, and other entities to reduce onboarding friction for end users by covering transaction fees and reserve requirements on their behalf. Today, users must self-fund both, or companies must essentially donate XRP to users with no controls over how they use it, before interacting with the XRPL. This creates a barrier to entry for use cases such as token distribution, NFT minting, or enterprise onboarding. Sponsorship provides a mechanism for entities with established XRP balances to subsidize these costs while maintaining strong on-chain accountability.
+This section explains the key technical design decisions, why particular choices were made, and how this design compares to similar features on other chains.
+
+### 20.1. Related Work
+
+Sponsored transactions and reserves are a common feature across blockchain ecosystems:
+
+- **Stellar** implements [sponsored reserves](https://developers.stellar.org/docs/learn/encyclopedia/sponsored-reserves) using a "sandwich transaction" pattern with `BeginSponsoringFutureReserves` and `EndSponsoringFutureReserves` operations wrapped around the sponsored operations.
+- **Ethereum** supports meta-transactions through various standards (EIP-2771, EIP-3009) and account abstraction (ERC-4337), where a relayer submits transactions on behalf of users and pays the gas fees.
+- **Solana** allows fee payers to be specified separately from the transaction signer.
+
+This proposal draws inspiration from these implementations while adapting the concepts to fit the XRPL's account-based model and existing transaction structure.
+
+### 20.2. Pre-Funded vs. Co-Signed Sponsorship
+
+The design supports two modes of sponsorship: pre-funded (via the `Sponsorship` ledger object) and co-signed (via the `Sponsor` transaction field). This dual approach was chosen to accommodate different use cases:
+
+- **Co-signed sponsorship** gives sponsors fine-grained control over each transaction, ideal for high-value or sensitive operations.
+- **Pre-funded sponsorship** reduces operational overhead for sponsors who want to enable many transactions without being involved in each one, while still maintaining limits via `MaxFee` and `ReserveCount`.
+
+### 20.3. Other Designs Considered
+
+#### 20.3.1. Per-Transaction Sponsorship vs. Account-Level Sponsorship
+
+An earlier design involved updating `AccountSet` to allow users to add a `Sponsor` to their account (with a signature from the sponsor as well). The sponsor would then sponsor every object from that account while the field was active, and either the sponsor or the account could remove the sponsorship at any time.
+
+This approach was rejected because it made more sense for the relationship to be specific to a specific transaction(s), to prevent abuse—the sponsor should decide what objects they want to support and what objects they don't want to support. This philosophy (that the sponsorship relationship should be ephemeral to prevent abuse) aligns with Stellar's design.
+
+The current design also supports having different sponsors for different objects, which allows users to use a broad set of services and platforms, instead of being locked into one.
+
+<!--Stellar uses this philosophy ("the relationship should be ephemeral to prevent abuse") for their sponsored reserves design, which I like.-->
+
+#### 20.3.2. Inner Object vs. Wrapper Transaction
+
+An alternative design considered was a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
+
+It would look something like this:
+
+| Field Name        | Required | JSON Type | Internal Type | Description                                                              |
+| ----------------- | -------- | --------- | ------------- | ------------------------------------------------------------------------ |
+| `TransactionType` | Yes      | `string`  | `UInt16`      | The transaction type (`Relay`).                                          |
+| `Account`         | Yes      | `string`  | `STAccount`   | The sponsor of the transaction.                                          |
+| `Transaction`     | Yes      | `object`  | `STTx`        | The sponsee's transaction.                                               |
+| `Fee`             | Yes      | `string`  | `STAmount`    | The fee for the transaction. This should match the fee in `Transaction`. |
+
+This was inspired by Stellar's sandwich transaction design, but the current inner object design felt cleaner. From an implementation perspective, it's easier to have the fee payer as a part of the existing transaction rather than as a part of a wrapper transaction, since that info needs to somehow get passed down the stack. Also, while the wrapper transaction paradigm will be used in XLS-56, they should be used sparingly in designs—only when necessary—as their flow is rather complicated in the `rippled` code.
+
+In addition, the signing process becomes complicated (as discovered in the process of developing XLS-56). You have to somehow prevent the sponsor from submitting the as-is signed transaction to the network, without including it in the wrapper transaction.
+
+#### 20.3.2. Create-Accept-Cancel Flow
+
+Another design considered was to have a new set of transactions (e.g. `SponsorCreate`/`SponsorAccept`/`SponsorCancel`/`SponsorFinish`) where a sponsor could take on the reserve for an existing object.
+
+This design was never seriously considered, as it felt too complicated and introduced several new transactions. It also doesn't support adding a sponsor to the object at object creation time, which is a much smoother UX and never requires the owner/sponsee to hold enough XRP for the reserve.
 
 ## 21. n+1. Remaining TODOs/Open Questions
 
@@ -1034,38 +1086,3 @@ The answer to this question is still being explored. One possible solution is to
 ### A.16: How does this proposal work in conjunction with [XLS-49](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0049-multiple-signer-lists)? What signer list(s) have the power to sponsor fees or reserves?
 
 Currently, only the global signer list is supported. Another `SignerListID` value could be added to support sponsorship. Transaction values can only go up to $2^{16}$, since the `TransactionType` field is a `UInt16`, but the `SignerListID` field goes up to $2^{32}$, so there is room in the design for additional values that do not correlate to a specific transaction type.
-
-## Appendix B: Alternate Designs
-
-### B.1: Add a `Sponsor` to the account
-
-This design involved updating `AccountSet` to allow users to add a `Sponsor` to their account (with a signature from the sponsor as well). The sponsor would then sponsor every object from that account while the field was active, and either the sponsor or the account could remove the sponsorship at any time.
-
-This was a previous version of the spec, but it made more sense for the relationship to be specific to a specific transaction(s), to prevent abuse (the sponsor should decide what objects they want to support and what objects they don't want to support).
-
-The current design also supports having different sponsors for different objects, which allows users to use a broad set of services and platforms, instead of being locked into one.
-
-<!--Stellar uses this philosophy ("the relationship should be ephemeral to prevent abuse") for their sponsored reserves design, which I like.-->
-
-### B.2: A Wrapper Transaction
-
-There would be a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
-
-It would look something like this:
-
-| Field Name        | Required | JSON Type | Internal Type | Description                                                              |
-| ----------------- | -------- | --------- | ------------- | ------------------------------------------------------------------------ |
-| `TransactionType` | Yes      | `string`  | `UInt16`      | The transaction type (`Relay`).                                          |
-| `Account`         | Yes      | `string`  | `STAccount`   | The sponsor of the transaction.                                          |
-| `Transaction`     | Yes      | `object`  | `STTx`        | The sponsee's transaction.                                               |
-| `Fee`             | Yes      | `string`  | `STAmount`    | The fee for the transaction. This should match the fee in `Transaction`. |
-
-This was a part of a previous version of the spec (inspired by Stellar's [sandwich transaction design](https://developers.stellar.org/docs/learn/encyclopedia/sponsored-reserves#begin-and-end-sponsorships) for their implementation of sponsored reserves), but the existing design felt cleaner. From an implementation perspective, it's easier to have the fee payer as a part of the existing transaction rather than as a part of a wrapper transaction, since that info needs to somehow get passed down the stack. Also, while the wrapper transaction paradigm will be used in XLS-56, they should be used sparingly in designs - only when necessary - as their flow is rather complicated in the `rippled` code.
-
-In addition, the signing process becomes complicated (as discovered in the process of developing XLS-56). You have to somehow prevent the sponsor from submitting the as-is signed transaction to the network, without including it in the wrapper transaction.
-
-### B.3: A Create-Accept-Cancel Flow
-
-The rough idea of this design was to have a new set of transactions (e.g. `SponsorCreate`/`SponsorAccept`/`SponsorCancel`/`SponsorFinish`) where a sponsor could take on the reserve for an existing object.
-
-This design was never seriously considered, as it felt too complicated and introduced several new transactions. It also doesn't support adding a sponsor to the object at object creation time, which is a much smoother UX and never requires the owner/sponsee to hold enough XRP for the reserve.
