@@ -4,7 +4,7 @@
     author: RichardAH (@RichardAH)
     created: 2020-04-05
     status: Stagnant
-    category: Community
+    category: Ecosystem
 </pre>
 
 ## Changelog

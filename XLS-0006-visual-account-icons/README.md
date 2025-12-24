@@ -5,7 +5,7 @@
   author: Richard Holland (@RichardAH)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/24
   status: Final
-  category: Community
+  category: Ecosystem
   created: 2019-09-22
 </pre>
 

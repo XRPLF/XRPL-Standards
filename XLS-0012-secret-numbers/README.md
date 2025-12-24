@@ -5,7 +5,7 @@
   author: Wietse Wind <w@xrpl-labs.com>, Nik Bougalis (@nbougalis)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/15
   status: Final
-  category: Community
+  category: Ecosystem
   created: 2020-05-13
 </pre>
 

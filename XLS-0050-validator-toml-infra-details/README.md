@@ -5,7 +5,7 @@
   author: Wietse Wind (@WietseWind)
   created: 2023-11-14
   status: Final
-  category: Community
+  category: Ecosystem
 </pre>
 
 # Abstract

@@ -4,7 +4,7 @@
   description: The API version number allows for evolving the `rippled` API while maintaining backward compatibility
   author: Elliot Lee (@intelliot), Peng Wang (@pwang200)
   status: Final
-  category: Protocol
+  category: System
   created: 2021-08-11
 </pre>
 

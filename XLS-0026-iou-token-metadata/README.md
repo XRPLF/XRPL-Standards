@@ -5,7 +5,7 @@
   author: Marc-Emanuel Otto (@Mwni)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/71
   status: Draft
-  category: Community
+  category: Ecosystem
   created: 2022-04-04
 </pre>
 

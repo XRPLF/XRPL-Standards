@@ -5,7 +5,7 @@
   author: Richard Holland (@RichardAH), Ryan Molley (@interc0der)
   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/91
   status: Final
-  category: Protocol
+  category: System
   created: 2023-02-12
 </pre>
 

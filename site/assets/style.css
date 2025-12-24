@@ -309,13 +309,13 @@ main {
   color: #ff6b35;
 }
 
-.category-badge.community {
+.category-badge.ecosystem {
   border: 1px solid var(--color-purple-4);
   background-color: #2e1a4c;
   color: var(--color-purple-4);
 }
 
-.category-badge.protocol {
+.category-badge.system {
   border: 1px solid #ffd700;
   background-color: #4c4200;
   color: #ffd700;

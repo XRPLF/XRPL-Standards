@@ -5,7 +5,7 @@
   author: Denis Angell (@dangell7)
   created: 2024-03-26
   status: Stagnant
-  category: Community
+  category: Ecosystem
 </pre>
 
 # Problem Statement

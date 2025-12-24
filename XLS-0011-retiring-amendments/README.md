@@ -5,7 +5,7 @@
   description: This standard proposes an orderly process for retiring legacy XRP Ledger protocol behavior.
   created: 2020-05-07
   status: Final
-  category: Community
+  category: Ecosystem
 </pre>
 
 # Retiring Amendments
