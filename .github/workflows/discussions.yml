@@ -52,6 +52,4 @@ jobs:
             echo "ERROR: GH_TOKEN is not set. Make sure the GitHub App is configured correctly."
             exit 1
           fi
-          echo "GH_TOKEN is set (length: ${#GH_TOKEN})"
-          chmod +x .github/scripts/process-stale-discussions.sh
           .github/scripts/process-stale-discussions.sh
