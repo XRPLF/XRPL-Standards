@@ -173,6 +173,24 @@ This object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/dele
 
 The `snake_case` form of the ledger object name is `sponsorship`.
 
+### 5.9. Example JSON
+
+```json
+{
+  "LedgerEntryType": "Sponsorship",
+  "Owner": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Sponsee": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+  "FeeAmount": "1000000",
+  "MaxFee": "1000",
+  "ReserveCount": 5,
+  "Flags": 0,
+  "OwnerNode": "0000000000000000",
+  "SponseeNode": "0000000000000000",
+  "PreviousTxnID": "1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF",
+  "PreviousTxnLgrSeq": 12345678
+}
+```
+
 ## 6. Ledger Entry: `AccountRoot`
 
 An `AccountRoot` ledger entry type describes a single [account](https://xrpl.org/docs/concepts/accounts), its settings, and XRP balance.
@@ -479,6 +497,21 @@ This transaction creates and updates the `Sponsorship` object.
 - If the `tfDeleteObject` flag is used, it will delete the object. All funds remaining in the object will be sent back to the `SponsorAccount`.
   - _Note: this does not affect already-sponsored entries and accounts. Existing sponsored objects/accounts will need to go through the `SponsorshipTransfer` process._
 
+### 9.5. Example JSON
+
+```json
+{
+  "TransactionType": "SponsorshipSet",
+  "Account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Sponsee": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+  "FeeAmount": "1000000",
+  "MaxFee": "1000",
+  "ReserveCount": 5,
+  "Fee": "12",
+  "Sequence": 42
+}
+```
+
 ## 10. Transaction: `SponsorshipTransfer`
 
 This transaction transfers a sponsor relationship for a particular ledger object's object reserve. The sponsor relationship can either be passed on to a new sponsor, or dissolved entirely (with the sponsee taking on the reserve). Either the sponsor or sponsee may submit this transaction at any point in time.
@@ -588,6 +621,18 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsorAccount` fie
 
 If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount` field, the `SponsorAccount`'s `SponsoringOwnerCount` is decremented by the `tx.Account`'s `SponsoredOwnerCount`.
 
+### 12.3. Example JSON
+
+```json
+{
+  "TransactionType": "AccountDelete",
+  "Account": "rWYkbWkCeg8dP6rXALnjgZSjjLyih5NXm",
+  "Destination": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Fee": "5000000",
+  "Sequence": 2470665
+}
+```
+
 ## 13. Granular Permission: `SponsorFee`
 
 This delegatable granular permission allows an account to sponsor fees on behalf of another account.
@@ -625,6 +670,56 @@ The response fields remain the same.
 ### 15.3. Failure Conditions
 
 There are no additional failure conditions.
+
+### 15.4. Example Request
+
+```json
+{
+  "command": "account_objects",
+  "account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "sponsored": true,
+  "ledger_index": "validated",
+  "type": "state"
+}
+```
+
+### 15.5. Example Response
+
+```json
+{
+  "account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "account_objects": [
+    {
+      "Balance": {
+        "currency": "USD",
+        "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+        "value": "100"
+      },
+      "Flags": 65536,
+      "HighLimit": {
+        "currency": "USD",
+        "issuer": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+        "value": "1000"
+      },
+      "HighNode": "0000000000000000",
+      "HighSponsorAccount": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+      "LedgerEntryType": "RippleState",
+      "LowLimit": {
+        "currency": "USD",
+        "issuer": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+        "value": "0"
+      },
+      "LowNode": "0000000000000000",
+      "PreviousTxnID": "1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF",
+      "PreviousTxnLgrSeq": 12345678,
+      "index": "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890"
+    }
+  ],
+  "ledger_hash": "FEDCBA0987654321FEDCBA0987654321FEDCBA0987654321FEDCBA0987654321",
+  "ledger_index": 56789012,
+  "validated": true
+}
+```
 
 ## 16. RPC: `account_sponsoring`
 
