@@ -8,7 +8,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   requires: 74
   created: 2024-05-02
-  updated: 2024-12-24
+  updated: 2025-12-23
 </pre>
 
 # Sponsored Fees and Reserves
