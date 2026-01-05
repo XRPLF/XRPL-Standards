@@ -15,11 +15,34 @@ set -e
 # - GH_TOKEN: GitHub token for API access
 # - DRY_RUN: Set to "true" to only print what would happen without making changes (optional)
 
+# Validate required environment variables
+required_env_vars=(STALE_DAYS WARNING_DAYS WARNING_MESSAGE CLOSE_MESSAGE GITHUB_REPOSITORY_OWNER GITHUB_REPOSITORY_NAME GH_TOKEN)
+for var in "${required_env_vars[@]}"; do
+  if [ -z "${!var}" ]; then
+    echo "Error: required environment variable ${var} is not set or empty." >&2
+    exit 1
+  fi
+done
 # Calculate cutoff dates
 SECONDS_IN_DAY=86400
-STALE_CUTOFF=$(date -u -d "@$(($(date +%s) - STALE_DAYS * SECONDS_IN_DAY))" '+%Y-%m-%dT%H:%M:%SZ')
-CLOSE_CUTOFF=$(date -u -d "@$(($(date +%s) - (STALE_DAYS + WARNING_DAYS) * SECONDS_IN_DAY))" '+%Y-%m-%dT%H:%M:%SZ')
 
+# Use epoch seconds and support both GNU date (-d) and BSD/macOS date (-r)
+NOW_EPOCH=$(date -u +%s)
+STALE_CUTOFF_EPOCH=$((NOW_EPOCH - STALE_DAYS * SECONDS_IN_DAY))
+CLOSE_CUTOFF_EPOCH=$((NOW_EPOCH - (STALE_DAYS + WARNING_DAYS) * SECONDS_IN_DAY))
+
+if date -u -d "@0" '+%Y-%m-%dT%H:%M:%SZ' >/dev/null 2>&1; then
+  # GNU date
+  STALE_CUTOFF=$(date -u -d "@$STALE_CUTOFF_EPOCH" '+%Y-%m-%dT%H:%M:%SZ')
+  CLOSE_CUTOFF=$(date -u -d "@$CLOSE_CUTOFF_EPOCH" '+%Y-%m-%dT%H:%M:%SZ')
+elif date -u -r 0 '+%Y-%m-%dT%H:%M:%SZ' >/dev/null 2>&1; then
+  # BSD/macOS date
+  STALE_CUTOFF=$(date -u -r "$STALE_CUTOFF_EPOCH" '+%Y-%m-%dT%H:%M:%SZ')
+  CLOSE_CUTOFF=$(date -u -r "$CLOSE_CUTOFF_EPOCH" '+%Y-%m-%dT%H:%M:%SZ')
+else
+  echo "Error: unsupported 'date' implementation; cannot compute cutoff dates." >&2
+  exit 1
+fi
 echo "Stale cutoff (for warnings): $STALE_CUTOFF"
 echo "Close cutoff (for closing): $CLOSE_CUTOFF"
 
@@ -51,7 +74,7 @@ gh api graphql -f query='
           updatedAt
           closed
           locked
-          comments(last: 10) {
+          comments(last: 100) {
             nodes {
               body
               createdAt
@@ -68,12 +91,12 @@ gh api graphql -f query='
 
 # Process discussions to close
 # A discussion should be closed if:
-# 1. It has a warning comment containing "will be closed in 30 days"
+# 1. It has a warning comment containing the configured WARNING_MESSAGE
 # 2. That warning comment is older than WARNING_DAYS
 # 3. The discussion hasn't been updated since the warning (or updates are also old)
 echo ""
 echo "=== Discussions to close - warned ${WARNING_DAYS}+ days ago with no activity ==="
-cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains("will be closed in 30 days"))) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt < $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt or $discussion.updatedAt < $warningCutoff) | @json' | while IFS= read -r discussion; do
+cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg warningMessage "$WARNING_MESSAGE" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($warningMessage))) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt < $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt or $discussion.updatedAt < $warningCutoff) | @json' | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
