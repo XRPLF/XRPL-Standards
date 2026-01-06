@@ -265,17 +265,17 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 
 _[If your specification introduces new permissions, document each permission in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-### 4.1. Transaction Types Affected
+### 4.1. Permission Description
+
+_[Describe how this permission interacts with existing permissions and what it allows/restricts. Describe what the granular permission controls.]_
+
+### 4.2. Transaction Types Affected
 
 _[List transaction types that this permission applies to]_
 
-### 4.2. Permission Scope
+### 4.3. Permission Value
 
-_[Describe what the granular permission controls]_
-
-### 4.3. Permission Description
-
-_[Describe how this permission interacts with existing permissions and what it allows/restricts]_
+_[Specify the numeric value for the permission]_
 
 ## 5. RPC: `[rpc_method_name]`
 

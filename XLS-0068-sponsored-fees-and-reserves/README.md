@@ -108,9 +108,60 @@ As a reference, here are the fields that all ledger objects currently have:
 
 We propose this additional field:
 
-| Field Name       | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                    |
-| ---------------- | --------- | --------- | ------------- | --------- | ------------- | -------------------------------------------------------------- |
-| `SponsorAccount` |           |           | N/A           | `string`  | `AccountID`   | The sponsor that is paying the reserve for this ledger object. |
+| Field Name       | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                                                        |
+| ---------------- | --------- | --------- | ------------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SponsorAccount` |           |           | N/A           | `string`  | `AccountID`   | The sponsor paying the owner reserve for a given ledger object. When present, it indicates that the reserve burden for that object has been shifted from the owner to the sponsor. |
+
+### 4.2. Invariant Checks
+
+#### 4.2.1. Allowed Ledger Entry Types
+
+The `SponsorAccount` field **MAY** appear on the following ledger entry types:
+
+- `AccountRoot` (for account reserve sponsorship)
+- `Offer`
+- `Escrow`
+- `Check`
+- `PayChannel`
+- `DepositPreauth`
+- `Ticket`
+- `NFTokenPage`
+- `NFTokenOffer`
+- `AMM`
+- `Bridge`
+- `XChainOwnedClaimID`
+- `XChainOwnedCreateAccountClaimID`
+- `DID`
+- Any other ledger entry type that contributes to an account's owner reserve, subject to implementation details
+
+The `SponsorAccount` field **MUST NOT** appear on:
+
+- `RippleState` objects, which instead use the `HighSponsorAccount` and `LowSponsorAccount` fields defined in section 7.1
+- `DirectoryNode` objects (these do not have reserves)
+- `Amendments` objects (global ledger objects)
+- `FeeSettings` objects (global ledger objects)
+- `NegativeUNL` objects (global ledger objects)
+
+#### 4.2.2. Presence Rules
+
+- The field **MUST** be omitted when there is no sponsor; there is no sentinel value such as `0` or an empty string to indicate "no sponsor".
+- When present, the field **MUST** contain a valid `AccountID` that exists on the ledger.
+- The field is added when sponsorship is established (either at object creation or via `SponsorshipTransfer`).
+- The field is removed when sponsorship is dissolved via `SponsorshipTransfer`.
+
+#### 4.2.3. Constraints
+
+- **Self-Sponsorship**: An account **MAY** sponsor its own objects. While this does not reduce the account's reserve requirement, it may be useful for accounting or organizational purposes.
+- **Relationship to Ownership**: The `SponsorAccount` value **MAY** differ from the object's owner (as indicated by the `Owner` or `Account` field). This is the typical case for sponsorship.
+- **Sponsor Account Requirements**: The sponsor account **MUST** have sufficient XRP to meet its reserve requirements, including reserves for all objects and accounts it sponsors.
+
+#### 4.2.4. Authoritative Indication
+
+Implementations **MUST** treat the presence or absence of `SponsorAccount` as the authoritative indication of whether an object is sponsored for reserves. The presence of this field triggers the following behaviors:
+
+- The object's reserve is counted against the sponsor's `SponsoringOwnerCount` (or `SponsoringAccountCount` for `AccountRoot`), not the owner's `OwnerCount`.
+- The owner's `SponsoredOwnerCount` is incremented (for non-`AccountRoot` objects).
+- The reserve calculation for both sponsor and owner accounts is adjusted accordingly.
 
 ## 5. Ledger Entry: `Sponsorship`
 
@@ -120,25 +171,34 @@ _Note: this object does not need to be created in order to sponsor accounts. It 
 
 ### 5.1. Object ID
 
-The key of the `Sponsorship` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
+#### 5.1.1. Key Space
 
-- The `Sponsorship` space key (defined during implementation)
-- The `AccountID` of the `Sponsor`
-- The `AccountID` of the `Sponsee`
+The `Sponsorship` ledger entry uses a dedicated key space constant `spaceSponsorship`, which will be assigned a unique 16-bit value during implementation (e.g., `0x0053` or another available value in the key space range).
+
+#### 5.1.2. ID Calculation Algorithm
+
+The unique identifier for a `Sponsorship` object is calculated using [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
+
+1. The `Sponsorship` space key (`'>'`)
+2. The `AccountID` of the `Owner` (sponsor)
+3. The `AccountID` of the `Sponsee`
+
+This ensures that there can be at most one `Sponsorship` object per sponsor-sponsee pair, preventing duplicate relationships.
 
 ### 5.2. Fields
 
-| Field Name          | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                           |
-| ------------------- | --------- | --------- | ------------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Owner`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                 |
-| `Sponsee`           | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                        |
-| `FeeAmount`         |           |           | `0`           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                          |
-| `MaxFee`            |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.        |
-| `ReserveCount`      |           |           | `0`           | `string`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                             |
-| `OwnerNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages. |
-| `SponseeNode`       | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages. |
-| `PreviousTxnID`     |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                       |
-| `PreviousTxnLgrSeq` |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                               |
+| Field Name          | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                            |
+| ------------------- | --------- | --------- | ------------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LedgerEntryType`   | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `"Sponsorship"` (JSON) or a unique numeric value (internal, assigned during implementation) indicates this is a `Sponsorship` ledger object. |
+| `Owner`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                                  |
+| `Sponsee`           | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                                         |
+| `FeeAmount`         |           |           | `0`           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                           |
+| `MaxFee`            |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                         |
+| `ReserveCount`      |           |           | `0`           | `string`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                                              |
+| `OwnerNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages.                  |
+| `SponseeNode`       | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages.                  |
+| `PreviousTxnID`     |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                        |
+| `PreviousTxnLgrSeq` |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                |
 
 ### 5.3. Flags
 
@@ -151,23 +211,47 @@ There are two flags on this object:
 
 ### 5.4. Ownership
 
-The object is owned by `Sponsor`, who also pays the reserve.
+The object is owned by `Owner`, who also pays the reserve for this object.
 
 ### 5.5. Reserve
 
-This object charges 1 reserve.
+**Reserve Requirement:** Standard
+
+The reserve is charged to the sponsor's account (the `Owner` field).
 
 ### 5.6. Deletion
 
-This object will be deleted via `SponsorshipSet`, when the `tfDeleteObject` flag is enabled.
+#### 5.6.1. \*Deletion Transactions
+
+`SponsorshipSet` with the `tfDeleteObject` flag
+
+#### 5.6.2. Deletion Conditions
+
+- The `SponsorshipSet` transaction must be submitted by the sponsor (the `Owner` of the `Sponsorship` object).
+- The `tfDeleteObject` flag must be enabled.
+- No other fields (`FeeAmount`, `MaxFee`, `ReserveCount`, or flag-setting fields) may be specified in the deletion transaction.
+- **Note:** Non-zero `FeeAmount` and `ReserveCount` values **ARE** permitted at deletion time. Any remaining XRP in `FeeAmount` is returned to the sponsor's account upon deletion.
+
+#### 5.6.3. Account Deletion Blocker
 
 This object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
 
+This object must be deleted before its owner account (the sponsor) can be deleted. The sponsor must either:
+
+1. Delete the `Sponsorship` object via `SponsorshipSet` with `tfDeleteObject`, or
+2. Wait for the sponsee to delete it (if the sponsee has permission to do so)
+
+**Note on Existing Sponsored Objects:** Deleting a `Sponsorship` object does **not** affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `SponsorAccount` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used.
+
 ### 5.7. Invariant Checks
 
-- `FeeAmount` >= 0 || `ReserveCount` >= 0
-- `SponsorAccount` != `Sponsee`
-- `FeeAmount` is nonnegative and denominated in XRP
+The following invariants must always hold for a `Sponsorship` object:
+
+- `Owner != Sponsee` (an account cannot create a `Sponsorship` object with itself as both sponsor and sponsee)
+- `FeeAmount >= 0` AND `FeeAmount` is denominated in XRP (drops)
+- `ReserveCount >= 0`
+- At least one of `FeeAmount` and `ReserveCount` must be included
+- Both `Owner` and `Sponsee` must be valid `AccountID` values that exist on the ledger
 
 ### 5.8. RPC Name
 
@@ -242,7 +326,7 @@ This spec proposes these additional fields:
 
 #### 6.1.1. `SponsorAccount`
 
-The `SponsorAccount` field is already added in the ledger common fields (see section [3.1.1](#311-sponsoraccount)), but it has some additional rules associated with it on the `AccountRoot` object.
+The `SponsorAccount` field is already added in the ledger common fields (see section [4.2](#42-sponsoraccount)), but it has some additional rules associated with it on the `AccountRoot` object.
 
 This field is included if the account was created with a sponsor paying its account reserve. If this sponsored account is deleted, the destination of the `AccountDelete` transaction must equal `SponsorAccount`, so that the sponsor can recoup their fees.
 
@@ -263,6 +347,21 @@ objReserve * (acct.OwnerCount + acct.SponsoringOwnerCount - acct.SponsoredOwnerC
 acctReserve * acct.SponsoringAccountCount
 }
 $$
+
+### 6.3. Invariants
+
+The following invariants must hold for `AccountRoot` objects with sponsorship fields:
+
+- `SponsoredOwnerCount <= OwnerCount` (cannot have more sponsored objects than total owned objects)
+- If `SponsorAccount` is present, it must be a valid `AccountID` that exists on the ledger
+- The reserve calculation must always result in a non-negative value
+
+**Global Invariant (referenced in section 18.2):**
+
+Across all accounts in the ledger:
+$$\sum_{accounts} SponsoredOwnerCount = \sum_{accounts} SponsoringOwnerCount$$
+
+This ensures that every sponsored object is properly accounted for on both the sponsee and sponsor sides.
 
 ## 7. Ledger Entry: `RippleState`
 
@@ -329,6 +428,13 @@ We propose these modifications:
 #### 8.1.1. `Sponsor`
 
 The `Sponsor` inner object contains all of the information for the sponsorship happening in the transaction.
+
+**Implementation Note:** The `Sponsor` field is a new `STObject` field.
+
+**Transaction Types:** The `Sponsor` field **MAY** be included in any transaction type except:
+
+- Pseudo-transactions (`EnableAmendment`, `SetFee`, `UNLModify`)
+- `Batch` transactions (inner transactions should use `Sponsor` instead)
 
 The fields contained in this object are:
 
@@ -455,15 +561,15 @@ This transaction creates and updates the `Sponsorship` object.
 
 ### 9.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                                                    |
-| ----------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                       |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the sponsor or the sponsee.                                                                                            |
-| `SponsorAccount`  |           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`. |
-| `Sponsee`         |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account`, is assumed to be the `SponsorAccount`.                                                |
-| `FeeAmount`       |           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                                                   |
-| `MaxFee`          |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                 |
-| `ReserveCount`    |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the sponsor has provided for the sponsee to use.                                                                                       |
+| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                 |
+| ----------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                    |
+| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the sponsor or the sponsee.                                                                                                         |
+| `SponsorAccount`  |           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.              |
+| `Sponsee`         |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account`, is assumed to be the `SponsorAccount`.                                                             |
+| `FeeAmount`       |           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
+| `MaxFee`          |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                              |
+| `ReserveCount`    |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.ReserveCount` field (if it exists).  |
 
 ### 9.2. Flags
 
@@ -475,31 +581,62 @@ This transaction creates and updates the `Sponsorship` object.
 | `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor.      |
 | `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                        |
 
-### 9.3. Failure Conditions
+### 9.3. Transaction Fee
 
-- `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee`
-- Both `SponsorAccount` and `Sponsee` are specified
-- `SponsorAccount` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled
-- `MaxFee` is less than the base fee or is not denominated in XRP
-- `FeeAmount` is less than the base fee or is not denominated in XRP
+**Fee Structure:** Standard
+
+This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
+
+### 9.4. Failure Conditions
+
+- `tx.Account` is not equal to either `tx.SponsorAccount` or `tx.Sponsee` (`temMALFORMED`)
+- Both `SponsorAccount` and `Sponsee` are specified (`temMALFORMED`)
+- Neither `SponsorAccount` nor `Sponsee` is specified (`temMALFORMED`)
+- `SponsorAccount` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled (`temMALFORMED` - only sponsor can create/update)
+- `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
+- `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
+- `SponsorAccount` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
+- `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
+- Sponsor does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecINSUFFICIENT_RESERVE`)
 - If `tfDeleteObject` is enabled:
-  - `FeeAmount` is specified
-  - `MaxFee` is specified
-  - `ReserveCount` is specified
-  - `tfSponsorshipSetRequireSignForFee` is enabled
-  - `tfSponsorshipSetRequireSignForReserve` is enabled
-  - `tfSponsorshipClearRequireSignForFee` is enabled
-  - `tfSponsorshipClearRequireSignForReserve` is enabled
+  - `FeeAmount` is specified (`temMALFORMED`)
+  - `MaxFee` is specified (`temMALFORMED`)
+  - `ReserveCount` is specified (`temMALFORMED`)
+  - `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
+  - `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+  - `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
+  - `tfSponsorshipClearRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+  - The `Sponsorship` object does not exist (`tecNO_ENTRY`)
 
-### 9.4. State Changes
+### 9.5. State Changes
 
-- If the object already exists:
-  - `Sponsorship.Amount = tx.FeeAmount`
-  - `Sponsorship.MaxFee` = `tx.MaxFee`
-  - `Sponsorship.ReserveCount = tx.ReserveCount`
-- If the object doesn't exist, it will be created with the provided fields.
-- If the `tfDeleteObject` flag is used, it will delete the object. All funds remaining in the object will be sent back to the `SponsorAccount`.
-  - _Note: this does not affect already-sponsored entries and accounts. Existing sponsored objects/accounts will need to go through the `SponsorshipTransfer` process._
+**On Success (`tesSUCCESS`):**
+
+**If creating a new `Sponsorship` object:**
+
+- Create the `Sponsorship` ledger entry with the specified fields
+- Increment the sponsor's `OwnerCount` by 1
+- Add the object to both the sponsor's and sponsee's owner directories
+- Deduct the object reserve from the sponsor's available XRP
+
+**If updating an existing `Sponsorship` object:**
+
+- Update `Sponsorship.FeeAmount` to `tx.FeeAmount` (or 0 if omitted)
+- Update `Sponsorship.MaxFee` to `tx.MaxFee` (or remove field if omitted)
+- Update `Sponsorship.ReserveCount` to `tx.ReserveCount` (or 0 if omitted)
+- Update flags based on `tfSponsorshipSetRequireSignForFee`, `tfSponsorshipClearRequireSignForFee`, `tfSponsorshipSetRequireSignForReserve`, and `tfSponsorshipClearRequireSignForReserve`
+- If `FeeAmount` is increased, deduct the additional XRP from the sponsor's balance
+- If `FeeAmount` is decreased, return the difference to the sponsor's balance
+
+**If deleting the `Sponsorship` object (`tfDeleteObject` flag):**
+
+- Delete the `Sponsorship` ledger entry
+- Return all remaining XRP in `FeeAmount` to the sponsor's balance
+- Decrement the sponsor's `OwnerCount` by 1
+- Remove the object from both the sponsor's and sponsee's owner directories
+- Return the object reserve to the sponsor's available XRP
+
+**Important Note:** Deleting a `Sponsorship` object does **not** affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `SponsorAccount` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used.
 
 ### 9.5. Example JSON
 
@@ -559,16 +696,26 @@ The sponsor will likely only rarely want to do this (such as if they are transfe
 
 ### 10.4. Transaction Fee
 
-The transaction fee for this transaction will be the base fee (currently 10 drops).
+**Fee Structure:** Standard
+
+This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
 
 ### 10.5. Failure Conditions
 
-All failure conditions mentioned in section [6.3](#63-failure-conditions) still apply here.
+All failure conditions mentioned in [section 8.3](#83-failure-conditions) still apply here.
 
-- If transferring the sponsorship, the new sponsor does not have enough reserve for this object/account.
-- If dissolving the sponsorship, the owner does not have enough reserve for this object/account.
-- The new sponsor does not exist.
-- The `tx.Account` neither the sponsor nor the owner (sponsee) of `ObjectID`.
+**Additional failure conditions specific to `SponsorshipTransfer`:**
+
+- `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
+- `ObjectID` is specified but does not have a `SponsorAccount` field (object is not sponsored) (`tecNO_PERMISSION`)
+- `ObjectID` is not specified and the `tx.Account` does not have a `SponsorAccount` field (account is not sponsored) (`tecNO_PERMISSION`)
+- `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
+- If transferring the sponsorship to a new sponsor:
+  - The new sponsor account does not exist (`terNO_ACCOUNT`)
+  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+  - The `Sponsor` field is malformed or missing required subfields (`temMALFORMED`)
+- If dissolving the sponsorship (no `Sponsor` field or `tfSponsorReserve` flag not set):
+  - The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
 ### 10.6. State Changes
 
@@ -609,13 +756,15 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 ### 12.1. Failure Conditions
 
-Existing failure conditions still apply.
+Existing failure conditions still apply (see [AccountDelete documentation](https://xrpl.org/docs/references/protocol/transactions/types/accountdelete)).
 
-If the `AccountRoot` associated with the `tx.Account` has a `SponsorAccount` field:
+Additional failure conditions for sponsored accounts:
 
-- The `Destination` is not equal to `AccountRoot.SponsorAccount`.
+- If the `AccountRoot` associated with `tx.Account` has a `SponsorAccount` field:
+  - The `Destination` is not equal to `AccountRoot.SponsorAccount` (`tecNO_PERMISSION` - sponsored account funds must go to sponsor)
 
-If the `AccountRoot` associated with the `tx.Account` has a `SponsoringOwnerCount` or `SponsoringAccountCount` field, the transaction will fail with `tecHAS_OBLIGATIONS`.
+- If the `AccountRoot` associated with `tx.Account` has a non-zero `SponsoringOwnerCount` or `SponsoringAccountCount` field:
+  - The transaction fails with `tecHAS_OBLIGATIONS` (account is currently sponsoring other accounts or objects and cannot be deleted until those sponsorships are transferred or dissolved)
 
 ### 12.2. State Changes
 
@@ -639,11 +788,41 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount
 
 ## 13. Granular Permission: `SponsorFee`
 
-This delegatable granular permission allows an account to sponsor fees on behalf of another account.
+### 13.1. Description
+
+The `SponsorFee` permission allows an account to delegate its ability to sponsor other accounts' transaction fees.
+
+### 13.2. Transaction Types Affected
+
+This permission affects **all transaction types** that support the `Sponsor` field (see section [8.1.1](#811-sponsor)).
+
+When a transaction includes a `Sponsor` field with the `tfSponsorFee` flag enabled, the sponsor must have granted the `SponsorFee` permission to the transaction submitter (the `tx.Account`), unless:
+
+- The sponsor is signing the transaction directly (via `Sponsor.SigningPubKey` and `Sponsor.TxnSignature` or `Sponsor.Signers`), OR
+- A `Sponsorship` object exists between the sponsor and sponsee with sufficient `FeeAmount`
+
+### 13.3. Permission Value
+
+65549
 
 ## 14. Granular Permission: `SponsorReserve`
 
-This delegatable granular permission allows an account to sponsor reserves on behalf of another account.
+### 14.1. Description
+
+The `SponsorFee` permission allows an account to delegate its ability to sponsor other accounts' transaction fees.
+
+### 14.2. Transaction Types Affected
+
+This permission affects **all transaction types** that support the `Sponsor` field (see section 8.1.1) and create new ledger objects or accounts.
+
+When a transaction includes a `Sponsor` field with the `tfSponsorReserve` flag enabled, the sponsor must have granted the `SponsorReserve` permission to the transaction submitter (the `tx.Account`), unless:
+
+- The sponsor is signing the transaction directly (via `Sponsor.SigningPubKey` and `Sponsor.TxnSignature` or `Sponsor.Signers`), OR
+- A `Sponsorship` object exists between the sponsor and sponsee with sufficient `ReserveCount`
+
+### 14.3. Permission Value
+
+65550
 
 ## 15. RPC: `account_objects`
 
@@ -763,7 +942,81 @@ The response fields are nearly identical to `account_objects`.
 - `actNotFound` - The [address](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#addresses) specified in the `account` field of the request does not correspond to an account in the ledger.
 - `lgrNotFound` - The ledger specified by the `ledger_hash` or `ledger_index` does not exist, or it does exist but the server does not have it.
 
-## 17. Security
+### 16.4. Example Request
+
+```json
+{
+  "command": "account_sponsoring",
+  "account": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+  "ledger_index": "validated",
+  "limit": 10
+}
+```
+
+### 16.5. Example Response
+
+```json
+{
+  "account": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+  "sponsored_objects": [
+    {
+      "Balance": {
+        "currency": "USD",
+        "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+        "value": "100"
+      },
+      "Flags": 65536,
+      "HighLimit": {
+        "currency": "USD",
+        "issuer": "rSponsee1ABC123XYZ456DEF789GHI",
+        "value": "1000"
+      },
+      "HighNode": "0000000000000000",
+      "HighSponsorAccount": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+      "LedgerEntryType": "RippleState",
+      "LowLimit": {
+        "currency": "USD",
+        "issuer": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+        "value": "0"
+      },
+      "LowNode": "0000000000000000",
+      "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+      "PreviousTxnLgrSeq": 14090896,
+      "index": "9ED4406351B7A511A012A9B5E7FE4059FA2F7650621379C0013492C315E25B97"
+    },
+    {
+      "Account": "rSponsee2XYZ789ABC123DEF456GHI",
+      "Balance": "1000000",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 3,
+      "PreviousTxnID": "0D5FB50FA65C9FE1538FD7E398FFFE9D1908DFA4576D8D7A020040686F93C77D",
+      "PreviousTxnLgrSeq": 14091574,
+      "Sequence": 1,
+      "SponsorAccount": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+      "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8"
+    },
+    {
+      "LedgerEntryType": "Sponsorship",
+      "Owner": "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
+      "Sponsee": "rSponsee3DEF456GHI789ABC123XYZ",
+      "FeeAmount": "5000000",
+      "MaxFee": "10000",
+      "ReserveCount": 5,
+      "OwnerNode": "0000000000000000",
+      "SponseeNode": "0000000000000000",
+      "PreviousTxnID": "B044D3861WL1HZ4WM4GURZVKTTdJPgM1v5T8QBKWJZQM",
+      "PreviousTxnLgrSeq": 14091600,
+      "index": "2B42F8F4E3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3"
+    }
+  ],
+  "ledger_hash": "4C99E5F63C0D0B1C2283D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3D3",
+  "ledger_index": 14091625,
+  "validated": true
+}
+```
+
+## 17. Security Considerations
 
 ### 17.1. Security Axioms
 
@@ -1009,12 +1262,217 @@ Another design considered was to have a new set of transactions (e.g. `SponsorCr
 
 This design was never seriously considered, as it felt too complicated and introduced several new transactions. It also doesn't support adding a sponsor to the object at object creation time, which is a much smoother UX and never requires the owner/sponsee to hold enough XRP for the reserve.
 
-## 21. n+1. Remaining TODOs/Open Questions
+## 21. Backwards Compatibility
 
-- How will this work for objects like trustlines, where multiple accounts might be holding reserves for it?
-  - Maybe a second `Sponsor` field or something?
+This amendment introduces new functionality while maintaining compatibility with existing ledger states and transactions.
+
+### 21.1. Pre-Amendment Ledgers and Transactions
+
+All ledgers and transactions created before the `Sponsor` amendment are activated remain valid. The amendment does not modify or invalidate any existing ledger entries or historical transactions.
+
+### 21.2. Changes to `AccountDelete` Behavior
+
+The `AccountDelete` transaction has two new behavioral changes:
+
+1. **Destination Constraint for Sponsored Accounts**: If an account being deleted has a `SponsorAccount` field (indicating the account reserve is sponsored), the `Destination` field of the `AccountDelete` transaction must equal the `SponsorAccount`. This ensures sponsors can recoup their reserve. Accounts without sponsorship can still use `AccountDelete` with any valid destination as before.
+
+2. **New Failure Condition**: `AccountDelete` will fail with `tecHAS_OBLIGATIONS` if the account has non-zero `SponsoringOwnerCount` or `SponsoringAccountCount` fields, indicating the account is currently sponsoring other accounts or objects. This prevents sponsors from deleting their accounts while they have active sponsorship obligations.
+
+### 21.3. Reserve Accounting Changes
+
+The amendment introduces new fields that affect reserve calculations:
+
+- **New AccountRoot Fields**: `SponsorAccount`, `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` modify how an account's required XRP reserve is calculated.
+- **New Ledger Entry Fields**: The `SponsorAccount` field (and `HighSponsorAccount`/`LowSponsorAccount` for `RippleState`) indicates when an object's reserve is sponsored.
+- **Reserve Calculation**: The reserve formula changes from `acctReserve + objReserve * OwnerCount` to account for sponsored objects and sponsorship obligations (see section 6.2).
+
+Accounts without these new fields continue to use the existing reserve calculation, ensuring backward compatibility.
+
+### 21.4. Impact on Tooling and Applications
+
+Legacy tooling that does not understand the new sponsorship fields may experience the following:
+
+- **Display Issues**: Tools may not correctly display or interpret `SponsorAccount`, `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` fields.
+- **Reserve Calculations**: Tools that calculate required reserves may produce incorrect results if they do not account for the new reserve formula.
+- **RPC Methods**: The new `account_sponsoring` RPC method and the `sponsored` filter on `account_objects` will not be available in tools that have not been updated.
+- **Transaction Construction**: Tools will need updates to support constructing transactions with the `Sponsor` field and handling the dual-signature flow.
+
+Applications should be updated to recognize and handle these new fields to provide accurate information to users.
+
+### 21.5. Amendment Activation
+
+The `Sponsor` amendment must be enabled via the standard amendment process. Once activated:
+
+- New transactions can include the `Sponsor` field to enable fee and reserve sponsorship.
+- New ledger entries can include sponsorship-related fields.
+- The new `Sponsorship` ledger entry type becomes available.
+- The new `SponsorshipSet` and `SponsorshipTransfer` transaction types become available.
+- The `Payment` transaction accepts the new `tfSponsorCreatedAccount` flag.
+
+Before activation, transactions attempting to use these features will be rejected.
+
+## 22. Test Plan
+
+This section outlines the testing strategy for the sponsored fees and reserves feature. A comprehensive test plan is essential to ensure the correctness and security of this amendment.
+
+### 22.1. Unit Tests for Ledger Entries
+
+**`Sponsorship` Object Tests:**
+
+- Creation of `Sponsorship` objects via `SponsorshipSet` with various field combinations
+- Updates to existing `Sponsorship` objects (modifying `FeeAmount`, `MaxFee`, `ReserveCount`)
+- Deletion of `Sponsorship` objects via `SponsorshipSet` with `tfDeleteObject` flag
+- Validation of invariants: `Owner != Sponsee`, `FeeAmount >= 0` and denominated in XRP, `ReserveCount >= 0`
+- Proper handling of `lsfSponsorshipRequireSignForFee` and `lsfSponsorshipRequireSignForReserve` flags
+- Verification that `Sponsorship` objects are deletion blockers
+
+**`AccountRoot` Field Tests:**
+
+- Addition and removal of `SponsorAccount` field on accounts
+- Correct tracking of `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount`
+- Reserve calculation with new fields (see section 6.2)
+- Interaction between sponsored and unsponsored objects on the same account
+
+**`RippleState` Field Tests:**
+
+- Addition and removal of `HighSponsorAccount` and `LowSponsorAccount` fields
+- Verification that `SponsorAccount` common field is not used on `RippleState` objects
+- Proper handling of bidirectional trust line sponsorship
+
+### 22.2. Unit Tests for Transactions
+
+**`SponsorshipSet` Transaction Tests:**
+
+- Creating new `Sponsorship` objects with valid and invalid parameters
+- Updating existing `Sponsorship` objects
+- Deleting `Sponsorship` objects and verifying fund return to sponsor
+- Failure conditions: invalid account combinations, invalid fee/reserve values, conflicting flags
+- Proper increment/decrement of owner counts and sponsorship counters
+
+**`SponsorshipTransfer` Transaction Tests:**
+
+- Transferring sponsorship of objects to new sponsors
+- Dissolving sponsorship (returning reserve burden to owner)
+- Transferring sponsorship of accounts
+- Failure conditions: insufficient reserves, invalid accounts, unauthorized submitters
+- Proper updates to `SponsoringOwnerCount`, `SponsoringAccountCount`, and `SponsoredOwnerCount`
+
+**`Payment` Transaction Tests:**
+
+- Creating sponsored accounts using `tfSponsorCreatedAccount` flag
+- Fee sponsorship via `Sponsor` field with `tfSponsorFee` flag
+- Reserve sponsorship for new accounts via `Sponsor` field with `tfSponsorReserve` flag
+- Combined fee and reserve sponsorship
+- Failure conditions: invalid sponsor signatures, insufficient sponsor funds
+
+**`AccountDelete` Transaction Tests:**
+
+- Deleting sponsored accounts with correct destination (must be sponsor)
+- Failure when destination is not the sponsor for sponsored accounts
+- Failure with `tecHAS_OBLIGATIONS` when account has non-zero `SponsoringOwnerCount` or `SponsoringAccountCount`
+- Proper decrement of sponsor's counters upon successful deletion
+
+**Common Transaction Field Tests:**
+
+- Valid and invalid `Sponsor` field structures
+- Single-signature sponsorship (`SigningPubKey` + `TxnSignature`)
+- Multi-signature sponsorship (`Signers` array)
+- Validation of `tfSponsorFee` and `tfSponsorReserve` flags
+- Fee calculation with sponsor signatures (multi-sig overhead)
+- Pre-funded sponsorship (using `Sponsorship` object) vs. co-signed sponsorship
+- Signature validation and replay attack prevention
+
+### 22.3. Invariant Tests
+
+**Owner Count Balancing:**
+
+- Verify that object creation increments either `OwnerCount` or both `SponsoringOwnerCount` and `SponsoredOwnerCount`
+- Verify that object deletion decrements the appropriate counters
+- Test the global invariant: `Σ SponsoredOwnerCount = Σ SponsoringOwnerCount`
+
+**Account Count Balancing:**
+
+- Verify that sponsored account creation increments `SponsoringAccountCount` on sponsor
+- Verify that sponsored account deletion decrements `SponsoringAccountCount` on sponsor
+
+**Reserve Consistency:**
+
+- Verify that accounts always have sufficient XRP to meet their reserve requirements
+- Test edge cases where sponsorship changes affect reserve calculations
+
+### 22.4. Integration Tests
+
+**End-to-End Co-Signed Sponsorship Flow:**
+
+- Sponsee constructs and autofills transaction
+- Sponsor signs transaction
+- Sponsee adds sponsor signature and signs transaction
+- Transaction is submitted and validated
+- Verify correct state changes and fee/reserve handling
+
+**End-to-End Pre-Funded Sponsorship Flow:**
+
+- Sponsor creates `Sponsorship` object with `SponsorshipSet`
+- Sponsee constructs transaction with `Sponsor` field
+- Transaction is submitted without sponsor signature (using pre-funded amounts)
+- Verify `FeeAmount` and `ReserveCount` are decremented correctly
+- Test exhaustion of pre-funded amounts
+
+**Error Case Testing:**
+
+- Insufficient sponsor funds for fees
+- Insufficient sponsor reserves for objects
+- Exceeding `MaxFee` limit in `Sponsorship` object
+- Exceeding `ReserveCount` limit in `Sponsorship` object
+- Invalid or missing sponsor signatures
+- Signature replay attempts
+
+**Sponsorship Transfer Flows:**
+
+- Sponsor transfers object sponsorship to new sponsor
+- Sponsor dissolves sponsorship, returning burden to owner
+- Owner transfers sponsorship to new sponsor
+- Test with insufficient reserves on receiving party
+
+### 22.5. RPC Tests
+
+**`account_objects` with `sponsored` Filter:**
+
+- Retrieve only sponsored objects (`sponsored: true`)
+- Retrieve only unsponsored objects (`sponsored: false`)
+- Retrieve all objects (omit `sponsored` parameter)
+- Test pagination with `sponsored` filter
+- Test interaction with `type` filter
+
+**`account_sponsoring` RPC Method:**
+
+- Retrieve all objects sponsored by an account
+- Test pagination with `limit` and `marker`
+- Test `deletion_blockers_only` filter
+- Test with various `type` filters
+- Verify correct response format and field presence
+- Test error conditions: invalid account, missing ledger
+
+### 22.6. Performance and Stress Tests
+
+- Create maximum number of sponsored objects per account
+- Test with large `Sponsorship` object counts
+- Verify performance of reserve calculations with many sponsored objects
+- Test transaction throughput with sponsored transactions
+
+### 22.7. Amendment Activation Tests
+
+- Verify that sponsorship features are unavailable before amendment activation
+- Verify that sponsorship features become available after amendment activation
+- Test that pre-amendment ledgers and transactions remain valid post-activation
+
+## 23. Reference Implementation
+
+https://github.com/XRPLF/rippled/pull/5887
+
+## 24. n+1. Remaining TODOs/Open Questions
+
 - Should fee sponsorship allow for the existing fee paradigm that allows users to dip below the reserve?
-- Should `account_sponsoring` be Clio-only?
 - Should a sponsored account be prevented from sponsoring other accounts? By default the answer is no, so unless there's a reason to do so, we should leave it as is.
 
 # Appendix
