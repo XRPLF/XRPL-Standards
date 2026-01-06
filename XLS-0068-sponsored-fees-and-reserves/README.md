@@ -159,7 +159,7 @@ This object charges 1 reserve.
 
 ### 5.6. Deletion
 
-This object will be deleted any time the `FeeAmount` and `ReserveCount` are both `0`. This can be done directly via `SponsorshipSet`, or can occur in the regular flow of transactions, if the sponsorship runs out.
+This object will be deleted via `SponsorshipSet`, when the `tfDeleteObject` flag is enabled.
 
 This object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
 
@@ -258,7 +258,9 @@ The total account reserve should now be calculated as:
 
 $$
 \displaylines{
-(acct.SponsorAccount 	ext{ ? } 0 : acctReserve) + \nobjReserve * (acct.OwnerCount + acct.SponsoringOwnerCount - acct.SponsoredOwnerCount) + \nacctReserve * acct.SponsoringAccountCount
+(acct.SponsorAccount 	ext{ ? } 0 : acctReserve) +
+objReserve * (acct.OwnerCount + acct.SponsoringOwnerCount - acct.SponsoredOwnerCount) +
+acctReserve * acct.SponsoringAccountCount
 }
 $$
 
@@ -290,7 +292,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 | `LowNode`           | No        | Yes       | N/A           | `string`             | `UInt64`      | (Omitted in some historical ledgers) A hint indicating which page of the low account's owner directory links to this entry, in case the directory consists of multiple pages.                                                                                                                                |
 | `LowQualityIn`      | No        | No        | N/A           | `number`             | `UInt32`      | The inbound quality set by the low account, as an integer in the implied ratio `LowQualityIn`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                       |
 | `LowQualityOut`     | No        | No        | N/A           | `number`             | `UInt32`      | The outbound quality set by the low account, as an integer in the implied ratio `LowQualityOut`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                     |
-| `PreviousTxnID`     | No        | Yes       | N/A           | `string`             | `UInt256`     | The identifying hash of the transaction that most recently modified this entry.                                                                                                                                                                                                                              |
+| `PreviousTxnID`     | No        | Yes       | N/A           | `string`             | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                                                                                                                                                                              |
 | `PreviousTxnLgrSeq` | No        | Yes       | N/A           | `number`             | `UInt32`      | The ledger index that contains the transaction that most recently modified this entry.                                                                                                                                                                                                                       |
 
 </details>
@@ -486,6 +488,8 @@ This transaction creates and updates the `Sponsorship` object.
   - `ReserveCount` is specified
   - `tfSponsorshipSetRequireSignForFee` is enabled
   - `tfSponsorshipSetRequireSignForReserve` is enabled
+  - `tfSponsorshipClearRequireSignForFee` is enabled
+  - `tfSponsorshipClearRequireSignForReserve` is enabled
 
 ### 9.4. State Changes
 
@@ -522,7 +526,7 @@ This transaction transfers a sponsor relationship for a particular ledger object
 | ----------------- | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------- |
 | `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipTransfer`).                                                       |
 | `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the current sponsor or the current sponsee. |
-| `ObjectID`        |           | `string`  | `UInt256`     | The ID of the object to transfer sponsorship.                                                       |
+| `ObjectID`        |           | `string`  | `Hash256`     | The ID of the object to transfer sponsorship.                                                       |
 | `Sponsor`         |           | `object`  | `STObject`    | The new sponsor of the object. This field contains the same subfields as above.                     |
 
 #### 10.1.1. `ObjectID`
