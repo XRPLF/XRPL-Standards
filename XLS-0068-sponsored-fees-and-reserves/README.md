@@ -429,13 +429,6 @@ We propose these modifications:
 
 The `Sponsor` inner object contains all of the information for the sponsorship happening in the transaction.
 
-**Implementation Note:** The `Sponsor` field is a new `STObject` field.
-
-**Transaction Types:** The `Sponsor` field **MAY** be included in any transaction type except:
-
-- Pseudo-transactions (`EnableAmendment`, `SetFee`, `UNLModify`)
-- `Batch` transactions (inner transactions should use `Sponsor` instead)
-
 The fields contained in this object are:
 
 | Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                        |
@@ -475,6 +468,13 @@ There will be no additional transaction fee required for the use of the `TxnSign
 
 Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the transaction. There is one exception to this: if `lsfRequireSignatureForFee`/`lsfRequireSignatureForReserve` are not enabled for the type(s) of sponsorship in the transaction.
 
+#### 8.1.1.4. Transaction Types
+
+**Transaction Types:** The `Sponsor` field may be included in any transaction type except:
+
+- Pseudo-transactions (`EnableAmendment`, `SetFee`, `UNLModify`)
+- `Batch` transactions (inner transactions should use `Sponsor` instead)
+
 ### 8.2. Transaction Fee
 
 If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base	extunderscore fee$.
@@ -490,6 +490,7 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 - The `SponsorAccount` doesn't exist on the ledger.
 - An invalid sponsorship flag is used.
 - `Sponsor.SigningPubKey`, `Sponsor.TxnSignature`, and `Sponsor.Signers` are all included (or other incorrect combinations of signing fields).
+- `Sponsor` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
 
 #### 8.3.2. Fee Sponsorship Failures
 
@@ -511,7 +512,7 @@ Note: if a transaction doesn't charge a fee (such as an account's first `SetRegu
 #### 8.3.3. Reserve Sponsorship Failures
 
 - The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`)
-- The transaction does not support reserve sponsorship (see section 6.3.4)
+- The transaction does not support reserve sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
 
 If a `Sponsorship` object exists:
 
@@ -610,16 +611,14 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 ### 9.5. State Changes
 
-**On Success (`tesSUCCESS`):**
-
-**If creating a new `Sponsorship` object:**
+If creating a new `Sponsorship` object:
 
 - Create the `Sponsorship` ledger entry with the specified fields
 - Increment the sponsor's `OwnerCount` by 1
 - Add the object to both the sponsor's and sponsee's owner directories
 - Deduct the object reserve from the sponsor's available XRP
 
-**If updating an existing `Sponsorship` object:**
+If updating an existing `Sponsorship` object:
 
 - Update `Sponsorship.FeeAmount` to `tx.FeeAmount` (or 0 if omitted)
 - Update `Sponsorship.MaxFee` to `tx.MaxFee` (or remove field if omitted)
@@ -628,7 +627,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 - If `FeeAmount` is increased, deduct the additional XRP from the sponsor's balance
 - If `FeeAmount` is decreased, return the difference to the sponsor's balance
 
-**If deleting the `Sponsorship` object (`tfDeleteObject` flag):**
+If deleting the `Sponsorship` object (`tfDeleteObject` flag):
 
 - Delete the `Sponsorship` ledger entry
 - Return all remaining XRP in `FeeAmount` to the sponsor's balance
@@ -636,7 +635,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 - Remove the object from both the sponsor's and sponsee's owner directories
 - Return the object reserve to the sponsor's available XRP
 
-**Important Note:** Deleting a `Sponsorship` object does **not** affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `SponsorAccount` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used.
+_Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `SponsorAccount` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used._
 
 ### 9.5. Example JSON
 
@@ -704,7 +703,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 All failure conditions mentioned in [section 8.3](#83-failure-conditions) still apply here.
 
-**Additional failure conditions specific to `SponsorshipTransfer`:**
+Additional failure conditions specific to `SponsorshipTransfer`:
 
 - `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
 - `ObjectID` is specified but does not have a `SponsorAccount` field (object is not sponsored) (`tecNO_PERMISSION`)
@@ -794,7 +793,7 @@ The `SponsorFee` permission allows an account to delegate its ability to sponsor
 
 ### 13.2. Transaction Types Affected
 
-This permission affects **all transaction types** that support the `Sponsor` field (see section [8.1.1](#811-sponsor)).
+This permission affects all transaction types that support the `Sponsor` field (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
 
 When a transaction includes a `Sponsor` field with the `tfSponsorFee` flag enabled, the sponsor must have granted the `SponsorFee` permission to the transaction submitter (the `tx.Account`), unless:
 
@@ -813,7 +812,7 @@ The `SponsorFee` permission allows an account to delegate its ability to sponsor
 
 ### 14.2. Transaction Types Affected
 
-This permission affects **all transaction types** that support the `Sponsor` field (see section 8.1.1) and create new ledger objects or accounts.
+This permission affects all transaction types that support the `Sponsor` field (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) and create new ledger objects or accounts.
 
 When a transaction includes a `Sponsor` field with the `tfSponsorReserve` flag enabled, the sponsor must have granted the `SponsorReserve` permission to the transaction submitter (the `tx.Account`), unless:
 
@@ -1057,10 +1056,6 @@ $$ \sum*{accounts} Account.SponsoredOwnerCount = \sum*{accounts} Account.Sponsor
 In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to the sum of all accounts' `SponsoringOwnerCount`s. This ensures that every sponsored object is logged as being sponsored and also has a sponsor.
 
 ## 19. Example Flows
-
-Each example will show what the transaction will look like before **and** after both the sponsor and sponsee sign the transaction.
-
-The unsigned transaction must be autofilled before it is passed to the sponsor to sign. Tooling can be updated to handle combining the sponsor and sponsee signatures, similar to helper functions that already exist for multisigning.
 
 ### 19.1. Fee Sponsorship
 
