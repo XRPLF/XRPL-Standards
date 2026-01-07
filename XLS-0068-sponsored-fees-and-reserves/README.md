@@ -421,9 +421,10 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/co
 
 We propose these modifications:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                                                                                                                                   |
-| ---------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sponsor`  |           | `object`  | `STObject`    | This field contains all the information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
+| Field Name         | Required? | JSON Type | Internal Type | Description                                                                                                                                                           |
+| ------------------ | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Sponsor`          |           | `object`  | `STObject`    | This field contains all the information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored.         |
+| `SponsorSignature` |           | `object`  | `STObject`    | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
 
 #### 8.1.1. `Sponsor`
 
@@ -431,13 +432,10 @@ The `Sponsor` inner object contains all of the information for the sponsorship h
 
 The fields contained in this object are:
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                        |
-| ---------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SponsorAccount` | ✔️        | `string`  | `AccountID`   | The sponsoring account.                                                                                                                                                                                                                            |
-| `Flags`          | ✔️        | `number`  | `UInt16`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                                                                                                           |
-| `SigningPubKey`  |           | `string`  | `STBlob`      | The `SigningPubKey` for `SponsorAccount`, if single-signing.                                                                                                                                                                                       |
-| `TxnSignature`   |           | `string`  | `STBlob`      | A signature of the transaction from the sponsor, to indicate their approval of this transaction, if single-signing. All signing fields must be included in the signature, including `Sponsor.SponsorAccount` and `Sponsor.Flags`.                  |
-| `Signers`        |           | `array`   | `STArray`     | An array of signatures of the transaction from the sponsor's signers to indicate their approval of this transaction, if the sponsor is multi-signing. All signing fields must be included, including `Sponsor.SponsorAccount` and `Sponsor.Flags`. |
+| Field Name       | Required? | JSON Type | Internal Type | Description                                                                              |
+| ---------------- | --------- | --------- | ------------- | ---------------------------------------------------------------------------------------- |
+| `SponsorAccount` | ✔️        | `string`  | `AccountID`   | The sponsoring account.                                                                  |
+| `Flags`          | ✔️        | `number`  | `UInt16`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve). |
 
 ##### 8.1.1.1. `Account`
 
@@ -458,7 +456,15 @@ There are two flag values that are supported:
 
 This field **will** be a signing field (it will be included in transaction signatures).
 
-##### 8.1.1.3. `SigningPubKey`, `TxnSignature` and `Signers`
+#### 8.1.2 `SponsorSignature`
+
+| Field Name      | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                        |
+| --------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SigningPubKey` |           | `string`  | `STBlob`      | The `SigningPubKey` for `SponsorAccount`, if single-signing.                                                                                                                                                                                       |
+| `TxnSignature`  |           | `string`  | `STBlob`      | A signature of the transaction from the sponsor, to indicate their approval of this transaction, if single-signing. All signing fields must be included in the signature, including `Sponsor.SponsorAccount` and `Sponsor.Flags`.                  |
+| `Signers`       |           | `array`   | `STArray`     | An array of signatures of the transaction from the sponsor's signers to indicate their approval of this transaction, if the sponsor is multi-signing. All signing fields must be included, including `Sponsor.SponsorAccount` and `Sponsor.Flags`. |
+
+##### 8.1.2.1. `SigningPubKey`, `TxnSignature` and `Signers`
 
 Either `TxnSignature` or `Signers` must be included in the final transaction.
 
@@ -467,13 +473,6 @@ There will be no additional transaction fee required for the use of the `TxnSign
 `TxnSignature` and `Signers` **will not** be signing fields (they will not be included in transaction signatures, though they will still be included in the stored transaction).
 
 Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the transaction. There is one exception to this: if `lsfRequireSignatureForFee`/`lsfRequireSignatureForReserve` are not enabled for the type(s) of sponsorship in the transaction.
-
-#### 8.1.1.4. Transaction Types
-
-**Transaction Types:** The `Sponsor` field may be included in any transaction type except:
-
-- Pseudo-transactions (`EnableAmendment`, `SetFee`, `UNLModify`)
-- `Batch` transactions (inner transactions should use `Sponsor` instead)
 
 ### 8.2. Transaction Fee
 
@@ -490,7 +489,8 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 - The `SponsorAccount` doesn't exist on the ledger.
 - An invalid sponsorship flag is used.
 - `Sponsor.SigningPubKey`, `Sponsor.TxnSignature`, and `Sponsor.Signers` are all included (or other incorrect combinations of signing fields).
-- `Sponsor` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
+- `Sponsor` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
+- Only one of `Sponsor` and `SponsorSignature` is included (they must either both be included, if the transaction is sponsored, or neither, if it is not).
 
 #### 8.3.2. Fee Sponsorship Failures
 
