@@ -476,7 +476,7 @@ Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the trans
 
 ### 8.2. Transaction Fee
 
-If the `Sponsor.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base	extunderscore fee$.
+If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base	extunderscore fee$.
 
 The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Sponsor.Signers|) * base\_fee$ (plus transaction-specific fees).
 
@@ -488,8 +488,8 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 - `Sponsor.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, or signature(s) are invalid).
 - The `SponsorAccount` doesn't exist on the ledger.
 - An invalid sponsorship flag is used.
-- `Sponsor.SigningPubKey`, `Sponsor.TxnSignature`, and `Sponsor.Signers` are all included (or other incorrect combinations of signing fields).
-- `Sponsor` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
+- `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
+- `Sponsor` or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
 - Only one of `Sponsor` and `SponsorSignature` is included (they must either both be included, if the transaction is sponsored, or neither, if it is not).
 
 #### 8.3.2. Fee Sponsorship Failures
