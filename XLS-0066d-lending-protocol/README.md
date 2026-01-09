@@ -1376,7 +1376,7 @@ $$
 
 Applying the `principalPortion` to the loan reduces the `PrincipalOutstanding`, which in turn changes the amortization schedule and the total interest that will be paid over the remainder of the loan's term. This change in total future interest is the primary `valueChange`.
 
-The system performs the following logical steps (as detailed in the `do_overpayment` pseudo-code):
+The system performs the following logical steps (as detailed in the `try_overpayment` pseudo-code):
 
 1.  The `principalPortion` is subtracted from the current `PrincipalOutstanding` to get a `newPrincipalOutstanding`.
 2.  A `newPeriodicPayment` is calculated using the standard amortization formula based on the `newPrincipalOutstanding` and the `paymentsRemaining`.
@@ -1633,43 +1633,127 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
 
     return (roundedPrincipalPayment, roundedInterestPayment, roundedManagementFee)
 
-function do_overpayment(amount) -> (valueChange):
-    # Calculate the ideal, unrounded ("true") state of the loan before the overpayment.
-    let (truePrincipalOutstanding, trueInterestOutstanding, trueManagementFeeOutstanding) = calculate_true_loan_state(loan.paymetsRemaining)
+function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanProperties) or error:
+    # Loan state is composed of three tracked variables:
+    #   - valueOutstanding (total amount owed)
+    #   - principalOutstanding (original borrowed amount still owed)
+    #   - managementFeeOutstanding (fee owed to broker)
+    # Interest is derived: interestOutstanding = valueOutstanding - principalOutstanding - managementFeeOutstanding
 
-    # For an accurate overpayment, we must preserve historical rounding errors.
-    # These 'diff' variables capture the difference between the on-ledger rounded state and the ideal 'true' state.
-    let diffTotal = loan.totalValueOutstanding - (truePrincipalOutstanding + trueInterestOutstanding + trueManagementFeeOutstanding)
-    let diffPrincipal = loan.principalOutstanding - truePrincipalOutstanding
-    let diffManagementFee = loan.managementFeeOutstanding - trueManagementFeeOutstanding
+    # Calculate the theoretical (full precision) loan state before the overpayment.
+    let theoreticalState = compute_theoretical_loan_state(
+        loan.periodicPayment, 
+        loan.periodicRate, 
+        loan.paymentsRemaining, 
+        loan.loanbroker.managementFeeRate
+    )
+    # theoreticalState contains: { valueOutstanding, principalOutstanding, managementFeeOutstanding }
+    # theoreticalState.interestOutstanding() = valueOutstanding - principalOutstanding - managementFeeOutstanding
 
-    # Re-amortize the loan based on the new, lower principal after the overpayment is applied.
-    let newTruePrincipalOutstanding = truePrincipalOutstanding - amount
-    let newTruePeriodicPayment = compute_periodic_payment(newTruePrincipalOutstanding)
+    # Calculate accumulated rounding errors. These need to be preserved across the
+    # re-amortization to maintain consistency with the loan's payment history.
+    # Without preserving these errors, the loan could end up with a different total
+    # value than what the borrower has actually paid.
+    # Errors are tracked for principal, interest (derived), and management fee.
+    let theoreticalInterest = theoreticalState.valueOutstanding - theoreticalState.principalOutstanding - theoreticalState.managementFeeOutstanding
+    let loanInterest = loan.valueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
+    let errors = {
+        principalOutstanding: loan.principalOutstanding - theoreticalState.principalOutstanding,
+        interestOutstanding: loanInterest - theoreticalInterest,
+        managementFeeOutstanding: loan.managementFeeOutstanding - theoreticalState.managementFeeOutstanding
+    }
 
-    # From the new periodic payment, calculate the new ideal total value, interest, and fee.
-    let newTrueTotalValueOutstanding = (newTruePeriodicPayment * loan.paymentsRemaining).round(loan.loanScale, HALF_EVEN)
-    let newTrueInterestOutstanding = newTrueTotalValueOutstanding - newTruePrincipalOutstanding
-    let newTrueManagementFeeOutstanding = (newTrueInterestOutstanding * loan.loanbroker.managementFeeRate).round(loan.loanScale, HALF_EVEN)
-    newTrueInterestOutstanding = newTrueInterestOutstanding - newTrueManagementFeeOutstanding
+    # Compute the new principal by applying the overpayment to the theoretical principal.
+    # Use max with 0 to ensure we never go negative.
+    let newTheoreticalPrincipal = max(
+        theoreticalState.principalOutstanding - overpaymentComponents.trackedPrincipalDelta,
+        0
+    )
 
-    # Set the new on-ledger total value, adjusting for the historical rounding errors to maintain consistency.
-    let newRoundedTotalValueOutstanding = (newTrueTotalValueOutstanding + diffTotal).round(loan.loanScale, DOWN)
+    # Compute new loan properties based on the reduced principal. This recalculates
+    # the periodic payment, total value, and management fees for the remaining payment schedule.
+    let newLoanProperties = compute_loan_properties(
+        newTheoreticalPrincipal,
+        loan.periodicRate,
+        loan.paymentsRemaining,
+        loan.loanbroker.managementFeeRate,
+        loan.loanScale
+    )
 
-    # The old total value, for comparison, is what the on-ledger value would have been if we just subtracted the overpayment amount.
-    let oldRoundedTotalValueOutstanding = loan.totalValueOutstanding - amount
+    # Calculate what the new loan state should be with the new periodic payment,
+    # including preserved rounding errors.
+    let newTheoreticalStateBase = compute_theoretical_loan_state(
+        newLoanProperties.periodicPayment,
+        loan.periodicRate,
+        loan.paymentsRemaining,
+        loan.loanbroker.managementFeeRate
+    )
+    # Add preserved rounding errors to each component (principal, interest, management fee)
+    let newTheoreticalInterestBase = newTheoreticalStateBase.valueOutstanding - newTheoreticalStateBase.principalOutstanding - newTheoreticalStateBase.managementFeeOutstanding
+    let newTheoreticalState = {
+        principalOutstanding: newTheoreticalStateBase.principalOutstanding + errors.principalOutstanding,
+        interestOutstanding: newTheoreticalInterestBase + errors.interestOutstanding,
+        managementFeeOutstanding: newTheoreticalStateBase.managementFeeOutstanding + errors.managementFeeOutstanding
+    }
 
-    # The change in the loan's value is the difference between the new re-amortized value and the old value.
-    # This formula correctly calculates the change in future interest while preserving the existing rounding difference (diffTotal),
-    # which is present in both newRoundedTotalValueOutstanding and implicitly in oldRoundedTotalValueOutstanding.
-    let roundedValueChange = newRoundedTotalValueOutstanding - oldRoundedTotalValueOutstanding
+    # Update the loan state variables with the new values that include the preserved
+    # rounding errors. This ensures the loan's tracked state remains consistent with
+    # its payment history. Clamp values to valid ranges.
+    let principalOutstanding = clamp(
+        newTheoreticalState.principalOutstanding.round(loan.loanScale, UP),
+        0,
+        loan.principalOutstanding
+    )
+    # Use the interest error directly (already computed with errors)
+    let totalValueOutstanding = clamp(
+        (principalOutstanding + newTheoreticalState.interestOutstanding).round(loan.loanScale, UP),
+        0,
+        loan.valueOutstanding
+    )
+    let managementFeeOutstanding = clamp(
+        newTheoreticalState.managementFeeOutstanding.round(loan.loanScale, HALF_EVEN),
+        0,
+        loan.managementFeeOutstanding
+    )
 
-    # Update loan state by applying the preserved rounding differences to the new 'true' state.
-    loan.totalValueOutstanding = newTrueTotalValueOutstanding + diffTotal
-    loan.principalOutstanding = (newTruePrincipalOutstanding + diffPrincipal).round(loan.loanScale, DOWN)
-    loan.managementFeeOutstanding = (newTrueManagementFeeOutstanding + diffManagementFee).round(loan.loanScale, DOWN)
+    # Construct the new rounded state from the three tracked components
+    let roundedNewState = {
+        valueOutstanding: totalValueOutstanding,
+        principalOutstanding: principalOutstanding,
+        managementFeeOutstanding: managementFeeOutstanding
+    }
+    # Interest is derived: roundedNewState.interestOutstanding() = valueOutstanding - principalOutstanding - managementFeeOutstanding
 
-    return roundedValueChange
+    # Check that the loan is still valid after applying the overpayment
+    let newInterestOutstanding = roundedNewState.valueOutstanding - roundedNewState.principalOutstanding - roundedNewState.managementFeeOutstanding
+
+
+    # Calculate deltas between old and new state for each tracked component
+    let deltas = {
+        principal: loan.principalOutstanding - roundedNewState.principalOutstanding,
+    }
+    # Derive interest delta from the state components
+    let oldInterest = loan.valueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
+    let newInterest = roundedNewState.valueOutstanding - roundedNewState.principalOutstanding - roundedNewState.managementFeeOutstanding
+    deltas.interest = oldInterest - newInterest
+
+    # Calculate value change as the negative of interest delta.
+    # A principal overpayment should never increase the loan's value.
+    let valueChange = -deltas.interest
+    if valueChange > 0:
+        # Principal overpayment would increase the value of the loan, ignore the overpayment
+        return error
+
+    # Return the payment parts and new loan properties
+    return (
+        {
+            principalPaid: deltas.principal,
+            interestPaid: overpaymentComponents.untrackedInterest,
+            valueChange: valueChange + overpaymentComponents.untrackedInterest,
+            feePaid: overpaymentComponents.untrackedManagementFee + overpaymentComponents.trackedManagementFeeDelta
+        },
+        newLoanProperties
+    )
 
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
@@ -1778,16 +1862,33 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         # ======== STEP 4.2: Determine how the overpayment changes the value of the Loan ======== #
         # if the overpayment was not eaten by fees and interest, then apply it
         if overpaymentPrincipal > 0:
-            # the valueChange is the decrease in the total interest caused by overpaying the principal
-            let valueChange = do_overpayment(overpaymentPrincipal)
+            # Build overpayment components for try_overpayment
+            let overpaymentComponents = {
+                trackedPrincipalDelta: overpaymentPrincipal,
+                trackedManagementFeeDelta: overpaymentManagementFee,
+                untrackedInterest: overpaymentInterest,
+                untrackedManagementFee: overpaymentFee
+            }
 
-            # ajust the total loanValueChange
-            loanValueChange = loanValueChange + valueChange
+            # Try to apply the overpayment; returns error if it would cause invalid loan state
+            let result = try_overpayment(overpaymentComponents)
+            if result is error:
+                # Overpayment would cause invalid loan state, ignore it
+                continue
+
+            let (paymentParts, newLoanProperties) = result
+
+            # Update loan properties with re-amortized values
+            loan.periodicPayment = newLoanProperties.periodicPayment
+            loan.roundedState = newLoanProperties.loanState
+
+            # Adjust the total loanValueChange
+            loanValueChange = loanValueChange + paymentParts.valueChange
 
             totalPaid = totalPaid + overpaymentAmount
-            totalPrincipalPaid = totalPrincipalPaid + overpaymentPrincipal
-            totalInterestPaid = totalInterestPaid + overpaymentInterest
-            totalFeePaid = totalFeePaid + overpaymentManagementFee + overpaymentFee
+            totalPrincipalPaid = totalPrincipalPaid + paymentParts.principalPaid
+            totalInterestPaid = totalInterestPaid + paymentParts.interestPaid
+            totalFeePaid = totalFeePaid + paymentParts.feePaid
 
     return (
         totalPrincipalPaid,     # This will include the periodicPayment principal and any overpayment
