@@ -52,7 +52,7 @@ Notice that a Draft is not a [rubber-stamp](https://idioms.thefreedictionary.com
 
 To publish a new Draft, submit a Pull Request to this repo with a new folder and a new Markdown file. The folder MUST follow the naming convention `XLS-draft-{title}` where `{title}` is a lower case title with spaces replaced by hyphens (`-`). An example draft name is: `XLS-20d-non-fungible-token-support-native`
 
-The submission must follow the template in [xls-template.md](./templates/XLS-TEMPLATE.md).
+The submission must follow the template in [XLS_TEMPLATE.md](./templates/XLS_TEMPLATE.md).
 
 Assuming there is consensus to publish, one of the project maintainers will review the submission and assign the document's XLS number, after which the author should update the PR to reflect the assigned number with the following naming convention: `XLS-{0000}-{title}`, where `{0000}` is the unique number referencing the XLS. Once at least one other person involved in the spec process for that spec has approved, and the maintainer has ensured that the template and naming conventions are followed, the maintainer will merge the PR.
 
