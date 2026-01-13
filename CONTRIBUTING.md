@@ -20,11 +20,7 @@ Before opening a PR with any kind of formal proposal, please first gather commun
 
 #### Discussion Title
 
-When creating a new discussion for your idea, the discussion title should follow the naming convention `XLS-{0000}d {Title}`, where `{0000}` is a unique number for the XLS, `d` indicates that the document is a Draft (i.e., work in progress), and `{Title}` is a descriptive title for the proposed document.
-
-#### Specification Number
-
-Use the next number that has not yet been used. If a conflict occurs, it will be fixed by a maintainer or editor. Maintainers or editors also reserve the right to remove or re-number proposals as necessary. The number is important, as it will be used to reference features and ideas throughout the community.
+When creating a new discussion for your idea, the discussion title should follow the naming convention `[{Category} {Idea/Proposal} {Title}]`, where `{Category}` is one of `Amendment`, `System`, `Ecosystem`, or `Meta` (depending on what type of spec it is), `{Idea/Proposal}` is either `Idea` or `Proposal` (depending on how fleshed out the idea is), and `{Title}` is a descriptive title for the proposed document.
 
 ### 2. Closing a Discussion
 
@@ -54,13 +50,11 @@ Notice that a Draft is not a [rubber-stamp](https://idioms.thefreedictionary.com
 
 ##### Publishing a Draft
 
-To publish a new Draft, submit a Pull Request to this repo with a new folder and a new Markdown file. The folder MUST follow the naming convention `XLS-{0000}d-{title}` where `{0000}` is the unique number referencing the XLS, `d` indicates that the document is a Draft, and `{title}` is a lower case title with spaces replaced by hyphens (`-`). The submission should have front-matter (similar to GitHub pages rendered from Markdown) specifying at least a `title` and `type`. The `type` MUST have the value `draft`.
+To publish a new Draft, submit a Pull Request to this repo with a new folder and a new Markdown file. The folder MUST follow the naming convention `XLS-draft-{title}` where `{title}` is a lower case title with spaces replaced by hyphens (`-`). An example draft name is: `XLS-20d-non-fungible-token-support-native`
 
-An example draft name is: `XLS-20d-non-fungible-token-support-native`
+The submission must follow the template in [XLS_TEMPLATE.md](./templates/XLS_TEMPLATE.md).
 
-Use the following template when creating the Markdown file: [xls-template.md](./templates/XLS_TEMPLATE.md)
-
-Assuming there is consensus to publish, one of the project maintainers will review the submission and confirm the document's XLS number, often making a follow-up commit to the PR which renames the file as appropriate.
+Assuming there is consensus to publish, one of the project maintainers will review the submission and assign the document's XLS number, after which the author should update the PR to reflect the assigned number with the following naming convention: `XLS-{0000}-{title}`, where `{0000}` is the unique number referencing the XLS. Once at least one other person involved in the spec process for that spec has approved, and the maintainer has ensured that the template and naming conventions are followed, the maintainer will merge the PR.
 
 #### Candidate Specifications
 
