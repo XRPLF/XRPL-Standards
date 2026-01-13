@@ -1,7 +1,7 @@
 # CONTRIBUTING
 
-> [!IMPORTANT]  
-> This process is in a state of flux right now, and this document is still referring to the old process. Please refer to https://github.com/XRPLF/XRPL-Standards/discussions/340 instead.
+> [!IMPORTANT]
+> This process is in a state of flux right now, and this document is still referring to the old process. Please refer to [XLS-1](./XLS-0001-xls-process/README.md) instead.
 
 The work of the [XRP Ledger](https://xrpl.org) community is open, collaborative, and welcoming of all contributors participating in good faith. Part of that effort involves standardization, and this document outlines how anyone can contribute to that process.
 
@@ -58,7 +58,7 @@ To publish a new Draft, submit a Pull Request to this repo with a new folder and
 
 An example draft name is: `XLS-20d-non-fungible-token-support-native`
 
-Use the following template when creating the Markdown file: [xls-template.md](./xls-template.md)
+Use the following template when creating the Markdown file: [xls-template.md](./templates/XLS_TEMPLATE.md)
 
 Assuming there is consensus to publish, one of the project maintainers will review the submission and confirm the document's XLS number, often making a follow-up commit to the PR which renames the file as appropriate.
 
