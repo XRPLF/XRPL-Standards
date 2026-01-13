@@ -1,7 +1,7 @@
 # CONTRIBUTING
 
 > [!IMPORTANT]
-> This process is in a state of flux right now, and this document is still referring to the old process. Please refer to XLS-0001-xls-process/README.md instead.
+> This process is in a state of flux right now, and this document is still referring to the old process. Please refer to [XLS-1](../XLS-0001-xls-process/README.md) instead.
 
 The work of the [XRP Ledger](https://xrpl.org) community is open, collaborative, and welcoming of all contributors participating in good faith. Part of that effort involves standardization, and this document outlines how anyone can contribute to that process.
 
