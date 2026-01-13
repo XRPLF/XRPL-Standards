@@ -747,6 +747,25 @@ This spec proposes the following additions:
 | ------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tfSponsorCreatedAccount` | `0x00080000` | This flag is only valid if the `Payment` is used to create an account. If it is enabled, the created account will be sponsored by the `tx.Account`. |
 
+### 11.2. Failure Conditions
+
+Existing failure conditions still apply (see [Payment documentation](https://xrpl.org/docs/references/protocol/transactions/types/payment)), with one exception:
+
+- If `tfSponsorCreatedAccount` is enabled, the XRP amount does not need to be greater than or equal to the account reserve requirement.
+
+Additional failure conditions when `tfSponsorCreatedAccount` is enabled:
+
+- `tfNoRippleDirect`, `tfPartialPayment`, or `tfLimitQuality` are enabled (`temINVALID_FLAG`)
+- `Amount` specifies a non-XRP currency (`temBAD_AMOUNT`)
+- `Destination` already exists (`tecNO_DST`)
+- `Account` does not have enough XRP to cover the account reserve requirement (`tecINSUFFICIENT_RESERVE`)
+
+### 11.3. State Changes
+
+Existing state changes still apply (see [Payment documentation](https://xrpl.org/docs/references/protocol/transactions/types/payment)).
+
+If `tfSponsorCreatedAccount` is enabled, the created account's `AccountRoot` will have a `SponsorAccount` field pointing to the `tx.Account`.
+
 ## 12. Transaction: `AccountDelete`
 
 This transaction deletes an account.
