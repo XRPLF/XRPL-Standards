@@ -58,7 +58,7 @@ To publish a new Draft, submit a Pull Request to this repo with a new folder and
 
 An example draft name is: `XLS-20d-non-fungible-token-support-native`
 
-Use the following template when creating the Markdown file: [xls-template.md](./xls-template.md)
+Use the following template when creating the Markdown file: [xls-template.md](./templates/XLS_TEMPLATE.md)
 
 Assuming there is consensus to publish, one of the project maintainers will review the submission and confirm the document's XLS number, often making a follow-up commit to the PR which renames the file as appropriate.
 
