@@ -36,7 +36,7 @@ _[The technical specification should describe the syntax and semantics of any ne
 
 > **Note:** It is recommended to follow RFC 2119 and RFC 8174. Do not remove the key word definitions if RFC 2119 and RFC 8174 are followed.
 
-_[For Amendment XLSes, use the [AMENDMENT_TEMPLATE.md](AMENDMENT_TEMPLATE.md) to structure this section with detailed subsections for Serialized Types, Ledger Entries, Transactions, Permissions, and RPCs as needed.]_
+_[For Amendment XLSes, use the [AMENDMENT_TEMPLATE.md](./AMENDMENT_TEMPLATE.md) to structure this section with detailed subsections for Serialized Types, Ledger Entries, Transactions, Permissions, and RPCs as needed.]_
 
 _[For other XLS types, provide a clear technical specification.]_
 
