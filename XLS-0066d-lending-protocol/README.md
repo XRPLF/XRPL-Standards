@@ -1131,83 +1131,84 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.3.1 Failure Conditions
 
-- A `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The `Account` submitting the transaction is not the `LoanBroker.Owner`.
-- The `lsfLoanDefault` flag is set on the Loan object. Once a Loan is defaulted, it cannot be modified.
+- `LoanID` is zero.
+- More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive).
 
-- If `Loan(LoanID).Flags == lsfLoanImpaired` AND `tfLoanImpair` flag is provided (impairing an already impaired loan).
-- If `Loan(LoanID).Flags == 0` AND `tfLoanUnimpair` flag is provided (clearing impairment for an unimpaired loan).
+- `Loan` object with the specified `LoanID` does not exist on the ledger.
+- `Loan.Flags` has `lsfLoanDefault` set (a defaulted loan cannot be modified).
+- `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan).
+- `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan).
+- `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified).
 
-- `Loan.PaymentRemaining == 0`.
+- `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed.
 
-- The `tfLoanDefault` flag is specified and:
-  - `LastClosedLedger.CloseTime` < `Loan.NextPaymentDueDate + Loan.GracePeriod`.
+- `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets).
+
+- The submitter is not the `LoanBroker.Owner`.
 
 ##### 3.2.3.2 State Changes
 
 - If the `tfLoanDefault` flag is specified:
-  - Calculate the amount of the Default that First-Loss Capital covers:
-    - The default Amount equals the outstanding principal and interest, excluding any funds unclaimed by the Borrower.
-      - `DefaultAmount = (Loan.PrincipalOutstanding + Loan.InterestOutstanding)`.
-    - Apply the First-Loss Capital to the Default Amount
-      - `DefaultCovered = min((LoanBroker(Loan.LoanBrokerID).DebtTotal x LoanBroker(Loan.LoanBrokerID).CoverRateMinimum)  x LoanBroker(Loan.LoanBrokerID).CoverRateLiquidation, DefaultAmount)`
-    - `DefaultAmount -= DefaultCovered`
-    - `ReturnToVault = DefaultCovered`
+  - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
+  - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
+  - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`.
+  - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
 
-  - Update the `Vault` object:
-    - Decrease the Total Value of the Vault:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsTotal -= DefaultAmount`.
-    - Increase the Asset Available of the Vault by liquidated First-Loss Capital and any unclaimed funds amount:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).AssetsAvailable += ReturnToVault`.
-    - If `Loan.lsfLoanImpaired` flag is set:
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding).
+  - Update `Vault` object:
+    - Decrease `Vault.AssetsTotal` by `VaultLoss`.
+    - Increase `Vault.AssetsAvailable` by `DefaultCovered`.
+    - If `Loan.Flags` has `lsfLoanImpaired` set:
+      - Decrease `Vault.LossUnrealized` by `DefaultAmount`.
 
-  - Update the `LoanBroker` object:
-    - Decrease the Debt of the LoanBroker:
-      - `LoanBroker(LoanBrokerID).DebtTotal -= Loan.PrincipalOutstanding + Loan.InterestOutstanding`
-    - Decrease the First-Loss Capital Cover Available:
-      - `LoanBroker(LoanBrokerID).CoverAvailable -= DefaultCovered`
+  - Update `LoanBroker` object:
+    - Decrease `LoanBroker.DebtTotal` by `DefaultAmount`.
+    - Decrease `LoanBroker.CoverAvailable` by `DefaultCovered`.
 
-  - Update the `Loan` object:
-    - `Loan(LoanID).Flags |= lsfLoanDefault`
-    - `Loan(LoanID).PaymentRemaining = 0`
-    - `Loan(LoanID).PrincipalOutstanding = 0`
+  - Update `Loan` object:
+    - Set `lsfLoanDefault` flag.
+    - Set `Loan.TotalValueOutstanding = 0`.
+    - Set `Loan.PaymentRemaining = 0`.
+    - Set `Loan.PrincipalOutstanding = 0`.
+    - Set `Loan.ManagementFeeOutstanding = 0`.
+    - Set `Loan.NextPaymentDueDate = 0`.
 
-  - Move the First-Loss Capital from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_:
-    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-      - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
-      - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `ReturnToVault`.
+  - Transfer `DefaultCovered` from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_ (transfer fee waived):
+    - If `Vault.Asset` is `XRP`:
+      - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+      - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
 
-    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-      - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
-      - Increase the `RippleState` balance between the `Vault` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `ReturnToVault`.
+    - If `Vault.Asset` is an `IOU`:
+      - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
+      - Increase the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
 
-    - If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-      - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
-      - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object for the `Vault.Asset` by `ReturnToVault`.
+    - If `Vault.Asset` is an `MPT`:
+      - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `DefaultCovered`.
+      - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `DefaultCovered`.
 
-  - If `tfLoanImpair` flag is specified:
-    - Update the `Vault` object (set "paper loss"):
-      - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized += Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+- If the `tfLoanImpair` flag is specified:
+  - Compute `LossUnrealized = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
 
-    - Update the `Loan` object:
-    - `Loan(LoanID).Flags |= lsfLoanImpaired`
-      - If `currentTime < Loan(LoanID).NextPaymentDueDate` (if the loan payment is not yet late):
-        - `Loan(LoanID).NextPaymentDueDate = currentTime` (move the next payment due date to now)
+  - Update `Vault` object:
+    - Increase `Vault.LossUnrealized` by `LossUnrealized`.
 
-  - If the `tfLoanUnimpair` flag is specified:
-    - Update the `Vault` object (clear "paper loss"):
-    - `Vault(LoanBroker(LoanBrokerID).VaultID).LossUnrealized -= Loan.PrincipalOutstanding + TotalInterestOutstanding()` (Please refer to section [**3.2.4.1.5 Total Value Calculation**](#3242-total-loan-value-calculation), which outlines how to calculate total interest outstanding)
+  - Update `Loan` object:
+    - Set `lsfLoanImpaired` flag.
+    - If `Loan.NextPaymentDueDate` has not yet passed:
+      - Set `Loan.NextPaymentDueDate = currentTime`.
 
-    - Update the `Loan` object:
-      - Unset `lsfLoanImpaired` flag
-      - `CandidateDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`
+- If the `tfLoanUnimpair` flag is specified:
+  - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
 
-      - If `CandidateDueDate > currentTime` (the loan was unimpaired within the payment interval):
-        - `Loan(LoanID).NextPaymentDueDate = CandidateDueDate`
+  - Update `Vault` object:
+    - Decrease `Vault.LossUnrealized` by `LossReversed`.
 
-      - If `CandidateDueDate <= currentTime` (the loan was unimpaired after the original payment due date):
-        - `Loan(LoanID).NextPaymentDueDate = currentTime + Loan(LoanID).PaymentInterval`
+  - Update `Loan` object:
+    - Clear `lsfLoanImpaired` flag.
+    - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
+    - If `NormalDueDate` has not yet passed:
+      - Set `Loan.NextPaymentDueDate = NormalDueDate`.
+    - Otherwise:
+      - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
 
 ##### 3.2.3.3 Invariants
 
