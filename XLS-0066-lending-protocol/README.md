@@ -1659,6 +1659,17 @@ The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `Loa
 
 ## A-2 Equation Glossary
 
+<!--
+
+########################################################## NOTE ##########################################################
+
+The formulas in the Glossary are referenced in the C++ implementation of the XRP Ledger. (https://github.com/XRPLF/rippled)
+At the time of writting this was: https://github.com/XRPLF/rippled/blob/develop/src/xrpld/app/misc/detail/LendingHelpers.cpp
+
+Make sure to change the code documentation if the formula numbering is changed.
+
+ -->
+
 Throughout the specification we use numerous equations to calculate various Loan properties. This consolidated reference groups related formulas by financial concept.
 
 **All time values are expressed in seconds unless otherwise noted.**
