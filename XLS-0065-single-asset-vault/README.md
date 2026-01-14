@@ -655,10 +655,8 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 The transaction can be submitted by:
 
-1. **Asset Issuer**: The issuer of the Vault's asset (IOU or MPT) can clawback funds from any holder's shares, sending the assets to the Issuer's account.
-2. **Vault Owner**: In the rare circumstance when both `Vault.AssetsTotal` and `Vault.AssetsAvailable` are zero, the Vault Owner can force burn the shares of depositors. This situation may arise when, for example, a Loan issued for the total of Vault's assets defaults. Without this mechanism, the Vault would become permanently stuck—deposits would not be able to settle the balance, and the Vault object would be non-deletable.
-
-Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset (when submitted by the Issuer). In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. The Clawback transaction must respect any future fees or penalties.
+1. **Asset Issuer**: The issuer of the Vault's asset (IOU or MPT) can clawback funds from any holder's shares, sending the assets to the Issuer's account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset (when submitted by the Issuer). In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. The Clawback transaction must respect any future fees or penalties.
+2. **Vault Owner**: In the rare circumstance when both `Vault.AssetsTotal` and `Vault.AssetsAvailable` are zero, the Vault Owner can force burn the shares of depositors. This situation may arise when, for example, a Loan issued for the total of Vault's assets defaults. Without this mechanism, the Vault would become permanently stuck, deposits would not be able to settle the balance, and the Vault object would be non-deletable.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                    |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
@@ -669,36 +667,55 @@ Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`
 
 ##### 3.3.1.1 `Amount`
 
-The `Amount` field is an `STAmount` that specifies the quantity to clawback. The type of the `Amount` determines its interpretation and must match the expected asset type based on who submits the transaction:
+The `Amount` field is an `STAmount` that specifies the quantity and type of asset to clawback. Its interpretation depends on who submits the transaction:
 
-- **Asset Issuer**: The `Amount` must be specified as the Vault's asset type (IOU or MPT). The transaction will clawback up to `Amount` of assets from the `Holder`'s shares, sending the funds to the Issuer's account.
+- **Asset Issuer**: The `Amount` must be the Vault's asset type (IOU or MPT). The transaction claws back up to `Amount` of assets from the `Holder`'s shares, sending the funds to the Issuer's account. Partial clawback is supported.
 
-- **Vault Owner**: The `Amount` must be specified as the Vault's share type (MPT), where `mpt_issuance_id` matches `Vault.MPTokenIssuanceID`. Since the Vault Owner can only submit this transaction when `Vault.AssetsTotal` and `Vault.AssetsAvailable` are both zero, no assets are transferred—only shares are destroyed. Partial burns are not permitted, the Vault Owner must burn all shares held by the `Holder`. The `Amount` can be specified as either:
-  - `0` - Burns all shares held by the `Holder`.
+- **Vault Owner**: The `Amount` must be the Vault's share type (MPT), where `mpt_issuance_id` matches `Vault.MPTokenIssuanceID`. Since the Vault Owner can only submit this transaction when both `Vault.AssetsTotal` and `Vault.AssetsAvailable` are zero, no assets are transferred—only shares are destroyed. Partial share burns are **not** permitted; the Vault Owner must burn all shares held by the `Holder`. The `Amount` can be specified as either:
+  - `0` — Burns all shares held by the `Holder`.
   - The exact total shares held by the `Holder` (i.e., `MPToken(Vault.MPTokenIssuanceID, Holder).MPTAmount`).
 
-When `Amount` is `0`, the transaction will clawback/burn all funds, up to the total shares the `Holder` owns.
+If the `Amount` field is omitted:
+
+- The asset type is inferred as Vault Asset for the Issuer, or Vault Share for the Vault Owner.
+- The transaction claws back or burns all funds, up to the total the `Holder` owns.
+- If the Vault Owner and Asset Issuer are the same entity, the `Amount` must be explicitly provided.
 
 ##### 3.3.1.2 Failure conditions
 
+- `VaultID` is zero or empty.
+
+- `Amount` is negative.
+
+- `Amount` is specified as XRP (XRP cannot be clawed back).
+
 - `Vault` object with the `VaultID` does not exist on the ledger.
 
-- The submitter is neither the Asset Issuer nor the Vault Owner.
+- The `Amount` is omitted and the Vault Owner is also the Asset Issuer (ambiguous case — `Amount` must be explicitly provided).
+
+- The `Amount` asset type does not match either the Vault's asset or the Vault's share.
 
 - If the submitter is the **Vault Owner**:
   - `Vault.AssetsTotal != 0` OR `Vault.AssetsAvailable != 0` (Vault Owner can only burn worthless shares).
+  - `MPTokenIssuance(Vault.MPTokenIssuanceID).OutstandingAmount == 0` (there are no shares to burn).
   - `Amount != 0` AND `Amount != MPToken(Vault.MPTokenIssuanceID, Holder).MPTAmount` (partial burns are not allowed).
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is `XRP`.
+- If the submitter is the **Asset Issuer**:
+  - The `Holder` is the same account as the Issuer (issuer cannot clawback from itself).
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `IOU` and:
-  - If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
-  - If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `IOU`:
+  - The `AccountRoot(Issuer)` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+  - The `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
 
-- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `MPT` and:
-  - `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
-  
-- The `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
+- If the submitter is the **Asset Issuer** and `Vault.Asset` is an `MPT`:
+  - The `MPTokenIssuance` object for the asset does not exist.
+  - The `lsfMPTCanClawback` flag is not set on the `MPTokenIssuance` (the asset does not support clawback).
+
+- The `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder` does not exist OR `MPToken.MPTAmount == 0`.
+
+- The calculated `sharesDestroyed` is zero due to precision loss.
+
+- Arithmetic overflow occurs during share/asset calculations (e.g., with large `Scale` values).
 
 ##### 3.3.1.3 State Changes
 
