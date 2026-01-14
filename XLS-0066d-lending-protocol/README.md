@@ -693,39 +693,51 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 ##### 3.1.3.1 Failure Conditions
 
+- `LoanBrokerID` is zero.
+- `Amount <= 0`.
+- `Amount` asset does not match the Amount of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+- `Vault(LoanBroker.VaultID)` does not exist.
+- `Amount.asset` does not match `Vault.Asset`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-  - `AccountRoot(LoanBroker.Owner).Balance - Reserve(AccountRoot(LoanBroker.Owner).OwnerCount) < Amount` (LoanBroker does not have sufficient funds to deposit the First Loss Capital).
+- The asset is not transferable:
+  - If `Vault.Asset` is an `MPT`: The `MPTokenIssuance` does not have the `lsfMPTCanTransfer` flag set.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The `RippleState` object `Balance` < `Amount` (Depositor has insufficient funds).
+- The submitting account is frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` object between the submitter and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot`:
-    - Has `lsfMPTLocked` flag set.
-    - `MPTAmount` < `Amount`.
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set (the asset is not transferable).
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the submitter has the `lsfMPTLocked` flag set.
+    - The `MPTokenIssuance` has the `lsfMPTLocked` flag set.
+
+- The broker _pseudo-account_ is deep frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` object between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set.
+
+- The submitting account is not authorized for the asset.
+- The submitting account has insufficient funds to deposit the `Amount`.
 
 ##### 3.1.3.2 State Changes
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-  - Increase the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
-  - Decrease the `Balance` field of the submitter `AccountRoot` by `Amount`.
+- Transfer `Amount` from the submitting account to the broker _pseudo-account_ (transfer fee waived):
+  - If `Vault.Asset` is `XRP`:
+    - Decrease the `Balance` field of the submitting account `AccountRoot` by `Amount`.
+    - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  - Decrease the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+  - If `Vault.Asset` is an `IOU`:
+    - Decrease the `RippleState` balance between the submitting account and the `Issuer` by `Amount`.
+    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `Amount`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - Increase the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
+  - If `Vault.Asset` is an `MPT`:
+    - Decrease the `MPToken.MPTAmount` of the submitting account `MPToken` object by `Amount`.
+    - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `Amount`.
 
 - Increase `LoanBroker.CoverAvailable` by `Amount`.
 
