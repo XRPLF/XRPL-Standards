@@ -757,7 +757,7 @@ Additional failure conditions when `tfSponsorCreatedAccount` is enabled:
 
 - `tfNoRippleDirect`, `tfPartialPayment`, or `tfLimitQuality` are enabled (`temINVALID_FLAG`)
 - `Amount` specifies a non-XRP currency (`temBAD_AMOUNT`)
-- `Destination` already exists (`tecNO_DST`)
+- `Destination` already exists (`tecNO_SPONSOR_PERMISSION`)
 - `Account` does not have enough XRP to cover the account reserve requirement (`tecNO_DST_INSUF_XRP`)
 
 ### 11.3. State Changes
