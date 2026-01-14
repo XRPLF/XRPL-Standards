@@ -2,10 +2,12 @@
   xls: 66
   title: Lending Protocol
   description: XRP Ledger-native protocol for issuing uncollateralized, fixed-term loans using pooled funds, enabling on-chain credit origination.
-  author: Vytautas Vito Tumas (@Tapanito) Aanchal Malhotra <amalhotra@ripple.com>
+  author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   status: Draft
   category: Amendment
+  requires: XLS-65, XLS-64
   created: 2024-10-18
+  updated: 2026-01-14
 </pre>
 
 ## _Abstract_
@@ -531,7 +533,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 3. Due to the cumulative effect of rounding across multiple payment cycles, these on-ledger values may deviate by up to one asset unit from their theoretical mathematical values at any given time.
 
-**Important**: Implementations must **not** recalculate these values from the theoretical formulas during payment processing. The stored ledger values are the authoritative source of truth. The pseudo-code in [Section 3.2.4.4](#3244-transaction-pseudo-code) demonstrates how to properly handle these rounding discrepancies while maintaining loan integrity.
+**Important**: Implementations must **not** recalculate these values from the theoretical formulas during payment processing. The stored ledger values are the authoritative source of truth. The pseudo-code in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) demonstrates how to properly handle these rounding discrepancies while maintaining loan integrity.
 
 **Late Payment Interest Treatment**: Late payment penalties and additional interest charges are calculated and collected separately from the core loan value. These charges do not modify the `TotalValueOutstanding` calculation, which remains anchored to the original scheduled payment terms.
 
@@ -1239,7 +1241,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 
 A `LoanPay` transaction is processed according to a defined workflow that evaluates the payment's timing, amount, and any specified flags. This determines how the funds are applied to the loan's principal, interest, and associated fees.
 
-**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#3244-transaction-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
+**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-3-loanpay-transaction-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
 
 **Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
 
@@ -1518,7 +1520,559 @@ $$
 
 **Important Note**: These formulas describe the theoretical financial model. The actual values stored on the `Loan` ledger object (`TotalValueOutstanding`, `PrincipalOutstanding`, `ManagementFeeOutstanding`) are continuously adjusted during payment processing to account for asset-specific rounding rules. Therefore, implementations **must not** rely on these formulas to derive the live state of a loan. The stored ledger fields are the single source of truth.
 
-##### 3.2.4.4 Transaction Pseudo-code
+##### 3.2.4.4 Failure Conditions
+
+- `LoanID` is zero.
+- `Amount <= 0`.
+- More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
+
+- `Loan` object with the specified `LoanID` does not exist on the ledger.
+- The submitter is not the `Loan.Borrower`.
+- `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
+- `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
+- `Amount.asset` does not match `Vault.Asset`.
+
+- The Borrower is frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
+    - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
+
+- The Vault _pseudo-account_ is deep frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
+
+- The Borrower is not authorized for the asset.
+
+- The Borrower has insufficient funds to pay `Amount`.
+
+- Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
+
+- If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
+  - The `tfLoanLatePayment` flag is not specified in the transaction.
+  - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
+
+- If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
+  - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
+
+- If the `tfLoanFullPayment` flag is specified:
+  - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
+  - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
+
+##### 3.2.4.5 State Changes
+
+Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
+
+**1. High-Level Accounting**
+
+First, the system determines the final destination of all funds.
+
+1.  **Determine Fee Destination**: All collected fees are directed to one of two places:
+    - **If ALL of the following conditions are met**, fees are paid to the `LoanBroker.Owner`:
+      - First-Loss Capital is sufficient: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+      - The `LoanBroker.Owner` is NOT deep frozen for the asset.
+      - The `LoanBroker.Owner` is authorized for the asset.
+    - **Otherwise**: The fees are added to the `LoanBroker` pseudo-account's first-loss pool (`CoverAvailable`).
+
+2.  **Define Final Fund Flows**:
+    - `totalPaidByBorrower = principalPaid + interestPaid + feePaid`
+    - `totalToVault = principalPaid + interestPaid` (rounded to the vault's asset scale)
+    - `totalToBroker = feePaid`, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
+
+**2. `Loan` Object State Changes**
+
+The `Loan` object is updated to reflect the payment.
+
+- If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3233-tfloanunimpair-state-changes) for details).
+
+- **For a Full Repayment**:
+  - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
+  - `PaymentRemaining` is set to `0`.
+
+- **For Other Payments**:
+  - `PrincipalOutstanding` is decreased by the `principal` portion of each periodic payment settled.
+  - `ManagementFeeOutstanding` is decreased by the `managementFee` portion of each periodic payment settled.
+  - `TotalValueOutstanding` is decreased by the sum of the `principal`, `interest`, and `managementFee` portions of each periodic payment settled.
+  - If an overpayment occurred, `TotalValueOutstanding` is further adjusted by the `valueChange` resulting from re-amortization. It is **not** adjusted for `valueChange` from late payment interest, as that interest was not part of the original loan value.
+  - `PaymentRemaining` is decreased by `1` for each full periodic payment cycle covered.
+  - `NextPaymentDueDate` is advanced by `Loan.PaymentInterval` for each periodic payment cycle covered.
+  - `PreviousPaymentDueDate` is updated.
+  - If an overpayment was made:
+    - `PeriodicPayment` is recalculated based on the new outstanding principal and remaining term.
+
+**3. `LoanBroker` and `Vault` Object State Changes**
+
+The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
+
+- **`LoanBroker` Updates**:
+  - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
+    - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
+    - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
+  - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
+
+- **`Vault` Updates**:
+  - `Vault.AssetsAvailable` increases by `totalToVault`.
+  - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+
+**4. Asset Transfers**
+
+Finally, the actual asset transfers are executed on the ledger. All transfers are performed with **transfer fees waived**.
+
+- The borrower's balance is **decreased** by `totalToVault + totalToBroker`.
+- The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
+- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
+
+These transfers are performed according to the asset type:
+
+- **If the asset is XRP**:
+  - The `Balance` of the borrower's `AccountRoot` is decreased.
+  - The `Balance` of the `Vault` pseudo-account's `AccountRoot` is increased.
+  - The `Balance` of the destination account for fees (`LoanBroker.Owner` or `LoanBroker` pseudo-account) is increased.
+- **If the asset is an IOU**:
+  - The `RippleState` balance between the borrower and the `Issuer` is decreased.
+  - The `RippleState` balance between the `Vault` pseudo-account and the `Issuer` is increased.
+  - The `RippleState` balance between the destination account for fees and the `Issuer` is increased.
+- **If the asset is an MPT**:
+  - The `MPTAmount` in the borrower's `MPToken` object is decreased.
+  - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
+  - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
+
+##### 3.2.4.6 Invariants
+
+**TBD**
+
+# Appendix
+
+## A-1 F.A.Q.
+
+### A-1.1. What is the `LoanBroker.LoanSequence` field?
+
+A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created.
+
+### A-1-2. Why the `LoanBrokerCoverClawback` cannot clawback the full LoanBroker.CoverAvailable amount?
+
+The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
+
+## A-2 Equation Glossary
+
+Throughout the specification we use numerous equations to calculate various Loan properties. This consolidated reference groups related formulas by financial concept.
+
+**All time values are expressed in seconds unless otherwise noted.**
+
+### 1. Interest Rate Conversions
+
+All interest rate calculations convert annual rates to period-specific rates.
+
+#### 1.1 Periodic Rate (Regular Payments)
+
+$$
+periodicRate = \frac{interestRate \times paymentInterval}{secondsPerYear} \quad \text{(1)}
+$$
+
+**Where:**
+
+- `periodicRate` = Interest rate for one payment period
+- `interestRate` = Annual interest rate (from `Loan.InterestRate`)
+- `paymentInterval` = `Loan.PaymentInterval` (seconds between payments)
+- `secondsPerYear` = 31,536,000 (365 × 24 × 60 × 60)
+
+#### 1.2 Late Periodic Rate (Penalty Interest)
+
+$$
+latePeriodicRate = \frac{lateInterestRate \times secondsOverdue}{secondsPerYear} \quad \text{(2)}
+$$
+
+$$
+secondsOverdue = lastLedgerCloseTime - Loan.NextPaymentDueDate \quad \text{(3)}
+$$
+
+**Where:**
+
+- `latePeriodicRate` = Penalty interest rate for overdue period
+- `lateInterestRate` = `Loan.LateInterestRate` (annual penalty rate)
+- `secondsOverdue` = Duration payment is late (in seconds)
+
+#### 1.3 Time Since Last Payment
+
+$$
+secondsSinceLastPayment = lastLedgerCloseTime - \max(Loan.PreviousPaymentDueDate, Loan.StartDate) \quad \text{(4)}
+$$
+
+**Usage:** Calculates the time elapsed since the last payment was due (or since loan origination, whichever is later). Used in early full payment calculations ([Section 5.1](#51-total-due-components)).
+
+**Why `max()`?**
+
+- For the first payment period, `PreviousPaymentDueDate = 0` (undefined)
+- Taking `max(0, StartDate)` ensures we use `StartDate` for the first calculation
+- For subsequent payments, `PreviousPaymentDueDate > StartDate`, so it's used instead
+
+### 2. Standard Amortization
+
+These formulas calculate the regular payment schedule and breakdown.
+
+#### 2.1 Periodic Payment Amount
+
+$$
+raisedRate = (1 + periodicRate)^{paymentsRemaining} \quad \text{(5)}
+$$
+
+$$
+factor = \frac{periodicRate \times raisedRate}{raisedRate - 1} \quad \text{(6)}
+$$
+
+$$
+periodicPayment = PrincipalOutstanding \times factor \quad \text{(7)}
+$$
+
+**Note**: The calculation is split into `raisedRate` and `factor` for numerical stability and to enable the reverse calculation in [Section 2.3](#23-reverse-calculation-principal-from-payment).
+
+**Special Cases:**
+
+- **Final Payment:** When `paymentsRemaining = 1`, override formula with `periodicPayment = TotalValueOutstanding`
+- **Zero Interest:** When `periodicRate = 0`, simplify to `periodicPayment = PrincipalOutstanding / paymentsRemaining`
+
+#### 2.2 Payment Breakdown
+
+From the periodic payment, derive the principal and interest portions:
+
+$$
+interest = PrincipalOutstanding \times periodicRate \quad \text{(8)}
+$$
+
+$$
+principal = periodicPayment - interest \quad \text{(9)}
+$$
+
+To
+**Note:** For zero-interest loans, `principal = PrincipalOutstanding / paymentsRemaining` and `interest = 0`.
+
+#### 2.3 Reverse Calculation: Principal from Payment
+
+Used to detect rounding errors during overpayment processing:
+
+$$
+PrincipalOutstanding = \frac{periodicPayment}{factor} \quad \text{(10)}
+$$
+
+**Where:**
+
+- `factor` is defined by formula (6)
+
+**Usage:** This inverse formula is used in the pseudo-code to calculate the "true" principal outstanding before applying rounding adjustments. See [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) `principal_outstanding_from_periodic()` function.
+
+**Special Cases:**
+
+- **Zero Interest:** When `periodicRate = 0`, simplify to:
+  $$PrincipalOutstanding = periodicPayment \times paymentsRemaining \quad \text{(11)}$$
+
+### 3. Management Fee Calculations
+
+The Loan Broker charges a management fee as a percentage of the interest earned. This fee is calculated differently depending on the payment scenario.
+
+#### 3.1 Regular Payment Management Fee
+
+For standard periodic payments:
+
+$$
+managementFee = interest \times managementFeeRate \quad \text{(12)}
+$$
+
+**Where:**
+
+- `interest` = Interest portion of a payment (from formula 8)
+- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
+
+#### 3.2 Late Payment Management Fee
+
+For late payments, the management fee applies to the penalty interest:
+
+$$
+managementFee_{late} = latePaymentInterest_{gross} \times managementFeeRate \quad \text{(13)}
+$$
+
+**Where:**
+
+- `latePaymentInterest_{gross}` = Gross late payment interest (from formula 15)
+- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
+
+#### 3.3 Overpayment Management Fee
+
+For overpayments, the management fee applies to the interest charged on the overpayment amount:
+
+$$
+managementFee_{overpayment} = overpaymentInterest_{gross} \times managementFeeRate \quad \text{(14)}
+$$
+
+**Where:**
+
+- `overpaymentInterest_{gross}` = Gross overpayment interest (from formula 20)
+- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
+
+**Note:** In all cases, the management fee is deducted from the gross interest before calculating the net interest that accrues to the vault.
+
+### 4. Late Payment
+
+A late payment adds penalty charges to the standard periodic payment.
+
+#### 4.1 Late Payment Components
+
+$$
+totalDue = periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest_{net} \quad \text{(15)}
+$$
+
+**Where:**
+
+$$
+latePaymentInterest_{gross} = PrincipalOutstanding \times latePeriodicRate \quad \text{(16)}
+$$
+
+$$
+latePaymentInterest_{net} = latePaymentInterest_{gross} - managementFee_{late} \quad \text{(17)}
+$$
+
+- `latePeriodicRate` is defined by formula (2)
+- `managementFee_{late}` is defined by formula (13)
+
+#### 4.2 Value Impact
+
+$$
+valueChange = latePaymentInterest_{net} \quad \text{(18)}
+$$
+
+**Note:**
+
+- `valueChange > 0` (always positive for late payments)
+- Not reflected in `Loan.TotalValueOutstanding` (unanticipated value increase)
+- Applied directly to `Vault.AssetsTotal` and `LoanBroker.DebtTotal`
+
+### 5. Overpayment Processing
+
+Overpayments reduce principal early and trigger loan re-amortization.
+
+#### 5.1 Overpayment Fees and Interest
+
+$$
+overpaymentAmount = amount - (periodicPaymentsCovered \times (periodicPayment + serviceFee)) \quad \text{(19)}
+$$
+
+**Where:**
+
+- `amount` = Total amount paid by the borrower
+- `periodicPaymentsCovered` = Number of complete periodic payment cycles covered by `amount`
+- Formula applies only after all full periodic cycles are paid
+- If `periodicPaymentsCovered = 0`, the payment is rejected as insufficient
+
+$$
+overpaymentInterest_{gross} = overpaymentAmount \times overpaymentInterestRate \quad \text{(20)}
+$$
+
+$$
+overpaymentInterest_{net} = overpaymentInterest_{gross} - managementFee_{overpayment} \quad \text{(21)}
+$$
+
+$$
+overpaymentFee = overpaymentAmount \times overpaymentFeeRate \quad \text{(22)}
+$$
+
+**Where:**
+
+- `managementFee_{overpayment}` is defined by formula (14)
+
+#### 5.2 Principal Reduction
+
+$$
+principalPortion = overpaymentAmount - overpaymentInterest_{net} - overpaymentFee \quad \text{(23)}
+$$
+
+**Where:**
+
+- `overpaymentAmount` = The excess funds after all periodic payments are settled (formula 19)
+- `overpaymentInterest_{net}` = Gross overpayment interest minus management fee (formula 21)
+- `overpaymentFee` = Percentage-based fee on the overpayment amount (formula 22)
+
+**Note:** The management fee has already been deducted from `overpaymentInterest_{net}`, so it does not appear as a separate term in this formula.
+
+#### 5.3 Re-amortization Value Change
+
+The pseudo-code in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) handles re-amortization by preserving historical rounding errors while applying the overpayment to reduce the principal. The process follows these logical steps:
+
+**1. Calculate the "true" pre-overpayment state** (using formulas 10, 31-34):
+
+The system first determines what the loan state should be based on pure mathematical formulas, without rounding:
+
+```
+truePrincipalOutstanding = periodicPayment / factor
+trueTotalValue = periodicPayment × paymentsRemaining
+trueInterest = trueTotalValue - truePrincipalOutstanding
+trueManagementFee = trueInterest × managementFeeRate
+trueInterest = trueInterest - trueManagementFee
+```
+
+**2. Capture the rounding discrepancy:**
+
+$$
+diffTotal = TotalValueOutstanding_{ledger} - (truePrincipalOutstanding + trueInterest + trueManagementFee) \quad \text{(24a)}
+$$
+
+This `diffTotal` represents the cumulative effect of rounding across all previous payments. It must be preserved to maintain numerical stability.
+
+**3. Apply the overpayment:**
+
+$$
+newTruePrincipalOutstanding = truePrincipalOutstanding - principalPortion \quad \text{(24b)}
+$$
+
+**4. Re-calculate with reduced principal** (using formulas 5-7, 31):
+
+The system computes a new amortization schedule based on the reduced principal:
+
+```
+newPeriodicPayment = compute_periodic_payment(newTruePrincipalOutstanding)
+newTrueTotalValue = newPeriodicPayment × paymentsRemaining
+```
+
+**5. Preserve the rounding discrepancy:**
+
+$$
+newTotalValueOutstanding_{ledger} = newTrueTotalValue + diffTotal \quad \text{(24c)}
+$$
+
+By adding back the `diffTotal`, the system ensures that historical rounding errors don't compound or disappear.
+
+**6. Calculate the value change:**
+
+$$
+valueChange_{re-amortization} = newTotalValueOutstanding_{ledger} - (oldTotalValue - overpaymentAmount) \quad \text{(24)}
+$$
+
+**Where:**
+
+- `oldTotalValue` = `Loan.TotalValueOutstanding` before the overpayment
+- `newTotalValueOutstanding_{ledger}` = The new total value after re-amortization, adjusted for rounding
+- `overpaymentAmount` = The excess funds applied to principal
+
+**Note on Formula Numbering**: Formulas 24a-24c represent intermediate calculation steps in the re-amortization process. The final result is formula (24). This sub-numbering preserves the sequential formula count while showing the logical flow.
+
+**Why This Matters**: The `diffTotal` variable ensures that historical rounding errors are preserved across re-amortization, maintaining numerical stability. Without this adjustment, repeated overpayments could cause the loan's on-ledger values to drift from their theoretical equivalents, potentially leaving small "dust" amounts at the end of the loan term.
+
+**Note:** The `valueChange` from re-amortization is typically negative, as reducing principal early decreases future interest.
+
+#### 5.4 Total Value Change from Overpayment
+
+$$
+valueChange_{total} = overpaymentInterest_{net} + valueChange_{re-amortization} \quad \text{(25)}
+$$
+
+**Where:**
+
+- `overpaymentInterest_{net}` from formula (21)
+- `valueChange_{re-amortization}` from formula (24)
+
+**Note:** Typically `valueChange_{total} < 0` because the reduction in future interest from re-amortization outweighs the interest charged on the overpayment itself.
+
+### 6. Early Full Repayment
+
+Closes the loan before maturity with potential prepayment penalty.
+
+#### 6.1 Total Due Components
+
+$$
+totalDue = PrincipalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee \quad \text{(26)}
+$$
+
+**Where:**
+
+$$
+accruedInterest = PrincipalOutstanding \times periodicRate \times \frac{secondsSinceLastPayment}{paymentInterval} \quad \text{(27)}
+$$
+
+$$
+prepaymentPenalty = PrincipalOutstanding \times closeInterestRate \quad \text{(28)}
+$$
+
+- `periodicRate` is defined by formula (1)
+- `secondsSinceLastPayment` is defined by formula (4)
+
+#### 6.2 Value Impact
+
+$$
+valueChange = (accruedInterest + prepaymentPenalty) - totalInterestOutstanding_{net} \quad \text{(29)}
+$$
+
+**Where:**
+
+- `InterestOutstanding_{net}` = Remaining net interest from ledger values:
+  - $$totalInterestOutstanding\_{net} = The total interest outstanding for the Loan
+- **Note:**
+
+- Can be positive or negative depending on penalty size
+- Negative if `(accruedInterest + prepaymentPenalty) < InterestOutstanding_{net}` (vault loses future interest)
+- Positive if `(accruedInterest + prepaymentPenalty) > InterestOutstanding_{net}` (penalty exceeds forgiven interest)
+
+### 7. Theoretical Loan Value
+
+#### 7.1 Total Value Outstanding
+
+$$
+totalValueOutstanding = periodicPayment \times paymentsRemaining \quad \text{(30)}
+$$
+
+#### 7.2 Interest and Fee Breakdown
+
+$$
+totalInterestOutstanding_{gross} = totalValueOutstanding - PrincipalOutstanding \quad \text{(31)}
+$$
+
+$$
+managementFeeOutstanding = totalInterestOutstanding_{gross} \times managementFeeRate \quad \text{(32)}
+$$
+
+$$
+totalInterestOutstanding_{net} = totalInterestOutstanding_{gross} - managementFeeOutstanding \quad \text{(33)}
+$$
+
+### 8. First-Loss Capital (Default Coverage)
+
+Applied when a loan defaults.
+
+#### 8.1 Default Amounts
+
+$$
+DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34)}
+$$
+
+$$
+DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount) \quad \text{(35)}
+$$
+
+$$
+Loss = DefaultAmount - DefaultCovered \quad \text{(36)}
+$$
+
+$$
+FundsReturned = DefaultCovered \quad \text{(37)}
+$$
+
+**Where:**
+
+- `PrincipalOutstanding` = Outstanding principal balance (`Loan.PrincipalOutstanding`)
+- `InterestOutstanding_{net}` = Remaining net interest excluding management fee (formula 33 applied to ledger values)
+- `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
+- `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
+- `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
+
+**Process:**
+
+1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)` using formula (35)
+2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
+3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
+4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
+
+## A-3 LoanPay Transaction Pseudo-code
 
 The following is the pseudo-code for handling a Loan payment transaction.
 
@@ -1947,555 +2501,3 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalFeePaid            # The total fee
     )
 ```
-
-##### 3.2.4.5 Failure Conditions
-
-- `LoanID` is zero.
-- `Amount <= 0`.
-- More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
-
-- `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The submitter is not the `Loan.Borrower`.
-- `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
-- `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
-- `Amount.asset` does not match `Vault.Asset`.
-
-- The Borrower is frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
-    - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
-
-- The Vault _pseudo-account_ is deep frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
-
-- The Borrower is not authorized for the asset.
-
-- The Borrower has insufficient funds to pay `Amount`.
-
-- Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
-
-- If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
-  - The `tfLoanLatePayment` flag is not specified in the transaction.
-  - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
-
-- If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
-  - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
-
-- If the `tfLoanFullPayment` flag is specified:
-  - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
-  - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
-
-##### 3.2.4.6 State Changes
-
-Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in the [Transaction Pseudo-code](#3244-transaction-pseudo-code). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
-
-**1. High-Level Accounting**
-
-First, the system determines the final destination of all funds.
-
-1.  **Determine Fee Destination**: All collected fees are directed to one of two places:
-    - **If ALL of the following conditions are met**, fees are paid to the `LoanBroker.Owner`:
-      - First-Loss Capital is sufficient: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
-      - The `LoanBroker.Owner` is NOT deep frozen for the asset.
-      - The `LoanBroker.Owner` is authorized for the asset.
-    - **Otherwise**: The fees are added to the `LoanBroker` pseudo-account's first-loss pool (`CoverAvailable`).
-
-2.  **Define Final Fund Flows**:
-    - `totalPaidByBorrower = principalPaid + interestPaid + feePaid`
-    - `totalToVault = principalPaid + interestPaid` (rounded to the vault's asset scale)
-    - `totalToBroker = feePaid`, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
-
-**2. `Loan` Object State Changes**
-
-The `Loan` object is updated to reflect the payment.
-
-- If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3233-tfloanunimpair-state-changes) for details).
-
-- **For a Full Repayment**:
-  - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
-  - `PaymentRemaining` is set to `0`.
-
-- **For Other Payments**:
-  - `PrincipalOutstanding` is decreased by the `principal` portion of each periodic payment settled.
-  - `ManagementFeeOutstanding` is decreased by the `managementFee` portion of each periodic payment settled.
-  - `TotalValueOutstanding` is decreased by the sum of the `principal`, `interest`, and `managementFee` portions of each periodic payment settled.
-  - If an overpayment occurred, `TotalValueOutstanding` is further adjusted by the `valueChange` resulting from re-amortization. It is **not** adjusted for `valueChange` from late payment interest, as that interest was not part of the original loan value.
-  - `PaymentRemaining` is decreased by `1` for each full periodic payment cycle covered.
-  - `NextPaymentDueDate` is advanced by `Loan.PaymentInterval` for each periodic payment cycle covered.
-  - `PreviousPaymentDueDate` is updated.
-  - If an overpayment was made:
-    - `PeriodicPayment` is recalculated based on the new outstanding principal and remaining term.
-
-**3. `LoanBroker` and `Vault` Object State Changes**
-
-The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
-
-- **`LoanBroker` Updates**:
-  - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
-    - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
-    - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
-  - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
-
-- **`Vault` Updates**:
-  - `Vault.AssetsAvailable` increases by `totalToVault`.
-  - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
-
-**4. Asset Transfers**
-
-Finally, the actual asset transfers are executed on the ledger. All transfers are performed with **transfer fees waived**.
-
-- The borrower's balance is **decreased** by `totalToVault + totalToBroker`.
-- The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
-- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
-
-These transfers are performed according to the asset type:
-
-- **If the asset is XRP**:
-  - The `Balance` of the borrower's `AccountRoot` is decreased.
-  - The `Balance` of the `Vault` pseudo-account's `AccountRoot` is increased.
-  - The `Balance` of the destination account for fees (`LoanBroker.Owner` or `LoanBroker` pseudo-account) is increased.
-- **If the asset is an IOU**:
-  - The `RippleState` balance between the borrower and the `Issuer` is decreased.
-  - The `RippleState` balance between the `Vault` pseudo-account and the `Issuer` is increased.
-  - The `RippleState` balance between the destination account for fees and the `Issuer` is increased.
-- **If the asset is an MPT**:
-  - The `MPTAmount` in the borrower's `MPToken` object is decreased.
-  - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
-  - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
-
-##### 3.2.4.7 Invariants
-
-**TBD**
-
-# Appendix
-
-## A-1 F.A.Q.
-
-### A-1.1. What is the `LoanBroker.LoanSequence` field?
-
-A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created.
-
-### A-1-2. Why the `LoanBrokerCoverClawback` cannot clawback the full LoanBroker.CoverAvailable amount?
-
-The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
-
-## A-2 Equation Glossary
-
-Throughout the specification we use numerous equations to calculate various Loan properties. This consolidated reference groups related formulas by financial concept.
-
-**All time values are expressed in seconds unless otherwise noted.**
-
-### 1. Interest Rate Conversions
-
-All interest rate calculations convert annual rates to period-specific rates.
-
-#### 1.1 Periodic Rate (Regular Payments)
-
-$$
-periodicRate = \frac{interestRate \times paymentInterval}{secondsPerYear} \quad \text{(1)}
-$$
-
-**Where:**
-
-- `periodicRate` = Interest rate for one payment period
-- `interestRate` = Annual interest rate (from `Loan.InterestRate`)
-- `paymentInterval` = `Loan.PaymentInterval` (seconds between payments)
-- `secondsPerYear` = 31,536,000 (365 × 24 × 60 × 60)
-
-#### 1.2 Late Periodic Rate (Penalty Interest)
-
-$$
-latePeriodicRate = \frac{lateInterestRate \times secondsOverdue}{secondsPerYear} \quad \text{(2)}
-$$
-
-$$
-secondsOverdue = lastLedgerCloseTime - Loan.NextPaymentDueDate \quad \text{(3)}
-$$
-
-**Where:**
-
-- `latePeriodicRate` = Penalty interest rate for overdue period
-- `lateInterestRate` = `Loan.LateInterestRate` (annual penalty rate)
-- `secondsOverdue` = Duration payment is late (in seconds)
-
-#### 1.3 Time Since Last Payment
-
-$$
-secondsSinceLastPayment = lastLedgerCloseTime - \max(Loan.PreviousPaymentDueDate, Loan.StartDate) \quad \text{(4)}
-$$
-
-**Usage:** Calculates the time elapsed since the last payment was due (or since loan origination, whichever is later). Used in early full payment calculations ([Section 5.1](#51-total-due-components)).
-
-**Why `max()`?**
-
-- For the first payment period, `PreviousPaymentDueDate = 0` (undefined)
-- Taking `max(0, StartDate)` ensures we use `StartDate` for the first calculation
-- For subsequent payments, `PreviousPaymentDueDate > StartDate`, so it's used instead
-
-### 2. Standard Amortization
-
-These formulas calculate the regular payment schedule and breakdown.
-
-#### 2.1 Periodic Payment Amount
-
-$$
-raisedRate = (1 + periodicRate)^{paymentsRemaining} \quad \text{(5)}
-$$
-
-$$
-factor = \frac{periodicRate \times raisedRate}{raisedRate - 1} \quad \text{(6)}
-$$
-
-$$
-periodicPayment = PrincipalOutstanding \times factor \quad \text{(7)}
-$$
-
-**Note**: The calculation is split into `raisedRate` and `factor` for numerical stability and to enable the reverse calculation in [Section 2.3](#23-reverse-calculation-principal-from-payment).
-
-**Special Cases:**
-
-- **Final Payment:** When `paymentsRemaining = 1`, override formula with `periodicPayment = TotalValueOutstanding`
-- **Zero Interest:** When `periodicRate = 0`, simplify to `periodicPayment = PrincipalOutstanding / paymentsRemaining`
-
-#### 2.2 Payment Breakdown
-
-From the periodic payment, derive the principal and interest portions:
-
-$$
-interest = PrincipalOutstanding \times periodicRate \quad \text{(8)}
-$$
-
-$$
-principal = periodicPayment - interest \quad \text{(9)}
-$$
-
-To
-**Note:** For zero-interest loans, `principal = PrincipalOutstanding / paymentsRemaining` and `interest = 0`.
-
-#### 2.3 Reverse Calculation: Principal from Payment
-
-Used to detect rounding errors during overpayment processing:
-
-$$
-PrincipalOutstanding = \frac{periodicPayment}{factor} \quad \text{(10)}
-$$
-
-**Where:**
-
-- `factor` is defined by formula (6)
-
-**Usage:** This inverse formula is used in the pseudo-code to calculate the "true" principal outstanding before applying rounding adjustments. See [Section 3.2.4.4](#3244-transaction-pseudo-code) `principal_outstanding_from_periodic()` function.
-
-**Special Cases:**
-
-- **Zero Interest:** When `periodicRate = 0`, simplify to:
-  $$PrincipalOutstanding = periodicPayment \times paymentsRemaining \quad \text{(11)}$$
-
-### 3. Management Fee Calculations
-
-The Loan Broker charges a management fee as a percentage of the interest earned. This fee is calculated differently depending on the payment scenario.
-
-#### 3.1 Regular Payment Management Fee
-
-For standard periodic payments:
-
-$$
-managementFee = interest \times managementFeeRate \quad \text{(12)}
-$$
-
-**Where:**
-
-- `interest` = Interest portion of a payment (from formula 8)
-- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
-
-#### 3.2 Late Payment Management Fee
-
-For late payments, the management fee applies to the penalty interest:
-
-$$
-managementFee_{late} = latePaymentInterest_{gross} \times managementFeeRate \quad \text{(13)}
-$$
-
-**Where:**
-
-- `latePaymentInterest_{gross}` = Gross late payment interest (from formula 15)
-- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
-
-#### 3.3 Overpayment Management Fee
-
-For overpayments, the management fee applies to the interest charged on the overpayment amount:
-
-$$
-managementFee_{overpayment} = overpaymentInterest_{gross} \times managementFeeRate \quad \text{(14)}
-$$
-
-**Where:**
-
-- `overpaymentInterest_{gross}` = Gross overpayment interest (from formula 20)
-- `managementFeeRate` = `LoanBroker.ManagementFeeRate`
-
-**Note:** In all cases, the management fee is deducted from the gross interest before calculating the net interest that accrues to the vault.
-
-### 4. Late Payment
-
-A late payment adds penalty charges to the standard periodic payment.
-
-#### 4.1 Late Payment Components
-
-$$
-totalDue = periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest_{net} \quad \text{(15)}
-$$
-
-**Where:**
-
-$$
-latePaymentInterest_{gross} = PrincipalOutstanding \times latePeriodicRate \quad \text{(16)}
-$$
-
-$$
-latePaymentInterest_{net} = latePaymentInterest_{gross} - managementFee_{late} \quad \text{(17)}
-$$
-
-- `latePeriodicRate` is defined by formula (2)
-- `managementFee_{late}` is defined by formula (13)
-
-#### 4.2 Value Impact
-
-$$
-valueChange = latePaymentInterest_{net} \quad \text{(18)}
-$$
-
-**Note:**
-
-- `valueChange > 0` (always positive for late payments)
-- Not reflected in `Loan.TotalValueOutstanding` (unanticipated value increase)
-- Applied directly to `Vault.AssetsTotal` and `LoanBroker.DebtTotal`
-
-### 5. Overpayment Processing
-
-Overpayments reduce principal early and trigger loan re-amortization.
-
-#### 5.1 Overpayment Fees and Interest
-
-$$
-overpaymentAmount = amount - (periodicPaymentsCovered \times (periodicPayment + serviceFee)) \quad \text{(19)}
-$$
-
-**Where:**
-
-- `amount` = Total amount paid by the borrower
-- `periodicPaymentsCovered` = Number of complete periodic payment cycles covered by `amount`
-- Formula applies only after all full periodic cycles are paid
-- If `periodicPaymentsCovered = 0`, the payment is rejected as insufficient
-
-$$
-overpaymentInterest_{gross} = overpaymentAmount \times overpaymentInterestRate \quad \text{(20)}
-$$
-
-$$
-overpaymentInterest_{net} = overpaymentInterest_{gross} - managementFee_{overpayment} \quad \text{(21)}
-$$
-
-$$
-overpaymentFee = overpaymentAmount \times overpaymentFeeRate \quad \text{(22)}
-$$
-
-**Where:**
-
-- `managementFee_{overpayment}` is defined by formula (14)
-
-#### 5.2 Principal Reduction
-
-$$
-principalPortion = overpaymentAmount - overpaymentInterest_{net} - overpaymentFee \quad \text{(23)}
-$$
-
-**Where:**
-
-- `overpaymentAmount` = The excess funds after all periodic payments are settled (formula 19)
-- `overpaymentInterest_{net}` = Gross overpayment interest minus management fee (formula 21)
-- `overpaymentFee` = Percentage-based fee on the overpayment amount (formula 22)
-
-**Note:** The management fee has already been deducted from `overpaymentInterest_{net}`, so it does not appear as a separate term in this formula.
-
-#### 5.3 Re-amortization Value Change
-
-The pseudo-code in [Section 3.2.4.4](#3244-transaction-pseudo-code) handles re-amortization by preserving historical rounding errors while applying the overpayment to reduce the principal. The process follows these logical steps:
-
-**1. Calculate the "true" pre-overpayment state** (using formulas 10, 31-34):
-
-The system first determines what the loan state should be based on pure mathematical formulas, without rounding:
-
-```
-truePrincipalOutstanding = periodicPayment / factor
-trueTotalValue = periodicPayment × paymentsRemaining
-trueInterest = trueTotalValue - truePrincipalOutstanding
-trueManagementFee = trueInterest × managementFeeRate
-trueInterest = trueInterest - trueManagementFee
-```
-
-**2. Capture the rounding discrepancy:**
-
-$$
-diffTotal = TotalValueOutstanding_{ledger} - (truePrincipalOutstanding + trueInterest + trueManagementFee) \quad \text{(24a)}
-$$
-
-This `diffTotal` represents the cumulative effect of rounding across all previous payments. It must be preserved to maintain numerical stability.
-
-**3. Apply the overpayment:**
-
-$$
-newTruePrincipalOutstanding = truePrincipalOutstanding - principalPortion \quad \text{(24b)}
-$$
-
-**4. Re-calculate with reduced principal** (using formulas 5-7, 31):
-
-The system computes a new amortization schedule based on the reduced principal:
-
-```
-newPeriodicPayment = compute_periodic_payment(newTruePrincipalOutstanding)
-newTrueTotalValue = newPeriodicPayment × paymentsRemaining
-```
-
-**5. Preserve the rounding discrepancy:**
-
-$$
-newTotalValueOutstanding_{ledger} = newTrueTotalValue + diffTotal \quad \text{(24c)}
-$$
-
-By adding back the `diffTotal`, the system ensures that historical rounding errors don't compound or disappear.
-
-**6. Calculate the value change:**
-
-$$
-valueChange_{re-amortization} = newTotalValueOutstanding_{ledger} - (oldTotalValue - overpaymentAmount) \quad \text{(24)}
-$$
-
-**Where:**
-
-- `oldTotalValue` = `Loan.TotalValueOutstanding` before the overpayment
-- `newTotalValueOutstanding_{ledger}` = The new total value after re-amortization, adjusted for rounding
-- `overpaymentAmount` = The excess funds applied to principal
-
-**Note on Formula Numbering**: Formulas 24a-24c represent intermediate calculation steps in the re-amortization process. The final result is formula (24). This sub-numbering preserves the sequential formula count while showing the logical flow.
-
-**Why This Matters**: The `diffTotal` variable ensures that historical rounding errors are preserved across re-amortization, maintaining numerical stability. Without this adjustment, repeated overpayments could cause the loan's on-ledger values to drift from their theoretical equivalents, potentially leaving small "dust" amounts at the end of the loan term.
-
-**Note:** The `valueChange` from re-amortization is typically negative, as reducing principal early decreases future interest.
-
-#### 5.4 Total Value Change from Overpayment
-
-$$
-valueChange_{total} = overpaymentInterest_{net} + valueChange_{re-amortization} \quad \text{(25)}
-$$
-
-**Where:**
-
-- `overpaymentInterest_{net}` from formula (21)
-- `valueChange_{re-amortization}` from formula (24)
-
-**Note:** Typically `valueChange_{total} < 0` because the reduction in future interest from re-amortization outweighs the interest charged on the overpayment itself.
-
-### 6. Early Full Repayment
-
-Closes the loan before maturity with potential prepayment penalty.
-
-#### 6.1 Total Due Components
-
-$$
-totalDue = PrincipalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee \quad \text{(26)}
-$$
-
-**Where:**
-
-$$
-accruedInterest = PrincipalOutstanding \times periodicRate \times \frac{secondsSinceLastPayment}{paymentInterval} \quad \text{(27)}
-$$
-
-$$
-prepaymentPenalty = PrincipalOutstanding \times closeInterestRate \quad \text{(28)}
-$$
-
-- `periodicRate` is defined by formula (1)
-- `secondsSinceLastPayment` is defined by formula (4)
-
-#### 6.2 Value Impact
-
-$$
-valueChange = (accruedInterest + prepaymentPenalty) - totalInterestOutstanding_{net} \quad \text{(29)}
-$$
-
-**Where:**
-
-- `InterestOutstanding_{net}` = Remaining net interest from ledger values:
-  - $$totalInterestOutstanding\_{net} = The total interest outstanding for the Loan
-- **Note:**
-
-- Can be positive or negative depending on penalty size
-- Negative if `(accruedInterest + prepaymentPenalty) < InterestOutstanding_{net}` (vault loses future interest)
-- Positive if `(accruedInterest + prepaymentPenalty) > InterestOutstanding_{net}` (penalty exceeds forgiven interest)
-
-### 7. Theoretical Loan Value
-
-#### 7.1 Total Value Outstanding
-
-$$
-totalValueOutstanding = periodicPayment \times paymentsRemaining \quad \text{(30)}
-$$
-
-#### 7.2 Interest and Fee Breakdown
-
-$$
-totalInterestOutstanding_{gross} = totalValueOutstanding - PrincipalOutstanding \quad \text{(31)}
-$$
-
-$$
-managementFeeOutstanding = totalInterestOutstanding_{gross} \times managementFeeRate \quad \text{(32)}
-$$
-
-$$
-totalInterestOutstanding_{net} = totalInterestOutstanding_{gross} - managementFeeOutstanding \quad \text{(33)}
-$$
-
-### 8. First-Loss Capital (Default Coverage)
-
-Applied when a loan defaults.
-
-#### 8.1 Default Amounts
-
-$$
-DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34)}
-$$
-
-$$
-DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount) \quad \text{(35)}
-$$
-
-$$
-Loss = DefaultAmount - DefaultCovered \quad \text{(36)}
-$$
-
-$$
-FundsReturned = DefaultCovered \quad \text{(37)}
-$$
-
-**Where:**
-
-- `PrincipalOutstanding` = Outstanding principal balance (`Loan.PrincipalOutstanding`)
-- `InterestOutstanding_{net}` = Remaining net interest excluding management fee (formula 33 applied to ledger values)
-- `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
-- `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
-- `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
-
-**Process:**
-
-1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)` using formula (35)
-2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
-3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
-4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
