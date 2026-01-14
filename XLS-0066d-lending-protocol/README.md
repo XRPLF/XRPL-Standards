@@ -638,31 +638,42 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 ##### 3.1.2.1 Failure Conditions
 
+- `LoanBrokerID` is zero.
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-
-- The `OwnerCount > 0` there are loan objects.
-- The `DebtTotal > 0` there are unpaid loans.
+- `LoanBroker.OwnerCount != 0` (has outstanding loans).
+- `Vault(LoanBroker.VaultID)` does not exist.
+- `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`).
+- `LoanBroker.CoverAvailable > 0` and the broker owner is deep frozen for the `Vault.Asset`:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
 
 ##### 3.1.2.2 State Changes
 
-- Delete `LoanBrokerID` from the `OwnerDirectory` of the submitting account.
-- Delete `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_.
+- Remove `LoanBrokerID` from the `OwnerDirectory` of the submitting account (using `OwnerNode`).
+- Remove `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_ (using `VaultNode`).
+- Transfer `LoanBroker.CoverAvailable` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
+  - If `Vault.Asset` is `XRP`:
+    - Decrease the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
+    - Increase the `Balance` field of the submitting account `AccountRoot` by `CoverAvailable`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
-  - Increase the `Balance` field of the submitter `AccountRoot` by `CoverAvailable`.
+  - If `Vault.Asset` is an `IOU`:
+    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `CoverAvailable`.
+    - Increase the `RippleState` balance between the submitting account and the `Issuer` by `CoverAvailable`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
-  - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `CoverAvailable`.
+  - If `Vault.Asset` is an `MPT`:
+    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `CoverAvailable`.
+    - Increase the `MPToken.MPTAmount` of the submitting account `MPToken` object by `CoverAvailable`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - Decrease the `MPToken.MPTAmount` by `CoverAvailable` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Increase the `MPToken.MPTAmount` by `CoverAvailable` of the submitter `MPToken` object for the `Vault.Asset`.
+- Remove the empty asset holding from the broker _pseudo-account_:
+  - If `Vault.Asset` is an `IOU`: Delete the `RippleState` object between the broker _pseudo-account_ and the `Issuer`.
+  - If `Vault.Asset` is an `MPT`: Delete the `MPToken` object for the broker _pseudo-account_.
 
 - Delete the `LoanBroker` _pseudo-account_ `AccountRoot` object.
 - Delete the `LoanBroker` ledger object.
+- Decrement the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
 
 ##### 3.1.2.3 Invariants
 
