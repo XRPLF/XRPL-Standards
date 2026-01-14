@@ -719,20 +719,26 @@ If the `Amount` field is omitted:
 
 ##### 3.3.1.3 State Changes
 
-- If the `Vault.Asset` is an `IOU`:
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`.
+- If the submitter is the **Asset Issuer**:
+  - If `Vault.Asset` is an `IOU`:
+    - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable, ` $\Delta_{asset}$ `)`.
+  - If `Vault.Asset` is an `MPT`:
+    - Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset` by `min(Vault.AssetsAvailable, ` $\Delta_{asset}$ `)`.
 
-- If the `Vault.Asset` is an `MPT`:
-  - Decrease the `MPToken.MPTAmount` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+- If the submitter is the **Vault Owner** (burning worthless shares when `Vault.AssetsTotal == 0` AND `Vault.AssetsAvailable == 0`):
+  - No asset transfer occurs ($\Delta_{asset} = 0$).
+  - $\Delta_{share}$ is equal to `MPToken(Vault.MPTokenIssuanceID, Holder).MPTAmount`.
 
-- Update the `MPToken` object for the `Vault.MPTokenIssuanceID` of the depositor `AccountRoot`:
-  - Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
-  - If `MPToken.MPTAmount == 0`, delete the object.
+- Update the `MPToken` object for the `Vault.MPTokenIssuanceID` of the `Holder`:
+  - Decrease `MPToken.MPTAmount` by $\Delta_{share}$.
+  - If `MPToken.MPTAmount == 0` AND `Holder != Vault.Owner`, delete the object.
 
 - Update the `MPTokenIssuance` object for the `Vault.MPTokenIssuanceID`:
-  - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
+  - Decrease `OutstandingAmount` by $\Delta_{share}$.
 
-- Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
+- Update the `Vault` object:
+  - Decrease `AssetsTotal` by `min(Vault.AssetsAvailable, ` $\Delta_{asset}$ `)`.
+  - Decrease `AssetsAvailable` by `min(Vault.AssetsAvailable, ` $\Delta_{asset}$ `)`.
 
 ##### 3.3.1.4 Invariants
 
