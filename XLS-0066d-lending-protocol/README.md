@@ -842,49 +842,49 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 | `LoanBrokerID`    |                    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
 | `Amount`          |                    | `object`  |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
 
-##### 3.1.5.1 Failure conditions
+##### 3.1.5.1 Failure Conditions
 
 - Neither `LoanBrokerID` nor `Amount` are specified.
-- `Amount` is specified and `Amount < 0`
+- `LoanBrokerID` is specified and is zero.
+- `Amount` is specified and `Amount < 0`.
 - `Amount` specifies an XRP amount.
-- If the `LoanBrokerID` is specified, the `LoanBroker` object with that ID does not exist on the ledger.
-- If the `LoanBrokerID` is not specified, and can not be determined from `Amount`.
+
+- If `LoanBrokerID` is not specified:
   - `Amount` specifies an MPT.
-  - `Amount` specifies an IOU, and the `issuer` value is _not_ a pseudo-account with `Account(Amount.issuer).LoanBrokerID` set. If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
-- If both the `LoanBrokerID` and `Amount` are specified, and:
-  - The `Amount.issuer` value does not match the submitter `Account` of the transaction or `LoanBroker(LoanBrokerID).Account` (the pseudo-account of the LoanBroker).
-  - The `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is not the same asset type as `Amount`, allowing for an IOU `Amount.issuer` to specify `LoanBroker(LoanBrokerID).Account` instead of `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+  - `Amount` specifies an IOU, and `Amount.issuer` is the submitter `Account` or zero.
+  - The `Account(Amount.issuer)` does not exist.
+  - The `Account(Amount.issuer)` exists but does not have `LoanBrokerID` set (not a LoanBroker _pseudo-account_). If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`.
+- `LoanBroker` object with the specified (or derived) `LoanBrokerID` does not exist on the ledger.
+- `Vault(LoanBroker.VaultID)` does not exist.
+- `Vault.Asset` is `XRP` (cannot clawback native asset).
+- The submitter is not the `Issuer` of the `Vault.Asset`.
 
-- If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU` and:
-  - The Issuer account is not the submitter of the transaction.
-  - `Amount.issuer` value is not one of
-    - The submitter of the transaction
-    - `LoanBroker(LoanBrokerID).Account`
-  - If the `AccountRoot(Issuer)` object does not have lsfAllowTrustLineClawback flag set (the asset does not support clawback).
-  - If the `AccountRoot(Issuer)` has the lsfNoFreeze flag set (the asset cannot be frozen).
+- If `Amount` is specified:
+  - `Amount.asset` does not match `Vault.Asset` (allowing `Amount.issuer` to be either the submitter or `LoanBroker.Account` for IOUs).
 
-- If `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT` and:
-  - MPTokenIssuance.Issuer is not the submitter of the transaction.
-  - If the `LoanBrokerID` is not specified.
-  - MPTokenIssuance.lsfMPTCanClawback flag is not set (the asset does not support clawback).
-  - If the MPTokenIssuance.lsfMPTCanLock flag is NOT set (the asset cannot be locked).
+- If `Vault.Asset` is an `IOU`:
+  - The `AccountRoot` of the `Issuer` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+  - The `AccountRoot` of the `Issuer` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
 
-- `LoanBroker.CoverAvailable` <= `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+- If `Vault.Asset` is an `MPT`:
+  - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback).
+
+- `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum).
 
 ##### 3.1.5.2 State Changes
 
-- If `Amount` is 0 or unset, set `Amount` to `LoanBroker.CoverAvailable - LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
-- Otherwise set `Amount` to `min(Amount,`LoanBroker.CoverAvailable - LoanBroker.DebtTotal \* LoanBroker.CoverRateMinimum`).
+- Compute `ClawAmount`:
+  - If `Amount` is 0 or unset: `ClawAmount = LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum)`.
+  - Otherwise: `ClawAmount = min(Amount, LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum))`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+- Decrease `LoanBroker.CoverAvailable` by `ClawAmount`.
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-
-- Decrease `LoanBroker.CoverAvailable` by `Amount`.
+- Transfer `ClawAmount` from the broker _pseudo-account_ to the submitter (transfer fee waived):
+  - If `Vault.Asset` is an `IOU`:
+    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `ClawAmount`.
+  - If `Vault.Asset` is an `MPT`:
+    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `ClawAmount`.
 
 [**Return to Index**](#index)
 
