@@ -114,15 +114,25 @@ cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg warningMe
 
       # Step 1: Add a closing comment explaining why the discussion was closed
       echo "  Adding close comment..."
-      gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"
+      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"; then
+        echo "  Error: Failed to add close comment for discussion #$DISCUSSION_NUMBER. Skipping close/lock for this discussion."
+        echo ""
+        continue
+      fi
 
       # Step 2: Close the discussion
       echo "  Closing discussion..."
-      gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"
+      if ! gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"; then
+        echo "  Error: Failed to close discussion #$DISCUSSION_NUMBER after adding close comment. Skipping lock for this discussion."
+        echo ""
+        continue
+      fi
 
       # Step 3: Lock the discussion to prevent further comments
       echo "  Locking discussion..."
-      gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"
+      if ! gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"; then
+        echo "  Warning: Failed to lock discussion #$DISCUSSION_NUMBER after closing it. Discussion remains closed but unlocked."
+      fi
     fi
 
     echo ""
