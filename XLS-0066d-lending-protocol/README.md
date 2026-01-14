@@ -1088,23 +1088,22 @@ The transaction deletes an existing `Loan` object.
 
 ##### 3.2.2.1 Failure Conditions
 
-- A `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The Account submitting the `LoanDelete` is not the `LoanBroker.Owner` or the `Loan.Borrower`.
-- The Loan is active:
-  - `Loan.PaymentRemaining > 0`
-  - `Loan.TotalValueOutstanding > 0`
+- `LoanID` is zero.
+- `Loan` object with the specified `LoanID` does not exist on the ledger.
+- `Loan.PaymentRemaining > 0` (loan is still active).
+- The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`.
 
 ##### 3.2.2.2 State Changes
 
+- Remove `LoanID` from the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (using `LoanBrokerNode`).
+- Remove `LoanID` from the `OwnerDirectory` of the `Borrower` (using `OwnerNode`).
 - Delete the `Loan` object.
 
-- Remove `LoanID` from `DirectoryNode.Indexes` of the `LoanBroker` _pseudo-account_ `AccountRoot`.
-- If `LoanBroker.OwnerCount = 0`
-  - Delete the `LoanBroker` _pseudo-account_ `DirectoryNode`.
+- Decrement `LoanBroker.OwnerCount` by `1`.
+- If `LoanBroker.OwnerCount == 0` and `LoanBroker.DebtTotal != 0`:
+  - Set `LoanBroker.DebtTotal = 0` (forgive any remaining rounding dust).
 
-- Remove `LoanID` from `DirectoryNode.Indexes` of the `Borrower` `AccountRoot`.
-
-- `LoanBroker.OwnerCount -= 1`
+- Decrement `AccountRoot(Borrower).OwnerCount` by `1`.
 
 ##### 3.2.2.3 Invariants
 
