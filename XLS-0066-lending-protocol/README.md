@@ -56,6 +56,9 @@ This version intentionally skips the complex mechanisms of automated on-chain co
     - [**3.2.3. LoanManage Transaction**](#323-loanmanage-transaction)
     - [**3.2.4. LoanPay Transaction**](#324-loanpay-transaction)
 - [**Appendix**](#appendix)
+  - [**A-1. F.A.Q.**](#a-1-faq)
+  - [**A-2. Equation Glossary**](#a-2-equation-glossary)
+  - [**A-3. LoanPay Implementation Reference**](#a-3-loanpay-implementation-reference) — Detailed formulas, payment processing logic, and pseudo-code for implementing the `LoanPay` transaction.
 
 ## 1. Introduction
 
@@ -118,6 +121,8 @@ There are three basic interest rates associated with a Loan:
 - **`Late Interest Rate`**: A higher interest rate charged for a late payment.
 - **`Full Payment Rate`**: An interest rate charged for repaying the total Loan early.
 
+See [Appendix A-3](#a-3-loanpay-implementation-reference) for detailed formulas on how these rates are applied during payment processing.
+
 ### 1.5 Fees
 
 The lending protocol charges a number of fees that the Loan Broker can configure. The protocol will not charge the fees if the Loan Broker has not deposited enough First-Loss Capital.
@@ -138,7 +143,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - **`Default`**: The failure by the Borrower to meet the obligations of a loan, such as missing payments.
 - **`First-Loss Capital`**: The portion of capital that absorbs initial losses in case of a Default, protecting the Vault from loss.
 - **`Term`**: The period over which a Borrower must repay the Loan.
-- **`Amortization`**: The gradual repayment of a loan through scheduled payments that cover both interest and principal over time.
+- **`Amortization`**: The gradual repayment of a loan through scheduled payments that cover both interest and principal over time. For the complete amortization formula and implementation details, see [Appendix A-3.1](#a-31-conceptual-loan-value).
 - **`Repayment Schedule`**: A detailed plan that outlines when and how much a borrower must pay to repay the Loan funds.
 - **`Grace Period`**: A set period after the Loan's due date after which the Loan Broker can default the Loan
 
@@ -533,7 +538,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 3. Due to the cumulative effect of rounding across multiple payment cycles, these on-ledger values may deviate by up to one asset unit from their theoretical mathematical values at any given time.
 
-**Important**: Implementations must **not** recalculate these values from the theoretical formulas during payment processing. The stored ledger values are the authoritative source of truth. The pseudo-code in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) demonstrates how to properly handle these rounding discrepancies while maintaining loan integrity.
+**Important**: Implementations must **not** recalculate these values from the theoretical formulas during payment processing. The stored ledger values are the authoritative source of truth. The pseudo-code in [Appendix A-3](#a-3-loanpay-implementation-reference) demonstrates how to properly handle these rounding discrepancies while maintaining loan integrity.
 
 **Late Payment Interest Treatment**: Late payment penalties and additional interest charges are calculated and collected separately from the core loan value. These charges do not modify the `TotalValueOutstanding` calculation, which remains anchored to the original scheduled payment terms.
 
@@ -1220,7 +1225,7 @@ The transaction deletes an existing `Loan` object.
 
 #### 3.2.4 `LoanPay` Transaction
 
-The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
+The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For complete payment processing logic, formulas, and implementation pseudo-code, see [Appendix A-3](#a-3-loanpay-implementation-reference).
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                               |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------- |
@@ -1237,290 +1242,9 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan.
 | `tfLoanFullPayment` | `0x00020000` | Indicates that the borrower is making a full early repayment.                |
 | `tfLoanLatePayment` | `0x00040000` | Indicates that the borrower is making a late loan payment.                   |
 
-##### 3.2.4.2 Payment Processing
+For detailed processing logic for each flag, see: [Late Payment](#a-322-late-payment), [Full Payment](#a-324-early-full-repayment), and [Overpayment](#a-323-loan-overpayment).
 
-A `LoanPay` transaction is processed according to a defined workflow that evaluates the payment's timing, amount, and any specified flags. This determines how the funds are applied to the loan's principal, interest, and associated fees.
-
-**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-3-loanpay-transaction-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
-
-**Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
-
-For example:
-
-- If a loan is denominated in an asset that only supports whole numbers (like an MPT) and the calculated `Loan.PeriodicPayment` is `10.12345`, the borrower is expected to pay `11`.
-- If a loan is denominated in a USD IOU with two decimal places of precision and the `Loan.PeriodicPayment` is `25.54321`, the borrower is expected to pay `25.55`.
-
-This rounded-up value, plus any applicable service fees, constitutes the minimum payment for a single period.
-
-Each payment consists of four components:
-
-- **Principal**: The portion that reduces the outstanding loan principle.
-- **Interest**: The portion that covers the cost of borrowing for the period.
-- **Fees**: The portion that covers any applicable `serviceFee`, `managementFee`, `latePaymentFee`, or other charges.
-- **ValueChange**: The amount by which the payment changed the value of the Loan.
-
-The system follows these steps to process a payment:
-
-1.  **Timing Verification**: The transaction is first classified as either **On-time** or **Late** by comparing the ledger's close time to the `Loan.NextPaymentDueDate`.
-
-2.  **Minimum Amount Validation**: The payment is checked against the minimum amount required for its timing classification. If the amount is insufficient, the transaction is rejected.
-    - **Late Minimum**: `periodicPayment + serviceFee + latePaymentFee + lateInterest`
-    - **On-time Minimum**: `periodicPayment + serviceFee`
-
-3.  **Scenario Handling**: Based on the timing and transaction flags, the system proceeds with one of the following paths:
-    - **A) Late Payment Processing**: If the payment is late, it must be for the exact amount calculated by the [late payment formula](#32422-late-payment).
-      - **Constraint**: Overpayments are not permitted on late payments. Any amount paid beyond the exact total due will be ignored.
-
-    - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
-      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set and the amount is sufficient to cover the [full payment formula](#32424-early-full-repayment), the loan is closed.
-        - **Constraint**: This option is not available if only one payment remains on the loan.
-      - **ii. Sequential Periodic Payments**: If it is not a full repayment, the system applies the funds to as many complete periodic payment cycles as possible. A single cycle consists of the `periodicPayment` plus the `serviceFee`.
-      - **iii. Overpayment Application**: After all possible full periodic cycles are paid, any remaining amount is treated as an overpayment and applied to the principal.
-        - **Constraint**: This step only occurs for on-time payments and requires two flags to be set: `lsfLoanOverpayment` on the `Loan` object and `tfLoanOverpayment` on the `LoanPay` transaction. If these conditions are not met, the excess amount is ignored.
-
-**Note on Excess Funds**: In scenarios where funds are "ignored" (e.g., an overpayment on a late payment, or on a loan that does not permit overpayments), the transaction succeeds, the borrower is only charged the expected due amount, but not the excess.
-
-**The `valueChange` Concept**
-
-The `valueChange` is a critical accounting mechanism that represents the change in the _total future interest_ the vault expects to earn from the loan. It is triggered by events that alter the original amortization schedule.
-
-- **Late Payment**: Adds new penalty interest, so `valueChange` is positive.
-- **Overpayment**: Overpayment reduces principal, and thus the future interest, thus `valueChange` is negative.
-- **Early Full Payment**: The `valueChange` for an early repayment can be either positive or negative, depending on the size of the early full payment configuration.
-
-This `valueChange` is always split between the Vault (as a change in its net interest) and the Loan Broker (as a change in the `managementFee`).
-
-###### 3.2.4.2.1 Regular Payment
-
-For a standard, on-time payment, the total amount due from the borrower is the sum of the calculated periodic payment and applicable service fee.
-
-$$
-totalDue = periodicPayment + loanServiceFee
-$$
-
-The `periodicPayment` is calculated using the standard amortization formula, which ensures a constant payment amount over the life of the loan. This payment covers both the interest accrued for the period and a portion of the principal.
-
-$$
-periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
-$$
-
-The `periodicRate` is the interest rate applied for each payment interval, derived from the annual rate:
-
-$$
-periodicRate = \frac{interestRate \times paymentInterval}{365 \times 24 \times 60 \times 60}
-$$
-
-From the calculated `periodicPayment`, the specific `interest` and `principal` portions for that period can be derived as follows:
-
-$$
-interest = principalOutstanding \times periodicRate
-$$
-
-$$
-principal = periodicPayment - interest
-$$
-
-**Special Handling for the Final Payment**
-
-When only a single payment remains (`PaymentRemaining = 1`), the standard amortization formula is overridden. Instead, the final `periodicPayment` is set to the exact `TotalValueOutstanding` (which is the sum of the remaining `principalOutstanding`, `interestOutstanding`, and `managementFeeOutstanding`).
-
-This crucial adjustment prevents "residual dust", small leftover amounts caused by the cumulative effect of rounding individual payments over the loan's term (e.g., truncating fractions for XRP drops or MPTs). Without this override, the final formula-calculated payment might not perfectly match the remaining balance, making it impossible to fully clear the debt.
-
-Formally:
-
-```
-If PaymentRemaining > 1:
-  periodicPayment = result from amortization formula (rounded per asset rules)
-If PaymentRemaining = 1:
-  periodicPayment = TotalValueOutstanding (the sum of all remaining balances)
-```
-
-Example (integer-only MPT):
-
-- Initial TotalValueOutstanding = 11 MPT
-- PaymentTotal = 10
-- Amortization produces periodicPayment = 1.1 MPT
-- Asset supports only whole units ⇒ each scheduled payment is truncated to 1 MPT
-  Progress:
-  After 9 payments: Paid = 9 MPT, Remaining TotalValueOutstanding = 2 MPT
-  If we applied the formula again for the 10th payment:
-  periodicPayment (unrounded) = 1.1 MPT → truncated to 1 MPT
-  Remaining after payment = 1 MPT (cannot be repaid; no payments left)
-  Adjustment:
-  Because PaymentRemaining = 1, set periodicPayment = TotalValueOutstanding = 2 MPT
-  Final payment = 2 MPT clears the loan exactly (PrincipalOutstanding = 0, TotalValueOutstanding = 0).
-
-Therefore, implementations must detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
-
-###### 3.2.4.2.2 Late Payment
-
-When a Borrower makes a payment after `NextPaymentDueDate`, they must pay the standard `periodicPayment` plus a nominal `latePaymentFee` and additional penalty interest (`latePaymentInterest`) for the overdue period.
-
-The total amount due is calculated as:
-
-$$
-totalDue = periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest
-$$
-
-The penalty interest is calculated based on the number of seconds the payment is overdue:
-
-$$
-secondsOverdue = lastLedgerCloseTime - Loan.NextPaymentDueDate
-$$
-
-$$
-latePeriodicRate = \frac{lateInterestRate \times secondsOverdue}{365 \times 24 \times 60 \times 60}
-$$
-
-$$
-latePaymentInterest_{gross} = principalOutstanding \times latePeriodicRate
-$$
-
-A portion of this gross late interest is allocated to the Loan Broker as a management fee. The remaining net interest increases the total value of the loan.
-
-$$
-managementFee_{late} = latePaymentInterest_{gross} \times managementFeeRate
-$$
-
-The change in the total loan value is equal to the late payment interest, excluding any fees.
-
-$$
-valueChange = latePaymentInterest_{gross} - managementFee_{late}
-$$
-
-This `valueChange` represents the net increase in the loan's value, which must be reflected in `Vault.AssetsTotal`. However, this value change is not reflected in `Loan.TotalValueOutstanding` and `LoanBroker.DebtTotal` fields. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
-
-###### 3.2.4.2.3 Loan Overpayment
-
-An overpayment occurs when an on-time payment exceeds the amount required for one or more periodic payments. The excess amount is used to pay down the principal early, which reduces the total future interest owed. This process involves two key calculations: charging fees on the overpayment itself and re-amortizing the loan.
-
-**1. Processing the Overpayment Amount**
-
-First, fees and interest are calculated on the `overpaymentAmount` (the funds remaining after all full periodic payments are settled).
-
-$$
-overpaymentInterest_{gross} = overpaymentAmount \times overpaymentInterestRate
-$$
-
-A management fee is taken from this interest:
-
-$$
-managementFee_{overpayment} = overpaymentInterest_{gross} \times managementFeeRate
-$$
-
-$$
-overpaymentInterest_{net} = overpaymentInterest_{gross} - managementFee_{overpayment}
-$$
-
-A percentage fee may also be charged:
-
-$$
-overpaymentFee = overpaymentAmount \times overpaymentFee
-$$
-
-The portion of the overpayment that will be applied directly to the principal is:
-
-$$
-principalPortion = overpaymentAmount - overpaymentInterest_{net} - managementFee_{overpayment} - overpaymentFee
-$$
-
-**2. Re-Amortizing the Loan and Calculating `valueChange`**
-
-Applying the `principalPortion` to the loan reduces the `PrincipalOutstanding`, which in turn changes the amortization schedule and the total interest that will be paid over the remainder of the loan's term. This change in total future interest is the primary `valueChange`.
-
-The system performs the following logical steps (as detailed in the `try_overpayment` pseudo-code):
-
-1.  The `principalPortion` is subtracted from the current `PrincipalOutstanding` to get a `newPrincipalOutstanding`.
-2.  A `newPeriodicPayment` is calculated using the standard amortization formula based on the `newPrincipalOutstanding` and the `paymentsRemaining`.
-3.  A `newTotalValueOutstanding` is calculated based on the `newPeriodicPayment` and `paymentsRemaining`.
-4.  The `valueChange` is the difference between the old and new total future interest, adjusted for any existing rounding discrepancies to ensure numerical stability.
-
-The total change in the loan's value from an overpayment is the sum of the net interest charged on the overpayment and the value change from re-amortization.
-
-$$
-valueChange = overpaymentInterest_{net} + valueChange_{re-amortization}
-$$
-
-Note, that an overpayment typically decreases the overall value of the loan, as the reduction in future interest from re-amortization outweighs interest charged on the overpayment amount itself. However, it is possible for an overpayment to increase the value, if the overpayment interest portion is greater than the value change caused by re-amortization.
-
-###### 3.2.4.2.4 Early Full Repayment
-
-A Borrower can close a Loan early by submitting the total amount needed to do so. This amount is the sum of the outstanding principal, any interest accrued since the last payment, a prepayment penalty, and a fixed prepayment fee.
-
-$$
-totalDue = principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee
-$$
-
-The interest accrued since the last payment is calculated pro-rata:
-
-$$
-secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.PreviousPaymentDueDate, Loan.startDate)
-$$
-
-$$
-accruedInterest = principalOutstanding \times periodicRate \times \frac{secondsSinceLastPayment}{paymentInterval}
-$$
-
-The Lender may also charge a prepayment penalty, calculated as a percentage of the outstanding principal:
-
-$$
-prepaymentPenalty = principalOutstanding \times closeInterestRate
-$$
-
-Because the borrower is not paying all of the originally scheduled future interest, the total value of the loan asset changes. This `valueChange` is the difference between the interest and penalties the vault _will receive_ versus the interest it _expected_ to receive.
-
-The total interest and penalties collected are `accruedInterest + prepaymentPenalty`. The total interest that was expected is `interestOutstanding`.
-
-Therefore, the change in the loan's value is calculated as:
-
-$$
-valueChange = (accruedInterest + prepaymentPenalty) - interestOutstanding
-$$
-
-The `valueChange` for an early repayment can be either positive or negative, depending on the size of the `prepaymentPenalty` relative to the `interestOutstanding`.
-
-- If `(accruedInterest + prepaymentPenalty) < interestOutstanding`, the `valueChange` will be negative, reflecting a decrease in the total value of the loan asset because the vault receives less interest than originally scheduled.
-- If `(accruedInterest + prepaymentPenalty) > interestOutstanding`, the `valueChange` will be positive. This can occur if the lender imposes a significant prepayment penalty that exceeds the forgiven future interest.
-
-This change in value must be reflected in `Vault.AssetsTotal` and `LoanBroker.DebtTotal`, accounting for the corresponding change in the `managementFee`.
-
-##### 3.2.4.3 Conceptual Loan Value
-
-The value of a loan is based on the present value of its future payments. Conceptually, this can be understood through the standard amortization formulas.
-
-The `periodicPayment` is the constant amount required to pay off the `principalOutstanding` over the `PaymentRemaining` intervals at the given `periodicRate`.
-
-$$
-periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
-$$
-
-From this, the theoretical `totalValueOutstanding` is the sum of all remaining payments.
-
-$$
-\text{Theoretical } totalValueOutstanding = periodicPayment \times PaymentRemaining
-$$
-
-And the theoretical `totalInterestOutstanding` is the portion of that total value that is not principal.
-
-$$
-\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalValueOutstanding - principalOutstanding
-$$
-
-And the theoretical `managementFeeOutstanding` is the portion of the interest that is due to the loan broker.
-
-$$
-\text{Theoretical } managementFeeOutstanding = \text{Theoretical } totalInterestOutstanding \times managementFeeRate
-$$
-
-The true `totalInterestOutstanding` is then updated to reflect this.
-
-$$
-\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalInterestOutstanding - managementFeeOutstanding
-$$
-
-**Important Note**: These formulas describe the theoretical financial model. The actual values stored on the `Loan` ledger object (`TotalValueOutstanding`, `PrincipalOutstanding`, `ManagementFeeOutstanding`) are continuously adjusted during payment processing to account for asset-specific rounding rules. Therefore, implementations **must not** rely on these formulas to derive the live state of a loan. The stored ledger fields are the single source of truth.
-
-##### 3.2.4.4 Failure Conditions
+##### 3.2.4.2 Failure Conditions
 
 - `LoanID` is zero.
 - `Amount <= 0`.
@@ -1563,9 +1287,9 @@ $$
   - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
   - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
 
-##### 3.2.4.5 State Changes
+##### 3.2.4.3 State Changes
 
-Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
+Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in [Appendix A-3](#a-3-loanpay-implementation-reference). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
 
 **1. High-Level Accounting**
 
@@ -1641,7 +1365,7 @@ These transfers are performed according to the asset type:
   - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
   - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
 
-##### 3.2.4.6 Invariants
+##### 3.2.4.4 Invariants
 
 **TBD**
 
@@ -1773,7 +1497,7 @@ $$
 
 - `factor` is defined by formula (6)
 
-**Usage:** This inverse formula is used in the pseudo-code to calculate the "true" principal outstanding before applying rounding adjustments. See [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) `principal_outstanding_from_periodic()` function.
+**Usage:** This inverse formula is used in the pseudo-code to calculate the "true" principal outstanding before applying rounding adjustments. See [Appendix A-3.3](#a-33-pseudo-code) `principal_outstanding_from_periodic()` function.
 
 **Special Cases:**
 
@@ -1909,7 +1633,7 @@ $$
 
 #### 5.3 Re-amortization Value Change
 
-The pseudo-code in [Appendix A-3](#a-3-loanpay-transaction-pseudo-code) handles re-amortization by preserving historical rounding errors while applying the overpayment to reduce the principal. The process follows these logical steps:
+The pseudo-code in [Appendix A-3.3](#a-33-pseudo-code) handles re-amortization by preserving historical rounding errors while applying the overpayment to reduce the principal. The process follows these logical steps:
 
 **1. Calculate the "true" pre-overpayment state** (using formulas 10, 31-34):
 
@@ -2083,7 +1807,294 @@ $$
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
 
-## A-3 LoanPay Transaction Pseudo-code
+## A-3 LoanPay Implementation Reference
+
+This appendix provides the complete payment processing logic and implementation pseudo-code for the `LoanPay` transaction.
+
+### A-3.1 Conceptual Loan Value
+
+The value of a loan is based on the present value of its future payments. Conceptually, this can be understood through the standard amortization formulas.
+
+The `periodicPayment` is the constant amount required to pay off the `principalOutstanding` over the `PaymentRemaining` intervals at the given `periodicRate`.
+
+$$
+periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
+$$
+
+From this, the theoretical `totalValueOutstanding` is the sum of all remaining payments.
+
+$$
+\text{Theoretical } totalValueOutstanding = periodicPayment \times PaymentRemaining
+$$
+
+And the theoretical `totalInterestOutstanding` is the portion of that total value that is not principal.
+
+$$
+\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalValueOutstanding - principalOutstanding
+$$
+
+And the theoretical `managementFeeOutstanding` is the portion of the interest that is due to the loan broker.
+
+$$
+\text{Theoretical } managementFeeOutstanding = \text{Theoretical } totalInterestOutstanding \times managementFeeRate
+$$
+
+The true `totalInterestOutstanding` is then updated to reflect this.
+
+$$
+\text{Theoretical } totalInterestOutstanding = \text{Theoretical } totalInterestOutstanding - managementFeeOutstanding
+$$
+
+**Important Note**: These formulas describe the theoretical financial model. The actual values stored on the `Loan` ledger object (`TotalValueOutstanding`, `PrincipalOutstanding`, `ManagementFeeOutstanding`) are continuously adjusted during payment processing to account for asset-specific rounding rules. Therefore, implementations **must not** rely on these formulas to derive the live state of a loan. The stored ledger fields are the single source of truth.
+
+### A-3.2 Payment Processing
+
+A `LoanPay` transaction is processed according to a defined workflow that evaluates the payment's timing, amount, and any specified flags. This determines how the funds are applied to the loan's principal, interest, and associated fees.
+
+**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-33-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
+
+**Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
+
+For example:
+
+- If a loan is denominated in an asset that only supports whole numbers (like an MPT) and the calculated `Loan.PeriodicPayment` is `10.12345`, the borrower is expected to pay `11`.
+- If a loan is denominated in a USD IOU with two decimal places of precision and the `Loan.PeriodicPayment` is `25.54321`, the borrower is expected to pay `25.55`.
+
+This rounded-up value, plus any applicable service fees, constitutes the minimum payment for a single period.
+
+Each payment consists of four components:
+
+- **Principal**: The portion that reduces the outstanding loan principle.
+- **Interest**: The portion that covers the cost of borrowing for the period.
+- **Fees**: The portion that covers any applicable `serviceFee`, `managementFee`, `latePaymentFee`, or other charges.
+- **ValueChange**: The amount by which the payment changed the value of the Loan.
+
+The system follows these steps to process a payment:
+
+1.  **Timing Verification**: The transaction is first classified as either **On-time** or **Late** by comparing the ledger's close time to the `Loan.NextPaymentDueDate`.
+
+2.  **Minimum Amount Validation**: The payment is checked against the minimum amount required for its timing classification. If the amount is insufficient, the transaction is rejected.
+    - **Late Minimum**: `periodicPayment + serviceFee + latePaymentFee + lateInterest`
+    - **On-time Minimum**: `periodicPayment + serviceFee`
+
+3.  **Scenario Handling**: Based on the timing and transaction flags, the system proceeds with one of the following paths:
+    - **A) Late Payment Processing**: If the payment is late, it must be for the exact amount calculated by the [late payment formula](#a-322-late-payment).
+      - **Constraint**: Overpayments are not permitted on late payments. Any amount paid beyond the exact total due will be ignored.
+
+    - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
+      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set and the amount is sufficient to cover the [full payment formula](#a-324-early-full-repayment), the loan is closed.
+        - **Constraint**: This option is not available if only one payment remains on the loan.
+      - **ii. Sequential Periodic Payments**: If it is not a full repayment, the system applies the funds to as many complete periodic payment cycles as possible. A single cycle consists of the `periodicPayment` plus the `serviceFee`.
+      - **iii. Overpayment Application**: After all possible full periodic cycles are paid, any remaining amount is treated as an overpayment and applied to the principal.
+        - **Constraint**: This step only occurs for on-time payments and requires two flags to be set: `lsfLoanOverpayment` on the `Loan` object and `tfLoanOverpayment` on the `LoanPay` transaction. If these conditions are not met, the excess amount is ignored.
+
+**Note on Excess Funds**: In scenarios where funds are "ignored" (e.g., an overpayment on a late payment, or on a loan that does not permit overpayments), the transaction succeeds, the borrower is only charged the expected due amount, but not the excess.
+
+**The `valueChange` Concept**
+
+The `valueChange` is a critical accounting mechanism that represents the change in the _total future interest_ the vault expects to earn from the loan. It is triggered by events that alter the original amortization schedule.
+
+- **Late Payment**: Adds new penalty interest, so `valueChange` is positive.
+- **Overpayment**: Overpayment reduces principal, and thus the future interest, thus `valueChange` is negative.
+- **Early Full Payment**: The `valueChange` for an early repayment can be either positive or negative, depending on the size of the early full payment configuration.
+
+This `valueChange` is always split between the Vault (as a change in its net interest) and the Loan Broker (as a change in the `managementFee`).
+
+#### A-3.2.1 Regular Payment
+
+For a standard, on-time payment, the total amount due from the borrower is the sum of the calculated periodic payment and applicable service fee.
+
+$$
+totalDue = periodicPayment + loanServiceFee
+$$
+
+The `periodicPayment` is calculated using the standard amortization formula, which ensures a constant payment amount over the life of the loan. This payment covers both the interest accrued for the period and a portion of the principal.
+
+$$
+periodicPayment = principalOutstanding \times \frac{periodicRate \times (1 + periodicRate)^{PaymentRemaining}}{(1 + periodicRate)^{PaymentRemaining} - 1}
+$$
+
+The `periodicRate` is the interest rate applied for each payment interval, derived from the annual rate:
+
+$$
+periodicRate = \frac{interestRate \times paymentInterval}{365 \times 24 \times 60 \times 60}
+$$
+
+From the calculated `periodicPayment`, the specific `interest` and `principal` portions for that period can be derived as follows:
+
+$$
+interest = principalOutstanding \times periodicRate
+$$
+
+$$
+principal = periodicPayment - interest
+$$
+
+**Special Handling for the Final Payment**
+
+When only a single payment remains (`PaymentRemaining = 1`), the standard amortization formula is overridden. Instead, the final `periodicPayment` is set to the exact `TotalValueOutstanding` (which is the sum of the remaining `principalOutstanding`, `interestOutstanding`, and `managementFeeOutstanding`).
+
+This crucial adjustment prevents "residual dust", small leftover amounts caused by the cumulative effect of rounding individual payments over the loan's term (e.g., truncating fractions for XRP drops or MPTs). Without this override, the final formula-calculated payment might not perfectly match the remaining balance, making it impossible to fully clear the debt.
+
+Formally:
+
+```
+If PaymentRemaining > 1:
+  periodicPayment = result from amortization formula (rounded per asset rules)
+If PaymentRemaining = 1:
+  periodicPayment = TotalValueOutstanding (the sum of all remaining balances)
+```
+
+Example (integer-only MPT):
+
+- Initial TotalValueOutstanding = 11 MPT
+- PaymentTotal = 10
+- Amortization produces periodicPayment = 1.1 MPT
+- Asset supports only whole units ⇒ each scheduled payment is truncated to 1 MPT
+  Progress:
+  After 9 payments: Paid = 9 MPT, Remaining TotalValueOutstanding = 2 MPT
+  If we applied the formula again for the 10th payment:
+  periodicPayment (unrounded) = 1.1 MPT → truncated to 1 MPT
+  Remaining after payment = 1 MPT (cannot be repaid; no payments left)
+  Adjustment:
+  Because PaymentRemaining = 1, set periodicPayment = TotalValueOutstanding = 2 MPT
+  Final payment = 2 MPT clears the loan exactly (PrincipalOutstanding = 0, TotalValueOutstanding = 0).
+
+Therefore, implementations must detect the single remaining payment case and substitute the outstanding value to guarantee full extinguishment of the debt.
+
+#### A-3.2.2 Late Payment
+
+When a Borrower makes a payment after `NextPaymentDueDate`, they must pay the standard `periodicPayment` plus a nominal `latePaymentFee` and additional penalty interest (`latePaymentInterest`) for the overdue period.
+
+The total amount due is calculated as:
+
+$$
+totalDue = periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest
+$$
+
+The penalty interest is calculated based on the number of seconds the payment is overdue:
+
+$$
+secondsOverdue = lastLedgerCloseTime - Loan.NextPaymentDueDate
+$$
+
+$$
+latePeriodicRate = \frac{lateInterestRate \times secondsOverdue}{365 \times 24 \times 60 \times 60}
+$$
+
+$$
+latePaymentInterest_{gross} = principalOutstanding \times latePeriodicRate
+$$
+
+A portion of this gross late interest is allocated to the Loan Broker as a management fee. The remaining net interest increases the total value of the loan.
+
+$$
+managementFee_{late} = latePaymentInterest_{gross} \times managementFeeRate
+$$
+
+The change in the total loan value is equal to the late payment interest, excluding any fees.
+
+$$
+valueChange = latePaymentInterest_{gross} - managementFee_{late}
+$$
+
+This `valueChange` represents the net increase in the loan's value, which must be reflected in `Vault.AssetsTotal`. However, this value change is not reflected in `Loan.TotalValueOutstanding` and `LoanBroker.DebtTotal` fields. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
+
+#### A-3.2.3 Loan Overpayment
+
+An overpayment occurs when an on-time payment exceeds the amount required for one or more periodic payments. The excess amount is used to pay down the principal early, which reduces the total future interest owed. This process involves two key calculations: charging fees on the overpayment itself and re-amortizing the loan.
+
+**1. Processing the Overpayment Amount**
+
+First, fees and interest are calculated on the `overpaymentAmount` (the funds remaining after all full periodic payments are settled).
+
+$$
+overpaymentInterest_{gross} = overpaymentAmount \times overpaymentInterestRate
+$$
+
+A management fee is taken from this interest:
+
+$$
+managementFee_{overpayment} = overpaymentInterest_{gross} \times managementFeeRate
+$$
+
+$$
+overpaymentInterest_{net} = overpaymentInterest_{gross} - managementFee_{overpayment}
+$$
+
+A percentage fee may also be charged:
+
+$$
+overpaymentFee = overpaymentAmount \times overpaymentFee
+$$
+
+The portion of the overpayment that will be applied directly to the principal is:
+
+$$
+principalPortion = overpaymentAmount - overpaymentInterest_{net} - managementFee_{overpayment} - overpaymentFee
+$$
+
+**2. Re-Amortizing the Loan and Calculating `valueChange`**
+
+Applying the `principalPortion` to the loan reduces the `PrincipalOutstanding`, which in turn changes the amortization schedule and the total interest that will be paid over the remainder of the loan's term. This change in total future interest is the primary `valueChange`.
+
+The system performs the following logical steps (as detailed in the `try_overpayment` [pseudo-code](#a-33-pseudo-code)):
+
+1.  The `principalPortion` is subtracted from the current `PrincipalOutstanding` to get a `newPrincipalOutstanding`.
+2.  A `newPeriodicPayment` is calculated using the standard amortization formula based on the `newPrincipalOutstanding` and the `paymentsRemaining`.
+3.  A `newTotalValueOutstanding` is calculated based on the `newPeriodicPayment` and `paymentsRemaining`.
+4.  The `valueChange` is the difference between the old and new total future interest, adjusted for any existing rounding discrepancies to ensure numerical stability.
+
+The total change in the loan's value from an overpayment is the sum of the net interest charged on the overpayment and the value change from re-amortization.
+
+$$
+valueChange = overpaymentInterest_{net} + valueChange_{re-amortization}
+$$
+
+Note, that an overpayment typically decreases the overall value of the loan, as the reduction in future interest from re-amortization outweighs interest charged on the overpayment amount itself. However, it is possible for an overpayment to increase the value, if the overpayment interest portion is greater than the value change caused by re-amortization.
+
+#### A-3.2.4 Early Full Repayment
+
+A Borrower can close a Loan early by submitting the total amount needed to do so. This amount is the sum of the outstanding principal, any interest accrued since the last payment, a prepayment penalty, and a fixed prepayment fee.
+
+$$
+totalDue = principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee
+$$
+
+The interest accrued since the last payment is calculated pro-rata:
+
+$$
+secondsSinceLastPayment = lastLedgerCloseTime - max(Loan.PreviousPaymentDueDate, Loan.startDate)
+$$
+
+$$
+accruedInterest = principalOutstanding \times periodicRate \times \frac{secondsSinceLastPayment}{paymentInterval}
+$$
+
+The Lender may also charge a prepayment penalty, calculated as a percentage of the outstanding principal:
+
+$$
+prepaymentPenalty = principalOutstanding \times closeInterestRate
+$$
+
+Because the borrower is not paying all of the originally scheduled future interest, the total value of the loan asset changes. This `valueChange` is the difference between the interest and penalties the vault _will receive_ versus the interest it _expected_ to receive.
+
+The total interest and penalties collected are `accruedInterest + prepaymentPenalty`. The total interest that was expected is `interestOutstanding`.
+
+Therefore, the change in the loan's value is calculated as:
+
+$$
+valueChange = (accruedInterest + prepaymentPenalty) - interestOutstanding
+$$
+
+The `valueChange` for an early repayment can be either positive or negative, depending on the size of the `prepaymentPenalty` relative to the `interestOutstanding`.
+
+- If `(accruedInterest + prepaymentPenalty) < interestOutstanding`, the `valueChange` will be negative, reflecting a decrease in the total value of the loan asset because the vault receives less interest than originally scheduled.
+- If `(accruedInterest + prepaymentPenalty) > interestOutstanding`, the `valueChange` will be positive. This can occur if the lender imposes a significant prepayment penalty that exceeds the forgiven future interest.
+
+This change in value must be reflected in `Vault.AssetsTotal` and `LoanBroker.DebtTotal`, accounting for the corresponding change in the `managementFee`.
+
+### A-3.3 Pseudo-code
 
 The following is the pseudo-code for handling a Loan payment transaction.
 
