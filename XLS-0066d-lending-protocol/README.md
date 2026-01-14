@@ -758,11 +758,16 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw.                               |
 | `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
-##### 3.1.4.1 Failure conditions
+##### 3.1.4.1 Failure Conditions
 
+- `LoanBrokerID` is zero.
+- `Amount` is not a legal net amount.
+- `Destination` is specified and is zero.
+- `Destination` (or submitter if not specified) is a _pseudo-account_.
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-
+- `Vault(LoanBroker.VaultID)` does not exist.
+- `Amount.asset` does not match `Vault.Asset`.
 - The `Destination` account is specified and it does not have permission to receive the asset.
 
 - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
@@ -771,7 +776,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
   - If the `Destination` field is specified:
     - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
-    - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+    - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
 
   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
@@ -794,31 +799,32 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 ##### 3.1.4.2 State Changes
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-  - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
-  - If `Destination` field is not specified:
-    - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
-
-  - If `Destination` field is specified:
-    - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
-
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  - If `Destination` field is not specified:
-    - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-  - If `Destination` field is specified:
-    - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - If `Destination` field is not specified:
-    - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
-
-  - If `Destination` field is specified:
-    - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
-
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
+
+- Transfer `Amount` from the submitting account to the broker _pseudo-account_ (transfer fee waived):
+  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
+    - If `Destination` field is not specified:
+      - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
+
+    - If `Destination` field is specified:
+      - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
+
+  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
+    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+    - If `Destination` field is not specified:
+      - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+
+    - If `Destination` field is specified:
+      - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+
+  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
+    - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+    - If `Destination` field is not specified:
+      - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
+
+    - If `Destination` field is specified:
+      - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
 
 ##### 3.1.4.3 Invariants
 
