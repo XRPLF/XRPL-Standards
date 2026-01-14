@@ -1250,7 +1250,7 @@ For example:
 
 This rounded-up value, plus any applicable service fees, constitutes the minimum payment for a single period.
 
-Each payment consists of three components:
+Each payment consists of four components:
 
 - **Principal**: The portion that reduces the outstanding loan principle.
 - **Interest**: The portion that covers the cost of borrowing for the period.
@@ -1950,42 +1950,46 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ##### 3.2.4.5 Failure Conditions
 
-- A `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The `Account` submitting the transaction is not the `Loan.Borrower`.
-- The `Amount` field is invalid or specifies a negative value.
+- `LoanID` is zero.
+- `Amount <= 0`.
+- More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
 
-- The loan is already fully paid (`Loan.PaymentRemaining` is `0` or `Loan.TotalValueOutstanding` is `0`).
-- The `tfLoanOverpayment` flag is set on the transaction, but the `lsfLoanOverpayment` flag is not set on the `Loan` object.
-- The `tfLoanFullPayment` flag is set, but only one payment remains on the loan (`Loan.PaymentRemaining` is `1`).
-- More than one of `LoanPay` transaction flags are specified.
+- `Loan` object with the specified `LoanID` does not exist on the ledger.
+- The submitter is not the `Loan.Borrower`.
+- `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
+- `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
+- `Amount.asset` does not match `Vault.Asset`.
 
-- If the payment is late (`LastLedgerCloseTime > Loan.NextPaymentDueDate`):
-  - The `tfLoanLatePayment` is not specified in the transaction.
-  - The `Amount` is less than the calculated `totalDue` for a late payment, which is `periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`.
+- The Borrower is frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
+    - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
 
-- If the payment is on-time (`LastLedgerCloseTime <= Loan.NextPaymentDueDate`):
-  - The `Amount` is less than the calculated `totalDue` for a periodic payment, which is `periodicPayment + loanServiceFee`.
+- The Vault _pseudo-account_ is deep frozen for the asset:
+  - If `Vault.Asset` is an `IOU`:
+    - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+  - If `Vault.Asset` is an `MPT`:
+    - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
+
+- The Borrower is not authorized for the asset.
+
+- The Borrower has insufficient funds to pay `Amount`.
+
+- Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
+
+- If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
+  - The `tfLoanLatePayment` flag is not specified in the transaction.
+  - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
+
+- If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
+  - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
 
 - If the `tfLoanFullPayment` flag is specified:
-  - The `Amount` is less than the calculated `totalDue` for a full early payment, which is `principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is `XRP`:
-  - The `Balance` of the `AccountRoot` object of the Borrower is less than `totalDue`.
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-  - The `RippleState` between the `Vault(LoanBroker(Loan.LoanBrokerID).VaultID).Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The `RippleState` object `Balance` < `totalDue` (Borrower has insufficient funds).
-
-- If the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has
-    - `lsfMPTLocked` flag set.
-    - `MPTAmount` < `totalDue` (insufficient funds).
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-  - The `MPToken` object for the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(Loan(LoanID).LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set.
+  - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
+  - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
 
 ##### 3.2.4.6 State Changes
 
@@ -1996,20 +2000,22 @@ Upon successful validation, the `LoanPay` transaction is processed according to 
 First, the system determines the final destination of all funds.
 
 1.  **Determine Fee Destination**: All collected fees are directed to one of two places:
-    - **If First-Loss Capital is sufficient** (`LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`): The fees are paid to the `LoanBroker.Owner`.
-    - **If First-Loss Capital is insufficient**: The fees are added to the first-loss pool to cover the deficit.
+    - **If ALL of the following conditions are met**, fees are paid to the `LoanBroker.Owner`:
+      - First-Loss Capital is sufficient: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+      - The `LoanBroker.Owner` is NOT deep frozen for the asset.
+      - The `LoanBroker.Owner` is authorized for the asset.
+    - **Otherwise**: The fees are added to the `LoanBroker` pseudo-account's first-loss pool (`CoverAvailable`).
 
 2.  **Define Final Fund Flows**:
     - `totalPaidByBorrower = principalPaid + interestPaid + feePaid`
-    - `totalToVault = principalPaid + interestPaid`
-    - `totalToBroker` = The total fee amount, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
+    - `totalToVault = principalPaid + interestPaid` (rounded to the vault's asset scale)
+    - `totalToBroker = feePaid`, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
 
 **2. `Loan` Object State Changes**
 
-The `Loan` object is updated to reflect the payment
-.
+The `Loan` object is updated to reflect the payment.
 
-- If the loan was impaired (`lsfLoanImpaired` flag was set), the flag is cleared.
+- If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3233-tfloanunimpair-state-changes) for details).
 
 - **For a Full Repayment**:
   - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
@@ -2031,20 +2037,20 @@ The `Loan` object is updated to reflect the payment
 The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
 
 - **`LoanBroker` Updates**:
-  - `LoanBroker.DebtTotal` is decreased by `totalToVault` (the principal and interest paid back).
-  - If the payment resulted in a `valueChange` from an overpayment or early full repayment, `LoanBroker.DebtTotal` is adjusted by that `valueChange`. It is **not** adjusted for `valueChange` from late payment interest, as this represents a penalty paid directly to the vault, not an alteration of the original debt schedule.
-    - `LoanBroker.DebtToal + valueChange`
+  - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
+    - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
+    - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
   - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
 
 - **`Vault` Updates**:
   - `Vault.AssetsAvailable` increases by `totalToVault`.
-  - `Vault.AssetsTotal` is always adjusted by the total `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+  - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
 
-**4. Low-Level Asset Transfers**
+**4. Asset Transfers**
 
-Finally, the actual asset transfers are executed on the ledger.
+Finally, the actual asset transfers are executed on the ledger. All transfers are performed with **transfer fees waived**.
 
-- The borrower's balance is **decreased** by `totalPaidByBorrower`.
+- The borrower's balance is **decreased** by `totalToVault + totalToBroker`.
 - The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
 - The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
 
@@ -2057,13 +2063,13 @@ These transfers are performed according to the asset type:
 - **If the asset is an IOU**:
   - The `RippleState` balance between the borrower and the `Issuer` is decreased.
   - The `RippleState` balance between the `Vault` pseudo-account and the `Issuer` is increased.
-  - The `RippleState` balance between the destination account for fees (`LoanBroker.Owner` or `LoanBroker` pseudo-account) and the `Issuer` is increased.
+  - The `RippleState` balance between the destination account for fees and the `Issuer` is increased.
 - **If the asset is an MPT**:
   - The `MPTAmount` in the borrower's `MPToken` object is decreased.
   - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
-  - The `MPTAmount` in the destination account for fees (`LoanBroker.Owner` or `LoanBroker` pseudo-account) `MPToken` object is increased.
+  - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
 
-##### 3.2.4.6 Invariants
+##### 3.2.4.7 Invariants
 
 **TBD**
 
