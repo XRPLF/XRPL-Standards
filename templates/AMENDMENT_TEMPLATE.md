@@ -69,7 +69,15 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
-### 2.3. Ownership
+### 2.3. Flags
+
+\_[Describe any ledger entry-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
+
+| Flag Name        | Flag Value   | Description      |
+| ---------------- | ------------ | ---------------- |
+| `[lsfFlagName1]` | `0x[Value1]` | `[Description1]` |
+
+### 2.4. Ownership
 
 _[Specify which AccountRoot object owns this ledger entry and how the ownership relationship is established.]_
 
@@ -77,7 +85,7 @@ _[Specify which AccountRoot object owns this ledger entry and how the ownership 
 
 **Directory Registration:** `[Describe how this object is registered in the owner's directory, or specify if it's a special case]`
 
-### 2.4. Reserves
+### 2.5. Reserves
 
 **Reserve Requirement:** `[Standard/Custom/None]`
 
@@ -87,7 +95,7 @@ _[If Custom]: This ledger entry requires `[X]` reserve units because `[reason]`.
 
 _[If None]: This ledger entry does not require additional reserves because `[reason]`._
 
-### 2.5. Deletion
+### 2.6. Deletion
 
 **Deletion Transactions:** `[List transaction types that can delete this object]`
 
@@ -101,7 +109,7 @@ _[If None]: This ledger entry does not require additional reserves because `[rea
 _[If Yes]: This object must be deleted before its owner account can be deleted._
 _[If No]: This object does not prevent its owner account from being deleted._
 
-### 2.6. Pseudo-Account _(Optional)_
+### 2.7. Pseudo-Account _(Optional)_
 
 _[Only include this section if your ledger entry uses a pseudo-account. Otherwise, delete this subsection.]_
 
@@ -113,7 +121,7 @@ _[If Yes]:_
 - **AccountID Derivation:** `[Describe the algorithm for deriving the pseudo-account's AccountID]`
 - **Capabilities:** `[List what the pseudo-account can/cannot do]`
 
-### 2.7. Freeze/Lock _(Optional)_
+### 2.8. Freeze/Lock _(Optional)_
 
 _[Only include this section if your ledger entry holds assets that can be frozen/locked. Otherwise, delete this subsection.]_
 
@@ -122,7 +130,7 @@ _[Only include this section if your ledger entry holds assets that can be frozen
 
 _[If applicable, describe how freeze/lock functionality is implemented for assets held by this object]_
 
-### 2.8. Invariants
+### 2.9. Invariants
 
 _[List logical statements that must always be true for this ledger entry. Use `<object>` for before-state and `<object>'` for after-state.]_
 
@@ -130,13 +138,13 @@ _[List logical statements that must always be true for this ledger entry. Use `<
 - `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
 - `[Additional invariants as needed]`
 
-### 2.9. RPC Name
+### 2.10. RPC Name
 
 **RPC Type Name:** `[snake_case_name]`
 
 _[This is the name used in `account_objects` and `ledger_data` RPC calls to filter for this object type]_
 
-### 2.10. Example JSON
+### 2.11. Example JSON
 
 ```json
 {
@@ -178,7 +186,15 @@ _[Add more rows as needed for your specific fields. Remove example custom fields
 
 _[Detailed explanation of field behavior, validation rules, etc.]_
 
-### 3.2. Transaction Fee
+### 3.2. Flags
+
+\_[Describe any transaction-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
+
+| Flag Name       | Flag Value   | Description      |
+| --------------- | ------------ | ---------------- |
+| `[tfFlagName1]` | `0x[Value1]` | `[Description1]` |
+
+### 3.3. Transaction Fee
 
 **Fee Structure:** `[Standard/Custom]`
 
@@ -186,7 +202,7 @@ _[If Standard]: This transaction uses the standard transaction fee (currently 10
 
 _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
-### 3.3. Failure Conditions
+### 3.4. Failure Conditions
 
 _[List all conditions that cause the transaction to fail, with corresponding error codes]_
 
@@ -196,7 +212,7 @@ _[List all conditions that cause the transaction to fail, with corresponding err
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
-### 3.4. State Changes
+### 3.5. State Changes
 
 _[Describe the ledger state changes when the transaction executes successfully. Omit standard changes like fee processing and sequence increment.]_
 
@@ -206,7 +222,7 @@ _[Describe the ledger state changes when the transaction executes successfully. 
 - `[State change 2, e.g., "Update Account's OwnerCount"]`
 - `[Additional changes as needed]`
 
-### 3.5. Metadata Fields _(Optional)_
+### 3.6. Metadata Fields _(Optional)_
 
 _[Only include this section if the transaction adds or modifies metadata fields. Otherwise, delete this subsection.]_
 
@@ -214,7 +230,7 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 | -------------- | ---------- | ---------------------- | ------------------------------ | --------------- |
 | `[field_name]` | `[Yes/No]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description]` |
 
-### 3.6. Example JSON
+### 3.7. Example JSON
 
 ```json
 {
