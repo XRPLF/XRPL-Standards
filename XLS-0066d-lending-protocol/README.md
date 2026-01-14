@@ -565,35 +565,63 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 ##### 3.1.1.1 Failure Conditions
 
-- If `LoanBrokerID` is not specified:
-  - `Vault` object with the specified `VaultID` does not exist on the ledger.
-  - The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
-  - One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
+**General Field Validation:**
 
-- If `LoanBrokerID` is specified:
-  - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-  - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-  - The submitter is attempting to modify fixed fields.
+- `VaultID` is zero.
+- `Data` field is present, non-empty, and exceeds 256 bytes.
+- `ManagementFeeRate` is outside valid range (0 to 10000).
+- `CoverRateMinimum` is outside valid range (0 to 100000).
+- `CoverRateLiquidation` is outside valid range (0 to 100000).
+- `DebtMaximum` is negative or exceeds maximum allowed value.
+- One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
 
-- Any of the fields are _invalid_.
+**If `LoanBrokerID` is not specified (creating new):**
+
+- `Vault` object with the specified `VaultID` does not exist on the ledger.
+- The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
+- Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues).
+- The Vault _pseudo-account_ is frozen for the `Vault.Asset`.
+- The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves).
+
+**If `LoanBrokerID` is specified (modifying existing):**
+
+- `LoanBrokerID` is zero.
+- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+- The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`.
+- The submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`).
+- `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`.
+
+**Precision Validation:**
+
+- Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT).
 
 ##### 3.1.1.2 State Changes
 
-- If `LoanBrokerID` is not specified:
-  - Create a new `LoanBroker` ledger object.
+**If `LoanBrokerID` is not specified (creating new):**
 
-  - Create a new `AccountRoot` _pseudo-account_ object, setting the `AccountRoot.LoanBrokerID` to `LoanBrokerID`.
-    - If the `Vault(VaultID).Asset` is an `IOU`:
-      - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
+- Create `LoanBroker` ledger object
 
-    - If the `Vault(VaultID).Asset` is an `MPT`:
-      - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
+- Create pseudo-account `AccountRoot` for the `LoanBroker`:
+  - Set `AccountRoot.LoanBrokerID` to the new `LoanBrokerID`
 
-  - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account.
-  - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's _pseudo-account_.
+- Add asset holding for the `pseudo-account`:
+  - If the `Vault(VaultID).Asset` is an `IOU`:
+    - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
+  - If the `Vault(VaultID).Asset` is an `MPT`:
+    - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
 
-- If `LoanBrokerID` is specified:
-  - Update appropriate fields.
+- Directory linking:
+  - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account (sets `OwnerNode`).
+  - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's _pseudo-account_ (sets `VaultNode`).
+
+- Update submitting account:
+  - Increment the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
+
+**If `LoanBrokerID` is specified (modifying existing):**
+
+- Update `LoanBroker.Data` if provided in the transaction.
+- Update `LoanBroker.DebtMaximum` if provided in the transaction.
 
 ##### 3.1.1.3 Invariants
 
@@ -1642,9 +1670,9 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
 
     # Calculate the theoretical (full precision) loan state before the overpayment.
     let theoreticalState = compute_theoretical_loan_state(
-        loan.periodicPayment, 
-        loan.periodicRate, 
-        loan.paymentsRemaining, 
+        loan.periodicPayment,
+        loan.periodicRate,
+        loan.paymentsRemaining,
         loan.loanbroker.managementFeeRate
     )
     # theoreticalState contains: { valueOutstanding, principalOutstanding, managementFeeOutstanding }
