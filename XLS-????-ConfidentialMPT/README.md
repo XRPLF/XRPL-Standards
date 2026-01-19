@@ -189,7 +189,8 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 | `HolderEncryptedAmount` | ✔️ | `string` | `Blob` | ElGamal ciphertext credited to the holder's $CB_{IN}$. |
 | `IssuerEncryptedAmount` | ✔️ | `string` | `Blob` | ElGamal ciphertext credited to the issuer's mirror balance. |
 | `AuditorEncryptedAmount` | Conditional | `string` | `Blob` | ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
-| `ZKProof` | ✔️ | `string` | `Blob` | ZKP(s) proving the plaintext correctly encrypts to the ciphertexts. |
+| `BlindingFactor` | ✔️ | `string` | `Blob` | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
+| `ZKProof` | Conditional | `string` | `Blob` | A Schnorr Proof of Knowledge (PoK) for the `HolderElGamalPublicKey`. **Required** only when `HolderElGamalPublicKey` is present. |
 
 **Notes:**
 - This transaction performs **self-conversion only**; there is no `Receiver` field.
@@ -206,8 +207,10 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 * **`temBAD_AMOUNT`**: `MPTAmount` exceeds `maxMPTokenAmount`.
 * **`tecINSUFFICIENT_FUNDS`**: The holder does not have enough public MPT balance to cover the `MPTAmount`.
 * **`tecDUPLICATE`**: A public key is provided in the transaction, but the account already has a registered key.
-* **`tecBAD_PROOF`**: The Zero-Knowledge Proof fails to verify consistency between the plaintext amount and the ciphertexts.
-
+* **`tecBAD_PROOF`**:
+    * The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`.
+    * The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key.
+    
 ### 6.4. State Changes
 
 If the transaction is successful:
@@ -223,12 +226,13 @@ If the transaction is successful:
 {
   "Account": "rBob...",
   "TransactionType": "ConfidentialConvert",
-  "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
+  "MPTokenIssuanceID": "610F33...",
   "MPTAmount": 1000,
   "HolderElGamalPublicKey": "038d...",
   "HolderEncryptedAmount": "AD3F...",
   "IssuerEncryptedAmount": "BC2E...",
-  "ZKProof": "7429..."
+  "BlindingFactor": "EE21...",
+  "ZKProof": "ABCD..." 
 }
 ```
 
@@ -377,14 +381,16 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 | `MPTAmount` | ✔️ | `number` | `UInt64` | The plaintext amount to credit to the public balance. |
 | `HolderEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`. |
 | `IssuerEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext to be subtracted from the issuer's mirror balance. |
-| `ZKProof` | ✔️ | `string` | `Blob` | A bundle containing Equality Proofs and Range Proofs. |
+| `BlindingFactor` | ✔️ | `string` | `Blob` | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
 | `AuditorEncryptedAmount` | Conditional | `string` | `Blob` | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
 
 
 ### 9.4. Failure Conditions
 * **`temDISABLED`**: The `featureConfidentialTransfer` is not enabled.
-* **`temMALFORMED`**: The account is the Issuer (Issuers cannot use this transaction; they must use `ConfidentialClawback` or standard treasury operations).
-* **`temBAD_CIPHERTEXT`**: Ciphertext lengths are invalid.
+* **`temMALFORMED`**: 
+    * The account is the Issuer
+    * The `BlindingFactor` is not exactly 32 bytes.
+* **`temBAD_CIPHERTEXT`**: Ciphertext lengths or formats are invalid.
 * **`temBAD_AMOUNT`**: `MPTAmount` is zero or greater than the maximum allowable supply.
 * **`tecOBJECT_NOT_FOUND`**: The `MPToken` or `MPTokenIssuance` does not exist.
 * **`tecNO_PERMISSION`**:
@@ -394,7 +400,7 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 * **`tecINSUFFICIENT_FUNDS`**:
     * **Global Check:** The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`.
     * **Local Check:** The user's confidential balance is insufficient (enforced via ZK Proof verification).
-* **`tecBAD_PROOF`**: The ZKP fails to prove that the ciphertexts correspond to the plaintext `MPTAmount` or that the account has sufficient funds.
+* **`tecBAD_PROOF`**: The BlindingFactor fails to verify that the provided ciphertexts (Holder, Issuer, and Auditor) validly encrypt the plaintext MPTAmount.
 * **`terFROZEN`**: The account or issuance is frozen.
 
 ### 9.5. State Changes
@@ -412,11 +418,12 @@ If the transaction is successful:
 {
   "Account": "rUserAccount...",
   "TransactionType": "ConfidentialConvertBack",
-  "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
+  "MPTokenIssuanceID": "610F33...",
   "MPTAmount": 500,
   "HolderEncryptedAmount": "AD3F...",
   "IssuerEncryptedAmount": "BC2E...",
-  "ZKProof": "92da..."
+  "AuditorEncryptedAmount": "C1A9...",
+  "BlindingFactor": "12AB..."
 }
 ```
 
