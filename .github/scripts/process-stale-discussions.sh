@@ -136,15 +136,21 @@ rm -f discussions_page.json
 TOTAL_DISCUSSIONS=$(jq '.data.repository.discussions.nodes | length' discussions.json)
 echo "Fetched $TOTAL_DISCUSSIONS discussions across $PAGE_COUNT page(s)"
 
+# Define the unique marker used to identify warning comments
+# This HTML comment is invisible to users but allows the script to reliably detect
+# warning comments even if the WARNING_MESSAGE text changes over time.
+# IMPORTANT: This marker must match the one in WARNING_MESSAGE in the workflow file.
+MARKER="<!-- stale-discussion-warning -->"
+
 # Process discussions to close
 # A discussion should be closed if:
-# 1. It has a warning comment containing the configured WARNING_MESSAGE
+# 1. It has a warning comment containing the unique marker
 # 2. That warning comment was posted by the bot
 # 3. That warning comment is older than WARNING_DAYS
 # 4. The discussion hasn't been updated since the warning (or updates are also old)
 echo ""
 echo "=== Discussions to close - warned ${WARNING_DAYS}+ days ago with no activity ==="
-cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg warningMessage "$WARNING_MESSAGE" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($warningMessage)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt < $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
+cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($marker)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt < $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
@@ -191,11 +197,11 @@ done
 # A discussion should be warned if:
 # 1. It hasn't been updated in STALE_DAYS
 # 2. Either:
-#    a. It doesn't have a warning comment from the bot yet, OR
+#    a. It doesn't have a warning comment (with unique marker) from the bot yet, OR
 #    b. It has a warning from the bot but was updated after that warning (user responded, so we warn again)
 echo ""
 echo "=== Discussions to warn - stale for ${STALE_DAYS}+ days, not yet warned ==="
-cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg warningMessage "$WARNING_MESSAGE" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | select(.updatedAt < $staleCutoff) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($warningMessage)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment == null or $discussion.updatedAt > $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
+cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | select(.updatedAt < $staleCutoff) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($marker)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment == null or $discussion.updatedAt > $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
