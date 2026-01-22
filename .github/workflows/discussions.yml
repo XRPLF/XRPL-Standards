@@ -42,6 +42,7 @@ jobs:
       - name: Fetch and process stale discussions
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}[bot]
           STALE_DAYS: ${{ env.STALE_DAYS }}
           WARNING_DAYS: ${{ env.WARNING_DAYS }}
           WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}

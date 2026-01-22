@@ -13,10 +13,11 @@ set -e
 # - GITHUB_REPOSITORY_OWNER: Owner of the repository
 # - GITHUB_REPOSITORY_NAME: Name of the repository
 # - GH_TOKEN: GitHub token for API access
+# - BOT_LOGIN: GitHub login name of the bot (for author verification)
 # - DRY_RUN: Set to "true" to only print what would happen without making changes (optional)
 
 # Validate required environment variables
-required_env_vars=(STALE_DAYS WARNING_DAYS WARNING_MESSAGE CLOSE_MESSAGE GITHUB_REPOSITORY_OWNER GITHUB_REPOSITORY_NAME GH_TOKEN)
+required_env_vars=(STALE_DAYS WARNING_DAYS WARNING_MESSAGE CLOSE_MESSAGE GITHUB_REPOSITORY_OWNER GITHUB_REPOSITORY_NAME GH_TOKEN BOT_LOGIN)
 for var in "${required_env_vars[@]}"; do
   if [ -z "${!var}" ]; then
     echo "Error: required environment variable ${var} is not set or empty." >&2
@@ -57,14 +58,8 @@ echo ""
 echo "Checking GitHub token permissions..."
 gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME --jq '.permissions' || echo "Could not fetch repo permissions"
 
-# Get the bot's login name for author verification
+# Display bot login for verification
 echo ""
-echo "Fetching bot login name..."
-BOT_LOGIN=$(gh api /user --jq '.login')
-if [ -z "$BOT_LOGIN" ]; then
-  echo "Error: Could not fetch bot login name." >&2
-  exit 1
-fi
 echo "Bot login: $BOT_LOGIN"
 
 # Fetch all discussions using GitHub GraphQL API with pagination
