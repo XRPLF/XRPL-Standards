@@ -152,7 +152,7 @@ MARKER="<!-- stale-discussion-warning -->"
 # 4. The discussion hasn't been updated since the warning (or updates are also old)
 echo ""
 echo "=== Discussions to close - warned ${WARNING_DAYS}+ days ago with no activity ==="
-cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($marker)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt < $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
+cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" '.data.repository.discussions.nodes[] | select(.closed == false) | . as $discussion | ((.comments.nodes // []) | map(select(.body | contains($marker)) | select(.author.login == $botLogin)) | last) as $warningComment | select($warningComment != null) | select($warningComment.createdAt <= $warningCutoff) | select($discussion.updatedAt <= $warningComment.createdAt) | @json' | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
