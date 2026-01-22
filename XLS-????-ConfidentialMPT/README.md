@@ -185,12 +185,12 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 | `Account` | ✔️ | `string` | `AccountID` | The account initiating the conversion. |
 | `MPTokenIssuanceID` | ✔️ | `string` | `UInt256` | The unique identifier for the MPT issuance. |
 | `MPTAmount` | ✔️ | `number` | `UInt64` | The public plaintext amount $m$ to convert. |
-| `HolderElGamalPublicKey` | Optional | `string` | `Blob` | The holder's ElGamal public key ($pk_A$). Mandatory if the account has not yet registered a key (initialization). Forbidden if a key is already registered. |
+| `HolderElGamalPublicKey` |   | `string` | `Blob` | The holder's ElGamal public key ($pk_A$). Mandatory if the account has not yet registered a key (initialization). Forbidden if a key is already registered. |
 | `HolderEncryptedAmount` | ✔️ | `string` | `Blob` | ElGamal ciphertext credited to the holder's $CB_{IN}$. |
 | `IssuerEncryptedAmount` | ✔️ | `string` | `Blob` | ElGamal ciphertext credited to the issuer's mirror balance. |
-| `AuditorEncryptedAmount` | Conditional | `string` | `Blob` | ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| `AuditorEncryptedAmount` |   | `string` | `Blob` | ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
 | `BlindingFactor` | ✔️ | `string` | `Blob` | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
-| `ZKProof` | Conditional | `string` | `Blob` | A Schnorr Proof of Knowledge (PoK) for the `HolderElGamalPublicKey`. **Required** only when `HolderElGamalPublicKey` is present. |
+| `ZKProof` |   | `string` | `Blob` | A Schnorr Proof of Knowledge (PoK): prove the knowledge of the private key for the provided ElGamal Public Key. |
 
 **Notes:**
 - This transaction performs **self-conversion only**; there is no `Receiver` field.
@@ -200,8 +200,11 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 ### 6.3. Failure Conditions
 * **`temDISABLED`**: The `ConfidentialTransfer` feature is not enabled on the ledger.
 * **`temMALFORMED`**:
-    * The issuer attempts to convert funds directly.
-    * The size of the `ZKProof` blob does not match the expected count (2 normally, 3 if Auditor is present).
+    * `sfHolderElGamalPublicKey` is present but `sfZKProof` is not present (registering holder pub key)
+    * `sfHolderElGamalPublicKey` is absent but `sfZKProof` is not absent (`sfZKProof` should not be provided if it's not registering holder pub key)
+    * `sfHolderElGamalPublicKey` length is invalid, it should be 64.
+    * `sfBlindingFactor` length is invalid, it should be 32.
+    * `sfZKProof` length is invalid, it should be Schnorr Proof Length, which is 65.
 * **`temBAD_CIPHERTEXT`**: Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point.
 * **`tecNO_PERMISSION`**: The issuance has `sfAuditorElGamalPublicKey` set, but the transaction does not include `sfAuditorEncryptedAmount`.
 * **`temBAD_AMOUNT`**: `MPTAmount` exceeds `maxMPTokenAmount`.
@@ -253,7 +256,8 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 | `DestinationEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext credited to the receiver's inbox balance. |
 | `IssuerEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext used to update the issuer mirror balance. |
 | `ZKProof` | ✔️ | `string` | `Blob` | ZKP bundle establishing equality, linkage, and range sufficiency. |
-| `AuditorEncryptedAmount` | Conditional | `string` | `Blob` | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| `PedersenCommitment` | ✔️ | `string` | `Blob` | A cryptographic commitment to the user's confidential spending balance. |
+| `AuditorEncryptedAmount` |    | `string` | `Blob` | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
 
 ### 7.2 Use Cases
 
@@ -293,6 +297,7 @@ If the transaction is successful:
   "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
   "SenderEncryptedAmount": "AD3F...",
   "DestinationEncryptedAmount": "DF4E...",
+  "PedersenCommitment": "038A...",
   "IssuerEncryptedAmount": "BC2E...",
   "ZKProof": "84af..."
 }
@@ -382,7 +387,9 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 | `HolderEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`. |
 | `IssuerEncryptedAmount` | ✔️ | `string` | `Blob` | Ciphertext to be subtracted from the issuer's mirror balance. |
 | `BlindingFactor` | ✔️ | `string` | `Blob` | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
-| `AuditorEncryptedAmount` | Conditional | `string` | `Blob` | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| `AuditorEncryptedAmount` |   | `string` | `Blob` | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| `PedersenCommitment` | ✔️ | `string` | `Blob` | A cryptographic commitment to the user's confidential spending balance. |
+| `ZKProof` | ✔️ | `string` | `Blob` | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**. |
 
 
 ### 9.4. Failure Conditions
@@ -400,7 +407,10 @@ return (R = r·G, S = r·Pk),  Pk: ElGamal public key of Acct
 * **`tecINSUFFICIENT_FUNDS`**:
     * **Global Check:** The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`.
     * **Local Check:** The user's confidential balance is insufficient (enforced via ZK Proof verification).
-* **`tecBAD_PROOF`**: The BlindingFactor fails to verify that the provided ciphertexts (Holder, Issuer, and Auditor) validly encrypt the plaintext MPTAmount.
+* **`tecBAD_PROOF`**:
+    * The `BlindingFactor` fails to verify the integrity of the ciphertexts.
+    * The `ZKProof` fails the **Pedersen Linkage** check (proving the commitment matches the on-ledger balance).
+    * The `ZKProof` fails the **Range Proof** (proving the remaining balance is non-negative).
 * **`terFROZEN`**: The account or issuance is frozen.
 
 ### 9.5. State Changes
@@ -423,7 +433,9 @@ If the transaction is successful:
   "HolderEncryptedAmount": "AD3F...",
   "IssuerEncryptedAmount": "BC2E...",
   "AuditorEncryptedAmount": "C1A9...",
-  "BlindingFactor": "12AB..."
+  "BlindingFactor": "12AB...",
+  "PedersenCommitment": "038A...",
+  "ZKProof": "ABCD..."
 }
 ```
 
