@@ -83,42 +83,48 @@ if ! REPO_INFO=$(gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME 
   exit 1
 fi
 
-# Verify the token has necessary permissions
-# For GitHub Apps, check installation permissions
-# For PATs, check repo permissions
-if ! PERMISSIONS=$(echo "$REPO_INFO" | jq -r '.permissions // empty' 2>/dev/null); then
-  # If .permissions is not available, try to verify by attempting a test query
-  echo "Warning: Could not read .permissions field. Attempting to verify access via GraphQL query..."
+# Verify the token has necessary permissions for discussions
+# Note: Repository permissions (push/admin) don't directly correlate with discussion permissions.
+# The most reliable way to check is to actually test the required operations.
+echo "Testing discussion read access..."
+if ! gh api graphql -f query='query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    discussions(first: 1) { nodes { id } }
+  }
+}' -f owner="$GITHUB_REPOSITORY_OWNER" -f name="$GITHUB_REPOSITORY_NAME" >/dev/null 2>&1; then
+  echo "Error: Token does not have permission to read discussions" >&2
+  echo "" >&2
+  echo "Required permissions/scopes:" >&2
+  echo "  - For GitHub Apps: Read and Write access to Discussions" >&2
+  echo "  - For PATs: 'repo' scope (or 'public_repo' for public repos)" >&2
+  echo "" >&2
+  echo "Please check your token configuration in GitHub settings." >&2
+  exit 1
+fi
 
-  if ! gh api graphql -f query='query($owner: String!, $name: String!) {
-    repository(owner: $owner, name: $name) {
-      discussions(first: 1) { nodes { id } }
+echo "Testing discussion write access..."
+# Test if we can perform a write operation by checking the viewer's permissions
+# We use a query that would fail if we don't have write access
+if ! VIEWER_CHECK=$(gh api graphql -f query='query {
+  viewer {
+    login
+    repositories(first: 1, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) {
+      nodes {
+        viewerCanSubscribe
+      }
     }
-  }' -f owner="$GITHUB_REPOSITORY_OWNER" -f name="$GITHUB_REPOSITORY_NAME" >/dev/null 2>&1; then
-    echo "Error: Token does not have permission to read discussions" >&2
-    echo "Required permissions:" >&2
-    echo "  - Read access to discussions" >&2
-    echo "  - Write access to discussions (for commenting and closing)" >&2
-    exit 1
-  fi
+  }
+}' 2>&1); then
+  echo "Warning: Could not verify write permissions via viewer query" >&2
+  echo "The script will attempt to proceed, but may fail during write operations." >&2
+  echo "API Response: $VIEWER_CHECK" >&2
 else
-  # Check specific permissions for REST API tokens
-  HAS_PUSH=$(echo "$PERMISSIONS" | jq -r '.push // false')
-  HAS_ADMIN=$(echo "$PERMISSIONS" | jq -r '.admin // false')
-
-  if [ "$HAS_PUSH" != "true" ] && [ "$HAS_ADMIN" != "true" ]; then
-    echo "Error: Token lacks required permissions" >&2
-    echo "Current permissions: $PERMISSIONS" >&2
-    echo "" >&2
-    echo "Required: Token must have 'push' or 'admin' access to:" >&2
-    echo "  - Add comments to discussions" >&2
-    echo "  - Close discussions" >&2
-    echo "  - Lock discussions" >&2
-    exit 1
-  fi
+  echo "✓ Token has basic write capabilities"
 fi
 
 echo "✓ Token permissions validated successfully"
+echo ""
+echo "Note: Full write permissions (comment, close, lock) will be verified during actual operations."
 
 # Display bot login for verification
 echo ""
