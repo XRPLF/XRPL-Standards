@@ -79,37 +79,42 @@ while [ "$HAS_NEXT_PAGE" = "true" ]; do
   # Fetch one page of discussions
   # Note: Fetches last 100 comments per discussion, which is sufficient since
   # bot warning comments are recent and we only need to find the last one.
-  gh api graphql -f query='
-    query($owner: String!, $repo: String!, $cursor: String) {
-      repository(owner: $owner, name: $repo) {
-        discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          nodes {
-            id
-            number
-            title
-            url
-            createdAt
-            updatedAt
-            closed
-            locked
-            comments(last: 100) {
-              nodes {
-                body
-                createdAt
-                author {
-                  login
+  # Use -F for cursor to pass it as raw JSON (allows null value)
+  gh api graphql \
+    -f owner="$GITHUB_REPOSITORY_OWNER" \
+    -f repo="$GITHUB_REPOSITORY_NAME" \
+    -F cursor="$CURSOR" \
+    -f query='
+      query($owner: String!, $repo: String!, $cursor: String) {
+        repository(owner: $owner, name: $repo) {
+          discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              id
+              number
+              title
+              url
+              createdAt
+              updatedAt
+              closed
+              locked
+              comments(last: 100) {
+                nodes {
+                  body
+                  createdAt
+                  author {
+                    login
+                  }
                 }
               }
             }
           }
         }
       }
-    }
-  ' -f owner="$GITHUB_REPOSITORY_OWNER" -f repo="$GITHUB_REPOSITORY_NAME" -f cursor="$CURSOR" > discussions_page.json
+    ' > discussions_page.json
 
   # Extract pagination info
   HAS_NEXT_PAGE=$(jq -r '.data.repository.discussions.pageInfo.hasNextPage' discussions_page.json)
