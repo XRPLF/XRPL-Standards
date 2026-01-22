@@ -30,8 +30,10 @@ SECONDS_IN_DAY=86400
 
 # Use epoch seconds and support both GNU date (-d) and BSD/macOS date (-r)
 NOW_EPOCH=$(date -u +%s)
+# Stale cutoff: discussions not updated in STALE_DAYS will be warned
 STALE_CUTOFF_EPOCH=$((NOW_EPOCH - STALE_DAYS * SECONDS_IN_DAY))
-CLOSE_CUTOFF_EPOCH=$((NOW_EPOCH - (STALE_DAYS + WARNING_DAYS) * SECONDS_IN_DAY))
+# Close cutoff: warning comments older than WARNING_DAYS will trigger closure
+CLOSE_CUTOFF_EPOCH=$((NOW_EPOCH - WARNING_DAYS * SECONDS_IN_DAY))
 
 if date -u -d "@0" '+%Y-%m-%dT%H:%M:%SZ' >/dev/null 2>&1; then
   # GNU date
