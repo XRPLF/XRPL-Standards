@@ -67,38 +67,74 @@ if [ -z "$BOT_LOGIN" ]; then
 fi
 echo "Bot login: $BOT_LOGIN"
 
-# Fetch discussions using GitHub GraphQL API
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $cursor: String) {
-    repository(owner: $owner, name: $repo) {
-      discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        nodes {
-          id
-          number
-          title
-          url
-          createdAt
-          updatedAt
-          closed
-          locked
-          comments(last: 100) {
-            nodes {
-              body
-              createdAt
-              author {
-                login
+# Fetch all discussions using GitHub GraphQL API with pagination
+echo ""
+echo "Fetching discussions..."
+CURSOR="null"
+HAS_NEXT_PAGE="true"
+PAGE_COUNT=0
+
+# Initialize empty discussions array
+echo '{"data":{"repository":{"discussions":{"nodes":[]}}}}' > discussions.json
+
+while [ "$HAS_NEXT_PAGE" = "true" ]; do
+  PAGE_COUNT=$((PAGE_COUNT + 1))
+  echo "Fetching page $PAGE_COUNT..."
+
+  # Fetch one page of discussions
+  # Note: Fetches last 100 comments per discussion, which is sufficient since
+  # bot warning comments are recent and we only need to find the last one.
+  gh api graphql -f query='
+    query($owner: String!, $repo: String!, $cursor: String) {
+      repository(owner: $owner, name: $repo) {
+        discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            number
+            title
+            url
+            createdAt
+            updatedAt
+            closed
+            locked
+            comments(last: 100) {
+              nodes {
+                body
+                createdAt
+                author {
+                  login
+                }
               }
             }
           }
         }
       }
     }
-  }
-' -f owner="$GITHUB_REPOSITORY_OWNER" -f repo="$GITHUB_REPOSITORY_NAME" > discussions.json
+  ' -f owner="$GITHUB_REPOSITORY_OWNER" -f repo="$GITHUB_REPOSITORY_NAME" -f cursor="$CURSOR" > discussions_page.json
+
+  # Extract pagination info
+  HAS_NEXT_PAGE=$(jq -r '.data.repository.discussions.pageInfo.hasNextPage' discussions_page.json)
+  CURSOR=$(jq -r '.data.repository.discussions.pageInfo.endCursor' discussions_page.json)
+
+  # Merge this page's discussions into the main array
+  jq -s '.[0].data.repository.discussions.nodes += .[1].data.repository.discussions.nodes | .[0]' discussions.json discussions_page.json > discussions_temp.json
+  mv discussions_temp.json discussions.json
+
+  # If cursor is null, we've reached the end
+  if [ "$CURSOR" = "null" ]; then
+    HAS_NEXT_PAGE="false"
+  fi
+done
+
+# Clean up temporary file
+rm -f discussions_page.json
+
+TOTAL_DISCUSSIONS=$(jq '.data.repository.discussions.nodes | length' discussions.json)
+echo "Fetched $TOTAL_DISCUSSIONS discussions across $PAGE_COUNT page(s)"
 
 # Process discussions to close
 # A discussion should be closed if:
