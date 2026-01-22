@@ -213,7 +213,11 @@ cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg warningMess
 
       # Add a warning comment to the discussion
       echo "  Adding warning comment..."
-      gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"
+      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"; then
+        echo "  Error: Failed to add warning comment for discussion #$DISCUSSION_NUMBER. Skipping this discussion."
+        echo ""
+        continue
+      fi
     fi
 
     echo ""
