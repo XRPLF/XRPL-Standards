@@ -5,6 +5,18 @@ set -e
 # It warns discussions that haven't been updated in STALE_DAYS
 # It closes discussions that were warned WARNING_DAYS ago with no activity
 
+# Cleanup function to remove temporary files
+cleanup() {
+  if [ -f "discussions.json" ]; then
+    echo ""
+    echo "Cleaning up temporary files..."
+    rm -f discussions.json
+  fi
+}
+
+# Register cleanup function to run on script exit (success or failure)
+trap cleanup EXIT
+
 # Environment variables expected:
 # - STALE_DAYS: Number of days without updates to consider a discussion stale
 # - WARNING_DAYS: Number of days to wait after warning before closing
@@ -55,14 +67,72 @@ if [ "$DRY_RUN" = "true" ]; then
   echo "*** DRY RUN MODE - No actual changes will be made ***"
 fi
 
-# Debug: Check token permissions
+# Validate GitHub token permissions
 echo ""
-echo "Checking GitHub token permissions..."
-gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME --jq '.permissions' || echo "Could not fetch repo permissions"
+echo "Validating GitHub token permissions..."
+
+# Check if we can access the repository
+if ! REPO_INFO=$(gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME 2>&1); then
+  echo "Error: Failed to access repository $GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME" >&2
+  echo "This could indicate:" >&2
+  echo "  - Invalid or expired GH_TOKEN" >&2
+  echo "  - Incorrect repository owner or name" >&2
+  echo "  - Token lacks 'repo' or 'public_repo' scope" >&2
+  echo "" >&2
+  echo "API Response: $REPO_INFO" >&2
+  exit 1
+fi
+
+# Verify the token has necessary permissions
+# For GitHub Apps, check installation permissions
+# For PATs, check repo permissions
+if ! PERMISSIONS=$(echo "$REPO_INFO" | jq -r '.permissions // empty' 2>/dev/null); then
+  # If .permissions is not available, try to verify by attempting a test query
+  echo "Warning: Could not read .permissions field. Attempting to verify access via GraphQL query..."
+
+  if ! gh api graphql -f query='query($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      discussions(first: 1) { nodes { id } }
+    }
+  }' -f owner="$GITHUB_REPOSITORY_OWNER" -f name="$GITHUB_REPOSITORY_NAME" >/dev/null 2>&1; then
+    echo "Error: Token does not have permission to read discussions" >&2
+    echo "Required permissions:" >&2
+    echo "  - Read access to discussions" >&2
+    echo "  - Write access to discussions (for commenting and closing)" >&2
+    exit 1
+  fi
+else
+  # Check specific permissions for REST API tokens
+  HAS_PUSH=$(echo "$PERMISSIONS" | jq -r '.push // false')
+  HAS_ADMIN=$(echo "$PERMISSIONS" | jq -r '.admin // false')
+
+  if [ "$HAS_PUSH" != "true" ] && [ "$HAS_ADMIN" != "true" ]; then
+    echo "Error: Token lacks required permissions" >&2
+    echo "Current permissions: $PERMISSIONS" >&2
+    echo "" >&2
+    echo "Required: Token must have 'push' or 'admin' access to:" >&2
+    echo "  - Add comments to discussions" >&2
+    echo "  - Close discussions" >&2
+    echo "  - Lock discussions" >&2
+    exit 1
+  fi
+fi
+
+echo "✓ Token permissions validated successfully"
 
 # Display bot login for verification
 echo ""
 echo "Bot login: $BOT_LOGIN"
+
+# Verify bot login is accessible
+if ! BOT_INFO=$(gh api /users/$BOT_LOGIN 2>&1); then
+  echo "Warning: Could not verify bot user '$BOT_LOGIN'" >&2
+  echo "The script will continue, but make sure BOT_LOGIN is correct." >&2
+  echo "API Response: $BOT_INFO" >&2
+else
+  BOT_TYPE=$(echo "$BOT_INFO" | jq -r '.type // "Unknown"')
+  echo "Bot type: $BOT_TYPE"
+fi
 
 # Fetch all discussions using GitHub GraphQL API with pagination
 echo ""
@@ -79,8 +149,14 @@ while [ "$HAS_NEXT_PAGE" = "true" ]; do
   echo "Fetching page $PAGE_COUNT..."
 
   # Fetch one page of discussions
-  # Note: Fetches last 100 comments per discussion, which is sufficient since
-  # bot warning comments are recent and we only need to find the last one.
+  # Note: Fetches last 100 comments per discussion using comments(last: 100).
+  # This is INTENTIONAL and correct behavior:
+  # - We only need to find the bot's most recent warning comment
+  # - If a discussion has 100+ comments AFTER the bot's warning, it means there's
+  #   significant ongoing activity, so the discussion should NOT be closed
+  # - This prevents closing active discussions that happen to be old
+  # - The script looks for the LAST (most recent) warning comment, which will be
+  #   in the last 100 comments if it's relevant for closure decisions
   # Use -F for cursor to pass it as raw JSON (allows null value)
   gh api graphql \
     -f owner="$GITHUB_REPOSITORY_OWNER" \
@@ -153,6 +229,9 @@ MARKER="<!-- stale-discussion-warning -->"
 echo ""
 echo "=== Discussions to close - warned ${WARNING_DAYS}+ days ago with no activity ==="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Disable exit-on-error for this section to allow graceful error handling per discussion
+set +e
 cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-close.jq" | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
@@ -195,6 +274,8 @@ cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$
     echo ""
   fi
 done
+# Re-enable exit-on-error
+set -e
 
 # Process discussions to warn
 # A discussion should be warned if:
@@ -204,6 +285,9 @@ done
 #    b. It has a warning from the bot but was updated after that warning (user responded, so we warn again)
 echo ""
 echo "=== Discussions to warn - stale for ${STALE_DAYS}+ days, not yet warned ==="
+
+# Disable exit-on-error for this section to allow graceful error handling per discussion
+set +e
 cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-warn.jq" | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
@@ -232,5 +316,8 @@ cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MA
     echo ""
   fi
 done
+# Re-enable exit-on-error
+set -e
 
 echo "Done!"
+# Note: discussions.json will be automatically cleaned up by the EXIT trap

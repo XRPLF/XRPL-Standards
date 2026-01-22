@@ -21,6 +21,9 @@
 | . as $discussion
 
 # Find the most recent warning comment from the bot
+# Note: We only look at the last 100 comments (fetched by the shell script).
+# This is intentional - if there are 100+ comments after a warning, the discussion
+# is clearly active and should not be closed.
 | (
     (.comments.nodes // [])
     | map(
