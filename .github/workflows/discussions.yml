@@ -4,7 +4,7 @@ on:
   pull_request: # just for debug purposes
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * 1" # Every Monday at 6:00 AM UTC (8:00 AM CET)
+    - cron: "0 6 * * *" # Every day at 6:00 AM UTC
 
 permissions:
   discussions: write # Required to comment, close, and lock discussions
