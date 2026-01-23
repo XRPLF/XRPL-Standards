@@ -10,11 +10,11 @@ Usage:
     # Validate specific files
     python scripts/validate_xls_template.py XLS-0070-credentials/README.md
 
+    # Validate multiple files
+    python scripts/validate_xls_template.py XLS-0070-credentials/README.md XLS-0035-uritoken/README.md
+
     # Validate all XLS specs
     python scripts/validate_xls_template.py --all
-
-    # Auto-detect changed files (for CI)
-    python scripts/validate_xls_template.py
 
 Validation Rules:
     - All XLS: Checks preamble fields and basic structure
@@ -486,49 +486,6 @@ def validate_file(file_path: Path) -> Tuple[bool, List[ValidationError]]:
     return success, validator.get_errors()
 
 
-def get_changed_files(repo_root: Path) -> List[Path]:
-    """
-    Get list of changed XLS files in the current git diff.
-
-    Returns:
-        List of paths to changed README.md files in XLS folders
-    """
-    import subprocess
-
-    try:
-        # Get the base branch (usually master or main)
-        base_ref = "origin/master"
-
-        # Try to get changed files from git diff
-        result = subprocess.run(
-            ["git", "diff", "--name-only", base_ref, "HEAD"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        changed_files = result.stdout.strip().split('\n')
-
-        # Filter for XLS README.md files
-        xls_files = []
-        for file in changed_files:
-            if file.startswith('XLS-') and file.endswith('/README.md'):
-                file_path = repo_root / file
-                if file_path.exists():
-                    xls_files.append(file_path)
-
-        return xls_files
-
-    except subprocess.CalledProcessError:
-        # If git diff fails, fall back to checking all files
-        print("Warning: Could not get git diff, checking all XLS files")
-        return list(repo_root.glob('XLS-*/README.md'))
-    except Exception as e:
-        print(f"Warning: Error getting changed files: {e}")
-        return []
-
-
 def main():
     """Main entry point for the validator."""
     import argparse
@@ -540,12 +497,12 @@ def main():
     parser.add_argument(
         'files',
         nargs='*',
-        help='Specific files to validate (default: auto-detect changed files)'
+        help='XLS files to validate (e.g., XLS-0070-credentials/README.md)'
     )
     parser.add_argument(
         '--all',
         action='store_true',
-        help='Validate all XLS specs, not just changed ones'
+        help='Validate all XLS specs'
     )
 
     args = parser.parse_args()
@@ -555,15 +512,17 @@ def main():
     repo_root = script_dir.parent
 
     # Determine which files to validate
-    if args.files:
-        # Validate specific files provided as arguments
-        files_to_validate = [Path(f).resolve() for f in args.files]
-    elif args.all:
+    if args.all:
         # Validate all XLS files
         files_to_validate = list(repo_root.glob('XLS-*/README.md'))
+    elif args.files:
+        # Validate specific files provided as arguments
+        files_to_validate = [Path(f).resolve() for f in args.files]
     else:
-        # Auto-detect changed files (for CI)
-        files_to_validate = get_changed_files(repo_root)
+        # No files specified
+        parser.print_help()
+        print("\nError: Please specify files to validate or use --all")
+        return 1
 
     if not files_to_validate:
         print("No files to validate.")
