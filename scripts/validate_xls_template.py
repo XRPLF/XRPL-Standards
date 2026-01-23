@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-XLS Template Validator - Validates XLS specs against XLS_TEMPLATE.md
+XLS Validator - Validates XLS specs against templates
 
-This script validates that XLS documents follow the structure defined in
-XLS_TEMPLATE.md, checking both preamble metadata and section structure.
+This script validates that XLS documents follow the structure defined in:
+- XLS_TEMPLATE.md (preamble metadata and basic structure)
+- AMENDMENT_TEMPLATE.md (for Amendment category XLS)
 
 Usage:
     # Validate specific files
@@ -16,10 +17,8 @@ Usage:
     python scripts/validate_xls_template.py
 
 Validation Rules:
-    - Checks all required preamble fields exist
-    - Validates field formats (dates, categories, status values)
-    - Checks for required top-level sections
-    - Validates section numbering and structure
+    - All XLS: Checks preamble fields and basic structure
+    - Amendment XLS: Additionally validates against AMENDMENT_TEMPLATE.md
 
 Exit Codes:
     0 - All validations passed
@@ -87,6 +86,88 @@ class XLSTemplateValidator:
     # Valid category values
     VALID_CATEGORIES = ["Amendment", "System", "Ecosystem", "Meta"]
 
+    # Amendment template section patterns and their required subsections
+    AMENDMENT_SECTION_TEMPLATES = {
+        r"SType:": {
+            "required_subsections": {
+                "1": "SType Value",
+                "2": "JSON Representation",
+                "4": "Binary Encoding",
+                "5": "Example JSON and Binary Encoding",
+            },
+            "optional_subsections": {
+                "3": "Additional Accepted JSON Inputs",
+            }
+        },
+        r"Ledger Entry:": {
+            "required_subsections": {
+                "1": "Object Identifier",
+                "2": "Fields",
+                "3": "Ownership",
+                "4": "Reserves",
+                "5": "Deletion",
+                "8": "Invariants",
+                "9": "RPC Name",
+                "10": "Example JSON",
+            },
+            "optional_subsections": {
+                "6": "Pseudo-Account",
+                "7": "Freeze/Lock",
+            }
+        },
+        r"Transaction:": {
+            "required_subsections": {
+                "1": "Fields",
+                "2": "Transaction Fee",
+                "3": "Failure Conditions",
+                "4": "State Changes",
+                "6": "Example JSON",
+            },
+            "optional_subsections": {
+                "5": "Metadata Fields",
+            }
+        },
+        r"Permission:": {
+            "required_subsections": {},
+            "optional_subsections": {}
+        },
+        r"RPC:": {
+            "required_subsections": {},
+            "optional_subsections": {}
+        },
+    }
+
+    # Placeholder patterns that should not appear in final Amendment specs
+    PLACEHOLDER_PATTERNS = [
+        r'\[STypeName\]',
+        r'\[LedgerEntryName\]',
+        r'\[TransactionName\]',
+        r'\[PermissionName\]',
+        r'\[rpc_method_name\]',
+        r'0x\[XXXX\]',
+        r'\[field_name\]',
+        r'\[FieldName\]',
+        r'\[api_method_name\]',
+        r'\[CustomField\d+\]',
+        r'\[EntryTypeValue\]',
+        r'\[TYPE\]',
+        r'\[Yes/No(?:/Conditional)?\]',
+        r'\[Standard/Custom(?:/None)?\]',
+        r'\[Value/N/A\]',
+        r'\[r-address\]',
+        r'\[example value\]',
+        r'_\[Description.*?\]',
+        r'_\[Provide.*?\]',
+        r'_\[Specify.*?\]',
+        r'_\[Describe.*?\]',
+        r'_\[List.*?\]',
+        r'_\[If .*?\]',
+        r'_\[Add more.*?\]',
+        r'_\[Remove example.*?\]',
+        r'_\[Any explanatory.*?\]',
+        r'_\[Detailed explanation.*?\]',
+    ]
+
     def __init__(self, file_path: Path):
         """Initialize validator with the file to validate."""
         self.file_path = file_path
@@ -126,10 +207,12 @@ class XLSTemplateValidator:
 
         # Run validation checks
         self._validate_preamble(doc)
+        self._validate_section_structure()
 
-        # Only validate section structure for new (Draft) XLS
-        if doc.status == "Draft":
-            self._validate_section_structure()
+        # Additionally validate Amendment template structure
+        if doc.category == "Amendment":
+            self._validate_amendment_structure()
+            self._validate_no_placeholders()
 
         return len(self.errors) == 0
 
@@ -187,16 +270,6 @@ class XLSTemplateValidator:
 
     def _validate_preamble(self, doc):
         """Validate preamble metadata fields."""
-        # Determine if this is a "new" XLS based on status
-        # Draft XLS are considered new and must follow all rules
-        is_new_xls = doc.status == "Draft"
-
-        # Only validate Draft XLS strictly
-        # Old XLS may not follow current template requirements
-        if not is_new_xls:
-            return
-
-        # Check required fields for new (Draft) XLS
         if not doc.title or doc.title == "Unknown Title":
             self.errors.append(ValidationError(
                 str(self.file_path), 1,
@@ -251,7 +324,7 @@ class XLSTemplateValidator:
                 "Expected YYYY-MM-DD"
             ))
 
-        # proposal-from is required for new XLS (Draft status)
+        # proposal-from is required for new XLS
         if not doc.proposal_from:
             self.errors.append(ValidationError(
                 str(self.file_path), 1,
@@ -299,6 +372,99 @@ class XLSTemplateValidator:
         # are often split into numbered subsections, so we don't enforce
         # them strictly. The template validator focuses on preamble
         # and basic structure.
+
+    def _validate_amendment_structure(self):
+        """Validate Amendment-specific template structure."""
+        # Get main sections (level 2)
+        main_sections = [s for s in self.sections if s.level == 2]
+
+        # Check if at least one template section exists
+        has_template_section = False
+        for section in main_sections:
+            for pattern in self.AMENDMENT_SECTION_TEMPLATES.keys():
+                if re.search(pattern, section.title):
+                    has_template_section = True
+                    break
+            if has_template_section:
+                break
+
+        if not has_template_section:
+            # No template sections found - might be an old spec, skip
+            return
+
+        # Validate each template section's subsections
+        for section in main_sections:
+            for pattern, template in self.AMENDMENT_SECTION_TEMPLATES.items():
+                if re.search(pattern, section.title):
+                    self._validate_subsections(
+                        section,
+                        template["required_subsections"],
+                        template["optional_subsections"]
+                    )
+
+    def _validate_subsections(
+        self,
+        parent_section: Section,
+        required_subsections: dict,
+        optional_subsections: dict
+    ):
+        """Validate that a section has required subsections."""
+        # Get all subsections under this parent
+        parent_idx = self.sections.index(parent_section)
+        subsections = []
+
+        for i in range(parent_idx + 1, len(self.sections)):
+            section = self.sections[i]
+
+            # Stop when we hit another section at same or higher level
+            if section.level <= parent_section.level:
+                break
+
+            # Only collect direct children (one level deeper)
+            if section.level == parent_section.level + 1:
+                subsections.append(section)
+
+        # Check for required subsections
+        for sub_num, sub_title in required_subsections.items():
+            # Find this subsection by title, regardless of its actual number
+            found = any(
+                sub_title in s.title
+                for s in subsections
+            )
+
+            if not found:
+                self.errors.append(ValidationError(
+                    str(self.file_path),
+                    parent_section.line_number,
+                    f"Section '{parent_section.title}' is missing required "
+                    f"subsection: {sub_title}"
+                ))
+
+    def _validate_no_placeholders(self):
+        """Check for template placeholder text in Amendment specs."""
+        # Skip metadata block (first <pre> block)
+        in_metadata = False
+        content_start = 0
+
+        for i, line in enumerate(self.content_lines):
+            if '<pre>' in line:
+                in_metadata = True
+            elif '</pre>' in line and in_metadata:
+                in_metadata = False
+                content_start = i + 1
+                break
+
+        # Check content after metadata
+        for line_num, line in enumerate(
+            self.content_lines[content_start:], start=content_start + 1
+        ):
+            for pattern in self.PLACEHOLDER_PATTERNS:
+                if re.search(pattern, line):
+                    self.errors.append(ValidationError(
+                        str(self.file_path), line_num,
+                        f"Found template placeholder text: {pattern}"
+                    ))
+                    break  # Only report one error per line
 
     def get_errors(self) -> List[ValidationError]:
         """Get all validation errors."""
@@ -368,7 +534,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Validate XLS specs against XLS_TEMPLATE.md'
+        description='Validate XLS specs against templates '
+                    '(XLS_TEMPLATE.md and AMENDMENT_TEMPLATE.md)'
     )
     parser.add_argument(
         'files',
@@ -407,6 +574,7 @@ def main():
     # Validate each file
     all_errors = []
     validated_count = 0
+    amendment_count = 0
 
     for file_path in files_to_validate:
         print(f"Checking {file_path.parent.name}/README.md...")
@@ -415,9 +583,22 @@ def main():
         if errors:
             all_errors.extend(errors)
             validated_count += 1
+            # Check if this is an Amendment for stats
+            try:
+                content = file_path.read_text()
+                if 'category: Amendment' in content:
+                    amendment_count += 1
+            except:
+                pass
         elif success:
             # File was validated and passed
             validated_count += 1
+            try:
+                content = file_path.read_text()
+                if 'category: Amendment' in content:
+                    amendment_count += 1
+            except:
+                pass
             print("  ✓ Valid")
 
     # Print results
@@ -425,6 +606,8 @@ def main():
     print(f"\n{separator}")
     print("Validation complete:")
     print(f"  Validated: {validated_count}")
+    if amendment_count > 0:
+        print(f"  Amendment specs: {amendment_count}")
     print(f"  Errors: {len(all_errors)}")
 
     if all_errors:
