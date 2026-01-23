@@ -7,10 +7,10 @@ set -e
 
 # Cleanup function to remove temporary files
 cleanup() {
-  if [ -f "discussions.json" ]; then
+  if [ -f "discussions.json" || [ -f "discussions_page.json" ] ]; then
     echo ""
     echo "Cleaning up temporary files..."
-    rm -f discussions.json
+    rm -f discussions.json discussions_page.json
   fi
 }
 
@@ -79,7 +79,7 @@ if ! REPO_INFO=$(gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME 
   echo "  - Incorrect repository owner or name" >&2
   echo "  - Token lacks 'repo' or 'public_repo' scope" >&2
   echo "" >&2
-  echo "API Response: $REPO_INFO" >&2
+  echo "Additional details are available from the GitHub CLI error output; avoid logging sensitive data from API responses." >&2
   exit 1
 fi
 
@@ -146,12 +146,22 @@ echo "Fetching discussions..."
 CURSOR="null"
 HAS_NEXT_PAGE="true"
 PAGE_COUNT=0
+MAX_PAGES=1000  # Safety limit to prevent infinite loops (100 discussions/page = max 100k discussions)
 
 # Initialize empty discussions array
 echo '{"data":{"repository":{"discussions":{"nodes":[]}}}}' > discussions.json
 
 while [ "$HAS_NEXT_PAGE" = "true" ]; do
   PAGE_COUNT=$((PAGE_COUNT + 1))
+
+  # Safety check: prevent infinite loops
+  if [ "$PAGE_COUNT" -gt "$MAX_PAGES" ]; then
+    echo "Error: Exceeded maximum page count ($MAX_PAGES pages)" >&2
+    echo "This likely indicates a pagination logic error or an extremely large repository." >&2
+    echo "If you genuinely have more than $((MAX_PAGES * 100)) discussions, increase MAX_PAGES in the script." >&2
+    exit 1
+  fi
+
   echo "Fetching page $PAGE_COUNT..."
 
   # Fetch one page of discussions
@@ -200,12 +210,35 @@ while [ "$HAS_NEXT_PAGE" = "true" ]; do
       }
     ' > discussions_page.json
 
-  # Extract pagination info
+  # Validate the API response
+  if ! jq -e '.data.repository.discussions' discussions_page.json >/dev/null 2>&1; then
+    echo "Error: Invalid API response on page $PAGE_COUNT" >&2
+    echo "Response content:" >&2
+    cat discussions_page.json >&2
+    exit 1
+  fi
+
+  # Extract pagination info with error handling
   HAS_NEXT_PAGE=$(jq -r '.data.repository.discussions.pageInfo.hasNextPage' discussions_page.json)
   CURSOR=$(jq -r '.data.repository.discussions.pageInfo.endCursor' discussions_page.json)
 
+  # Validate pagination values
+  if [ -z "$HAS_NEXT_PAGE" ] || [ "$HAS_NEXT_PAGE" = "null" ]; then
+    echo "Warning: hasNextPage is null or empty, assuming no more pages" >&2
+    HAS_NEXT_PAGE="false"
+  fi
+
+  if [ -z "$CURSOR" ]; then
+    echo "Warning: endCursor is empty, assuming no more pages" >&2
+    CURSOR="null"
+    HAS_NEXT_PAGE="false"
+  fi
+
   # Merge this page's discussions into the main array
-  jq -s '.[0].data.repository.discussions.nodes += .[1].data.repository.discussions.nodes | .[0]' discussions.json discussions_page.json > discussions_temp.json
+  if ! jq -s '.[0].data.repository.discussions.nodes += .[1].data.repository.discussions.nodes | .[0]' discussions.json discussions_page.json > discussions_temp.json; then
+    echo "Error: Failed to merge discussions from page $PAGE_COUNT" >&2
+    exit 1
+  fi
   mv discussions_temp.json discussions.json
 
   # If cursor is null, we've reached the end
@@ -238,7 +271,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Disable exit-on-error for this section to allow graceful error handling per discussion
 set +e
-cat discussions.json | jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-close.jq" | while IFS= read -r discussion; do
+jq_output=$(jq -r --arg warningCutoff "$CLOSE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-close.jq" discussions.json)
+jq_status=$?
+if [ "$jq_status" -ne 0 ]; then
+  echo "Error: Failed to filter discussions to close using jq (exit code: $jq_status)." >&2
+  exit 1
+fi
+printf '%s\n' "$jq_output" | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')

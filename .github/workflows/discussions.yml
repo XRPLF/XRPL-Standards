@@ -27,7 +27,7 @@ env:
 jobs:
   run:
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == 'XRPLF' }}
+    if: github.repository == 'XRPLF/XRPL-Standards'
 
     steps:
       - name: Check out code
