@@ -3,6 +3,7 @@
   title: Charge
   description: A feature that focuses on fee collection and makes monetization easier and simpler for platforms, wallet services, and users to use
   author: tequ (@tequdev)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/194
   created: 2024-04-22
   status: Stagnant
   category: Amendment

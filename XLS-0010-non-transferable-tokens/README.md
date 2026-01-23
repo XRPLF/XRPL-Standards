@@ -2,6 +2,7 @@
     xls: 10
     title: Non-Transferable Token (NTT) standard
     author: RichardAH (@RichardAH)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/20
     created: 2020-04-05
     status: Stagnant
     category: Ecosystem

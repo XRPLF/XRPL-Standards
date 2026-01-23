@@ -3,6 +3,7 @@
     title: NFT Metadata
     author: Hubert Getrouw (@HubertG97)
     created: 2021-03-17
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/37
     status: Stagnant
     category: Ecosystem
 </pre>

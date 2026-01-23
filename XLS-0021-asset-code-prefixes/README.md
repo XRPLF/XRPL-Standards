@@ -3,6 +3,7 @@
     title: 21: Allocating Asset Code Prefixes
     description: This proposal defines a mechanism for setting aside prefixes for specific formats and publishing a list of formats potentially in use.
     author: Rome Reginelli (@mDuo13)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/53
     created: 2021-07-28
     status: Stagnant
     category: Ecosystem

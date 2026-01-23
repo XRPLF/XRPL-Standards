@@ -4,6 +4,7 @@
     author: Ryan (@interc0der)
     description: A standard URI schema for making payments and sharing data between platforms on the XRP Ledger
     created: 2022-07-28
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/81
     status: Stagnant
     category: Ecosystem
 </pre>

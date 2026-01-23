@@ -3,6 +3,7 @@
   title: NFTokenOffer Destination Tag
   description: Add DestinationTag to NFTokenCreateOffer transaction and NFTokenOffer object
   author: Florent (@florent-uzio)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/152
   created: 2023-11-27
   status: Stagnant
   category: Amendment

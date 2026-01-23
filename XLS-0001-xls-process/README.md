@@ -7,6 +7,7 @@
   author: Mayukha Vadari (@mvadari), Vito Tumas (@Tapanito)
   status: Proposal
   category: Meta
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/340
   created: 2025-09-22
   updated: 2025-12-02
 </pre>

@@ -4,6 +4,7 @@
   description: Supporting out-of-sequence transactions on the XRP Ledger
   author: Scott Schurr <scott@ripple.com>, Nik Bougalis (@nbougalis)
   created: 2020-03-01
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/23
   status: Withdrawn
   category: Amendment
 </pre>
