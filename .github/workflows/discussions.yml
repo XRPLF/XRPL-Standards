@@ -11,7 +11,7 @@ permissions:
   contents: read # Required to checkout the repository
 
 env:
-  STALE_DAYS: 1000 # Number of days without updates to consider a discussion stale
+  STALE_DAYS: 900 # Number of days without updates to consider a discussion stale
   WARNING_DAYS: 30 # Number of days to wait after warning before closing
   WARNING_MESSAGE:
     | # note: the marker is necessary for the script and should not be removed
