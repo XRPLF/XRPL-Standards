@@ -46,9 +46,9 @@ jobs:
           echo "This pipeline validates that all XLS documents can be parsed correctly"
           echo "If this fails, it indicates issues with XLS document formatting or metadata"
 
-  validate-amendment-template:
+  validate-xls-template:
     runs-on: ubuntu-latest
-    name: Validate Amendment Template Compliance
+    name: Validate XLS Template Compliance
 
     steps:
       - name: Checkout repository
@@ -75,14 +75,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scripts/requirements.txt
 
-      - name: Validate Amendment template compliance
+      - name: Validate XLS template compliance
         run: |
-          echo "Running Amendment template validation..."
+          echo "Running XLS template validation..."
+          python scripts/validate_xls_template.py
           python scripts/validate_amendment_template.py
 
       - name: Report validation results
         if: always()
         run: |
-          echo "Amendment template validation completed"
-          echo "This validates that new/modified Amendment specs follow AMENDMENT_TEMPLATE.md"
+          echo "XLS template validation completed"
+          echo "This validates that all XLSes follow XLS_TEMPLATE.md"
+          echo "And that new/modified Amendment specs follow AMENDMENT_TEMPLATE.md"
           echo "If this fails, check the error messages for missing sections or placeholders"
