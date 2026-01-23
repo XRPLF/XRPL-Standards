@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from markdown_it import MarkdownIt
 from xls_parser import extract_xls_metadata
 
 
@@ -199,31 +200,53 @@ class AmendmentTemplateValidator:
             return False
 
     def _parse_sections(self):
-        """Parse all sections from the markdown content."""
-        # Match markdown headers: ## 1. Title, ### 1.1. Title, etc.
-        header_pattern = (
-            r'^(#{2,4})\s+(\d+(?:\.\d+)*)\.\s+(.+?)(?:\s+_\(Optional\)_)?$'
-        )
+        """Parse all sections from the markdown content using markdown-it-py."""
+        # Parse markdown into tokens
+        md = MarkdownIt()
+        content = '\n'.join(self.content_lines)
+        tokens = md.parse(content)
 
-        for line_num, line in enumerate(self.content_lines, start=1):
-            match = re.match(header_pattern, line)
-            if match:
-                hashes, number, title = match.groups()
-                level = len(hashes)
-                is_optional = '_(Optional)_' in line
+        # Pattern to match section numbering: "1.", "1.1.", "2.3.4.", etc.
+        number_pattern = r'^(\d+(?:\.\d+)*)\.\s+(.+)$'
 
-                # Clean title
-                title = title.strip()
-                title = re.sub(r'_\(Optional\)_', '', title).strip()
-                title = re.sub(r'`([^`]+)`', r'\1', title)  # Remove backticks
+        # Walk through tokens to find headings
+        for i, token in enumerate(tokens):
+            if token.type == 'heading_open':
+                # Get the heading level (h2 = level 2, h3 = level 3, etc.)
+                level = int(token.tag[1])  # Extract number from 'h2', 'h3', etc.
 
-                self.sections.append(Section(
-                    number=number,
-                    title=title,
-                    level=level,
-                    line_number=line_num,
-                    is_optional=is_optional
-                ))
+                # Only process h2, h3, h4 (level 2, 3, 4)
+                if level < 2 or level > 4:
+                    continue
+
+                # The next token should be 'inline' containing the heading text
+                if i + 1 < len(tokens) and tokens[i + 1].type == 'inline':
+                    inline_token = tokens[i + 1]
+                    heading_text = inline_token.content
+
+                    # Line number from the token's map (0-based, so add 1)
+                    line_number = token.map[0] + 1 if token.map else None
+
+                    # Check if this heading has section numbering
+                    match = re.match(number_pattern, heading_text)
+                    if match:
+                        number, title = match.groups()
+
+                        # Check if optional
+                        is_optional = '_(Optional)_' in title
+
+                        # Clean title
+                        title = title.strip()
+                        title = re.sub(r'_\(Optional\)_', '', title).strip()
+                        title = re.sub(r'`([^`]+)`', r'\1', title)  # Remove backticks
+
+                        self.sections.append(Section(
+                            number=number,
+                            title=title,
+                            level=level,
+                            line_number=line_number,
+                            is_optional=is_optional
+                        ))
 
     def _validate_has_required_sections(self):
         """Validate that at least one template section exists."""
@@ -268,25 +291,23 @@ class AmendmentTemplateValidator:
             if s.number.startswith(parent_num + ".") and s.level == 3
         ]
 
-        # For template sections, subsections are directly under the parent
-        # (e.g., 1.1, 1.2, 1.3 for SType section 1)
-        # Check each required subsection
+        # Check each required subsection by title (not by exact number)
+        # This allows flexibility in numbering while ensuring all required
+        # sections are present
         required_subs = template["required_subsections"]
 
-        for sub_num, sub_title in required_subs.items():
-            expected_num = f"{parent_num}.{sub_num}"
-
-            # Find this subsection
+        for sub_title in required_subs.values():
+            # Find this subsection by title, regardless of its actual number
             found = any(
-                s.number == expected_num and s.title == sub_title
+                s.title == sub_title
                 for s in subsections
             )
 
             if not found:
                 self.errors.append(ValidationError(
                     str(self.file_path), parent_section.line_number,
-                    f"Missing required subsection {expected_num} "
-                    f"'{sub_title}' under {parent_section.title}"
+                    f"Missing required subsection '{sub_title}' "
+                    f"under {parent_section.title}"
                 ))
 
     def _validate_no_placeholders(self):
