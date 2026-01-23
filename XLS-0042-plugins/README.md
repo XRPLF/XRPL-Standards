@@ -3,7 +3,7 @@
   title: XRPL Plugins
   description: A plugin transactor API to make it easier for developers to modify rippled for sidechains without needing C++ knowledge
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/116
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/116
   status: Stagnant
   category: System
   created: 2023-06-26

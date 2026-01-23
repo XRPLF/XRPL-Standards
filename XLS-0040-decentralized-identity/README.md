@@ -3,7 +3,7 @@
   title: Decentralized Identity on XRP Ledger
   description: Implementation of native support for W3C Decentralized Identifiers (DIDs) on XRP Ledger
   author: Aanchal Malhotra <amalhotra@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/100
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/100
   status: Final
   category: Amendment
   created: 2023-03-30

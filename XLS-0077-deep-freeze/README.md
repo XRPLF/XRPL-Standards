@@ -3,7 +3,7 @@
   title: Deep Freeze
   description: Enhancement to prevent token misuse by frozen account holders and improve regulatory compliance
   author: Shawn Xie <shawnxie@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/220
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/220
   status: Final
   category: Amendment
   created: 2024-07-08

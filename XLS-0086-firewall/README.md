@@ -3,7 +3,7 @@
   title: Firewall
   description: Destination-based security through whitelisted recipients with counterparty authorization and rule-based safeguards
   author: Kris Dangerfield (@krisdangerfield), Denis Angell (@angell_denis)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/255
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/255
   status: Draft
   category: Amendment
   created: 2024-11-29

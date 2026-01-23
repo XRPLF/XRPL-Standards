@@ -3,7 +3,7 @@
   title: Trustline Add URI
   description: A URI standard for instructing wallets to add trustlines following the design of XLS-2d
   author: Richard Holland (@RichardAH)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/25
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/25
   status: Stagnant
   category: Ecosystem
   created: 2019-03-06

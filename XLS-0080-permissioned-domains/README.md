@@ -3,7 +3,7 @@
   title: Permissioned Domains
   description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
   status: Final
   category: Amendment
   requires: [XLS-70](../XLS-0070-credentials/README.md)

@@ -3,7 +3,7 @@
   title: Single Asset Tokenized Vault
   description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
