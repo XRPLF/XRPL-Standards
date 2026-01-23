@@ -7,10 +7,10 @@ set -e
 
 # Cleanup function to remove temporary files
 cleanup() {
-  if [ -f "discussions.json" || [ -f "discussions_page.json" ] ]; then
+  if [ -f "discussions.json" ] || [ -f "discussions_page.json" ]; then
     echo ""
     echo "Cleaning up temporary files..."
-    rm -f discussions.json discussions_page.json
+    rm -f discussions.json discussions_page.json discussions_temp.json
   fi
 }
 

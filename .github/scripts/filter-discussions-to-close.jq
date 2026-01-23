@@ -40,7 +40,7 @@
 | select($warningComment.createdAt <= $warningCutoff)
 
 # Only proceed if the discussion hasn't been updated since the warning
-| select($discussion.updatedAt <= $warningComment.createdAt)
+| select($discussion.updatedAt < $warningComment.createdAt)
 
 # Output as JSON
 | @json
