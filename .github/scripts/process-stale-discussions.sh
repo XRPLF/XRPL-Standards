@@ -259,6 +259,17 @@ echo "Fetched $TOTAL_DISCUSSIONS discussions across $PAGE_COUNT page(s)"
 # IMPORTANT: This marker must match the one in WARNING_MESSAGE in the workflow file.
 MARKER="<!-- stale-discussion-warning -->"
 
+# Validate that WARNING_MESSAGE contains the marker
+echo ""
+echo "Validating WARNING_MESSAGE contains required marker..."
+if [[ "$WARNING_MESSAGE" != *"$MARKER"* ]]; then
+  echo "Error: WARNING_MESSAGE does not contain the required marker: $MARKER" >&2
+  echo "Current WARNING_MESSAGE:" >&2
+  echo "$WARNING_MESSAGE" >&2
+  exit 1
+fi
+echo "✓ WARNING_MESSAGE contains required marker"
+
 # Process discussions to close
 # A discussion should be closed if:
 # 1. It has a warning comment containing the unique marker
