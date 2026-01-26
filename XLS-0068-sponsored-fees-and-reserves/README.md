@@ -221,7 +221,7 @@ The reserve is charged to the sponsor's account (the `Owner` field).
 
 ### 5.6. Deletion
 
-#### 5.6.1. \*Deletion Transactions
+#### 5.6.1. Deletion Transactions
 
 `SponsorshipSet` with the `tfDeleteObject` flag
 
@@ -264,8 +264,8 @@ The `snake_case` form of the ledger object name is `sponsorship`.
   "LedgerEntryType": "Sponsorship",
   "Owner": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
   "Sponsee": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
-  "FeeAmount": "1000000",
-  "MaxFee": "1000",
+  "FeeAmount": "1000000", // 1 XRP, 1 million drops
+  "MaxFee": "1000", // 1000 drops
   "ReserveCount": 5,
   "Flags": 0,
   "OwnerNode": "0000000000000000",
@@ -476,7 +476,7 @@ Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the trans
 
 ### 8.2. Transaction Fee
 
-If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base	extunderscore fee$.
+If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base\_fee$.
 
 The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Sponsor.Signers|) * base\_fee$ (plus transaction-specific fees).
 
@@ -1113,7 +1113,9 @@ In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to
   Fee: "10",
   Sponsor: {
     Account: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
-    Flags: 1,
+    Flags: 1
+  },
+  SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
     Signature: "3045022100C15AFB7C0C4F5EDFEC4667B292DAB165B96DAF3FFA6C7BBB3361E9EE19E04BC70220106C04B90185B67DB2C67864EB0A11AE6FB62280588954C6E4D9C1EF3710904D"
   },
@@ -1163,7 +1165,9 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Fee: "10",
   Sponsor: {
     Account: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
-    Flags: 2,
+    Flags: 2
+  },
+  SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
     Signature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
   },
@@ -1209,7 +1213,9 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Fee: "10",
   Sponsor: {
     Account: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
-    Flags: 2,
+    Flags: 2
+  },
+  SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
     Signature: "30450221009878F3A321250341886FE344E0B50700C8020ABAA25301925BD84DDB5421D432022002A3C72C54BACB5E7DAEC48E2A1D75DCBB8BA3B2212C7FC22F070CCABAF76EC1"
   },
