@@ -843,4 +843,4 @@ The explicit MergeInbox transaction is currently required because it determinist
 
 ## Acknowledgements
 
-We would like to thank David Schwartz, Ayo Akinyele, Kenny Lei, Shashwat Mittal, and Shawn Xie for their invaluable feedback and insightful discussions which improved this specification.
+We would like to thank David Schwartz, Ayo Akinyele, Kenny Lei, Shashwat Mittal, Shawn Xie, Yinyi Qian, and Peter Chen for their invaluable feedback and insightful discussions which improved this specification.
