@@ -140,6 +140,11 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
     for folder in xls_folders:
         readme_path = folder / "README.md"
         if readme_path.exists():
+            # Skip symlinked README files
+            if readme_path.is_symlink():
+                print(f"Skipping symlinked document: {folder.name}")
+                continue
+
             try:
                 with open(readme_path, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -158,6 +163,48 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
     return xls_docs
 
 
+def validate_symlinks(root_dir: Path) -> bool:
+    """Validate that all symlinked XLS documents point to correct targets.
+
+    Args:
+        root_dir: Root directory containing XLS folders
+
+    Returns:
+        True if all symlinks are valid, False otherwise
+    """
+    symlink_errors = []
+    xls_folders = [
+        d for d in root_dir.iterdir() if d.is_dir() and d.name.startswith("XLS-")
+    ]
+
+    for folder in xls_folders:
+        readme_path = folder / "README.md"
+        if readme_path.exists() and readme_path.is_symlink():
+            # Extract XLS numbers from folder names
+            source_match = re.match(r"XLS-(\d+)([d]?)", folder.name)
+            if source_match:
+                number = source_match.group(1)
+                suffix = source_match.group(2)
+
+                if suffix == "d":
+                    # This is a "d" version that should point to the non-d version
+                    target = str(readme_path.resolve())
+                    # The symlink should resolve to the non-d version
+                    # Check if target contains the XLS number but not the "d" suffix
+                    if f"XLS-{number}-" in target and f"XLS-{number}d-" not in target:
+                        print(f"Validated symlink: {folder.name} -> correct target")
+                    else:
+                        symlink_errors.append(
+                            f"Error: {folder.name}/README.md symlink points to wrong target"
+                        )
+
+    if symlink_errors:
+        for error in symlink_errors:
+            print(error)
+        return False
+    return True
+
+
 def validate_xls_documents(root_dir: Path) -> bool:
     """Validate that all XLS documents can be parsed correctly.
 
@@ -168,6 +215,11 @@ def validate_xls_documents(root_dir: Path) -> bool:
         True if all documents parse successfully, False otherwise
     """
     try:
+        # First validate symlinks
+        if not validate_symlinks(root_dir):
+            print("Symlink validation failed")
+            return False
+
         docs = find_xls_documents(root_dir)
 
         # Basic validation checks
