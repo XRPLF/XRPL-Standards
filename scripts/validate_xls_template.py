@@ -30,6 +30,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
+import urllib.request
+import urllib.error
 
 from markdown_it import MarkdownIt
 from xls_parser import extract_xls_metadata
@@ -85,6 +87,10 @@ class XLSTemplateValidator:
 
     # Valid category values
     VALID_CATEGORIES = ["Amendment", "System", "Ecosystem", "Meta"]
+
+    # Note: Ledger entry and transaction existence is now determined dynamically
+    # by checking if the documentation exists on xrpl.org rather than
+    # maintaining hardcoded lists.
 
     # Amendment template section patterns and their required subsections
     AMENDMENT_SECTION_TEMPLATES = {
@@ -228,11 +234,11 @@ class XLSTemplateValidator:
         # Walk through tokens to find headings
         for i, token in enumerate(tokens):
             if token.type == 'heading_open':
-                # Get the heading level (h2 = level 2, h3 = level 3, etc.)
+                # Get the heading level (h1 = level 1, h2 = level 2, etc.)
                 level = int(token.tag[1])
 
-                # Only process h2 (top-level sections)
-                if level != 2:
+                # Skip h1 (document title); process h2+ for structure
+                if level < 2:
                     continue
 
                 # The next token should be 'inline' containing heading text
@@ -396,17 +402,125 @@ class XLSTemplateValidator:
         for section in main_sections:
             for pattern, template in self.AMENDMENT_SECTION_TEMPLATES.items():
                 if re.search(pattern, section.title):
+                    # Check if this is a Ledger Entry section for an
+                    # existing ledger entry type
+                    is_existing_ledger_entry = False
+                    if pattern == r"Ledger Entry:":
+                        is_existing_ledger_entry = (
+                            self._is_existing_ledger_entry(section.title)
+                        )
+
+                    # Check if this is a Transaction section for an
+                    # existing transaction type
+                    is_existing_transaction = False
+                    if pattern == r"Transaction:":
+                        is_existing_transaction = (
+                            self._is_existing_transaction(section.title)
+                        )
+
                     self._validate_subsections(
                         section,
                         template["required_subsections"],
-                        template["optional_subsections"]
+                        template["optional_subsections"],
+                        is_existing_ledger_entry,
+                        is_existing_transaction
                     )
+
+    def _is_existing_ledger_entry(self, section_title: str) -> bool:
+        """
+        Check if a Ledger Entry section is for an existing ledger entry.
+
+        Extracts the ledger entry name from the section title and checks
+        if the ledger entry exists on xrpl.org by fetching the URL:
+        https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/[lowercase]
+
+        Args:
+            section_title: The title of the section
+                          (e.g., "Ledger Entry: `AccountRoot`")
+
+        Returns:
+            True if this is an existing ledger entry type, False otherwise
+        """
+        # Extract ledger entry name from title like "Ledger Entry: `Foo`"
+        # or "2. Ledger Entry: `Foo`"
+        match = re.search(r'Ledger Entry:\s*`?([A-Za-z]+)`?', section_title)
+        if not match:
+            return False
+
+        entry_name = match.group(1)
+
+        # Convert to lowercase for URL
+        lowercase_name = entry_name.lower()
+        url = (
+            "https://xrpl.org/docs/references/protocol/"
+            f"ledger-data/ledger-entry-types/{lowercase_name}"
+        )
+
+        try:
+            # Try to fetch the URL
+            req = urllib.request.Request(url, method='HEAD')
+            with urllib.request.urlopen(req, timeout=5) as response:
+                # If we get a 200 response, the ledger entry exists
+                return response.status == 200
+        except urllib.error.HTTPError as e:
+            # 404 means the ledger entry doesn't exist
+            if e.code == 404:
+                return False
+            # Other errors (500, etc.) - assume it exists to be safe
+            return True
+        except (urllib.error.URLError, TimeoutError):
+            # Network error - assume it exists to be safe
+            return True
+
+    def _is_existing_transaction(self, section_title: str) -> bool:
+        """
+        Check if a Transaction section is for an existing transaction type.
+
+        Extracts the transaction name from the section title and checks
+        if the transaction exists on xrpl.org by fetching the URL:
+        https://xrpl.org/docs/references/protocol/transactions/types/[lowercase]
+
+        Args:
+            section_title: The title of the section (e.g., "Transaction: `Payment`")
+
+        Returns:
+            True if this is an existing transaction type, False otherwise
+        """
+        # Extract transaction name from title like "Transaction: `Payment`"
+        # or "3. Transaction: `Payment`"
+        match = re.search(r'Transaction:\s*`?([A-Za-z]+)`?', section_title)
+        if not match:
+            return False
+
+        transaction_name = match.group(1)
+
+        # Convert to lowercase for URL
+        lowercase_name = transaction_name.lower()
+        url = f"https://xrpl.org/docs/references/protocol/transactions/types/{lowercase_name}"
+
+        try:
+            # Try to fetch the URL
+            req = urllib.request.Request(url, method='HEAD')
+            with urllib.request.urlopen(req, timeout=5) as response:
+                # If we get a 200 response, the transaction exists
+                return response.status == 200
+        except urllib.error.HTTPError as e:
+            # 404 means the transaction doesn't exist
+            if e.code == 404:
+                return False
+            # Other errors (500, etc.) - assume it exists to be safe
+            return True
+        except (urllib.error.URLError, TimeoutError):
+            # Network error - assume it exists to be safe
+            return True
 
     def _validate_subsections(
         self,
         parent_section: Section,
         required_subsections: dict,
-        optional_subsections: dict
+        optional_subsections: dict,
+        is_existing_ledger_entry: bool = False,
+        is_existing_transaction: bool = False
     ):
         """Validate that a section has required subsections."""
         # Get all subsections under this parent
@@ -424,8 +538,27 @@ class XLSTemplateValidator:
             if section.level == parent_section.level + 1:
                 subsections.append(section)
 
+        # For existing ledger entries, make certain subsections optional
+        exempted_subsections = set()
+        if is_existing_ledger_entry:
+            exempted_subsections = {
+                "Object Identifier",
+                "Ownership",
+                "Reserves",
+                "Deletion",
+                "RPC Name"
+            }
+
+        # For existing transactions, make Transaction Fee optional
+        if is_existing_transaction:
+            exempted_subsections.add("Transaction Fee")
+
         # Check for required subsections
         for sub_num, sub_title in required_subsections.items():
+            # Skip if this subsection is exempted
+            if sub_title in exempted_subsections:
+                continue
+
             # Find this subsection by title, regardless of its actual number
             found = any(
                 sub_title in s.title
