@@ -101,15 +101,15 @@ def build_site():
         if category not in categories:
             categories[category] = []
         categories[category].append(doc)
-    
+
     # Generate category pages
     category_template = env.get_template("category.html")
     all_categories = [(cat, len(docs)) for cat, docs in sorted(categories.items())]
-    
+
     for category, category_docs in categories.items():
         # Sort category documents by number in reverse order
         category_docs.sort(key=lambda x: int(x.number), reverse=True)
-        
+
         category_html = category_template.render(
             title=f"{category} XLS Standards",
             category=category,
@@ -118,12 +118,12 @@ def build_site():
             total_count=len(xls_docs),
             base_url=".." if base_url == "." else base_url,
         )
-        
+
         # Write category HTML file
         category_file = site_dir / "category" / f"{category.lower()}.html"
         with open(category_file, "w", encoding="utf-8") as f:
             f.write(category_html)
-            
+
         print(f"Generated category page: {category_file}")
 
     # Generate index page with category navigation
@@ -146,10 +146,10 @@ def build_site():
         try:
             with open(contributing_path, "r", encoding="utf-8") as f:
                 contributing_content = f.read()
-            
+
             # Convert markdown to HTML
             contributing_html_content = convert_markdown_to_html(contributing_content)
-            
+
             # Render contribute page
             contribute_template = env.get_template("contribute.html")
             contribute_html = contribute_template.render(
@@ -157,13 +157,13 @@ def build_site():
                 content=contributing_html_content,
                 base_url=base_url,
             )
-            
+
             # Write contribute file
             with open(site_dir / "contribute.html", "w", encoding="utf-8") as f:
                 f.write(contribute_html)
-                
+
             print(f"Generated contribute page from CONTRIBUTING.md")
-            
+
         except Exception as e:
             print(f"Error generating contribute page: {e}")
     else:

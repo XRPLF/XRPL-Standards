@@ -3,6 +3,7 @@
     title: Standard For Bootstrapping XRPLD Networks
     description: An experimental procedure to bootstrapping XRP Ledger Network
     author: Richard Holland (@RichardAH)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/42
     created: 2021-03-25
     status: Stagnant
     category: Ecosystem

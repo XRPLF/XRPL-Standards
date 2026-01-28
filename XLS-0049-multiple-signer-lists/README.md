@@ -3,7 +3,7 @@
   title: Multiple Signer Lists
   description: A proposal to enable multiple signer lists per account on the XRP Ledger, allowing different signer lists to authorize specific transaction types.
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/144
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/144
   status: Draft
   category: Amendment
   created: 2023-11-13

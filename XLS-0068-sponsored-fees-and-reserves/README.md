@@ -3,6 +3,7 @@
   title: Sponsored Fees and Reserves
   description: Allow an account to fund fees and reserves on behalf of another account
   author: Mayukha Vadari (@mvadari)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   created: 2024-05-02
   status: Stagnant
   category: Amendment

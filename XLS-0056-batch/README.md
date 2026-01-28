@@ -3,7 +3,7 @@
   title: Atomic/Batch Transactions
   description: A design to allow multiple transactions to be packaged together and executed as a single atomic unit
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/162
   status: Final
   category: Amendment
   created: 2023-12-13

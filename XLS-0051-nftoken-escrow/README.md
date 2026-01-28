@@ -3,6 +3,7 @@
   title: NFToken Escrows
   author: Mayukha Vadari (@mvadari)
   created: 2023-11-17
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/146
   status: Stagnant
   category: Amendment
 </pre>

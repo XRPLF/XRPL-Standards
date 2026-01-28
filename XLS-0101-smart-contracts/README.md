@@ -2,7 +2,8 @@
   title: XRPL Smart Contracts
   description: An L1 native implementation of Smart Contracts on the XRP Ledger
   created: 2025-07-28
-  Author: Mayukha Vadari (@mvadari), Denis Angell (@dangell7)
+  author: Mayukha Vadari (@mvadari), Denis Angell (@dangell7)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/271
   status: Proposal
   category: Amendment
 </pre>

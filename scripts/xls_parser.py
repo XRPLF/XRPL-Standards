@@ -28,6 +28,11 @@ class XLSDocument:
     status: str  # draft, final, stagnant, withdrawn, etc.
     category: str  # amendment, ecosystem, system, etc.
     created: str  # YYYY-MM-DD format
+    proposal_from: Optional[str] = None  # Link to proposal discussion
+    implementation: Optional[str] = None  # Link to implementation PR
+    requires: Optional[str] = None  # XLS number(s) this depends on
+    updated: Optional[str] = None  # YYYY-MM-DD format
+    withdrawal_reason: Optional[str] = None  # Reason for withdrawal
 
     def to_dict(self):
         return asdict(self)
@@ -64,6 +69,11 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         "status": r"[sS]tatus:\s*(.*?)(?:\n|$)",
         "category": r"[cC]ategory:\s*(.*?)(?:\n|$)",
         "created": r"[cC]reated:\s*(.*?)(?:\n|$)",
+        "proposal_from": r"[pP]roposal-from:\s*(.*?)(?:\n|$)",
+        "implementation": r"[iI]mplementation:\s*(.*?)(?:\n|$)",
+        "requires": r"[rR]equires:\s*(.*?)(?:\n|$)",
+        "updated": r"[uU]pdated:\s*(.*?)(?:\n|$)",
+        "withdrawal_reason": r"[wW]ithdrawal-reason:\s*(.*?)(?:\n|$)",
     }
 
     def format_author(author):
@@ -117,6 +127,11 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         status=metadata.get("status", "Unknown"),
         category=metadata.get("category", "Unknown"),
         created=metadata.get("created", "Unknown"),
+        proposal_from=metadata.get("proposal_from"),
+        implementation=metadata.get("implementation"),
+        requires=metadata.get("requires"),
+        updated=metadata.get("updated"),
+        withdrawal_reason=metadata.get("withdrawal_reason"),
     )
 
 
@@ -219,6 +234,13 @@ def validate_xls_documents(root_dir: Path) -> bool:
             if not doc.created or doc.created == "Unknown":
                 validation_errors.append(
                     f"Error: {doc.folder} is missing required created metadata"
+                )
+
+            # Check for proposal-from field
+            if not doc.proposal_from:
+                validation_errors.append(
+                    f"Error: {doc.folder} is missing required "
+                    f"proposal-from metadata"
                 )
 
         if validation_errors:

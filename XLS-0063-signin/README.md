@@ -3,6 +3,7 @@
   title: SignIn Transaction
   description: A dedicated transaction type for off-chain signing in with wallets
   author: Denis Angell (@dangell7)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/187
   created: 2024-03-26
   status: Stagnant
   category: Ecosystem

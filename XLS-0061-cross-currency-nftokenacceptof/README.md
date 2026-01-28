@@ -3,6 +3,7 @@
   title: CrossCurrency NFTokenAcceptOffer
   description: Allow cross-currency NFToken transactions using multiple currencies
   author: tequ (@tequdev)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/183
   created: 2024-02-26
   status: Stagnant
   category: Amendment

@@ -3,6 +3,7 @@
   title: Default AutoBridge
   description: Use autobridging in IOU-IOU Payment transactions
   author: tequ (@tequdev)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/175
   created: 2024-02-05
   status: Stagnant
   category: Amendment

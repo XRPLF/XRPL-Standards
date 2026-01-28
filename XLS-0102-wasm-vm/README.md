@@ -3,6 +3,7 @@
   description: WebAssembly VM integration into rippled
   created: 2025-08-08
   author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuelling (@sappenin)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/303
   status: Draft
   category: Amendment
 </pre>

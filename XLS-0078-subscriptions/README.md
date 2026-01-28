@@ -3,7 +3,7 @@
    title: Subscriptions
    description: A subscription mechanism for recurring payments on the XRP Ledger
    author: Kris Dangerfield (@krisdangerfield), Denis Angell (@angell_denis)
-   discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/222
+   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/222
    status: Draft
    category: Amendment
    created: 2024-08-30

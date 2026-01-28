@@ -3,7 +3,7 @@
   title: Tagged Addresses
   description: A standard for addresses that contain both the target wallet and destination tag as a single unit
   author: Nikolaos D. Bougalis <nikb@bougalis.net>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/142
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/142
   status: Final
   category: Ecosystem
   created: 2019-06-04
