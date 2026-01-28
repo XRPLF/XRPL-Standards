@@ -169,7 +169,7 @@ Implementations **MUST** treat the presence or absence of `SponsorAccount` as th
 
 _Note: this object does not need to be created in order to sponsor accounts. It is an offered convenience, so that sponsors do not have to co-sign every sponsored transaction if they don't want to, especially for transaction fees. It also allows them to set a maximum balance even if they still want to co-sign transactions._
 
-### 5.1. Object ID
+### 5.1. Object Identifier
 
 #### 5.1.1. Key Space
 
@@ -213,7 +213,7 @@ There are two flags on this object:
 
 The object is owned by `Owner`, who also pays the reserve for this object.
 
-### 5.5. Reserve
+### 5.5. Reserves
 
 **Reserve Requirement:** Standard
 
@@ -243,7 +243,7 @@ This object must be deleted before its owner account (the sponsor) can be delete
 
 **Note on Existing Sponsored Objects:** Deleting a `Sponsorship` object does **not** affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `SponsorAccount` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used.
 
-### 5.7. Invariant Checks
+### 5.7. Invariants
 
 The following invariants must always hold for a `Sponsorship` object:
 
@@ -277,7 +277,7 @@ The `snake_case` form of the ledger object name is `sponsorship`.
 
 ## 6. Ledger Entry: `AccountRoot`
 
-An `AccountRoot` ledger entry type describes a single [account](https://xrpl.org/docs/concepts/accounts), its settings, and XRP balance.
+An [`AccountRoot` ledger entry](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/accountroot) type describes a single [account](https://xrpl.org/docs/concepts/accounts), its settings, and XRP balance.
 
 ### 6.1. Fields
 
@@ -363,6 +363,23 @@ $$\sum_{accounts} SponsoredOwnerCount = \sum_{accounts} SponsoringOwnerCount$$
 
 This ensures that every sponsored object is properly accounted for on both the sponsee and sponsor sides.
 
+### 6.4. Example JSON
+
+```json
+{
+  "LedgerEntryType": "AccountRoot",
+  "Account": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+  "Balance": "100000000", // 100 XRP, in drops
+  "OwnerCount": 5,
+  "SponsorAccount": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "SponsoredOwnerCount": 2,
+  "SponsoringOwnerCount": 1,
+  "SponsoringAccountCount": 1,
+  "PreviousTxnID": "1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF",
+  "PreviousTxnLgrSeq": 12345679
+}
+```
+
 ## 7. Ledger Entry: `RippleState`
 
 A `RippleState` ledger entry represents a [trust line](https://xrpl.org/docs/concepts/tokens/fungible-tokens) between two accounts. Each account can change its own limit and other settings, but the balance is a single shared value. A trust line that is entirely in its default state is considered the same as a trust line that does not exist and is automatically deleted. You can create or modify a trust line with a [TrustSet transaction](https://xrpl.org/docs/references/protocol/transactions/types/trustset).
@@ -410,6 +427,36 @@ These additional fields are necessary for a trustline since the reserve for this
 Existing invariants remain.
 
 The common field `SponsorAccount` must not be on any `RippleState` objects (they must use `HighSponsorAccount` and `LowSponsorAccount` instead).
+
+### 7.3. Example JSON
+
+```json
+{
+  "LedgerEntryType": "RippleState",
+  "Balance": {
+    "currency": "USD",
+    "issuer": "rLowAccountAddressXXXXXXXXXXXXXXX",
+    "value": "-10"
+  },
+  "HighLimit": {
+    "currency": "USD",
+    "issuer": "rHighAccountAddressXXXXXXXXXXXXXX",
+    "value": "100"
+  },
+  "LowLimit": {
+    "currency": "USD",
+    "issuer": "rLowAccountAddressXXXXXXXXXXXXXXX",
+    "value": "0"
+  },
+  "HighSponsorAccount": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "LowSponsorAccount": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Flags": 262144,
+  "HighNode": "0000000000000000",
+  "LowNode": "0000000000000000",
+  "PreviousTxnID": "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789",
+  "PreviousTxnLgrSeq": 12345680
+}
+```
 
 ## 8. Transactions: Common Fields
 
@@ -723,15 +770,35 @@ Additional failure conditions specific to `SponsorshipTransfer`:
 - The new sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` incremented by one.
 - If there is no new sponsor, then the owner's `SponsoredOwnerCount` will be decremented by one.
 
+### 10.7. Example JSON
+
+```json
+{
+  "TransactionType": "SponsorshipTransfer",
+  "Account": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+  "ObjectID": "13F1A9B5C2D3E4F613F1A9B5C2D3E4F613F1A9B5C2D3E4F613F1A9B5C2D3E4F6",
+  "Sponsor": {
+    "Account": "rNEWSponsor3LNcTz8JF2oJC6qaww6RZ7Lw",
+    "Flags": 2
+  },
+  "Fee": "12",
+  "Sequence": 43
+}
+```
+
 ## 11. Transaction: `Payment`
 
 A Payment transaction represents a transfer of value from one account to another. (Depending on the path taken, this can involve additional exchanges of value, which occur atomically.) This transaction type can be used for several [types of payments](https://xrpl.org/docs/references/protocol/transactions/types/payment#types-of-payments).
 
 Payments are also the only way to [create accounts](https://xrpl.org/docs/references/protocol/transactions/types/payment#creating-accounts).
 
-As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/payment) are the fields that `Payment` currently has. This amendment proposes no changes to the fields, only to the flags and behavior.
+As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/payment) are the fields that `Payment` currently has.
 
-### 11.1. Flags
+### 11.1. Fields
+
+This amendment proposes no changes to the fields, only to the flags and behavior.
+
+### 11.2. Flags
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/payment#payment-flags) are the flags that `Payment` currently has:
 
@@ -747,7 +814,7 @@ This spec proposes the following additions:
 | ------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tfSponsorCreatedAccount` | `0x00080000` | This flag is only valid if the `Payment` is used to create an account. If it is enabled, the created account will be sponsored by the `tx.Account`. |
 
-### 11.2. Failure Conditions
+### 11.3. Failure Conditions
 
 Existing failure conditions still apply (see [Payment documentation](https://xrpl.org/docs/references/protocol/transactions/types/payment)), with one exception:
 
@@ -760,19 +827,37 @@ Additional failure conditions when `tfSponsorCreatedAccount` is enabled:
 - `Destination` already exists (`tecNO_SPONSOR_PERMISSION`)
 - `Account` does not have enough XRP to cover the account reserve requirement (`tecNO_DST_INSUF_XRP`)
 
-### 11.3. State Changes
+### 11.4. State Changes
 
 Existing state changes still apply (see [Payment documentation](https://xrpl.org/docs/references/protocol/transactions/types/payment)).
 
 If `tfSponsorCreatedAccount` is enabled, the created account's `AccountRoot` will have a `SponsorAccount` field pointing to the `tx.Account`.
 
+### 11.5. Example JSON
+
+```json
+{
+  "TransactionType": "Payment",
+  "Account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Destination": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo", // the new sponsored account
+  "Amount": "1", // 1 drop, the minimum
+  "Flags": 524288, // tfSponsorCreatedAccount
+  "Fee": "10",
+  "Sequence": 3
+}
+```
+
 ## 12. Transaction: `AccountDelete`
 
 This transaction deletes an account.
 
-As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/accountdelete) are the fields that `AccountDelete` currently has. This amendment proposes no changes to the fields, only to the behavior.
+As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/accountdelete) are the fields that `AccountDelete` currently has.
 
-### 12.1. Failure Conditions
+### 12.1. Fields
+
+This amendment proposes no changes to the fields, only to the behavior.
+
+### 12.2. Failure Conditions
 
 Existing failure conditions still apply (see [AccountDelete documentation](https://xrpl.org/docs/references/protocol/transactions/types/accountdelete)).
 
@@ -784,7 +869,7 @@ Additional failure conditions for sponsored accounts:
 - If the `AccountRoot` associated with `tx.Account` has a non-zero `SponsoringOwnerCount` or `SponsoringAccountCount` field:
   - The transaction fails with `tecHAS_OBLIGATIONS` (account is currently sponsoring other accounts or objects and cannot be deleted until those sponsorships are transferred or dissolved)
 
-### 12.2. State Changes
+### 12.3. State Changes
 
 Existing state changes still apply, including rules around deletion blockers.
 
@@ -792,13 +877,13 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsorAccount` fie
 
 If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount` field, the `SponsorAccount`'s `SponsoringOwnerCount` is decremented by the `tx.Account`'s `SponsoredOwnerCount`.
 
-### 12.3. Example JSON
+### 12.4. Example JSON
 
 ```json
 {
   "TransactionType": "AccountDelete",
   "Account": "rWYkbWkCeg8dP6rXALnjgZSjjLyih5NXm",
-  "Destination": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Destination": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf", // the sponsor
   "Fee": "5000000",
   "Sequence": 2470665
 }
