@@ -1,6 +1,8 @@
 name: Validate XLS Documents
 
 on:
+  push:
+    branches: [master]
   pull_request:
   workflow_dispatch:
 
