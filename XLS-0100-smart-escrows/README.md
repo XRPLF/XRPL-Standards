@@ -4,6 +4,7 @@
   created: 2025-02-25
   updated: 2025-11-20
   author: Mayukha Vadari (@mvadari), David Fuelling (@sappenin)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/270
   status: Draft
   category: Amendment
 </pre>

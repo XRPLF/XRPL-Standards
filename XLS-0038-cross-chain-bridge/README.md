@@ -3,7 +3,7 @@
   title: Cross-Chain Bridge
   description: Enabling transfer of value between sidechains through locking and issuing mechanisms
   author: Mayukha Vadari <mvadari@ripple.com>, Scott Determan <scott.determan@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/92
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/92
   status: Final
   category: Amendment
   created: 2023-02-22

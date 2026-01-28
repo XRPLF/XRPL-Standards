@@ -3,6 +3,7 @@
     title: Metadata Structure for XLS-20
     description: Introduces a metadata standard for Non Fungible Tokens
     author: X-Tokenize (@x-Tokenize)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/69
     created: 2022-02-16
     status: Final
     category: Ecosystem
