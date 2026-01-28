@@ -42,9 +42,9 @@ _[If your specification introduces new ledger entry objects, document each entry
 
 _[If your specification introduces new ledger entry common fields, you can have a section called `Transaction: Common Fields` before listing out any specific transactions.]_
 
-_[**Note for existing ledger entries:** If you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet (e.g., AccountRoot, RippleState, Offer, etc.), the following subsections are **optional**: Ownership (2.4), Reserves (2.5), Deletion (2.6), and RPC Name (2.10). You only need to include these subsections if you are making changes to those aspects of the ledger entry.]_
+_[**Note for existing ledger entries:** If you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet (e.g., AccountRoot, RippleState, Offer, etc.), the following subsections are **optional**: Object Identifier (2.1), Ownership (2.4), Reserves (2.5), Deletion (2.6), and RPC Name (2.10). You only need to include these subsections if you are making changes to those aspects of the ledger entry.]_
 
-### 2.1. Object Identifier
+### 2.1. Object Identifier _(Optional if ledger entry already exists on XRPL)_
 
 **Key Space:** `0x[XXXX]` _[Specify the 16-bit hex value for the key space]_
 

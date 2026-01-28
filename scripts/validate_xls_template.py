@@ -546,7 +546,7 @@ class XLSTemplateValidator:
                 "Ownership",
                 "Reserves",
                 "Deletion",
-                "RPC Name"
+                "RPC Name",
             }
 
         # For existing transactions, make Transaction Fee optional
