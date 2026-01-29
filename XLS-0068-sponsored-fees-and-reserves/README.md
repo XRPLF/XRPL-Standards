@@ -685,6 +685,15 @@ _Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger 
 
 This transaction transfers a sponsor relationship for a particular ledger object's object reserve. The sponsor relationship can either be passed on to a new sponsor, or dissolved entirely (with the sponsee taking on the reserve). Either the sponsor or sponsee may submit this transaction at any point in time.
 
+There are three valid transfer scenarios:
+
+- Transferring from sponsor to sponsee (sponsored to unsponsored)
+  - Either the sponsor or sponsee may submit this transaction. Both have the right to end the relationship on that object at any time.
+- Transferring from sponsee to sponsor (unsponsored to sponsored)
+  - Only the sponsee may submit this transaction. It follows a standard sponsoring flow in terms of signing.
+- Transferring from sponsor to new sponsor
+  - Only the sponsee may submit this transaction. The old sponsor is not directly involved, and the new sponsor provides their signature via the standard signing flow.
+
 ### 10.1. Fields
 
 | Field Name         | Required? | JSON Type | Internal Type | Description                                                                                                                                                           |
@@ -740,12 +749,20 @@ Additional failure conditions specific to `SponsorshipTransfer`:
 - `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
 - `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
 - `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
-- If transferring the sponsorship to a new sponsor:
-  - The new sponsor account does not exist (`terNO_ACCOUNT`)
-  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
-  - The `Sponsor` field is malformed or missing required subfields (`temMALFORMED`)
 - If dissolving the sponsorship (no `Sponsor` field or `tfSponsorReserve` flag not set):
   - The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+- If creating a new sponsorship (unsponsored to sponsored):
+  - The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+  - The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+  - The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
+  - The new sponsor account does not exist (`terNO_ACCOUNT`)
+  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+- If transferring the sponsorship to a new sponsor:
+  - The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+  - The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+  - The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
+  - The new sponsor account does not exist (`terNO_ACCOUNT`)
+  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
 ### 10.6. State Changes
 
