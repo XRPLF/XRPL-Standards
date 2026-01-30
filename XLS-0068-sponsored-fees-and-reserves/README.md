@@ -142,26 +142,26 @@ The `Sponsor` field **must not** appear on:
 - `FeeSettings` objects (global ledger objects)
 - `NegativeUNL` objects (global ledger objects)
 
-#### 4.2.2. Presence Rules
+#### 4.2.2. Constraints
 
 - The field **must** be omitted when there is no sponsor.
 - When present, the field **must** contain a valid `AccountID` that exists on the ledger.
 - The field is added when sponsorship is established (either at object creation or via `SponsorshipTransfer`).
 - The field is removed when sponsorship is dissolved via `SponsorshipTransfer`.
 - The `Sponsor` must have a `SponsoringOwnerCount` that is greater than 0.
-
-#### 4.2.3. Constraints
-
-- Self-Sponsorship: An account **may not** sponsor its own objects. The `Sponsor` value **must** differ from the object's owner (as indicated by the `Owner` or `Account` field).
-- Sponsor Account Requirements: The sponsor account **must** have sufficient XRP to meet its reserve requirements, including reserves for all objects and accounts it sponsors.
+- The `Sponsor` value **must** differ from the object's owner (as indicated by the `Owner` or `Account` field). An account **may not** sponsor its own objects.
+- The sponsor account **must** have sufficient XRP to meet its reserve requirements when creating/sponsoring new objects, including reserves for all objects and accounts it sponsors.
 
 #### 4.2.4. Authoritative Indication
 
-Implementations **must** treat the presence or absence of `Sponsor` as the authoritative indication of whether an object is sponsored for reserves. The presence of this field triggers the following behaviors:
+The presence or absence of `Sponsor` is the authoritative indication of whether an object is sponsored for reserves. The presence of this field triggers the following behaviors:
 
 - The object's reserve is counted against the sponsor's `SponsoringOwnerCount` (or `SponsoringAccountCount` for `AccountRoot`), not the owner's `OwnerCount`.
+- The sponsor's `SponsoringOwnerCount` (or `SponsoringAccountCount` for `AccountRoot`) is incremented.
 - The owner's `SponsoredOwnerCount` is incremented (for non-`AccountRoot` objects).
 - The reserve calculation for both sponsor and owner accounts is adjusted accordingly.
+
+_NOTE: These values are likely not recalculated later due to performance issues, and the implementation should make sure that the `SponsoringOwnerCount`, `SponsoredOwnerCount`, and `SponsoringAccountCount` fields in all accounts are updated appropriately. The accuracy will only be verifiable via off-chain mechanisms._
 
 ## 5. Ledger Entry: `Sponsorship`
 
