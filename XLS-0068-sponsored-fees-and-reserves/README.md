@@ -190,6 +190,7 @@ This ensures that there can be at most one `Sponsorship` object per sponsor-spon
 | Field Name          | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                            |
 | ------------------- | --------- | --------- | ------------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `LedgerEntryType`   | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `"Sponsorship"` (JSON) or a unique numeric value (internal, assigned during implementation) indicates this is a `Sponsorship` ledger object. |
+| `Flags`             |           |           | `0`           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object.                                                                                                    |
 | `Owner`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                                  |
 | `Sponsee`           | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                                         |
 | `FeeAmount`         |           |           | `0`           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                           |
@@ -204,10 +205,10 @@ This ensures that there can be at most one `Sponsorship` object per sponsor-spon
 
 There are two flags on this object:
 
-| Flag Name                             | Flag Value   | Modifiable? | Description                                                                                                 |
-| ------------------------------------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------- |
-| `lsfSponsorshipRequireSignForFee`     | `0x00010000` | Yes         | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
-| `lsfSponsorshipRequireSignForReserve` | `0x00020000` | Yes         | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
+| Flag Name                             | Flag Value   | Modifiable? | Description                                                                                                                                                                                                    |
+| ------------------------------------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lsfSponsorshipRequireSignForFee`     | `0x00010000` | Yes         | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient).     |
+| `lsfSponsorshipRequireSignForReserve` | `0x00020000` | Yes         | If set, indicates that every use of this sponsor for sponsoring reserves requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient). |
 
 ### 5.4. Ownership
 
@@ -355,6 +356,7 @@ The following invariants must hold for `AccountRoot` objects with sponsorship fi
 - `SponsoredOwnerCount <= OwnerCount` (cannot have more sponsored objects than total owned objects)
 - If `Sponsor` is present, it must be a valid `AccountID` that exists on the ledger
 - The reserve calculation must always result in a non-negative value
+- The `Sponsor`'s `SponsoringAccountCount` must be greater than 0
 
 **Global Invariant (referenced in section 18.2):**
 
