@@ -8,7 +8,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   requires: 74
   created: 2024-05-02
-  updated: 2025-01-06
+  updated: 2026-01-30
 </pre>
 
 # Sponsored Fees and Reserves
@@ -151,6 +151,8 @@ The `Sponsor` field **must not** appear on:
 - The `Sponsor` must have a `SponsoringOwnerCount` that is greater than 0.
 - The `Sponsor` value **must** differ from the object's owner (as indicated by the `Owner` or `Account` field). An account **may not** sponsor its own objects.
 - The sponsor account **must** have sufficient XRP to meet its reserve requirements when creating/sponsoring new objects, including reserves for all objects and accounts it sponsors.
+
+_NOTE: A sponsor may also be a sponsee._
 
 #### 4.2.4. Authoritative Indication
 
@@ -591,7 +593,7 @@ The `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` 
 
 ## 9. Transaction: `SponsorshipSet`
 
-This transaction creates and updates the `Sponsorship` object.
+This transaction creates, updates, and deletes the `Sponsorship` object.
 
 ### 9.1. Fields
 
@@ -670,7 +672,7 @@ If deleting the `Sponsorship` object (`tfDeleteObject` flag):
 
 _Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `Sponsor` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used._
 
-### 9.5. Example JSON
+### 9.6. Example JSON
 
 ```json
 {
