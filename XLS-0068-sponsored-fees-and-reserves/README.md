@@ -514,7 +514,8 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 #### 8.3.1. General Failures
 
 - `SponsorSignature.TxnSignature` is invalid.
-- `SponsorSignature.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, or signature(s) are invalid).
+- `SponsorSignature.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, the public key(s) are invalid, or signature(s) are invalid).
+- `SponsorSignature.SigningPubKey` is invalid (the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid).
 - The `Sponsor` doesn't exist on the ledger.
 - An invalid sponsorship flag is used.
 - `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
