@@ -144,16 +144,16 @@ The `Sponsor` field **must not** appear on:
 
 #### 4.2.2. Presence Rules
 
-- The field **must** be omitted when there is no sponsor; there is no sentinel value such as `0` or an empty string to indicate "no sponsor".
+- The field **must** be omitted when there is no sponsor.
 - When present, the field **must** contain a valid `AccountID` that exists on the ledger.
 - The field is added when sponsorship is established (either at object creation or via `SponsorshipTransfer`).
 - The field is removed when sponsorship is dissolved via `SponsorshipTransfer`.
+- The `Sponsor` must have a `SponsoringOwnerCount` that is greater than 0.
 
 #### 4.2.3. Constraints
 
-- **Self-Sponsorship**: An account **may not** sponsor its own objects.
-- **Relationship to Ownership**: The `Sponsor` value **must** differ from the object's owner (as indicated by the `Owner` or `Account` field).
-- **Sponsor Account Requirements**: The sponsor account **must** have sufficient XRP to meet its reserve requirements, including reserves for all objects and accounts it sponsors.
+- Self-Sponsorship: An account **may not** sponsor its own objects. The `Sponsor` value **must** differ from the object's owner (as indicated by the `Owner` or `Account` field).
+- Sponsor Account Requirements: The sponsor account **must** have sufficient XRP to meet its reserve requirements, including reserves for all objects and accounts it sponsors.
 
 #### 4.2.4. Authoritative Indication
 
