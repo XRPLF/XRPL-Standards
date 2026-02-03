@@ -29,7 +29,7 @@ This feature does not (directly) involve any new transactions, ledger objects, o
 
 <img width="1020" height="495" alt="image" src="https://github.com/user-attachments/assets/8d8e90f4-cda6-4747-9438-e648bc89378b" />
 
-Using [Smart Escrows](https://github.com/XRPLF/XRPL-Standards/discussions/270) as an example:
+Using [Smart Escrows](../XLS-0100-smart-escrows/README.md) as an example:
 
 1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `FinishFunction` code to determine if the escrow is finishable).
 2. Enter the WASM engine, where the WASM environment is set up to run the code.

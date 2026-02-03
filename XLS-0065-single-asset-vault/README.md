@@ -393,7 +393,7 @@ The type indicates the withdrawal strategy supported by the vault. The following
 
 ##### 3.1.1.3 Transaction Fees
 
-The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Therefore, the transaction [must destroy](https://github.com/XRPLF/XRPL-Standards/discussions/191) one incremental owner reserve amount.
+The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Therefore, the transaction [must destroy](../XLS-0064-pseudo-account/README.md) one incremental owner reserve amount.
 
 ##### 3.1.1.4 Failure Conditions
 
@@ -423,7 +423,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
   - If the `DomainID` is provided:
     - `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
   - Create an `MPToken` object for the Vault Owner to hold Vault Shares.
-- Create a new `AccountRoot`[_pseudo-account_](https://github.com/XRPLF/XRPL-Standards/discussions/191) object setting the `PseudoOwner` to `VaultID`.
+- Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
 
 - If `Vault.Asset` is an `IOU`:
   - Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.

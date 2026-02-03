@@ -622,7 +622,7 @@ The sponsor will have the standard problem of trying to get ahold of a debtor to
 
 ### A.6: What happens if the sponsor tries to `SponsorTransfer` but the sponsee doesn't have enough funds to cover the reserve?
 
-If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](https://github.com/XRPLF/XRPL-Standards/discussions/162), to ensure that the sponsee can't do something else with the funds before the `SponsorTransfer` transaction is validated.
+If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](../XLS-0056-batch/README.md), to ensure that the sponsee can't do something else with the funds before the `SponsorTransfer` transaction is validated.
 
 ### A.7: Would sponsored accounts carry a lower reserve?
 

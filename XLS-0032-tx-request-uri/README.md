@@ -575,10 +575,10 @@ https://github.com/standardconnect/xls-32d/tree/main/tests
 2022-07-29
 
 1. Update references to include all previous standards pertaining to URI standardization
-   XLS-2d https://github.com/XRPLF/XRPL-Standards/discussions/27
-   XLS-3d https://github.com/XRPLF/XRPL-Standards/discussions/26
-   XLS-4d https://github.com/XRPLF/XRPL-Standards/discussions/25
-   XLS-15d https://github.com/XRPLF/XRPL-Standards/discussions/34
+   XLS-2 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0002-destination-information/README.md
+   XLS-3 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0003-deeplink-signed-transactions/README.md
+   XLS-4 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0004-trustline-uri/README.md
+   XLS-15 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0015-concise-tx-id/README.md
 
 2023-01-22
 

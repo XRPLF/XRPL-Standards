@@ -43,7 +43,7 @@ See [the blog post here](https://dev.to/ripplexdev/a-proposed-vision-for-xrp-led
 
 ## 2. Overview
 
-This design for Smart Contracts combines the easy-to-learn overall design of EVM smart contracts (addresses with functions) with the familiarity of XRPL transactions. A Smart Contract lives on a [pseudo-account](https://github.com/XRPLF/XRPL-Standards/discussions/191) and is triggered via a new `ContractCall` transaction, which calls a specific function on the smart contract, with provided parameters. The Smart Contract can modify its own state data, or interact with other XRPL building blocks (including other smart contracts) via submitting its own XRPL transactions via its code.
+This design for Smart Contracts combines the easy-to-learn overall design of EVM smart contracts (addresses with functions) with the familiarity of XRPL transactions. A Smart Contract lives on a [pseudo-account](../XLS-0064-pseudo-account/README.md) and is triggered via a new `ContractCall` transaction, which calls a specific function on the smart contract, with provided parameters. The Smart Contract can modify its own state data, or interact with other XRPL building blocks (including other smart contracts) via submitting its own XRPL transactions via its code.
 
 The details of the WASM engine and the API will be in separate XLSes published later.
 
@@ -849,7 +849,7 @@ How should object reserves be covered? Some options (numbered for ease of discus
 3. Some way to amortize higher fees for increasing reserve (a la EVM)
    - Could be on the contract writer to figure out a way to handle this
    - If not, could be complex to figure out a good system
-4. A [Sponsor](https://github.com/XRPLF/XRPL-Standards/discussions/196)-esque way of keeping track of who owns the burden for certain objects (perhaps with some API calls - could default to the contract creator if the API isn't used)
+4. A [Sponsor](../XLS-0068-sponsored-fees-and-reserves/README.md)-esque way of keeping track of who owns the burden for certain objects (perhaps with some API calls - could default to the contract creator if the API isn't used)
    - Downside: it would likely add an additional dependency to smart contracts (XLS-68)
 5. Ignore the issue
    - This isn’t really a viable option, given the ledger load it would result in - it would defeat the purpose of reserves in the first place
