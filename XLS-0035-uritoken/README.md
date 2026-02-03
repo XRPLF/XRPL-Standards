@@ -9,7 +9,7 @@
   created: 2023-02-09
 </pre>
 
-# XLS-35d URITokens — Lightweight first-class NFTs for XRPL Protocol Chains
+# XLS-35 URITokens — Lightweight first-class NFTs for XRPL Protocol Chains
 
 # Problem Statement
 

@@ -17,7 +17,7 @@ The XRP Ledger currently only supports one global signer list per account. Howev
 
 This document describes a proposal for supporting multiple signer lists per account. The current system of global signer lists will continue to be supported, but we propose adding **per-transaction-type signer lists**. Accounts can set up signer lists that only have the power to send **transactions of one specific type** on behalf of the account.
 
-This proposal is related to [XLS-31d](https://github.com/XRPLF/XRPL-Standards/discussions/77), but broader in scope.
+This proposal is related to [XLS-31](https://github.com/XRPLF/XRPL-Standards/discussions/77), but broader in scope.
 
 ## 1. Overview
 
