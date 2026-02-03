@@ -305,7 +305,14 @@ Submitting a transaction typically requires paying a transaction fee. A typical 
 
 ###### 4.4.3.3.4. Failure Conditions
 
-This section describes the conditions under which the transaction will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
+This section describes all conditions under which the transaction will fail. Each condition must map to a specific error code. The list must be exhaustive, descriptive, and indexed for easy reference.
+
+Failure conditions are grouped into two categories:
+
+- Data validation failures: Return a tem code
+- Protocol-level failures: Return a tec code
+
+If another error code must be returned (e.g., ter), provide strong justification.
 
 When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`).
 

@@ -222,11 +222,23 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 ### 3.4. Failure Conditions
 
-_[List all conditions that cause the transaction to fail, with corresponding error codes]_
+[An indexed list of all conditions that cause the transaction to fail, with corresponding error codes. Group failure conditions into two categories: data verification, invalid field values, protocol-level logic.]
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+#### 3.4.1. Data Verification
+
+[All Data Verification failures return a `tem` level error.]
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
+
+#### 3.4.2. Protocol-Level Failures
+
+[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter` code.]
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
@@ -297,9 +309,11 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.3. Failure Conditions
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+[An indexed list of RPC error codes.]
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 ### 5.4. Example Request
 
