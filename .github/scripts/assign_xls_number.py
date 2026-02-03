@@ -31,15 +31,26 @@ def get_existing_xls_numbers(repo_root: Path) -> set[int]:
     return numbers
 
 
+# Minimum XLS number to assign (to avoid filling old historical gaps)
+MIN_XLS_NUMBER = 96
+
+
 def get_next_xls_number(existing_numbers: set[int]) -> int:
     """
     Determine the next available XLS number.
 
-    Returns the highest existing number + 1.
+    Returns the first unused number >= MIN_XLS_NUMBER.
     """
     if not existing_numbers:
-        return 1
-    return max(existing_numbers) + 1
+        return MIN_XLS_NUMBER
+
+    # Find the first available number starting from MIN_XLS_NUMBER
+    max_num = max(existing_numbers)
+    for num in range(MIN_XLS_NUMBER, max_num + 2):
+        if num not in existing_numbers:
+            return num
+
+    return max_num + 1
 
 
 def find_draft_xls_files(changed_files: list[str]) -> list[str]:
