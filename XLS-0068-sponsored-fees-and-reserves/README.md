@@ -195,7 +195,7 @@ This ensures that there can be at most one `Sponsorship` object per sponsor-spon
 | `Flags`             |           |           | `0`           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object.                                                                                                    |
 | `Owner`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                                  |
 | `Sponsee`           | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                                         |
-| `FeeAmount`         |           |           | `0`           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                           |
+| `FeeAmount`         |           |           |               | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                           |
 | `MaxFee`            |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                         |
 | `ReserveCount`      |           |           | `0`           | `string`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                                              |
 | `OwnerNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages.                  |
@@ -255,6 +255,8 @@ The following invariants must always hold for a `Sponsorship` object:
 - `ReserveCount >= 0`
 - At least one of `FeeAmount` and `ReserveCount` must be included
 - Both `Owner` and `Sponsee` must be valid `AccountID` values that exist on the ledger
+
+_NOTE: The invariants in [4.2](#42-invariant-checks) also apply to `Sponsorship` objects, as they apply to all objects._
 
 ### 5.8. RPC Name
 
@@ -432,6 +434,8 @@ Existing invariants remain.
 
 The common field `Sponsor` **must not** be on any `RippleState` objects (they must use `HighSponsor` and `LowSponsor` instead).
 
+_NOTE: The invariants in [4.2](#42-invariant-checks) also apply to `RippleState` objects, as they apply to all objects._
+
 ### 7.3. Example JSON
 
 ```json
@@ -480,7 +484,7 @@ We propose these modifications:
 
 ##### 8.1.1. `SponsorFlags`
 
-The `SponsorFlags` field allows the user to specify which sponsorship type(s) they wish to participate in. This field **must** be included if the `Sponsor` field is included in a transaction, and at least one flag **must** be specified if the `Sponsor` field is included in a transaction.
+The `SponsorFlags` field allows the user to specify which sponsorship type(s) they wish to participate in. This field **must** be included if the `Sponsor` field is included in a transaction, and at least one flag **must** be specified if the `Sponsor` field is included in a transaction. The `SponsorFlags` field **must not** be included if the `Sponsor` field is not included in a transaction.
 
 There are two flag values that are supported:
 
@@ -509,9 +513,9 @@ Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the trans
 
 ### 8.2. Transaction Fee
 
-If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base\_fee$.
+If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base\textunderscore fee$.
 
-The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.SponsorSignature.Signers|) * base\_fee$ (plus transaction-specific fees).
+The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.SponsorSignature.Signers|) * base\textunderscore fee$ (plus transaction-specific fees).
 
 ### 8.3. Failure Conditions
 
