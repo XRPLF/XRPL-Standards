@@ -9,7 +9,7 @@
     category: Ecosystem
 </pre>
 
-# XLS-41d
+# XLS-41
 
 # Abstract
 
