@@ -3,7 +3,7 @@
     description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
     status: Ongoing
-    category: Standard
+    category: Standards Track
     created: Jan 15, 2026
 </pre>
 
@@ -179,7 +179,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                                                 |
 | :----------------------- | :-------- | :-------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvert`.                                                                                                                              |
+| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvert`.                                                                                                                           |
 | `Account`                | ✔️        | `string`  | `AccountID`   | The account initiating the conversion.                                                                                                                      |
 | `MPTokenIssuanceID`      | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance.                                                                                                                 |
 | `MPTAmount`              | ✔️        | `number`  | `UInt64`      | The public plaintext amount $m$ to convert.                                                                                                                 |
@@ -248,7 +248,7 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 
 | Field Name                   | Required? | JSON Type | Internal Type | Description                                                                                         |
 | :--------------------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------- |
-| `TransactionType`            | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTSend`.                                                                         |
+| `TransactionType`            | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTSend`.                                                                      |
 | `Account`                    | ✔️        | `string`  | `AccountID`   | The sender's XRPL account.                                                                          |
 | `Destination`                | ✔️        | `string`  | `AccountID`   | The receiver's XRPL account.                                                                        |
 | `MPTokenIssuanceID`          | ✔️        | `string`  | `UInt256`     | Identifier of the MPT issuance being transferred.                                                   |
@@ -320,7 +320,7 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 
 | Field Name          | Required? | JSON Type | Internal Type | Description                                 |
 | :------------------ | :-------- | :-------- | :------------ | :------------------------------------------ |
-| `TransactionType`   | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTMergeInbox`.           |
+| `TransactionType`   | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTMergeInbox`.        |
 | `Account`           | ✔️        | `string`  | `AccountID`   | The account performing the merge.           |
 | `MPTokenIssuanceID` | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance. |
 
@@ -386,7 +386,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                        |
 | :----------------------- | :-------- | :-------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvertBack`.                                                                                                 |
+| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvertBack`.                                                                                              |
 | `Account`                | ✔️        | `string`  | `AccountID`   | The account performing the conversion.                                                                                             |
 | `MPTokenIssuanceID`      | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance.                                                                                        |
 | `MPTAmount`              | ✔️        | `number`  | `UInt64`      | The plaintext amount to credit to the public balance.                                                                              |
