@@ -157,5 +157,3 @@ The block-receiving feature shares similarities with the existing freeze functio
 ### How does MPT freeze/lock behavior differ from IOU?
 
 The MPT freeze/lock functionality differs somewhat from how IOUs work today. When an MPT holder is locked, they cannot send or receive MPT payments, so a single flag is sufficient. In contrast, for IOUs, the regular freeze only disallows sending. If the issuer wants to block receiving as well, they must apply a deep-freeze.
-
-_Originally posted by @shawnxie999 in https://github.com/XRPLF/XRPL-Standards/discussions/220_

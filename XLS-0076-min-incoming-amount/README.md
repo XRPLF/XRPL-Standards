@@ -9,7 +9,7 @@
   category: Amendment
 </pre>
 
-# XLS-76d - Min Incoming Amount
+# XLS-76 - Min Incoming Amount
 
 ## Abstract
 
