@@ -30,7 +30,7 @@ Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` 
 
 XLS-33 enables flexible tokenization on the XRP Ledger, but all balances and transfers remain publicly visible. This transparency limits adoption in institutional and privacy-sensitive contexts. Confidential MPTs address this gap by introducing encrypted balances and confidential transfers while preserving XLS-33 semantics.
 
-The design uses a second-account model, where the issuer maintains a designated account treated as a regular holder. This keeps the definition of OutstandingAmount (OA) exactly as in XLS-33, the sum of all non-issuer balances, now including the issuer’s second account. A complementary value, ConfidentialOutstandingAmount (COA), tracks the confidential portion of circulation and MaxAmount (MA) continues to cap supply. By modeling confidential issuance through the second account rather than redefining OA, validators can enforce supply consistency with the existing invariant OA ≤ MA.
+The design maintains the standard definition of OutstandingAmount (OA) as the sum of all non-issuer balances. A complementary value, ConfidentialOutstandingAmount (COA), tracks the confidential portion of circulation, ensuring that while individual balances are encrypted, the global supply remains auditable. MaxAmount (MA) continues to cap the total supply, allowing validators to enforce consistency with the existing invariant OA ≤ MA.
 
 ### 2.1 Benefits
 
@@ -46,10 +46,10 @@ This XLS specifies the protocol changes required to support confidential MPTs, i
 
 ### 3.1 New Transaction Types
 
-- ConfidentialConvert: Converts public MPT balances into encrypted form for a holder.
-- ConfidentialSend: Confidential transfer of tokens between accounts, with encrypted amounts validated by ZKPs.
-- ConfidentialMergeInbox: Merges a holder’s inbox balance into their spending balance, preventing stale-proof issues.
-- ConfidentialConvertBack: Converts confidential balances back into public form, restoring visible balances or returning funds to the issuer’s reserve.
+- ConfidentialMPTConvert: Converts public MPT balances into encrypted form for a holder.
+- ConfidentialMPTSend: Confidential transfer of tokens between accounts, with encrypted amounts validated by ZKPs.
+- ConfidentialMPTMergeInbox: Merges a holder’s inbox balance into their spending balance, preventing stale-proof issues.
+- ConfidentialMPTConvertBack: Converts confidential balances back into public form, restoring visible balances or returning funds to the issuer’s reserve.
 - ConfidentialClawback: An issuer-only transaction to forcibly convert a holder’s confidential balance back to the issuer's public reserve.
 
 ### 3.2 New Ledger Fields and Objects
@@ -64,7 +64,7 @@ MPTokenIssuance Extensions: To support confidential MPTs, the MPTokenIssuance le
 ### 3.2.3 New Fields:
 
 - IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the lsfConfidential flag is set.
-- ConfidentialOutstandingAmount: (Required if lsfConfidential is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialConvert, ConfidentialConvertBack, and ConfidentialClawback transaction.
+- ConfidentialOutstandingAmount: (Required if lsfConfidential is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialClawback transaction.
 - AuditorPolicy: (Optional) An object containing the configuration for an on-chain auditor, including their public key and an immutability flag.
 
 ### 3.3 Managing Confidentiality Settings via MPTokenIssuanceSet:
@@ -137,7 +137,7 @@ The Confidential MPT protocol is built on three core design principles: the issu
 
 To introduce confidential tokens without modifying the supply semantics of XLS-33, the protocol uses an issuer-controlled second account that is treated by the ledger as a standard non-issuer holder.
 
-- **Issuing into circulation:** The issuer introduces confidential supply by executing a `ConfidentialConvert` transaction, moving funds from its public reserve into the issuer’s second account.
+- **Issuing into circulation:** The issuer introduces confidential supply by executing a `ConfidentialMPTConvert` transaction, moving funds from its public reserve into the issuer’s second account.
 
 - **Preserving invariants:** Because the second account is a non-issuer, its balance is included in `OutstandingAmount` (OA). This preserves the existing `OA ≤ MaxAmount` invariant and allows validators to enforce the supply cap without decrypting confidential balances. All subsequent confidential transfers between non-issuer holders are redistributions that do not modify OA.
 
@@ -145,9 +145,9 @@ To introduce confidential tokens without modifying the supply semantics of XLS-3
 
 To prevent stale-proof failures—where an incoming transfer could invalidate a proof generated for an outgoing transfer—each account’s confidential balance is split into two components:
 
-- **Spending balance (CB_S):** A stable balance used for generating proofs in outgoing `ConfidentialSend` transactions.
+- **Spending balance (CB_S):** A stable balance used for generating proofs in outgoing `ConfidentialMPTSend` transactions.
 - **Inbox balance (CB_IN):** A separate balance that receives all incoming confidential transfers.
-- **Merging:** Holders explicitly merge `CB_IN` into `CB_S` using the proof-free `ConfidentialMergeInbox` transaction. Each merge increments a monotonically increasing version number (`CB_S_Version`), which is bound to newly generated proofs to prevent replay and ensure proofs reference a stable balance.
+- **Merging:** Holders explicitly merge `CB_IN` into `CB_S` using the proof-free `ConfidentialMPTMergeInbox` transaction. Each merge increments a monotonically increasing version number (`CB_S_Version`), which is bound to newly generated proofs to prevent replay and ensure proofs reference a stable balance.
 
 ### 5.3 The Multi-Ciphertext Architecture
 
@@ -159,12 +159,12 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Optional auditor encryption:** If an `AuditorPolicy` is active, balances are additionally encrypted under an auditor’s public key (`EncryptedBalanceAuditor`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
 
-## 6. Transaction: `ConfidentialConvert`
+## 6. Transaction: `ConfidentialMPTConvert`
 
 **Purpose:**  
 Converts a holder’s own visible (public) MPT balance into confidential form. The converted amount is credited to the holder’s confidential inbox balance (`CB_IN`) to avoid immediate proof staleness, requiring an explicit merge into the spending balance (`CB_S`) before use. This transaction also serves as the opt-in mechanism for confidential MPT participation: by executing it (including a zero-amount conversion), a holder’s `HolderElGamalPublicKey` is recorded on their `MPToken` object, enabling the holder to receive and manage confidential funds.
 
-This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
+This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
 
 ### 6.1 Use Cases
 
@@ -179,7 +179,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                                                 |
 | :----------------------- | :-------- | :-------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialConvert`.                                                                                                                              |
+| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvert`.                                                                                                                              |
 | `Account`                | ✔️        | `string`  | `AccountID`   | The account initiating the conversion.                                                                                                                      |
 | `MPTokenIssuanceID`      | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance.                                                                                                                 |
 | `MPTAmount`              | ✔️        | `number`  | `UInt64`      | The public plaintext amount $m$ to convert.                                                                                                                 |
@@ -228,7 +228,7 @@ If the transaction is successful:
 ```json
 {
   "Account": "rBob...",
-  "TransactionType": "ConfidentialConvert",
+  "TransactionType": "ConfidentialMPTConvert",
   "MPTokenIssuanceID": "610F33...",
   "MPTAmount": 1000,
   "HolderElGamalPublicKey": "038d...",
@@ -239,16 +239,16 @@ If the transaction is successful:
 }
 ```
 
-## 7. Transaction: `ConfidentialSend`
+## 7. Transaction: `ConfidentialMPTSend`
 
 **Purpose:**  
-Performs a confidential transfer of MPT value between accounts while keeping the transfer amount hidden. The transferred amount is credited to the receiver’s confidential inbox balance (`CB_IN`) to avoid proof staleness; the receiver may later merge these funds into the spending balance (`CB_S`) via `ConfidentialMergeInbox`.
+Performs a confidential transfer of MPT value between accounts while keeping the transfer amount hidden. The transferred amount is credited to the receiver’s confidential inbox balance (`CB_IN`) to avoid proof staleness; the receiver may later merge these funds into the spending balance (`CB_S`) via `ConfidentialMPTMergeInbox`.
 
 ### 7.1. Fields
 
 | Field Name                   | Required? | JSON Type | Internal Type | Description                                                                                         |
 | :--------------------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------- |
-| `TransactionType`            | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialSend`.                                                                         |
+| `TransactionType`            | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTSend`.                                                                         |
 | `Account`                    | ✔️        | `string`  | `AccountID`   | The sender's XRPL account.                                                                          |
 | `Destination`                | ✔️        | `string`  | `AccountID`   | The receiver's XRPL account.                                                                        |
 | `MPTokenIssuanceID`          | ✔️        | `string`  | `UInt256`     | Identifier of the MPT issuance being transferred.                                                   |
@@ -293,7 +293,7 @@ If the transaction is successful:
 ```javascript
 {
   "Account": "rSenderAccount...",
-  "TransactionType": "ConfidentialSend",
+  "TransactionType": "ConfidentialMPTSend",
   "Destination": "rReceiverAccount...",
   "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
   "SenderEncryptedAmount": "AD3F...",
@@ -306,7 +306,7 @@ If the transaction is successful:
 
 Net effect: Public balances unchanged; confidential amount is redistributed (sender CB_S ↓, receiver CB_IN ↑). OA (plaintext) unchanged; COA (plaintext) unchanged.
 
-## 8. Transaction: `ConfidentialMergeInbox`
+## 8. Transaction: `ConfidentialMPTMergeInbox`
 
 **Purpose:** Moves all funds from the inbox balance into the spending balance, then resets the inbox to a canonical encrypted zero (EncZero). This ensures that proofs reference only stable spending balances and prevents staleness from incoming transfers.
 
@@ -320,7 +320,7 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 
 | Field Name          | Required? | JSON Type | Internal Type | Description                                 |
 | :------------------ | :-------- | :-------- | :------------ | :------------------------------------------ |
-| `TransactionType`   | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMergeInbox`.           |
+| `TransactionType`   | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTMergeInbox`.           |
 | `Account`           | ✔️        | `string`  | `AccountID`   | The account performing the merge.           |
 | `MPTokenIssuanceID` | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance. |
 
@@ -363,12 +363,12 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 ```json
 {
   "Account": "rUserAccount...",
-  "TransactionType": "ConfidentialMergeInbox",
+  "TransactionType": "ConfidentialMPTMergeInbox",
   "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864"
 }
 ```
 
-## 9. Transaction: `ConfidentialConvertBack`
+## 9. Transaction: `ConfidentialMPTConvertBack`
 
 ### 9.1 Purpose: Convert confidential into public MPT value.
 
@@ -377,14 +377,16 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
 ### 9.2 Account Effects
 
-- Holder path: OA unchanged, COA ↓, IPB unchanged.
-- Second-account path: OA ↓, COA ↓, IPB ↑.
+- Confidential Supply (COA): Decreases (COA ↓).
+- Total Supply (OA): Unchanged. (Tokens are converted to public form, not burned).
+- Holder Public Balance: Increases.
+- Holder Confidential Balance: Decreases.
 
 ### 9.3. Fields
 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                        |
 | :----------------------- | :-------- | :-------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialConvertBack`.                                                                                                 |
+| `TransactionType`        | ✔️        | `string`  | `UInt16`      | Must be `ConfidentialMPTConvertBack`.                                                                                                 |
 | `Account`                | ✔️        | `string`  | `AccountID`   | The account performing the conversion.                                                                                             |
 | `MPTokenIssuanceID`      | ✔️        | `string`  | `UInt256`     | The unique identifier for the MPT issuance.                                                                                        |
 | `MPTAmount`              | ✔️        | `number`  | `UInt64`      | The plaintext amount to credit to the public balance.                                                                              |
@@ -432,7 +434,7 @@ If the transaction is successful:
 ```json
 {
   "Account": "rUserAccount...",
-  "TransactionType": "ConfidentialConvertBack",
+  "TransactionType": "ConfidentialMPTConvertBack",
   "MPTokenIssuanceID": "610F33...",
   "MPTAmount": 500,
   "HolderEncryptedAmount": "AD3F...",
@@ -481,7 +483,7 @@ Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
 
 ## 10. Transaction: `ConfidentialClawback`
 
-Clawback involves the issuer forcibly reclaiming funds from a holder's account. This action is fundamentally incompatible with standard confidential transfers, as the issuer does not possess the holder's private ElGamal key and therefore cannot generate the required ZKPs for a normal ConfidentialSend. To solve this, the protocol introduces a single and privileged transaction that allows an issuer to verifiably reclaim funds in one uninterruptible step.
+Clawback involves the issuer forcibly reclaiming funds from a holder's account. This action is fundamentally incompatible with standard confidential transfers, as the issuer does not possess the holder's private ElGamal key and therefore cannot generate the required ZKPs for a normal ConfidentialMPTSend. To solve this, the protocol introduces a single and privileged transaction that allows an issuer to verifiably reclaim funds in one uninterruptible step.
 
 This issuer-only transaction is designed to convert a holder's entire confidential balance directly into the issuer's public reserve.
 
@@ -648,7 +650,7 @@ Confidential MPT transactions are designed to minimize information leakage while
 
 **Publicly Visible Information**
 
-- Transaction type (ConfidentialConvert, ConfidentialSend, etc.).
+- Transaction type (ConfidentialMPTConvert, ConfidentialMPTSend, etc.).
 - Involved accounts (Account, Issuer, Destination).
 - Currency code (e.g., "USD").
 - Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
@@ -657,7 +659,7 @@ Confidential MPT transactions are designed to minimize information leakage while
 
 **Hidden Information**
 
-- Amounts moved in ConfidentialSend, ConfidentialMerge.
+- Amounts moved in ConfidentialMPTSend, ConfidentialMerge.
 - Holder balances (except their public balance field).
 - Distribution of confidential supply across holders.
 
@@ -744,7 +746,7 @@ First, let's establish the size of our basic cryptographic building blocks.
 - Compressed EC Point: A point on the curve represented by its x-coordinate and a prefix byte, totaling 33 bytes.
 - EC-ElGamal Ciphertext: A pair of EC points (C1​,C2​), resulting in 2×33=66 bytes.
 
-We will use the ConfidentialSend transaction as our benchmark, as its cryptographic payload is the most complex:
+We will use the ConfidentialMPTSend transaction as our benchmark, as its cryptographic payload is the most complex:
 
 - 3 Ciphertexts (Sender, Receiver, Issuer): 3×66 \= 198 bytes.
 - 2 Public Keys (Sender, Receiver): 2×33 \= 66 bytes.
@@ -794,7 +796,7 @@ Bulletproofs are an efficient choice. Even when reducing the bit length, the dec
 This section addresses common questions about Confidential MPTs and their design choices, ranging from basic functionality to advanced research topics.
 
 Q1. Can confidential and public balances coexist?\
-Yes, both issuers and holders may simultaneously maintain both public and confidential balances of the same MPT, fully supporting hybrid ecosystems with explicit conversions between the two using ConfidentialConvert transactions.
+Yes, both issuers and holders may simultaneously maintain both public and confidential balances of the same MPT, fully supporting hybrid ecosystems with explicit conversions between the two using ConfidentialMPTConvert transactions.
 
 Q2. Why introduce a separate Merge transaction?\
 A separate Merge transaction is introduced because incoming transfers could cause proofs to become stale if all balances were in a single field, while split balances (CB_S and CB_IN) isolate proofs to a stable spending balance, allowing the Merge transaction to consolidate funds deterministically and update the version counter without requiring a proof, making it cheap to validate.
@@ -839,7 +841,7 @@ Today's design relies on EC-ElGamal over secp256k1, which is not considered quan
 
 Q14. Why require explicit Merge instead of eliminating it in future?
 
-The explicit MergeInbox transaction is currently required because it deterministically solves the issue of "staleness," ensuring that all received funds are consolidated before spending. While issuers and wallets might prefer less operational overhead, the current design offers clear, verifiable guarantees. Future designs may revisit whether the second-account model or other protocol refinements could simplify or even eliminate this explicit merge requirement.
+The explicit MergeInbox transaction is currently required because it deterministically solves the issue of "staleness," ensuring that all received funds are consolidated before spending. While issuers and wallets might prefer less operational overhead, the current design offers clear, verifiable guarantees. Future designs may revisit whether we can eliminate this explicit merge requirement.
 
 ## Acknowledgements
 
