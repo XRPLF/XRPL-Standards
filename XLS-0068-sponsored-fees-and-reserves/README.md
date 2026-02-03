@@ -566,7 +566,7 @@ All transactions (other than pseudo-transactions) may use the `tfSponsorFee` fla
 
 However, some transactions will not support the `tfSponsorReserve` flag.
 
-- [`Batch` transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch)
+- [`Batch` transactions](../XLS-0056-batch/README.md)
   - `Batch` does not create any objects on its own, and therefore its use in the outer transaction would be confusing, as users may think that that means that all inner transactions are sponsored. The inner transactions should use `tfSponsorReserve` instead.
 - All [pseudo-transactions](https://xrpl.org/docs/references/protocol/transactions/pseudo-transaction-types/pseudo-transaction-types) (currently `EnableAmendment`, `SetFee`, and `UNLModify`)
   - The fees and reserves for those objects are covered by the network, not by any one account.
@@ -1339,7 +1339,7 @@ The current design also supports having different sponsors for different objects
 
 #### 20.3.2. Inner Object vs. Wrapper Transaction
 
-An alternative design considered was a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
+An alternative design considered was a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](../XLS-0056-batch/README.md), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
 
 It would look something like this:
 
@@ -1603,7 +1603,7 @@ The sponsor will have the standard problem of trying to get ahold of a debtor to
 
 ### A.6: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
 
-If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), to ensure that the sponsee can't do something else with the funds before the `SponsorshipTransfer` transaction is validated.
+If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](../XLS-0056-batch/README.md), to ensure that the sponsee can't do something else with the funds before the `SponsorshipTransfer` transaction is validated.
 
 ### A.7: Would sponsored accounts carry a lower reserve?
 
@@ -1633,7 +1633,7 @@ This is something that good tooling can solve. It could work similarly to how mu
 
 See Appendix B for the alternate designs that were considered and why this one was preferred. If you have another one in mind, please describe it in the comments and we can discuss.
 
-### A.14: How is this account sponsorship model different from/better than [XLS-23d, Lite Accounts](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0023-lite-accounts)?
+### A.14: How is this account sponsorship model different from/better than [XLS-23, Lite Accounts](../XLS-0023-lite-accounts/README.md)?
 
 - Sponsored accounts do not have any restrictions, and can hold objects.
 - Sponsored accounts require the same reserve as a normal account (this was one of the objections to the Lite Account proposal).
@@ -1643,6 +1643,6 @@ See Appendix B for the alternate designs that were considered and why this one w
 
 The answer to this question is still being explored. One possible solution is to add a second field, `Sponsor2`, to handle the other reserve.
 
-### A.16: How does this proposal work in conjunction with [XLS-49](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0049-multiple-signer-lists)? What signer list(s) have the power to sponsor fees or reserves?
+### A.16: How does this proposal work in conjunction with [XLS-49](../XLS-0049-multiple-signer-lists/README.md)? What signer list(s) have the power to sponsor fees or reserves?
 
 Currently, only the global signer list is supported. Another `SignerListID` value could be added to support sponsorship. Transaction values can only go up to $2^{16}$, since the `TransactionType` field is a `UInt16`, but the `SignerListID` field goes up to $2^{32}$, so there is room in the design for additional values that do not correlate to a specific transaction type.

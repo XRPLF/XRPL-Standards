@@ -11,7 +11,7 @@
 
 # Abstract
 
-One way to monetize NFT, AMM and other platforms that use XRP Ledger is to charge a fee from separate Payment transaction. XLS-56d (Batch/Atomic Transaction) has already been proposed as a way to do this in a single transaction. Here, I propose a feature that focuses on fee collection and makes monetization easier and simpler for platforms, wallet services, and users to use.
+One way to monetize NFT, AMM and other platforms that use XRP Ledger is to charge a fee from separate Payment transaction. [XLS-56](../XLS-0056-batch/README.md) (Batch/Atomic Transaction) has already been proposed as a way to do this in a single transaction. Here, I propose a feature that focuses on fee collection and makes monetization easier and simpler for platforms, wallet services, and users to use.
 
 # Specification
 
@@ -59,8 +59,8 @@ It is possible to make cross-currency payments by specifying different currencie
 The `Path` field cannot specified and the default Path is used.
 e.g.
 
-- AAA/BBB without XLS-60d
-- AAA/XRP, BBB/XRP, AAA/BBB with XLS-60d
+- AAA/BBB without XLS-60
+- AAA/XRP, BBB/XRP, AAA/BBB with XLS-60
 
 ## Multiple charges
 

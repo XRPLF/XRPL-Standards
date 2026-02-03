@@ -427,7 +427,7 @@ pub extern "C" fn finish() -> i32 {
 
 ### 14.2. Temporary Hold
 
-The escrow can only be released if the destination holds a specific [credential](https://opensource.ripple.com/docs/xls-70d-credentials/reference/credential).
+The escrow can only be released if the destination holds a specific [credential](https://xrpl.org/docs/concepts/decentralized-storage/credentials).
 
 ```rust
 pub extern "C" fn finish() -> i32 {
