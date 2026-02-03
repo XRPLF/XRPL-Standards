@@ -92,7 +92,7 @@ This section introduces WASM host functions for extensions on the XRP Ledger, en
 
 WASM code, whether in an extension or a smart contract, needs access to XRPL ledger data in order to be useful. A host function allows that access, in a secure way. Host functions can also be used to save gas/compute in WASM, as they can perform those same functions in C++ code instead, which will likely be more performant.
 
-Some examples from [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270):
+Some examples from [XLS-100](../XLS-0100-smart-escrows/README.md):
 
 - A notary escrow extension needs access to the triggering `EscrowFinish` transaction (to know who is sending the transaction).
 - An escrow checking for KYC needs access to ledger state, to determine if the destination has a given credential.

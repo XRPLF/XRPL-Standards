@@ -9,7 +9,7 @@
   created: 2023-02-12
 </pre>
 
-> This proposal replaces the original proposal for Concise Transaction Identifiers XLS-15d
+> This proposal replaces the original proposal for Concise Transaction Identifiers XLS-15
 
 # Quickstart
 

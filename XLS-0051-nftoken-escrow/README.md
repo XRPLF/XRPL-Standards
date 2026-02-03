@@ -1,5 +1,5 @@
 <pre>
-  xls: 51d
+  xls: 51
   title: NFToken Escrows
   author: Mayukha Vadari (@mvadari)
   created: 2023-11-17

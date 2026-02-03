@@ -60,7 +60,7 @@ This proposal involves:
 
 ### 2.1. Background: Pseudo-Accounts
 
-A pseudo-account ([XLS-64d](https://github.com/XRPLF/XRPL-Standards/discussions/191)) is an XRPL account that is impossible for any person to have the keys for (it is cryptographically impossible to have those keys). It may be associated with other ledger entries.
+A pseudo-account ([XLS-64](../XLS-0064-pseudo-account/README.md)) is an XRPL account that is impossible for any person to have the keys for (it is cryptographically impossible to have those keys). It may be associated with other ledger entries.
 
 Since it is not governed by any set of keys, it cannot be controlled by any user. Therefore, it may host smart contracts.
 
@@ -534,7 +534,7 @@ This standard doesn't add any new field to the [transaction common fields](https
 
 This flag should only be used if a transaction is submitted from a smart contract. This signifies that the transaction shouldn't be signed. Any transaction that is submitted normally that includes this flag should be rejected.
 
-Contract-submitted transactions will be processed in a method very similar to [Batch inner transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056d-batch) - i.e. executed within the `ContractCall` processing, rather than as a separate independent transaction. This allows the smart contract code to take actions based on whether the transaction was successful.
+Contract-submitted transactions will be processed in a method very similar to [Batch inner transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch) - i.e. executed within the `ContractCall` processing, rather than as a separate independent transaction. This allows the smart contract code to take actions based on whether the transaction was successful.
 
 ### 12.2. Metadata
 
@@ -850,7 +850,7 @@ How should object reserves be covered? Some options (numbered for ease of discus
    - Could be on the contract writer to figure out a way to handle this
    - If not, could be complex to figure out a good system
 4. A [Sponsor](https://github.com/XRPLF/XRPL-Standards/discussions/196)-esque way of keeping track of who owns the burden for certain objects (perhaps with some API calls - could default to the contract creator if the API isn't used)
-   - Downside: it would likely add an additional dependency to smart contracts (XLS-68d)
+   - Downside: it would likely add an additional dependency to smart contracts (XLS-68)
 5. Ignore the issue
    - This isn’t really a viable option, given the ledger load it would result in - it would defeat the purpose of reserves in the first place
 6. User data and reserves are handled by the user
@@ -910,7 +910,7 @@ The main differences:
 
 Use something akin to Ethereum’s Account Abstraction design ([ERC-4337](https://www.erc4337.io/)).
 
-Might involve [XLS-75d](https://github.com/XRPLF/XRPL-Standards/discussions/218) (Delegating Account Permissions).
+Might involve [XLS-75 (Permission Delegation)](../XLS-0075-permission-delegation/README.md).
 
 We're also investigating whether additional Smart Features can help with this problem.
 
