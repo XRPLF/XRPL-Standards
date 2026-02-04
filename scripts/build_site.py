@@ -7,6 +7,7 @@ Converts markdown XLS files to HTML and creates an index page.
 import os
 import shutil
 from pathlib import Path
+import re
 
 import markdown
 from jinja2 import Environment, FileSystemLoader
@@ -17,6 +18,9 @@ from collections import Counter
 
 def convert_markdown_to_html(content: str) -> str:
     """Convert markdown content to HTML."""
+    content = re.sub(r"</pre>(\s*)#", r"</pre>\1# Table of Contents\n\n[TOC]\n\n#", content)
+    content = re.sub(r"../(XLS-[0-9A-Za-z-]+)/README.md", r"./\1.html", content)
+
     md = markdown.Markdown(
         extensions=["extra", "codehilite", "toc", "tables"],
         extension_configs={
