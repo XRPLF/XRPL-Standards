@@ -460,25 +460,44 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 ##### 3.1.2.1 Failure Conditions
 
-- `Vault` object with the specified `VaultID` does not exist on the ledger.
-- The submitting account is not the `Owner` of the vault.
-- The `Data` field is larger than 256 bytes.
-- If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
-  - The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
-- The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
-- The `PermissionedDomain` object does not exist with the provided `DomainID`.
-- The transaction is attempting to modify an immutable field.
-- The transaction does not specify any of the modifiable fields.
+**Data Validation Errors** (`temMALFORMED`)                                                                                                                                           
+  
+1. The `VaultID` parameter is zero.                                                                                                                                                  
+2. The `Data` field is provided and is empty (zero length).
+3. The `Data` field is provided and is larger than the maximum allowed length (256 bytes).
+4. The `AssetsMaximum` parameter is provided and is negative (less than zero).
+5. None of the fields `DomainID`, `AssetsMaximum`, or `Data` are provided (no updates specified).
+
+**Protocol Errors**
+
+1. The `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
+2. The `Account` submitting the transaction is not the `Vault.Owner`. (`tecNO_PERMISSION`)
+3. The `MPTokenIssuance` object for vault shares does not exist. (`tefINTERNAL`)
+4. The `DomainID` parameter is provided and the `lsfVaultPrivate` flag is not set in the `Vault`. (`tecNO_PERMISSION`)
+5. The `DomainID` parameter is provided with a non-zero value and the `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
+6. The `DomainID` parameter is provided and the `lsfMPTRequireAuth` flag is not set in the vault share `MPTokenIssuance`. (`tefINTERNAL`)
+7. The `AssetsMaximum` parameter is provided with a non-zero value that is less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
 
 ##### 3.1.2.2 State Changes
 
-- Update mutable fields in the `Vault` ledger object.
-- If `DomainID` is provided:
-  - Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
+1. If the `Data` parameter is provided, the `Vault.Data` field is updated to the new value.
+2. If the `AssetsMaximum` parameter is provided, the `Vault.AssetsMaximum` field is updated to the new value.
+3. If the `DomainID` parameter is provided with a non-zero value, the `MPTokenIssuance.DomainID` field is set or updated to the new value.
+4. If the `DomainID` parameter is provided with a zero value and the `MPTokenIssuance.DomainID` field exists, the field is removed from the `MPTokenIssuance` object.
+5. If the `DomainID` parameter is provided, the vault share `MPTokenIssuance` object is updated.
+6. The `Vault` object is updated (even if only the `DomainID` was changed in the `MPTokenIssuance`).
 
 ##### 3.1.2.3 Invariants
 
-**TBD**
+VaultSet transaction must:
+
+1. Update an existing Vault.
+2. Not update Vault balances (assests or shares).
+3. Not exceed `AssetsMaximum` below `AssetsTotal`.
+4. Not change `AssetsTotal`.
+5. Not change `AssetsAvailable`.
+6. Not change `SharesTotal`,
+7. Not change _pseudo-account_ balance.
 
 [**Return to Index**](#index)
 
