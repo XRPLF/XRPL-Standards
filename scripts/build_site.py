@@ -18,14 +18,14 @@ from collections import Counter
 
 def convert_markdown_to_html(content: str) -> str:
     """Convert markdown content to HTML."""
-    content = re.sub(r"</pre>(\s*)#", r"</pre>\1# Table of Contents\n\n[TOC]\n\n#", content)
+    content = re.sub(r"</pre>(\s*)#", r"</pre>\1[TOC]\n\n#", content)
     content = re.sub(r"../(XLS-[0-9A-Za-z-]+)/README.md", r"./\1.html", content)
 
     md = markdown.Markdown(
         extensions=["extra", "codehilite", "toc", "tables"],
         extension_configs={
             "codehilite": {"css_class": "highlight"},
-            "toc": {"permalink": True},
+            "toc": {"permalink": True, "baselevel": 2, "toc_depth": 3, "title": "Table of Contents"},
         },
     )
     return md.convert(content)
