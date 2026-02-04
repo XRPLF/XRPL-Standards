@@ -512,22 +512,53 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ##### 3.1.3.1 Failure Conditions
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
-- The submitting account is not the `Owner` of the vault.
-- `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
-- The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
+**Data Validation Errors** (`temMALFORMED`)                                                                                                                                           
+  
+1. The `VaultID` parameter is zero.                                                                                                                                                  
+                
+**Protocol Errors**
+
+1. The `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
+2. The `Account` submitting the transaction is not the `Vault.Owner`. (`tecNO_PERMISSION`)
+3. The `Vault.AssetsAvailable` is not zero. (`tecHAS_OBLIGATIONS`)
+4. The `Vault.AssetsTotal` is not zero. (`tecHAS_OBLIGATIONS`)
+5. The `MPTokenIssuance` object for vault shares does not exist. (`tecOBJECT_NOT_FOUND`)
+6. The `MPTokenIssuance.Issuer` for vault shares does not match the `Vault.Account` (pseudo-account). (`tecNO_PERMISSION`)
+7. The `MPTokenIssuance.OutstandingAmount` for vault shares is not zero. (`tecHAS_OBLIGATIONS`)
+9. The vault's pseudo-account does not exist. (`tefBAD_LEDGER`)
+10. Failed to remove the `MPTokenIssuance` from the pseudo-account's owner directory. (`tefBAD_LEDGER`)
+11. The pseudo-account's owner directory still exists after removing the `MPTokenIssuance`. (`tecHAS_OBLIGATIONS`)
+12. The pseudo-account does not exist or the `AccountRoot.VaultID` does not match the `Vault` key. (`tefBAD_LEDGER`)
+13. The pseudo-account's `AccountRoot.Balance` is not zero. (`tecHAS_OBLIGATIONS`)
+14. The pseudo-account's `AccountRoot.OwnerCount` is not zero. (`tecHAS_OBLIGATIONS`)
+15. The pseudo-account's owner directory exists. (`tecHAS_OBLIGATIONS`)
+16. Failed to remove the `Vault` from the owner's directory. (`tefBAD_LEDGER`)
+17. The vault owner's account does not exist. (`tefBAD_LEDGER`)
 
 ##### 3.1.3.2 State Changes
 
-- Delete the `MPTokenIssuance` object for the vault shares.
-- Delete the `MPToken` or `RippleState` object corresponding to the vault's holding of the asset, if one exists.
-- Delete the `AccountRoot` object of the _pseudo-account_, and its `DirectoryNode` objects.
-- Release the Owner Reserve to the `Vault.Owner` account.
-- Delete the `Vault` object.
+1. The empty holding (either `MPToken` or `RippleState`) for the vault's `Asset` is removed from the pseudo-account.
+2. If the vault owner has an `MPToken` for vault shares, it is removed.
+3. The vault share `MPTokenIssuance` is removed from the pseudo-account's owner directory.
+4. The pseudo-account's `AccountRoot.OwnerCount` is decreased by `1`.
+5. The vault share `MPTokenIssuance` object is erased from the ledger.
+6. The pseudo-account (`AccountRoot`) is erased from the ledger.
+7. The `Vault` is removed from the owner's directory.
+8. The owner's `AccountRoot.OwnerCount` is decreased by `2` (for the Vault and PseudoAccount).
+9. The `Vault` object is erased from the ledger.
+10. The vault's asset association is updated (implementation-specific tracking).
 
 ##### 3.1.3.3 Invariants
 
-**TBD**
+VaultDelete transaction must:
+
+1. Delete the Vault ledger entry.
+2. Delete only a single Vault.
+3. Not alter any immutable fields.
+4. Not allow deleting a Vault with `AssetsTotal > 0`.
+5. Not allow deleting a Vault with `AssetsAvailable > 0`.
+6. Not allow deleting a Vault with `SharesTotal > 0`.
+
 
 [**Return to Index**](#index)
 
