@@ -8,9 +8,10 @@
   requires: XLS-65, XLS-64
   created: 2024-10-18
   updated: 2026-01-14
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
-## _Abstract_
+## Abstract
 
 Decentralized Finance (DeFi) lending represents a transformative force within the blockchain ecosystem. It revolutionizes traditional financial services by offering a peer-to-peer alternative without intermediaries like banks or financial institutions. At its core, DeFi lending platforms empower users to borrow and lend digital assets directly, fostering financial inclusion, transparency, and efficiency.
 
@@ -491,7 +492,7 @@ The `Loan` object supports the following flags:
 
 ##### 2.2.2.2 TotalValueOutstanding
 
-The total outstanding value of the Loan, including management fee charges against the interest. To calculate the outstanding interest portion, use this formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
+The total outstanding value of the Loan, including management fee charged against the interest.
 
 ##### 2.2.2.3 PrincipalOutstanding
 
@@ -501,7 +502,11 @@ The principal amount that the Borrower still owes. This amount decreases each ti
 
 The remaining Management Fee owed to the LoanBroker. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
 
-##### 2.2.2.5 PeriodicPayment
+##### 2.2.2.5 TotalInterestOutstanding
+
+TotalInterestOutstanding represents the interest amount due from the Borrower. This value is not stored explicitly but is derived using the following formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
+
+##### 2.2.2.6 PeriodicPayment
 
 The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `11` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
 
@@ -946,9 +951,9 @@ The final transaction must include exactly one of
 1. The `SigningPubKey` and `TxnSignature` fields, or
 2. The `Signers` field and, optionally, an empty `SigningPubKey`.
 
-The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
+The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
-The total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base_fee$.
+The total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\_fee$.
 
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
@@ -1369,6 +1374,10 @@ These transfers are performed according to the asset type:
 
 **TBD**
 
+## 4. Security Considerations
+
+The protocol makes strong trust assumptions between Vault Depositors, LoanBroker and Borrower. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due dilligence and necessary off-chain checks.
+
 # Appendix
 
 ## A-1 F.A.Q.
@@ -1531,7 +1540,7 @@ $$
 
 **Where:**
 
-- `latePaymentInterest_{gross}` = Gross late payment interest (from formula 15)
+- $latePaymentInterest_{gross}$ = Gross late payment interest (from formula 15)
 - `managementFeeRate` = `LoanBroker.ManagementFeeRate`
 
 #### 3.3 Overpayment Management Fee
@@ -1544,7 +1553,7 @@ $$
 
 **Where:**
 
-- `overpaymentInterest_{gross}` = Gross overpayment interest (from formula 20)
+- $overpaymentInterest_{gross}$ = Gross overpayment interest (from formula 20)
 - `managementFeeRate` = `LoanBroker.ManagementFeeRate`
 
 **Note:** In all cases, the management fee is deducted from the gross interest before calculating the net interest that accrues to the vault.
@@ -1570,7 +1579,7 @@ latePaymentInterest_{net} = latePaymentInterest_{gross} - managementFee_{late} \
 $$
 
 - `latePeriodicRate` is defined by formula (2)
-- `managementFee_{late}` is defined by formula (13)
+- $managementFee_{late}$ is defined by formula (13)
 
 #### 4.2 Value Impact
 
@@ -1615,7 +1624,7 @@ $$
 
 **Where:**
 
-- `managementFee_{overpayment}` is defined by formula (14)
+- $managementFee_{overpayment}$ is defined by formula (14)
 
 #### 5.2 Principal Reduction
 
@@ -1626,10 +1635,10 @@ $$
 **Where:**
 
 - `overpaymentAmount` = The excess funds after all periodic payments are settled (formula 19)
-- `overpaymentInterest_{net}` = Gross overpayment interest minus management fee (formula 21)
+- $overpaymentInterest_{net}$ = Gross overpayment interest minus management fee (formula 21)
 - `overpaymentFee` = Percentage-based fee on the overpayment amount (formula 22)
 
-**Note:** The management fee has already been deducted from `overpaymentInterest_{net}`, so it does not appear as a separate term in this formula.
+**Note:** The management fee has already been deducted from $overpaymentInterest_{net}$, so it does not appear as a separate term in this formula.
 
 #### 5.3 Re-amortization Value Change
 
@@ -1687,7 +1696,7 @@ $$
 **Where:**
 
 - `oldTotalValue` = `Loan.TotalValueOutstanding` before the overpayment
-- `newTotalValueOutstanding_{ledger}` = The new total value after re-amortization, adjusted for rounding
+- $newTotalValueOutstanding_{ledger}$ = The new total value after re-amortization, adjusted for rounding
 - `overpaymentAmount` = The excess funds applied to principal
 
 **Note on Formula Numbering**: Formulas 24a-24c represent intermediate calculation steps in the re-amortization process. The final result is formula (24). This sub-numbering preserves the sequential formula count while showing the logical flow.
@@ -1704,8 +1713,8 @@ $$
 
 **Where:**
 
-- `overpaymentInterest_{net}` from formula (21)
-- `valueChange_{re-amortization}` from formula (24)
+- $overpaymentInterest_{net}$ from formula (21)
+- $valueChange_{re-amortization}$ from formula (24)
 
 **Note:** Typically `valueChange_{total} < 0` because the reduction in future interest from re-amortization outweighs the interest charged on the overpayment itself.
 
@@ -1740,13 +1749,14 @@ $$
 
 **Where:**
 
-- `InterestOutstanding_{net}` = Remaining net interest from ledger values:
-  - $$totalInterestOutstanding\_{net} = The total interest outstanding for the Loan
-- **Note:**
+- $InterestOutstanding_{net}$ = Remaining net interest from ledger values:
+- $totalInterestOutstanding_{net}$ = The total interest outstanding for the Loan
+
+**Note:**
 
 - Can be positive or negative depending on penalty size
-- Negative if `(accruedInterest + prepaymentPenalty) < InterestOutstanding_{net}` (vault loses future interest)
-- Positive if `(accruedInterest + prepaymentPenalty) > InterestOutstanding_{net}` (penalty exceeds forgiven interest)
+- Negative if $(accruedInterest + prepaymentPenalty) < InterestOutstanding_{net}$ (vault loses future interest)
+- Positive if $(accruedInterest + prepaymentPenalty) > InterestOutstanding_{net}$ (penalty exceeds forgiven interest)
 
 ### 7. Theoretical Loan Value
 
@@ -1795,7 +1805,7 @@ $$
 **Where:**
 
 - `PrincipalOutstanding` = Outstanding principal balance (`Loan.PrincipalOutstanding`)
-- `InterestOutstanding_{net}` = Remaining net interest excluding management fee (formula 33 applied to ledger values)
+- $InterestOutstanding_{net}$ = Remaining net interest excluding management fee (formula 33 applied to ledger values)
 - `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
 - `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
