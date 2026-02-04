@@ -97,6 +97,8 @@ There are two ways in which he could do this:
 
 ## 4. Ledger Entries: Common Fields
 
+This section describes the changes to the common fields of ledger entries, to indicate whether or not they are sponsored, and if so, who the sponsor is.
+
 ### 4.1. Fields
 
 As a reference, here are the fields that all ledger objects currently have:
@@ -106,15 +108,19 @@ As a reference, here are the fields that all ledger objects currently have:
 | `LedgerEntryType` | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The type of ledger entry.               |
 | `Flags`           | ✔️        | ✔️        | N/A           | `number`  | `UInt16`      | Set of bit-flags for this ledger entry. |
 
-We propose this additional field:
+This spec proposes one additional field:
 
 | Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                                                        |
 | ---------- | --------- | --------- | ------------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Sponsor`  |           |           | N/A           | `string`  | `AccountID`   | The sponsor paying the owner reserve for a given ledger object. When present, it indicates that the reserve burden for that object has been shifted from the owner to the sponsor. |
 
-### 4.2. Invariant Checks
+### 4.2. Ownership
 
-#### 4.2.1. Allowed Ledger Entry Types
+Any sponsored object is still owned by the original owner, and the sponsor is not added as an additional owner.
+
+### 4.3. Invariant Checks
+
+#### 4.3.1. Allowed Ledger Entry Types
 
 The `Sponsor` field **may** appear on the following ledger entry types:
 
@@ -142,7 +148,7 @@ The `Sponsor` field **must not** appear on:
 - `FeeSettings` objects (global ledger objects)
 - `NegativeUNL` objects (global ledger objects)
 
-#### 4.2.2. Constraints
+#### 4.3.2. Constraints
 
 - The field **must** be omitted when there is no sponsor.
 - When present, the field **must** contain a valid `AccountID` that exists on the ledger.
@@ -154,7 +160,7 @@ The `Sponsor` field **must not** appear on:
 
 _NOTE: A sponsor may also be a sponsee._
 
-#### 4.2.4. Authoritative Indication
+#### 4.3.4. Authoritative Indication
 
 The presence or absence of `Sponsor` is the authoritative indication of whether an object is sponsored for reserves. The presence of this field triggers the following behaviors:
 
@@ -256,7 +262,7 @@ The following invariants must always hold for a `Sponsorship` object:
 - At least one of `FeeAmount` and `ReserveCount` must be included
 - Both `Owner` and `Sponsee` must be valid `AccountID` values that exist on the ledger
 
-_NOTE: The invariants in [4.2](#42-invariant-checks) also apply to `Sponsorship` objects, as they apply to all objects._
+_NOTE: The invariants in [4.3](#43-invariant-checks) also apply to `Sponsorship` objects, as they apply to all objects._
 
 ### 5.8. RPC Name
 
@@ -331,7 +337,7 @@ This spec proposes these additional fields:
 
 #### 6.1.1. `Sponsor`
 
-The `Sponsor` field is already added in the ledger common fields (see section [4.2](#42-sponsoraccount)), but it has some additional rules associated with it on the `AccountRoot` object.
+The `Sponsor` field is already added in the ledger common fields (see section [4.1](#41-fields)), but it has some additional rules associated with it on the `AccountRoot` object.
 
 This field is included if the account was created with a sponsor paying its account reserve. If this sponsored account is deleted, the destination of the `AccountDelete` transaction must equal `Sponsor`, so that the sponsor can recoup their fees.
 
@@ -434,7 +440,7 @@ Existing invariants remain.
 
 The common field `Sponsor` **must not** be on any `RippleState` objects (they must use `HighSponsor` and `LowSponsor` instead).
 
-_NOTE: The invariants in [4.2](#42-invariant-checks) also apply to `RippleState` objects, as they apply to all objects._
+_NOTE: The invariants in [4.3](#43-invariant-checks) also apply to `RippleState` objects, as they apply to all objects._
 
 ### 7.3. Example JSON
 
@@ -478,7 +484,7 @@ We propose these modifications:
 
 | Field Name         | Required? | JSON Type | Internal Type | Description                                                                                                                                                           |
 | ------------------ | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sponsor`          |           | `string`  | `STAccount`   | The sponsoring account.                                                                                                                                               |
+| `Sponsor`          |           | `string`  | `AccountID`   | The sponsoring account.                                                                                                                                               |
 | `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                              |
 | `SponsorSignature` |           | `object`  | `STObject`    | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
 
@@ -605,6 +611,7 @@ This transaction creates, updates, and deletes the `Sponsorship` object.
 | ----------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                    |
 | `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the sponsor or the sponsee.                                                                                                         |
+| `Flags`           |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                 |
 | `Sponsor`         |           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.              |
 | `Sponsee`         |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `Sponsor`.                                                                     |
 | `FeeAmount`       |           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
@@ -634,6 +641,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 - Neither `Sponsor` nor `Sponsee` is specified (`temMALFORMED`)
 - `Sponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
 - `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
+- `MaxFee` is greater than `FeeAmount` (`temBAD_AMOUNT`)
 - `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
 - `Sponsor` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
 - `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
@@ -693,7 +701,7 @@ _Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger 
 
 ## 10. Transaction: `SponsorshipTransfer`
 
-This transaction transfers a sponsor relationship for a particular ledger object's object reserve. The sponsor relationship can either be passed on to a new sponsor, or dissolved entirely (with the sponsee taking on the reserve). Either the sponsor or sponsee may submit this transaction at any point in time.
+This transaction transfers a sponsor relationship for a particular ledger object's reserve. The sponsor relationship can either be passed on to a new sponsor, or dissolved entirely (with the sponsee taking on the reserve). Either the sponsor or sponsee may submit this transaction at any point in time.
 
 There are three valid transfer scenarios:
 
@@ -711,8 +719,8 @@ There are three valid transfer scenarios:
 | `TransactionType`  | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipTransfer`).                                                                                                                         |
 | `Account`          | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the current sponsor or the current sponsee.                                                                   |
 | `ObjectID`         |           | `string`  | `Hash256`     | The ID of the object to transfer sponsorship.                                                                                                                         |
-| `Sponsor`          |           | `string`  | `STAccount`   | The new sponsor of the object.                                                                                                                                        |
-| `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve). The `tfSponsorReserve` flag **must** be included.                            |
+| `Sponsor`          |           | `string`  | `AccountID`   | The new sponsor of the object.                                                                                                                                        |
+| `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                              |
 | `SponsorSignature` |           | `object`  | `STObject`    | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
 
 #### 10.1.1. `ObjectID`
@@ -729,27 +737,54 @@ In this case, if `Sponsor` is included with the `tfSponsorReserve` flag, then th
 
 If there is no `Sponsor` field, or if the `tfSponsorReserve` flag is not included, then the burden of the reserve will be passed back to the ledger object's owner (the former sponsee).
 
-### 10.2. Ending the Sponsorship for a Sponsored Ledger Object
+### 10.2. Sponsorship Transfer Scenarios
 
-A sponsored ledger object will have the `Sponsor` field attached to it. Ending the sponsor relationship for a sponsored ledger object requires the `ObjectID` parameter, to specify which ledger object.
+#### 10.2.1. Transferring from Sponsor to Sponsee (Sponsored to Unsponsored)
 
-Two accounts are allowed to submit a `SponsorshipTransfer` relationship to end the sponsor relationship for a sponsored ledger object: either the sponsor for that object or the owner of that object (the sponsee).
+This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time.
 
-### 10.3. Migrating a Sponsorship to a New Account
+The following fields indicate this scenario:
 
-A sponsorship can be migrated to a new account by including the `Sponsor` field with the `tfSponsorReserve` flag. This can be done for either a sponsored account or a sponsored ledger object.
+- `ObjectID` must be included (if sponsored object)
+- `Sponsor` must be excluded
+- `SponsorFlags.tfSponsorReserve` must be excluded
+- The object specified by `ObjectID` must be have a `Sponsor` field
 
-Two accounts are allowed to submit a `SponsorshipTransfer` relationship to migrate the sponsor relationship: the sponsor or the sponsee.
+#### 10.2.2. Transferring from Sponsee to Sponsor (Unsponsored to Sponsored)
 
-The sponsor will likely only rarely want to do this (such as if they are transferring accounts), but the sponsee may want to migrate if they change providers.
+This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction.
 
-### 10.4. Transaction Fee
+The following fields indicate this scenario:
+
+- `ObjectID` must be included (if sponsored object)
+- `Sponsor` must be included
+- `SponsorFlags.tfSponsorReserve` must be included
+- The object specified by `ObjectID` must **not** have a `Sponsor` field
+
+#### 10.2.3. Transferring from Sponsor to New Sponsor
+
+This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction.
+
+The following fields indicate this scenario:
+
+- `ObjectID` must be included (if sponsored object)
+- `Sponsor` must be included
+- `SponsorFlags.tfSponsorReserve` must be included
+- The object specified by `ObjectID` must have a `Sponsor` field
+
+_NOTE: The only difference between this scenario and the one specified in [10.2.2](#1022-transferring-from-sponsee-to-sponsor-unsponsored-to-sponsored) is that in this case, the object specified by `ObjectID` must already have a `Sponsor` field._
+
+#### 10.2.4. Sponsorship Transfer for Accounts
+
+The same 3 scenarios above apply to accounts as well. The only difference is that for accounts, the `ObjectID` field is not included, and instead the `Account` field is used to specify which account the sponsorship is changing for.
+
+### 10.3. Transaction Fee
 
 **Fee Structure:** Standard
 
 This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
 
-### 10.5. Failure Conditions
+### 10.4. Failure Conditions
 
 All failure conditions mentioned in [section 8.3](#83-failure-conditions) still apply here.
 
@@ -774,14 +809,14 @@ Additional failure conditions specific to `SponsorshipTransfer`:
   - The new sponsor account does not exist (`terNO_ACCOUNT`)
   - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
-### 10.6. State Changes
+### 10.5. State Changes
 
 - The `Sponsor` field on the object specified by `ObjectID` is deleted if the `tx.Sponsor` is the object's `Owner`, otherwise the `Sponsor` field is updated to the new `tx.Sponsor`.
 - The old sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented by one.
 - The new sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` incremented by one.
 - If there is no new sponsor, then the owner's `SponsoredOwnerCount` will be decremented by one.
 
-### 10.7. Example JSON
+### 10.6. Example JSON
 
 ```json
 {
@@ -1350,7 +1385,7 @@ It would look something like this:
 | Field Name        | Required | JSON Type | Internal Type | Description                                                              |
 | ----------------- | -------- | --------- | ------------- | ------------------------------------------------------------------------ |
 | `TransactionType` | Yes      | `string`  | `UInt16`      | The transaction type (`Relay`).                                          |
-| `Account`         | Yes      | `string`  | `STAccount`   | The sponsor of the transaction.                                          |
+| `Account`         | Yes      | `string`  | `AccountID`   | The sponsor of the transaction.                                          |
 | `Transaction`     | Yes      | `object`  | `STTx`        | The sponsee's transaction.                                               |
 | `Fee`             | Yes      | `string`  | `STAmount`    | The fee for the transaction. This should match the fee in `Transaction`. |
 
