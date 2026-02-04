@@ -465,7 +465,10 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 - Update mutable fields in the `Vault` ledger object.
 - If `DomainID` is provided:
-  - Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
+  - If `DomainID` is zero:
+    - Clear `MPTokenIssuance(Vault.ShareMPTID).DomainID`
+  - Otherwise:
+    - Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
 
 ##### 3.1.2.3 Invariants
 
