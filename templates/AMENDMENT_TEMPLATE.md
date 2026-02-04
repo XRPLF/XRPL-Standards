@@ -234,7 +234,7 @@ _[An indexed list of all conditions that cause the transaction to fail, with cor
 
 #### 3.4.2. Protocol-Level Failures
 
-[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code.]
+_[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code.]_
 
 1. `[Description of failure condition]` (`[ERROR_CODE]`)
 2. `[Description of failure condition]` (`[ERROR_CODE]`)
@@ -309,7 +309,7 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.3. Failure Conditions
 
-[An indexed list of RPC error codes.]
+_[An indexed list of RPC error codes.]_
 
 1. `[Description of failure condition]` (`[ERROR_CODE]`)
 2. `[Description of failure condition]` (`[ERROR_CODE]`)
