@@ -131,11 +131,11 @@ A vault has the following fields:
 | `Account`           |    `N/A`    | :heavy_check_mark: |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
 | `Data`              |    `Yes`    |                    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
 | `Asset`             |    `No`     | :heavy_check_mark: | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
-| `AssetsTotal`       |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
-| `AssetsAvailable`   |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
-| `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
-| `AssetsMaximum`     |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
-| `ShareMPTID`        |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
+| `AssetsTotal`       |    `N/A`    | :heavy_check_mark: |      `string`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
+| `AssetsAvailable`   |    `N/A`    | :heavy_check_mark: |      `string`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
+| `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `string`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
+| `AssetsMaximum`     |    `Yes`    |                    |      `string`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
+| `ShareMPTID`        |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    `No`     | :heavy_check_mark: |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
@@ -397,43 +397,52 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.1.1.4 Failure Conditions
 
-- The `Asset` is `XRP`:
-  - The `Scale` parameter is provided.
+ **Data Validation Errors** (`temMALFORMED`)                                                                                                                                           
+                                                                                                                                                                                     
+1. The `Data` field is larger than the maximum allowed length (256 bytes).                                                                                                           
+2. The `WithdrawalPolicy` parameter is provided and is not equal to `vaultStrategyFirstComeFirstServe`.
+3. The `DomainID` parameter is zero.                                                                                                                                                 
+4. The `DomainID` parameter is provided and the `tfVaultPrivate` flag is not set.                                                                                                  
+5. The `AssetsMaximum` parameter is negative (less than zero).
+6. The `MPTokenMetadata` field length is zero.
+7. The `MPTokenMetadata` field length exceeds the maximum allowed length.
+8. The `Asset` is `XRP` and the `Scale` parameter is provided.
+9. The `Asset` is `MPT` and the `Scale` parameter is provided.
+10. The `Asset` is an `IOU` and the `Scale` parameter is greater than `18`.
 
-- The `Asset` is `MPT`:
-  - The `Scale` parameter is provided.
-  - The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
-  - The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
+**Protocol Errors**
 
-- The `Asset` is an `IOU`:
-  - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `Scale` parameter is provided, and is less than **0** or greater than **18**.
-
-- The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
-
-- The `PermissionedDomain` object does not exist with the provided `DomainID`.
-
-- The `Data` field is larger than 256 bytes.
-- The account submiting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
+1. The `Asset` issuer is a pseudo-account (e.g., AMM account, another Vault). (`tecWRONG_ASSET`)
+2. The `Asset` is an `IOU` and the `lsfGlobalFreeze` flag is set on the issuing account. (`tecFROZEN`)
+3. The `Asset` is an `MPT` and the `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (`tecLOCKED`)
+4. The `Asset` is an `MPT` and the `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object. (`tecLOCKED`)
+5. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
+6. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve (creating Vault + PseudoAccount requires reserve for 2 objects).
+(`tecINSUFFICIENT_RESERVE`)
+7. The calculated pseudo-account address collides with an existing address. (`terADDRESS_COLLISION`)
 
 ##### 3.1.1.5 State Changes
 
-- Create a new `Vault` ledger object.
-- Create a new `MPTokenIssuance` ledger object for the vault shares.
-  - If the `DomainID` is provided:
-    - `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
-  - Create an `MPToken` object for the Vault Owner to hold Vault Shares.
-- Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
-
-- If `Vault.Asset` is an `IOU`:
-  - Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.
-
-- If `Vault.Asset` is an `MPT`:
-  - Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
-
+1. A new `Vault` ledger entry is created with the `VaultID` calculated from the owner's account and transaction sequence.                                                            
+2. The `Vault` is linked to the owner's directory via `OwnerNode`.                                                                                                                 
+3. The owner's `AccountRoot.OwnerCount` is increased by `2` (for the Vault and PseudoAccount).
+4. A new pseudo-account (`AccountRoot`) is created for the Vault with the `Account` field derived from the `VaultID`.
+5. An empty holding is created for the vault's `Asset` on the pseudo-account (either an `MPToken` or `RippleState` entry depending on asset type).
+6. A new `MPTokenIssuance` is created for vault shares, owned by the pseudo-account, with sequence `1`.
+7. The vault share `MPTokenIssuance` flags are set based on transaction flags:
+    - If `tfVaultShareNonTransferable` is not set: `lsfMPTCanEscrow`, `lsfMPTCanTrade`, and `lsfMPTCanTransfer` are enabled.
+    - If `tfVaultPrivate` is set: `lsfMPTRequireAuth` is enabled.
+8. An `MPToken` is created for the vault owner, authorizing them to hold vault shares.
+9. If `tfVaultPrivate` is set, an `MPToken` is created for the pseudo-account with the vault owner as holder, setting the authorized flag.
+  
 ##### 3.1.1.6 Invariants
 
-**TBD**
+VaultCreate transaction must:
+1. Not update any other Vault.
+2. Creat an empty Vault (asset and share balances are zero).
+3. Use Vault _pseudo-account_ as the issuer of shares.
+4. The _pseudo-account_ must exist.
+5. The _pseudo-account_ must link to the created Vault.
 
 [**Return to Index**](#index)
 
