@@ -701,7 +701,7 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `76`      | The transaction type.                             |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to deposit.          |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.          |
 
 ##### 3.1.3.1 Failure Conditions
 
@@ -767,7 +767,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `77`      | Transaction type.                                                       |
 | `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |       0       | The Fist-Loss Capital amount to withdraw.                               |
+| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                               |
 | `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
 ##### 3.1.4.1 Failure Conditions
