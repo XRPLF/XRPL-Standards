@@ -222,7 +222,7 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 ### 3.4. Failure Conditions
 
-[An indexed list of all conditions that cause the transaction to fail, with corresponding error codes. Group failure conditions into two categories: data verification, invalid field values, protocol-level logic.]
+_[An indexed list of all conditions that cause the transaction to fail, with corresponding error codes. Group failure conditions into two categories: data verification, invalid field values, protocol-level logic.]_
 
 #### 3.4.1. Data Verification
 
@@ -234,7 +234,7 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 #### 3.4.2. Protocol-Level Failures
 
-[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter` code.]
+[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code.]
 
 1. `[Description of failure condition]` (`[ERROR_CODE]`)
 2. `[Description of failure condition]` (`[ERROR_CODE]`)
