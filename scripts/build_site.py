@@ -21,7 +21,7 @@ def convert_markdown_to_html(content: str) -> str:
     # Insert a TOC marker after the first metadata block, unless one already exists.
     if "[TOC]" not in content:
         content = re.sub(r"</pre>", "</pre>\n\n[TOC]\n\n", content, count=1)
-    content = re.sub(r"../(XLS-[0-9A-Za-z-]+)/README.md", r"./\1.html", content)
+    content = re.sub(r"\.\./(XLS-[0-9A-Za-z-]+)/README\.md", r"./\1.html", content)
 
     md = markdown.Markdown(
         extensions=["extra", "codehilite", "toc", "tables"],
