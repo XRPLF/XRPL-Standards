@@ -133,7 +133,33 @@ In other words, the fee is twice the base fee (a total of 20 drops when there is
 
 The fees for the individual inner transactions are paid here instead of in the inner transaction itself, to ensure that fee escalation is calculated on the total cost of the transaction instead of just the overhead.
 
-### 2.3. Metadata
+### 2.3. Failure Conditions
+
+The standard transaction failure conditions still apply here.
+
+- The `Flags` field is not set to exactly one of the supported batch modes.
+- Inner transactions
+  - There are fewer than 2 transactions in the `RawTransactions` field.
+  - There are more than 8 transactions in the `RawTransactions` field.
+  - The `RawTransactions` field contains a transaction that is not a valid transaction.
+  - One of the inner transactions is invalid (i.e. has a `Fee` greater than 0, has a non-empty `SigningPubKey`, or has a `TxnSignature` or `Signers` field).
+  - One of the inner transaction has `TransactionType` of `Batch`.
+  - There is a duplicate transaction in the `RawTransactions` field.
+  - One of the inner transactions does not have the `tfInnerBatchTxn` flag set.
+  - One of the inner transactions fails its preflight checks (i.e. is invalid, irrespective of ledger state).
+  - Either both or neither of `TicketSequence` and `Sequence` are set.
+- `BatchSigners`
+  - `BatchSigners` is included, but the length is 0.
+  - The `BatchSigners` field is included, but it is not needed (i.e. all inner transactions are from the same account as the outer transaction).
+  - The `BatchSigners` field is not included, but it is needed (i.e. there are inner transactions from multiple accounts, but the outer transaction is not signed by all of them).
+  - The `BatchSigners` field is included, but it contains a signature from an account that does not have any inner transactions.
+  - The `BatchSigners` field contains a signature from an account that is not a signer on the outer transaction.
+
+### 2.4. State Changes
+
+The state changes for the outer transaction are the same as for a normal transaction. The state changes for the inner transactions are the same as if they were submitted as normal transactions.
+
+### 2.5. Metadata
 
 The inner transactions will be committed separately to the ledger and will therefore have separate metadata. This is to ensure better backwards compatibility for legacy systems, so they can support `Batch` transactions without needing any changes to their systems.
 
@@ -147,60 +173,23 @@ For example, a ledger that only has one `Batch` transaction containing 2 inner t
 ]
 ```
 
-#### 2.6.1. Outer Transactions
+#### 2.5.1. Outer Transactions
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing. The error code will also only be based on the outer transaction processing (e.g. sequence and fee), and it will return a `tesSUCCESS` error even if the inner transaction processing fails.
 
-#### 2.6.2. Inner Transactions
+#### 2.5.2. Inner Transactions
 
 Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Batch` transactions as if they were normal.
 
 There will also be a pointer back to the parent outer transaction (`ParentBatchID`).
 
-## 3. Transaction Common Fields
+### 2.6. Example JSONs
 
-This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
-
-| Flag Name         | Value        |
-| ----------------- | ------------ |
-| `tfInnerBatchTxn` | `0x40000000` |
-
-This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
-
-## 4. Security
-
-### 4.1. Trust Assumptions
-
-Regardless of how many accounts' transactions are included in a `Batch` transaction, all accounts need to sign the collection of transactions.
-
-#### 4.1.1. Single Account
-
-In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
-
-#### 4.1.2. Multi Account
-
-The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless swap via a multi-account `Batch`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Batch` transaction, so Alice must provide her part of the swap to him.
-
-If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned.
-
-If Alice just signs her part of the `Batch` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Batch` transaction (and all its inner transactions) must be signed by all parties.
-
-### 4.2. Inner Transaction Safety
-
-An inner batch transaction is a very special case. It doesn't include a signature or a fee (since those are both included in the outer transaction). Therefore, they must be handled very carefully to ensure that someone can't somehow directly submit an inner `Batch` transaction without it being included in an outer transaction.
-
-Namely:
-
-- Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
-- Inner transactions may not be directly submitted via the `submit` RPC.
-
-## 5. Examples
-
-### 5.1. One Account
+#### 2.6.1. One Account
 
 In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
-#### 5.1.1. Sample Transaction
+##### 2.6.1.1. Sample Transaction
 
 <details open>
 <summary>
@@ -253,7 +242,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
 
 </details>
 
-#### 5.1.2. Sample Ledger
+##### 2.6.1.2. Sample Ledger
 
 <details open>
 <summary>
@@ -335,11 +324,11 @@ Note that the inner transactions are committed as normal transactions.
 
 </details>
 
-### 5.2. Multiple Accounts
+#### 2.6.2. Multiple Accounts
 
 In this example, two users are atomically swapping their tokens, XRP for GKO.
 
-#### 5.2.1. Sample Transaction
+##### 2.6.2.1. Sample Transaction
 
 <details open>
 <summary>
@@ -401,7 +390,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
 
 </details>
 
-#### 5.2.2. Sample Ledger
+##### 2.6.2.2. Sample Ledger
 
 <details open>
 <summary>
@@ -493,6 +482,43 @@ Note that the inner transactions are committed as normal transactions.
 ```
 
 </details>
+
+## 3. Transaction Common Fields
+
+This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
+
+| Flag Name         | Value        |
+| ----------------- | ------------ |
+| `tfInnerBatchTxn` | `0x40000000` |
+
+This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
+
+## 4. Security
+
+### 4.1. Trust Assumptions
+
+Regardless of how many accounts' transactions are included in a `Batch` transaction, all accounts need to sign the collection of transactions.
+
+#### 4.1.1. Single Account
+
+In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
+
+#### 4.1.2. Multi Account
+
+The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless swap via a multi-account `Batch`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Batch` transaction, so Alice must provide her part of the swap to him.
+
+If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned.
+
+If Alice just signs her part of the `Batch` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Batch` transaction (and all its inner transactions) must be signed by all parties.
+
+### 4.2. Inner Transaction Safety
+
+An inner batch transaction is a very special case. It doesn't include a signature or a fee (since those are both included in the outer transaction). Therefore, they must be handled very carefully to ensure that someone can't somehow directly submit an inner `Batch` transaction without it being included in an outer transaction.
+
+Namely:
+
+- Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
+- Inner transactions may not be directly submitted via the `submit` RPC.
 
 # Appendix
 
