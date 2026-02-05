@@ -459,10 +459,10 @@ The `LoanID` is calculated as follows:
 | `LoanBrokerNode`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                               |
 | `LoanBrokerID`             |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                        |
 | `Borrower`                 |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                                      |
-| `LoanOriginationFee`       |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal nds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                         |
+| `LoanOriginationFee`       |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                       |
 | `LoanServiceFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                        |
 | `LatePaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                         |
-| `ClosePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment full payment is made.                                                                            |
+| `ClosePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a full payment is made.                                                                                    |
 | `OverpaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                                     |
 | `InterestRate`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Annualized interest rate of the Loan in 1/10th basis points.                                                                                                          |
 | `LateInterestRate`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                         |
@@ -656,11 +656,17 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 - `LoanBroker.OwnerCount != 0` (has outstanding loans).
 - `Vault(LoanBroker.VaultID)` does not exist.
 - `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`).
-- `LoanBroker.CoverAvailable > 0` and the broker owner is deep frozen for the `Vault.Asset`:
+- `LoanBroker.CoverAvailable > 0`:
   - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+    - If Broker Owner is deep frozen for the `Vault.Asset`:
+      - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+    - The LoanBroker _pseudo-account_ `RippleState` balance is greater than zero.
   - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
+    - If Broker Owner is deep frozen for the `Vault.Asset`:
+      - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
+    - The LoanBroker _pseudo-account_ `MPToken.MPTAmount` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
+  - If the `Vault.Asset` is `XRP`:
+    - The LoanBroker _pseudo-account_ `AccountRoot.Balance` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
 
 ##### 3.1.2.2 State Changes
 
@@ -697,23 +703,22 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 The transaction deposits First Loss Capital into the `LoanBroker` object.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                       |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------ |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `76`      | The transaction type.                             |
-| `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.          |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                       |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :------------------------------------------------ |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `76`      | The transaction type.                             |
+| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.          |
 
 ##### 3.1.3.1 Failure Conditions
 
 - `LoanBrokerID` is zero.
 - `Amount <= 0`.
-- `Amount` asset does not match the Amount of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+- `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
 - `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
 
 - The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
 - `Vault(LoanBroker.VaultID)` does not exist.
-- `Amount.asset` does not match `Vault.Asset`.
 
 - The asset is not transferable:
   - If `Vault.Asset` is an `MPT`: The `MPTokenIssuance` does not have the `lsfMPTCanTransfer` flag set.
@@ -763,12 +768,12 @@ The transaction deposits First Loss Capital into the `LoanBroker` object.
 
 The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from the `LoanBroker`.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                             |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `77`      | Transaction type.                                                       |
-| `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | `object`  |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                               |
-| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                             |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                       |
+| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                               |
+| `Destination`     |                    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
 
 ##### 3.1.4.1 Failure Conditions
 
@@ -813,7 +818,7 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 - Decrease `LoanBroker.CoverAvailable` by `Amount`.
 
-- Transfer `Amount` from the submitting account to the broker _pseudo-account_ (transfer fee waived):
+- Transfer `Amount` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
   - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
     - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
     - If `Destination` field is not specified:
@@ -848,11 +853,11 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from the `LoanBroker`. The transaction can only be submitted by the Issuer of the Loan asset. Furthermore, the transaction can only clawback funds up to the minimum cover required for the current loans.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                            |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                                                                      |
-| `LoanBrokerID`    |                    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
-| `Amount`          |                    | `object`  |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                                                                                                            |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                                                                      |
+| `LoanBrokerID`    |                    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
+| `Amount`          |                    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
 
 ##### 3.1.5.1 Failure Conditions
 
@@ -885,6 +890,10 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 - `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum).
 
 ##### 3.1.5.2 State Changes
+
+- Compute `LoanBrokerID`:
+  - If `LoanBrokerID` is specified, use that.
+  - Otherwise: `LoanBrokerID = Account(Amount.issuer).LoanBrokerID`.
 
 - Compute `ClawAmount`:
   - If `Amount` is 0 or unset: `ClawAmount = LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum)`.
@@ -951,9 +960,9 @@ The final transaction must include exactly one of
 1. The `SigningPubKey` and `TxnSignature` fields, or
 2. The `Signers` field and, optionally, an empty `SigningPubKey`.
 
-The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum fee will be $(|signatures| + 1) \times base\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
+The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum additional fee will be $(|signatures|) \times base\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
-The total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\_fee$.
+If the `LoanSet` transaction is **not** part of a [`Batch` transaction](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), the total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\_fee$. Otherwise, the fee is based on the total number of signatures in the outer transaction. See [Batch Fees](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch#22-transaction-fee) for further details.
 
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
@@ -1038,14 +1047,13 @@ The account specified in the `Account` field pays the transaction fee.
 - `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault).
 - `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt).
 - `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital).
-- `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (interest would exceed vault assets cap).
+- `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap).
 - The Borrower does not have sufficient reserve for the `Loan` object.
 
 ##### 3.2.1.6 State Changes
 
 - Create the `Loan` object with computed fields (`TotalValueOutstanding`, `PeriodicPayment`, `ManagementFeeOutstanding`, `LoanScale`, etc.).
 - Increment `AccountRoot(Borrower).OwnerCount` by `1`.
-- Increment `LoanBroker.LoanSequence` by `1`.
 
 - Create asset holding for the Borrower if one does not exist:
   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `Borrower`.
@@ -1078,6 +1086,7 @@ The account specified in the `Account` field pays the transaction fee.
 - Update `LoanBroker` object:
   - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
   - Increment `LoanBroker.OwnerCount` by `1`.
+  - Increment `LoanBroker.LoanSequence` by `1`.
 
 - Directory linking:
   - Add `LoanID` to the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (sets `LoanBrokerNode`).
@@ -1232,12 +1241,12 @@ The transaction deletes an existing `Loan` object.
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For complete payment processing logic, formulas, and implementation pseudo-code, see [Appendix A-3](#a-3-loanpay-implementation-reference).
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                               |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `83`      | The transaction type.                     |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
-| `Amount`          | :heavy_check_mark: | `string`  |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
-| `Flags`           |                    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                               |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `83`      | The transaction type.                     |
+| `LoanID`          | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
+| `Flags`           |                    |                                                       `number`                                                       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
 
 ##### 3.2.4.1 `Flags`
 
@@ -1376,7 +1385,7 @@ These transfers are performed according to the asset type:
 
 ## 4. Security Considerations
 
-The protocol makes strong trust assumptions between Vault Depositors, LoanBroker and Borrower. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due dilligence and necessary off-chain checks.
+The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due dilligence and necessary off-chain checks.
 
 # Appendix
 
@@ -1384,9 +1393,9 @@ The protocol makes strong trust assumptions between Vault Depositors, LoanBroker
 
 ### A-1.1. What is the `LoanBroker.LoanSequence` field?
 
-A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created.
+A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created. It guarantees that every `Loan` has a unique identifier.
 
-### A-1-2. Why the `LoanBrokerCoverClawback` cannot clawback the full LoanBroker.CoverAvailable amount?
+### A-1-2. Why can the `LoanBrokerCoverClawback` not clawback the full LoanBroker.CoverAvailable amount?
 
 The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
 
@@ -1888,7 +1897,7 @@ The system follows these steps to process a payment:
     - **On-time Minimum**: `periodicPayment + serviceFee`
 
 3.  **Scenario Handling**: Based on the timing and transaction flags, the system proceeds with one of the following paths:
-    - **A) Late Payment Processing**: If the payment is late, it must be for the exact amount calculated by the [late payment formula](#a-322-late-payment).
+    - **A) Late Payment Processing**: If the payment is late, it must be for at least the amount calculated by the [late payment formula](#a-322-late-payment).
       - **Constraint**: Overpayments are not permitted on late payments. Any amount paid beyond the exact total due will be ignored.
 
     - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
@@ -1960,7 +1969,7 @@ Example (integer-only MPT):
 - Initial TotalValueOutstanding = 11 MPT
 - PaymentTotal = 10
 - Amortization produces periodicPayment = 1.1 MPT
-- Asset supports only whole units ⇒ each scheduled payment is truncated to 1 MPT
+  Asset supports only whole units ⇒ the transaction must specify 2 MPT, but only the truncated amount of 1 MPT will be taken.
   Progress:
   After 9 payments: Paid = 9 MPT, Remaining TotalValueOutstanding = 2 MPT
   If we applied the formula again for the 10th payment:
