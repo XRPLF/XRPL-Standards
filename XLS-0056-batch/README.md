@@ -194,13 +194,42 @@ Namely:
 - Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
 - Inner transactions may not be directly submitted via the `submit` RPC.
 
-## 5. Examples
+## 5. Integration Considerations
 
-### 5.1. One Account
+- An outer `Batch` transaction will return `tesSUCCESS` if the outer transaction succeeds, even if the inner transactions fail. The inner transaction metadata and result codes must be used to determine the actual outcome of each inner transaction.
+  - The inner transactions, if validated, **will** be in the same ledger. If it is not in the same ledger, then it is likely a fraud attempt.
+- An inner `Batch` transaction will not be validated on its own.
+
+### 5.1. Client Libraries
+
+- `Batch` transactions have a special fee calculation that includes the sum of the inner transaction fees. Client libraries should provide a helper method to calculate the fee for a `Batch` transaction.
+- Multi-account `Batch` transactions require a special signing flow where one party signs the outer transaction and the other parties sign the inner transactions. Client libraries should provide a helper method to construct a multi-account `Batch` transaction.
+- When auto-filling a `Batch` transaction, the inner transactions must have their `Fee` set to 0 and the `SigningPubKey` and `TxnSignature` fields must be empty. Client libraries should provide a helper method to auto-fill a `Batch` transaction.
+
+### 5.2. Wallets
+
+Wallets should:
+
+- Clearly display all inner transactions to users before requesting a signature, so users understand the full scope of what they are approving.
+- For multi-account `Batch` transactions, provide a workflow for users to review and sign their portion of the batch, then export it for other parties to sign.
+- Warn users if they are signing a `Batch` transaction that includes inner transactions from other accounts, as they are approving the entire batch.
+- Display the batch mode (`ALLORNOTHING`, `ONLYONE`, `UNTILFAILURE`, `INDEPENDENT`) and explain its implications.
+
+### 5.3. Explorers and Indexers
+
+Explorers and indexers should:
+
+- Display the relationship between outer `Batch` transactions and their inner transactions using the `ParentBatchID` field.
+- Show inner transactions in context with their parent `Batch` transaction, rather than as standalone transactions.
+- Consider grouping inner transactions with their outer transaction in transaction lists for clarity.
+
+## 6. Examples
+
+### 6.1. One Account
 
 In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
-#### 5.1.1. Sample Transaction
+#### 6.1.1. Sample Transaction
 
 <details open>
 <summary>
@@ -253,7 +282,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
 
 </details>
 
-#### 5.1.2. Sample Ledger
+#### 6.1.2. Sample Ledger
 
 <details open>
 <summary>
@@ -335,11 +364,11 @@ Note that the inner transactions are committed as normal transactions.
 
 </details>
 
-### 5.2. Multiple Accounts
+### 6.2. Multiple Accounts
 
 In this example, two users are atomically swapping their tokens, XRP for GKO.
 
-#### 5.2.1. Sample Transaction
+#### 6.2.1. Sample Transaction
 
 <details open>
 <summary>
@@ -401,7 +430,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
 
 </details>
 
-#### 5.2.2. Sample Ledger
+#### 6.2.2. Sample Ledger
 
 <details open>
 <summary>
