@@ -438,7 +438,9 @@ These additional fields are necessary for a trustline since the reserve for this
 
 Existing invariants remain.
 
-The common field `Sponsor` **must not** be on any `RippleState` objects (they must use `HighSponsor` and `LowSponsor` instead).
+- The common field `Sponsor` **must not** be on any `RippleState` objects (they must use `HighSponsor` and `LowSponsor` instead).
+- If `LowSponsor` is included, `lsfLowReserve` **must** be enabled.
+- If `HighSponsor` is included, `lsfHighReserve` **must** be enabled.
 
 _NOTE: The invariants in [4.3](#43-invariant-checks) also apply to `RippleState` objects, as they apply to all objects._
 
