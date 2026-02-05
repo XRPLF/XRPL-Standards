@@ -223,8 +223,8 @@ The `LoanBroker` object has the following fields:
 | `DebtTotal`            |       `No`       |   `No`    | :heavy_check_mark:  | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
 | `DebtMaximum`          |      `Yes`       |   `No`    | :heavy_check_mark:  | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
 | `CoverAvailable`       |       `No`       |   `No`    | :heavy_check_mark:  | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
-| `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark:  | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
-| `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark:  | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
+| `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark:  | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
+| `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark:  | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
 #### 2.1.3 `LoanBroker` _pseudo-account_
 
@@ -353,7 +353,7 @@ DebtTotal   = DebtTotal - PaymentPrincipalAmount - (PaymentInterestPortion - (Pa
 
 #### 2.1.7 First-Loss Capital
 
-The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default. The first loss of capital absorbs some of the loss. The following parameters control the First-Loss Capital:
+The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default by absorbing some of the loss. The following parameters control this mechanism:
 
 - `CoverAvailable` - the total amount of cover deposited by the Lending Protocol Owner.
 - `CoverRateMinimum` - the percentage of `DebtTotal` that must be covered by the `CoverAvailable`.
@@ -362,7 +362,7 @@ The First-Loss Capital is an optional mechanism to protect the Vault depositors 
 Whenever the available cover falls below the minimum cover required, two consequences occur:
 
 - The Lender cannot issue new Loans.
-- The Lender cannot directly receive fees. The fees are instead added to the First Loss Capital to cover the deficit.
+- The Lender cannot directly receive fees. The fees are instead added to the First-Loss Capital to cover the deficit.
 
 **Examples**
 
@@ -572,8 +572,8 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `Data`                 |                    |    `Yes`    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |                    |    `No`     | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
 | `DebtMaximum`          |                    |    `Yes`    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
-| `CoverRateMinimum`     |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
-| `CoverRateLiquidation` |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+| `CoverRateMinimum`     |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateLiquidation` |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
 ##### 3.1.1.1 Failure Conditions
 
@@ -701,12 +701,12 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 #### 3.1.3 `LoanBrokerCoverDeposit`
 
-The transaction deposits First Loss Capital into the `LoanBroker` object.
+The transaction deposits First-Loss Capital into the `LoanBroker` object.
 
 | Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                       |
 | ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :------------------------------------------------ |
 | `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `76`      | The transaction type.                             |
-| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to deposit First-Loss Capital. |
+| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to which to deposit First-Loss Capital. |
 | `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.          |
 
 ##### 3.1.3.1 Failure Conditions
@@ -856,7 +856,7 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 | Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                                                                                                            |
 | ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                                                                      |
-| `LoanBrokerID`    |                    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
+| `LoanBrokerID`    |                    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to clawback First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
 | `Amount`          |                    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
 
 ##### 3.1.5.1 Failure Conditions
@@ -1385,7 +1385,7 @@ These transfers are performed according to the asset type:
 
 ## 4. Security Considerations
 
-The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due dilligence and necessary off-chain checks.
+The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due diligence and necessary off-chain checks.
 
 # Appendix
 
@@ -1395,7 +1395,7 @@ The protocol makes strong trust assumptions between Vault Depositors, LoanBroker
 
 A sequential identifier for Loans associated with a LoanBroker object. This value increments with each new Loan created by the broker. Unlike `LoanBroker.OwnerCount`, which tracks the number of currently active Loans, `LoanBroker.LoanSequence` reflects the total number of Loans ever created. It guarantees that every `Loan` has a unique identifier.
 
-### A-1-2. Why can the `LoanBrokerCoverClawback` not clawback the full LoanBroker.CoverAvailable amount?
+### A-1-2. Why can't the `LoanBrokerCoverClawback` clawback the full LoanBroker.CoverAvailable amount?
 
 The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
 
