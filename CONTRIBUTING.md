@@ -1,90 +1,137 @@
-# CONTRIBUTING
+# Contributing to XRPL Standards
 
-Contributions to this repo are free, open-source, and follow the process outlined below:
+> [!NOTE]
+> This document summarizes how to contribute new XRP Ledger Standards (XLSes). The authoritative, detailed definition of the process is **[XLS-1: XLS Process and Guidelines](./XLS-0001-xls-process/README.md)**. If anything here conflicts with XLS-1, XLS-1 wins.
 
-Any XRPL-Standards document can be referred to interchangeably as an "XLS", "XRPL Standard", or "document".
+The work of the [XRP Ledger](https://xrpl.org) community is open, collaborative, and welcoming of all contributors participating in good faith. Part of that effort involves standardization, and this document outlines how anyone can contribute to that process.
 
-## Summary
+## 1. Licensing
 
-Copyright on all content is subject to the terms of the [license](LICENSE).
+Any XRPL Standards document can be referred to interchangeably as an "XLS", "XRPL Standard", or "document". Copyright on all content is subject to the terms of this [license](LICENSE), and all contributors grant everyone a royalty-free license to use their contributions, including the following grants:
 
-All contributors grant everyone:
+- **Copyright**: a royalty-free license to anyone to use any contributions submitted to this repository.
+- **Patent**: a commitment to license on a royalty-free basis any essential patent claims relating to any contributions in this repository.
 
-Copyright: a royalty-free license to use the copyrights for their contributions.
-Patent: a commitment to license on a royalty-free basis their essential patent claims reading on their contributions.
+## 2. Overview of the XLS process (per XLS-1)
 
-## Background
+XLS-1 defines both **categories** of XLSes and their **lifecycle statuses**.
 
-The work of the XRP Ledger community is open source, collaborative, and welcoming of all contributors participating in good faith. [Learn more about the XRP Ledger at XRPL.org](https://xrpl.org/).
+- **Categories** (`category` field in the XLS preamble):
+  - `Amendment`: changes that require an XRP Ledger amendment.
+  - `System`: changes that affect XRPL protocol behavior (RPCs, P2P, etc.) but do not require an amendment.
+  - `Ecosystem`: off-chain or community standards (metadata, registries, etc.).
+  - `Meta`: standards about the XLS process itself (like XLS-1).
 
+- **Statuses** (`status` field in the XLS preamble):
+  - `Idea`: pre-draft, typically discussed only in GitHub Discussions.
+  - `Proposal`: a fairly fleshed-out proposal, still only in Discussions.
+  - `Draft`: the first formally tracked stage in this repo; XLS numbers are assigned here by XLS Editors.
+  - `Final`: the final, stable form of the XLS. Only errata and non-normative clarifications may be added.
+  - `Living`: a spec intended to be continuously updated (for example, XLS-1 itself).
+  - `Deprecated`: a `Final` XLS that is no longer recommended.
+  - `Stagnant`: a `Draft` that has seen no activity for a long period.
+  - `Withdrawn`: withdrawn by the author(s); cannot be resurrected under the same XLS number.
 
-## Process
+The sections below explain how to move through these stages. For all edge cases and full definitions, see [XLS-1 §4: XLS Process](./XLS-0001-xls-process/README.md#4-xls-process).
 
-The XRPL-Standards process attempts to be easy to use, but also rigorous enough that there are permalinks to revisions of documents for reference purposes.
+## 3. Start with a GitHub Discussion (Idea / Proposal)
 
-### Gathering Feedback Before Submitting
+Before opening a PR with any kind of formal proposal, **start with a GitHub Discussion**.
 
-Please gather community input before opening a PR. Collecting such feedback helps to refine your concept. This step is required.
+1. Go to the [XRPL-Standards Discussions](https://github.com/XRPLF/XRPL-Standards/discussions).
+2. Choose a category that matches your intended XLS `category`:
+   - `Amendment`, `System`, `Ecosystem`, or `Meta`.
+3. Use the **status** in your title to indicate maturity:
+   - For early concepts, treat them as **Ideas**.
+   - Once the concept is fairly fleshed out, treat it as a **Proposal**.
 
-Start a [Discussion](https://github.com/XRPLF/XRPL-Standards/discussions) under this repo.
+#### 3.1. Discussion titles
 
-The title should follow the naming convention `XLS-0000d {Title}`, where `0000` is a unique number for the XLS, `d` indicates that the document is a Draft (in progress), and `{Title}` is a descriptive title for the proposed document.
+To make Discussions easier to scan, we recommend titles of the form:
 
-Use the next number that has not yet been used. If a conflict occurs, it will be fixed by a maintainer or editor. Maintainers or editors also reserve the right to remove or re-number proposals as necessary.
+```text
+[<Category> <Idea|Proposal>: <Short descriptive title>]
+```
 
-The number is important, as it will be used to reference features and ideas throughout the community.
+For example:
 
-Discussions are suitable for early work-in-progress: ask, suggest, add, and make sweeping changes.
+- `[Amendment Idea: In-ledger governance tokens]`
+- `[Ecosystem Proposal: Extended validator TOML metadata]`
 
-When a discussion has produced a well-refined standard, authors should post a comment to the discussion noting that it will be closed in a few days. This allows time (for those engaged with the discussion) to submit any final commentary. 
+This keeps the Discussion aligned with the `category` and `status` terminology from XLS-1.
 
-When the fair notice time has elapsed, the author should move from discussion to Draft by opening a PULL REQUEST.
+#### 3.2. Gather feedback and iterate
 
+Discussions are the right place for early work-in-progress: ask questions, propose alternatives, and make sweeping changes. Collecting such feedback is required before moving forward in the specification process.
 
-The standard's author must edit and replace the post with a summary and a link to the PR.
+When your idea has converged into a coherent design and has community interest, you are ready to move toward a **Draft XLS** via a PR.
 
-The last comment on the discussion should also be a link to the PR.
+#### 3.3. Closing or archiving Discussions
 
-Finally, the discussion should be closed from further comments, with further comments instead being posted on the PR for fine-tuning and alignment with implementation or adoption (as appropriate).
+XLS-1 defines rules for stale proposals and ideas (see [§4.5](./XLS-0001-xls-process/README.md#45-stale-proposalsideas)). In short:
 
-When opening a PR, there are two document types: *Drafts* and *Candidate Specifications*. The type and status of any particular document has no bearing on the priority of that document. Typically, the further along in the process, the more likely it is that any particular XLS will be implemented or adopted.
+- Discussions are checked for staleness after 90 days.
+- If there is no activity for another 30 days, they may be closed and locked.
+- Authors can ask maintainers to reopen stale Discussions later.
 
-### Drafts
+When you open a PR for a Draft XLS, you should:
 
-A _Draft_ is a document that proposes some new feature, protocol or idea related to the XRP Ledger. The criteria for getting the document merged is minimal: project maintainers will review the document to ensure style conformance and applicability, but will otherwise not require editorial fixes before allowing it to be published.
+- Close the original Discussion (if it's still open).
+- Link the PR from the original Discussion (for traceability).
+- Optionally, add a final comment pointing to the PR so others know where to continue the conversation.
 
-A document does not need to have an implementation in order to become a Draft. A Draft may or may not have implementation(s) available; no code is required prior to the Draft being published.
-A Draft is often stable enough for people to experiment with, but has not necessarily been endorsed by the entire community. When there are competing Drafts that address the same problem in different ways, all such Drafts can continue to be refined, promoted, and used independently, without any blocking. Implementors can create software to implement this type of standard into their codebase to explore how it works in a real world setting.
+## 4. Creating a Draft XLS (Pull Request)
 
-Any, or all, competing Drafts may graduate into a Candidate Specification.
+Once there is a clear Proposal with community interest, you can open a PR to add a **Draft** XLS to this repository.
 
-Notice that a Draft is not a [rubber-stamp](https://idioms.thefreedictionary.com/rubber-stamp) of the content in any particular document. Documents can still undergo significant changes and potentially be discarded all together.
+At a high level this looks like:
 
-#### Publishing a Draft
+1. **Create a new directory for your draft.**
+   - Use a temporary name such as `XLS-draft-<short-title>` while the number is being assigned.
+2. **Copy the template.**
+   - Base your document on [XLS_TEMPLATE.md](./templates/XLS_TEMPLATE.md).
+3. **Fill out the required sections.**
+   - Follow [XLS-1 §4.3: Format: Drafts and Onward](./XLS-0001-xls-process/README.md#43-format-drafts-and-onward), especially the required preamble and sections.
+4. **Open a pull request.**
+   - Link the associated Discussion in the PR description.
+   - Make it clear which `category` you are targeting and that this is intended to be a `Draft`.
+5. **Work with XLS Editors.**
+   - Editors review for completeness, formatting, and clarity (see [XLS-1 §7](./XLS-0001-xls-process/README.md#7-xls-editors)).
+   - Editors assign the official XLS number and update the directory name to `XLS-<NNNN>-<short-title>`.
+   - The `xls` and `status` fields in the preamble are updated to reflect the assigned number and `Draft` status before merge.
 
-To publish a new Draft, submit a Pull Request to this repo with a new folder and a new Markdown file. The folder MUST follow the naming convention `XLS-0000d-{title}`, `0000` is the unique number referencing the XLS, `d` indicates that the document is a Draft, and `title` is a lower case title with spaces replaced by hyphens (`-`). The submission should have front-matter (similar to GitHub pages rendered from Markdown) specifying at least a `title` and `type`. The `type` MUST have the value `draft`.
+After the PR is merged, your XLS is an officially tracked **Draft** in this repository.
 
-Use the following template when creating the Markdown file: [xls-template.md](./xls-template.md)
+## 5. Moving from Draft to Final (or Living)
 
-Assuming there is consensus to publish, one of the project maintainers will review the submission and confirm the document's XLS number, often making a follow-up commit to the PR which renames the file as appropriate.
+Promotion from `Draft` to `Final` (or `Living`) is governed by XLS-1 (see [§4](./XLS-0001-xls-process/README.md#4-xls-process)). In summary:
 
-### Candidate Specifications
+- A `Final` XLS is considered the canonical form of the standard.
+  - Only errata and non-normative clarifications should be added afterward.
+- For **Amendment** and **System** XLSes, an XLS cannot be `Final` until the corresponding implementation (for example, in `rippled`) has been merged.
+- For **Ecosystem** and **Meta** XLSes, there should be at least one complete implementation or clear adoption before moving to `Final`.
+- Some documents (including XLS-1) are explicitly marked `Living` and are expected to evolve over time instead of reaching `Final`.
 
-A _Candidate Specification_ is a document that was previously a Draft that is considered stable enough by the community such that no further changes are required. Once an XLS becomes a Candidate Specification, no further substantive changes are allowed under the same XLS number.
+Requests to move a `Draft` to `Final` (or `Living`) should be made via a PR that updates the `status` field in the preamble and, if applicable, links to implementations.
 
-#### Publishing a Candidate Specification
+## 6. Stagnant, Withdrawn, and Deprecated XLSes
 
-When a Draft is considered stable, there is a call for review from the community to publish the document as a Candidate Specification by making a PR to remove the `d` from the document folder name and update the `type` to `candidate-specification`.
+XLS-1 defines additional statuses that describe the long-term state of a spec:
 
+- **Stagnant**: a `Draft` that has had no activity for at least 6 months.
+- **Withdrawn**: an XLS that the author(s) have actively withdrawn; this state has finality and the number should not be reused.
+- **Deprecated**: a `Final` XLS that is no longer recommended. This is typically chosen when a better alternative exists or when the functionality is being phased out.
 
-Once published as a Candidate Specification, no further substantive changes are allowed under the same XLS number.
+The precise rules for these transitions, and how they are recorded, are described in [XLS-1 §4](./XLS-0001-xls-process/README.md#4-xls-process).
 
-For Specifications that require changes or implementation in the XRP Ledger server software and protocol, the Candidate Specification cannot be published until the relevant change has been merged into [the software's `master` branch](https://github.com/XRPLF/rippled/tree/master).
+## 7. Ownership and Editors
 
-#### Errata
+The roles and responsibilities around XLS authorship and editing are defined in [XLS-1 §6–7](./XLS-0001-xls-process/README.md#6-xls-ownership).
 
-The community may discover errors in a Candidate Specification. In these circumstances, it is possible to update the document to fix typos or clarify the original meaning of the document.
+- **Authors** own and champion their XLSes, shepherding them through the process and building community consensus.
+- **XLS Editors** (maintainers of this repository):
+  - Help ensure proposals are complete, well-structured, and follow the required format.
+  - Assign XLS numbers and merge PRs once they meet the bar.
+  - Do **not** decide which technical direction is “correct” when there are competing proposals; their role is editorial and administrative.
 
-### Deprecated or Rejected XLSs
-
-An XLS document may be rejected after public discussion has settled and comments have been made summarizing the rationale for rejection. Similarly, a document may be deprecated when its use should be discouraged. A member of the core maintainer team will move rejected and deprecated proposals to the `/rejected` folder in this repo.
+If you are unsure how to proceed at any step, open a Discussion or PR and explicitly ask for help from the XLS Editors; they will guide you according to XLS-1.

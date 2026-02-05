@@ -1,0 +1,69 @@
+<!--
+    Base HTML template for XLS Standards website
+
+    This template provides the common structure and styling for all pages:
+    - XRPL.org themed design with dark color scheme
+    - Work Sans typography matching official XRPL branding
+    - Responsive layout with header, main content, and footer
+    - Dynamic base URL support for GitHub Pages deployment
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Dynamic page title - can be overridden by child templates -->
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="{{ base_url }}/assets/favicon.ico"
+      type="image/x-icon"
+    />
+
+    <!-- Main stylesheet with XRPL.org themed styling -->
+    <link rel="stylesheet" href="{{ base_url }}/assets/style.css" />
+
+    <!-- Work Sans font - official XRPL.org typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Site header with navigation -->
+    <header>
+      <div class="container">
+        <!-- Main site title with link to homepage -->
+        <h1><a href="{{ base_url }}/">XRP Ledger Standards</a></h1>
+        <nav>
+          <!-- Primary navigation links -->
+          <a href="{{ base_url }}/">All Standards</a>
+          <a href="{{ base_url }}/contribute.html">Contribute</a>
+          <a href="https://github.com/XRPLF/XRPL-Standards">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main content area - populated by child templates -->
+    <main class="container">{% block content %}{% endblock %}</main>
+
+    <!-- Site footer with copyright and license information -->
+    <footer>
+      <div class="container">
+        <p>
+          &copy; 2025 XRP Ledger Foundation. Licensed under
+          <a href="https://github.com/XRPLF/XRPL-Standards/blob/master/LICENSE"
+            >Apache License 2.0</a
+          >.
+        </p>
+      </div>
+    </footer>
+
+    <!-- JavaScript blocks for child templates -->
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,308 @@
+<!--
+    Index page template for XLS Standards website
+
+    Displays all XLS standards in a sortable table format with:
+    - Introduction section with total count
+    - Interactive sortable table with 4 columns (Number, Title, Author, Status)
+    - Status badges with color coding (Released=green, Draft=blue, etc.)
+    - JavaScript-powered sorting functionality
+    - Mobile-responsive design with horizontal scrolling
+-->
+{% extends "base.html" %} {% block content %}
+<!-- Introduction section -->
+<div class="intro">
+  <h2>XRP Ledger Standards (XLS)</h2>
+  <p>
+    XRP Ledger Standards (XLSes) describe standards and specifications relating
+    to the XRP Ledger ecosystem that help achieve interoperability,
+    compatibility, and excellent user experience.
+  </p>
+  <p>Total standards: <strong>{{ total_count }}</strong></p>
+
+  <!-- Category navigation -->
+  <div class="category-nav">
+    <h3>Browse by Category:</h3>
+    <div class="category-links">
+      <a href="{{ base_url }}/" class="category-link active">
+        <span class="category-badge all">All Categories</span>
+        <span class="count">{{ total_count }} standards</span>
+      </a>
+      {% for cat_name, cat_count in all_categories %}
+      <a
+        href="{{ base_url }}/category/{{ cat_name|lower }}.html"
+        class="category-link"
+      >
+        <span class="category-badge {{ cat_name|lower }}">{{ cat_name }}</span>
+        <span class="count"
+          >{{ cat_count }} standard{{ 's' if cat_count != 1 else '' }}</span
+        >
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Main standards table with horizontal scrolling for mobile -->
+<div class="standards-table-container">
+  <table class="standards-table" id="standardsTable">
+    <thead>
+      <tr>
+        <!-- Sortable column headers with data attributes for JavaScript -->
+        <th class="sortable" data-column="number">Number</th>
+        <th class="sortable" data-column="title">Title</th>
+        <th class="sortable" data-column="category">
+          <span class="tooltip">
+            Category
+            <span class="tooltip-text">
+              <div class="tooltip-category">
+                <strong>Amendment:</strong> Changes to core XRP Ledger protocol
+                requiring network consensus and activation through the amendment
+                process.
+              </div>
+              <div class="tooltip-category">
+                <strong>Ecosystem:</strong> Best practices, conventions, and
+                guidelines for the XRP Ledger ecosystem that don't require
+                protocol changes.
+              </div>
+              <div class="tooltip-category">
+                <strong>System:</strong> XRP Ledger APIs, formats, and behaviors
+                that don't require consensus changes but define how applications
+                interact with the network.
+              </div>
+            </span>
+          </span>
+        </th>
+        <th class="sortable" data-column="author">Author(s)</th>
+        <th class="sortable" data-column="status">
+          <span class="tooltip">
+            Status
+            <span class="tooltip-text">
+              <div class="tooltip-status">
+                <strong>Draft:</strong> Work in progress, subject to change and
+                further development.
+              </div>
+              <div class="tooltip-status">
+                <strong>Final:</strong> Completed and approved standard, ready
+                for implementation.
+              </div>
+              <div class="tooltip-status">
+                <strong>Stagnant:</strong> No longer actively developed or
+                maintained.
+              </div>
+              <div class="tooltip-status">
+                <strong>Withdrawn:</strong> Withdrawn from consideration and
+                will not be implemented.
+              </div>
+            </span>
+          </span>
+        </th>
+        <th class="sortable" data-column="created">Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Loop through all XLS documents -->
+      {% for doc in xls_docs %}
+      <tr class="status-{{ doc.status }}">
+        <!-- XLS number column with link to document -->
+        <td
+          class="number-col"
+          data-label="Number"
+          data-sort-value="{{ doc.number|int }}"
+        >
+          <a href="{{ base_url }}/xls/{{ doc.folder }}.html" class="xls-link"
+            >XLS-{{ doc.number }}</a
+          >
+        </td>
+
+        <!-- Document title with link -->
+        <td
+          class="title-col"
+          data-label="Title"
+          data-sort-value="{{ doc.title|lower }}"
+        >
+          <a href="{{ base_url }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+        </td>
+
+        <!-- Category column -->
+        <td
+          class="category-col"
+          data-label="Category"
+          data-sort-value="{{ doc.category|lower }}"
+        >
+          <span class="category-badge {{ doc.category|lower }}"
+            >{{ doc.category }}</span
+          >
+        </td>
+
+        <!-- Author information -->
+        <td
+          class="author-col"
+          data-label="Author"
+          data-sort-value="{% for author in doc.authors %}{% if author %}{{ author[0]|lower }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}"
+        >
+          {% for author in doc.authors %}
+          <a href="{{ author[1] }}">{{ author[0] }}</a>{% if not loop.last %},
+          {% endif %} {% endfor %}
+        </td>
+
+        <!-- Status badge with conditional styling -->
+        <td
+          class="status-col"
+          data-label="Status"
+          data-sort-value="{{ doc.status|lower }}"
+        >
+          <span class="status-badge {{doc.status|lower}}"
+            >{{ doc.status.title() }}</span
+          >
+        </td>
+
+        <!-- Created date column -->
+        <td
+          class="created-col"
+          data-label="Created"
+          data-sort-value="{{ doc.created }}"
+        >
+          {{ doc.created }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} {% block scripts %}
+<!-- JavaScript for interactive table sorting functionality -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const table = document.getElementById("standardsTable");
+    const headers = table.querySelectorAll("th.sortable");
+    // Default sort: reverse numerical order (later standards more relevant)
+    let currentSort = { column: "number", direction: "desc" };
+
+    // Set initial sort indicator on the Number column
+    const numberHeader = table.querySelector('th[data-column="number"]');
+    numberHeader.classList.add("sort-desc");
+
+    // Tooltip positioning functionality
+    const tooltips = document.querySelectorAll(".tooltip");
+    tooltips.forEach((tooltip) => {
+      const tooltipText = tooltip.querySelector(".tooltip-text");
+      if (tooltipText) {
+        tooltip.addEventListener("mouseenter", function (e) {
+          // Get the position of the tooltip trigger
+          const rect = tooltip.getBoundingClientRect();
+
+          // Position the tooltip above the trigger, centered horizontally
+          const left = rect.left + rect.width / 2 - 150; // Center the 300px wide tooltip
+          const top = rect.top - 10; // 10px above the trigger
+
+          // Ensure tooltip stays within viewport bounds
+          const adjustedLeft = Math.max(
+            10,
+            Math.min(left, window.innerWidth - 310),
+          );
+          const adjustedTop = Math.max(10, top);
+
+          tooltipText.style.left = adjustedLeft + "px";
+          tooltipText.style.top = adjustedTop + "px";
+        });
+
+        tooltip.addEventListener("mouseleave", function (e) {
+          // Reset positioning to hide tooltip properly
+          tooltipText.style.left = "";
+          tooltipText.style.top = "";
+        });
+      }
+    });
+
+    // Add click event listeners to all sortable headers
+    headers.forEach((header) => {
+      header.addEventListener("click", function () {
+        const column = this.dataset.column;
+        let direction = "asc";
+
+        // Toggle direction if clicking the same column
+        if (currentSort.column === column && currentSort.direction === "asc") {
+          direction = "desc";
+        }
+
+        // Perform the sort and update UI indicators
+        sortTable(column, direction);
+        updateSortIndicators(this, direction);
+
+        // Update current sort state
+        currentSort = { column, direction };
+      });
+    });
+
+    /**
+     * Sort the table by the specified column and direction
+     * @param {string} column - Column identifier (number, title, author, status)
+     * @param {string} direction - Sort direction ('asc' or 'desc')
+     */
+    function sortTable(column, direction) {
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      // Sort rows based on data-sort-value attributes
+      rows.sort((a, b) => {
+        let aVal, bVal;
+
+        // Special handling for numerical sorting of XLS numbers and dates
+        if (column === "number") {
+          aVal = parseInt(
+            a.querySelector(
+              `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+            ).dataset.sortValue,
+          );
+          bVal = parseInt(
+            b.querySelector(
+              `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+            ).dataset.sortValue,
+          );
+        } else if (column === "created") {
+          // Sort by date - data is already in YYYY-MM-DD format which sorts correctly as strings
+          aVal = a.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+          bVal = b.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+        } else {
+          // Text-based sorting for other columns
+          aVal = a.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+          bVal = b.querySelector(
+            `td[data-label="${column.charAt(0).toUpperCase() + column.slice(1)}"]`,
+          ).dataset.sortValue;
+        }
+
+        // Apply sort direction
+        if (direction === "asc") {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+
+      // Re-append sorted rows to the table body
+      rows.forEach((row) => tbody.appendChild(row));
+    }
+
+    /**
+     * Update visual sort indicators in column headers
+     * @param {Element} activeHeader - The clicked header element
+     * @param {string} direction - Sort direction ('asc' or 'desc')
+     */
+    function updateSortIndicators(activeHeader, direction) {
+      // Clear all existing sort indicators
+      headers.forEach((h) => {
+        h.classList.remove("sort-asc", "sort-desc");
+      });
+
+      // Add indicator to the active header
+      activeHeader.classList.add(`sort-${direction}`);
+    }
+  });
+</script>
+{% endblock %}
