@@ -3,7 +3,7 @@
   title: MPT Integration into DEX
   description: Adds Multi-purpose token support for XRPL DEX
   author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
   status: Final
   category: Ecosystem
   requires: XLS-33
@@ -468,6 +468,10 @@ To use MPT in API's, `currency` and `issuer` fields must be replaced with `mpt_i
        "limit": 10
 }
 ```
+
+## 2. Security
+
+While Multipurpose Tokens (MPT) inherit the core security model of the XRPL (including issuer-controlled freezes and authorization), this integration acknowledges the architectural shift from RippleState to MPT objects. Security is maintained by performing real-time verification of MPT-specific flags and ensuring that DEX quality calculations account for MPT-specific decimal scaling to prevent rounding exploits. Furthermore, the DEX engine treats MPT-specific freezes as immediate execution barriers, mirroring the existing IOU freeze behavior.
 
 # Appendices
 
