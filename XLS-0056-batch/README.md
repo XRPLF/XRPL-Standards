@@ -199,6 +199,7 @@ Namely:
 - An outer `Batch` transaction will return `tesSUCCESS` if the outer transaction succeeds, even if the inner transactions fail. The inner transaction metadata and result codes must be used to determine the actual outcome of each inner transaction.
   - The inner transactions, if validated, **will** be in the same ledger. If it is not in the same ledger, then it is likely a fraud attempt.
 - An inner `Batch` transaction will not be validated on its own.
+- Systems that don't specifically handle `Batch` transactions should be able to support them without any changes, since each inner transaction will be a valid transaction on its own.
 
 ### 5.1. Client Libraries
 
