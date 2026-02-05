@@ -228,7 +228,7 @@ The `LoanBroker` object has the following fields:
 
 #### 2.1.3 `LoanBroker` _pseudo-account_
 
-The `LoanBroker` _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker, as well as Loan funds. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
+The `LoanBroker` object  _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
 #### 2.1.4 Ownership
 
