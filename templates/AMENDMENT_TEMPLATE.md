@@ -318,3 +318,17 @@ _[If your specification introduces new APIs or modifies existing ones, document 
   "[ResponseField]": "[example value]"
 }
 ```
+
+## 6. Cross-Feature Considerations
+
+_[All Amendment XLSes should contain a section that discusses how the proposed change interacts with other features on the XRP Ledger, and how conflicts or dependencies should be resolved.]_
+
+A sample list:
+
+- **Deposit Authorization** (Does any transaction involve the transfer of funds from one party to another? If so, Deposit Auth should be integrated into that transaction.)
+- **Batch** (Should any transaction type be excluded from being allowed in a Batch transaction?)
+- **Clawback**
+- **Sponsorship** (Should any ledger entry be excluded from reserve sponsorship? Should any transaction be excluded from fee sponsorship?)
+- **Credentials and Permissioned Domains** (Should this protocol integrate with Permissioned Domains as a permissioning layer?)
+- **Interaction when the submitting account is the Issuer of the particular asset**
+- **Number over or underflows caused by mathematical operations**
