@@ -384,9 +384,11 @@ class XLSTemplateValidator:
             if e.code == 404:
                 return False
             # Other errors (500, etc.) - assume it exists to be safe
+            print(f"Warning: unexpected error checking {url}: {e}")
             return True
-        except (urllib.error.URLError, TimeoutError):
+        except (urllib.error.URLError, TimeoutError) as e:
             # Network error - assume it exists to be safe
+            print(f"Warning: network error checking {url}: {e}")
             return True
 
     def _is_existing_ledger_entry_name(self, entry_name: str) -> bool:
