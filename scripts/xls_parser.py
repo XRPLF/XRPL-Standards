@@ -262,9 +262,6 @@ def validate_xls_documents(root_dir: Path) -> bool:
 
 if __name__ == "__main__":
     """Run validation when script is executed directly."""
-    import sys
-    from pathlib import Path
-
     root_dir = Path(".")
     success = validate_xls_documents(root_dir)
     sys.exit(0 if success else 1)
