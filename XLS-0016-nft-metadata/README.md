@@ -1,11 +1,12 @@
 <pre>
-    xls: 16
-    title: NFT Metadata
-    author: Hubert Getrouw (@HubertG97)
-    created: 2021-03-17
-    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/37
-    status: Stagnant
-    category: Ecosystem
+  xls: 16
+  title: NFT Metadata
+  description: Standard for NFT metadata
+  author: Hubert Getrouw (@HubertG97)
+  created: 2021-03-17
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/37
+  status: Stagnant
+  category: Ecosystem
 </pre>
 
 In addition to @WietseWind 's [XLS-14](https://github.com/XRPLF/XRPL-Standards/discussions/30) and @RichardAH 's proposal [XLS-15](../XLS-0015-concise-tx-id/README.md) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code.
