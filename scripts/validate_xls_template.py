@@ -34,7 +34,7 @@ import urllib.request
 import urllib.error
 
 from markdown_it import MarkdownIt
-from xls_parser import extract_xls_metadata
+from xls_parser import extract_xls_metadata, validate_xls_preamble
 
 
 @dataclass
@@ -60,14 +60,6 @@ class Section:
 
 class XLSTemplateValidator:
     """Validates XLS specs against the template structure."""
-
-    # Valid status values
-    VALID_STATUSES = [
-        "Draft", "Final", "Living", "Deprecated", "Stagnant", "Withdrawn"
-    ]
-
-    # Valid category values
-    VALID_CATEGORIES = ["Amendment", "System", "Ecosystem", "Meta"]
 
     # Amendment template section patterns and their required subsections
     AMENDMENT_SECTION_TEMPLATES = {
@@ -233,81 +225,17 @@ class XLSTemplateValidator:
                     ))
 
     def _validate_preamble(self, doc):
-        """Validate preamble metadata fields."""
-        if not doc.title or doc.title == "Unknown Title":
+        """Validate preamble metadata fields using the parser's validation."""
+        preamble_errors = validate_xls_preamble(doc)
+        for error_msg in preamble_errors:
+            # Strip the folder prefix since we use file_path
+            # Error format is "folder: message", extract just the message
+            if ": " in error_msg:
+                message = error_msg.split(": ", 1)[1]
+            else:
+                message = error_msg
             self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: title"
-            ))
-
-        if not doc.description or doc.description == "No description available":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: description"
-            ))
-
-        if not doc.authors or doc.authors == [("Unknown Author", "")]:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: author"
-            ))
-
-        if not doc.category or doc.category == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: category"
-            ))
-        elif doc.category not in self.VALID_CATEGORIES:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid category '{doc.category}'. "
-                f"Must be one of: {', '.join(self.VALID_CATEGORIES)}"
-            ))
-
-        if not doc.status or doc.status == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: status"
-            ))
-        elif doc.status not in self.VALID_STATUSES:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid status '{doc.status}'. "
-                f"Must be one of: {', '.join(self.VALID_STATUSES)}"
-            ))
-
-        if not doc.created or doc.created == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: created"
-            ))
-        elif not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.created):
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid date format for 'created': {doc.created}. "
-                "Expected YYYY-MM-DD"
-            ))
-
-        # proposal-from is required for new XLS
-        if not doc.proposal_from:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: proposal-from"
-            ))
-
-        # Check conditional fields
-        if doc.status == "Withdrawn" and not doc.withdrawal_reason:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Withdrawn XLS must have withdrawal-reason field"
-            ))
-
-        # Validate updated field format if present
-        if doc.updated and not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.updated):
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid date format for 'updated': {doc.updated}. "
-                "Expected YYYY-MM-DD"
+                str(self.file_path), 1, message
             ))
 
     def _validate_section_structure(self):
