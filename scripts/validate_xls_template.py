@@ -169,7 +169,7 @@ class XLSTemplateValidator:
         # Parse metadata
         try:
             doc = extract_xls_metadata(content, self.file_path.parent.name)
-        except ValueError as e:
+        except Exception as e:
             self.errors.append(ValidationError(
                 str(self.file_path), None, f"Failed to parse metadata: {e}"
             ))
