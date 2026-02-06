@@ -260,10 +260,15 @@ class XLSTemplateValidator:
                 "Missing required section: Security or Security Considerations"
             ))
 
-        # For Amendment XLS, the Specification and Rationale sections
-        # are often split into numbered subsections, so we don't enforce
-        # them strictly. The template validator focuses on preamble
-        # and basic structure.
+        # Check for Rationale section (required)
+        has_rationale = any(
+            "Rationale" in title for title in section_titles
+        )
+        if not has_rationale:
+            self.errors.append(ValidationError(
+                str(self.file_path), None,
+                "Missing required section: Rationale"
+            ))
 
     def _validate_amendment_structure(self):
         """Validate Amendment-specific template structure."""
