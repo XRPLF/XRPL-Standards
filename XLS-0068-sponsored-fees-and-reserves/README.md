@@ -1057,6 +1057,8 @@ There are no additional failure conditions.
 
 The `account_sponsoring` RPC method is used to fetch a list of objects that an account is sponsoring; namely, a list of objects where the `Sponsor` is the given account. It has a very similar API to the [`account_objects` method](https://xrpl.org/account_objects.html).
 
+_[NOTE: This API will not be implemented in rippled, but will instead be implemented in Clio. This is due to the fact that this API would likely require another database to keep track of the sponsorship relationships, which would be too expensive to maintain in rippled.]_
+
 ### 16.1. Request Fields
 
 | Field Name               | Required? | JSON Type            | Description                                                                                                             |
