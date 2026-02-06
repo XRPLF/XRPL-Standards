@@ -61,6 +61,13 @@ class Section:
 class XLSTemplateValidator:
     """Validates XLS specs against the template structure."""
 
+    # Required top-level sections (checked by substring match in section titles)
+    REQUIRED_SECTIONS = [
+        "Abstract",
+        "Rationale",
+        "Security",  # Matches "Security" or "Security Considerations"
+    ]
+
     # Amendment template section patterns and their required subsections
     AMENDMENT_SECTION_TEMPLATES = {
         r"SType:": {
@@ -243,32 +250,14 @@ class XLSTemplateValidator:
         # Get all section titles
         section_titles = [s.title for s in self.sections]
 
-        # Check for Abstract (required, not numbered)
-        if "Abstract" not in section_titles:
-            self.errors.append(ValidationError(
-                str(self.file_path), None,
-                "Missing required section: Abstract"
-            ))
-
-        # Check for Security section (can be "Security" or "Security Considerations")
-        has_security = any(
-            "Security" in title for title in section_titles
-        )
-        if not has_security:
-            self.errors.append(ValidationError(
-                str(self.file_path), None,
-                "Missing required section: Security or Security Considerations"
-            ))
-
-        # Check for Rationale section (required)
-        has_rationale = any(
-            "Rationale" in title for title in section_titles
-        )
-        if not has_rationale:
-            self.errors.append(ValidationError(
-                str(self.file_path), None,
-                "Missing required section: Rationale"
-            ))
+        # Check for each required section (using substring match)
+        for required in self.REQUIRED_SECTIONS:
+            has_section = any(required in title for title in section_titles)
+            if not has_section:
+                self.errors.append(ValidationError(
+                    str(self.file_path), None,
+                    f"Missing required section: {required}"
+                ))
 
     def _validate_amendment_structure(self):
         """Validate Amendment-specific template structure."""
