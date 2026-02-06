@@ -5,7 +5,7 @@
   author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
   status: Final
-  category: Ecosystem
+  category: Amendment
   requires: XLS-33
   created: 2024-09-19
   updated: 2026-01-27
