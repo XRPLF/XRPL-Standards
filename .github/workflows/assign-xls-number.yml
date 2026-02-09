@@ -55,7 +55,7 @@ jobs:
       - name: Check for existing assignment comment
         if: steps.check-drafts.outputs.has_drafts == 'true'
         id: find-comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
