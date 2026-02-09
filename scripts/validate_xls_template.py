@@ -369,11 +369,19 @@ class XLSTemplateValidator:
         entry_name = match.group(1)
         return self._is_existing_ledger_entry_name(entry_name)
 
-    def _url_exists(self, url: str) -> bool:
+    def _url_exists(self, url: str, safe_on_error: bool = True) -> bool:
         """Check if a URL exists by making a HEAD request.
 
-        Returns True if the URL returns 200, False if 404.
-        On network errors, returns True to be safe (assume it exists).
+        Args:
+            url: The URL to check
+            safe_on_error: If True, return True on network errors (assume
+                resource exists to avoid false positives). If False, return
+                False on network errors (used for heuristic checks where
+                false positives are worse than false negatives).
+
+        Returns:
+            True if the URL returns 200, False if 404 or on error when
+            safe_on_error is False.
         """
         try:
             req = urllib.request.Request(url, method="HEAD")
@@ -383,21 +391,23 @@ class XLSTemplateValidator:
             # 404 means the resource doesn't exist
             if e.code == 404:
                 return False
-            # Other errors (500, etc.) - assume it exists to be safe
+            # Other errors (500, etc.)
             print(f"Warning: unexpected error checking {url}: {e}")
-            return True
+            return safe_on_error
         except (urllib.error.URLError, TimeoutError) as e:
-            # Network error - assume it exists to be safe
+            # Network error
             print(f"Warning: network error checking {url}: {e}")
-            return True
+            return safe_on_error
 
-    def _is_existing_ledger_entry_name(self, entry_name: str) -> bool:
+    def _is_existing_ledger_entry_name(
+        self, entry_name: str, safe_on_error: bool = True
+    ) -> bool:
         """Check if the given ledger entry name exists on xrpl.org."""
         url = (
             "https://xrpl.org/docs/references/protocol/"
             f"ledger-data/ledger-entry-types/{entry_name.lower()}"
         )
-        return self._url_exists(url)
+        return self._url_exists(url, safe_on_error)
 
     def _is_existing_transaction(self, section_title: str) -> bool:
         """Check if a Transaction section is for an existing transaction.
@@ -410,13 +420,15 @@ class XLSTemplateValidator:
             return False
         return self._is_existing_transaction_name(match.group(1))
 
-    def _is_existing_transaction_name(self, transaction_name: str) -> bool:
+    def _is_existing_transaction_name(
+        self, transaction_name: str, safe_on_error: bool = True
+    ) -> bool:
         """Check if the given transaction name exists on xrpl.org."""
         url = (
             "https://xrpl.org/docs/references/protocol/transactions/types/"
             f"{transaction_name.lower()}"
         )
-        return self._url_exists(url)
+        return self._url_exists(url, safe_on_error)
 
     def _find_existing_transaction_like_headings(self) -> List[Section]:
         """Find headings that look like "`SomeTransaction` Transaction".
@@ -447,8 +459,10 @@ class XLSTemplateValidator:
             candidate_name = match.group(1)
 
             # Only treat this as a signal if the candidate resolves to a
-            # known XRPL transaction type.
-            if self._is_existing_transaction_name(candidate_name):
+            # known XRPL transaction type. Use safe_on_error=False to avoid
+            # false positives on network errors (better to miss a warning
+            # than to incorrectly fail validation).
+            if self._is_existing_transaction_name(candidate_name, False):
                 matches.append(section)
 
         return matches
@@ -484,8 +498,9 @@ class XLSTemplateValidator:
             candidate_name = match.group(1)
 
             # Only treat this as a signal if the candidate resolves to a
-            # known XRPL ledger entry type.
-            if self._is_existing_ledger_entry_name(candidate_name):
+            # known XRPL ledger entry type. Use safe_on_error=False to avoid
+            # false positives on network errors.
+            if self._is_existing_ledger_entry_name(candidate_name, False):
                 matches.append(section)
 
         return matches
