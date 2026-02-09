@@ -200,6 +200,8 @@ Namely:
   - The inner transactions, if validated, **will** be in the same ledger. If it is not in the same ledger, then it is likely a fraud attempt.
 - An inner `Batch` transaction will not be validated on its own.
 - Systems that don't specifically handle `Batch` transactions should be able to support them without any changes, since each inner transaction will be a valid transaction on its own.
+  - All inner transactions that have a `tes` (success) or `tec` result code will be accessible via standard transaction-fetching mechanisms (such as `tx` and `account_tx`).
+- Since only the inner transactions and batch mode flags are signed in a multi-account `Batch` transaction, the relayer (submitter of the outer transaction) can adjust the sequence number and fee of the outer transaction as needed, without needing to coordinate with the other parties.
 
 ### 5.1. Client Libraries
 
@@ -215,6 +217,7 @@ Wallets should:
 - For multi-account `Batch` transactions, provide a workflow for users to review and sign their portion of the batch, then export it for other parties to sign.
 - Warn users if they are signing a `Batch` transaction that includes inner transactions from other accounts, as they are approving the entire batch.
 - Display the batch mode (`ALLORNOTHING`, `ONLYONE`, `UNTILFAILURE`, `INDEPENDENT`) and explain its implications.
+- Not auto-increment sequence numbers after successes/failures, since it depends on what/how many transactions are validated.
 
 ### 5.3. Explorers and Indexers
 
