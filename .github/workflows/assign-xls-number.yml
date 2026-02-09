@@ -63,7 +63,7 @@ jobs:
 
       - name: Post or update PR comment
         if: steps.check-drafts.outputs.has_drafts == 'true' && steps.find-comment.outputs.comment-id == ''
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
