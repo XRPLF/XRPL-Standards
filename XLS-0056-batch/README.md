@@ -7,6 +7,7 @@
   status: Final
   category: Amendment
   created: 2023-12-13
+  updated: 2026-02-10
 </pre>
 
 # Atomic/Batch Transactions
@@ -137,23 +138,40 @@ The fees for the individual inner transactions are paid here instead of in the i
 
 The standard transaction failure conditions still apply here.
 
-- The `Flags` field is not set to exactly one of the supported batch modes.
-- Inner transactions
-  - There are fewer than 2 transactions in the `RawTransactions` field.
-  - There are more than 8 transactions in the `RawTransactions` field.
-  - The `RawTransactions` field contains a transaction that is not a valid transaction.
-  - One of the inner transactions is invalid (i.e. has a `Fee` greater than 0, has a non-empty `SigningPubKey`, or has a `TxnSignature` or `Signers` field).
-  - One of the inner transaction has `TransactionType` of `Batch`.
-  - There is a duplicate transaction in the `RawTransactions` field.
-  - One of the inner transactions does not have the `tfInnerBatchTxn` flag set.
-  - One of the inner transactions fails its preflight checks (i.e. is invalid, irrespective of ledger state).
-  - Either both or neither of `TicketSequence` and `Sequence` are set.
-- `BatchSigners`
-  - `BatchSigners` is included, but the length is 0.
-  - The `BatchSigners` field is included, but it is not needed (i.e. all inner transactions are from the same account as the outer transaction).
-  - The `BatchSigners` field is not included, but it is needed (i.e. there are inner transactions from multiple accounts, but the outer transaction is not signed by all of them).
-  - The `BatchSigners` field is included, but it contains a signature from an account that does not have any inner transactions.
-  - The `BatchSigners` field contains a signature from an account that is not a signer on the outer transaction.
+1. The `Flags` field is not set to exactly one of the supported batch modes (`temINVALID_FLAG`).
+1. Inner transactions
+   1. There are fewer than 2 transactions in the `RawTransactions` field (`temARRAY_EMPTY`).
+   2. There are more than 8 transactions in the `RawTransactions` field (`temARRAY_TOO_LARGE`).
+   3. The `RawTransactions` field contains a transaction that is not a valid transaction.
+   4. One of the inner transactions has a `Fee` greater than 0 (`temBAD_FEE`).
+   5. One of the inner transactions has a `TxnSignature` field included (`temBAD_SIGNATURE`).
+   6. One of the inner transactions has a non-empty `SigningPubKey` (`temBAD_REGKEY`).
+   7. One of the inner transactions is has a `Signers` field included (`temBAD_SIGNER`).
+   8. One of the inner transactions has `TransactionType` of `Batch` (`temINVALID`).
+   9. One of the inner transactions has a different invalid `TransactionType` (`temINVALID_INNER_BATCH`).
+   10. There is a duplicate transaction in the `RawTransactions` field (`temREDUNDANT`).
+   11. One of the inner transactions does not have the `tfInnerBatchTxn` flag set (`temINVALID_FLAG`).
+   12. One of the inner transactions fails its preflight checks (i.e. is invalid, irrespective of ledger state) (`temINVALID_INNER_BATCH`).
+   13. Either both or neither of `TicketSequence` and `Sequence` are set (`temSEQ_AND_TICKET`).
+1. `BatchSigners`
+   1. The length of `BatchSigners` is greater than the number of transactions in `RawTransactions` (`temARRAY_TOO_LARGE`).
+   2. The `BatchSigners` field contains a signature from the account signing the outer transaction (`temBAD_SIGNER`).
+   3. The `BatchSigners` field contains a duplicate signature (`temREDUNDANT`).
+   4. The `BatchSigners` field contains a signature from an account that does not have any inner transactions (`temBAD_SIGNER`).
+   5. The `BatchSigners` field is missing a signature from an account that has inner transactions (`temBAD_SIGNER`).
+   6. The `BatchSigners` field contains an invalid signature (`temBAD_SIGNATURE`).
+1. Preclaim/doApply errors
+   1. The public key for a signer is not a valid public key (`tefBAD_AUTH`). (This should be caught by preflight checks, but it is an additional backup check just in case).
+   2. The batch signer is single-signing:
+      1. The public key for a signer is not valid for the account ('`tefBAD_AUTH`).
+      2. The account is signing with the account's master key, but the master key is disabled (`tefMASTER_DISABLED`).
+   3. The batch signer is multi-signing:
+      1. The account does not have a signer list (`tefNOT_MULTI_SIGNING`).
+      2. The signing account is not a signer on the signer list (`tefBAD_SIGNATURE`).
+      3. The `SigningPubkey` field in a `SignerEntry` field is empty or not a valid public key (`tefBAD_SIGNATURE`).
+      4. The signing account is signing with the account's master key, but the master key is disabled (`tefMASTER_DISABLED`).
+      5. The `SigningPubKey` field is not the `Account`'s master or regular key (`tefBAD_SIGNATURE`).
+      6. There is not enough signing weight to meet the `SignerQuorum` (`tefBAD_QUORUM`).
 
 ### 2.4. State Changes
 
