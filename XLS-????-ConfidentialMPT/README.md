@@ -58,13 +58,13 @@ MPTokenIssuance Extensions: To support confidential MPTs, the MPTokenIssuance le
 
 ### 3.2.1 New Flags:
 
-- sfMPTCanPrivacy: If set, indicates that confidential transfers and conversions are enabled for this token issuance.
-- sfMPTCannotMutatePrivacy: If set, the sfMPTCanPrivacy flag can never be changed after the token is issued, permanently locking the confidentiality setting.
+- lsfMPTCanPrivacy: If set, indicates that confidential transfers and conversions are enabled for this token issuance.
+- lsmfMPTCannotMutatePrivacy: If set, the lsfMPTCanPrivacy flag can never be changed after the token is issued, permanently locking the confidentiality setting.
 
 ### 3.2.3 New Fields:
 
-- IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the sfMPTCanPrivacy flag is set.
-- ConfidentialOutstandingAmount: (Required if sfMPTCanPrivacy is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialClawback transaction.
+- IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the lsfMPTCanPrivacy flag is set.
+- ConfidentialOutstandingAmount: (Required if lsfMPTCanPrivacy is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialClawback transaction.
 - AuditorPolicy: (Optional) An object containing the configuration for an on-chain auditor, including their public key and an immutability flag.
 
 ### 3.3 Managing Confidentiality Settings
@@ -73,15 +73,15 @@ The confidentiality status of an MPT is controlled by the `lsfMPTCanPrivacy` fla
 
 ### 3.3.1 Mutability & Defaults
 
-- **Default Behavior (Mutable):** By default, an MPT issuance is created with `sfMPTCannotMutatePrivacy` set to **false**. This means the issuer retains the ability to toggle the privacy setting (`lsfMPTCanPrivacy`) on or off via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions.
-- **Permanent Lock (Immutable):** If the issuer sets the `tfMPTCannotMutatePrivacy` flag during the [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanPrivacy` setting becomes permanent and can never be changed.
+- **Default Behavior (Mutable):** By default, an MPT issuance is created with `lsmfMPTCannotMutatePrivacy` set to **false**. This means the issuer retains the ability to toggle the privacy setting (`lsfMPTCanPrivacy`) on or off via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions.
+- **Permanent Lock (Immutable):** If the issuer sets the `tmfMPTCannotMutatePrivacy` flag during the [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanPrivacy` setting becomes permanent and can never be changed.
 
 ### 3.3.2 Enabling Confidentiality
 
 There are two ways to enable the `lsfMPTCanPrivacy` flag:
 
 - **At Creation:** The issuer can set the `tfMPTCanPrivacy` flag immediately during the `MPTokenIssuanceCreate` transaction. More can be read here
-- **Post-Creation (Update):** If the issuance was created with mutability enabled (i.e., `sfMPTCannotMutatePrivacy` is false), the issuer can later submit an `MPTokenIssuanceSet` transaction to enable `lsfMPTCanPrivacy`.
+- **Post-Creation (Update):** If the issuance was created with mutability enabled (i.e., `lsmfMPTCannotMutatePrivacy` is false), the issuer can later submit an `MPTokenIssuanceSet` transaction to enable `lsfMPTCanPrivacy`.
 
 ### 3.3.3 Disabling Confidentiality
 
@@ -287,7 +287,7 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 - **`temBAD_CIPHERTEXT`**: `AuditorEncryptedAmount` (if present) has invalid length or invalid EC point.
 - **`tecNO_TARGET`**: The destination account does not exist.
 - **`tecNO_AUTH`**: The issuance does not have the `lsfMPTCanTransfer` flag set.
-- **`tecNO_PERMISSION`**: The issuance does not support privacy (`sfMPTCanPrivacy`), or one of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderElGamalPublicKey`, `sfConfidentialBalanceSpending`, etc.).
+- **`tecNO_PERMISSION`**: The issuance does not support privacy (`lsfMPTCanPrivacy`), or one of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderElGamalPublicKey`, `sfConfidentialBalanceSpending`, etc.).
 - **`terFROZEN`**: Either the sender or receiver's balance is currently frozen.
 - **`tecBAD_PROOF`**: The provided Zero-Knowledge Proof fails to verify equality or range constraints.
 
@@ -343,7 +343,7 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 - **`temMALFORMED`**: The account submitting the transaction is the **Issuer**. Issuers do not use the split-balance model.
 - **`tecOBJECT_NOT_FOUND`**: The `MPTokenIssuance` or the user's `MPToken` object does not exist.
 - **`tecNO_PERMISSION`**:
-  - The issuance does not have the `sfMPTCanPrivacy` flag set.
+  - The issuance does not have the `lsfMPTCanPrivacy` flag set.
   - The user's `MPToken` object has not been initialized (missing `sfConfidentialBalanceInbox` or `sfConfidentialBalanceSpending`).
 - **`tefINTERNAL`**: A system invariant failure where the issuer attempts to merge (checked again at preclaim).
 
@@ -420,7 +420,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 - **`temBAD_AMOUNT`**: `MPTAmount` is zero or greater than the maximum allowable supply.
 - **`tecOBJECT_NOT_FOUND`**: The `MPToken` or `MPTokenIssuance` does not exist.
 - **`tecNO_PERMISSION`**:
-  - The issuance does not have the `sfMPTCanPrivacy` flag.
+  - The issuance does not have the `lsfMPTCanPrivacy` flag.
   - The user's `MPToken` is missing the `sfConfidentialBalanceSpending` or `sfHolderElGamalPublicKey` fields.
   - The issuance has `sfAuditorElGamalPublicKey` set, but the transaction does not include `sfAuditorEncryptedAmount`.
 - **`tecINSUFFICIENT_FUNDS`**:
@@ -582,7 +582,7 @@ The existing `MPTokenIssuanceSet` transaction is extended to manage the confiden
 
 ### 11.2. Usage & Mutability
 
-This transaction is the only method to register keys or modify the privacy status (`tfMPTCanPrivacy`) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
+This transaction is the only method to register keys or modify the privacy status (`tmfMPTSetPrivacy`) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
 ### 11.3. Failure Conditions
 
