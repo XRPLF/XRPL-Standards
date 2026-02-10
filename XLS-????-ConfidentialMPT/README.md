@@ -65,7 +65,6 @@ MPTokenIssuance Extensions: To support confidential MPTs, the MPTokenIssuance le
 
 - IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the lsfMPTCanPrivacy flag is set.
 - ConfidentialOutstandingAmount: (Required if lsfMPTCanPrivacy is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialClawback transaction.
-- AuditorPolicy: (Optional) An object containing the configuration for an on-chain auditor, including their public key and an immutability flag.
 
 ### 3.3 Managing Confidentiality Settings
 
@@ -170,7 +169,6 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`EncryptedBalanceIssuer`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
 
-- **Optional auditor encryption:** If an `AuditorPolicy` is active, balances are additionally encrypted under an auditor’s public key (`EncryptedBalanceAuditor`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
 
 ## 6. Transaction: `ConfidentialMPTConvert`
 
@@ -616,7 +614,6 @@ The technical foundation for both of these models is a multi-ciphertext architec
 
 The primary method for compliance is on-chain selective disclosure, which provides cryptographically enforced auditability directly on the ledger.
 
-- Auditor-Specific Encryption: When an AuditorPolicy is active, each confidential balance is dually encrypted under the designated auditor's public key and stored in the EncryptedBalanceAuditor field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
 - Dynamic, Forward-Looking Compliance: This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can facilitate this without disrupting the system. The process is as follows:
   1. The issuer uses its private key to decrypt its own on-ledger copy of a holder's balance (EncryptedBalanceIssuer).
@@ -732,11 +729,7 @@ Every confidential transaction must carry appropriate ZKPs:
   - Conversion from public → confidential, where only the converted amount is disclosed once.
 - Redistribution among holders (including issuer’s second account) leaks no amounts.
 
-### Auditor & Compliance Controls
 
-- If AuditorPolicy is enabled, ciphertexts under auditor keys must be validated with equality proofs.
-- Prevents issuers from selectively encrypting incorrect balances for auditors.
-- Selective disclosure allows compliance without undermining public confidentiality.
 
 ### Attack Surface & Mitigations
 
@@ -846,7 +839,7 @@ The current design employs separate range and equality proofs for each transacti
 
 Q12. Can there be more than one auditor?
 
-At present, the protocol supports only a single, optional AuditorPolicy. Future extensions could explore multi-auditor setups, potentially leveraging advanced cryptographic techniques such as threshold encryption or more sophisticated policy-driven key distribution mechanisms.
+At present, the protocol supports only a single, optional Auditor. Future extensions could explore multi-auditor setups, potentially leveraging advanced cryptographic techniques such as threshold encryption or more sophisticated policy-driven key distribution mechanisms.
 
 Q13. Is the system quantum-safe?
 
