@@ -63,7 +63,9 @@ MPTokenIssuance Extensions: To support confidential MPTs, the MPTokenIssuance le
 
 ### 3.2.3 New Fields:
 
-- IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal for an optional on-chain auditor.
+- IssuerElGamalPublicKey: (Optional) A string containing the issuer’s 33-byte compressed ElGamal public key. This field is required if the lsfConfidential flag is set.
+- AuditorELGamalPublicKey: (Optional) A string containing the auditor’s 33-byte compressed ElGamal public key for an optional on-chain auditor.
+
 - ConfidentialOutstandingAmount: (Required if lsfMPTCanPrivacy is set) The total amount of this token that is currently held in confidential balances. This value is adjusted with every ConfidentialMPTConvert, ConfidentialMPTConvertBack, and ConfidentialClawback transaction.
 
 ### 3.3 Managing Confidentiality Settings
