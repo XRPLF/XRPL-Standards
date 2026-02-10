@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-33
   created: 2024-09-19
-  updated: 2026-01-27
+  updated: 2026-02-10
 </pre>
 
 # MPT Integration into DEX
@@ -33,27 +33,49 @@ Current transactions, which interract with XRPL DEX are:
 - `OfferCreate`: An OfferCreate transaction places an Offer in the decentralized exchange.
 - `Payment`: A Payment transaction represents a transfer of value from one account to another.
 
-MPT supports all of the above transactions. MPT can be combined with IOU and XRP tokens in the transactions. For instance, a Payment could be a cross-token payment from MPT token to IOU token; AMM can be created for XRP and MPT token-pair; an order book offer can be created to buy some MPT token and to sell another MPT token. MPT doesn't modify the transactions fields, flags, and functionality. However, the JSON of the MPT amount field differs from the JSON of the IOU amount field. Instead of `currency` and `issuer`, MPT is identified by `mpt_issuance_id`. MPT amount `value` is INT or UINT, which must be less or equal to $63^2 - 1$. Below is an example of JSON MPT amount:
+MPT supports all of the above transactions. MPT can be combined with IOU and XRP tokens in the transactions. For instance, a Payment could be a cross-token payment from MPT token to IOU token; AMM can be created for XRP and MPT token-pair; an order book offer can be created to buy some MPT token and to sell another MPT token. MPT doesn't modify the transactions fields, flags, and functionality. However, the JSON of the MPT amount field differs from the JSON of the IOU amount field. Instead of `currency` and `issuer`, MPT is identified by `mpt_issuance_id`. MPT amount `value` is INT or UINT, which must be less or equal to $63^2 - 1$. Below are the examples of JSON MPT amount and JSON MPT asset:
 
 ```json
-   "Amount": {
-       "mpt_issuance_id": "00000003430427B80BD2D09D36B70B969E12801065F22308",
-       "value": "110"
-   }
+  "Amount": {
+    "mpt_issuance_id": "00000003430427B80BD2D09D36B70B969E12801065F22308",
+    "value": "110"
+  }
+  "Asset": {
+    "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
+  },
 ```
 
-Any transaction with MPT Amount has to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). In addition, MPTokenIssuanceCreate` must have the following flags set:
+Any transaction with MPT Amount or Asset have to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). In addition, MPTokenIssuanceCreate` must have the following flags set:
 
 - `lsfMPTCanTrade`, in order for individual holders to trade their balances using the XRP Ledger DEX or AMM.
-- `lsfMPTCanTransfer, in order for the tokens held by non-issuers to be transferred to other accounts.
+- `lsfMPTCanTransfer`, in order for the tokens held by non-issuers to be transferred to other accounts.
 
-## 3. MPT Supported Transactions
+## 2. The AMMCreate Transaction
 
-### 3.1. AMM
+Any token or both tokens in `AMMCreate` transaction can be MPT. I.e., in addition to the current combination of XRP/IOU and IOU/IOU token pair, `AMMCreate` can have XRP/MPT, IOU/MPT, and MPT/MPT token pair. Each MPT in the pair is identified by `mpt_issuance_id`. If both tokens are MPT then each token must have a unique `mpt_issuance_id`. In case of `AMMCreate` the token pair is identified by `Amount` and `Amount2`.
 
-AMM is identified by a token pair. Any token or both tokens in AMM transactions can be MPT. I.e., in addition to the current combination of XRP/IOU and IOU/IOU token pair, AMM can have XRP/MPT, IOU/MPT, and MPT/MPT token pair. Each MPT in the pair is identified by `mpt_issuance_id`. If both tokens are MPT then each token must have a unique `mpt_issuance_id`. In case of `AMMCreate` the token pair is identified by `Amount` and `Amount2`. In case of `AMMDeposit`, `AMMWithdraw`, and `AMMDelete` the token pair is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMDeposit` and `AMMWithdraw` have optional fields `Amount` and `Amount2`, which if present must match the type of `Asset` and `Asset2` respectively.
+### 2.1. Fields
 
-#### 3.1.1. Create JSON Example
+We do not introduce new fields.
+
+### 2.2. Failure Conditions
+
+We extend the `AMMCreate` with the following failure conditions:
+
+- `Amount` or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND`.
+- `MPToken` object doesn't exist and AMM creator is not the issuer of MPT, fail with `tecNO_AUTH`.
+- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
+- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
+- `MPTRequireAuth` flag is set and AMM creator is not authorized, fail with `tecNO_AUTH`.
+- `MPTCanTransfer` flag is not set and AMM creator is not the issuer of MPT, with `tecNO_PERMISSION`.
+- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+
+### 2.3. State Changes
+
+On success `AMMCreate` creates and authorizes `MPToken` object for each MPT token for AMM pseudo-account.
+
+#### 2.4. Example JSON
 
 ```json
 {
@@ -73,20 +95,32 @@ AMM is identified by a token pair. Any token or both tokens in AMM transactions 
 }
 ```
 
-For each MPT token `AMMCreate` creates and authorizes `MPToken` object for AMM pseudo-account.
+## 3. The AMMDeposit Transaction
 
-In addition to the current failure scenarios `AMMCreate` fails if:
+`AMMDeposit` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMDeposit` has optional fields `Amount` and `Amount2`, which if present must match the type of `Asset` and `Asset2` respectively.
 
-- `Amount` or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND`.
-- `MPToken` object doesn't exist and AMM creator is not the issuer of MPT, fail with `tecNO_AUTH`.
+### 3.1. Fields
+
+We do not introduce new fields.
+
+### 3.2. Failure Conditions
+
+We extend the `AMMDeposit` transaction with the following failure conditions:
+
+- `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
+- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
 - `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
 - `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and AMM creator is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and AMM creator is not the issuer of MPT, with with `tecNO_PERMISSION`.
+- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
+- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`.
 - `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
-#### 3.1.2. Deposit JSON Example
+### 3.3. State Changes
+
+We do not introduce new state changes.
+
+### 3.4. Example JSON
 
 ```json
 {
@@ -111,18 +145,32 @@ In addition to the current failure scenarios `AMMCreate` fails if:
 }
 ```
 
-In addition to the current failure scenarios `AMMDeposit` fails if:
+## 4. The AMMWithdraw Transaction
+
+`AMMWithdraw` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMWithdraw` has optional fields `Amount` and `Amount2`, which if present must match the type of `Asset` and `Asset2` respectively.
+
+### 4.1. Fields
+
+We do not introduce new fields.
+
+### 4.2. Failure Conditions
+
+We extend the `AMMWithdraw` transaction with the following failure conditions:
 
 - `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
 - `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
-- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`.
+- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`. Can withdraw another asset.
+- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`. Can withdraw another asset.
+- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`. Can withdraw another asset.
+- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`. Can withdraw another asset.
 - `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+-
 
-#### 3.1.3. Withdraw JSON Example
+### 4.3. State Changes
+
+On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a withdrawn token.
+
+#### 4.4. Example JSON
 
 ```json
 {
@@ -147,19 +195,25 @@ In addition to the current failure scenarios `AMMDeposit` fails if:
 }
 ```
 
-`AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a withdrawn token.
+## 5. The AMMDelete Transaction
 
-In addition to the current failure scenarios `AMMWithdraw` fails if:
+`AMMDelete` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead.
 
-- `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`. Can withdraw another asset.
-- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`. Can withdraw another asset.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`. Can withdraw another asset.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`. Can withdraw another asset.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+### 5.1. Fields
 
-#### 3.1.4. Delete JSON Example
+We do not introduce new fields.
+
+### 5.2. Failure Conditions
+
+We extend the `AMMDelete` transaction with the following failure conditions:
+
+- `Asset` or `Asset2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+
+### 5.3. State Changes
+
+We do not introduce new state changes.
+
+#### 5.4. Example JSON
 
 ```json
 {
@@ -177,11 +231,27 @@ In addition to the current failure scenarios `AMMWithdraw` fails if:
 }
 ```
 
-In addition to the current failure scenarios `AMMDelete` fails if:
+## 6. The AMMClawback Transaction
 
-- `Asset` or `Asset2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+`AMMClawback` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMClawback` has optional field `Amount`, which if present must match the type of `Asset`.
 
-#### 3.1.5. Clawback JSON Example
+### 6.1. Fields
+
+We do not introduce new fields.
+
+### 6.2. Failure Conditions
+
+We extend the `AMMClawback` transaction with the following failure conditions:
+
+- `Asset`, `Asset2`, or `Amount` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
+- `lsfMPTCanClawback` flag is not set, fail with `tecNO_PERMISSION`.
+
+### 6.3. State Changes
+
+On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a clawbacked token.
+
+#### 6.4. Example JSON
 
 ```json
 {
@@ -202,15 +272,29 @@ In addition to the current failure scenarios `AMMDelete` fails if:
 }
 ```
 
-`AMMClawback` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a withdrawn token.
+## 7. The CheckCreate Transaction
 
-In addition to the current failure scenarios `AMMClawback` fails if:
+If `SendMax` field is MPT then it is identified by `mpt_issuance_id`.
 
-- `Asset`, `Asset2`, or `Amount` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `lsfMPTCanClawback` flag is not not set, fail with `tecNO_PERMISSION`.
+### 7.1. Fields
 
-### 3.2. CheckCreate JSON Example
+We do not introduce new fields.
+
+### 7.2. Failure Conditions
+
+We extend the `CheckCreate` transaction with the following failure conditions:
+
+- `SendMax` holds MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
+- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
+- `MPTLock` flag is set on `MPToken`, fail for holder as source and destination with `tecFROZEN`.
+- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+
+### 7.3. State Changes
+
+We do not introduce new state changes.
+
+### 7.4. Example JSON
 
 ```json
 {
@@ -228,15 +312,32 @@ In addition to the current failure scenarios `AMMClawback` fails if:
 }
 ```
 
-In addition to the current failure scenarios `CheckCreate` fails if:
+## 8. The CheckCash Transaction
 
-- `SendMax` holds MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
-- `MPTLock` flag is set on `MPToken`, fail for holder as source and destination with `tecFROZEN`.
+If `Amount` or `DeliverMin` fields are MPT then they are identified by `mpt_issuance_id`. `mpt_issuance_id` of `DeliverMin` and `Amount` must match.
+
+### 8.1. Fields
+
+We do not introduce new fields.
+
+### 8.2. Failure Conditions
+
+We extend the `CheckCreate` transaction with the following failure conditions:
+
+- `MPTokenIssuance` object doesn't exist, fail with `tecNO_ENTRY`.
+- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
+- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_PARTIAL` if source and destination are holders.
+  Fail with `tecFROZEN` if source is issuer and destination is holder.
+- `MPTLock` flag is set on `MPToken`, fail for issuer and holder as destination with `tecPATH_PARTIAL`. Fail for holder as source with `tecFROZEN`.
+- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
+- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
 - `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
-### 3.3. CheckCash Transaction
+### 8.3. State Changes
+
+On success `CheckCash` creates and authorizes `MPToken` object if the account doesn't own `MPToken` object.
+
+### 8.4. Example JSON
 
 ```json
 {
@@ -251,18 +352,47 @@ In addition to the current failure scenarios `CheckCreate` fails if:
 }
 ```
 
-In addition to the current failure scenarios `CheckCash` fails if:
+## 9. OfferCreate Transaction
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecNO_ENTRY`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_PARTIAL` if source and destination are holders.
-  Fail with `tecFROZEN` if source is issuer and destination is holder.
-- `MPTLock` flag is set on `MPToken`, fail for issuer and holder as destination with `tecPATH_PARTIAL`. Fail for holder as source with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+`OfferCreate` can have any token combination of `TakerGets` and `TakerPays`. I.e., in addition to the current combination of XRP/IOU and IOU/IOU tokens, `OfferCreate` can have XRP/MPT, IOU/MPT, and MPT/MPT tokens. If `TakerPays` or `TakerGets` fields are MPT then they are identified by mpt_issuance_id.
 
-### 3.4. OfferCreate Transaction
+To ensure asset transfer consistency on offer crossing, the following logic is applied to the offer's assets transfer between the accounts.
+
+`TakerGets` asset is transferred if:
+
+- `MPTCanTransfer` is set
+- The offer's owner is the issuer
+- The asset is the delivered asset and the destination account is the issuer
+
+`TakerPays` is transferred if:
+
+- `MPTCanTransfer` is set
+- The offer's owner is the issuer
+- The asset is the source asset and the source account is the issuer
+- The offer's `TakerPays` and `TakerGets` are not the source and destination assets
+
+MPT tokens are not adjusted for `TickSize` in the offers.
+
+### 9.1. Fields
+
+We do not introduce new fields.
+
+### 9.2. Failure Conditions
+
+We extend the `OfferCreate` transaction with the following failure conditions:
+
+- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND` for `TakerPays` and `tecUNFUNDED_OFFER` for `TakerGets`.
+- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`.
+- `MPTLock` flag is set and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`. Create but not cross the offer for `TakerPays`.
+- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecUNFUNDED_OFFER`.
+- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT. `OfferCreate` succeeds but doesn't cross other offers owned by holders. It crosses offers owned by an issuer. If `MPTCanTransfer` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
+- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`. If `MPTCanTrade` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
+
+### 9.3. State Changes
+
+On success `OfferCreate` creates and authorizes `MPToken` object for the offer's owner account if the offer is consumed and `MPToken` object doesn't exist for `TakerPays`'s `mpt_issuance_id`.
+
+### 9.4. Example JSON
 
 ```json
 {
@@ -281,20 +411,31 @@ In addition to the current failure scenarios `CheckCash` fails if:
 }
 ```
 
-`OfferCreate` can have any token combination of `TakerGets` and `TakerPays`. I.e., in addition to the current combination of XRP/IOU and IOU/IOU tokens, `OfferCreate` can have XRP/MPT, IOU/MPT, and MPT/MPT tokens. `OfferCreate` automatically creates and authorizes `MPToken` object for the offer's owner account when the offer is consumed and `MPToken` object doesn't exist for `TakerPays`'s `mpt_issuance_id`.
+## 10. Payment Transaction
 
-In addition to the current failure scenarios `OfferCreate` fails if:
+`Payment` can have any cross-token payment combination. I.e., in addition to the current combination of XRP/IOU and IOU/IOU cross-token payment, `Payment` can have XRP/MPT, IOU/MPT, and MPT/MPT cross-token payment. MPT can be used to specify `Paths`, in which case `mpt_issuance_id` should be used instead of `currency` and `issuer` as shown in the `JSON` example below. MPT doesn't support payment rippling. `mpt_issuance_id` identifies a unique MPT. It's impossible to reference the same MPT with different issuer. If `Amount`, `DeliverMax`, `DeliverMin`, or `SendMax` fields are MPT then they are identified by mpt_issuance_id.
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND` for `TakerPays` and `tecUNFUNDED_OFFER` for `TakerGets`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`.
-- `MPTLock` flag is set and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`. Create but not cross the offer for `TakerPays`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecUNFUNDED_OFFER`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT. `OfferCreate` succeeds but doesn't cross other offers owned by holders. It crosses offers owned by an issuer. If `MPTCanTransfer` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`. If `MPTCanTrade` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
+### 10.1. Fields
 
-MPT tokens are not adjusted for `TickSize` in the offers.
+We do not introduce new fields.
 
-### 3.5. Payment Transaction
+### 10.2. Failure Conditions
+
+We extend the `Payment` transaction with the following failure conditions:
+
+- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
+- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
+- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_DRY`.
+- `MPTLock` flag is set on `MPToken`, fail with `tecPATH_DRY`.
+- `MPTRequireAuth` flag is set and the account is not authorized. Any transfer between unauathorized accounts fail with `tecNO_AUTH`.
+- `MPTCanTransfer` flag is not set. Any transfer between unauthorized accounts fail with `tecPATH_PARTIAL`.
+- `MPTCanTrade` is not set, fail with `tecPATH_DRY`.
+
+### 10.3 State Changes
+
+We do not introduce new state changes.
+
+### 10.4. Example JSON
 
 ```json
 {
@@ -327,136 +468,355 @@ MPT tokens are not adjusted for `TickSize` in the offers.
 }
 ```
 
-`Payment` can have any cross-token payment combination. I.e., in addition to the current combination of XRP/IOU and IOU/IOU cross-token payment, `Payment` can have XRP/MPT, IOU/MPT, and MPT/MPT cross-token payment. MPT can be used to specify `Paths`, in which case `mpt_issuance_id` should be used instead of `currency` and `issuer` as shown in the example above. MPT doesn't support payment rippling. `mpt_issuance_id` identifies a unique MPT and it's impossible to reference the same MPT with different issuer.
+## 11. RPC path_find
 
-In addition to the current failure scenarios `Payment` fails if:
+### 11.1. Request Fields
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_DRY`.
-- `MPTLock` flag is set on `MPToken`, fail with `tecPATH_DRY`.
-- `MPTRequireAuth` flag is set and the account is not authorized. Any transfer between unauathorized accounts fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set. Any transfer between unauthorized accounts fail with `tecPATH_PARTIAL`.
-- `MPTCanTrade` is not set, fail with `tecPATH_DRY`.
+We do not introduce new fields.
 
-To ensure asset transfer consistency during offer crossing and payment, the following logic is applied.
-`TakerGets` asset is transferred if:
+### 11.2 Response Fields
 
-- `MPTCanTransfer` is set
-- The offer's owner is the issuer
-- The asset is the delivered asset and the destination account is the issuer
+We do not introduce new fields.
 
-`TakerPays` is transferred if:
-
-- `MPTCanTransfer` is set
-- The offer's owner is the issuer
-- The asset is the source asset and the source account is the issuer
-- The offer's `TakerPays` and `TakerGets` are not the source and destination assets
-
-### 3.6. API's
-
-To use MPT in API's, `currency` and `issuer` fields must be replaced with `mpt_issuance_id` field as shown in the examples below.
-
-#### 3.6.1. path_find
+### 11.3 Example Request
 
 ```json
 {
   "command": "path_find",
   "subcommand": "create",
-  "source_account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
-  "destination_account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
+  "destination_account": "rPMh7Pi9ct699iZUTWaytJUoHcJ7cgyziK",
   "destination_amount": {
-    "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308",
-    "value": "100"
-  }
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "value": "-1"
+  },
+  "send_max": "100000000000000",
+  "source_account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn"
 }
 ```
 
-#### 3.6.2. ripple_path_find
+### 11.4 Example Response
+
+```json
+{
+  "alternatives": [
+    {
+      "destination_amount": {
+        "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+        "value": "100"
+      },
+      "paths_canonical": [],
+      "paths_computed": [
+        [
+          {
+            "issuer": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+            "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+            "type": 96
+          }
+        ]
+      ],
+      "source_amount": "100000000"
+    }
+  ],
+  "destination_account": "rPMh7Pi9ct699iZUTWaytJUoHcJ7cgyziK",
+  "destination_amount": {
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "value": "-1"
+  },
+  "destination_currencies": [
+    "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "XRP"
+  ],
+  "full_reply": true,
+  "ledger_current_index": 8,
+  "source_account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+  "validated": false
+}
+```
+
+## 12. RPC ripple_path_find
+
+### 12.1. Request Fields
+
+We do not introduce new fields.
+
+### 12.2 Response Fields
+
+We do not introduce new fields.
+
+### 12.3 Example Request
 
 ```json
 {
   "command": "ripple_path_find",
-  "source_account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
-  "source_currencies": [
-    {
-      "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
-    }
-  ],
-  "destination_account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
+  "destination_account": "rPMh7Pi9ct699iZUTWaytJUoHcJ7cgyziK",
   "destination_amount": {
-    "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308",
-    "value": "100"
-  }
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "value": "-1"
+  },
+  "send_max": "100000000000000",
+  "source_account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn"
 }
 ```
 
-#### 3.6.3. amm_info
+### 12.4 Example Response
+
+```json
+{
+  "alternatives": [
+    {
+      "destination_amount": {
+        "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+        "value": "100"
+      },
+      "paths_canonical": [],
+      "paths_computed": [
+        [
+          {
+            "issuer": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+            "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+            "type": 96
+          }
+        ]
+      ],
+      "source_amount": "100000000"
+    }
+  ],
+  "destination_account": "rPMh7Pi9ct699iZUTWaytJUoHcJ7cgyziK",
+  "destination_amount": {
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "value": "-1"
+  },
+  "destination_currencies": [
+    "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+    "XRP"
+  ],
+  "full_reply": true,
+  "ledger_current_index": 8,
+  "source_account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+  "validated": false
+}
+```
+
+## 13. RPC amm_info
+
+### 13.1. Request Fields
+
+We do not introduce new fields.
+
+### 13.2 Response Fields
+
+We do not introduce new fields.
+
+### 13.3 Example Request
 
 ```json
 {
   "command": "amm_info",
-  "Asset": {
-    "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
+  "asset": {
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
   },
-  "Asset2": {
-    "mpt_issuance_id": "00000003430427B80BD2D09D36B70B969E12801065F22308"
+  "asset2": {
+    "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83"
   }
 }
 ```
 
-#### 3.6.4. ledger_entry
+### 13.4 Example Response
+
+```json
+{
+  "result": {
+    "amm": {
+      "account": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+      "amount": {
+        "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+        "value": "100"
+      },
+      "amount2": {
+        "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+        "value": "100"
+      },
+      "asset2_frozen": false,
+      "asset_frozen": false,
+      "auction_slot": {
+        "account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+        "discounted_fee": 0,
+        "expiration": "2000-01-02T00:00:40+0000",
+        "price": {
+          "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
+          "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+          "value": "0"
+        },
+        "time_interval": 0
+      },
+      "lp_token": {
+        "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
+        "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+        "value": "100"
+      },
+      "trading_fee": 0,
+      "vote_slots": [
+        {
+          "account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+          "trading_fee": 0,
+          "vote_weight": 100000
+        }
+      ]
+    },
+    "ledger_current_index": 8,
+    "status": "success",
+    "validated": false
+  }
+}
+```
+
+## 14. RPC ledger_entry
+
+### 14.1. Request Fields
+
+We do not introduce new fields.
+
+### 14.2 Response Fields
+
+We do not introduce new fields.
+
+### 14.3 Example Request
 
 ```json
 {
   "command": "ledger_entry",
   "amm": {
-    "Asset": {
-      "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
+    "asset": {
+      "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
     },
-    "Asset2": {
-      "mpt_issuance_id": "00000003430427B80BD2D09D36B70B969E12801065F22308"
+    "asset2": {
+      "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83"
     }
-  },
-  "ledger_index": "validated"
+  }
 }
 ```
 
-#### 3.6.5. book_offers
+### 14.4 Example Response
 
 ```json
 {
-  "id": 4,
-  "command": "book_offers",
-  "taker": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
-  "taker_gets": {
-    "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
+  "index": "3B391EB8C901D850E698B80C13C98A937A8F9DF30F826D6CEB26F5616902EAF4",
+  "ledger_current_index": 8,
+  "node": {
+    "Account": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+    "Asset": {
+      "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
+    },
+    "Asset2": {
+      "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83"
+    },
+    "AuctionSlot": {
+      "Account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+      "Expiration": 86440,
+      "Price": {
+        "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
+        "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+        "value": "0"
+      }
+    },
+    "Flags": 0,
+    "LPTokenBalance": {
+      "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
+      "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
+      "value": "100"
+    },
+    "LedgerEntryType": "AMM",
+    "OwnerNode": "0",
+    "PreviousTxnID": "C12736E829EBF9C16BB7C827D71B398232051D53A584CDFA6384AE13311BA399",
+    "PreviousTxnLgrSeq": 7,
+    "VoteSlots": [
+      {
+        "VoteEntry": {
+          "Account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+          "VoteWeight": 100000
+        }
+      }
+    ],
+    "index": "3B391EB8C901D850E698B80C13C98A937A8F9DF30F826D6CEB26F5616902EAF4"
   },
-  "taker_pays": {
-    "currency": "USD",
-    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
-  },
-  "limit": 10
+  "status": "success",
+  "validated": false
 }
 ```
 
-## 2. Security
+## 15. RPC book_offers
+
+### 15.1. Request Fields
+
+We do not introduce new fields.
+
+### 15.2 Response Fields
+
+We do not introduce new fields.
+
+### 15.3 Example Request
+
+```json
+{
+  "command": "book_offers",
+  "ledger_index": "current",
+  "taker": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+  "taker_gets": {
+    "mpt_issuance_id": "000000065C488AAC5813270850685FFD89F4A4A8F4CD4C83"
+  },
+  "taker_pays": {
+    "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
+  }
+}
+```
+
+### 15.4 Example Response
+
+```json
+{
+  "result": {
+    "ledger_current_index": 12,
+    "offers": [
+      {
+        "Account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+        "BookDirectory": "55795BD0628C360A24D3163A2A1EDD66AA9F715E94E9C1D954232CE5E5C6B16D",
+        "BookNode": "0",
+        "Flags": 0,
+        "LedgerEntryType": "Offer",
+        "OwnerNode": "0",
+        "PreviousTxnID": "1177EC0BC778D39306481F6D2E33C267DB783800A58EE2F90C91AE38F1B023AD",
+        "PreviousTxnLgrSeq": 11,
+        "Sequence": 6,
+        "TakerGets": {
+          "mpt_issuance_id": "000000065C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+          "value": "101"
+        },
+        "TakerPays": {
+          "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+          "value": "100"
+        },
+        "index": "F4715C7C5957FE81246F259315494C671AF12C8B180BB32398DE5148B82ADD93",
+        "owner_funds": "1000",
+        "quality": "0.9900990099009901"
+      }
+    ],
+    "status": "success",
+    "validated": false
+  }
+}
+```
+
+## 16. Security
 
 While Multipurpose Tokens (MPT) inherit the core security model of the XRPL (including issuer-controlled freezes and authorization), this integration acknowledges the architectural shift from RippleState to MPT objects. Security is maintained by performing real-time verification of MPT-specific flags and ensuring that DEX quality calculations account for MPT-specific decimal scaling to prevent rounding exploits. Furthermore, the DEX engine treats MPT-specific freezes as immediate execution barriers, mirroring the existing IOU freeze behavior.
 
-# Appendices
+# Appendix
 
-## `STIssue` serialization
+## A: `STIssue` serialization
 
-`STIssue` type defines AMM token pair used in `AMMDeposit`, `AMMWithdraw`, and `AMMDelete` transactions. However, its current serialization format presents a challenge for integrating MPT into the DEX.
+`STIssue` type is extended to support MPT as follows:
 
-Currently, `STIssue` is serialized as a 160-bit `currency` code followed by a 160-bit `account` address. This format doesn't have spare bits to indicate whether the serialized `STIssue` represents a `currency` and `account` or an `mpt_issuance_id`. I.e. reading 320 bits doesn't provide enough information to unequivocally distinguish `currency` and `account` from `mpt_issuance_id`.
-
-### Proposed Solutions
-
-#### Splitting `mpt_issuance_id` with black hole account flag:
-
-- This option breaks down `mpt_issuance_id` into its sequence number and account.
+- Break down `mpt_issuance_id` into its sequence number and account.
 - The account is serialized in the first 160 bits, followed by a dedicated black hole account in the next 160 bits.
 - Finally, the sequence number (32 bits) is serialized last.
 - Deserialization method reads 320-bit `currency` and `account`. If `account` is the black hole account then additional 32 bits have to be read and deserialized into a sequence number.
