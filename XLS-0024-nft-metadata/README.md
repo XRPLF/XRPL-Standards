@@ -3,6 +3,7 @@
     title: Metadata Structure for XLS-20
     description: Introduces a metadata standard for Non Fungible Tokens
     author: X-Tokenize (@x-Tokenize)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/69
     created: 2022-02-16
     status: Final
     category: Ecosystem
@@ -16,7 +17,7 @@ The data which represents the underlying asset/rights are often described and th
 
 ## Motivation
 
-With the release of the [XLS-20d](https://github.com/XRPLF/XRPL-Standards/discussions/46) NFT dev network, there has been significant development of applications utilizing the proposed XLS-20d standard. The areas of interest utilizing NFTs are vast and thus requires a scalable standard for the representation of metadata to facilitate NFToken interoperability amongst applications.
+With the release of the [XLS-20](../XLS-0020-non-fungible-tokens/README.md) NFT dev network, there has been significant development of applications utilizing the proposed XLS-20 standard. The areas of interest utilizing NFTs are vast and thus requires a scalable standard for the representation of metadata to facilitate NFToken interoperability amongst applications.
 
 ## Advantages
 
@@ -334,7 +335,7 @@ Example 2 shows a valid art.v0 metadata file which includes all of the supported
     }
 ```
 
-Example 3 shows a valid art.v0 metadata file which includes all of the supported fields as well as additional properties that an issuer might need for their application. Although XLS-24d enables you to add as much additional information as you'd like, it is up to the marketplace/viewing application to determine if they will handle and display that information.
+Example 3 shows a valid art.v0 metadata file which includes all of the supported fields as well as additional properties that an issuer might need for their application. Although XLS-24 enables you to add as much additional information as you'd like, it is up to the marketplace/viewing application to determine if they will handle and display that information.
 
 [Mint Tx](https://xls20.bithomp.com/explorer/F4BBDC5FDC97833481E694FF37FC18BD822A3A22BA2B3C0E455CD6EEC6FBD43F)
 [IPFS Hash: QmfYHzY8UwyobMqbQyCTbeUNfy9EJv2KvEvk6ouhUmdUj5](https://x-tokenize.mypinata.cloud/ipfs/QmfYHzY8UwyobMqbQyCTbeUNfy9EJv2KvEvk6ouhUmdUj5)

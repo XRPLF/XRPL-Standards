@@ -7,6 +7,7 @@ Converts markdown XLS files to HTML and creates an index page.
 import os
 import shutil
 from pathlib import Path
+import re
 
 import markdown
 from jinja2 import Environment, FileSystemLoader
@@ -17,11 +18,16 @@ from collections import Counter
 
 def convert_markdown_to_html(content: str) -> str:
     """Convert markdown content to HTML."""
+    # Insert a TOC marker after the first metadata block, unless one already exists.
+    if "[TOC]" not in content:
+        content = re.sub(r"</pre>", "</pre>\n\n[TOC]\n\n", content, count=1)
+    content = re.sub(r"\.\./(XLS-[0-9A-Za-z-]+)/README\.md", r"./\1.html", content)
+
     md = markdown.Markdown(
         extensions=["extra", "codehilite", "toc", "tables"],
         extension_configs={
             "codehilite": {"css_class": "highlight"},
-            "toc": {"permalink": True},
+            "toc": {"permalink": True, "baselevel": 2, "toc_depth": 3, "title": "Table of Contents"},
         },
     )
     return md.convert(content)
@@ -94,6 +100,32 @@ def build_site():
     # Sort documents by number in reverse order (later ones more relevant)
     xls_docs.sort(key=lambda x: int(x.number), reverse=True)
 
+    # Generate simple redirect pages so /xls-<number>.html redirects to
+    # the canonical document URL under /xls/<folder>.html.
+    redirect_template = env.get_template("redirect.html")
+    for doc in xls_docs:
+        # Redirect pages live under /xls/, next to the canonical XLS HTML files.
+        # For local builds (base_url == "."), use a relative URL that does *not*
+        # add another /xls/ segment; otherwise we create /xls/xls/<file>.html.
+        if base_url == ".":
+            # From scripts/_site/xls/xls-<number>.html → ./<folder>.html
+            target_url = f"./{doc.folder}.html"
+        else:
+            # On GitHub Pages, use an absolute URL with the base path.
+            target_url = f"{base_url}/xls/{doc.folder}.html"
+
+        redirect_html = redirect_template.render(
+            title=f"XLS-{doc.number}: {doc.title}",
+            target_url=target_url,
+        )
+
+        # /xls/ alias: /xls/xls-<number>.html
+        redirect_xls_path = site_dir / "xls" / f"xls-{doc.number}.html"
+        with open(redirect_xls_path, "w", encoding="utf-8") as f:
+            f.write(redirect_html)
+
+        print(f"Generated redirect: {redirect_xls_path} -> {target_url}")
+
     # Group documents by category for category pages and navigation
     categories = {}
     for doc in xls_docs:
@@ -101,15 +133,15 @@ def build_site():
         if category not in categories:
             categories[category] = []
         categories[category].append(doc)
-    
+
     # Generate category pages
     category_template = env.get_template("category.html")
     all_categories = [(cat, len(docs)) for cat, docs in sorted(categories.items())]
-    
+
     for category, category_docs in categories.items():
         # Sort category documents by number in reverse order
         category_docs.sort(key=lambda x: int(x.number), reverse=True)
-        
+
         category_html = category_template.render(
             title=f"{category} XLS Standards",
             category=category,
@@ -118,12 +150,12 @@ def build_site():
             total_count=len(xls_docs),
             base_url=".." if base_url == "." else base_url,
         )
-        
+
         # Write category HTML file
         category_file = site_dir / "category" / f"{category.lower()}.html"
         with open(category_file, "w", encoding="utf-8") as f:
             f.write(category_html)
-            
+
         print(f"Generated category page: {category_file}")
 
     # Generate index page with category navigation
@@ -146,10 +178,10 @@ def build_site():
         try:
             with open(contributing_path, "r", encoding="utf-8") as f:
                 contributing_content = f.read()
-            
+
             # Convert markdown to HTML
             contributing_html_content = convert_markdown_to_html(contributing_content)
-            
+
             # Render contribute page
             contribute_template = env.get_template("contribute.html")
             contribute_html = contribute_template.render(
@@ -157,13 +189,13 @@ def build_site():
                 content=contributing_html_content,
                 base_url=base_url,
             )
-            
+
             # Write contribute file
             with open(site_dir / "contribute.html", "w", encoding="utf-8") as f:
                 f.write(contribute_html)
-                
+
             print(f"Generated contribute page from CONTRIBUTING.md")
-            
+
         except Exception as e:
             print(f"Error generating contribute page: {e}")
     else:

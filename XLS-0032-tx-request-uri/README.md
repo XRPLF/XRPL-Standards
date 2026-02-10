@@ -4,6 +4,7 @@
     author: Ryan (@interc0der)
     description: A standard URI schema for making payments and sharing data between platforms on the XRP Ledger
     created: 2022-07-28
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/81
     status: Stagnant
     category: Ecosystem
 </pre>
@@ -28,7 +29,7 @@ XRPL Labs, by way of the XUMM app, relies upon QR codes for main interactions be
 
 ### 1.2 Problem/Solution
 
-Limitations to this payload structure include passing simple parameters such as account address, destination tag, or messages. A thoughtful and defined XRPL URI standard could give direction to new developers and could provide more interoperability between applications. See [XLS-2d](https://github.com/XRPLF/XRPL-Standards/discussions/27) for the beginning discussions around a URI standard for combining account addresses and destination tags, represented by query parameter “dt”.
+Limitations to this payload structure include passing simple parameters such as account address, destination tag, or messages. A thoughtful and defined XRPL URI standard could give direction to new developers and could provide more interoperability between applications. See [XLS-2](../XLS-0002-destination-information/README.md) for the beginning discussions around a URI standard for combining account addresses and destination tags, represented by query parameter “dt”.
 
 ### 1.3 Motivation
 
@@ -172,7 +173,7 @@ The `type` field is required. This is how we determine what type of XRPL data is
 
 ### 2.6.1 Account Type
 
-This type is intended for passing a single XRPL address and tag. Currently, you can achieve this same functionality by the use of XLS 2d. This standard will supersede XLS 2d.
+This type is intended for passing a single XRPL address and tag. Currently, you can achieve this same functionality by the use of XLS 2. This standard will supersede XLS 2.
 
 The address parameter is required for this data type. The tag parameter is optional.
 
@@ -270,7 +271,7 @@ Considering the size limitations, we have chosen to split the URI into data type
 
 # 4. Backward Compatibility
 
-Adopting previous standards and schemas, if the data type field is not provided, the schema will fall back to XLS 2d. The schema is written as follows:
+Adopting previous standards and schemas, if the data type field is not provided, the schema will fall back to XLS 2. The schema is written as follows:
 
 ```
       "xrpl" ":" ﹡( address ) [ "&" "dt" "=" tag ]
@@ -504,21 +505,21 @@ https://www.rfc-editor.org/rfc/rfc2718
 
 https://www.rfc-editor.org/rfc/rfc3986
 
-#### XRPL - XLS-2d
+#### XRPL - XLS-2
 
-https://github.com/XRPLF/XRPL-Standards/discussions/27
+https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0002-destination-information/README.md
 
-#### XRPL - XLS-3d
+#### XRPL - XLS-3
 
-https://github.com/XRPLF/XRPL-Standards/discussions/26
+https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0003-deeplink-signed-transactions/README.md
 
-#### XRPL - XLS-4d
+#### XRPL - XLS-4
 
-https://github.com/XRPLF/XRPL-Standards/discussions/25
+https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0004-trustline-uri/README.md
 
-#### XRPL - XLS-15d
+#### XRPL - XLS-15
 
-https://github.com/XRPLF/XRPL-Standards/discussions/34
+https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0015-concise-tx-id/README.md
 
 #### Ethereum - EIP 681
 
@@ -574,10 +575,10 @@ https://github.com/standardconnect/xls-32d/tree/main/tests
 2022-07-29
 
 1. Update references to include all previous standards pertaining to URI standardization
-   XLS-2d https://github.com/XRPLF/XRPL-Standards/discussions/27
-   XLS-3d https://github.com/XRPLF/XRPL-Standards/discussions/26
-   XLS-4d https://github.com/XRPLF/XRPL-Standards/discussions/25
-   XLS-15d https://github.com/XRPLF/XRPL-Standards/discussions/34
+   XLS-2 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0002-destination-information/README.md
+   XLS-3 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0003-deeplink-signed-transactions/README.md
+   XLS-4 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0004-trustline-uri/README.md
+   XLS-15 https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0015-concise-tx-id/README.md
 
 2023-01-22
 

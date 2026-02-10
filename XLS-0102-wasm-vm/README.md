@@ -1,10 +1,12 @@
 <pre>
   title: WASM VM
   description: WebAssembly VM integration into rippled
-  created: 2025-08-08
   author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuelling (@sappenin)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/303
   status: Draft
   category: Amendment
+  created: 2025-08-08
+  updated: 2026-02-03
 </pre>
 
 # WASM VM Configuration
@@ -28,7 +30,7 @@ This feature does not (directly) involve any new transactions, ledger objects, o
 
 <img width="1020" height="495" alt="image" src="https://github.com/user-attachments/assets/8d8e90f4-cda6-4747-9438-e648bc89378b" />
 
-Using [Smart Escrows](https://github.com/XRPLF/XRPL-Standards/discussions/270) as an example:
+Using [Smart Escrows](../XLS-0100-smart-escrows/README.md) as an example:
 
 1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `FinishFunction` code to determine if the escrow is finishable).
 2. Enter the WASM engine, where the WASM environment is set up to run the code.
@@ -91,7 +93,7 @@ This section introduces WASM host functions for extensions on the XRP Ledger, en
 
 WASM code, whether in an extension or a smart contract, needs access to XRPL ledger data in order to be useful. A host function allows that access, in a secure way. Host functions can also be used to save gas/compute in WASM, as they can perform those same functions in C++ code instead, which will likely be more performant.
 
-Some examples from [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270):
+Some examples from [XLS-100](../XLS-0100-smart-escrows/README.md):
 
 - A notary escrow extension needs access to the triggering `EscrowFinish` transaction (to know who is sending the transaction).
 - An escrow checking for KYC needs access to ledger state, to determine if the destination has a given credential.
@@ -108,11 +110,11 @@ This section includes ledger header data, amendments, and fees.
 
 | Function Signature                                                                              | Description                                       | Gas Cost |
 | :---------------------------------------------------------------------------------------------- | :------------------------------------------------ | :------- |
-| `get_ledger_sqn()`                                                                              | Get the sequence number of the last ledger.       | 60       |
-| `get_parent_ledger_time()`                                                                      | Get the time (in Ripple Time) of the last ledger. | 60       |
+| `get_ledger_sqn(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`         | Get the sequence number of the last ledger.       | 60       |
+| `get_parent_ledger_time(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the time (in Ripple Time) of the last ledger. | 60       |
 | `get_parent_ledger_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the last ledger.                  | 60       |
 | `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)`    | Check if a given amendment is enabled.            | 60       |
-| `get_base_fee()`                                                                                | Get the current transaction base fee.             | 60       |
+| `get_base_fee(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`           | Get the current transaction base fee.             | 60       |
 
 ### 5.2. Current Ledger Object data
 
@@ -156,27 +158,27 @@ Fetch data from any other ledger object
 
 A keylet is a unique hash that represents a ledger object on the XRP Ledger. It is a 256-bit hash, constructed from unique identifiers for an object. For example, an `AccountRoot`'s hash is constructed from its `AccountID`, and an `Oracle`'s hash is constructed from its `Owner` and `DocumentID`.
 
-| Function Signature                                                                                                                                                                                                                                                               | Description                                                | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------- | :------- |
-| `account_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                              | Calculate an `AccountRoot`'s keylet from its pieces.       | 350      |
-| `amm_keylet(`<br/>&emsp;`issue1_ptr: i32,`<br/>&emsp;`issue1_len: i32,`<br/>&emsp;`issue2_ptr: i32,`<br/>&emsp;`issue2_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                          | Calculate an `AMM`’s keylet from its pieces.               | 350      |
-| `check_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                     | Calculate a `Check`'s keylet from its pieces.              | 350      |
-| `credential_keylet(`<br/>&emsp;`subject_ptr: i32,`<br/>&emsp;`subject_len: i32,`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`cred_type_ptr: i32,`<br/>&emsp;`cred_type_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Calculate a `Credential`'s keylet from its pieces.         | 350      |
-| `delegate_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                             | Calculate a `Delegate`'s keylet from its pieces.           | 350      |
-| `deposit_preauth_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Calculate a `DepositPreauth`'s keylet from its pieces.     | 350      |
-| `did_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                  | Calculate a `DID`'s keylet from its pieces.                | 350      |
-| `escrow_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                    | Calculate an `Escrow`'s keylet from its pieces.            | 350      |
-| `line_keylet(`<br/>&emsp;`account1_ptr: i32,`<br/>&emsp;`account1_len: i32,`<br/>&emsp;`account2_ptr: i32,`<br/>&emsp;`account2_len: i32,`<br/>&emsp;`currency_ptr: i32,`<br/>&emsp;`currency_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`   | Calculate a trustline’s keylet from its pieces.            | 350      |
-| `mpt_issuance_keylet(`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                | Calculate an `MPTIssuance`’s keylet from its pieces.       | 350      |
-| `mptoken_keylet(`<br/>&emsp;`mptid_ptr: i32,`<br/>&emsp;`mptid_len: i32,`<br/>&emsp;`holder_ptr: i32,`<br/>&emsp;`holder_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                        | Calculate an `MPToken`’s keylet from its pieces.           | 350      |
-| `nft_offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                 | Calculate an `NFTOffer`'s keylet from its pieces.          | 350      |
-| `offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                     | Calculate an `Offer`'s keylet from its pieces.             | 350      |
-| `oracle_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`document_id: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                 | Calculate an `Oracle`'s keylet from its pieces.            | 350      |
-| `paychan_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`destination_ptr: i32,`<br/>&emsp;`destination_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                               | Calculate a `PayChannel`’s keylet from its pieces.         | 350      |
-| `permissioned_domain_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                       | Calculate a `PermissionedDomain`’s keylet from its pieces. | 350      |
-| `signers_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                              | Calculate a `SignerListSet`'s keylet from its pieces.      | 350      |
-| `ticket_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                    | Calculate a `Ticket`'s keylet from its pieces.             | 350      |
-| `vault_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                     | Calculate a `Vault`’s keylet from its pieces.              | 350      |
+| Function Signature                                                                                                                                                                                                                                                                    | Description                                                | Gas Cost |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------- | :------- |
+| `account_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate an `AccountRoot`'s keylet from its pieces.       | 350      |
+| `amm_keylet(`<br/>&emsp;`issue1_ptr: i32,`<br/>&emsp;`issue1_len: i32,`<br/>&emsp;`issue2_ptr: i32,`<br/>&emsp;`issue2_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                               | Calculate an `AMM`’s keylet from its pieces.               | 350      |
+| `check_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Check`'s keylet from its pieces.              | 350      |
+| `credential_keylet(`<br/>&emsp;`subject_ptr: i32,`<br/>&emsp;`subject_len: i32,`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`cred_type_ptr: i32,`<br/>&emsp;`cred_type_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`      | Calculate a `Credential`'s keylet from its pieces.         | 350      |
+| `delegate_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate a `Delegate`'s keylet from its pieces.           | 350      |
+| `deposit_preauth_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                           | Calculate a `DepositPreauth`'s keylet from its pieces.     | 350      |
+| `did_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                       | Calculate a `DID`'s keylet from its pieces.                | 350      |
+| `escrow_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate an `Escrow`'s keylet from its pieces.            | 350      |
+| `line_keylet(`<br/>&emsp;`account1_ptr: i32,`<br/>&emsp;`account1_len: i32,`<br/>&emsp;`account2_ptr: i32,`<br/>&emsp;`account2_len: i32,`<br/>&emsp;`currency_ptr: i32,`<br/>&emsp;`currency_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`        | Calculate a trustline’s keylet from its pieces.            | 350      |
+| `mpt_issuance_keylet(`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate an `MPTIssuance`’s keylet from its pieces.       | 350      |
+| `mptoken_keylet(`<br/>&emsp;`mptid_ptr: i32,`<br/>&emsp;`mptid_len: i32,`<br/>&emsp;`holder_ptr: i32,`<br/>&emsp;`holder_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                             | Calculate an `MPToken`’s keylet from its pieces.           | 350      |
+| `nft_offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                   | Calculate an `NFTOffer`'s keylet from its pieces.          | 350      |
+| `offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate an `Offer`'s keylet from its pieces.             | 350      |
+| `oracle_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`document_id_ptr: i32,`<br/>&emsp;`document_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                | Calculate an `Oracle`'s keylet from its pieces.            | 350      |
+| `paychan_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`destination_ptr: i32,`<br/>&emsp;`destination_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Calculate a `PayChannel`’s keylet from its pieces.         | 350      |
+| `permissioned_domain_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                         | Calculate a `PermissionedDomain`’s keylet from its pieces. | 350      |
+| `signers_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate a `SignerListSet`'s keylet from its pieces.      | 350      |
+| `ticket_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate a `Ticket`'s keylet from its pieces.             | 350      |
+| `vault_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Vault`’s keylet from its pieces.              | 350      |
 
 The singleton keylets (e.g. `Amendments`) are a bit unnecessary to include, as a dev can simply copy the keylet directly instead. They will be included as constants in `xrpl-wasm-stdlib` as well.
 
@@ -218,13 +220,15 @@ Helper functions for working with rippled-encoded floats (e.g. IOU amounts).
 | `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Subtract two floats in rippled format.                            | 1000     |
 | `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                            | 1000     |
 | `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`   | Divide two floats in rippled format.                              | 1000     |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`n: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth power of a float in rippled format.               | 1000     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`n: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                       | Compute the nth root of a float in rippled format.                | 1000     |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                      | Compute the nth power of a float in rippled format.               | 1000     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                    | Compute the nth root of a float in rippled format.                | 1000     |
 | `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                            | Compute the 10 based log of a float in rippled format.            | 1000     |
 
 ### 5.9. Trace
 
-Output debug info to the `rippled` debug log. The maximum size of data that can be passed into these functions is 1024 bytes.
+Output debug info to the `rippled` debug log (if trace logging is enabled). The maximum size of data that can be passed into these functions is 1024 bytes (attempting to pass in more will trigger an error).
+
+Each of these host functions will return `0` on success and a negative value on failure.
 
 | Function Signature                                                                                                                                      | Description                                             | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------ | :------- |

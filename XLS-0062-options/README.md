@@ -3,21 +3,14 @@
   title: Options
   description: A new framework for options trading on the XRPL protocol
   author: Denis Angell (@dangell7)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/186
   created: 2024-03-25
+  updated: 2025-04-22
   status: Stagnant
   category: Amendment
 </pre>
 
-# XLS-62d: Options on XRPL Protocol Chains
-
-```markdown
-Title: Options
-Revision: 6 (2025-04-22)
-Type: Draft
-Author:
-Denis Angell, XRPL-Labs [dangell7](https://github.com/dangell7)
-Affiliation: XRPL-Labs
-```
+# XLS-62: Options on XRPL Protocol Chains
 
 ## Amendment
 

@@ -3,14 +3,14 @@
   title: Token-Enabled Escrows
   description: Enhancement to existing Escrow functionality to support both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs)
   author: Denis Angell (@dangell7)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/248
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/248
   status: Final
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-11-07
 </pre>
 
-> This proposal, XLS85d, replaces [XLS34d](https://github.com/XRPLF/XRPL-Standards/discussions/88) and draws inspiration from https://github.com/XRPLF/XRPL-Standards/discussions/133
+> This proposal, XLS-85, replaces [XLS-34](../XLS-0034-paychan-escrow-for-tokens/README.md) and draws inspiration from https://github.com/XRPLF/XRPL-Standards/discussions/133.
 
 The proposed `TokenEscrow` amendment to the XRP Ledger (XRPL) protocol enhances the existing `Escrow` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow escrows to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity.
 
@@ -80,7 +80,6 @@ The `EscrowCreate` transaction is modified as follows:
   - **MPTs**: The escrow `Amount` is deducted from the source's MPT balance. The `sfOutstandingBalance` of the MPT issuance remains unchanged. The `sfLockedAmount` is increased on both the source's MPT and the MPT issuance.
 - **Escrow Object Creation:**
   - The `Escrow` ledger object includes:
-    - `CancelAfter`: When the Escrow Expires (Required on IOU/MPT)
     - `Amount`: Tokens held in escrow.
     - `TransferRate`: `TransferRate` (IOUs) or `TransferFee` (MPTs) at creation.
     - `IssuerNode`: Reference to the issuer’s ledger node if applicable.
@@ -262,6 +261,6 @@ To enable trust line locking for an issuer account:
 
 ## 1.7. Future Considerations
 
-1. Clawback: XLS-85d currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
+1. Clawback: XLS-85 currently does not provide a direct “clawback” mechanism within an active Escrow. If your use case requires clawback, you can either finish or cancel the Escrow (as appropriate) and then perform a clawback of the funds outside of the Escrow context. In other words, once the token amount returns to the issuer or source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
 
-2. Issuer as Source: XLS-85d currently does not allow the issuer to be the source of the Escrow. If your use case requires this functionality you should create a new account, send the MPT or IOU to that account and then Escrow the token.
+2. Issuer as Source: XLS-85 currently does not allow the issuer to be the source of the Escrow. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then Escrow the token.

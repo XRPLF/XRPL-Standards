@@ -25,19 +25,19 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/site/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/scripts/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r site/requirements.txt
+          pip install -r scripts/requirements.txt
 
       - name: Validate XLS document parsing
         run: |
           echo "Running XLS document validation..."
-          python site/xls_parser.py
+          python scripts/xls_parser.py
 
       - name: Report validation results
         if: always()
@@ -45,3 +45,59 @@ jobs:
           echo "XLS validation completed"
           echo "This pipeline validates that all XLS documents can be parsed correctly"
           echo "If this fails, it indicates issues with XLS document formatting or metadata"
+
+  validate-xls-template:
+    runs-on: ubuntu-latest
+    name: "[Beta CI Check] Validate XLS Template Compliance"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Fetch full history for git diff
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        id: cache-deps
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/scripts/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: Get changed XLS files
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            XLS-*/README.md
+
+      - name: Validate XLS template compliance
+        if: steps.changed-files.outputs.all_changed_files != ''
+        run: |
+          echo "Running XLS template validation..."
+          python scripts/validate_xls_template.py ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Report validation results
+        if: always()
+        run: |
+          if [ "${{ steps.changed-files.outputs.all_changed_files }}" = "" ]; then
+            echo "No XLS files were changed - skipping validation"
+          else
+            echo "XLS template validation completed"
+            echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+            echo ""
+            echo "This validates that XLSes follow XLS_TEMPLATE.md"
+            echo "And that Amendment specs follow AMENDMENT_TEMPLATE.md"
+            echo "If this fails, check the error messages for missing sections or placeholders"
+          fi

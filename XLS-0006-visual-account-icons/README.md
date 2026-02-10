@@ -3,15 +3,15 @@
   title: Standard for Visual Account Icons
   description: A standard for visually distinguishing XRPL accounts by generating unique icons for each account, regardless of address format.
   author: Richard Holland (@RichardAH)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/24
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/24
   status: Final
   category: Ecosystem
   created: 2019-09-22
 </pre>
 
-Following from [XLS-5d](https://github.com/XRPLF/XLS-0005-standards-for-addressing), it has become necessary to provide XRPL users a way to identify their XRPL account, which effectively now has two different identifiers: an 'r-address' and an 'X-address'.
+Following from [XLS-5](https://github.com/XRPLF/XLS-0005-standards-for-addressing), it has become necessary to provide XRPL users a way to identify their XRPL account, which effectively now has two different identifiers: an 'r-address' and an 'X-address'.
 
-To solve this problem XLS-6d provides for a standard way to visually identify accounts irrespective of which addressing system is used by the rest of the user interface.
+To solve this problem XLS-6 provides for a standard way to visually identify accounts irrespective of which addressing system is used by the rest of the user interface.
 
 For a user account take the X-address of the account without destination tag and feed it into hashicon https://www.npmjs.com/package/hashicon
 

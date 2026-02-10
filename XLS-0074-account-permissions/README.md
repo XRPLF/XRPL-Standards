@@ -3,7 +3,7 @@
   title: Account Permissions
   description: Formalization of different types of transaction-based account permissions for subset capabilities
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/217
   status: Final
   category: Amendment
   created: 2024-08-21
@@ -17,7 +17,7 @@ This document formalizes different types of transaction-based account permission
 
 ## 1. Overview
 
-[XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144) proposed transaction-type-level permissions. These types of permissions can be used for multiple signer lists, as explained in XLS-49d, but could also be used in conjunction with other features.
+[XLS-49](../XLS-0049-multiple-signer-lists/README.md) proposed transaction-type-level permissions. These types of permissions can be used for multiple signer lists, as explained in XLS-49, but could also be used in conjunction with other features.
 
 Currently, it's all or nothing - global signer lists and regular keys can do all transactions. Sometimes you want to provide an account permissions to a subset of features, like with `NFTokenMinter` - maybe a few transaction types (e.g. all AMM transaction), or a single transaction type (e.g. `NFTokenMint`), or even some portion of a transaction type (e.g. authorizing trustlines).
 
@@ -73,7 +73,7 @@ The global permission value is already used in existing signer lists; they have 
 
 A transaction type is represented by a `UInt16`.
 
-Transaction type permissions were previously defined in [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144), section `2.1.1`.
+Transaction type permissions were previously defined in [XLS-49](../XLS-0049-multiple-signer-lists/README.md), section `2.1.1`.
 
 **`1` to `65536` ($2^{16}$): all transaction types** (1 + their serialized value, which is represented by a `UInt16`)
 
@@ -81,7 +81,7 @@ Adding a new transaction type to the XRPL will automatically be supported by any
 
 #### 2.2.1. `Batch` Transactions
 
-The one exception to this rule is `Batch` transactions ([XLS-56d](https://github.com/XRPLF/XRPL-Standards/discussions/162)). They will not have a separate permission, since `Batch` transactions on their own do not do anything. In order to execute a `Batch` transaction with a permission, the user will need to have permissions for all the inner transactions.
+The one exception to this rule is `Batch` transactions ([XLS-56](../XLS-0056-batch/README.md)). They will not have a separate permission, since `Batch` transactions on their own do not do anything. In order to execute a `Batch` transaction with a permission, the user will need to have permissions for all the inner transactions.
 
 ### 2.3. Granular Permissions
 
@@ -110,8 +110,8 @@ Many other granular permissions may be added. There is capacity for a total of 4
 
 Some other potential examples include:
 
-- `SponsorFee` - the ability to sponsor the fee of another account (from [XLS-68d](https://github.com/XRPLF/XRPL-Standards/discussions/196))
-- `SponsorReserve` - the ability to sponsor the fee of another account/object (from [XLS-68d](https://github.com/XRPLF/XRPL-Standards/discussions/196))
+- `SponsorFee` - the ability to sponsor the fee of another account (from [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md))
+- `SponsorReserve` - the ability to sponsor the fee of another account/object (from [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md))
 
 #### 2.4.1. Limitations
 
