@@ -137,8 +137,6 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
   - **Spending (CB_S):** Stable balance used for spending and proofs.
   - **Inbox (CB_IN):** Receives incoming transfers and must be explicitly merged into `CB_S`, preventing stale-proof rejection.
 
-- **Auditor Policy:** An optional issuance-level configuration that enables selective disclosure by encrypting balances under an auditor’s public key.
-
 - **Clawback:** A privileged issuer-only operation performed via a `ConfidentialClawback` transaction, which forcibly converts a holder’s confidential balance back into the issuer’s public reserve while preserving ledger accounting consistency through ZKPs.
 
 ## 5. Protocol Overview
