@@ -103,7 +103,13 @@ class XLSTemplateValidator:
             "required": [],
         },
         r"RPC:": {
-            "required": [],
+            "required": [
+                "Request Fields",
+                "Response Fields",
+                "Failure Conditions",
+                "Example Request",
+                "Example Response",
+            ],
         },
     }
 
