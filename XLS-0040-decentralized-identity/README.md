@@ -151,7 +151,7 @@ The components specific to the XRPL network are the following:
   A DID that uses this method MUST begin with the following prefix: `did:xrpl`. Per the DID specification, this string MUST be in lowercase. The remainder of the DID, after the prefix, is specified below.
 
 - `method-specific-idstring` is formed by `network-id` and `xrpl-specific-idstring`
-  - `network-id`: `network-id` is a chain ID which is an identifier of XRP ledger networks. It specifies the underlying network instance where the `DID` is stored. Per [XLS-37d specification](https://github.com/XRPLF/rippled/pull/4418), in XRPL Protocol Chains the Network ID should match the chosen peer port.
+  - `network-id`: `network-id` is a chain ID which is an identifier of XRP ledger networks. It specifies the underlying network instance where the `DID` is stored. Per [XLS-37 specification](../XLS-0037-concise-transaction-identifier-ctid/README.md), in XRPL Protocol Chains the Network ID should match the chosen peer port.
 
 - `xrpl-specific-idstring` is generated as described in the next section.
 

@@ -10,7 +10,7 @@
   category: Amendment
 </pre>
 
-# XLS-62d: Options on XRPL Protocol Chains
+# XLS-62: Options on XRPL Protocol Chains
 
 ## Amendment
 
