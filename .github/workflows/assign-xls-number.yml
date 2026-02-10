@@ -2,7 +2,7 @@ name: Assign XLS Number
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   assign-xls-number:
@@ -34,8 +34,8 @@ jobs:
         uses: tj-actions/changed-files@v47
         with:
           files: |
-            XLS-draft-*/README.md
-            xls-draft-*/README.md
+            XLS-draft*/README.md
+            xls-draft*/README.md
           # Only look at added files, not modified ones
           include_all_old_new_renamed_files: false
 

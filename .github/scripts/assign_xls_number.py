@@ -63,7 +63,7 @@ def find_draft_xls_files(changed_files: list[str]) -> list[str]:
     Returns:
         List of draft XLS directory names (e.g., ["XLS-draft-my-feature"])
     """
-    draft_pattern = re.compile(r"^(XLS-draft-[^/]+)/README\.md$")
+    draft_pattern = re.compile(r"^((XLS|xls)-draft-[^/]+)/README\.md$")
     drafts = []
 
     for file_path in changed_files:
