@@ -169,7 +169,7 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`EncryptedBalanceIssuer`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
 
-- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`EncryptedBalanceAuditor`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
+- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
 
 ## 6. Transaction: `ConfidentialMPTConvert`
 
