@@ -169,7 +169,6 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`EncryptedBalanceIssuer`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
 
-
 ## 6. Transaction: `ConfidentialMPTConvert`
 
 **Purpose:**  
@@ -728,8 +727,6 @@ Every confidential transaction must carry appropriate ZKPs:
   - Issuer mint events (already visible in legacy MPTs).
   - Conversion from public → confidential, where only the converted amount is disclosed once.
 - Redistribution among holders (including issuer’s second account) leaks no amounts.
-
-
 
 ### Attack Surface & Mitigations
 
