@@ -1,7 +1,7 @@
 name: Assign XLS Number
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -10,6 +10,7 @@ jobs:
     name: Assign XLS Number to Draft
     permissions:
       pull-requests: write
+      issues: write
       contents: read
 
     steps:
@@ -17,6 +18,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout script from base branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          sparse-checkout: |
+            .github/scripts/assign_xls_number.py
+          sparse-checkout-cone-mode: false
+          path: base-repo
 
       - name: Get added files
         id: added-files
@@ -53,7 +64,7 @@ jobs:
         id: assign-number
         run: |
           echo ${{ steps.check-drafts.outputs.draft_files }}
-          python .github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}
+          python base-repo/.github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}
 
       - name: Check for existing assignment comment
         if: steps.check-drafts.outputs.has_drafts == 'true'
