@@ -228,7 +228,7 @@ The `LoanBroker` object has the following fields:
 
 #### 2.1.3 `LoanBroker` _pseudo-account_
 
-The `LoanBroker` object  _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
+The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
 #### 2.1.4 Ownership
 
@@ -768,12 +768,13 @@ The transaction deposits First-Loss Capital into the `LoanBroker` object.
 
 The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from the `LoanBroker`.
 
-| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                             |
-| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                       |
-| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.           |
-| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                               |
-| `Destination`     |                    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset. |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                  |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                            |
+| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
+| `Destination`     |                    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
+| `DestinationTag`  |                    |                                                       `number`                                                       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
 
 ##### 3.1.4.1 Failure Conditions
 
