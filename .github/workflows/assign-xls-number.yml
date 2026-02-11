@@ -24,6 +24,7 @@ jobs:
         with:
           files: |
             XLS-draft-*/README.md
+            xls-draft-*/README.md
           # Only look at added files, not modified ones
           include_all_old_new_renamed_files: false
 
@@ -31,6 +32,7 @@ jobs:
         id: check-drafts
         run: |
           ADDED_FILES="${{ steps.added-files.outputs.added_files }}"
+          echo $ADDED_FILES
           if [ -z "$ADDED_FILES" ]; then
             echo "No XLS draft files added in this PR"
             echo "has_drafts=false" >> $GITHUB_OUTPUT
@@ -50,12 +52,13 @@ jobs:
         if: steps.check-drafts.outputs.has_drafts == 'true'
         id: assign-number
         run: |
+          echo ${{ steps.check-drafts.outputs.draft_files }}
           python .github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}
 
       - name: Check for existing assignment comment
         if: steps.check-drafts.outputs.has_drafts == 'true'
         id: find-comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
@@ -63,7 +66,7 @@ jobs:
 
       - name: Post or update PR comment
         if: steps.check-drafts.outputs.has_drafts == 'true' && steps.find-comment.outputs.comment-id == ''
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
