@@ -160,7 +160,7 @@ The `Sponsor` field **must not** appear on:
 
 _NOTE: A sponsor may also be a sponsee._
 
-#### 4.3.4. Authoritative Indication
+#### 4.3.3. Authoritative Indication
 
 The presence or absence of `Sponsor` is the authoritative indication of whether an object is sponsored for reserves. The presence of this field triggers the following behaviors:
 
@@ -661,6 +661,7 @@ There are three valid transfer scenarios:
 | ------------------ | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType`  | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipTransfer`).                                                                                                                         |
 | `Account`          | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the current sponsor or the current sponsee.                                                                   |
+| `Flags`            |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. These flags represent the transfer scenario.                                                                 |
 | `ObjectID`         |           | `string`  | `Hash256`     | The ID of the object to transfer sponsorship.                                                                                                                         |
 | `Sponsor`          |           | `string`  | `AccountID`   | The new sponsor of the object.                                                                                                                                        |
 | `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                              |
@@ -680,11 +681,19 @@ In this case, if `Sponsor` is included with the `tfSponsorReserve` flag, then th
 
 If there is no `Sponsor` field, or if the `tfSponsorReserve` flag is not included, then the burden of the reserve will be passed back to the ledger object's owner (the former sponsee).
 
-### 10.2. Sponsorship Transfer Scenarios
+### 10.2. Transaction Flags
 
-#### 10.2.1. Transferring from Sponsor to Sponsee (Sponsored to Unsponsored)
+| Flag Name                           | Value        | Description                                                   |
+| ----------------------------------- | ------------ | ------------------------------------------------------------- |
+| `tfSponsorshipTransferToSponsee`    | `0x00000001` | The sponsor is transferring the sponsorship to the sponsee.   |
+| `tfSponsorshipTransferToSponsor`    | `0x00000002` | The sponsee is transferring the sponsorship to the sponsor.   |
+| `tfSponsorshipTransferToNewSponsor` | `0x00000004` | The sponsee is transferring the sponsorship to a new sponsor. |
 
-This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time.
+### 10.3. Sponsorship Transfer Scenarios
+
+#### 10.3.1. Transferring from Sponsor to Sponsee (Sponsored to Unsponsored)
+
+This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time. It is indicated by the `tfSponsorshipTransferToSponsee` flag.
 
 The following fields indicate this scenario:
 
@@ -693,9 +702,9 @@ The following fields indicate this scenario:
 - `SponsorFlags.tfSponsorReserve` must be excluded
 - The object specified by `ObjectID` must be have a `Sponsor` field
 
-#### 10.2.2. Transferring from Sponsee to Sponsor (Unsponsored to Sponsored)
+#### 10.3.2. Transferring from Sponsee to Sponsor (Unsponsored to Sponsored)
 
-This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction.
+This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipTransferToSponsor` flag.
 
 The following fields indicate this scenario:
 
@@ -704,9 +713,9 @@ The following fields indicate this scenario:
 - `SponsorFlags.tfSponsorReserve` must be included
 - The object specified by `ObjectID` must **not** have a `Sponsor` field
 
-#### 10.2.3. Transferring from Sponsor to New Sponsor
+#### 10.3.3. Transferring from Sponsor to New Sponsor
 
-This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction.
+This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipTransferToNewSponsor` flag.
 
 The following fields indicate this scenario:
 
@@ -715,19 +724,19 @@ The following fields indicate this scenario:
 - `SponsorFlags.tfSponsorReserve` must be included
 - The object specified by `ObjectID` must have a `Sponsor` field
 
-_NOTE: The only difference between this scenario and the one specified in [10.2.2](#1022-transferring-from-sponsee-to-sponsor-unsponsored-to-sponsored) is that in this case, the object specified by `ObjectID` must already have a `Sponsor` field._
+_NOTE: The only difference between this scenario and the one specified in [10.3.2](#1032-transferring-from-sponsee-to-sponsor-unsponsored-to-sponsored) is that in this case, the object specified by `ObjectID` must already have a `Sponsor` field._
 
-#### 10.2.4. Sponsorship Transfer for Accounts
+#### 10.3.4. Sponsorship Transfer for Accounts
 
 The same 3 scenarios above apply to accounts as well. The only difference is that for accounts, the `ObjectID` field is not included, and instead the `Account` field is used to specify which account the sponsorship is changing for.
 
-### 10.3. Transaction Fee
+### 10.4. Transaction Fee
 
 **Fee Structure:** Standard
 
 This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
 
-### 10.4. Failure Conditions
+### 10.5. Failure Conditions
 
 All failure conditions mentioned in [section 8.3](#83-failure-conditions) still apply here.
 
@@ -752,14 +761,14 @@ Additional failure conditions specific to `SponsorshipTransfer`:
 1. The new sponsor account does not exist (`terNO_ACCOUNT`)
 1. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
-### 10.5. State Changes
+### 10.6. State Changes
 
 - The `Sponsor` field on the object specified by `ObjectID` is deleted if the `tx.Sponsor` is the object's `Owner`, otherwise the `Sponsor` field is updated to the new `tx.Sponsor`.
 - The old sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented by one.
 - The new sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` incremented by one.
 - If there is no new sponsor, then the owner's `SponsoredOwnerCount` will be decremented by one.
 
-### 10.6. Example JSON
+### 10.7. Example JSON
 
 ```json
 {
@@ -1326,7 +1335,7 @@ This was inspired by Stellar's sandwich transaction design, but the current inne
 
 In addition, the signing process becomes complicated (as discovered in the process of developing XLS-56). You have to somehow prevent the sponsor from submitting the as-is signed transaction to the network, without including it in the wrapper transaction.
 
-#### 20.3.2. Create-Accept-Cancel Flow
+#### 20.3.3. Create-Accept-Cancel Flow
 
 Another design considered was to have a new set of transactions (e.g. `SponsorCreate`/`SponsorAccept`/`SponsorCancel`/`SponsorFinish`) where a sponsor could take on the reserve for an existing object.
 
@@ -1553,7 +1562,11 @@ https://github.com/XRPLF/rippled/pull/5887
 
 No, there is no XRP transfer in a sponsorship relationship - the XRP stays in the sponsor's account. The burden of the reserve for that object/account is just transferred to the sponsor.
 
-### A.2: What happens if you try to delete your account and you have sponsored objects?
+### A.2: Can a sponsor sponsor both fees and reserves for a transaction?
+
+Yes, a sponsor can sponsor both fees and reserves for a transaction, by specifying both the `tfSponsorFee` and `tfSponsorReserve` flags. The sponsor can also sponsor just one or the other.
+
+### A.3: What happens if you try to delete your account and you have sponsored objects?
 
 If the account itself is sponsored, then it can be deleted, but the destination of the `AccountDelete` transaction (in other words, where the leftover XRP goes) **must** be the sponsor's account. This ensures that the sponsor gets their reserve back, and the sponsee cannot run away with those funds.
 
@@ -1561,7 +1574,7 @@ If the sponsee still has sponsored objects, those objects will follow the same r
 
 If a sponsored object is deleted (either due to normal object deletion processes or, in the case of objects that aren't deletion blockers, because the owner account is deleted), the sponsor's reserve becomes available again.
 
-### A.3: What if a sponsor that is sponsoring a few objects wants to delete their account?
+### A.4: What if a sponsor that is sponsoring a few objects wants to delete their account?
 
 An account cannot be deleted if it is sponsoring **any** existing accounts or objects. They will need to either delete those objects (by asking the owner to do so, as they cannot do so directly) or use the `SponsorshipTransfer` transaction to relinquish control of them.
 
