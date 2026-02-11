@@ -579,43 +579,50 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 | `Amount`          | :heavy_check_mark: | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
 
 ##### 3.2.1.1 Failure conditions
+  
+**Data Validation Errors** (`temMALFORMED` / `temBAD_AMOUNT`)
+        
+1. The `VaultID` parameter is zero. (`temMALFORMED`)                                                                                                                                 
+2. The `Amount` parameter is zero or negative. (`temBAD_AMOUNT`)
+                                                                                                                                                                                      
+**Protocol Errors**
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
-- The asset type of the vault does not match the asset type the depositor is depositing.
-- The depositor does not have sufficient funds to make a deposit.
-- Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
-- The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
-
-- The `Vault.Asset` is `MPT`:
-  - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-  - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-  - `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
-  - `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
-
-- The `Asset` is an `IOU`:
-  - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
-  - The `RippleState` object `Balance` < `Amount` (insufficient balance).
+1. The `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
+2. The `Amount.asset()` does not match the `Vault.Asset`. (`tecWRONG_ASSET`)
+3. The vault's asset is non-transferable (failed `canTransfer` check). (`tecNO_AUTH` or `terNO_RIPPLE`)
+4. The vault shares and vault assets are the same (vault shares `MPTIssue` equals deposited asset). (`tefINTERNAL`)
+5. The `MPTokenIssuance` object for vault shares does not exist. (`tefINTERNAL`)
+6. The `lsfMPTLocked` flag is set in the vault share `MPTokenIssuance`. (`tefINTERNAL`)
+7. The vault's `Asset` is an `IOU` and is frozen for the depositor. (`tecFROZEN`)
+8. The vault's `Asset` is an `MPT` and is locked for the depositor. (`tecLOCKED`)
+9. The vault shares are frozen for the depositor. (`tecLOCKED`)
+10. The `Vault` has the `lsfVaultPrivate` flag set, the depositor is not the `Vault.Owner`, and no valid `PermissionedDomain` authorization exists. (`tecNO_AUTH` or credential
+validation error `tecBAD_CREDENTIALS`)
+11. The depositor's balance of the vault's asset is less than the `Amount`. (`tecINSUFFICIENT_FUNDS`)
+12. The computed shares to create is zero due to precision loss. (`tecPRECISION_LOSS`)
+13. The computed assets to deposit would exceed the offered `Amount`. (`tecINTERNAL`)
+14. Arithmetic overflow occurred during share or asset computation. (`tecPATH_DRY`)
+15. The deposit would cause `Vault.AssetsTotal` to exceed `Vault.AssetsMaximum` (when non-zero). (`tecLIMIT_EXCEEDED`)
+16. The depositor's balance becomes negative after the transfer (sanity check). (`tefINTERNAL`)
 
 ##### 3.2.1.2 State Changes
 
-If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
-
-- Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
-- Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
-
-- If the `Vault.Asset` is `XRP`:
-  - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
-  - Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
-
-- If the `Vault.Asset` is an `IOU`:
-  - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  - Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-- If the `Vault.Asset` is an `MPT`:
-  - Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
+1. If the depositor does not have an `MPToken` for vault shares, one is created.                                                                                                     
+2. If the `Vault` has the `lsfVaultPrivate` flag set and the depositor is the `Vault.Owner`, an `MPToken` is created for the _pseudo-account_ with the owner as holder, setting the
+authorized flag.                                                                                                                                                                     
+3. Increase the `Vault.AssetsTotal` field.
+4. Increase the `Vault.AssetsAvailable` field.
+5. If the `Vault.Asset` is `XRP`:
+    1. Increase the `Balance` field of _pseudo-account_ `AccountRoot`.
+    2. Decrease the `Balance` field of the depositor `AccountRoot`.
+6. If the `Vault.Asset` is an `IOU`:
+    1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot`.
+    2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot`.
+7. If the `Vault.Asset` is an `MPT`:
+    1. Increase the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+    2. Decrease the `MPToken.MPTAmount` of the depositor `MPToken` object for the `Vault.Asset`.
+8. Increase the `MPToken.MPTAmount` of the depositor `MPToken` object for vault shares.
+9. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` object for vault shares.
 
 ##### 3.2.1.3 Invariants
 
