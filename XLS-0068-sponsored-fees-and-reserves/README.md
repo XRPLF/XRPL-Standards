@@ -1578,56 +1578,56 @@ If a sponsored object is deleted (either due to normal object deletion processes
 
 An account cannot be deleted if it is sponsoring **any** existing accounts or objects. They will need to either delete those objects (by asking the owner to do so, as they cannot do so directly) or use the `SponsorshipTransfer` transaction to relinquish control of them.
 
-### A.4: Does a sponsor have any powers over an object they pay the reserve for? I.e. can they delete the object?
+### A.5: Does a sponsor have any powers over an object they pay the reserve for? I.e. can they delete the object?
 
 No. If a sponsor no longer wants to support an object, they can always use the `SponsorshipTransfer` transaction instead to transfer the reserve burden back to the sponsee.
 
-### A.5: What if a sponsee refuses to delete their account when a sponsor wants to stop supporting their account?
+### A.6: What if a sponsee refuses to delete their account when a sponsor wants to stop supporting their account?
 
 The sponsor will have the standard problem of trying to get ahold of a debtor to make them pay. They may use the `SponsorshipTransfer` transaction to put the onus on the sponsee. If the sponsee does not have enough XRP to cover the reserve for those objects, they will not be able to create any more objects until they do so.
 
-### A.6: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
+### A.7: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
 
 If the sponsor really needs to get out of the sponsor relationship ASAP without recouping the value of the reserve, they can pay the sponsee the amount of XRP they need to cover the reserve. These steps can be executed atomically via a [Batch transaction](../XLS-0056-batch/README.md), to ensure that the sponsee can't do something else with the funds before the `SponsorshipTransfer` transaction is validated.
 
-### A.7: Would sponsored accounts carry a lower reserve?
+### A.8: Would sponsored accounts carry a lower reserve?
 
 No, they would still carry a reserve of 1 XRP at current levels.
 
-### A.8: Can an existing unsponsored ledger object/account be sponsored?
+### A.9: Can an existing unsponsored ledger object/account be sponsored?
 
 Yes, with the `SponsorshipTransfer` transaction.
 
-### A.9: Can a sponsored account be a sponsor for other accounts/objects?
+### A.10: Can a sponsored account be a sponsor for other accounts/objects?
 
 Yes, though they will have to use their own XRP for this (not from another sponsor).
 
-### A.10: Can a sponsored account hold unsponsored objects, or objects sponsored by a different sponsor?
+### A.11: Can a sponsored account hold unsponsored objects, or objects sponsored by a different sponsor?
 
 Yes, and yes.
 
-### A.11: What if I want different sponsors to sponsor the transaction fee vs. the reserve for the same transaction?
+### A.12: What if I want different sponsors to sponsor the transaction fee vs. the reserve for the same transaction?
 
 That will not be supported by this proposal. If you have a need for this, please provide example use-cases.
 
-### A.12: Won't it be difficult to add two signatures to a transaction?
+### A.13: Won't it be difficult to add two signatures to a transaction?
 
 This is something that good tooling can solve. It could work similarly to how multisigning is supported in various tools.
 
-### A.13. Why not instead do [insert some other design]?
+### A.14: Why not instead do [insert some other design]?
 
 See Appendix B for the alternate designs that were considered and why this one was preferred. If you have another one in mind, please describe it in the comments and we can discuss.
 
-### A.14: How is this account sponsorship model different from/better than [XLS-23, Lite Accounts](../XLS-0023-lite-accounts/README.md)?
+### A.15: How is this account sponsorship model different from/better than [XLS-23, Lite Accounts](../XLS-0023-lite-accounts/README.md)?
 
 - Sponsored accounts do not have any restrictions, and can hold objects.
 - Sponsored accounts require the same reserve as a normal account (this was one of the objections to the Lite Account proposal).
 - Lite accounts can be deleted by their sponsor.
 
-### A.15: How will this work for objects like trustlines, where multiple accounts might be holding reserves for it?
+### A.16: How will this work for objects like trustlines, where multiple accounts might be holding reserves for it?
 
 The answer to this question is still being explored. One possible solution is to add a second field, `Sponsor2`, to handle the other reserve.
 
-### A.16: How does this proposal work in conjunction with [XLS-49](../XLS-0049-multiple-signer-lists/README.md)? What signer list(s) have the power to sponsor fees or reserves?
+### A.17: How does this proposal work in conjunction with [XLS-49](../XLS-0049-multiple-signer-lists/README.md)? What signer list(s) have the power to sponsor fees or reserves?
 
 Currently, only the global signer list is supported. Another `SignerListID` value could be added to support sponsorship. Transaction values can only go up to $2^{16}$, since the `TransactionType` field is a `UInt16`, but the `SignerListID` field goes up to $2^{32}$, so there is room in the design for additional values that do not correlate to a specific transaction type.
