@@ -6,6 +6,7 @@
   created: 2020-03-01
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/23
   status: Withdrawn
+  withdrawal-reason: Superseded by XLS-13
   category: Amendment
 </pre>
 
