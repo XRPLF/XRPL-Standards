@@ -529,46 +529,46 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 
 #### 8.3.1. General Failures
 
-- `SponsorSignature.TxnSignature` is invalid.
-- `SponsorSignature.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, the public key(s) are invalid, or signature(s) are invalid).
-- `SponsorSignature.SigningPubKey` is invalid (the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid).
-- The `Sponsor` doesn't exist on the ledger.
-- An invalid sponsorship flag is used.
-- `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
-- `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
-- Only one or two of `Sponsor`, `SponsorFlags`, and `SponsorSignature` is included (they must either all be included, if the transaction is sponsored, or none, if it is not).
-- `SponsorFlags` includes invalid flags (currently, the only two valid flags are `tfSponsorFee` and `tfSponsorReserve`).
+1. `SponsorSignature.TxnSignature` is invalid.
+1. `SponsorSignature.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, the public key(s) are invalid, or signature(s) are invalid).
+1. `SponsorSignature.SigningPubKey` is invalid (the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid).
+1. The `Sponsor` doesn't exist on the ledger.
+1. An invalid sponsorship flag is used.
+1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
+1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
+1. Only one or two of `Sponsor`, `SponsorFlags`, and `SponsorSignature` is included (they must either all be included, if the transaction is sponsored, or none, if it is not).
+1. `SponsorFlags` includes invalid flags (currently, the only two valid flags are `tfSponsorFee` and `tfSponsorReserve`).
 
 #### 8.3.2. Fee Sponsorship Failures
 
-- The sponsor's account does not have enough XRP to cover the sponsored transaction fee (`telINSUF_FEE_P`)
+1. The sponsor's account does not have enough XRP to cover the sponsored transaction fee (`telINSUF_FEE_P`)
 
 If a `Sponsorship` object exists:
 
-- The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included.
-- There is not enough XRP in the `FeeAmount` to pay for the transaction.
-  - Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement).
-- The fee in `tx.Fee` is greater than `Sponsorship.MaxFee`
+1. The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included.
+1. There is not enough XRP in the `FeeAmount` to pay for the transaction.
+1. Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement).
+1. The fee in `tx.Fee` is greater than `Sponsorship.MaxFee`
 
 If a `Sponsorship` object does not exist:
 
-- There is no sponsor signature included.
+1. There is no sponsor signature included.
 
 Note: if a transaction doesn't charge a fee (such as an account's first `SetRegularKey` transaction), the transaction will still succeed.
 
 #### 8.3.3. Reserve Sponsorship Failures
 
-- The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`)
-- The transaction does not support reserve sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
+1. The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`)
+1. The transaction does not support reserve sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
 
 If a `Sponsorship` object exists:
 
-- The `lsfRequireSignatureForReserve` flag is enabled and there is no sponsor signature included.
-- There is not enough remaining count in the `ReserveCount` to pay for the transaction.
+1. The `lsfRequireSignatureForReserve` flag is enabled and there is no sponsor signature included.
+1. There is not enough remaining count in the `ReserveCount` to pay for the transaction.
 
 If a `Sponsorship` object does not exist:
 
-- There is no sponsor signature included.
+1. There is no sponsor signature included.
 
 Note: if a transaction doesn't charge a reserve (such as `AccountSet`), the transaction will still succeed.
 
@@ -638,25 +638,25 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 ### 9.4. Failure Conditions
 
-- `tx.Account` is not equal to either `tx.Sponsor` or `tx.Sponsee` (`temMALFORMED`)
-- Both `Sponsor` and `Sponsee` are specified (`temMALFORMED`)
-- Neither `Sponsor` nor `Sponsee` is specified (`temMALFORMED`)
-- `Sponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
-- `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
-- `MaxFee` is greater than `FeeAmount` (`temBAD_AMOUNT`)
-- `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
-- `Sponsor` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
-- `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
-- Sponsor does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecINSUFFICIENT_RESERVE`)
-- If `tfDeleteObject` is enabled:
-  - `FeeAmount` is specified (`temMALFORMED`)
-  - `MaxFee` is specified (`temMALFORMED`)
-  - `ReserveCount` is specified (`temMALFORMED`)
-  - `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
-  - `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
-  - `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
-  - `tfSponsorshipClearRequireSignForReserve` is enabled (`temINVALID_FLAG`)
-  - The `Sponsorship` object does not exist (`tecNO_ENTRY`)
+1. `tx.Account` is not equal to either `tx.Sponsor` or `tx.Sponsee` (`temMALFORMED`)
+1. Both `Sponsor` and `Sponsee` are specified (`temMALFORMED`)
+1. Neither `Sponsor` nor `Sponsee` is specified (`temMALFORMED`)
+1. `Sponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
+1. `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
+1. `MaxFee` is greater than `FeeAmount` (`temBAD_AMOUNT`)
+1. `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
+1. `Sponsor` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
+1. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
+1. Sponsor does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecINSUFFICIENT_RESERVE`)
+1. If `tfDeleteObject` is enabled:
+1. `FeeAmount` is specified (`temMALFORMED`)
+1. `MaxFee` is specified (`temMALFORMED`)
+1. `ReserveCount` is specified (`temMALFORMED`)
+1. `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
+1. `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+1. `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
+1. `tfSponsorshipClearRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+1. The `Sponsorship` object does not exist (`tecNO_ENTRY`)
 
 ### 9.5. State Changes
 
@@ -792,24 +792,24 @@ All failure conditions mentioned in [section 8.3](#83-failure-conditions) still 
 
 Additional failure conditions specific to `SponsorshipTransfer`:
 
-- `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
-- `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
-- `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
-- `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
-- If dissolving the sponsorship (no `Sponsor` field or `tfSponsorReserve` flag not set):
-  - The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
-- If creating a new sponsorship (unsponsored to sponsored):
-  - The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
-  - The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
-  - The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
-  - The new sponsor account does not exist (`terNO_ACCOUNT`)
-  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
-- If transferring the sponsorship to a new sponsor:
-  - The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
-  - The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
-  - The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
-  - The new sponsor account does not exist (`terNO_ACCOUNT`)
-  - The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+1. `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
+1. `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
+1. `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
+1. `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
+1. If dissolving the sponsorship (no `Sponsor` field or `tfSponsorReserve` flag not set):
+1. The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+1. If creating a new sponsorship (unsponsored to sponsored):
+1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+1. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+1. The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
+1. The new sponsor account does not exist (`terNO_ACCOUNT`)
+1. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+1. If transferring the sponsorship to a new sponsor:
+1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+1. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+1. The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
+1. The new sponsor account does not exist (`terNO_ACCOUNT`)
+1. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
 ### 10.5. State Changes
 
@@ -864,14 +864,14 @@ This spec proposes the following additions:
 
 Existing failure conditions still apply (see [Payment documentation](https://xrpl.org/docs/references/protocol/transactions/types/payment)), with one exception:
 
-- If `tfSponsorCreatedAccount` is enabled, the XRP amount does not need to be greater than or equal to the account reserve requirement.
+1. If `tfSponsorCreatedAccount` is enabled, the XRP amount does not need to be greater than or equal to the account reserve requirement.
 
 Additional failure conditions when `tfSponsorCreatedAccount` is enabled:
 
-- `tfNoRippleDirect`, `tfPartialPayment`, or `tfLimitQuality` are enabled (`temINVALID_FLAG`)
-- `Amount` specifies a non-XRP currency (`temBAD_AMOUNT`)
-- `Destination` already exists (`tecNO_SPONSOR_PERMISSION`)
-- `Account` does not have enough XRP to cover the account reserve requirement (`tecNO_DST_INSUF_XRP`)
+1. `tfNoRippleDirect`, `tfPartialPayment`, or `tfLimitQuality` are enabled (`temINVALID_FLAG`)
+1. `Amount` specifies a non-XRP currency (`temBAD_AMOUNT`)
+1. `Destination` already exists (`tecNO_SPONSOR_PERMISSION`)
+1. `Account` does not have enough XRP to cover the account reserve requirement (`tecNO_DST_INSUF_XRP`)
 
 ### 11.4. State Changes
 
@@ -909,11 +909,13 @@ Existing failure conditions still apply (see [AccountDelete documentation](https
 
 Additional failure conditions for sponsored accounts:
 
-- If the `AccountRoot` associated with `tx.Account` has a `Sponsor` field:
-  - The `Destination` is not equal to `AccountRoot.Sponsor` (`tecNO_PERMISSION` - sponsored account funds must go to sponsor)
+1. If the `AccountRoot` associated with `tx.Account` has a `Sponsor` field:
 
-- If the `AccountRoot` associated with `tx.Account` has a non-zero `SponsoringOwnerCount` or `SponsoringAccountCount` field:
-  - The transaction fails with `tecHAS_OBLIGATIONS` (account is currently sponsoring other accounts or objects and cannot be deleted until those sponsorships are transferred or dissolved)
+- The `Destination` is not equal to `AccountRoot.Sponsor` (`tecNO_PERMISSION` - sponsored account funds must go to sponsor)
+
+2. If the `AccountRoot` associated with `tx.Account` has a non-zero `SponsoringOwnerCount` or `SponsoringAccountCount` field:
+
+- The transaction fails with `tecHAS_OBLIGATIONS` (account is currently sponsoring other accounts or objects and cannot be deleted until those sponsorships are transferred or dissolved)
 
 ### 12.3. State Changes
 
@@ -1088,10 +1090,10 @@ The response fields are nearly identical to `account_objects`.
 
 ### 16.3. Failure Conditions
 
-- Any of the [universal error types](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/error-formatting#universal-errors).
-- `invalidParams` - One or more fields are specified incorrectly, or one or more required fields are missing.
-- `actNotFound` - The [address](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#addresses) specified in the `account` field of the request does not correspond to an account in the ledger.
-- `lgrNotFound` - The ledger specified by the `ledger_hash` or `ledger_index` does not exist, or it does exist but the server does not have it.
+1. Any of the [universal error types](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/error-formatting#universal-errors).
+1. `invalidParams` - One or more fields are specified incorrectly, or one or more required fields are missing.
+1. `actNotFound` - The [address](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#addresses) specified in the `account` field of the request does not correspond to an account in the ledger.
+1. `lgrNotFound` - The ledger specified by the `ledger_hash` or `ledger_index` does not exist, or it does exist but the server does not have it.
 
 ### 16.4. Example Request
 
