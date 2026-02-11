@@ -45,7 +45,7 @@ MPT supports all of the above transactions. MPT can be combined with IOU and XRP
   },
 ```
 
-Any transaction with MPT Amount or Asset have to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens). In addition, MPTokenIssuanceCreate` must have the following flags set:
+Any transaction with MPT Amount or Asset have to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](../XLS-0033d-multi-purpose-tokens/README.md). In addition, MPTokenIssuanceCreate` must have the following flags set:
 
 - `lsfMPTCanTrade`, in order for individual holders to trade their balances using the XRP Ledger DEX or AMM.
 - `lsfMPTCanTransfer`, in order for the tokens held by non-issuers to be transferred to other accounts.
