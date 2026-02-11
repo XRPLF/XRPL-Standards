@@ -1,17 +1,18 @@
-<pre>
-    title:  Confidential Multi-Purpose Tokens for XRPL
+%<pre>
+    title:  Confidential Multi-Purpose Tokens
     description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
-    status: Ongoing
+    status: Draft
     category: Amendment
-    created: Jan 15, 2026
-</pre>
+    requires: XLS-0033
+    created: 2026-01-15
+%</pre>
 
-# Confidential Multi-Purpose Tokens for XRPL
+# Confidential Multi-Purpose Tokens
 
 ## 1. Abstract
 
-This specification introduces **Confidential Multi-Purpose Tokens (Confidential MPTs)** on the XRP Ledger as an extension of the XLS-33 Multi-Purpose Token standard. Confidential MPTs enable **confidential balances and transfers** using EC-ElGamal encryption and zero-knowledge proofs (ZKPs), while preserving the core accounting semantics and supply invariants of XLS-33.
+This specification introduces **Confidential Multi-Purpose Tokens (Confidential MPTs)** on the XRP Ledger as an extension of XLS-0033 (Multi-Purpose Token). Confidential MPTs enable **confidential balances and transfers** using EC-ElGamal encryption and zero-knowledge proofs (ZKPs), while preserving the core accounting semantics and supply invariants of XLS-0033.
 
 The design provides the following properties:
 
@@ -21,23 +22,23 @@ The design provides the following properties:
 - **Selective disclosure / view keys:** The protocol supports flexible auditability through two models:  
   (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and  
   (ii) a simpler, trust-based alternative using issuer-controlled view keys for on-demand disclosure.
-- **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
+- **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-0033 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback to the issuer’s reserve.
 
-Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through equality proofs and compact range proofs.
+Confidential MPTs align directly with XLS-0033 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through equality proofs and compact range proofs.
 
 ## 2. Motivation
 
-XLS-33 enables flexible tokenization on the XRP Ledger, but all balances and transfers remain publicly visible. This transparency limits adoption in institutional and privacy-sensitive contexts. Confidential MPTs address this gap by introducing encrypted balances and confidential transfers while preserving XLS-33 semantics.
+XLS-0033 enables flexible tokenization on the XRP Ledger, but all balances and transfers remain publicly visible. This transparency limits adoption in institutional and privacy-sensitive contexts. Confidential MPTs address this gap by introducing encrypted balances and confidential transfers while preserving XLS-0033 semantics.
 
 The design maintains the standard definition of OutstandingAmount (OA) as the sum of all non-issuer balances. A complementary value, ConfidentialOutstandingAmount (COA), tracks the confidential portion of circulation, ensuring that while individual balances are encrypted, the global supply remains auditable. MaxAmount (MA) continues to cap the total supply, allowing validators to enforce consistency with the existing invariant OA ≤ MA.
 
 ### 2.1 Benefits
 
 - Confidentiality: Hides individual balances and transfer amounts using EC-ElGamal encryption and ZKPs.
-- Auditability: Public auditability is preserved via XLS-33’s existing OA semantics.
+- Auditability: Public auditability is preserved via XLS-0033’s existing OA semantics.
 - Flexible Compliance: Enables selective disclosure through multiple mechanisms, including a trust-minimized on-chain model and a simpler issuer-controlled view key model.
-- Compatibility: Maintains backward compatibility with XLS-33 by treating the issuer’s second account as a standard holder.
+- Compatibility: Maintains backward compatibility with XLS-0033 by treating the issuer’s second account as a standard holder.
 - Enhanced Issuer Control: Provides optional Freeze and a Clawback transaction, giving issuers the tools needed to manage assets and enforce compliance.
 
 ## 3. Scope
@@ -114,7 +115,7 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 
 ## 4. Definitions & Terminology
 
-- **MPT (Multi-Purpose Token):** A token standard defined by XLS-33, extended here to support confidential balances and transfers.
+- **MPT (Multi-Purpose Token):** A token standard defined by XLS-0033, extended here to support confidential balances and transfers.
 
 - **MPTokenIssuance (Object):** Ledger object storing metadata for an MPT, including `Currency`, `Issuer`, `MaxAmount` (MA), and `OutstandingAmount` (OA).
 
@@ -149,7 +150,7 @@ The Confidential MPT protocol is built on three core design principles: the issu
 
 ### 5.1 The Issuer Second Account Model
 
-To introduce confidential tokens without modifying the supply semantics of XLS-33, the protocol uses an issuer-controlled second account that is treated by the ledger as a standard non-issuer holder.
+To introduce confidential tokens without modifying the supply semantics of XLS-0033, the protocol uses an issuer-controlled second account that is treated by the ledger as a standard non-issuer holder.
 
 - **Issuing into circulation:** The issuer introduces confidential supply by executing a `ConfidentialMPTConvert` transaction, moving funds from its public reserve into the issuer’s second account.
 
@@ -178,18 +179,18 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 **Purpose:**  
 Converts a holder’s own visible (public) MPT balance into confidential form. The converted amount is credited to the holder’s confidential inbox balance (`CB_IN`) to avoid immediate proof staleness, requiring an explicit merge into the spending balance (`CB_S`) before use. This transaction also serves as the opt-in mechanism for confidential MPT participation: by executing it (including a zero-amount conversion), a holder’s `HolderElGamalPublicKey` is recorded on their `MPToken` object, enabling the holder to receive and manage confidential funds.
 
-This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
+This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-0033 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
 
 ### 6.1 Use Cases
 
 - **Holder → self (public → confidential):**  
   Public balance decreases and confidential balance increases; OA unchanged, COA increases (both in plaintext).
 - **Issuer second account → self (public → confidential):**  
-  After being funded publicly via XLS-33 issuance, the second account converts its own balance like any holder; OA unchanged, COA increases.
+  After being funded publicly via XLS-0033 issuance, the second account converts its own balance like any holder; OA unchanged, COA increases.
 - **Hybrid circulation:**  
   Tokens may coexist in public and confidential form.
 
-### 6.2 Transaction Fields
+### 6.2 Fields
 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                                                 |
 | :----------------------- | :-------- | :-------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -207,7 +208,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 **Notes:**
 
 - This transaction performs **self-conversion only**; there is no `Receiver` field.
-- Issuers introduce supply via existing XLS-33 public issuance. The issuer’s second account executes this transaction as a regular holder.
+- Issuers introduce supply via existing 00 public issuance. The issuer’s second account executes this transaction as a regular holder.
 
 ### 6.3. Failure Conditions
 
@@ -332,7 +333,7 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 - The issuer merges its own inbox into the spending balance (applies to the second account).
 - Required periodically to combine funds before subsequent confidential sends.
 
-### 8.2 Transaction Fields
+### 8.2 Fields
 
 | Field Name          | Required? | JSON Type | Internal Type | Description                                 |
 | :------------------ | :-------- | :-------- | :------------ | :------------------------------------------ |
@@ -662,7 +663,7 @@ Both compliance models are built upon foundational elements that ensure the inte
 
 ## 13. Privacy Properties
 
-Confidential MPT transactions are designed to minimize information leakage while preserving verifiability of supply and balances. Validators and external observers see only ciphertexts and ZKPs and never learn the underlying amounts except where amounts are already revealed in XLS-33 semantics.
+Confidential MPT transactions are designed to minimize information leakage while preserving verifiability of supply and balances. Validators and external observers see only ciphertexts and ZKPs and never learn the underlying amounts except where amounts are already revealed in XLS-0033 semantics.
 
 **Publicly Visible Information**
 
@@ -671,7 +672,7 @@ Confidential MPT transactions are designed to minimize information leakage while
 - Currency code (e.g., "USD").
 - Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
 - ZKPs (non-interactive proofs of correctness).
-- For issuer funding (Convert → second account): Amount is revealed, consistent with visible mint events in XLS-33.
+- For issuer funding (Convert → second account): Amount is revealed, consistent with visible mint events in XLS-0033.
 
 **Hidden Information**
 
@@ -686,7 +687,7 @@ Confidential MPT transactions are designed to minimize information leakage while
   - Thereafter, spending is hidden.
   - OA unchanged, COA ↑.
 - Convert (issuer → second account):
-  - Amount visible (already disclosed in XLS-33 issuance).
+  - Amount visible (already disclosed in XLS-0033 issuance).
   - Confidential balance seeded in the second account.
   - OA ↑, COA ↑.
 - Send:
@@ -725,7 +726,7 @@ Every confidential transaction must carry appropriate ZKPs:
 ### Issuer Second Account Model
 
 - Issuer must use a designated second account for confidential issuance.
-- Prevents redefinition of OA semantics and keeps compatibility with XLS-33.
+- Prevents redefinition of OA semantics and keeps compatibility with XLS-0033.
 - Validators enforce that direct confidential issuance from the issuer account is invalid.
 
 ### Privacy Guarantees
@@ -841,7 +842,7 @@ If validators cannot verify a ZKP, the transaction is rejected during consensus,
 
 Q10. Why does the issuer need a second account?
 
-The issuer utilizes a second account as a designated holder account to convert their public reserve into the confidential supply. This approach is primarily used to keep the existing XLS-33 semantics intact, ensuring that the OutstandingAmount accurately reflects non-issuer balances.
+The issuer utilizes a second account as a designated holder account to convert their public reserve into the confidential supply. This approach is primarily used to keep the existing XLS-0033 semantics intact, ensuring that the OutstandingAmount accurately reflects non-issuer balances.
 
 Q11. Will proofs be optimized in future versions?
 
