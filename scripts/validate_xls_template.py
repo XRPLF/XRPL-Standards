@@ -34,7 +34,7 @@ import urllib.request
 import urllib.error
 
 from markdown_it import MarkdownIt
-from xls_parser import extract_xls_metadata
+from xls_parser import extract_xls_metadata, validate_xls_preamble
 
 
 @dataclass
@@ -53,93 +53,63 @@ class ValidationError:
 @dataclass
 class Section:
     """Represents a section in the markdown document."""
-    number: str  # e.g., "1", "2", "3"
     title: str
     level: int  # 2 for ##, 3 for ###, etc.
     line_number: int
-    is_optional: bool = False
 
 
 class XLSTemplateValidator:
     """Validates XLS specs against the template structure."""
 
-    # Required top-level sections (level 2 headings)
-    REQUIRED_SECTIONS = {
-        "Abstract": False,  # Not numbered in some specs
-        "Specification": False,
-        "Rationale": False,
-        "Security Considerations": False,
-    }
-
-    # Optional top-level sections
-    OPTIONAL_SECTIONS = {
-        "Motivation": True,
-        "Backwards Compatibility": True,
-        "Test Plan": True,
-        "Reference Implementation": True,
-        "Appendix": True,
-    }
-
-    # Valid status values
-    VALID_STATUSES = [
-        "Draft", "Final", "Living", "Deprecated", "Stagnant", "Withdrawn"
+    # Required top-level sections (checked by substring match in section titles)
+    REQUIRED_SECTIONS = [
+        "Abstract",
+        "Rationale",
+        "Security",  # Matches "Security" or "Security Considerations"
     ]
-
-    # Valid category values
-    VALID_CATEGORIES = ["Amendment", "System", "Ecosystem", "Meta"]
-
-    # Note: Ledger entry and transaction existence is now determined dynamically
-    # by checking if the documentation exists on xrpl.org rather than
-    # maintaining hardcoded lists.
 
     # Amendment template section patterns and their required subsections
     AMENDMENT_SECTION_TEMPLATES = {
         r"SType:": {
-            "required_subsections": {
-                "1": "SType Value",
-                "2": "JSON Representation",
-                "4": "Binary Encoding",
-                "5": "Example JSON and Binary Encoding",
-            },
-            "optional_subsections": {
-                "3": "Additional Accepted JSON Inputs",
-            }
+            "required": [
+                "SType Value",
+                "JSON Representation",
+                "Binary Encoding",
+                "Example JSON and Binary Encoding",
+            ],
         },
         r"Ledger Entry:": {
-            "required_subsections": {
-                "1": "Object Identifier",
-                "2": "Fields",
-                "3": "Ownership",
-                "4": "Reserves",
-                "5": "Deletion",
-                "8": "Invariants",
-                "9": "RPC Name",
-                "10": "Example JSON",
-            },
-            "optional_subsections": {
-                "6": "Pseudo-Account",
-                "7": "Freeze/Lock",
-            }
+            "required": [
+                "Object Identifier",
+                "Fields",
+                "Ownership",
+                "Reserves",
+                "Deletion",
+                "Invariants",
+                "RPC Name",
+                "Example JSON",
+            ],
         },
         r"Transaction:": {
-            "required_subsections": {
-                "1": "Fields",
-                "2": "Transaction Fee",
-                "3": "Failure Conditions",
-                "4": "State Changes",
-                "6": "Example JSON",
-            },
-            "optional_subsections": {
-                "5": "Metadata Fields",
-            }
+            "required": [
+                "Fields",
+                "Transaction Fee",
+                "Failure Conditions",
+                "State Changes",
+                "Example JSON",
+            ],
         },
         r"Permission:": {
-            "required_subsections": {},
-            "optional_subsections": {}
+            "required": [],
         },
         r"RPC:": {
-            "required_subsections": {},
-            "optional_subsections": {}
+            "required": [
+                "Request Fields",
+                "Response Fields",
+                "Failure Conditions",
+                "Example Request",
+                "Example Response",
+            ],
         },
     }
 
@@ -174,6 +144,9 @@ class XLSTemplateValidator:
         r'_\[Detailed explanation.*?\]',
     ]
 
+    # Timeout in seconds for HTTP requests to xrpl.org
+    HTTP_TIMEOUT = 5
+
     def __init__(self, file_path: Path):
         """Initialize validator with the file to validate."""
         self.file_path = file_path
@@ -193,7 +166,7 @@ class XLSTemplateValidator:
             with open(self.file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 self.content_lines = content.split('\n')
-        except Exception as e:
+        except OSError as e:
             self.errors.append(ValidationError(
                 str(self.file_path), None, f"Failed to read file: {e}"
             ))
@@ -229,7 +202,7 @@ class XLSTemplateValidator:
         tokens = md.parse(content)
 
         # Pattern to match section numbering: "1.", "2.", "3.", etc.
-        number_pattern = r'^(\d+)\.\s+(.+)$'
+        number_pattern = r'^\d+\.\s+(.+)$'
 
         # Walk through tokens to find headings
         for i, token in enumerate(tokens):
@@ -249,107 +222,33 @@ class XLSTemplateValidator:
                     # Line number from the token's map (0-based, so add 1)
                     line_number = token.map[0] + 1 if token.map else None
 
-                    # Check if this heading has section numbering
+                    # Strip section numbering if present
                     match = re.match(number_pattern, heading_text)
-                    if match:
-                        number, title = match.groups()
-                    else:
-                        # No numbering (e.g., "Abstract", "Appendix")
-                        number = ""
-                        title = heading_text
+                    title = match.group(1) if match else heading_text
 
-                    # Check if optional
-                    is_optional = '_(Optional)_' in title
-
-                    # Clean title
+                    # Clean title: remove optional markers and backticks
                     title = title.strip()
                     title = re.sub(r'_\(Optional\)_', '', title).strip()
                     title = re.sub(r'`([^`]+)`', r'\1', title)
 
                     self.sections.append(Section(
-                        number=number,
                         title=title,
                         level=level,
                         line_number=line_number,
-                        is_optional=is_optional
                     ))
 
     def _validate_preamble(self, doc):
-        """Validate preamble metadata fields."""
-        if not doc.title or doc.title == "Unknown Title":
+        """Validate preamble metadata fields using the parser's validation."""
+        preamble_errors = validate_xls_preamble(doc)
+        for error_msg in preamble_errors:
+            # Strip the folder prefix since we use file_path
+            # Error format is "folder: message", extract just the message
+            if ": " in error_msg:
+                message = error_msg.split(": ", 1)[1]
+            else:
+                message = error_msg
             self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: title"
-            ))
-
-        if not doc.description or doc.description == "No description available":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: description"
-            ))
-
-        if not doc.authors or doc.authors == [("Unknown Author", "")]:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: author"
-            ))
-
-        if not doc.category or doc.category == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: category"
-            ))
-        elif doc.category not in self.VALID_CATEGORIES:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid category '{doc.category}'. "
-                f"Must be one of: {', '.join(self.VALID_CATEGORIES)}"
-            ))
-
-        if not doc.status or doc.status == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: status"
-            ))
-        elif doc.status not in self.VALID_STATUSES:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid status '{doc.status}'. "
-                f"Must be one of: {', '.join(self.VALID_STATUSES)}"
-            ))
-
-        if not doc.created or doc.created == "Unknown":
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: created"
-            ))
-        elif not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.created):
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid date format for 'created': {doc.created}. "
-                "Expected YYYY-MM-DD"
-            ))
-
-        # proposal-from is required for new XLS
-        if not doc.proposal_from:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Missing required field: proposal-from"
-            ))
-
-        # Check conditional fields
-        if doc.status == "Withdrawn" and not doc.withdrawal_reason:
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                "Withdrawn XLS must have withdrawal-reason field"
-            ))
-
-        # Validate updated field format if present
-        if doc.updated and not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.updated):
-            self.errors.append(ValidationError(
-                str(self.file_path), 1,
-                f"Invalid date format for 'updated': {doc.updated}. "
-                "Expected YYYY-MM-DD"
+                str(self.file_path), 1, message
             ))
 
     def _validate_section_structure(self):
@@ -357,27 +256,14 @@ class XLSTemplateValidator:
         # Get all section titles
         section_titles = [s.title for s in self.sections]
 
-        # Check for Abstract (required, not numbered)
-        if "Abstract" not in section_titles:
-            self.errors.append(ValidationError(
-                str(self.file_path), None,
-                "Missing required section: Abstract"
-            ))
-
-        # Check for Security section (can be "Security" or "Security Considerations")
-        has_security = any(
-            "Security" in title for title in section_titles
-        )
-        if not has_security:
-            self.errors.append(ValidationError(
-                str(self.file_path), None,
-                "Missing required section: Security or Security Considerations"
-            ))
-
-        # For Amendment XLS, the Specification and Rationale sections
-        # are often split into numbered subsections, so we don't enforce
-        # them strictly. The template validator focuses on preamble
-        # and basic structure.
+        # Check for each required section (using substring match)
+        for required in self.REQUIRED_SECTIONS:
+            has_section = any(required in title for title in section_titles)
+            if not has_section:
+                self.errors.append(ValidationError(
+                    str(self.file_path), None,
+                    f"Missing required section: {required}"
+                ))
 
     def _validate_amendment_structure(self):
         """Validate Amendment-specific template structure."""
@@ -395,7 +281,54 @@ class XLSTemplateValidator:
                 break
 
         if not has_template_section:
-            # No template sections found - might be an old spec, skip
+            # No explicit template sections found. Before we assume this is an
+            # old spec and skip all Amendment-structure validation, check
+            # whether the document clearly describes existing XRPL primitives
+            # (transactions, ledger entries, RPCs) using non-template headings
+            # like "CheckCash Transaction", "AccountRoot Ledger Entry", or
+            # "book_offers RPC". If so, fail validation so authors are
+            # prompted to restructure the spec to use AMENDMENT_TEMPLATE.md.
+
+            ledger_like_sections = self._find_existing_ledger_entry_like_headings()
+            if ledger_like_sections:
+                for section in ledger_like_sections:
+                    self.errors.append(ValidationError(
+                        str(self.file_path),
+                        section.line_number,
+                        (
+                            "Amendment describes an existing XRPL ledger entry "
+                            "type in section "
+                            f"'{section.title}' but does not use the standard "
+                            "Amendment template Ledger Entry sections (for "
+                            "example, '## 2. Ledger Entry: `EntryName`'). "
+                            "Please restructure this specification to use "
+                            "AMENDMENT_TEMPLATE.md when documenting ledger "
+                            "entries it modifies."
+                        ),
+                    ))
+
+            transaction_like_sections = (
+                self._find_existing_transaction_like_headings()
+            )
+            if transaction_like_sections:
+                for section in transaction_like_sections:
+                    self.errors.append(ValidationError(
+                        str(self.file_path),
+                        section.line_number,
+                        (
+                            "Amendment describes an existing XRPL transaction in "
+                            f"section '{section.title}' but does "
+                            "not use the standard Amendment template Transaction "
+                            "sections (for example, '## 3. Transaction: `TxName`'). "
+                            "Please restructure this specification to use "
+                            "AMENDMENT_TEMPLATE.md when documenting transactions "
+                            "it modifies."
+                        ),
+                    ))
+
+            # Whether or not we found any heuristic issues, there are no
+            # template sections to validate, so treat this as a legacy spec and
+            # stop here.
             return
 
         # Validate each template section's subsections
@@ -420,105 +353,168 @@ class XLSTemplateValidator:
 
                     self._validate_subsections(
                         section,
-                        template["required_subsections"],
-                        template["optional_subsections"],
+                        template["required"],
                         is_existing_ledger_entry,
-                        is_existing_transaction
+                        is_existing_transaction,
                     )
 
     def _is_existing_ledger_entry(self, section_title: str) -> bool:
-        """
-        Check if a Ledger Entry section is for an existing ledger entry.
+        """Check if a Ledger Entry section is for an existing ledger entry.
 
-        Extracts the ledger entry name from the section title and checks
-        if the ledger entry exists on xrpl.org by fetching the URL:
+        Extracts the ledger entry name from the section title and checks if
+        the ledger entry exists on xrpl.org by fetching the URL:
+
         https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/[lowercase]
-
-        Args:
-            section_title: The title of the section
-                          (e.g., "Ledger Entry: `AccountRoot`")
-
-        Returns:
-            True if this is an existing ledger entry type, False otherwise
         """
-        # Extract ledger entry name from title like "Ledger Entry: `Foo`"
-        # or "2. Ledger Entry: `Foo`"
-        match = re.search(r'Ledger Entry:\s*`?([A-Za-z]+)`?', section_title)
+        # Extract ledger entry name from title like "Ledger Entry: `Foo`" or
+        # "2. Ledger Entry: `Foo`".
+        match = re.search(r"Ledger Entry:\s*`?([A-Za-z]+)`?", section_title)
         if not match:
             return False
 
         entry_name = match.group(1)
+        return self._is_existing_ledger_entry_name(entry_name)
 
-        # Convert to lowercase for URL
-        lowercase_name = entry_name.lower()
-        url = (
-            "https://xrpl.org/docs/references/protocol/"
-            f"ledger-data/ledger-entry-types/{lowercase_name}"
-        )
-
-        try:
-            # Try to fetch the URL
-            req = urllib.request.Request(url, method='HEAD')
-            with urllib.request.urlopen(req, timeout=5) as response:
-                # If we get a 200 response, the ledger entry exists
-                return response.status == 200
-        except urllib.error.HTTPError as e:
-            # 404 means the ledger entry doesn't exist
-            if e.code == 404:
-                return False
-            # Other errors (500, etc.) - assume it exists to be safe
-            return True
-        except (urllib.error.URLError, TimeoutError):
-            # Network error - assume it exists to be safe
-            return True
-
-    def _is_existing_transaction(self, section_title: str) -> bool:
-        """
-        Check if a Transaction section is for an existing transaction type.
-
-        Extracts the transaction name from the section title and checks
-        if the transaction exists on xrpl.org by fetching the URL:
-        https://xrpl.org/docs/references/protocol/transactions/types/[lowercase]
+    def _url_exists(self, url: str, safe_on_error: bool = True) -> bool:
+        """Check if a URL exists by making a HEAD request.
 
         Args:
-            section_title: The title of the section (e.g., "Transaction: `Payment`")
+            url: The URL to check
+            safe_on_error: If True, return True on network errors (assume
+                resource exists to avoid false positives). If False, return
+                False on network errors (used for heuristic checks where
+                false positives are worse than false negatives).
 
         Returns:
-            True if this is an existing transaction type, False otherwise
+            True if the URL returns 200, False if 404 or on error when
+            safe_on_error is False.
         """
-        # Extract transaction name from title like "Transaction: `Payment`"
-        # or "3. Transaction: `Payment`"
-        match = re.search(r'Transaction:\s*`?([A-Za-z]+)`?', section_title)
-        if not match:
-            return False
-
-        transaction_name = match.group(1)
-
-        # Convert to lowercase for URL
-        lowercase_name = transaction_name.lower()
-        url = f"https://xrpl.org/docs/references/protocol/transactions/types/{lowercase_name}"
-
         try:
-            # Try to fetch the URL
-            req = urllib.request.Request(url, method='HEAD')
-            with urllib.request.urlopen(req, timeout=5) as response:
-                # If we get a 200 response, the transaction exists
-                return response.status == 200
+            req = urllib.request.Request(url, method="HEAD")
+            with urllib.request.urlopen(req, timeout=self.HTTP_TIMEOUT) as resp:
+                return resp.status == 200
         except urllib.error.HTTPError as e:
-            # 404 means the transaction doesn't exist
+            # 404 means the resource doesn't exist
             if e.code == 404:
                 return False
-            # Other errors (500, etc.) - assume it exists to be safe
-            return True
-        except (urllib.error.URLError, TimeoutError):
-            # Network error - assume it exists to be safe
-            return True
+            # Other errors (500, etc.)
+            print(f"Warning: unexpected error checking {url}: {e}")
+            return safe_on_error
+        except (urllib.error.URLError, TimeoutError) as e:
+            # Network error
+            print(f"Warning: network error checking {url}: {e}")
+            return safe_on_error
+
+    def _is_existing_ledger_entry_name(
+        self, entry_name: str, safe_on_error: bool = True
+    ) -> bool:
+        """Check if the given ledger entry name exists on xrpl.org."""
+        url = (
+            "https://xrpl.org/docs/references/protocol/"
+            f"ledger-data/ledger-entry-types/{entry_name.lower()}"
+        )
+        return self._url_exists(url, safe_on_error)
+
+    def _is_existing_transaction(self, section_title: str) -> bool:
+        """Check if a Transaction section is for an existing transaction.
+
+        Extracts the transaction name from the section title and checks if
+        the transaction exists on xrpl.org.
+        """
+        match = re.search(r"Transaction:\s*`?([A-Za-z]+)`?", section_title)
+        if not match:
+            return False
+        return self._is_existing_transaction_name(match.group(1))
+
+    def _is_existing_transaction_name(
+        self, transaction_name: str, safe_on_error: bool = True
+    ) -> bool:
+        """Check if the given transaction name exists on xrpl.org."""
+        url = (
+            "https://xrpl.org/docs/references/protocol/transactions/types/"
+            f"{transaction_name.lower()}"
+        )
+        return self._url_exists(url, safe_on_error)
+
+    def _find_existing_transaction_like_headings(self) -> List[Section]:
+        """Find headings that look like "`SomeTransaction` Transaction".
+
+        This is used as a heuristic to detect specs like XLS-0082 that
+        clearly document behaviour for specific XRPL transactions but do not
+        use the "Transaction: `Name`" Amendment template sections.
+
+        Returns a list of matching sections; the list may be empty if no such
+        headings are found or none of the candidate names resolve to known
+        XRPL transaction types.
+        """
+        # Matches things like "3.3. CheckCash Transaction" or
+        # "CheckCash Transaction". The section parser has already stripped
+        # backticks from titles, so we only need to handle plain words here.
+        pattern = re.compile(r"\b([A-Za-z]+)\s+Transaction\b")
+
+        matches: List[Section] = []
+        for section in self.sections:
+            # Skip top-level template-style Transaction sections, if any exist
+            if section.level == 2 and "Transaction:" in section.title:
+                continue
+
+            match = pattern.search(section.title)
+            if not match:
+                continue
+
+            candidate_name = match.group(1)
+
+            # Only treat this as a signal if the candidate resolves to a
+            # known XRPL transaction type. Use safe_on_error=False to avoid
+            # false positives on network errors (better to miss a warning
+            # than to incorrectly fail validation).
+            if self._is_existing_transaction_name(candidate_name, False):
+                matches.append(section)
+
+        return matches
+
+    def _find_existing_ledger_entry_like_headings(self) -> List[Section]:
+        """Find headings that look like "`SomeEntry` Ledger Entry".
+
+        This is used as a heuristic to detect specs that clearly document
+        behaviour for specific XRPL ledger entry types but do not use the
+        "Ledger Entry: `Name`" Amendment template sections.
+        """
+        # Matches things like "2. AccountRoot Ledger Entry" or
+        # "AccountRoot Ledger Entry". The section parser has already
+        # stripped backticks from titles, so we only need to handle plain
+        # words here.
+        pattern = re.compile(
+            r"\b([A-Za-z]+)\s+(Ledger Entry|On-Ledger Object)\b"
+        )
+
+        matches: List[Section] = []
+        for section in self.sections:
+            # Skip top-level template-style Ledger Entry sections, if any exist
+            if section.level == 2 and (
+                "Ledger Entry:" in section.title
+                or "On-Ledger Object:" in section.title
+            ):
+                continue
+
+            match = pattern.search(section.title)
+            if not match:
+                continue
+
+            candidate_name = match.group(1)
+
+            # Only treat this as a signal if the candidate resolves to a
+            # known XRPL ledger entry type. Use safe_on_error=False to avoid
+            # false positives on network errors.
+            if self._is_existing_ledger_entry_name(candidate_name, False):
+                matches.append(section)
+
+        return matches
 
     def _validate_subsections(
         self,
         parent_section: Section,
-        required_subsections: dict,
-        optional_subsections: dict,
+        required_subsections: List[str],
         is_existing_ledger_entry: bool = False,
         is_existing_transaction: bool = False
     ):
@@ -539,7 +535,7 @@ class XLSTemplateValidator:
                 subsections.append(section)
 
         # For existing ledger entries, make certain subsections optional
-        exempted_subsections = set()
+        exempted_subsections: set[str] = set()
         if is_existing_ledger_entry:
             exempted_subsections = {
                 "Object Identifier",
@@ -554,16 +550,13 @@ class XLSTemplateValidator:
             exempted_subsections.add("Transaction Fee")
 
         # Check for required subsections
-        for sub_num, sub_title in required_subsections.items():
+        for sub_title in required_subsections:
             # Skip if this subsection is exempted
             if sub_title in exempted_subsections:
                 continue
 
-            # Find this subsection by title, regardless of its actual number
-            found = any(
-                sub_title in s.title
-                for s in subsections
-            )
+            # Find this subsection by title
+            found = any(sub_title in s.title for s in subsections)
 
             if not found:
                 self.errors.append(ValidationError(
@@ -599,10 +592,6 @@ class XLSTemplateValidator:
                     ))
                     break  # Only report one error per line
 
-    def get_errors(self) -> List[ValidationError]:
-        """Get all validation errors."""
-        return self.errors
-
 
 def validate_file(file_path: Path) -> Tuple[bool, List[ValidationError]]:
     """
@@ -616,7 +605,7 @@ def validate_file(file_path: Path) -> Tuple[bool, List[ValidationError]]:
     """
     validator = XLSTemplateValidator(file_path)
     success = validator.validate()
-    return success, validator.get_errors()
+    return success, validator.errors
 
 
 def main():
@@ -671,26 +660,19 @@ def main():
     for file_path in files_to_validate:
         print(f"Checking {file_path.parent.name}/README.md...")
         success, errors = validate_file(file_path)
+        validated_count += 1
+
+        # Check if this is an Amendment for stats
+        try:
+            content = file_path.read_text()
+            if 'category: Amendment' in content:
+                amendment_count += 1
+        except OSError:
+            pass
 
         if errors:
             all_errors.extend(errors)
-            validated_count += 1
-            # Check if this is an Amendment for stats
-            try:
-                content = file_path.read_text()
-                if 'category: Amendment' in content:
-                    amendment_count += 1
-            except:
-                pass
         elif success:
-            # File was validated and passed
-            validated_count += 1
-            try:
-                content = file_path.read_text()
-                if 'category: Amendment' in content:
-                    amendment_count += 1
-            except:
-                pass
             print("  ✓ Valid")
 
     # Print results
