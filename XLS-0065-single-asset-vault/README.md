@@ -470,10 +470,11 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ### 5.1 Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value |            Description             |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `60`      |         Transaction type.          |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the vault to be deleted. |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value |                        Description                        |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------: |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `60`      |                     Transaction type.                     |
+| `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     |            The ID of the vault to be deleted.             |
+| `Data`            |         No         | `string`  |    `BLOB`     |     Empty      | Arbitrary metadata about the Vault. Limited to 256 bytes. |
 
 ### 5.2 Failure Conditions
 
@@ -481,6 +482,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 2. The submitting account is not the `Owner` of the vault.
 3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
 4. The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
+5. `Data` field is greater than 256 bytes (`temMALFORMED`).
 
 ### 5.3 State Changes
 
