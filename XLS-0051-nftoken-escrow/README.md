@@ -1,11 +1,12 @@
 <pre>
   xls: 51
   title: NFToken Escrows
+  description: Extension to Escrow functionality to support escrowing NFTokens
   author: Mayukha Vadari (@mvadari)
-  created: 2023-11-17
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/146
   status: Stagnant
   category: Amendment
+  created: 2023-11-17
 </pre>
 
 # NFToken Escrows
