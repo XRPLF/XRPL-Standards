@@ -112,26 +112,27 @@ The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/
 
 A vault has the following fields:
 
-| Field Name          | Modifiable? |     Required?      |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                            |
-| ------------------- | :---------: | :----------------: | :----------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |   `0x0084`    | Ledger object type.                                                                                                                                    |
-| `LedgerIndex`       |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                              |
-| `Flags`             |    `Yes`    | :heavy_check_mark: |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                   |
-| `PreviousTxnID`     |    `N/A`    | :heavy_check_mark: |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                 |
-| `PreviousTxnLgrSeq` |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
-| `Sequence`          |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
-| `OwnerNode`         |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
-| `Owner`             |    `No`     | :heavy_check_mark: |      `string`      |  `AccountID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
-| `Account`           |    `N/A`    | :heavy_check_mark: |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
-| `Data`              |    `Yes`    |                    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
-| `Asset`             |    `No`     | :heavy_check_mark: | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
-| `AssetsTotal`       |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
-| `AssetsAvailable`   |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
-| `LossUnrealized`    |    `N/A`    | :heavy_check_mark: |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
-| `AssetsMaximum`     |    `Yes`    |                    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
-| `ShareMPTID`        |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
-| `WithdrawalPolicy`  |    `No`     | :heavy_check_mark: |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
-| `Scale`             |    `No`     | :heavy_check_mark: |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| Field Name           | Modifiable? |     Required?      |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                            |
+| -------------------- | :---------: | :----------------: | :----------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`    |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |   `0x0084`    | Ledger object type.                                                                                                                                    |
+| `LedgerIndex`        |    `N/A`    | :heavy_check_mark: |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                              |
+| `Flags`              |    `Yes`    | :heavy_check_mark: |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                   |
+| `PreviousTxnID`      |    `N/A`    | :heavy_check_mark: |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                 |
+| `PreviousTxnLgrSeq`  |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
+| `Sequence`           |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
+| `OwnerNode`          |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
+| `Owner`              |    `No`     | :heavy_check_mark: |      `string`      |  `AccountID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
+| `Account`            |    `N/A`    | :heavy_check_mark: |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
+| `Data`               |    `Yes`    |                    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
+| `Asset`              |    `No`     | :heavy_check_mark: | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
+| `AssetsTotal`        |    `N/A`    |                    |      `string`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
+| `AssetsAvailable`    |    `N/A`    |                    |      `string`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
+| `LossUnrealized`     |    `N/A`    |                    |      `string`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
+| `InterestUnrealized` |    `N/A`    |                    |      `string`      |   `NUMBER`    |       0       | The potential interest amount that is not yet realized expressed as the vaults asset.                                                                  |
+| `AssetsMaximum`      |    `Yes`    |                    |      `string`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
+| `ShareMPTID`         |    `N/A`    | :heavy_check_mark: |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
+| `WithdrawalPolicy`   |    `No`     | :heavy_check_mark: |      `number`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
+| `Scale`              |    `No`     |                    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 2.2.1 Flags
 
@@ -501,48 +502,60 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ### 6.1 Fields
 
-| Field Name        |     Required?      |      JSON Type       | Internal Type | Default Value | Description                                            |
-| ----------------- | :----------------: | :------------------: | :-----------: | :-----------: | :----------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |       `string`       |   `UINT16`    |     `61`      | Transaction type.                                      |
-| `VaultID`         | :heavy_check_mark: |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
-| `Amount`          | :heavy_check_mark: | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                            |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :----------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `61`      | Transaction type.                                      |
+| `VaultID`         | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
 
-### 6.2 Failure conditions
+### 6.2 Flags
+
+| Flag Name       |  Flag Value  | Description                                                         |
+| --------------- | :----------: | :------------------------------------------------------------------ |
+| `tfVaultDonate` | `0x00010000` | Indicates that the deposit is a donation, and no shares are issued. |
+
+### 6.3 Failure conditions
 
 1. `Vault` object with the `VaultID` does not exist on the ledger.
 2. The asset type of the vault does not match the asset type the depositor is depositing.
 3. The depositor does not have sufficient funds to make a deposit.
 4. Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
 5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
+6. `tfVaultDonate` flag is set and:
+   1. The Account submitting the transaction is not the owner of the vault (`tecNO_PERMISSION`).
+   2. The Vault is empty: `Vault.AssetsTotal == 0 and Vault.SharesTotal == 0` (`tecINSUFFICIENT_FUNDS`).
+   3. Donation would exceed the `AssetsMaximum`: `Vault.AssetsTotal + Amount > Vault.AssetsMaximum` (`tecLIMIT_EXCEEDED`).
 
-6. The `Vault.Asset` is `MPT`:
+7. The `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
    2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
    3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
    4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
 
-7. The `Asset` is an `IOU`:
+8. The `Asset` is an `IOU`:
    1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
    2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
    3. The `RippleState` object `Balance` < `Amount` (insufficient balance).
 
-### 6.3 State Changes
+### 6.4 State Changes
 
 1. If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
 
-2. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
-3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-4. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+2. If the `tfVaultDonate` flag is not set:
+   1. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
+   2. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-5. If the `Vault.Asset` is `XRP`:
+3. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+
+4. If the `Vault.Asset` is `XRP`:
    1. Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
    2. Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
 
-6. If the `Vault.Asset` is an `IOU`:
+5. If the `Vault.Asset` is an `IOU`:
    1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
    2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
-7. If the `Vault.Asset` is an `MPT`:
+6. If the `Vault.Asset` is an `MPT`:
    1. Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
    2. Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
 
@@ -558,13 +571,13 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 
 ### 7.1 Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                 |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
-| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
-| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
-| `DestinationTag`  |                    | `number`  |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination. |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                 |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `62`      | Transaction type.                                                           |
+| `VaultID`         | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
+| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
+| `Destination`     |                    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
+| `DestinationTag`  |                    |                                                       `number`                                                       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination. |
 
 - If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
 - If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21722-redeem).
@@ -644,12 +657,12 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 ### 8.1 Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                    |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
-| `Holder`          | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
-| `Amount`          |                    | `number`  |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
+| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                    |
+| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
+| `VaultID`         | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
+| `Holder`          | :heavy_check_mark: |                                                       `string`                                                       |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
+| `Amount`          |                    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
 
 ### 8.2 Failure conditions
 
