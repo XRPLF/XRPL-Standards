@@ -292,39 +292,7 @@ An [`AccountRoot` ledger entry](https://xrpl.org/docs/references/protocol/ledger
 
 ### 6.1. Fields
 
-<details>
-<summary>
-
-As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/accountroot/#accountroot-fields) are the fields that the `AccountRoot` ledger object currently has.
-
-</summary>
-
-| Field Name             | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                                           |
-| ---------------------- | --------- | --------- | ------------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Account`              | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The identifying (classic) address of this account.                                                                                                                    |
-| `AccountTxnID`         |           |           | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction most recently sent by this account.                                                                                           |
-| `AMMID`                | ✔️        |           | N/A           | `string`  | `Hash256`     | The ledger entry ID of the corresponding AMM ledger entry, if this is an AMM pseudo-account.                                                                          |
-| `Balance`              |           |           | N/A           | `string`  | `Amount`      | The account's current XRP balance.                                                                                                                                    |
-| `BurnedNFTokens`       |           |           | `0`           | `number`  | `UInt32`      | How many total of this account's issued NFTs have been burned.                                                                                                        |
-| `Domain`               |           |           | N/A           | `string`  | `Blob`        | A domain associated with this account.                                                                                                                                |
-| `EmailHash`            |           |           | N/A           | `string`  | `Hash128`     | The md5 hash of an email address.                                                                                                                                     |
-| `FirstNFTokenSequence` | ✔️        |           | N/A           | `number`  | `UInt32`      | The account's Sequence Number at the time it minted its first non-fungible-token.                                                                                     |
-| `LedgerEntryType`      | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `0x0061`, mapped to the string `AccountRoot`, indicates that this is an `AccountRoot `object.                                                               |
-| `MessageKey`           |           |           | N/A           | `string`  | `Blob`        | A public key that may be used to send encrypted messages to this account.                                                                                             |
-| `MintedNFTokens`       |           |           | `0`           | `number`  | `UInt32`      | How many total non-fungible tokens have been minted by/on behalf of this account.                                                                                     |
-| `NFTokenMinter`        |           |           | N/A           | `string`  | `AccountID`   | Another account that can mint NFTs on behalf of this account.                                                                                                         |
-| `OwnerCount`           |           | ✔️        | N/A           | `number`  | `UInt32`      | The number of objects this account owns in the ledger, which contributes to its owner reserve.                                                                        |
-| `PreviousTxnID`        |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this object.                                                                                      |
-| `PreviousTxnLgrSeq`    |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                               |
-| `RegularKey`           |           |           | N/A           | `string`  | `AccountID`   | The address of a key pair that can be used to sign transactions for this account instead of the master key.                                                           |
-| `Sequence`             |           | ✔️        | N/A           | `number`  | `UInt32`      | The [sequence number](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#account-sequence) of the next valid transaction for this account.        |
-| `TicketCount`          |           |           | N/A           | `number`  | `UInt32`      | How many Tickets this account owns in the ledger.                                                                                                                     |
-| `TickSize`             |           |           | N/A           | `number`  | `UInt8`       | [How many significant digits to use for exchange rates of Offers involving currencies issued by this address.](https://xrpl.org/resources/known-amendments/#ticksize) |
-| `TransferRate`         |           |           | N/A           | `number`  | `UInt32`      | A [transfer fee](https://xrpl.org/docs/concepts/tokens/transfer-fees/) to charge other users for sending currency issued by this account to each other.               |
-| `WalletLocator`        |           |           | N/A           | `string`  | `Hash256`     | An arbitrary 256-bit value that users can set.                                                                                                                        |
-| `WalletSize`           |           |           | N/A           | `number`  | `UInt32`      | Unused.                                                                                                                                                               |
-
-</details>
+As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/accountroot#accountroot-fields) are the fields that the `AccountRoot` ledger object currently has.
 
 This spec proposes these additional fields:
 
@@ -353,7 +321,7 @@ The total account reserve should now be calculated as:
 
 $$
 \displaylines{
-(acct.Sponsor 	ext{ ? } 0 : acctReserve) +
+(acct.Sponsor \text{ ? } 0 : acctReserve) +
 objReserve * (acct.OwnerCount + acct.SponsoringOwnerCount - acct.SponsoredOwnerCount) +
 acctReserve * acct.SponsoringAccountCount
 }
@@ -398,32 +366,7 @@ A `RippleState` ledger entry represents a [trust line](https://xrpl.org/docs/con
 
 ### 7.1. Fields
 
-<details>
-<summary>
-
 As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/ripplestate#ripplestate-fields) are the fields that the `RippleState` ledger object currently has.
-
-</summary>
-
-| Field Name          | Constant? | Required? | Default Value | JSON Type            | Internal Type | Description                                                                                                                                                                                                                                                                                                  |
-| ------------------- | --------- | --------- | ------------- | -------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Balance`           | No        | Yes       | N/A           | `object`             | `Amount`      | The balance of the trust line, from the perspective of the low account. A negative balance indicates that the high account holds tokens issued by the low account. The issuer in this is always set to the neutral value [ACCOUNT_ONE](https://xrpl.org/docs/concepts/accounts/addresses#special-addresses). |
-| `Flags`             | No        | Yes       | N/A           | `number`             | `UInt32`      | A bit-map of boolean options enabled for this entry.                                                                                                                                                                                                                                                         |
-| `HighLimit`         | No        | Yes       | N/A           | `object`             | `Amount`      | The limit that the high account has set on the trust line. The `issuer` is the address of the high account that set this limit.                                                                                                                                                                              |
-| `HighNode`          | Yes       | Yes       | N/A           | `string`             | `UInt64`      | (Omitted in some historical ledgers) A hint indicating which page of the high account's owner directory links to this entry, in case the directory consists of multiple pages.                                                                                                                               |
-| `HighQualityIn`     | No        | No        | N/A           | `number`             | `UInt32`      | The inbound quality set by the high account, as an integer in the implied ratio `HighQualityIn`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                     |
-| `HighQualityOut`    | No        | No        | N/A           | `number`             | `UInt32`      | The outbound quality set by the high account, as an integer in the implied ratio `HighQualityOut`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                   |
-| `LedgerEntryType`   | Yes       | Yes       | `RippleState` | `string`             | `UInt16`      | The value `0x0072`, mapped to the string `RippleState`, indicates that this is a RippleState entry.                                                                                                                                                                                                          |
-| `LockCount`         | No        | No        | N/A           | `object`             | `Amount`      | The total number of lock balances on a `RippleState` ledger object.                                                                                                                                                                                                                                          |
-| `LockedBalance`     | No        | No        | N/A           | `object` or `string` | `Amount`      | The total number of locked tokens on a `RippleState` ledger object.                                                                                                                                                                                                                                          |
-| `LowLimit`          | No        | Yes       | N/A           | `object`             | `Amount`      | The limit that the low account has set on the trust line. The `issuer` is the address of the low account that set this limit.                                                                                                                                                                                |
-| `LowNode`           | No        | Yes       | N/A           | `string`             | `UInt64`      | (Omitted in some historical ledgers) A hint indicating which page of the low account's owner directory links to this entry, in case the directory consists of multiple pages.                                                                                                                                |
-| `LowQualityIn`      | No        | No        | N/A           | `number`             | `UInt32`      | The inbound quality set by the low account, as an integer in the implied ratio `LowQualityIn`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                       |
-| `LowQualityOut`     | No        | No        | N/A           | `number`             | `UInt32`      | The outbound quality set by the low account, as an integer in the implied ratio `LowQualityOut`:1,000,000,000. As a special case, the value 0 is equivalent to 1 billion, or face value.                                                                                                                     |
-| `PreviousTxnID`     | No        | Yes       | N/A           | `string`             | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                                                                                                                                                                              |
-| `PreviousTxnLgrSeq` | No        | Yes       | N/A           | `number`             | `UInt32`      | The ledger index that contains the transaction that most recently modified this entry.                                                                                                                                                                                                                       |
-
-</details>
 
 This spec proposes these additional fields:
 
@@ -479,8 +422,6 @@ _NOTE: The invariants in [4.3](#43-invariant-checks) also apply to `RippleState`
 ### 8.1. Fields
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/common-fields/) are the fields that all transactions currently have.
-
-<!--There are too many and I didn't want to list them all, it cluttered up the spec - but maybe it can be a collapsed section?-->
 
 We propose these modifications:
 
@@ -977,25 +918,11 @@ When a transaction includes a `SponsorFlags` field with the `tfSponsorReserve` f
 
 ## 15. RPC: `account_objects`
 
+The [`account_objects` RPC method](https://xrpl.org/account_objects.html) already exists on the XRPL. This spec proposes an addition to the `account_objects` RPC method, to better support sponsored accounts.
+
 ### 15.1. Request Fields
 
-The [`account_objects` RPC method](https://xrpl.org/account_objects.html) already exists on the XRPL. As a reference, here are the fields that `account_objects` currently accepts:
-
-| Field Name               | Required? | JSON Type            | Description                                                                                                                                                                                                                                                                |
-| ------------------------ | --------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `account`                | ✔️        | `string`             | Get ledger entries associated with this account.                                                                                                                                                                                                                           |
-| `deletion_blockers_only` |           | `boolean`            | If `true`, only return ledger entries that would block this account from being deleted. The default is `false`.                                                                                                                                                            |
-| `ledger_hash`            |           | `string`             | The unique hash of the ledger version to use.                                                                                                                                                                                                                              |
-| `ledger_index`           |           | `number` or `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.                                                                                                                                                                              |
-| `limit`                  |           | `number`             | The maximum number of ledger entries to include in the results. Must be within the inclusive range `10` to `400` on non-admin connections. The default is `200`.                                                                                                           |
-| `marker`                 |           | `any`                | Value from a previous paginated response. Resume retrieving data where that response left off.                                                                                                                                                                             |
-| `type`                   |           | `string`             | Filter results to a specific type of ledger entry. This field accepts canonical names of ledger entry types (case insensitive) or short names. Ledger entry types that can't appear in an owner directory are not allowed. If omitted, return ledger entries of all types. |
-
-We propose this additional field:
-
-| Field Name  | Required? | JSON Type | Description                                                                                                                                              |
-| ----------- | --------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sponsored` |           | `boolean` | If `true`, only return ledger entries that are sponsored. If `false`, only return ledger entries that are not sponsored. If omitted, return all objects. |
+As a reference, [here](https://xrpl.org/account_objects.html#request-format) are the fields that `account_objects` currently accepts.
 
 ### 15.2. Response Fields
 
