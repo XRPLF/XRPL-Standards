@@ -511,17 +511,44 @@ This standard doesn't add any new field to the [transaction common fields](https
 
 This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
 
-## 4. Security
+## 4. Rationale
 
-### 4.1. Trust Assumptions
+The design of batch transactions prioritizes flexibility, security, and backward compatibility with the existing XRP Ledger infrastructure.
+
+### 4.1. Multiple Batch Modes
+
+Four distinct batch modes (`ALLORNOTHING`, `ONLYONE`, `UNTILFAILURE`, `INDEPENDENT`) were chosen to accommodate a wide range of use cases:
+
+- **`ALLORNOTHING`** is essential for trustless swaps and any scenario where partial completion would leave the system in an undesirable state.
+- **`ONLYONE`** enables try-multiple-options patterns, such as submitting offers with different slippage tolerances.
+- **`UNTILFAILURE`** provides a middle ground for sequential operations that can partially succeed.
+- **`INDEPENDENT`** allows for transaction bundling without strict interdependency.
+
+Alternatives considered included a simpler single-mode design, but this would have forced users to work around limitations for their specific use cases.
+
+### 4.2. Separate Metadata for Inner Transactions
+
+Inner transactions are committed separately to the ledger with their own metadata rather than being embedded within the outer transaction's metadata. This design choice ensures backward compatibility with legacy systems that can continue processing transactions without understanding or adding special support for the `Batch` transaction type. A more compact design with nested metadata was considered but rejected due to the extensive changes it would require for existing infrastructure.
+
+### 4.3. Transaction Limits
+
+The current limit of 8 inner transactions and a minimum of 2 was chosen to balance utility against potential abuse vectors and performance concerns. This limit can be relaxed in future amendments as the community gains experience with how batch transactions are used in practice.
+
+### 4.4. Inner Transaction Safety
+
+Requiring the `tfInnerBatchTxn` flag, prohibiting signatures, and mandating zero fees on inner transactions creates a clear separation between inner and outer transactions. This prevents inner transactions from being extracted and submitted independently, which would bypass the atomicity guarantees and potentially enable theft in multi-account scenarios.
+
+## 5. Security
+
+### 5.1. Trust Assumptions
 
 Regardless of how many accounts' transactions are included in a `Batch` transaction, all accounts need to sign the collection of transactions.
 
-#### 4.1.1. Single Account
+#### 5.1.1. Single Account
 
 In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
 
-#### 4.1.2. Multi Account
+#### 5.1.2. Multi Account
 
 The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless swap via a multi-account `Batch`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Batch` transaction, so Alice must provide her part of the swap to him.
 
@@ -529,7 +556,7 @@ If Alice provides a fully autofilled and signed transaction to Bob, Bob could su
 
 If Alice just signs her part of the `Batch` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Batch` transaction (and all its inner transactions) must be signed by all parties.
 
-### 4.2. Inner Transaction Safety
+### 5.2. Inner Transaction Safety
 
 An inner batch transaction is a very special case. It doesn't include a signature or a fee (since those are both included in the outer transaction). Therefore, they must be handled very carefully to ensure that someone can't somehow directly submit an inner `Batch` transaction without it being included in an outer transaction.
 
