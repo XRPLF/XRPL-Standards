@@ -21,7 +21,7 @@ This proposal introduces a new amendment `MPTVersion2` as an extension to [XLS-3
 
 The integration of Multi-Purpose Tokens (MPT) into the XRP Ledger Decentralized Exchange (DEX) focuses on extending the functional reach of existing trading mechanisms without introducing new on-ledger objects or modifying core state structures. By leveraging the existing ledger primitives, this update enables standard DEX transactions to natively support MPTs as a valid asset class. This specification outlines the necessary schema updates for transaction requests and provides comprehensive JSON examples to illustrate the interoperability between MPTs, XRP, and standard IOUs. Furthermore, this document details the expanded set of failure scenarios and transaction result codes specific to MPT trading, ensuring robust error handling for cross-asset liquidity paths and order-matching logic. For a comprehensive description of all transactions refer to [XRPL documentation](https://xrpl.org/docs/references/protocol/transactions)
 
-Current transactions, which interract with XRPL DEX are:
+Current transactions, which interact with XRPL DEX are:
 
 - `AMMCreate`: Create a new Automated Market Maker (AMM) instance for trading a pair of assets (fungible tokens or XRP).
 - `AMMDeposit`: Deposit funds into an AMM instance and receive the AMM's liquidity provider tokens (LP Tokens) in exchange.
@@ -36,21 +36,23 @@ Current transactions, which interract with XRPL DEX are:
 MPT supports all of the above transactions. MPT can be combined with IOU and XRP tokens in the transactions. For instance, a Payment could be a cross-token payment from MPT token to IOU token; AMM can be created for XRP and MPT token-pair; an order book offer can be created to buy some MPT token and to sell another MPT token. MPT doesn't modify the transactions fields, flags, and functionality. However, the JSON of the MPT amount field differs from the JSON of the IOU amount field. Instead of `currency` and `issuer`, MPT is identified by `mpt_issuance_id`. MPT amount `value` is INT or UINT, which must be less or equal to $63^2 - 1$. Below are the examples of JSON MPT amount and JSON MPT asset:
 
 ```json
+{
   "Amount": {
     "mpt_issuance_id": "00000003430427B80BD2D09D36B70B969E12801065F22308",
     "value": "110"
-  }
+  },
   "Asset": {
     "mpt_issuance_id": "00000002430427B80BD2D09D36B70B969E12801065F22308"
-  },
+  }
+}
 ```
 
-Any transaction with MPT Amount or Asset have to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](../XLS-0033d-multi-purpose-tokens/README.md). In addition, MPTokenIssuanceCreate` must have the following flags set:
+Any transaction with MPT `Amount` or `Asset` have to use JSON format as described above. For any transaction, which uses MPT token, the token has to be created first by an issuer with `MPTokenIssuanceCreate` transaction and in most cases, except for `AMMCreate`, `AMMWithdraw`, `AMMClawback`, `CheckCash`, and `OfferCreate`, the token has to be authorized by the holder account with `MPTokenAuthorize` transaction as described in [XLS-33d](../XLS-0033d-multi-purpose-tokens/README.md). `MPTokenAuthorize` creates `MPToken` object, owned by a holder account. In addition, `MPTokenIssuanceCreate` must have the following flags set:
 
 - `lsfMPTCanTrade`, in order for individual holders to trade their balances using the XRP Ledger DEX or AMM.
 - `lsfMPTCanTransfer`, in order for the tokens held by non-issuers to be transferred to other accounts.
 
-## 2. The AMMCreate Transaction
+## 2. Transaction: AMMCreate
 
 Any token or both tokens in `AMMCreate` transaction can be MPT. I.e., in addition to the current combination of XRP/IOU and IOU/IOU token pair, `AMMCreate` can have XRP/MPT, IOU/MPT, and MPT/MPT token pair. Each MPT in the pair is identified by `mpt_issuance_id`. If both tokens are MPT then each token must have a unique `mpt_issuance_id`. In case of `AMMCreate` the token pair is identified by `Amount` and `Amount2`.
 
@@ -60,16 +62,16 @@ We do not introduce new fields.
 
 ### 2.2. Failure Conditions
 
-We extend the `AMMCreate` with the following failure conditions:
+We extend the `AMMCreate` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount` or `Amount2` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `Amount` or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND`.
-- `MPToken` object doesn't exist and AMM creator is not the issuer of MPT, fail with `tecNO_AUTH`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
-- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and AMM creator is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and AMM creator is not the issuer of MPT, with `tecNO_PERMISSION`.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+1. `Amount` or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+2. `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND`.
+3. `MPToken` object doesn't exist and AMM creator is not the issuer of MPT, fail with `tecNO_AUTH`.
+4. `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
+5. `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
+6. `MPTRequireAuth` flag is set and AMM creator is not authorized, fail with `tecNO_AUTH`.
+7. `MPTCanTransfer` flag is not set and AMM creator is not the issuer of MPT, with `tecNO_PERMISSION`.
+8. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
 ### 2.3. State Changes
 
@@ -95,7 +97,7 @@ On success `AMMCreate` creates and authorizes `MPToken` object for each MPT toke
 }
 ```
 
-## 3. The AMMDeposit Transaction
+## 3. Transaction: AMMDeposit
 
 `AMMDeposit` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMDeposit` has optional fields `Amount` and `Amount2`, which if present must match the type of `Asset` and `Asset2` respectively.
 
@@ -105,16 +107,16 @@ We do not introduce new fields.
 
 ### 3.2. Failure Conditions
 
-We extend the `AMMDeposit` transaction with the following failure conditions:
+We extend the `AMMDeposit` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount` or `Amount2` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
-- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+1. `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+2. `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
+3. `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
+4. `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
+5. `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`.
+6. `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
+7. `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`.
+8. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
 ### 3.3. State Changes
 
@@ -145,7 +147,7 @@ We do not introduce new state changes.
 }
 ```
 
-## 4. The AMMWithdraw Transaction
+## 4. Transaction: AMMWithdraw
 
 `AMMWithdraw` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMWithdraw` has optional fields `Amount` and `Amount2`, which if present must match the type of `Asset` and `Asset2` respectively.
 
@@ -155,16 +157,15 @@ We do not introduce new fields.
 
 ### 4.2. Failure Conditions
 
-We extend the `AMMWithdraw` transaction with the following failure conditions:
+We extend the `AMMWithdraw` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount` or `Amount2` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`. Can withdraw another asset.
-- `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`. Can withdraw another asset.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`. Can withdraw another asset.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`. Can withdraw another asset.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
--
+1. `Asset`, `Asset2`, `Amount`, or `Amount2` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+2. `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
+3. `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`. Can withdraw another asset.
+4. `MPTLock` flag is set on `MPToken`, fail for holder with `tecFROZEN`. Can withdraw another asset.
+5. `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`. Can withdraw another asset.
+6. `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecNO_PERMISSION`. Can withdraw another asset.
+7. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
 ### 4.3. State Changes
 
@@ -195,7 +196,7 @@ On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Pr
 }
 ```
 
-## 5. The AMMDelete Transaction
+## 5. Transaction: AMMDelete
 
 `AMMDelete` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead.
 
@@ -231,7 +232,7 @@ We do not introduce new state changes.
 }
 ```
 
-## 6. The AMMClawback Transaction
+## 6. Transaction: AMMClawback
 
 `AMMClawback` is identified by `Asset` and `Asset2` with the token type corresponding to `Amount` and `Amount2` of `AMMCreate`. `Asset` and `Asset2` are `STIssue` type, which represents a token by `currency` and `issuer`. If `STIssue` type represents MPT then `mpt_issuance_id` must be used instead. `AMMClawback` has optional field `Amount`, which if present must match the type of `Asset`.
 
@@ -241,11 +242,11 @@ We do not introduce new fields.
 
 ### 6.2. Failure Conditions
 
-We extend the `AMMClawback` transaction with the following failure conditions:
+We extend the `AMMClawback` transaction with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount`:
 
-- `Asset`, `Asset2`, or `Amount` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
-- `lsfMPTCanClawback` flag is not set, fail with `tecNO_PERMISSION`.
+1. `Asset`, `Asset2`, or `Amount` hold MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+2. `MPTokenIssuance` object doesn't exist, fail with `terNO_AMM`.
+3. `lsfMPTCanClawback` flag is not set on `MPTokenIssuance`, fail with `tecNO_PERMISSION`.
 
 ### 6.3. State Changes
 
@@ -272,7 +273,7 @@ On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Pr
 }
 ```
 
-## 7. The CheckCreate Transaction
+## 7. Transaction: CheckCreate
 
 If `SendMax` field is MPT then it is identified by `mpt_issuance_id`.
 
@@ -282,13 +283,13 @@ We do not introduce new fields.
 
 ### 7.2. Failure Conditions
 
-We extend the `CheckCreate` transaction with the following failure conditions:
+We extend the `CheckCreate` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `SendMax`; and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `SendMax` holds MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
-- `MPTLock` flag is set on `MPToken`, fail for holder as source and destination with `tecFROZEN`.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+1. `SendMax` holds MPT and `featureMPTokensV2` amendment is not enabled, fail with `temDISABLED`.
+2. `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
+3. `MPTLock` flag is set on `MPTokenIssuance`, fail for issuer and holder with `tecFROZEN`.
+4. `MPTLock` flag is set on `MPToken`, fail for holder as source and destination with `tecFROZEN`.
+5. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
 ### 7.3. State Changes
 
@@ -312,7 +313,7 @@ We do not introduce new state changes.
 }
 ```
 
-## 8. The CheckCash Transaction
+## 8. Transaction: CheckCash
 
 If `Amount` or `DeliverMin` fields are MPT then they are identified by `mpt_issuance_id`. `mpt_issuance_id` of `DeliverMin` and `Amount` must match.
 
@@ -322,16 +323,16 @@ We do not introduce new fields.
 
 ### 8.2. Failure Conditions
 
-We extend the `CheckCreate` transaction with the following failure conditions:
+We extend the `CheckCash` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount` or `DeliverMin` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecNO_ENTRY`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_PARTIAL` if source and destination are holders.
-  Fail with `tecFROZEN` if source is issuer and destination is holder.
-- `MPTLock` flag is set on `MPToken`, fail for issuer and holder as destination with `tecPATH_PARTIAL`. Fail for holder as source with `tecFROZEN`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
+1. `MPTokenIssuance` object doesn't exist, fail with `tecNO_ENTRY`.
+2. `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
+3. `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_PARTIAL` if source and destination are holders.
+   Fail with `tecFROZEN` if source is issuer and destination is holder.
+4. `MPTLock` flag is set on `MPToken`, fail for issuer and holder as destination with `tecPATH_PARTIAL`. Fail for holder as source with `tecFROZEN`.
+5. `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecNO_AUTH`.
+6. `MPTCanTransfer` flag is not set and the account is not the issuer of MPT, fail with `tecPATH_PARTIAL`.
+7. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`.
 
 ### 8.3. State Changes
 
@@ -352,7 +353,7 @@ On success `CheckCash` creates and authorizes `MPToken` object if the account do
 }
 ```
 
-## 9. OfferCreate Transaction
+## 9. Transaction: OfferCreate
 
 `OfferCreate` can have any token combination of `TakerGets` and `TakerPays`. I.e., in addition to the current combination of XRP/IOU and IOU/IOU tokens, `OfferCreate` can have XRP/MPT, IOU/MPT, and MPT/MPT tokens. If `TakerPays` or `TakerGets` fields are MPT then they are identified by mpt_issuance_id.
 
@@ -379,14 +380,14 @@ We do not introduce new fields.
 
 ### 9.2. Failure Conditions
 
-We extend the `OfferCreate` transaction with the following failure conditions:
+We extend the `OfferCreate` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `TakerPays` or `TakerGets` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND` for `TakerPays` and `tecUNFUNDED_OFFER` for `TakerGets`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`.
-- `MPTLock` flag is set and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`. Create but not cross the offer for `TakerPays`.
-- `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecUNFUNDED_OFFER`.
-- `MPTCanTransfer` flag is not set and the account is not the issuer of MPT. `OfferCreate` succeeds but doesn't cross other offers owned by holders. It crosses offers owned by an issuer. If `MPTCanTransfer` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
-- `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`. If `MPTCanTrade` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
+1. `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND` for `TakerPays` and `tecUNFUNDED_OFFER` for `TakerGets`.
+2. `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`.
+3. `MPTLock` flag is set and the account is not the issuer of MPT, fail with `tecUNFUNDED_OFFER` for `TakerGets`. Create but not cross the offer for `TakerPays`.
+4. `MPTRequireAuth` flag is set and the account is not authorized, fail with `tecUNFUNDED_OFFER`.
+5. `MPTCanTransfer` flag is not set and the account is not the issuer of MPT. `OfferCreate` succeeds but doesn't cross other offers owned by holders. It crosses offers owned by an issuer. If `MPTCanTransfer` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
+6. `MPTCanTrade` flag is not set, fail with `tecNO_PERMISSION`. If `MPTCanTrade` is cleared after an offer is created then this offer is removed from the order book on offer crossing or cross-currency payment.
 
 ### 9.3. State Changes
 
@@ -411,9 +412,9 @@ On success `OfferCreate` creates and authorizes `MPToken` object for the offer's
 }
 ```
 
-## 10. Payment Transaction
+## 10. Transaction: Payment
 
-`Payment` can have any cross-token payment combination. I.e., in addition to the current combination of XRP/IOU and IOU/IOU cross-token payment, `Payment` can have XRP/MPT, IOU/MPT, and MPT/MPT cross-token payment. MPT can be used to specify `Paths`, in which case `mpt_issuance_id` should be used instead of `currency` and `issuer` as shown in the `JSON` example below. MPT doesn't support payment rippling. `mpt_issuance_id` identifies a unique MPT. It's impossible to reference the same MPT with different issuer. If `Amount`, `DeliverMax`, `DeliverMin`, or `SendMax` fields are MPT then they are identified by mpt_issuance_id.
+`Payment` can have any cross-token payment combination. I.e., in addition to the current combination of XRP/IOU and IOU/IOU cross-token payment, `Payment` can have XRP/MPT, IOU/MPT, and MPT/MPT cross-token payment. MPT can be used to specify `Paths`, in which case `mpt_issuance_id` should be used instead of `currency` and `issuer` as shown in the `JSON` example below. MPT doesn't support payment rippling. `mpt_issuance_id` identifies a unique MPT. It's impossible to reference the same MPT with different issuer. If `Amount`, `DeliverMax`, `DeliverMin`, or `SendMax` fields are MPT then they are identified by `mpt_issuance_id`.
 
 ### 10.1. Fields
 
@@ -421,15 +422,15 @@ We do not introduce new fields.
 
 ### 10.2. Failure Conditions
 
-We extend the `Payment` transaction with the following failure conditions:
+We extend the `Payment` with the following failure conditions, where `MPTokenIssuance` refers to the ledger object defining the specific MPT type identified in the transaction's `Amount` or `SendMax` fields; `MPToken` refers to the ledger object representing the specific MPT balance of the account executing the transaction (if that account is not the issuer); and flags refer to those set on the `MPTokenIssuance` object unless explicitly stated as being set on the individual `MPToken` object:
 
-- `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
-- `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
-- `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_DRY`.
-- `MPTLock` flag is set on `MPToken`, fail with `tecPATH_DRY`.
-- `MPTRequireAuth` flag is set and the account is not authorized. Any transfer between unauathorized accounts fail with `tecNO_AUTH`.
-- `MPTCanTransfer` flag is not set. Any transfer between unauthorized accounts fail with `tecPATH_PARTIAL`.
-- `MPTCanTrade` is not set, fail with `tecPATH_DRY`.
+1. `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NO_FOUND`.
+2. `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
+3. `MPTLock` flag is set on `MPTokenIssuance`, fail with `tecPATH_DRY`.
+4. `MPTLock` flag is set on `MPToken`, fail with `tecPATH_DRY`.
+5. `MPTRequireAuth` flag is set and the account is not authorized. Any transfer between unauthorized accounts fail with `tecNO_AUTH`.
+6. `MPTCanTransfer` flag is not set. Any transfer between unauthorized accounts fail with `tecPATH_PARTIAL`.
+7. `MPTCanTrade` is not set, fail with `tecPATH_DRY`.
 
 ### 10.3 State Changes
 
