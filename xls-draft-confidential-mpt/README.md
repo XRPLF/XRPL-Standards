@@ -270,7 +270,8 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 | `DestinationEncryptedAmount` | ✔️        | `string`  | `Blob`        | Ciphertext credited to the receiver's inbox balance.                                                |
 | `IssuerEncryptedAmount`      | ✔️        | `string`  | `Blob`        | Ciphertext used to update the issuer mirror balance.                                                |
 | `ZKProof`                    | ✔️        | `string`  | `Blob`        | ZKP bundle establishing equality, linkage, and range sufficiency.                                   |
-| `PedersenCommitment`         | ✔️        | `string`  | `Blob`        | A cryptographic commitment to the user's confidential spending balance.                             |
+| `BalanceCommitment`          | ✔️        | `string`  | `Blob`        | A cryptographic commitment to the user's confidential spending balance.                             |
+| `AmountCommitment`           | ✔️        | `string`  | `Blob`        | A cryptographic commitment to the amount being transferred.                                         |
 | `AuditorEncryptedAmount`     |           | `string`  | `Blob`        | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
 
 ### 7.2 Use Cases
@@ -312,7 +313,8 @@ If the transaction is successful:
   "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
   "SenderEncryptedAmount": "AD3F...",
   "DestinationEncryptedAmount": "DF4E...",
-  "PedersenCommitment": "038A...",
+  "BalanceCommitment": "038A...",
+  "AmountCommitment": "049B...",
   "IssuerEncryptedAmount": "BC2E...",
   "ZKProof": "84af..."
 }
@@ -408,7 +410,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 | `IssuerEncryptedAmount`  | ✔️        | `string`  | `Blob`        | Ciphertext to be subtracted from the issuer's mirror balance.                                                                      |
 | `BlindingFactor`         | ✔️        | `string`  | `Blob`        | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
 | `AuditorEncryptedAmount` |           | `string`  | `Blob`        | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                                |
-| `PedersenCommitment`     | ✔️        | `string`  | `Blob`        | A cryptographic commitment to the user's confidential spending balance.                                                            |
+| `BalanceCommitment`      | ✔️        | `string`  | `Blob`        | A cryptographic commitment to the user's confidential spending balance.                                                            |
 | `ZKProof`                | ✔️        | `string`  | `Blob`        | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**.        |
 
 ### 9.4. Failure Conditions
@@ -455,7 +457,7 @@ If the transaction is successful:
   "IssuerEncryptedAmount": "BC2E...",
   "AuditorEncryptedAmount": "C1A9...",
   "BlindingFactor": "12AB...",
-  "PedersenCommitment": "038A...",
+  "BalanceCommitment": "038A...",
   "ZKProof": "ABCD..."
 }
 ```
