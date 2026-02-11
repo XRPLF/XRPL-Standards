@@ -318,7 +318,7 @@ If the new transaction logic introduces novel failure reasons not adequately cov
 
 ###### 4.4.3.3.5. State Changes
 
-This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). The list must be exhaustive, descriptive, and indexed for easy reference.   When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`). A successfully applied transaction must return a `tesSUCCESS` code.
+This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). The list must be exhaustive, descriptive, and indexed for easy reference. When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`). A successfully applied transaction must return a `tesSUCCESS` code.
 
 ###### 4.4.3.3.6. Metadata Fields
 
