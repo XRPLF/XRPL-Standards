@@ -397,39 +397,37 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.1.1.4 Failure Conditions
 
-- The `Asset` is `XRP`:
-  - The `Scale` parameter is provided.
+1. The `Asset` is `XRP`:
+   1. The `Scale` parameter is provided.
 
-- The `Asset` is `MPT`:
-  - The `Scale` parameter is provided.
-  - The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
-  - The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
+2. The `Asset` is `MPT`:
+   1. The `Scale` parameter is provided.
+   2. The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
+   3. The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
 
-- The `Asset` is an `IOU`:
-  - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `Scale` parameter is provided, and is less than **0** or greater than **18**.
+3. The `Asset` is an `IOU`:
+   1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+   2. The `Scale` parameter is provided, and is less than **0** or greater than **18**.
 
-- The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
+4. The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
 
-- The `PermissionedDomain` object does not exist with the provided `DomainID`.
-
-- The `Data` field is larger than 256 bytes.
-- The account submiting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
+5. The `PermissionedDomain` object does not exist with the provided `DomainID`.
+6. The `Data` field is larger than 256 bytes.
+7. The account submiting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
 
 ##### 3.1.1.5 State Changes
 
-- Create a new `Vault` ledger object.
-- Create a new `MPTokenIssuance` ledger object for the vault shares.
-  - If the `DomainID` is provided:
-    - `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
-  - Create an `MPToken` object for the Vault Owner to hold Vault Shares.
-- Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
+1. Create a new `Vault` ledger object.
+2. Create a new `MPTokenIssuance` ledger object for the vault shares.
+   1. If the `DomainID` is provided: `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
+   2. Create an `MPToken` object for the Vault Owner to hold Vault Shares.
+3. Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
 
-- If `Vault.Asset` is an `IOU`:
-  - Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.
+4. If `Vault.Asset` is an `IOU`:
+   1. Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.
 
-- If `Vault.Asset` is an `MPT`:
-  - Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+5. If `Vault.Asset` is an `MPT`:
+   1. Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
 
 ##### 3.1.1.6 Invariants
 
@@ -451,21 +449,21 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 ##### 3.1.2.1 Failure Conditions
 
-- `Vault` object with the specified `VaultID` does not exist on the ledger.
-- The submitting account is not the `Owner` of the vault.
-- The `Data` field is larger than 256 bytes.
-- If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
-  - The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
-- The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
-- The `PermissionedDomain` object does not exist with the provided `DomainID`.
-- The transaction is attempting to modify an immutable field.
-- The transaction does not specify any of the modifiable fields.
+1. `Vault` object with the specified `VaultID` does not exist on the ledger.
+2. The submitting account is not the `Owner` of the vault.
+3. The `Data` field is larger than 256 bytes.
+4. If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
+   1. The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
+5. The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
+6. The `PermissionedDomain` object does not exist with the provided `DomainID`.
+7. The transaction is attempting to modify an immutable field.
+8. The transaction does not specify any of the modifiable fields.
 
 ##### 3.1.2.2 State Changes
 
-- Update mutable fields in the `Vault` ledger object.
-- If `DomainID` is provided:
-  - Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
+1. Update mutable fields in the `Vault` ledger object.
+2. If `DomainID` is provided:
+   1. Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
 
 ##### 3.1.2.3 Invariants
 
@@ -484,18 +482,18 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ##### 3.1.3.1 Failure Conditions
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
-- The submitting account is not the `Owner` of the vault.
-- `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
-- The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. The submitting account is not the `Owner` of the vault.
+3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
+4. The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
 
 ##### 3.1.3.2 State Changes
 
-- Delete the `MPTokenIssuance` object for the vault shares.
-- Delete the `MPToken` or `RippleState` object corresponding to the vault's holding of the asset, if one exists.
-- Delete the `AccountRoot` object of the _pseudo-account_, and its `DirectoryNode` objects.
-- Release the Owner Reserve to the `Vault.Owner` account.
-- Delete the `Vault` object.
+1. Delete the `MPTokenIssuance` object for the vault shares.
+2. Delete the `MPToken` or `RippleState` object corresponding to the vault's holding of the asset, if one exists.
+3. Delete the `AccountRoot` object of the _pseudo-account_, and its `DirectoryNode` objects.
+4. Release the Owner Reserve to the `Vault.Owner` account.
+5. Delete the `Vault` object.
 
 ##### 3.1.3.3 Invariants
 
@@ -521,42 +519,42 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ##### 3.2.1.1 Failure conditions
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
-- The asset type of the vault does not match the asset type the depositor is depositing.
-- The depositor does not have sufficient funds to make a deposit.
-- Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
-- The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. The asset type of the vault does not match the asset type the depositor is depositing.
+3. The depositor does not have sufficient funds to make a deposit.
+4. Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
+5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
 
-- The `Vault.Asset` is `MPT`:
-  - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-  - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-  - `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
-  - `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
+6. The `Vault.Asset` is `MPT`:
+   1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+   2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+   3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
+   4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
 
-- The `Asset` is an `IOU`:
-  - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
-  - The `RippleState` object `Balance` < `Amount` (insufficient balance).
+7. The `Asset` is an `IOU`:
+   1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+   2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
+   3. The `RippleState` object `Balance` < `Amount` (insufficient balance).
 
 ##### 3.2.1.2 State Changes
 
-If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
+1. If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
 
-- Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
-- Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+2. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
+3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
+4. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
 
-- If the `Vault.Asset` is `XRP`:
-  - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
-  - Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
+5. If the `Vault.Asset` is `XRP`:
+   1. Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
+   2. Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
 
-- If the `Vault.Asset` is an `IOU`:
-  - Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-  - Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+6. If the `Vault.Asset` is an `IOU`:
+   1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+   2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
-- If the `Vault.Asset` is an `MPT`:
-  - Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
+7. If the `Vault.Asset` is an `MPT`:
+   1. Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+   2. Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
 
 ##### 3.2.1.3 Invariants
 
@@ -589,60 +587,58 @@ In sections below assume the following variables:
 
 ##### 3.2.2.1 Failure conditions
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
+1. `Vault` object with the `VaultID` does not exist on the ledger.
 
-- The `Vault.Asset` is `MPT`:
-  - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-  - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-  - `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
+2. The `Vault.Asset` is `MPT`:
+   1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+   2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+   3. `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
 
-- The `Asset` is an `IOU`:
-  - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-  - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
+3. The `Asset` is an `IOU`:
+   1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+   2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
 
-- The unit of `Amount` is not shares of the vault.
-- The unit of `Amount` is not asset of the vault.
+4. The unit of `Amount` is not shares of the vault.
+5. The unit of `Amount` is not asset of the vault.
 
-- There is insufficient liquidity in the vault to fill the request:
-  - If `Amount` is the vaults share:
-    - `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
-    - The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
-    - `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
+6. There is insufficient liquidity in the vault to fill the request:
+   1. If `Amount` is the vaults share:
+      1. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
+      2. The shares `MPToken(MPTokenIssuanceID, AccountID | Destination).MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
+      3. `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
 
-  - If `Amount` is the vaults asset:
-    - The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
-    - `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
+7. If `Amount` is the vaults asset:
+   1. The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
+   2. `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
-- The `Destination` account is specified:
-  - The account does not have permission to receive the asset.
-  - The account does not have a `RippleState` or `MPToken` object for the asset.
+8. The `Destination` account is specified:
+   1. The account does not have permission to receive the asset.
+   2. The account does not have a `RippleState` or `MPToken` object for the asset.
 
 ##### 3.2.2.2 State Changes
 
-- If the `Vault.Asset` is XRP:
-  - Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by $\Delta_{asset}$.
-  - Increase the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
+1. If the `Vault.Asset` is XRP:
+   1. Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by $\Delta_{asset}$.
+   2. Increase the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
 
-- If the `Vault.Asset` is an `IOU`:
-  - If the Depositor account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
+2. If the `Vault.Asset` is an `IOU`:
+   1. If the Depositor account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
+   2. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
+   3. Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
-  - Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
+3. If the `Vault.Asset` is an `MPT`:
+   1. If the Depositor account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
+   2. Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+   3. Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
 
-- If the `Vault.Asset` is an `MPT`:
-  - If the Depositor account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
+4. Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
+   1. Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
+   2. If `MPToken.MPTAmount == 0`, delete the object.
 
-  - Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-  - Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
+5. Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
+   1. Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-- Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
-  - Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
-  - If `MPToken.MPTAmount == 0`, delete the object.
-
-- Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
-  - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-
-- Decrease the `AssetsTotal` and `AssetsAvailable` by $\Delta_{asset}$
+6. Decrease the `AssetsTotal` and `AssetsAvailable` by $\Delta_{asset}$
 
 ##### 3.2.2.3 Invariants
 
@@ -665,38 +661,38 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 ##### 3.3.1.1 Failure conditions
 
-- `Vault` object with the `VaultID` does not exist on the ledger.
+1. `Vault` object with the `VaultID` does not exist on the ledger.
 
-- If `Vault.Asset` is `XRP`.
+2. If `Vault.Asset` is `XRP`.
 
-- If `Vault.Asset` is an `IOU` and:
-  - The `Issuer` account is not the submitter of the transaction.
-  - If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
-  - If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+3. If `Vault.Asset` is an `IOU` and:
+   1. The `Issuer` account is not the submitter of the transaction.
+   2. If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+   3. If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
 
-- If `Vault.Asset` is an `MPT` and:
-  - `MPTokenIssuance.Issuer` is not the submitter of the transaction.
-  - `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
-  - If the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
+4. If `Vault.Asset` is an `MPT` and:
+   1. `MPTokenIssuance.Issuer` is not the submitter of the transaction.
+   2. `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
+   3. If the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
 
-- The `MPToken` object for the `Vault.ShareMPTID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
+5. The `MPToken` object for the `Vault.ShareMPTID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
 ##### 3.3.1.2 State Changes
 
-- If the `Vault.Asset` is an `IOU`:
-  - Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`.
+1. If the `Vault.Asset` is an `IOU`:
+   1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`.
 
-- If the `Vault.Asset` is an `MPT`:
-  - Decrease the `MPToken.MPTAmount` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+2. If the `Vault.Asset` is an `MPT`:
+   1. Decrease the `MPToken.MPTAmount` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
 
-- Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
-  - Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
-  - If `MPToken.MPTAmount == 0`, delete the object.
+3. Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
+   1. Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
+   2. If `MPToken.MPTAmount == 0`, delete the object.
 
-- Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
-  - Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
+4. Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
+   1. Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-- Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
+5. Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
 
 ##### 3.3.1.3 Invariants
 
@@ -712,26 +708,26 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
 
 #### 3.4.1.1 Failure Conditions
 
-- If `Payment.Amount` is a `Vault` share AND:
-  - The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain of the Vaults Share.
-  - The `Vault` `tfVaultShareNonTransferable` flag is set.
+1. If `Payment.Amount` is a `Vault` share AND:
+   1. The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain of the Vaults Share.
+   2. The `Vault` `tfVaultShareNonTransferable` flag is set.
 
-  - The `Vault.Asset` is `MPT`:
-    - `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-    - `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-    - `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
-    - `MPToken(MPTokenIssuanceID, PseudoAccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
-    - `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
+   3. The `Vault.Asset` is `MPT`:
+      1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+      2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+      3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
+      4. `MPToken(MPTokenIssuanceID, PseudoAccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
+      5. `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
 
-  - The `Vault.Asset` is an `IOU`:
-    - The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the payer account.
-    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
-    - The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
+   4. The `Vault.Asset` is an `IOU`:
+      1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+      2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the payer account.
+      3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
+      4. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
 
 #### 3.4.1.2 State Changes
 
-- If `MPToken`object for shares does not exist for the destination account, create one.
+1. If `MPToken`object for shares does not exist for the destination account, create one.
 
 [**Return to Index**](#index)
 
