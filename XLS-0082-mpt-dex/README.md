@@ -77,7 +77,7 @@ We extend the `AMMCreate` with the following failure conditions, where `MPTokenI
 
 On success `AMMCreate` creates and authorizes `MPToken` object for each MPT token for AMM pseudo-account.
 
-#### 2.4. Example JSON
+### 2.4. Example JSON
 
 ```json
 {
@@ -171,7 +171,7 @@ We extend the `AMMWithdraw` with the following failure conditions, where `MPToke
 
 On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a withdrawn token.
 
-#### 4.4. Example JSON
+### 4.4. Example JSON
 
 ```json
 {
@@ -214,7 +214,7 @@ We extend the `AMMDelete` transaction with the following failure conditions:
 
 We do not introduce new state changes.
 
-#### 5.4. Example JSON
+### 5.4. Example JSON
 
 ```json
 {
@@ -252,7 +252,7 @@ We extend the `AMMClawback` transaction with the following failure conditions, w
 
 On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a clawbacked token.
 
-#### 6.4. Example JSON
+### 6.4. Example JSON
 
 ```json
 {
