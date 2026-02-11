@@ -6,7 +6,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
   status: Final
   category: Amendment
-  requires: XLS-33
+  requires: XLS-33, XLS-30
   created: 2024-09-19
   updated: 2026-02-10
 </pre>
