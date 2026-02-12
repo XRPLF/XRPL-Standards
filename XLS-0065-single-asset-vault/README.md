@@ -469,19 +469,26 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ### 5.1 Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value |                        Description                        |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------: |
-| `TransactionType` | Yes | `string`  |   `Uint16`    |     `60`      |                     Transaction type.                     |
-| `VaultID`         | Yes | `string`  |   `Hash256`   |     `N/A`     |            The ID of the vault to be deleted.             |
-| `Data`            |         No         | `string`  |    `BLOB`     |     Empty      | Arbitrary metadata about the Vault. Limited to 256 bytes. |
+| Field Name        | Required? | JSON Type | Internal Type | Default Value |                        Description                        |
+| ----------------- | :-------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------: |
+| `TransactionType` |    Yes    | `string`  |   `Uint16`    |     `60`      |                     Transaction type.                     |
+| `VaultID`         |    Yes    | `string`  |   `Hash256`   |     `N/A`     |            The ID of the vault to be deleted.             |
+| `Data`            |    No     | `string`  |    `BLOB`     |     Empty     | Arbitrary metadata about the Vault. Limited to 256 bytes. |
 
 ### 5.2 Failure Conditions
 
-1. `Vault` object with the `VaultID` does not exist on the ledger.
-2. The submitting account is not the `Owner` of the vault.
-3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
-4. The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
-5. `Data` field is greater than 256 bytes (`temMALFORMED`).
+#### 5.2.1. Data Verification
+
+1. `VaultID` is empty. (`temMALFORMED`)
+2. `Data` field is provided and `fixLendingProtocolV1_1` amendment is not enabled. (`temDISABLED`)
+3. `Data` field is greater than 256 bytes. (`temMALFORMED`)
+
+#### 5.2.2. Protocol-Level Failures
+
+1. `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
+3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero. (`tecHAS_OBLIGATIONS`)
+4. The `OwnerDirectory` of the Vault _pseudo-account_ contains objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset. (`tecHAS_OBLIGATIONS`)
 
 ### 5.3 State Changes
 
