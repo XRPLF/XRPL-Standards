@@ -286,7 +286,7 @@ def main():
     for draft_dir in sorted(draft_dirs):
         assigned_number = next_number
         all_numbers.add(assigned_number)
-        new_dir_name = re.sub(r"^XLS-draft-", f"XLS-{assigned_number:04d}-", draft_dir)
+        new_dir_name = re.sub(r"^xls-draft-", f"xls-{assigned_number:04d}-", draft_dir.lower())
         assignments.append({
             "draft": draft_dir,
             "number": assigned_number,
@@ -309,7 +309,7 @@ def main():
 
     # For single draft case, also output individual values for easy access
     if len(assignments) == 1:
-        set_github_output("xls_number", f"{assignments[0]['number']:04d}")
+        set_github_output("xls_number", f"{assignments[0]['number']}")
         set_github_output("draft_dir", assignments[0]['draft'])
         set_github_output("new_dir_name", assignments[0]['new_name'])
 
