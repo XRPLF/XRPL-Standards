@@ -1,13 +1,16 @@
-# System XLS: Add Formats and Flags to `server_definitions`
-
-<pre>  
-  title: Formats, Fields and Flags  
-  description: Adding ledger entry and transaction flags and formats to the server_definitions RPC response.   
-  author: Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)  
-  category: System  
-  status: Proposal  
-  created: 2025-11-25  
+<pre>
+  xls: 103
+  title: Formats, Fields and Flags
+  description: Adding ledger entry and transaction flags and formats to the server_definitions RPC response.
+  implementation: https://github.com/XRPLF/rippled/pull/5702
+  author: Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
+  category: System
+  status: Draft
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/418
+  created: 2025-11-25
 </pre>
+
+# System XLS: Add Formats and Flags to `server_definitions`
 
 ## 1\. Abstract
 
