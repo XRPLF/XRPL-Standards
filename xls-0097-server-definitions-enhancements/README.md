@@ -1,5 +1,5 @@
 <pre>
-  xls: 103
+  xls: 97
   title: Formats, Fields and Flags
   description: Adding ledger entry and transaction flags and formats to the server_definitions RPC response.
   implementation: https://github.com/XRPLF/rippled/pull/5702
