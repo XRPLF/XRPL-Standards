@@ -74,6 +74,8 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
 
+A sample response can be [found here](https://gist.github.com/ckeshava/ff5d513a0c4c1c5f8f5bbba5309378cd).
+
 <a id="optionality-map"></a>
 
 ##### 3.2.1.1.1 `optionality` number-text map
@@ -101,6 +103,8 @@ The format of this field is an `object`. The keys of the `object` are the transa
 The format of this field is an `object`, with the keys being the ledger entry type name (e.g. `Offer`) and the values being another `object`. This nested `object`'s keys are the `lsf` name (e.g. `lsfSell`), and its values are the corresponding integer values (e.g. `131072`).
 
 Only ledger entry types that have flags are included in this.
+
+A sample response can be [found here](https://gist.github.com/ckeshava/4741c3562f26f01a61f295f03a5d460b).
 
 ##### 3.2.1.4. TRANSACTION_FLAGS
 
