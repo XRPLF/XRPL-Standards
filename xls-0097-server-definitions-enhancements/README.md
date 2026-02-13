@@ -72,7 +72,9 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
+
+<a id="optionality-map"></a>
 
 ##### 3.2.1.1.1 `optionality` number-text map
 
@@ -92,7 +94,7 @@ The format of this field is an `object`. The keys of the `object` are the transa
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
 
 ##### 3.2.1.3. LEDGER_ENTRY_FLAGS
 
