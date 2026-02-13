@@ -12,11 +12,11 @@
 
 # System XLS: Add Formats and Flags to `server_definitions`
 
-## 1\. Abstract
+## 1. Abstract
 
 The [server_definitions RPC command](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/server-info-methods/server_definitions) is an existing API endpoint that provides client applications with essential protocol information needed to properly interact with the XRPL network. Currently, it returns all the details necessary to serialize and deserialize data encoded in the custom XRPL binary format. This document proposes new additions to the `server_definitions` RPC response. Specifically, it advocates adding transaction formats, ledger object formats, transaction flags and ledger specific flags in the `server_definitions` response.
 
-## 2\. Motivation
+## 2. Motivation
 
 This information helps client libraries understand how to serialize/deserialize XRPL data structures, construct valid transactions, and parse valid ledger entries. Essentially, the basics of an XRPL library in any programming language could be constructed just from the details of the `server_definitions` output with the additions.
 
@@ -27,7 +27,7 @@ Some of the envisioned benefits of this proposal:
 - Better Error Messages: Applications can provide specific feedback about missing required fields. These error messages can be tailored to be more informative instead of the terse rippled error messages.
 - Protocol Compliance: Ensures applications stay in sync with protocol changes. This can be accomplished by periodically fetching the `server_definitions` RPC response
 
-## 3\. RPC: `server_definitions`
+## 3. RPC: `server_definitions`
 
 The `server_definitions` RPC [already exists](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/server-info-methods/server_definitions). A sample output is available [here](https://xrpl.org/resources/dev-tools/websocket-api-tool?server=wss%3A%2F%2Fs1.ripple.com%2F&req=%7B%20%20%22command%22%3A%20%22server_definitions%22%0A%7D). This spec proposes some additions.
 
@@ -130,7 +130,7 @@ There are no changes to the failure conditions of the `server_definitions` RPC. 
 
 A sample response is available [here](https://gist.github.com/mvadari/407732fee9d37678b372b4f9df01a311).
 
-## 4\. Rationale
+## 4. Rationale
 
 Currently, clients must manually hardcode or scrape this structural information from the `rippled` source, which is brittle and creates high maintenance overhead. Centralizing these definitions on the server offers:
 
@@ -142,19 +142,19 @@ Currently, clients must manually hardcode or scrape this structural information 
 
 - **Separate RPCs:** Rejected for requiring multiple network calls; consolidation is more efficient. In addition, this is essentially the purpose of the `server_definitions` RPC.
 
-## 5\. Backwards Compatibility
+## 5. Backwards Compatibility
 
 New additions to the RPC responses do not affect backwards compatibility. None of the existing systems are affected if they choose to not make use of the proposed changes.
 
-## 6\. Test Plan
+## 6. Test Plan
 
 This feature needs to be accompanied with suitable unit tests in the rippled code repository. The number of transactions, ledger objects, ledger-specific flags, and transaction flags are suitably determined at compile-time. The tests can validate the content of the RPC responses for specific transactions and ledger-objects. This is not as exhaustive as validating every transaction and ledger object. However, it is easier to maintain the test cases.
 
-## 7\. Reference Implementation
+## 7. Reference Implementation
 
 A reference implementation can be found [here](https://github.com/XRPLF/rippled/pull/5702) and [here](https://github.com/XRPLF/rippled/pull/5616). Note: This implementation does not comprehensively implement all the proposed changes yet.
 
-## 8\. Security Considerations
+## 8. Security Considerations
 
 The information returned by the `server_definitions` RPC is already available in various configuration files across rippled. No private or confidential information is revealed by this proposal.
 
