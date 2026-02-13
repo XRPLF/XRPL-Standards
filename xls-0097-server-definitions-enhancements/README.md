@@ -152,7 +152,7 @@ This feature needs to be accompanied with suitable unit tests in the rippled cod
 
 ## 7. Reference Implementation
 
-A reference implementation can be found [here](https://github.com/XRPLF/rippled/pull/5702) and [here](https://github.com/XRPLF/rippled/pull/5616). Note: This implementation does not comprehensively implement all the proposed changes yet.
+A reference implementation can be found [here](https://github.com/XRPLF/rippled/pull/6321).
 
 ## 8. Security Considerations
 
