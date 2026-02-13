@@ -834,58 +834,60 @@ Summary
 
 Bulletproofs are an efficient choice. Even when reducing the bit length, the decomposition approach results in a transaction payload that is over 6 times larger than a Bulletproof.
 
-## 16. Frequently Asked Questions (FAQ)
+# Appendix
+
+## Appendix A: FAQ 
 
 This section addresses common questions about Confidential MPTs and their design choices, ranging from basic functionality to advanced research topics.
 
-Q1. Can confidential and public balances coexist?\
+### A.1 Can confidential and public balances coexist?
 Yes, both issuers and holders may simultaneously maintain both public and confidential balances of the same MPT, fully supporting hybrid ecosystems with explicit conversions between the two using ConfidentialMPTConvert transactions.
 
-Q2. Why introduce a separate Merge transaction?\
+### A.2 Why introduce a separate Merge transaction?
 A separate Merge transaction is introduced because incoming transfers could cause proofs to become stale if all balances were in a single field, while split balances (CB_S and CB_IN) isolate proofs to a stable spending balance, allowing the Merge transaction to consolidate funds deterministically and update the version counter without requiring a proof, making it cheap to validate.
 
-Q3. What happens if a user forgets to merge their inbox?\
+### A.3 What happens if a user forgets to merge their inbox?
 If a user forgets to merge their inbox, incoming funds will accumulate in CB_IN, remaining safe but unable to be spent until they are consolidated into CB_S via a merge, therefore wallets are expected to perform this merge before a send if necessary.
 
-Q4. Can confidential transactions be used in DEX, escrow, or checks?\
+### A.4 Can confidential transactions be used in DEX, escrow, or checks?
 No, this version of confidential MPT extensions focuses solely on regular confidential MPT payments between accounts, as integration with XRPL’s DEX, escrow, or checks would require further research into how to represent offers or locked balances without revealing their amounts.
 
-Q5. How does compliance fit in?\
+### A.5 How does compliance fit in?
 Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (EncryptedBalanceIssuer), and an optional auditor’s key (EncryptedBalanceAuditor) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
 
-Q6. What happens if a holder loses their ElGamal private key?\
+### A.6 What happens if a holder loses their ElGamal private key?
 If a holder loses their ElGamal private key, they will be unable to decrypt or spend their confidential balances, which will remain valid on-ledger but are effectively locked and irrecoverable by that holder.
 
-Q7. What prevents replay or proof reuse?\
+### A.7 What prevents replay or proof reuse?
 Replay and proof reuse are prevented because all ZKPs are transcript-bound with domain separation, meaning the binding includes transaction type, issuer, currency, and version counters, so attempting to replay a proof in another context will result in a failed verification.
 
-Q8. Are confidential transactions more expensive than standard MPT transactions?\
+### A.8 Are confidential transactions more expensive than standard MPT transactions?
 Yes, confidential transactions are more expensive than standard MPT transactions as they include extra ciphertexts and ZKPs, which increase both transaction size and verification cost, though efficiency remains a design goal with lightweight proofs and future aggregation possibilities.
 
-Q9. What happens if validators cannot verify a ZKP?
+### A.9 What happens if validators cannot verify a ZKP?
 
 If validators cannot verify a ZKP, the transaction is rejected during consensus, functioning identically to an invalid signature and thus preventing malformed or incorrect confidential balances from entering the ledger.
 
-Q10. Why does the issuer need a second account?
+### A.10 Why does the issuer need a second account?
 
 The issuer utilizes a second account as a designated holder account to convert their public reserve into the confidential supply. This approach is primarily used to keep the existing XLS-0033 semantics intact, ensuring that the OutstandingAmount accurately reflects non-issuer balances.
 
-Q11. Will proofs be optimized in future versions?
+### A.11 Will proofs be optimized in future versions?
 
 The current design employs separate range and equality proofs for each transaction. However, future work will definitely prioritize optimizing these proofs to significantly reduce both transaction size and the associated verification cost for validators. Thorough benchmarking will be essential to find the right balance between validator performance and overall user experience.
 
-Q12. Can there be more than one auditor?
+### A.12 Can there be more than one auditor?
 
 At present, the protocol supports only a single optional auditor. Future extensions could explore multi-auditor setups, potentially leveraging advanced cryptographic techniques such as threshold encryption or more sophisticated policy-driven key distribution mechanisms.
 
-Q13. Is the system quantum-safe?
+### A.13 Is the system quantum-safe?
 
 Today's design relies on EC-ElGamal over secp256k1, which is not considered quantum-safe. The long-term plan includes migrating to post-quantum friendly schemes, such as those based on lattice cryptography. The specific migration path and timeline for achieving quantum resistance remain an open area of research.
 
-Q14. Why require explicit Merge instead of eliminating it in future?
+### A.14 Why require explicit Merge instead of eliminating it in future?
 
 The explicit MergeInbox transaction is currently required because it deterministically solves the issue of "staleness," ensuring that all received funds are consolidated before spending. While issuers and wallets might prefer less operational overhead, the current design offers clear, verifiable guarantees. Future designs may revisit whether we can eliminate this explicit merge requirement.
 
-## Acknowledgements
+# Acknowledgements
 
 We would like to thank David Schwartz, Ayo Akinyele, Kenny Lei, Shashwat Mittal, Shawn Xie, Yinyi Qian, and Peter Chen for their invaluable feedback and insightful discussions which improved this specification.
