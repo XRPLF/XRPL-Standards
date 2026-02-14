@@ -2,6 +2,7 @@
     title:  Confidential Multi-Purpose Tokens
     description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/372
     status: Draft
     category: Amendment
     requires: XLS-33
@@ -138,7 +139,6 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 - **Plaintext equality proofs:** Prove that multiple ElGamal ciphertexts encrypt the same plaintext value, ensuring consistency of a confidential amount across the sender, receiver, issuer, and optional auditor.
 - **ElGamal–Pedersen equality proofs:** Link ElGamal-encrypted values to Pedersen commitments, allowing confidential amounts and balances to be used as inputs to range proofs without revealing the underlying values.
 - **Range proofs:** Prove that confidential amounts and post-transfer confidential balances lie within a valid range, enforcing non-negativity and preventing overspending.
-
 
 ## 5. Protocol Overview
 
@@ -382,7 +382,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 - Represents encryption of 0 under account’s key.
 - Keeps inbox proofs well-formed.
 
-### 8.5. Example Transaction
+### 8.5. Example JSON
 
 ```json
 {
@@ -454,7 +454,7 @@ If the transaction is successful:
 - **Issuer Mirror:** The `sfIssuerEncryptedBalance` is updated via **homomorphic subtraction** of `IssuerEncryptedAmount`.
 - **Version:** The `sfConfidentialBalanceVersion` is incremented by 1.
 
-### 9.6. Example Transaction
+### 9.6. Example JSON
 
 ```json
 {
@@ -837,32 +837,40 @@ Bulletproofs are an efficient choice. Even when reducing the bit length, the dec
 
 # Appendix
 
-## Appendix A: FAQ 
+## Appendix A: FAQ
 
 This section addresses common questions about Confidential MPTs and their design choices, ranging from basic functionality to advanced research topics.
 
 ### A.1 Can confidential and public balances coexist?
+
 Yes, both issuers and holders may simultaneously maintain both public and confidential balances of the same MPT, fully supporting hybrid ecosystems with explicit conversions between the two using ConfidentialMPTConvert transactions.
 
 ### A.2 Why introduce a separate Merge transaction?
+
 A separate Merge transaction is introduced because incoming transfers could cause proofs to become stale if all balances were in a single field, while split balances (CB_S and CB_IN) isolate proofs to a stable spending balance, allowing the Merge transaction to consolidate funds deterministically and update the version counter without requiring a proof, making it cheap to validate.
 
 ### A.3 What happens if a user forgets to merge their inbox?
+
 If a user forgets to merge their inbox, incoming funds will accumulate in CB_IN, remaining safe but unable to be spent until they are consolidated into CB_S via a merge, therefore wallets are expected to perform this merge before a send if necessary.
 
 ### A.4 Can confidential transactions be used in DEX, escrow, or checks?
+
 No, this version of confidential MPT extensions focuses solely on regular confidential MPT payments between accounts, as integration with XRPL’s DEX, escrow, or checks would require further research into how to represent offers or locked balances without revealing their amounts.
 
 ### A.5 How does compliance fit in?
+
 Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (EncryptedBalanceIssuer), and an optional auditor’s key (EncryptedBalanceAuditor) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
 
 ### A.6 What happens if a holder loses their ElGamal private key?
+
 If a holder loses their ElGamal private key, they will be unable to decrypt or spend their confidential balances, which will remain valid on-ledger but are effectively locked and irrecoverable by that holder.
 
 ### A.7 What prevents replay or proof reuse?
+
 Replay and proof reuse are prevented because all ZKPs are transcript-bound with domain separation, meaning the binding includes transaction type, issuer, currency, and version counters, so attempting to replay a proof in another context will result in a failed verification.
 
 ### A.8 Are confidential transactions more expensive than standard MPT transactions?
+
 Yes, confidential transactions are more expensive than standard MPT transactions as they include extra ciphertexts and ZKPs, which increase both transaction size and verification cost, though efficiency remains a design goal with lightweight proofs and future aggregation possibilities.
 
 ### A.9 What happens if validators cannot verify a ZKP?
