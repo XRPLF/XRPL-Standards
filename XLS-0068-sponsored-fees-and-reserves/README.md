@@ -683,17 +683,17 @@ If there is no `Sponsor` field, or if the `tfSponsorReserve` flag is not include
 
 ### 10.2. Transaction Flags
 
-| Flag Name                           | Value        | Description                                                   |
-| ----------------------------------- | ------------ | ------------------------------------------------------------- |
-| `tfSponsorshipTransferToSponsee`    | `0x00000001` | The sponsor is transferring the sponsorship to the sponsee.   |
-| `tfSponsorshipTransferToSponsor`    | `0x00000002` | The sponsee is transferring the sponsorship to the sponsor.   |
-| `tfSponsorshipTransferToNewSponsor` | `0x00000004` | The sponsee is transferring the sponsorship to a new sponsor. |
+| Flag Name               | Value        | Description                                                                                                           |
+| ----------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `tfSponsorshipEnd`      | `0x00000001` | The sponsor or sponsee is ending the sponsorship, transferring the responsibility of the reserve back to the sponsee. |
+| `tfSponsorshipCreate`   | `0x00000002` | The sponsee is creating a new sponsored object, transferring the responsibility of the reserve to a sponsor.          |
+| `tfSponsorshipReassign` | `0x00000004` | The sponsee is reassigning a sponsorship, transferring the responsibility of the reserve from one sponsor to another. |
 
 ### 10.3. Sponsorship Transfer Scenarios
 
 #### 10.3.1. Transferring from Sponsor to Sponsee (Sponsored to Unsponsored)
 
-This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time. It is indicated by the `tfSponsorshipTransferToSponsee` flag.
+This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time. It is indicated by the `tfSponsorshipEnd` flag.
 
 The following fields indicate this scenario:
 
@@ -704,7 +704,7 @@ The following fields indicate this scenario:
 
 #### 10.3.2. Transferring from Sponsee to Sponsor (Unsponsored to Sponsored)
 
-This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipTransferToSponsor` flag.
+This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipCreate` flag.
 
 The following fields indicate this scenario:
 
@@ -715,7 +715,7 @@ The following fields indicate this scenario:
 
 #### 10.3.3. Transferring from Sponsor to New Sponsor
 
-This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipTransferToNewSponsor` flag.
+This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipReassign` flag.
 
 The following fields indicate this scenario:
 
