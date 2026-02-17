@@ -156,6 +156,29 @@ If the issuance is mutable, the issuer may disable `lsfMPTCanPrivacy` via `MPTok
 
 - **Zero Confidential Supply:** The transaction will fail if the `ConfidentialOutstandingAmount` (COA) is greater than 0. This constraint prevents user funds from being trapped in a confidential state that the ledger no longer recognizes.
 
+### 6.4. Invariants
+
+- `ConfidentialOutstandingAmount` >= 0
+- `ConfidentialOutstandingAmount` <= `OutstandingAmount`
+
+### 6.5. Example JSON
+
+```json
+{
+  "LedgerEntryType": "MPTokenIssuance",
+  "Flags": 128,
+  "Issuer": "rf1BiGeXwwQoi8Z2ueOMErvmAzyxw",
+  "OutstandingAmount": "1000000",
+  "MaxAmount": "5000000",
+  "ConfidentialOutstandingAmount": "500000",
+  "IssuerElGamalPublicKey": "028d...",
+  "AuditorElGamalPublicKey": "037c...",
+  "PreviousTxnID": "5DFD494A15AED58DE4335DAEDD3E1EEFECE...",
+  "PreviousTxnLgrSeq": 1234567,
+  "index": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864"
+}
+```
+
 ## 7. Transaction: `ConfidentialMPTConvert`
 
 **Purpose:**  
