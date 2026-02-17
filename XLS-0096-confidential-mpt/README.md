@@ -1,6 +1,6 @@
-<pre>
-    title:  Confidential Multi-Purpose Tokens
-    description: This amendment introduces Confidential Multi-Purpose Tokens (MPTs) on the XRP Ledger.
+%<pre>
+    title:  Confidential Transfers for Multi-Purpose Tokens
+    description: This amendment introduces Confidential Transfers for Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
     proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/372
     status: Draft
@@ -9,11 +9,11 @@
     created: 2026-01-15
 </pre>
 
-# Confidential Multi-Purpose Tokens
+# Confidential Transfers for Multi-Purpose Tokens
 
 ## 1. Abstract
 
-This specification introduces **Confidential Multi-Purpose Tokens (Confidential MPTs)** on the XRP Ledger as an extension of XLS-33 (Multi-Purpose Token). Confidential MPTs enable **confidential balances and transfers** using EC-ElGamal encryption and zero-knowledge proofs (ZKPs), while preserving the core accounting semantics and supply invariants of XLS-33.
+This specification introduces **Confidential Transfers for Multi-Purpose Tokens (Confidential MPTs)** on the XRP Ledger as an extension of XLS-33 (Multi-Purpose Token). Confidential MPTs enable **confidential balances and transfers** using EC-ElGamal encryption and zero-knowledge proofs (ZKPs), while preserving the core accounting semantics and supply invariants of XLS-33.
 
 The design provides the following properties:
 
