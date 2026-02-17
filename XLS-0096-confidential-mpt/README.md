@@ -1,4 +1,4 @@
-%<pre>
+<pre>
     title:  Confidential Transfers for Multi-Purpose Tokens
     description: This amendment introduces Confidential Transfers for Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
