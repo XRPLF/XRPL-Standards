@@ -123,7 +123,7 @@ To support confidential MPTs, the existing `MPTokenIssuance` ledger object is ex
 > | :-----------------------------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 > |    `IssuerElGamalPublicKey`     |  `Blob`  | A 33-byte compressed ElGamal public key for the issuer. **Required** if `lsfMPTCanPrivacy` is set.                                                                                                                                                     |
 > |    `AuditorElGamalPublicKey`    |  `Blob`  | A 33-byte compressed ElGamal public key for an optional on-chain auditor.                                                                                                                                                                              |
-> | `ConfidentialOutstandingAmount` | `Amount` | The total amount of this token that is currently held in confidential balances. This value is adjusted with every `ConfidentialConvert`, `ConfidentialConvertBack`, and `ConfidentialClawback` transaction. **Required** if `lsfMPTCanPrivacy` is set. |
+> | `ConfidentialOutstandingAmount` | `Amount` | The total amount of this token that is currently held in confidential balances. This value is adjusted with every `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`, and `ConfidentialMPTClawback` transaction. **Required** if `lsfMPTCanPrivacy` is set. |
 
 ### 6.2. Flags
 
