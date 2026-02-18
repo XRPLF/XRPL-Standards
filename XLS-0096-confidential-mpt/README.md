@@ -541,7 +541,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 
 | Field Name          | Constant | Required | Internal Type | Default Value             | Description                                         |
 | :------------------ | :------- | :------- | :------------ | :------------------------ | :-------------------------------------------------- |
-| `TransactionType`   | Yes      | Yes      | `UInt16`      | `ttCONFIDENTIAL_CLAWBACK` | Must be `ConfidentialClawback`.                     |
+| `TransactionType`   | Yes      | Yes      | `UInt16`      | 89 | Must be `ConfidentialClawback`.                     |
 | `Account`           | No       | Yes      | `AccountID`   | N/A                       | The **Issuer** account sending the transaction.     |
 | `Holder`            | No       | Yes      | `AccountID`   | N/A                       | The account from which funds are being clawed back. |
 | `MPTokenIssuanceID` | No       | Yes      | `UInt256`     | N/A                       | The unique identifier for the MPT issuance.         |
