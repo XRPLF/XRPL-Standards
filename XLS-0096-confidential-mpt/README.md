@@ -423,7 +423,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
 | Field Name               | Constant | Required    | Internal Type | Default Value                 | Description                                                                                                                        |
 | :----------------------- | :------- | :---------- | :------------ | :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | Yes      | Yes         | `UInt16`      | `ttCONFIDENTIAL_CONVERT_BACK` | Must be `ConfidentialMPTConvertBack`.                                                                                              |
+| `TransactionType`        | Yes      | Yes         | `UInt16`      | 87 | Must be `ConfidentialMPTConvertBack`.                                                                                              |
 | `Account`                | No       | Yes         | `AccountID`   | N/A                           | The account performing the conversion.                                                                                             |
 | `MPTokenIssuanceID`      | No       | Yes         | `UInt256`     | N/A                           | The unique identifier for the MPT issuance.                                                                                        |
 | `MPTAmount`              | No       | Yes         | `UInt64`      | N/A                           | The plaintext amount to credit to the public balance.                                                                              |
