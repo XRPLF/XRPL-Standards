@@ -431,7 +431,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 | `IssuerEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                           | A 66-byte ciphertext to be subtracted from the issuer's mirror balance.                                                                      |
 | `BlindingFactor`         | No       | Yes         | `Blob`        | N/A                           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
 | `AuditorEncryptedAmount` | No       | Conditional | `Blob`        | N/A                           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                                |
-| `BalanceCommitment`      | No       | Yes         | `Blob`        | N/A                           | A cryptographic commitment to the user's confidential spending balance.                                                            |
+| `BalanceCommitment`      | No       | Yes         | `Blob`        | N/A                           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                            |
 | `ZKProof`                | No       | Yes         | `Blob`        | N/A                           | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**.        |
 
 ### 10.4. Failure Conditions
