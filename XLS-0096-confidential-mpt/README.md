@@ -208,7 +208,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 | `HolderElGamalPublicKey` | No       | No          | `Blob`        | N/A                      | The holder's ElGamal public key ($pk_A$). **Required** if initializing (no key registered). **Forbidden** if key already registered. |
 | `HolderEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                      | A 66-byte ElGamal ciphertext credited to the holder's $CB_{IN}$.                                                                               |
 | `IssuerEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                      | A 66-byte  ElGamal ciphertext credited to the issuer's mirror balance.                                                                          |
-| `AuditorEncryptedAmount` | No       | Conditional | `Blob`        | N/A                      | ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                          |
+| `AuditorEncryptedAmount` | No       | Conditional | `Blob`        | N/A                      | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                          |
 | `BlindingFactor`         | No       | Yes         | `Blob`        | N/A                      | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.   |
 | `ZKProof`                | No       | Conditional | `Blob`        | N/A                      | A Schnorr Proof of Knowledge (PoK). **Required** only when `HolderElGamalPublicKey` is present.                                      |
 
