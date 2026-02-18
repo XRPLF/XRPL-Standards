@@ -106,7 +106,9 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 The protocol relies on a set of ZKPs to validate confidential transactions without revealing balances or transfer amounts. The following proof types are used:
 
-- **Plaintext–ciphertext equality proofs:** Prove that a publicly known amount `m` is correctly encrypted.
+- **Plaintext–ciphertext equality proofs:** Prove that a publicly known amount `m` is correctly encrypted. In transactions where the blinding factor is
+  disclosed (e.g., Convert and ConvertBack), this verification is performed
+  deterministically instead of via a ZKP.
 - **Plaintext equality proofs:** Prove that multiple ElGamal ciphertexts encrypt the same plaintext value, ensuring consistency of a confidential amount across the sender, receiver, issuer, and optional auditor.
 - **ElGamal–Pedersen equality proofs:** Link ElGamal-encrypted values to Pedersen commitments, allowing confidential amounts and balances to be used as inputs to range proofs without revealing the underlying values.
 - **Range proofs:** Prove that confidential amounts and post-transfer confidential balances lie within a valid range, enforcing non-negativity and preventing overspending.
@@ -646,7 +648,46 @@ If successful:
 }
 ```
 
-## 13. Auditability & Compliance
+## 13. Security Considerations
+
+Confidential MPTs introduce cryptographic mechanisms that require careful validation and enforcement. This section summarizes key privacy guarantees, auditability mechanisms, proof requirements, and considerations against potential attack vectors.
+
+### 13.1 Privacy Properties
+
+Confidential MPT transactions are designed to minimize information leakage while preserving verifiability of supply and balances. Validators and external observers see only ciphertexts and ZKPs and never learn the underlying amounts except where amounts are already revealed in XLS-33 semantics.
+
+#### 13.1.1 Publicly Visible Information
+
+- Transaction type (ConfidentialMPTConvert, ConfidentialMPTSend, etc.).
+- Involved accounts (Account, Issuer, Destination).
+- Currency code (e.g., "USD").
+- Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
+- ZKPs (non-interactive proofs of correctness).
+- For issuer funding (Convert → second account): Amount is revealed, consistent with visible mint events in XLS-33.
+
+#### 13.1.2 Hidden Information
+
+- Amounts moved in ConfidentialMPTSend, ConfidentialMPTMergeInbox.
+- Holder balances (except their public balance field).
+- Distribution of confidential supply across holders.
+
+#### 13.1.3 Transaction-Type Privacy Notes
+
+- Convert (holder):
+  - Public → Confidential: Amount is revealed once, but only as a conversion event.
+  - Thereafter, spending is hidden.
+  - OA unchanged, COA ↑.
+- Send:
+  - No amounts revealed.
+  - OA unchanged, COA unchanged.
+- Merge:
+  - No amounts revealed.
+  - OA unchanged, COA unchanged.
+- Convert back:
+  - Amount revealed.
+  - OA unchanged, COA ↓.
+
+### 13.2 Auditability & Compliance
 
 The Confidential MPT model is designed to provide robust privacy for individual transactions while ensuring both the integrity of the total token supply and a high degree of flexibility for regulatory compliance and auditing.
 
@@ -654,7 +695,7 @@ To achieve this balance, this protocol offers flexible auditability through two 
 
 The technical foundation for both of these models is a multi-ciphertext architecture, where each confidential balance is maintained under several different public keys (e.g., holder, issuer, and optional auditor) to serve these distinct purposes.
 
-### 13.1 Mechanism 1: On-Chain Selective Disclosure (A Trust-Minimized Approach)
+#### 13.2.1 Mechanism 1: On-Chain Selective Disclosure (A Trust-Minimized Approach)
 
 The primary method for compliance is on-chain selective disclosure, which provides cryptographically enforced auditability directly on the ledger.
 
@@ -667,7 +708,7 @@ The primary method for compliance is on-chain selective disclosure, which provid
 
 This powerful re-encryption capability enables targeted, on-demand compliance without ever sharing the issuer's private key or making user balances public.
 
-### 13.2 Mechanism 2: Issuer-Mediated Auditing (A Simple View Key Model)
+#### 13.2.2 Mechanism 2: Issuer-Mediated Auditing (A Simple View Key Model)
 
 As a simpler, trust-based alternative, the protocol also supports an issuer-mediated model using **view keys**.
 
@@ -675,7 +716,7 @@ As a simpler, trust-based alternative, the protocol also supports an issuer-medi
 - **On-Demand Disclosure**: When an audit is required, the issuer can share the relevant view key directly with an auditor or regulator. This key grants the third party **read-only access** to view the necessary confidential information.
 - **Trust Assumption**: This model is operationally simpler but requires the auditor to trust that the issuer is providing the correct and complete set of view keys for the scope of the audit.
 
-### 13.3 Foundational Elements for Public Integrity
+#### 13.2.3 Foundational Elements for Public Integrity
 
 Both compliance models are built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
@@ -684,7 +725,7 @@ Both compliance models are built upon foundational elements that ensure the inte
   - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaxAmount.
 
-### 13.4 Example Audit Flows
+#### 13.2.4 Example Audit Flows
 
 - Public Supply Audit (No Keys Required)
   1. An observer reads the public ledger fields: OA, COA, and MA.
@@ -699,61 +740,18 @@ Both compliance models are built upon foundational elements that ensure the inte
   2. The issuer provides the regulator with the appropriate view key.
   3. The regulator uses the view key to decrypt the relevant confidential balances and transaction amounts.
 
-## 14. Privacy Properties
 
-Confidential MPT transactions are designed to minimize information leakage while preserving verifiability of supply and balances. Validators and external observers see only ciphertexts and ZKPs and never learn the underlying amounts except where amounts are already revealed in XLS-33 semantics.
-
-### 14.1 Publicly Visible Information
-
-- Transaction type (ConfidentialMPTConvert, ConfidentialMPTSend, etc.).
-- Involved accounts (Account, Issuer, Destination).
-- Currency code (e.g., "USD").
-- Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
-- ZKPs (non-interactive proofs of correctness).
-- For issuer funding (Convert → second account): Amount is revealed, consistent with visible mint events in XLS-33.
-
-### 14.2 Hidden Information
-
-- Amounts moved in ConfidentialMPTSend, ConfidentialMerge.
-- Holder balances (except their public balance field).
-- Distribution of confidential supply across holders.
-
-### 14.3 Transaction-Type Privacy Notes
-
-- Convert (holder):
-  - Public → Confidential: Amount is revealed once, but only as a conversion event.
-  - Thereafter, spending is hidden.
-  - OA unchanged, COA ↑.
-- Convert (issuer → second account):
-  - Amount visible (already disclosed in XLS-33 issuance).
-  - Confidential balance seeded in the second account.
-  - OA ↑, COA ↑.
-- Send:
-  - No amounts revealed.
-  - OA unchanged, COA unchanged.
-- Merge:
-  - No amounts revealed.
-  - OA unchanged, COA unchanged.
-- Convert back (second account):
-  - Amount revealed (issuer reserve increases).
-  - OA ↓, COA ↓, IPB ↑.
-- Convert back (holder):
-  - Amount revealed.
-  - OA unchanged, COA ↓, HPB ↑.
-
-## 15. Security Considerations
-
-Confidential MPTs introduce cryptographic mechanisms that require careful validation and enforcement. This section summarizes key security invariants, proof requirements, and considerations against potential attack vectors.
-
-### 15.1 Proof Requirements
+### 13.3 Proof Requirements
 
 Every confidential transaction must carry appropriate ZKPs:
 
-- Convert: Equality proof that Amount is consistently encrypted under holder and issuer keys.
+- Convert: Deterministic ElGamal verification using the disclosed
+  blinding factor. If a new holder key is registered, a Schnorr
+  Proof of Knowledge is required.
 - Send: Range proof (balance ≥ transfer amount) and equality proof (ciphertexts match across holder/issuer/auditor keys).
 - Optional auditor keys: Additional equality proofs binding auditor ciphertexts to the same plaintext.
 
-### 15.2 Confidential Balance Consistency
+### 13.4 Confidential Balance Consistency
 
 - Each confidential balance entry maintains parallel ciphertexts:
 - Holder key (spendable balance).
@@ -761,26 +759,26 @@ Every confidential transaction must carry appropriate ZKPs:
 - Auditor key(s), if enabled.
 - Validators require a proof that all ciphertexts encrypt the same plaintext, preventing divergence between views.
 
-### 15.3 Issuer Second Account Model
+### 13.5 Issuer Second Account Model
 
 - Issuer must use a designated second account for confidential issuance.
 - Prevents redefinition of OA semantics and keeps compatibility with XLS-33.
 - Validators enforce that direct confidential issuance from the issuer account is invalid.
 
-### 15.4 Privacy Guarantees
+### 13.6 Privacy Guarantees
 
 - Transaction amounts are hidden in all confidential transfers except:
   - Issuer mint events (already visible in legacy MPTs).
   - Conversion from public → confidential, where only the converted amount is disclosed once.
 - Redistribution among holders (including issuer’s second account) leaks no amounts.
 
-### 15.5 Auditor & Compliance Controls
+### 13.7 Auditor & Compliance Controls
 
 - If auditor is set, ciphertexts under auditor keys must be validated with equality proofs.
 - Prevents issuers from selectively encrypting incorrect balances for auditors.
 - Selective disclosure allows compliance without undermining public confidentiality.
 
-### 15.6 Attack Surface & Mitigations
+### 13.8 Attack Surface & Mitigations
 
 - Replay attacks: Transactions bound to unique ledger indices/versions; proofs must include domain separation.
 - Malformed ciphertexts: Validators reject invalid EC points.
@@ -788,63 +786,25 @@ Every confidential transaction must carry appropriate ZKPs:
 - Auditor collusion: Auditors see balances only if granted view keys; public supply integrity remains trustless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
-## 16. Analysis of Transaction Cost and Performance
+## 14. Analysis of Transaction Cost and Performance
 
-The efficiency is critical to the viability of Confidential MPTs. This analysis compares potential methods for range proofs to determine their impact on transaction size and overall performance.
+The efficiency of Confidential MPT transactions is critical to their practical deployment within XRPL’s performance constraints. This section analyzes the cryptographic payload size and verification cost of the ConfidentialMPTSend transaction, which represents the most complex confidential operation in the protocol.
 
-### 16.1 Foundational Assumptions
+We assume the common configuration where the transfer amount is encrypted under four public keys (sender, receiver, issuer mirror, auditor mirror), hence Nciphers = 4 throughout this section. All estimates assume secp256k1, 32-byte scalars, compressed curve points of 33 bytes, EC–ElGamal ciphertexts of size 66 bytes, and aggregated Bulletproofs instantiated for 64-bit values. The cryptographic payload consists of ElGamal ciphertexts, Pedersen commitments, a plaintext-equality proof with shared randomness binding all ciphertexts to the same hidden amount, and an aggregated Bulletproof enforcing range constraints.
 
-First, let's establish the size of our basic cryptographic building blocks.
+### 14.1 Cryptographic Payload Structure (Nciphers = 4)
 
-- Curve: secp256k1
-- Scalar: An integer modulo the curve order, which is 32 bytes for secp256k1.
-- Compressed EC Point: A point on the curve represented by its x-coordinate and a prefix byte, totaling 33 bytes.
-- EC-ElGamal Ciphertext: A pair of EC points (C1​,C2​), resulting in 2×33=66 bytes.
+Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 x 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 x 33 = 66 bytes. The shared-randomness plaintext equality proof contains one commitment point Tr, Nciphers commitment points Tm,i, and two scalars sm and sr. Its size is (1 + Nciphers) x 33 + 2 x 32 bytes, which for Nciphers = 4 gives 229 bytes. A single aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in the interval [0, 2^64). For two aggregated 64-bit values, the proof size is approximately 754 bytes. Combining the components yields the preliminary cryptographic payload:
 
-We will use the ConfidentialMPTSend transaction as our benchmark, as its cryptographic payload is the most complex:
+Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 229 bytes (shared-randomness equality proof) + 754 bytes (aggregated Bulletproof)
+  ≈ 1313 bytes. Ledger metadata and transaction headers are excluded from this estimate,
+as the goal is to isolate the cryptographic overhead.
 
-- 3 Ciphertexts (Sender, Receiver, Issuer): 3×66 \= 198 bytes.
-- 2 Public Keys (Sender, Receiver): 2×33 \= 66 bytes.
-- Equality Proofs: Proofs that all ciphertexts encrypt the same amount, totaling 196 bytes.
-- Range Proof: The proof that the hidden amount is non-negative.
+### 14.2 Timing and Computational Complexity
 
-Option 1: Decomposition Range Proof  
-This method involves breaking the amount into its individual bits and generating a separate proof for each bit to show it is either 0 or 1. The proof size is linear to the number of bits.
+To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes.  On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps.  The shared-randomness plaintext equality proof introduces only a small additional overhead compared to Bulletproof verification, as it consists primarily of a fixed number of scalar multiplications and curve additions linear in Nciphers. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
-1a: Using 64-bit Values
-
-- Total Range Proof Size: For a 64-bit amount, the size is 64 bits×130 bytes/bit≈8,320 bytes (8.1 kB).
-- Total Crypto Payload: 198(ciphertexts)+66(keys)+194(equality)+8,320(range)≈8.8 kB.
-- Performance Impact: An overhead of nearly 9 kB is extremely large and generally considered impractical for production systems due to high fees and network load.
-
-1b: Using 40-bit Values  
-Reducing the bit length provides a significant, but insufficient, size reduction.
-
-- Total Range Proof Size: For a 40-bit amount, the size is 40 bits×130 bytes/bit=5,200 bytes (5.1 kB).
-- Total Crypto Payload: 198(ciphertexts)+66(keys)+194(equality)+5,200(range)≈5.7 kB.
-- Performance Impact: While a 35% reduction from the 64-bit version, a payload of over 5 kB is still far too large to be viable on a high-performance ledger.
-
-Option 2: Bulletproofs  
-Bulletproofs are a modern ZKP system designed for efficiency, with proof sizes that grow logarithmically with the number of bits (O(logn)).
-
-#### 16.2 Using 64-bit Values
-
-- Total Range Proof Size: A Bulletproof for a 64-bit value is highly compact, estimated at \~650 bytes.
-- Equality proofs are ~200 bytes
-- Total Crypto Payload: 198 (ciphertexts) + 66 (keys) + 850 (proofs) ≈ 1100 bytes.
-- Performance Impact: An overhead of ~ 1.1 kB is efficient and viable. The one-time computational cost to verify is a widely accepted trade-off for the enormous savings in data size.
-  - Note on 40-bit values: Bulletproofs require a bit length that is a power of two. A 40-bit proof would need to be padded to 64 bits, offering no size savings over a native 64-bit proof.
-
-Summary
-
-| Metric                              | Decomposition (64-bit)              | Decomposition (40-bit)              | Bulletproofs (64-bit)                                                                                                                   |
-| :---------------------------------- | :---------------------------------- | :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| Proof Size Complexity               | O(n) \- Linear                      | O(n) \- Linear                      | O(logn) \- Logarithmic                                                                                                                  |
-| Total Crypto Payload                | \~8.8 kB                            | \~5.7 kB                            | \~ 1100 bytes                                                                                                                           |
-| Computational Complexity (Prover)   | 256 scalar multiplications          | 160 scalar multiplications          | 128 scalar multiplications                                                                                                              |
-| Computational Complexity (Verifier) | 256 separate scalar multiplications | 160 separate scalar multiplications | 2log2​(n)+c scalar multiplications (c is a small constant). For a 64-bit value, \~17 terms, plus 2-3 individual scalar multiplications. |
-
-Bulletproofs are an efficient choice. Even when reducing the bit length, the decomposition approach results in a transaction payload that is over 6 times larger than a Bulletproof.
+These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
 
 # Appendix
 
