@@ -201,7 +201,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 
 | Field Name               | Constant | Required    | Internal Type | Default Value            | Description                                                                                                                          |
 | :----------------------- | :------- | :---------- | :------------ | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | Yes      | Yes         | `UInt16`      | `ttCONFIDENTIAL_CONVERT` | Must be `ConfidentialMPTConvert`.                                                                                                    |
+| `TransactionType`        | Yes      | Yes         | `UInt16`      | 85 | Must be `ConfidentialMPTConvert`.                                                                                                    |
 | `Account`                | No       | Yes         | `AccountID`   | N/A                      | The account initiating the conversion.                                                                                               |
 | `MPTokenIssuanceID`      | No       | Yes         | `UInt256`     | N/A                      | The unique identifier for the MPT issuance.                                                                                          |
 | `MPTAmount`              | No       | Yes         | `UInt64`      | N/A                      | The public plaintext amount $m$ to convert.                                                                                          |
