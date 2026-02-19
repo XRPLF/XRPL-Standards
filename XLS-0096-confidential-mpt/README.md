@@ -60,7 +60,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
   - **Spending (CB_S):** Stable balance used for spending and proofs.
   - **Inbox (CB_IN):** Receives incoming transfers and must be explicitly merged into `CB_S`, preventing stale-proof rejection.
 - **Auditor Policy:** An optional issuance-level configuration that enables selective disclosure by encrypting balances under an auditor’s public key.
-- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialClawback` transaction, which forcibly converts a holder’s confidential balance back into the issuer’s public reserve while preserving ledger accounting consistency through ZKPs.
+- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialMPTClawback` transaction, which forcibly converts a holder’s confidential balance back into the issuer’s public reserve while preserving ledger accounting consistency through ZKPs.
 
 ## 4. Scope
 
@@ -72,7 +72,7 @@ This XLS specifies the protocol changes required to support confidential MPTs, i
 - ConfidentialMPTSend: Confidential transfer of tokens between accounts, with encrypted amounts validated by ZKPs.
 - ConfidentialMPTMergeInbox: Merges a holder’s inbox balance into their spending balance, preventing stale-proof issues.
 - ConfidentialMPTConvertBack: Converts confidential balances back into public form, restoring visible balances or returning funds to the issuer’s reserve.
-- ConfidentialClawback: An issuer-only transaction to forcibly convert a holder’s confidential balance back to the issuer's public reserve.
+- ConfidentialMPTClawback: An issuer-only transaction to forcibly convert a holder’s confidential balance back to the issuer's public reserve.
 
 ## 5. Protocol Overview
 
@@ -119,42 +119,47 @@ To support confidential MPTs, the existing `MPTokenIssuance` ledger object is ex
 
 ### 6.1. Fields
 
-> |           Field Name            |   Type   | Description                                                                                                                                                                                                                                            |
-> | :-----------------------------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-> |    `IssuerElGamalPublicKey`     |  `Blob`  | A 33-byte compressed ElGamal public key for the issuer. **Required** if `lsfMPTCanPrivacy` is set.                                                                                                                                                     |
-> |    `AuditorElGamalPublicKey`    |  `Blob`  | A 33-byte compressed ElGamal public key for an optional on-chain auditor.                                                                                                                                                                              |
-> | `ConfidentialOutstandingAmount` | `Amount` | The total amount of this token that is currently held in confidential balances. This value is adjusted with every `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`, and `ConfidentialMPTClawback` transaction. **Required** if `lsfMPTCanPrivacy` is set. |
+| FieldName                       | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                                                 |
+| :------------------------------ | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IssuerElGamalPublicKey`        |           | `string`  | `Blob`        | A 33-byte compressed ElGamal public key for the issuer. **Required** to use the confidential transfer feature.                                                                                                                                                              |
+| `AuditorElGamalPublicKey`       |           | `string`  | `Blob`        | A 33-byte compressed ElGamal public key for an optional on-chain auditor.                                                                                                                                                                                                   |
+| `ConfidentialOutstandingAmount` | (default) | `number`  | `UINT64`      | The total amount of this token that is currently held in confidential balances. This value is adjusted with every `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`, and `ConfidentialMPTClawback` transaction. **Required** to use the confidential transfer feature. |
 
 ### 6.2. Flags
 
 Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanPrivacy`** is stored in the standard `sfFlags` field, while **`lsmfMPTCannotMutatePrivacy`** is stored in the `sfMutableFlags` field.
 
-| Flag Name                    | Flag Value   | Description                                                                                                                          |
-| :--------------------------- | :----------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `lsfMPTCanPrivacy`           | `0x00000080` | Indicates that confidential transfers and conversions are enabled for this token issuance.                                           |
-| `lsmfMPTCannotMutatePrivacy` | `0x00040000` | If set, the `lsfMPTCanPrivacy` flag can never be changed after the token is issued, permanently locking the confidentiality setting. |
+| Flag Name                    | Field            | Hex Value    | Description                                                                         |
+| :--------------------------- | :--------------- | :----------- | :---------------------------------------------------------------------------------- |
+| `lsfMPTCanPrivacy`           | `sfFlags`        | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.          |
+| `lsmfMPTCannotMutatePrivacy` | `sfMutableFlags` | `0x00040000` | If set, the `lsfMPTCanPrivacy` flag can never be changed after the token is issued. |
+
+**Note**: `sfMutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
 
 ### 6.3. Managing Confidentiality Settings
 
-The confidentiality status of an MPT is controlled by the `lsfMPTCanPrivacy` flag on the `MPTokenIssuance` object. Only when this flag is enabled can the token support confidential transfers.
+The `lsfMPTCanPrivacy` flag enables the use of confidential transactions for an `MPTokenIssuance`. Only when this flag is enabled can the token support confidential transfers.
 
 #### 6.3.1. Mutability & Defaults
 
-> **Note on Terminology:** The prefix `lsmf` (Ledger Specific Mutable Flag) refers to flags stored in the `sfMutableFlags` field, while `tmf` (Transaction Mutable Flag) refers to transaction flags that modify them.
+> **Note on Terminology:**
 
-- **Default Behavior (Mutable):** By default, an MPT issuance is created with `lsmfMPTCannotMutatePrivacy` set to **false**. This means the issuer retains the ability to toggle the privacy setting (`lsfMPTCanPrivacy`) on or off via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions.
-- **Permanent Lock (Immutable):** If the issuer sets the `tmfMPTCannotMutatePrivacy` flag during the [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanPrivacy` setting becomes permanent and can never be changed.
+- `sfFlags`: The prefix `lsf` refers to ledger state flags, while `tf` refers to the transaction flags.
+- `sfMutableFlags`: The prefix `lsmf` refers to the mutable ledger state flags, while `tmf` refers to the transaction mutable flags.
+
+- **Default Behavior (Mutable):** By default, without setting `tmfMPTCannotMutatePrivacy`, the issuer retains the ability to toggle the privacy setting (`lsfMPTCanPrivacy`) on or off via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions.
+- **Permanent Lock (Immutable):** If the issuer sets the mutable flag `tmfMPTCannotMutatePrivacy` through [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanPrivacy` can never be changed after issuance.
 
 #### 6.3.2. Enabling Confidentiality
 
 There are two ways to enable the `lsfMPTCanPrivacy` flag:
 
-- **At Creation:** The issuer can set the `tfMPTCanPrivacy` flag immediately during the `MPTokenIssuanceCreate` transaction.
-- **Post-Creation (Update):** If the issuance was created with mutability enabled (i.e., `lsmfMPTCannotMutatePrivacy` is false), the issuer can later submit an `MPTokenIssuanceSet` transaction to enable `lsfMPTCanPrivacy`.
+- **At Creation:** The issuer can enable the `tfMPTCanPrivacy` flag directly within the `MPTokenIssuanceCreate` transaction at the time the token is issued.
+- **Post-Creation (Update):** If the issuance was created with privacy mutability allowed (that is, `lsmfMPTCannotMutatePrivacy` was not set — which is the default behavior), the issuer may later submit an `MPTokenIssuanceSet` transaction to activate the `lsfMPTCanPrivacy` flag.
 
 #### 6.3.3. Disabling Confidentiality
 
-If the issuance is mutable, the issuer may disable `lsfMPTCanPrivacy` via `MPTokenIssuanceSet`, but only under strict conditions:
+If the issuance is mutable (tmfMPTCannotMutatePrivacy is not set, which is the default), the issuer may disable `lsfMPTCanPrivacy` via `MPTokenIssuanceSet`, but only under strict conditions:
 
 - **Zero Confidential Supply:** The transaction will fail if the `ConfidentialOutstandingAmount` (COA) is greater than 0. This constraint prevents user funds from being trapped in a confidential state that the ledger no longer recognizes.
 
@@ -199,18 +204,18 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 
 ### 7.2 Fields
 
-| Field Name               | Constant | Required    | Internal Type | Default Value            | Description                                                                                                                          |
-| :----------------------- | :------- | :---------- | :------------ | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | Yes      | Yes         | `UInt16`      | 85 | Must be `ConfidentialMPTConvert`.                                                                                                    |
-| `Account`                | No       | Yes         | `AccountID`   | N/A                      | The account initiating the conversion.                                                                                               |
-| `MPTokenIssuanceID`      | No       | Yes         | `UInt256`     | N/A                      | The unique identifier for the MPT issuance.                                                                                          |
-| `MPTAmount`              | No       | Yes         | `UInt64`      | N/A                      | The public plaintext amount $m$ to convert.                                                                                          |
-| `HolderElGamalPublicKey` | No       | No          | `Blob`        | N/A                      | The holder's ElGamal public key ($pk_A$). **Required** if initializing (no key registered). **Forbidden** if key already registered. |
-| `HolderEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                      | A 66-byte ElGamal ciphertext credited to the holder's $CB_{IN}$.                                                                               |
-| `IssuerEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                      | A 66-byte  ElGamal ciphertext credited to the issuer's mirror balance.                                                                          |
-| `AuditorEncryptedAmount` | No       | Conditional | `Blob`        | N/A                      | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                          |
-| `BlindingFactor`         | No       | Yes         | `Blob`        | N/A                      | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.   |
-| `ZKProof`                | No       | Conditional | `Blob`        | N/A                      | A Schnorr Proof of Knowledge (PoK). **Required** only when `HolderElGamalPublicKey` is present.                                      |
+| Field Name               | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                                                 |
+| :----------------------- | :-------- | :-------- | :------------ | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`        | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTConvert`, which is 85.                                                                                                 |
+| `Account`                | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account initiating the conversion.                                                                                                                      |
+| `MPTokenIssuanceID`      | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                                                 |
+| `MPTAmount`              | Yes       | `number`  | `UINT64`      | N/A           | The public plaintext amount $inline$m$inline$ to convert.                                                                                                   |
+| `HolderElGamalPublicKey` | No        | `string`  | `BLOB`        | N/A           | The holder's ElGamal public key ($inline$pk_A$inline$). **Required** if initializing (no key registered). **Forbidden** if key already registered.          |
+| `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the holder's $inline$CB\_{IN}$inline$.                                                                             |
+| `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the issuer's mirror balance.                                                                                       |
+| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                                       |
+| `BlindingFactor`         | Yes       | `string`  | `BLOB`        | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.                          |
+| `ZKProof`                | No        | `string`  | `BLOB`        | N/A           | A Schnorr Proof of Knowledge (PoK). **Required** only when `HolderElGamalPublicKey` is present. **MUST** be absent when `HolderElGamalPublicKey` is absent. |
 
 **Notes:**
 
@@ -278,19 +283,19 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 
 ### 8.2. Fields
 
-| Field Name                   | Constant | Required    | Internal Type | Default Value             | Description                                                                                         |
-| :--------------------------- | :------- | :---------- | :------------ | :------------------------ | :-------------------------------------------------------------------------------------------------- |
-| `TransactionType`            | Yes      | Yes         | `UInt16`      | `ttCONFIDENTIAL_MPT_SEND` | Must be `ConfidentialMPTSend`.                                                                      |
-| `Account`                    | No       | Yes         | `AccountID`   | N/A                       | The sender's XRPL account.                                                                          |
-| `Destination`                | No       | Yes         | `AccountID`   | N/A                       | The receiver's XRPL account.                                                                        |
-| `MPTokenIssuanceID`          | No       | Yes         | `UInt256`     | N/A                       | Identifier of the MPT issuance being transferred.                                                   |
-| `SenderEncryptedAmount`      | No       | Yes         | `Blob`        | N/A                       | Ciphertext used to homomorphically debit the sender's spending balance.                             |
-| `DestinationEncryptedAmount` | No       | Yes         | `Blob`        | N/A                       | Ciphertext credited to the receiver's inbox balance.                                                |
-| `IssuerEncryptedAmount`      | No       | Yes         | `Blob`        | N/A                       | Ciphertext used to update the issuer mirror balance.                                                |
-| `ZKProof`                    | No       | Yes         | `Blob`        | N/A                       | ZKP bundle establishing equality, linkage, and range sufficiency.                                   |
-| `BalanceCommitment`          | No       | Yes         | `Blob`        | N/A                       | A cryptographic commitment to the user's confidential spending balance.                             |
-| `AmountCommitment`           | No       | Yes         | `Blob`        | N/A                       | A cryptographic commitment to the amount being transferred.                                         |
-| `AuditorEncryptedAmount`     | No       | Conditional | `Blob`        | N/A                       | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| Field Name                   | Required? | JSON Type | Internal Type | Default Value | Description                                                                                         |
+| :--------------------------- | :-------- | :-------- | :------------ | :------------ | :-------------------------------------------------------------------------------------------------- |
+| `TransactionType`            | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTSend`, which is 88.                                            |
+| `Account`                    | Yes       | `string`  | `ACCOUNTID`   | N/A           | The sender's XRPL account.                                                                          |
+| `Destination`                | Yes       | `string`  | `ACCOUNTID`   | N/A           | The receiver's XRPL account.                                                                        |
+| `MPTokenIssuanceID`          | Yes       | `string`  | `UINT192`     | N/A           | Identifier of the MPT issuance being transferred.                                                   |
+| `SenderEncryptedAmount`      | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext used to homomorphically debit the sender's spending balance.                             |
+| `DestinationEncryptedAmount` | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext credited to the receiver's inbox balance.                                                |
+| `IssuerEncryptedAmount`      | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext used to update the issuer mirror balance.                                                |
+| `ZKProof`                    | Yes       | `string`  | `BLOB`        | N/A           | ZKP bundle establishing equality, linkage, and range sufficiency.                                   |
+| `BalanceCommitment`          | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the user's confidential spending balance.                             |
+| `AmountCommitment`           | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the amount being transferred.                                         |
+| `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
 
 ### 8.3. Failure Conditions
 
@@ -351,11 +356,11 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 
 ### 9.2 Fields
 
-| Field Name          | Constant | Required | Internal Type | Default Value                | Description                                 |
-| :------------------ | :------- | :------- | :------------ | :--------------------------- | :------------------------------------------ |
-| `TransactionType`   | Yes      | Yes      | `UInt16`      | `ttCONFIDENTIAL_MERGE_INBOX` | Must be `ConfidentialMPTMergeInbox`.        |
-| `Account`           | No       | Yes      | `AccountID`   | N/A                          | The account performing the merge.           |
-| `MPTokenIssuanceID` | No       | Yes      | `UInt256`     | N/A                          | The unique identifier for the MPT issuance. |
+| Field Name          | Required? | JSON Type | Internal Type | Default Value | Description                                                                |
+| :------------------ | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------- |
+| `TransactionType`   | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTMergeInbox` transaction, which is 86. |
+| `Account`           | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account performing the merge.                                          |
+| `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                |
 
 ### 9.2.1. Failure Conditions
 
@@ -421,18 +426,18 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
 ### 10.3. Fields
 
-| Field Name               | Constant | Required    | Internal Type | Default Value                 | Description                                                                                                                        |
-| :----------------------- | :------- | :---------- | :------------ | :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`        | Yes      | Yes         | `UInt16`      | 87 | Must be `ConfidentialMPTConvertBack`.                                                                                              |
-| `Account`                | No       | Yes         | `AccountID`   | N/A                           | The account performing the conversion.                                                                                             |
-| `MPTokenIssuanceID`      | No       | Yes         | `UInt256`     | N/A                           | The unique identifier for the MPT issuance.                                                                                        |
-| `MPTAmount`              | No       | Yes         | `UInt64`      | N/A                           | The plaintext amount to credit to the public balance.                                                                              |
-| `HolderEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                           | A 66-byte ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`.                                                     |
-| `IssuerEncryptedAmount`  | No       | Yes         | `Blob`        | N/A                           | A 66-byte ciphertext to be subtracted from the issuer's mirror balance.                                                                      |
-| `BlindingFactor`         | No       | Yes         | `Blob`        | N/A                           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
-| `AuditorEncryptedAmount` | No       | Conditional | `Blob`        | N/A                           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                                |
-| `BalanceCommitment`      | No       | Yes         | `Blob`        | N/A                           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                            |
-| `ZKProof`                | No       | Yes         | `Blob`        | N/A                           | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**.        |
+| Field Name               | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                        |
+| :----------------------- | :-------- | :-------- | :------------ | :------------ | :--------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`        | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTConvertBack`, which is 87.                                                                    |
+| `Account`                | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account performing the conversion.                                                                                             |
+| `MPTokenIssuanceID`      | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                        |
+| `MPTAmount`              | Yes       | `number`  | `UINT64`      | N/A           | The plaintext amount to credit to the public balance.                                                                              |
+| `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`.                                           |
+| `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the issuer's mirror balance.                                                            |
+| `BlindingFactor`         | Yes       | `string`  | `BLOB`        | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
+| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance.                      |
+| `BalanceCommitment`      | Yes       | `string`  | `BLOB`        | N/A           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                    |
+| `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**.        |
 
 ### 10.4. Failure Conditions
 
@@ -519,7 +524,7 @@ Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
 
 **Note:** This design allows tokens to move between public and private states. While the Convert and ConvertBack transactions show their amounts to provide this flexibility, they still protect the privacy of individual balances and transfers. Observers can only see the total change in circulation, not how the private supply is shared among holders. ElGamal randomization makes it impossible to tell the difference between accounts with zero balances. This ensures that outsiders cannot know if a specific account is empty or still holds private tokens.
 
-## 11. Transaction: `ConfidentialClawback`
+## 11. Transaction: `ConfidentialMPTClawback`
 
 Clawback involves the issuer forcibly reclaiming funds from a holder's account. This action is fundamentally incompatible with standard confidential transfers, as the issuer does not possess the holder's private ElGamal key and therefore cannot generate the required ZKPs for a normal ConfidentialMPTSend. To solve this, the protocol introduces a single and privileged transaction that allows an issuer to verifiably reclaim funds in one uninterruptible step.
 
@@ -528,7 +533,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 ### 11.1 How the Clawback Process Works
 
 1. Issuer Decrypts and Prepares: The issuer takes the EncryptedBalanceIssuer ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
-2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialClawback transaction, setting the RevealedAmount field to m. It also generates and includes an equality proof.
+2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes an equality proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that the RevealedAmount is the true value hidden in the holder's on-ledger ciphertext.
    - Ledger Changes: If the proof is valid, the validators execute all of the following changes at once:
@@ -539,14 +544,14 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 
 ### 11.2. Fields
 
-| Field Name          | Constant | Required | Internal Type | Default Value             | Description                                         |
-| :------------------ | :------- | :------- | :------------ | :------------------------ | :-------------------------------------------------- |
-| `TransactionType`   | Yes      | Yes      | `UInt16`      | 89 | Must be `ConfidentialClawback`.                     |
-| `Account`           | No       | Yes      | `AccountID`   | N/A                       | The **Issuer** account sending the transaction.     |
-| `Holder`            | No       | Yes      | `AccountID`   | N/A                       | The account from which funds are being clawed back. |
-| `MPTokenIssuanceID` | No       | Yes      | `UInt256`     | N/A                       | The unique identifier for the MPT issuance.         |
-| `MPTAmount`         | No       | Yes      | `UInt64`      | N/A                       | The plaintext total amount being removed.           |
-| `ZKProof`           | No       | Yes      | `Blob`        | N/A                       | An Equality Proof validating the amount.            |
+| Field Name          | Required? | JSON Type | Internal Type | Default Value | Description                                                              |
+| :------------------ | :-------- | :-------- | :------------ | :------------ | :----------------------------------------------------------------------- |
+| `TransactionType`   | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTClawback` transaction, which is 89. |
+| `Account`           | Yes       | `string`  | `ACCOUNTID`   | N/A           | The **Issuer** account sending the transaction.                          |
+| `Holder`            | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account from which funds are being clawed back.                      |
+| `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                              |
+| `MPTAmount`         | Yes       | `number`  | `UINT64`      | N/A           | The plaintext total amount being removed.                                |
+| `ZKProof`           | Yes       | `string`  | `BLOB`        | N/A           | An Equality Proof validating the amount.                                 |
 
 This single transaction securely and verifiably moves the funds directly from the holder's confidential balance to the issuer's public reserve, ensuring the integrity of the ledger's public accounting is perfectly maintained.
 
@@ -589,7 +594,7 @@ If the transaction is successful, the holder's confidential state is reset, and 
 ```json
 {
   "Account": "rIssuerAccount...",
-  "TransactionType": "ConfidentialClawback",
+  "TransactionType": "ConfidentialMPTClawback",
   "Holder": "rMaliciousHolder...",
   "MPTokenIssuanceID": "610F33B8EBF7EC795F822A454FB852156AEFE50BE0CB8326338A81CD74801864",
   "MPTAmount": 1000,
@@ -607,10 +612,10 @@ This transaction is the only method to register keys or modify the privacy statu
 
 ### 12.2. Fields
 
-| Field Name                | Description                                                                      |
-| :------------------------ | :------------------------------------------------------------------------------- |
-| `IssuerElGamalPublicKey`  | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
-| `AuditorElGamalPublicKey` | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
+| Field Name                | Required? | JSON Type | Internal Type | Default Value | Description                                                                      |
+| :------------------------ | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------------- |
+| `IssuerElGamalPublicKey`  | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
+| `AuditorElGamalPublicKey` | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
 
 ### 12.3. Failure Conditions
 
@@ -740,7 +745,6 @@ Both compliance models are built upon foundational elements that ensure the inte
   2. The issuer provides the regulator with the appropriate view key.
   3. The regulator uses the view key to decrypt the relevant confidential balances and transaction amounts.
 
-
 ### 13.3 Proof Requirements
 
 Every confidential transaction must carry appropriate ZKPs:
@@ -797,12 +801,12 @@ We assume the common configuration where the transfer amount is encrypted under 
 Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 x 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 x 33 = 66 bytes. The shared-randomness plaintext equality proof contains one commitment point Tr, Nciphers commitment points Tm,i, and two scalars sm and sr. Its size is (1 + Nciphers) x 33 + 2 x 32 bytes, which for Nciphers = 4 gives 229 bytes. A single aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in the interval [0, 2^64). For two aggregated 64-bit values, the proof size is approximately 754 bytes. Combining the components yields the preliminary cryptographic payload:
 
 Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 229 bytes (shared-randomness equality proof) + 754 bytes (aggregated Bulletproof)
-  ≈ 1313 bytes. Ledger metadata and transaction headers are excluded from this estimate,
+≈ 1313 bytes. Ledger metadata and transaction headers are excluded from this estimate,
 as the goal is to isolate the cryptographic overhead.
 
 ### 14.2 Timing and Computational Complexity
 
-To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes.  On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps.  The shared-randomness plaintext equality proof introduces only a small additional overhead compared to Bulletproof verification, as it consists primarily of a fixed number of scalar multiplications and curve additions linear in Nciphers. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
+To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The shared-randomness plaintext equality proof introduces only a small additional overhead compared to Bulletproof verification, as it consists primarily of a fixed number of scalar multiplications and curve additions linear in Nciphers. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
 These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
 
