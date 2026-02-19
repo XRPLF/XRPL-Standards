@@ -546,19 +546,21 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
    1. If `Account` credentials are expired. (`tecEXPIRED`)
    2. If `Account` does not have valid credentials. (`tecNO_AUTH`)
 
-6. The `Vault.Asset` is `MPT`:
+6. If vault is insolvent, `Vault.AssetsTotal = 0` and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount > 0`. (`tecLOCKED`)
+
+7. The `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable). (`tecNO_AUTH`)
    2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked) (`tecLOCKED`)
    3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor). (`tecLOCKED`)
    4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance). (`tecINSUFFICIENT_FUNDS`)
 
-7. The `Asset` is an `IOU`:
+8. The `Asset` is an `IOU`:
    1. `lsfDefaultRipple` flag is not set on either the issuer or the depositor. (`terNO_RIPPLE`)
    2. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen). (`tecFROZEN`)
    3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor. (`tecFROZEN`)
    4. The `RippleState` object `Balance` < `Amount` (insufficient balance). (`tecINSUFFICIENT_FUNDS`)
 
-8. `Account` is not `Vault.Owner` and `Vault.lsfVaultDepositBlocked` flag is set (`tecNO_PERMISSION`)
+9. `Account` is not `Vault.Owner` and `Vault.lsfVaultDepositBlocked` flag is set (`tecNO_PERMISSION`)
 
 ### 6.3 State Changes
 
