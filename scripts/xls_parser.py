@@ -15,6 +15,15 @@ import sys
 from bs4 import BeautifulSoup
 
 
+# Valid status values for XLS documents
+VALID_STATUSES = [
+    "Draft", "Final", "Living", "Deprecated", "Stagnant", "Withdrawn"
+]
+
+# Valid category values for XLS documents
+VALID_CATEGORIES = ["Amendment", "System", "Ecosystem", "Meta"]
+
+
 @dataclass
 class XLSDocument:
     """Represents an XLS document with metadata."""
@@ -28,6 +37,11 @@ class XLSDocument:
     status: str  # draft, final, stagnant, withdrawn, etc.
     category: str  # amendment, ecosystem, system, etc.
     created: str  # YYYY-MM-DD format
+    proposal_from: Optional[str] = None  # Link to proposal discussion
+    implementation: Optional[str] = None  # Link to implementation PR
+    requires: Optional[str] = None  # XLS number(s) this depends on
+    updated: Optional[str] = None  # YYYY-MM-DD format
+    withdrawal_reason: Optional[str] = None  # Reason for withdrawal
 
     def to_dict(self):
         return asdict(self)
@@ -64,6 +78,11 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         "status": r"[sS]tatus:\s*(.*?)(?:\n|$)",
         "category": r"[cC]ategory:\s*(.*?)(?:\n|$)",
         "created": r"[cC]reated:\s*(.*?)(?:\n|$)",
+        "proposal_from": r"[pP]roposal-from:\s*(.*?)(?:\n|$)",
+        "implementation": r"[iI]mplementation:\s*(.*?)(?:\n|$)",
+        "requires": r"[rR]equires:\s*(.*?)(?:\n|$)",
+        "updated": r"[uU]pdated:\s*(.*?)(?:\n|$)",
+        "withdrawal_reason": r"[wW]ithdrawal-reason:\s*(.*?)(?:\n|$)",
     }
 
     def format_author(author):
@@ -117,6 +136,11 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
         status=metadata.get("status", "Unknown"),
         category=metadata.get("category", "Unknown"),
         created=metadata.get("created", "Unknown"),
+        proposal_from=metadata.get("proposal_from"),
+        implementation=metadata.get("implementation"),
+        requires=metadata.get("requires"),
+        updated=metadata.get("updated"),
+        withdrawal_reason=metadata.get("withdrawal_reason"),
     )
 
 
@@ -158,6 +182,78 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
     return xls_docs
 
 
+def validate_xls_preamble(doc: XLSDocument) -> List[str]:
+    """Validate preamble metadata fields for a single XLS document.
+
+    Args:
+        doc: The XLSDocument to validate
+
+    Returns:
+        List of error messages (empty if validation passes)
+    """
+    errors = []
+
+    # Required fields
+    if not doc.title or doc.title == "Unknown Title":
+        errors.append(f"{doc.folder}: Missing required field: title")
+
+    if not doc.description or doc.description == "No description available":
+        errors.append(f"{doc.folder}: Missing required field: description")
+
+    if not doc.authors or doc.authors == [("Unknown Author", "")]:
+        errors.append(f"{doc.folder}: Missing required field: author")
+    elif any(not name for name, _ in doc.authors):
+        errors.append(f"{doc.folder}: Author with missing name")
+    elif any(link == "" for _, link in doc.authors):
+        errors.append(f"{doc.folder}: Author with missing link")
+
+    # Category validation
+    if not doc.category or doc.category == "Unknown":
+        errors.append(f"{doc.folder}: Missing required field: category")
+    elif doc.category not in VALID_CATEGORIES:
+        errors.append(
+            f"{doc.folder}: Invalid category '{doc.category}'. "
+            f"Must be one of: {', '.join(VALID_CATEGORIES)}"
+        )
+
+    # Status validation
+    if not doc.status or doc.status == "Unknown":
+        errors.append(f"{doc.folder}: Missing required field: status")
+    elif doc.status not in VALID_STATUSES:
+        errors.append(
+            f"{doc.folder}: Invalid status '{doc.status}'. "
+            f"Must be one of: {', '.join(VALID_STATUSES)}"
+        )
+
+    # Created date validation
+    if not doc.created or doc.created == "Unknown":
+        errors.append(f"{doc.folder}: Missing required field: created")
+    elif not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.created):
+        errors.append(
+            f"{doc.folder}: Invalid date format for 'created': {doc.created}. "
+            "Expected YYYY-MM-DD"
+        )
+
+    # proposal-from is required
+    if not doc.proposal_from:
+        errors.append(f"{doc.folder}: Missing required field: proposal-from")
+
+    # Conditional fields
+    if doc.status == "Withdrawn" and not doc.withdrawal_reason:
+        errors.append(
+            f"{doc.folder}: Withdrawn XLS must have withdrawal-reason field"
+        )
+
+    # Validate updated field format if present
+    if doc.updated and not re.match(r'^\d{4}-\d{2}-\d{2}$', doc.updated):
+        errors.append(
+            f"{doc.folder}: Invalid date format for 'updated': {doc.updated}. "
+            "Expected YYYY-MM-DD"
+        )
+
+    return errors
+
+
 def validate_xls_documents(root_dir: Path) -> bool:
     """Validate that all XLS documents can be parsed correctly.
 
@@ -182,51 +278,17 @@ def validate_xls_documents(root_dir: Path) -> bool:
             print(f"Error: Duplicate XLS numbers found: {duplicates}")
             return False
 
-        # Check for required fields
+        # Validate each document's preamble
         validation_errors = []
         for doc in docs:
-            if not doc.title or doc.title == "Unknown Title":
-                validation_errors.append(
-                    f"Error: {doc.folder} is missing required title metadata"
-                )
-            if not doc.authors or doc.authors == [("Unknown Author", "")]:
-                validation_errors.append(
-                    f"Error: {doc.folder} is missing required authors metadata"
-                )
-            elif any(not name for name, _ in doc.authors):
-                validation_errors.append(
-                    f"Error: {doc.folder} has an author with missing name"
-                )
-            elif any(link == "" for _, link in doc.authors):
-                validation_errors.append(
-                    f"Error: {doc.folder} has an author with missing link"
-                )
-
-            if not doc.status or doc.status == "Unknown":
-                validation_errors.append(
-                    f"Error: {doc.folder} is missing required status metadata"
-                )
-
-            if not doc.category or doc.category == "Unknown":
-                validation_errors.append(
-                    f"Error: {doc.folder} is missing required category metadata"
-                )
-            elif doc.category not in ["Amendment", "Ecosystem", "System", "Meta"]:
-                validation_errors.append(
-                    f"Error: {doc.folder} has an invalid category: {doc.category}"
-                )
-
-            if not doc.created or doc.created == "Unknown":
-                validation_errors.append(
-                    f"Error: {doc.folder} is missing required created metadata"
-                )
+            validation_errors.extend(validate_xls_preamble(doc))
 
         if validation_errors:
             print("\n")
             for error in validation_errors:
-                print(error)
+                print(f"Error: {error}")
             print(
-                f"Validation failed: {len(validation_errors)} document(s) missing required metadata"
+                f"\nValidation failed: {len(validation_errors)} error(s) found"
             )
             return False
 
@@ -240,9 +302,6 @@ def validate_xls_documents(root_dir: Path) -> bool:
 
 if __name__ == "__main__":
     """Run validation when script is executed directly."""
-    import sys
-    from pathlib import Path
-
     root_dir = Path(".")
     success = validate_xls_documents(root_dir)
     sys.exit(0 if success else 1)

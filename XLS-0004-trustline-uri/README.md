@@ -1,15 +1,15 @@
 <pre>
   xls: 4
   title: Trustline Add URI
-  description: A URI standard for instructing wallets to add trustlines following the design of XLS-2d
+  description: A URI standard for instructing wallets to add trustlines following the design of XLS-2
   author: Richard Holland (@RichardAH)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/25
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/25
   status: Stagnant
   category: Ecosystem
   created: 2019-03-06
 </pre>
 
-I suggest we follow on closely from the design of XLS-2d
+I suggest we follow on closely from the design of XLS-2
 
 Query parameters:
 `action=trustline`

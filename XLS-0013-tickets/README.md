@@ -3,6 +3,7 @@
     title: Tickets & Ticket Batching
     description: Tickets allow selected transactions on a single account to be processed out of order, which could benefit some multisigning situations.
     author: Nik Bougalis (@nbougalis)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/18
     created: 2020-09-01
     status: Final
     category: Amendment

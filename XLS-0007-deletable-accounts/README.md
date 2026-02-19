@@ -3,7 +3,7 @@
   title: Deletable Accounts
   description: A feature for completely removing accounts from the ledger and recovering the reserve from those accounts
   author: Scott Schurr <scott@ripple.com>, Nik Bougalis <nikb@bougalis.net>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/8
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/8
   status: Final
   category: Amendment
   created: 2019-10-01

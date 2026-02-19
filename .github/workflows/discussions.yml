@@ -1,0 +1,57 @@
+name: Stale GitHub Discussions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *" # Every day at 6:00 AM UTC
+
+permissions:
+  discussions: write # Required to comment, close, and lock discussions
+  contents: read # Required to checkout the repository
+
+env:
+  STALE_DAYS: 550 # Number of days without updates to consider a discussion stale (1.5 years)
+  WARNING_DAYS: 30 # Number of days to wait after warning before closing
+  WARNING_MESSAGE:
+    | # note: the marker is necessary for the script and should not be removed
+    <!-- stale-discussion-warning -->
+    This discussion has not been updated in over a year and will be closed in 30 days if there is no further activity.
+
+    If you would like to continue this discussion, please add a comment. Otherwise, this discussion will be automatically closed and locked.
+  CLOSE_MESSAGE: |
+    This discussion has been automatically closed and locked due to inactivity.
+
+    If you would like to reopen this discussion, please reach out to the repository editors.
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    if: github.repository == 'XRPLF/XRPL-Standards'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Generate token from GitHub App
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Fetch and process stale discussions
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}[bot]
+          STALE_DAYS: ${{ env.STALE_DAYS }}
+          WARNING_DAYS: ${{ env.WARNING_DAYS }}
+          WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}
+          CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "ERROR: GH_TOKEN is not set. Make sure the GitHub App is configured correctly."
+            exit 1
+          fi
+          .github/scripts/process-stale-discussions.sh

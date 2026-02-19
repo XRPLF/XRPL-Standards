@@ -2,8 +2,9 @@
   title: XRPL Smart Contracts
   description: An L1 native implementation of Smart Contracts on the XRP Ledger
   created: 2025-07-28
-  Author: Mayukha Vadari (@mvadari), Denis Angell (@dangell7)
-  status: Proposal
+  author: Mayukha Vadari (@mvadari), Denis Angell (@dangell7)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/271
+  status: Draft
   category: Amendment
 </pre>
 
@@ -42,7 +43,7 @@ See [the blog post here](https://dev.to/ripplexdev/a-proposed-vision-for-xrp-led
 
 ## 2. Overview
 
-This design for Smart Contracts combines the easy-to-learn overall design of EVM smart contracts (addresses with functions) with the familiarity of XRPL transactions. A Smart Contract lives on a [pseudo-account](https://github.com/XRPLF/XRPL-Standards/discussions/191) and is triggered via a new `ContractCall` transaction, which calls a specific function on the smart contract, with provided parameters. The Smart Contract can modify its own state data, or interact with other XRPL building blocks (including other smart contracts) via submitting its own XRPL transactions via its code.
+This design for Smart Contracts combines the easy-to-learn overall design of EVM smart contracts (addresses with functions) with the familiarity of XRPL transactions. A Smart Contract lives on a [pseudo-account](../XLS-0064-pseudo-account/README.md) and is triggered via a new `ContractCall` transaction, which calls a specific function on the smart contract, with provided parameters. The Smart Contract can modify its own state data, or interact with other XRPL building blocks (including other smart contracts) via submitting its own XRPL transactions via its code.
 
 The details of the WASM engine and the API will be in separate XLSes published later.
 
@@ -59,7 +60,7 @@ This proposal involves:
 
 ### 2.1. Background: Pseudo-Accounts
 
-A pseudo-account ([XLS-64d](https://github.com/XRPLF/XRPL-Standards/discussions/191)) is an XRPL account that is impossible for any person to have the keys for (it is cryptographically impossible to have those keys). It may be associated with other ledger entries.
+A pseudo-account ([XLS-64](../XLS-0064-pseudo-account/README.md)) is an XRPL account that is impossible for any person to have the keys for (it is cryptographically impossible to have those keys). It may be associated with other ledger entries.
 
 Since it is not governed by any set of keys, it cannot be controlled by any user. Therefore, it may host smart contracts.
 
@@ -533,7 +534,7 @@ This standard doesn't add any new field to the [transaction common fields](https
 
 This flag should only be used if a transaction is submitted from a smart contract. This signifies that the transaction shouldn't be signed. Any transaction that is submitted normally that includes this flag should be rejected.
 
-Contract-submitted transactions will be processed in a method very similar to [Batch inner transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056d-batch) - i.e. executed within the `ContractCall` processing, rather than as a separate independent transaction. This allows the smart contract code to take actions based on whether the transaction was successful.
+Contract-submitted transactions will be processed in a method very similar to [Batch inner transactions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch) - i.e. executed within the `ContractCall` processing, rather than as a separate independent transaction. This allows the smart contract code to take actions based on whether the transaction was successful.
 
 ### 12.2. Metadata
 
@@ -848,8 +849,8 @@ How should object reserves be covered? Some options (numbered for ease of discus
 3. Some way to amortize higher fees for increasing reserve (a la EVM)
    - Could be on the contract writer to figure out a way to handle this
    - If not, could be complex to figure out a good system
-4. A [Sponsor](https://github.com/XRPLF/XRPL-Standards/discussions/196)-esque way of keeping track of who owns the burden for certain objects (perhaps with some API calls - could default to the contract creator if the API isn't used)
-   - Downside: it would likely add an additional dependency to smart contracts (XLS-68d)
+4. A [Sponsor](../XLS-0068-sponsored-fees-and-reserves/README.md)-esque way of keeping track of who owns the burden for certain objects (perhaps with some API calls - could default to the contract creator if the API isn't used)
+   - Downside: it would likely add an additional dependency to smart contracts (XLS-68)
 5. Ignore the issue
    - This isn’t really a viable option, given the ledger load it would result in - it would defeat the purpose of reserves in the first place
 6. User data and reserves are handled by the user
@@ -909,7 +910,7 @@ The main differences:
 
 Use something akin to Ethereum’s Account Abstraction design ([ERC-4337](https://www.erc4337.io/)).
 
-Might involve [XLS-75d](https://github.com/XRPLF/XRPL-Standards/discussions/218) (Delegating Account Permissions).
+Might involve [XLS-75 (Permission Delegation)](../XLS-0075-permission-delegation/README.md).
 
 We're also investigating whether additional Smart Features can help with this problem.
 

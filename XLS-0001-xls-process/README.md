@@ -5,13 +5,14 @@
   title: XLS Process and Guidelines
   description: Formalizes the process and structure for XRP Ledger Standards
   author: Mayukha Vadari (@mvadari), Vito Tumas (@Tapanito)
-  status: Proposal
+  status: Living
   category: Meta
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/340
   created: 2025-09-22
   updated: 2025-12-02
 </pre>
 
-# 1. Abstract
+## 1. Abstract
 
 This document formalizes the XRP Ledger Standards (XLS) process, clarifying categories of standards, defining their lifecycle, and establishing editorial responsibilities. It:
 
@@ -22,17 +23,17 @@ This document formalizes the XRP Ledger Standards (XLS) process, clarifying cate
 
 Inspired by Ethereum’s [EIP-1](https://eips.ethereum.org/EIPS/eip-1), this proposal adapts established standards processes to the unique needs of the XRPL ecosystem, ensuring transparency, accountability, and long-term maintainability of the standards that guide XRPL development.
 
-# 2. Motivation
+## 2. Motivation
 
 The existing XLS process lacks clarity and consistency. In practice, “XLS” has been used to describe both protocol-level amendments and off-chain community standards, leading to confusion within the ecosystem. Furthermore, the lack of a formalized lifecycle, staleness rules, and editorial responsibilities has made it difficult to track proposals, maintain quality, and ensure transparency. This document introduces structure to the process, aligning the XLS process with proven practices from other ecosystems (most notably Ethereum’s EIPs), while tailoring them to the needs of the XRPL community.
 
-# 3. XLS Categories
+## 3. XLS Categories
 
 The name “XLS” can often get confusing, since it can refer to something that is an amendment (e.g. XLS-20 for the NFT amendment) or something that is a community standard and does not have any on-chain enforcement (e.g. XLS-24 for the NFT metadata standard). Ethereum disambiguates these with EIPs vs ERCs, for example.
 
 This document proposes splitting XLSes into four categories: **Amendment**, **System**, **Ecosystem**, and **Meta**. Each category will be a selectable “category” when creating a discussion.
 
-## 3.1. Amendment XLSes
+### 3.1. Amendment XLSes
 
 This category contains standards that would require an amendment. Every feature amendment must have an XLS associated with it.
 
@@ -41,7 +42,7 @@ Some examples:
 - [XLS-20](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0020-non-fungible-tokens) (NFTs)
 - [XLS-30](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0030-automated-market-maker) (AMM)
 
-## 3.2. System XLSes
+### 3.2. System XLSes
 
 This category contains standards that would not require an amendment, but do affect some other part of the XRPL protocol. This includes RPCs, the p2p protocol, or similar. This involves core-level code changes in rippled.
 
@@ -52,7 +53,7 @@ Some examples:
 - [XLS-45](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0045-prepublish-validator-lists) (Prepublish Validator Lists)
 - [XLS-69](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0069-simulate) (`simulate`)
 
-## 3.3. Ecosystem XLSes
+### 3.3. Ecosystem XLSes
 
 This category contains standards that pertain to the community or off-chain data, such as metadata standards.
 
@@ -61,11 +62,11 @@ Some examples:
 - [XLS-24](https://github.com/XRPLF/XRPL-Standards/discussions/69) (NFT metadata)
 - [XLS-50](https://github.com/XRPLF/XRPL-Standards/discussions/145) (Expanded TOML info for validators)
 
-## 3.4. Meta XLSes
+### 3.4. Meta XLSes
 
 This category contains standards that pertain to XLSes themselves, such as this document.
 
-# 4. XLS Process
+## 4. XLS Process
 
 Every XLS must have a status included in its heading:
 
@@ -83,15 +84,15 @@ Every XLS must have a status included in its heading:
 
 _Note: the “Review” and “Last Call” statuses have been removed from those listed in EIP-1, as we do not have formal processes established for review for XLSes (e.g. Core EIPs need to be approved by all client implementations). This may be re-added in the future, if such processes are desired._
 
-## 4.1. Format: Ideas
+### 4.1. Format: Ideas
 
 There are no formatting requirements for Ideas.
 
-## 4.2. Format: Proposals
+### 4.2. Format: Proposals
 
 The main formatting requirement for a `Proposal` is that its title must include its category - e.g. `Meta XLS: XLS Process and Guidelines`. It must generally be in the format of a `Ddraft` and should contain most of the sections required for `Draft`s, as this will make `Draft` generation easier later and distinguishes `Proposal`s from `Idea`s, but does not need to be a full-fledged `Draft`.
 
-## 4.3. Format: Drafts and Onward
+### 4.3. Format: Drafts and Onward
 
 Any XLS that wants to be considered for `Draft` status should have the following parts:
 
@@ -110,7 +111,7 @@ Any XLS that wants to be considered for `Draft` status should have the following
 
 All sections must be filled out with reasonable completeness and effort.
 
-### 4.3.1. Preamble
+#### 4.3.1. Preamble
 
 Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style header preamble, contained in a `<pre>` HTML block. The headers must appear in the following order.
 
@@ -130,17 +131,17 @@ Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style
 _Headers that permit lists must separate elements with commas._
 _Headers requiring dates will always do so in the format of ISO 8601 (yyyy-mm-dd)._
 
-## 4.4. Format: Amendment XLS
+### 4.4. Format: Amendment XLS
 
 An amendment usually introduces a set of semantically coherent ledger objects and transactions. The specification must make clear the purpose, introduced ledger entries and transactions. Optionally, the amendment specification can introduce new APIs, and include an optional F.A.Q.
 
 _Note: all fields specified above in the “Drafts and Onward” section must also be included here._
 
-### 4.4.1. Index
+#### 4.4.1. Index
 
 A Markdown index to make navigating a long specification easier. This field is optional and left to the author’s discretion.
 
-### 4.4.2. Introduction
+#### 4.4.2. Introduction
 
 A section to succinctly introduce the protocol that the amendment introduces.
 
@@ -152,45 +153,45 @@ A section to succinctly introduce the protocol that the amendment introduces.
   - **Transactions**: A list of transactions and their purpose introduced by the amendment.
   - **API**: A list of RPCs and their purpose introduced by the amendment (if applicable).
 
-### 4.4.3. Specification
+#### 4.4.3. Specification
 
 The technical specification describing the syntax and semantics of a new feature. The specification should be detailed enough to allow competing, interoperable implementations. See below for details.
 
 This will be codified in a template later.
 
-#### 4.4.3.1. Serialized Types
+##### 4.4.3.1. Serialized Types
 
 `Serialized Types` documents one or more new "serialized types" (or STypes) introduced or modified by the specification. Most specifications will not need such sections, as the[ existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally enough. Each SType must be in its own numbered section, with the following subsections:
 
-##### 4.4.3.1.1. `SType` value
+###### 4.4.3.1.1. `SType` value
 
 Each SType has its own unique value associated with it, so that when an object is being deserialized, the deserializer knows which decoder to use. The current values are specified [here](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/SField.h#L60).
 
-##### 4.4.3.1.2. JSON Representation
+###### 4.4.3.1.2. JSON Representation
 
 This subsection describes how an instance of the new SType will be represented in JSON (which is how most users will see and interact with it). For example, an `STAccount` is represented as an r-address `string`.
 
-##### 4.4.3.1.3. Additional Accepted JSON Inputs
+###### 4.4.3.1.3. Additional Accepted JSON Inputs
 
 This optional subsection describes additional JSON representations may be parsed. For example, a `UInt32` can be passed in as an `int`, a `uint`, or a `string`, even though its output is always a `uint`.
 
-##### 4.4.3.1.4. Binary Encoding
+###### 4.4.3.1.4. Binary Encoding
 
 This subsection describes how an instance of the new SType will be encoded or serialized in binary. For example, [this](https://xrpl.org/docs/references/protocol/binary-format#accountid-fields) describes how an `STAccount` is serialized.
 
-##### 4.4.3.1.5. Example JSON and Binary Encoding
+###### 4.4.3.1.5. Example JSON and Binary Encoding
 
 Provide JSON and binary examples for what this SType will look like.
 
-#### 4.4.3.2. Ledger Entries
+##### 4.4.3.2. Ledger Entries
 
 `Ledger Entries` documents one or more new ledger entry objects introduced or modified by the specification. Each ledger entry must be in its own numbered section, with the following subsections:
 
-##### 4.4.3.2.1. Object Identifier
+###### 4.4.3.2.1. Object Identifier
 
 Each object on the XRP Ledger must have a unique object identifier (ID or key). The ID for a given object within the ledger is calculated using "tagged hashing". This involves hashing some object-specific parameters along with a type-specific prefix called the `key space` (a 16-bit value) to ensure that different objects have different IDs, even if they use the same set of parameters The key space is given as a `hex` representation in the specification. This section introduces the key space and the algorithm for how to calculate a unique object identifier. It is critical that the algorithm does not create collisions between two objects.
 
-##### 4.4.3.2.2. Fields
+###### 4.4.3.2.2. Fields
 
 This subsection describes the ledger entry fields in a tabular format, indicating whether a field is constant or optional, its JSON type (for reference, actual storage is binary), Internal Type, and Default Value. The field table MUST include all standard ledger entry fields (like `LedgerEntryType`, `Flags`, `PreviousTxnID`, `PreviousTxnLgrSeq`, `OwnerNode`) as well as fields unique to the ledger entry. The `Account` field is typical for objects owned by a single account.
 
@@ -211,7 +212,7 @@ These columns must all be included in the table:
 
 The table may be followed by subsections for fields requiring further details that are too long for the Description column.
 
-##### 4.4.3.2.3. Flags
+###### 4.4.3.2.3. Flags
 
 This subsection describes all the ledger entry `lsf` flags in a tabular format.
 
@@ -221,17 +222,17 @@ These columns must all be included in the table:
 - **Flag Value**: The column indicates the flag's value. Flag values are powers of 2 expressed as 32-bit integers, written in hexadecimal with a `0x` prefix (e.g., `0x00010000`).
 - **Description**: A brief description of the flag. Further details can be written in a subsection of **Flags**.
 
-##### 4.4.3.2.4. Ownership
+###### 4.4.3.2.4. Ownership
 
 All XRP Ledger objects must have an owner. The owner is an `AccountRoot` object, and the ownership relationship is typically established by adding the object's ID to an `OwnerDirectory` ledger entry associated with the owner's account. This subsection captures which `AccountRoot` object's `OwnerDirectory` the ledger entry is registered. A single ledger entry may be linked from one or more unique `DirectoryNode` pages, usually under one `OwnerDirectory`.
 
 _Note: there are a handful of object types (such as `FeeSettings`) that don’t have an owner. If an amendment is of that ilk, that should be specified in this section._
 
-##### 4.4.3.2.5. Reserves
+###### 4.4.3.2.5. Reserves
 
 Creating ledger entries typically requires an increase in the owner's XRP reserve to discourage ledger bloat and account for the cost of storage. Each new ledger entry directly owned by an account typically increments the owner reserve by one unit (currently 0.2 XRP, as of last check, but subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.2.6. Deletion
+###### 4.4.3.2.6. Deletion
 
 This subsection captures the conditions under which the ledger entry can be deleted from the ledger. It should specify:
 
@@ -239,27 +240,27 @@ This subsection captures the conditions under which the ledger entry can be dele
 - Any prerequisite conditions for deletion (e.g., object state, zero balances, no linked objects).
 - Is the ledger entry a "blocker" for deleting its owner `AccountRoot` (i.e., whether it must be deleted before the account can be deleted).
 
-##### 4.4.3.2.7. Pseudo-Account
+###### 4.4.3.2.7. Pseudo-Account
 
 This section is optional. A "pseudo-account" might be associated if the newly introduced ledger entry needs to hold assets (XRP, IOUs or MPTs) or issue tokens (e.g., MPTs). A pseudo-account is a programmatically derived `Account` that cannot submit transactions, send or receive funds directly via standard payments, or have a key pair. For further details about pseudo-accounts, refer to [XLS-64](https://github.com/XRPLF/XRPL-Standards/pull/274) (or the relevant accepted standard). This section should specify if a pseudo-account is used, how its `AccountID` is derived, and its purpose.
 
-##### 4.4.3.2.8. Freeze/Lock
+###### 4.4.3.2.8. Freeze/Lock
 
 This section is optional. If the protocol holds assets on behalf of other users, it must comply with the existing compliance features `Freeze`, `Deep Freeze` for IOUs and `Locking` for MPTs. This section describes how said freezing is handled.
 
-##### 4.4.3.2.9. Invariants
+###### 4.4.3.2.9. Invariants
 
 Invariants are logical statements that MUST be true of a ledger entry's state before and after the execution of any transaction (whether successful or not). They help ensure that no transaction leads to an invalid or inconsistent ledger state. Use `<object>` for the state before and `<object>'` (see the added grave) for the state after.
 
-##### 4.4.3.2.10. RPC Name
+###### 4.4.3.2.10. RPC Name
 
 In RPCs like `account_objects` and `ledger_data`, a short, `snake_case` form of the name of a ledger entry is accepted in the `type` parameter, to filter the ledger entries returned by type. This section should specify that version of the entry's name.
 
-##### 4.4.3.2.11. Example JSON
+###### 4.4.3.2.11. Example JSON
 
 Provide JSON examples for what the ledger object will look like.
 
-#### 4.4.3.3. Transactions
+##### 4.4.3.3. Transactions
 
 This section details new or modified transactions introduced by the specification.
 
@@ -274,7 +275,7 @@ One example of this naming convention is `ExampleSet` and `ExampleDelete`. Most 
 
 The following subsections must be included in a `Transaction` section.
 
-##### 4.4.3.3.1. Fields
+###### 4.4.3.3.1. Fields
 
 This section outlines transaction fields, provides details about them, defines special logic, failure conditions, and state changes. This table should list fields specific to this transaction. Common transaction fields (e.g., `Account`, `Fee`, `Sequence`, `Flags` (common transaction flags), `SigningPubKey`, `TxnSignature`) are assumed unless their usage has special implications for this transaction type.
 
@@ -288,7 +289,7 @@ The following columns should be included:
 - **Default Value**: If any. `N/A` if none or always required.
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.2. Flags
+###### 4.4.3.3.2. Flags
 
 This subsection describes all the ledger entry `tf` flags in a tabular format.
 
@@ -298,25 +299,28 @@ These columns must all be included in the table:
 - **Flag Value**: The column indicates the flag's value. Flag values are powers of 2 expressed as 32-bit integers, written in hexadecimal with a `0x` prefix (e.g., `0x00010000`).
 - **Description**: A brief description of the flag. Further details can be written in a subsection of **Flags**.
 
-##### 4.4.3.3.3. Transaction Fee
+###### 4.4.3.3.3. Transaction Fee
 
 Submitting a transaction typically requires paying a transaction fee. A typical transaction costs 10 drops as of last check (subject to change by [Fee Voting](https://xrpl.org/docs/concepts/consensus-protocol/fee-voting)). This section should confirm whether this standard behavior applies or specify any deviations.
 
-##### 4.4.3.3.4. Failure Conditions
+###### 4.4.3.3.4. Failure Conditions
 
-This section describes the conditions under which the transaction will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
+This section describes all conditions under which the transaction will fail. Each condition must map to a specific error code. The list must be exhaustive, descriptive, and indexed for easy reference.
 
-When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`).
+Failure conditions are grouped into two categories:
+
+- Data validation failures: Return a `tem` code
+- Protocol-level failures: Return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code. If another error code must be returned, justification must be provided.
 
 In case of a transaction failure, an XRP Ledger server returns an error code indicating the outcome. These codes are crucial for clients to understand why a transaction was not successful. Please refer to the [documentation](https://xrpl.org/docs/references/protocol/transactions/transaction-results) for existing error codes. When defining failure conditions for a new transaction type in an XLS, reuse existing codes whenever an existing code accurately describes the failure condition. This helps maintain consistency and avoids unnecessary proliferation of codes.
 
 If the new transaction logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code (usually a `tec` code) should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/TER.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific transaction logic failures.
 
-##### 4.4.3.3.5. State Changes
+###### 4.4.3.3.5. State Changes
 
-This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). Indexed for clarity. A successfully applied transaction must return a `tesSUCCESS` code.
+This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). The list must be exhaustive, descriptive, and indexed for easy reference. When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`). A successfully applied transaction must return a `tesSUCCESS` code.
 
-##### 4.4.3.3.6. Metadata Fields
+###### 4.4.3.3.6. Metadata Fields
 
 This section describes any additions or modifications (synthetic or otherwise) to the transaction metadata. This section must not be included if the transaction does not make any such additions or modifications.
 
@@ -331,11 +335,11 @@ The following columns should be included in the table:
 - **Type**: If the field is synthetic, this should specify the The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.3.7. Example JSON
+###### 4.4.3.3.7. Example JSON
 
 Provide JSON examples for transaction submission.
 
-#### 4.4.3.4. Permissions
+##### 4.4.3.4. Permissions
 
 This section details new or modified [granular account permissions](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0074-account-permissions#23-granular-permissions) introduced by the specification.
 
@@ -343,13 +347,13 @@ No subsections are required for this section. The section must mention what tran
 
 The new transaction type permissions are implied by the addition of the transaction.
 
-#### 4.4.3.5. API/RPCs
+##### 4.4.3.5. API/RPCs
 
 New amendments often introduce new APIs or modify existing APIs. Those API descriptions should also be outlined in a spec. APIs are how developers and users will be interacting with the new feature, so it is important to achieve consensus on the format and fields (especially since a breaking change would require bumping the API version).
 
 For each new API added (or modified), these sections should be included:
 
-##### 4.4.3.5.1. Request Fields
+###### 4.4.3.5.1. Request Fields
 
 - **Field Name:** The column indicates the field's name. Fields follow the `snake_case` naming convention. For existing field names, please refer to `jss.h`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
 - **Required?**:
@@ -357,7 +361,7 @@ For each new API added (or modified), these sections should be included:
 - **JSON Type**: The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.4.2. Response Fields
+###### 4.4.3.4.2. Response Fields
 
 - **Field Name:** The column indicates the field's name. Fields follow the `PascalCase` naming convention. For existing field names (and their associated types), please refer to `sfields.macro`. A rule of thumb is to reuse already existing fields whenever possible and sensible.
 - **Always Present?**:
@@ -365,7 +369,7 @@ For each new API added (or modified), these sections should be included:
 - **JSON Type**:The JSON type of the field (e.g., `string`, `number`, `object`, `array`).
 - **Description**: Succinct description of the field.
 
-##### 4.4.3.5.3. Failure Conditions
+###### 4.4.3.5.3. Failure Conditions
 
 This section describes the conditions under which the API will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
 
@@ -373,31 +377,31 @@ In case of an API failure, an XRP Ledger server returns an error code and error 
 
 If the new API logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/ErrorCodes.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific API logic failures.
 
-## 4.5. Stale Proposals/Ideas
+### 4.5. Stale Proposals/Ideas
 
 All discussions will be checked for staleness after 90 days, and if no one responds for another 30 days, the discussion will be closed and locked. The author can reach out to the repo maintainers to reopen the issue at a later date, if desired.
 
 The repo could use [this Github Action](https://github.com/marketplace/actions/stalesweeper) to enforce this rule automatically.
 
-# 5. Writing Specs for Already-Implemented Features
+## 5. Writing Specs for Already-Implemented Features
 
 Many parts of the XRP Ledger are currently undocumented and un-specced. Giving them a new XLS number would make it seem like said feature is new, which is not the case. Therefore, these specs will be given a slightly different prefix, `PXLS`, to indicate that it is a "Preceding" XLS.
 
-# 6. XLS Ownership
+## 6. XLS Ownership
 
 The XLS author writes the XLS. By default, the author is also the owner and champion, who shepherds the discussions and builds community consensus around the idea. At any time, the author can choose a different champion for the XLS.
 
-## 6.1. Transferring XLS Ownership
+### 6.1. Transferring XLS Ownership
 
 It occasionally becomes necessary to transfer ownership of XLSes to a new champion. In general, we’d like to retain the original author as a co-author of the transferred XLS, but that’s really up to the original author. A good reason to transfer ownership is because the original author no longer has the time or interest in updating it or following through with the XLS process, or has fallen off the face of the 'net (i.e. is unreachable or isn’t responding to email). A bad reason to transfer ownership is because you don’t agree with the direction of the XLS. We try to build consensus around an XLS, but if that’s not possible, you can always submit a competing XLS.
 
 If you are interested in assuming ownership of an XLS, send a message asking to take over, addressed to both the original author and the XLS editor. If the original author doesn’t respond to the email in a timely manner, the XLS editor will make a unilateral decision, which can be reversed if needed.
 
-# 7. XLS Editors
+## 7. XLS Editors
 
 XLS Editors are those that have at least “write” access to the XRPL-Standards repository.
 
-## 7.1. XLS Editor Responsibilities
+### 7.1. XLS Editor Responsibilities
 
 The editors don’t pass judgment on XLSes. They merely do the administrative & editorial part.
 
@@ -416,7 +420,7 @@ Once the XLS is ready to be merged, the XLS editor will:
 
 The following is a non-exhaustive list of what editors do and don’t:
 
-### 7.1.1. What Editors Do
+#### 7.1.1. What Editors Do
 
 The editors’ mission is to serve the broad XRP Ledger community, both present and future, by:
 
@@ -424,7 +428,7 @@ The editors’ mission is to serve the broad XRP Ledger community, both present 
 - **Facilitating Discussion**: Providing a forum for discussing proposals open to anyone who wants to participate civilly. By encouraging open dialogue and collaboration, we aim to harness the collective knowledge and expertise of the XRP Ledger community in shaping proposals.
 - **Upholding Quality**: Upholding a measure of minimally-subjective quality for each proposal as defined by its target audience. By adhering to defined criteria, we promote the development of high-quality and relevant proposals that drive the evolution of the XRP Ledger.
 
-### 7.1.2. What Editors Don’t Do
+#### 7.1.2. What Editors Don’t Do
 
 On the other hand, editors do not:
 
@@ -434,7 +438,7 @@ On the other hand, editors do not:
 - **Track Registries**: They want all proposals to eventually become immutable, but a registry will never get there if anyone can keep adding items. To be clear, exhaustive and/or static lists are fine.
 - **Provide Legal Advice**: Trademarks, copyrights, patents, prior art, and other legal matters are the responsibility of authors and implementers, not XLS Editors. They are not lawyers, and while they may occasionally make comments touching on these areas, they cannot guarantee any measure of correctness.
 
-### 7.1.3. Membership
+#### 7.1.3. Membership
 
 Anyone may apply to join as an XLS Editor. Specific eligibility requirements are left to individual current XLS Editors, but the general requirements are:
 
@@ -444,7 +448,7 @@ Anyone may apply to join as an XLS Editor. Specific eligibility requirements are
 
 XLS Editors are expected to meet these requirements throughout their tenure, and not doing so is grounds for removal. Any member may delegate some or all of their responsibilities/powers to tools and/or to other people.
 
-## 7.2. Current Editors
+### 7.2. Current Editors
 
 The current XLS editors are:
 
@@ -452,7 +456,7 @@ The current XLS editors are:
 - David Fuelling ([@sappenin](https://github.com/sappenin))
 - Vito Tumas ([@Tapanito](https://github.com/Tapanito))
 
-# 8. Rationale
+## 8. Rationale
 
 The design of this process balances familiarity with existing standards frameworks and the specific needs of the XRPL community.
 
@@ -464,13 +468,13 @@ Automatic closure of inactive discussions ensures the process remains active and
 
 Editors are now explicitly not decision-makers but facilitators, ensuring decentralization and preventing gatekeeping.
 
-# 9. Security Considerations
+## 9. Security Considerations
 
 This proposal does not directly alter XRPL consensus or protocol behavior and therefore carries minimal direct security risks.
 
 However, governance processes themselves can affect the security of the ecosystem. By formalizing categories, statuses, and editor responsibilities, this document mitigates risks of ambiguity, miscommunication, and fragmentation that could otherwise lead to competing or unclear implementations. Transparent rules for authorship, ownership transfer, and editor conduct further reduce the risk of malicious exploitation of unclear standards governance.
 
-# 10. History
+## 10. History
 
 This document was derived heavily from Ethereum’s [EIP-1](https://eips.ethereum.org/EIPS/eip-1) (written by Martin Becze and Hudson Jameson et al) and [EIP-5069](https://eips.ethereum.org/EIPS/eip-5069) (written by Pooja Ranjan, Gavin John, Sam Wilson, et al), which in turn was derived from Bitcoin’s [BIP-0001](https://github.com/bitcoin/bips/blob/master/bip-0001.mediawiki) and Python’s [PEP-0001](https://peps.python.org/pep-0001/). In many places text was simply copied and modified. None of the people involved with those precursors are responsible for its use in the XRP Ledger Standards process, and should not be bothered with technical questions specific to the XRPL or the XLS. Please direct all comments to the XLS editors.
 
@@ -480,9 +484,9 @@ Some previous conversations on this topic in this repo, in no particular order:
 - https://github.com/XRPLF/XRPL-Standards/discussions/21
 - https://github.com/XRPLF/XRPL-Standards/discussions/32
 
-# Appendix
+## Appendix
 
-## Appendix A: Changelog from the Existing System
+### Appendix A: Changelog from the Existing System
 
 - The post-PR process of finalizing an XLS is more standardized.
 - The role of the XLS Editor (i.e. those that maintain this repo) is more formalized.
@@ -490,22 +494,22 @@ Some previous conversations on this topic in this repo, in no particular order:
   - _Note: this does not mean numbers will be gatekept. Any proposed XLS can obtain a number if they follow the process to become a Draft._
 - XLS discussions and drafts can become stale/stagnant if a certain amount of time passes without any progress.
 
-## Appendix B: FAQ
+### Appendix B: FAQ
 
-### B.1: How can I create a PR for a new XLS if I don’t know the number?
+#### B.1: How can I create a PR for a new XLS if I don’t know the number?
 
 With EIPs, the PR author creates a PR with a document titled `eip-draft.md`, and there is a bot that informs the author what number they have been assigned. This repo can implement a similar setup (e.g. create `XLS-draft/README.md`).
 
 The initial rollout of this system will probably involve a maintainer assigning numbers instead of a bot.
 
-### B.2: What do we do about the unused numbers in the middle, like XLS-36?
+#### B.2: What do we do about the unused numbers in the middle, like XLS-36?
 
 They are simply skipped. This way, XLS numbers are roughly incrementing in order of time of assignment.
 
-### B.3: What will happen to existing XLS numbers that Discussions have already claimed?
+#### B.3: What will happen to existing XLS numbers that Discussions have already claimed?
 
 Those will remain with those discussions, to avoid confusion. The process proposed in this document will, if consensus agrees, be applied to future `Proposal`s and `Idea`s.
 
-### B.4: What will happen to XLSes that have already been written and merged into the repo?
+#### B.4: What will happen to XLSes that have already been written and merged into the repo?
 
 They will be grandfathered in for now. Ideally someone (perhaps with the help of an AI) will go back and update them to match the desired format.

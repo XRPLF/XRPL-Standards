@@ -3,7 +3,7 @@
   title: Permissioned Domains
   description: Creation of controlled environments with specific rules and restrictions to bridge decentralized blockchain and regulatory requirements
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/228
   status: Final
   category: Amendment
   requires: [XLS-70](../XLS-0070-credentials/README.md)
@@ -18,7 +18,7 @@ This proposal introduces the concept of permissioned domains. Permissioned domai
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202), as credentials are needed for permissioning.
+This proposal builds on top of [XLS-70 (Credentials)](../XLS-0070-credentials/README.md), as credentials are needed for permissioning.
 
 We propose:
 
@@ -65,10 +65,10 @@ This is an array of inner objects referencing a type of credential. The maximum 
 
 The array will be sorted by `Issuer`, so that searching it for a match is more performant.
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                                |
-| ---------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `Issuer`         | ✔️        | `string`  | `AccountID`   | The issuer of the credential.                                                                                              |
-| `CredentialType` | ✔️        | `string`  | `Blob`        | A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70d). |
+| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                               |
+| ---------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `Issuer`         | ✔️        | `string`  | `AccountID`   | The issuer of the credential.                                                                                             |
+| `CredentialType` | ✔️        | `string`  | `Blob`        | A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70). |
 
 ### 2.2. Account Deletion
 
@@ -91,7 +91,7 @@ This transaction creates or modifies a `PermissionedDomain` object.
 
 - `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
 - The `AcceptedCredentials` array is empty or too long (limit 10).
-- Any credential in `AcceptedCredentials` has an empty `CredentialType` or a `CredentialType` longer than 64 bytes (as per XLS-70d).
+- Any credential in `AcceptedCredentials` has an empty `CredentialType` or a `CredentialType` longer than 64 bytes (as per XLS-70).
 - If `DomainID` is included:
   - That domain doesn't exist.
   - The `Account` isn't the domain owner.

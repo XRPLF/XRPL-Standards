@@ -3,6 +3,7 @@
   title: Initial Owner Reserve Exemption
   description: The first two account `objects` that are counted towards the `OwnerCount` shall not increase the `Owner Reserve`
   author: Vet (@xVet)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/204
   created: 2024-07-01
   status: Stagnant
   category: Amendment

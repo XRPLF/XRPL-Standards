@@ -1,10 +1,12 @@
 <pre>
-  xls: 51d
+  xls: 51
   title: NFToken Escrows
+  description: Extension to Escrow functionality to support escrowing NFTokens
   author: Mayukha Vadari (@mvadari)
-  created: 2023-11-17
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/146
   status: Stagnant
   category: Amendment
+  created: 2023-11-17
 </pre>
 
 # NFToken Escrows
@@ -62,7 +64,7 @@ The `Amount` field is still used as it currently is, but it is now optional, to 
 
 The NFTs that are in the escrow. One escrow can hold up to 32 NFTs, equivalent to one `NFTokenPage`.
 
-NFTs stored in an escrow cannot be burned (and cannot be modified either, if [XLS-46](https://github.com/XRPLF/XRPL-Standards/discussions/130) is enabled).
+NFTs stored in an escrow cannot be burned or [modified](../XLS-0046-dynamic-non-fungible-tokens/README.md).
 
 ## 3. Transaction: `EscrowCreate`
 

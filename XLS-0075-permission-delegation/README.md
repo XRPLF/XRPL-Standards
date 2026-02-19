@@ -3,7 +3,7 @@
   title: Permission Delegation
   description: Authorization delegation mechanism to enhance flexibility and usability of XRPL accounts
   author: Mayukha Vadari <mvadari@ripple.com>, Yinyi Qian <yqian@ripple.com>, Ed Hennis <ed@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/218
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/218
   status: Final
   category: Amendment
   created: 2024-08-21
@@ -43,7 +43,7 @@ He can authorize:
 - Bob's account for the `TrustSet` transaction permission.
 - Kylie's account for the `TrustlineAuthorize` granular permission.
 
-The full set of available permissions is listed in [XLS-74d, Account Permissions](https://github.com/XRPLF/XRPL-Standards/discussions/217)
+The full set of available permissions is listed in [XLS-74, Account Permissions](../XLS-0074-account-permissions/README.md)
 
 ## 2. On-Ledger Object: `Delegate`
 
@@ -68,7 +68,7 @@ The ID of this object will be a hash of the `Account` and `Authorize` fields, co
 
 #### 2.1.2. `Permissions`
 
-This field is an array of permissions to delegate to the account, as listed in [XLS-74d, Account Permissions](https://github.com/XRPLF/XRPL-Standards/discussions/217). The array will have a maximum length of 10.
+This field is an array of permissions to delegate to the account, as listed in [XLS-74, Account Permissions](../XLS-0074-account-permissions/README.md). The array will have a maximum length of 10.
 
 ### 2.2. Account Deletion
 
@@ -292,9 +292,9 @@ On the other hand, this mechanism also offers a granular approach to authorizati
 
 # Appendix
 
-## Appendix A: Comparing with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144), Multiple Signer Lists
+## Appendix A: Comparing with [XLS-49](../XLS-0049-multiple-signer-lists/README.md), Multiple Signer Lists
 
-In XLS-49d:
+In XLS-49:
 
 - There is multisign support by default.
 - The signer list is controlled by the delegating account.
@@ -310,7 +310,7 @@ In this proposal:
 - There is one account reserve per delegated account.
 - The delegate pays the fees.
 
-Both are useful for slightly different usecases; XLS-49d is more useful when you want multiple signatures to guard certain features, while this proposal is useful when you want certain parties to have access to certain features. This proposal does support XLS-49d-like usage, but it would cost more XRP, as a second account would need to be created.
+Both are useful for slightly different usecases; XLS-49 is more useful when you want multiple signatures to guard certain features, while this proposal is useful when you want certain parties to have access to certain features. This proposal does support XLS-49-like usage, but it would cost more XRP, as a second account would need to be created.
 
 ## Appendix B: FAQ
 
@@ -332,7 +332,7 @@ Given the overlap in functionality, the `NFTokenMinter` field could potentially 
 
 Yes, in certain cases. For example, an account could still be considered "blackholed" if it has the `AccountDomainSet` permission delegated, but not if it has the `SetRegularKey` permission delegated. The definition of a blackholed account will need to be modified after this amendment.
 
-### B.4: Can I delegate permissions to a `Batch` transaction ([XLS-56d](https://github.com/XRPLF/XRPL-Standards/discussions/162))?
+### B.4: Can I delegate permissions to a `Batch` transaction ([XLS-56](../XLS-0056-batch/README.md))?
 
 No, delegation will not be allowed on `Batch` transactions. Instead, the inner transactions must include the `Delegate` field.
 

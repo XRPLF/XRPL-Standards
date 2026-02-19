@@ -4,8 +4,9 @@
   description: Introduces concise transaction identifier
   author: RichardAH (@RichardAH)
   created: 2021-03-09
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/34
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/34
   status: Withdrawn
+  withdrawal-reason: Superseded by XLS-37
   category: System
 </pre>
 

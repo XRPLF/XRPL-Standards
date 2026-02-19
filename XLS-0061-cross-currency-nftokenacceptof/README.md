@@ -3,6 +3,7 @@
   title: CrossCurrency NFTokenAcceptOffer
   description: Allow cross-currency NFToken transactions using multiple currencies
   author: tequ (@tequdev)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/183
   created: 2024-02-26
   status: Stagnant
   category: Amendment
@@ -118,4 +119,4 @@ The royalty is sent by converting a portion of the buyer's Amount (TransferFee %
 The process used by Payment is used for currency conversion and remittance processing.
 Path cannot be specified, and only direct AAA->BBB pairs are used at this time.
 
-If auto-bridge is enabled by default by XLS-60d, the auto-bridge path will also be used for the currency conversion process in this proposal.
+If auto-bridge is enabled by default by [XLS-60](../XLS-0060-default-autobridge/README.md), the auto-bridge path will also be used for the currency conversion process in this proposal.

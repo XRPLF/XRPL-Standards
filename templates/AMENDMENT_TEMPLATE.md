@@ -42,7 +42,9 @@ _[If your specification introduces new ledger entry objects, document each entry
 
 _[If your specification introduces new ledger entry common fields, you can have a section called `Transaction: Common Fields` before listing out any specific transactions.]_
 
-### 2.1. Object Identifier
+_[**Note for existing ledger entries:** If you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet (e.g., AccountRoot, RippleState, Offer, etc.), the following subsections are **optional**: Object Identifier (2.1), Ownership (2.4), Reserves (2.5), Deletion (2.6), and RPC Name (2.10). You only need to include these subsections if you are making changes to those aspects of the ledger entry.]_
+
+### 2.1. Object Identifier _(Optional if ledger entry already exists on XRPL)_
 
 **Key Space:** `0x[XXXX]` _[Specify the 16-bit hex value for the key space]_
 
@@ -77,7 +79,7 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 | ---------------- | ------------ | ---------------- |
 | `[lsfFlagName1]` | `0x[Value1]` | `[Description1]` |
 
-### 2.4. Ownership
+### 2.4. Ownership _(Optional if ledger entry already exists on XRPL)_
 
 _[Specify which AccountRoot object owns this ledger entry and how the ownership relationship is established.]_
 
@@ -85,7 +87,9 @@ _[Specify which AccountRoot object owns this ledger entry and how the ownership 
 
 **Directory Registration:** `[Describe how this object is registered in the owner's directory, or specify if it's a special case]`
 
-### 2.5. Reserves
+_[Note: This subsection is optional if you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet.]_
+
+### 2.5. Reserves _(Optional if ledger entry already exists on XRPL)_
 
 **Reserve Requirement:** `[Standard/Custom/None]`
 
@@ -95,7 +99,9 @@ _[If Custom]: This ledger entry requires `[X]` reserve units because `[reason]`.
 
 _[If None]: This ledger entry does not require additional reserves because `[reason]`._
 
-### 2.6. Deletion
+_[Note: This subsection is optional if you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet.]_
+
+### 2.6. Deletion _(Optional if ledger entry already exists on XRPL)_
 
 **Deletion Transactions:** `[List transaction types that can delete this object]`
 
@@ -108,6 +114,8 @@ _[If None]: This ledger entry does not require additional reserves because `[rea
 **Account Deletion Blocker:** `[Yes/No]`
 _[If Yes]: This object must be deleted before its owner account can be deleted._
 _[If No]: This object does not prevent its owner account from being deleted._
+
+_[Note: This subsection is optional if you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet.]_
 
 ### 2.7. Pseudo-Account _(Optional)_
 
@@ -138,11 +146,13 @@ _[List logical statements that must always be true for this ledger entry. Use `<
 - `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
 - `[Additional invariants as needed]`
 
-### 2.10. RPC Name
+### 2.10. RPC Name _(Optional if ledger entry already exists on XRPL)_
 
 **RPC Type Name:** `[snake_case_name]`
 
 _[This is the name used in `account_objects` and `ledger_data` RPC calls to filter for this object type]_
+
+_[Note: This subsection is optional if you are documenting changes to an existing ledger entry type that is already deployed on the XRPL mainnet.]_
 
 ### 2.11. Example JSON
 
@@ -164,6 +174,12 @@ _[This is the name used in `account_objects` and `ledger_data` RPC calls to filt
 _[If your specification introduces new transactions, document each transaction in its own numbered section following this part of the template. Otherwise, delete this entire section.]_
 
 _[If your specification introduces new transaction common fields, you can have a section called `Transaction: Common Fields` before listing out any specific transactions.]_
+
+> **Note for Existing Transactions:** If you are documenting changes to an existing transaction type (one that is already deployed on XRPL mainnet), the following subsection is **optional** unless you are modifying it:
+>
+> - **Transaction Fee** (3.3)
+>
+> For new transaction types, all subsections are required.
 
 > **Naming Convention:** Transaction names should follow the pattern `<LedgerEntryName><Verb>` (e.g., `ExampleSet`, `ExampleDelete`). Most specifications will need at least:
 >
@@ -194,7 +210,9 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 | --------------- | ------------ | ---------------- |
 | `[tfFlagName1]` | `0x[Value1]` | `[Description1]` |
 
-### 3.3. Transaction Fee
+### 3.3. Transaction Fee _(Optional if transaction already exists on XRPL)_
+
+_[This subsection is optional if you are documenting changes to an existing transaction type. Only include it if you are introducing a new transaction type or modifying the fee structure of an existing one.]_
 
 **Fee Structure:** `[Standard/Custom]`
 
@@ -204,11 +222,23 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 ### 3.4. Failure Conditions
 
-_[List all conditions that cause the transaction to fail, with corresponding error codes]_
+_[An indexed list of all conditions that cause the transaction to fail, with corresponding error codes. Group failure conditions into two categories: data verification, invalid field values, protocol-level logic.]_
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+#### 3.4.1. Data Verification
+
+[All Data Verification failures return a `tem` level error.]
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
+
+#### 3.4.2. Protocol-Level Failures
+
+_[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code.]_
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
@@ -247,17 +277,17 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 
 _[If your specification introduces new permissions, document each permission in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-### 4.1. Transaction Types Affected
+### 4.1. Permission Description
+
+_[Describe how this permission interacts with existing permissions and what it allows/restricts. Describe what the granular permission controls.]_
+
+### 4.2. Transaction Types Affected
 
 _[List transaction types that this permission applies to]_
 
-### 4.2. Permission Scope
+### 4.3. Permission Value
 
-_[Describe what the granular permission controls]_
-
-### 4.3. Permission Description
-
-_[Describe how this permission interacts with existing permissions and what it allows/restricts]_
+_[Specify the numeric value for the permission]_
 
 ## 5. RPC: `[rpc_method_name]`
 
@@ -279,9 +309,11 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.3. Failure Conditions
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+_[An indexed list of RPC error codes.]_
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 ### 5.4. Example Request
 

@@ -1,0 +1,102 @@
+name: Assign XLS Number
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  assign-xls-number:
+    runs-on: ubuntu-latest
+    name: Assign XLS Number to Draft
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout script from base branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          sparse-checkout: |
+            .github/scripts/assign_xls_number.py
+          sparse-checkout-cone-mode: false
+          path: base-repo
+
+      - name: Get added files
+        id: added-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            XLS-draft*/README.md
+            xls-draft*/README.md
+          # Only look at added files, not modified ones
+          include_all_old_new_renamed_files: false
+
+      - name: Check for draft XLS files
+        id: check-drafts
+        run: |
+          ADDED_FILES="${{ steps.added-files.outputs.added_files }}"
+          echo $ADDED_FILES
+          if [ -z "$ADDED_FILES" ]; then
+            echo "No XLS draft files added in this PR"
+            echo "has_drafts=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found draft XLS files: $ADDED_FILES"
+            echo "has_drafts=true" >> $GITHUB_OUTPUT
+            echo "draft_files=$ADDED_FILES" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        if: steps.check-drafts.outputs.has_drafts == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Assign XLS number
+        if: steps.check-drafts.outputs.has_drafts == 'true'
+        id: assign-number
+        run: |
+          echo ${{ steps.check-drafts.outputs.draft_files }}
+          python base-repo/.github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}
+
+      - name: Check for existing assignment comment
+        if: steps.check-drafts.outputs.has_drafts == 'true'
+        id: find-comment
+        uses: peter-evans/find-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "XLS Number Assignment"
+
+      - name: Post or update PR comment
+        if: steps.check-drafts.outputs.has_drafts == 'true' && steps.find-comment.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🎫 XLS Number Assignment
+
+            This PR adds a new XLS draft. The next available XLS number has been determined:
+
+            | Draft Directory | Assigned Number | New Directory Name |
+            |-----------------|-----------------|-------------------|
+            | `${{ steps.assign-number.outputs.draft_dir }}` | **XLS-${{ steps.assign-number.outputs.xls_number }}** | `${{ steps.assign-number.outputs.new_dir_name }}` |
+
+            ### Next Steps for XLS Editors
+
+            Before merging this PR, please:
+
+            1. **Rename the directory** from `${{ steps.assign-number.outputs.draft_dir }}` to `${{ steps.assign-number.outputs.new_dir_name }}`
+            2. **Update the preamble** in the README.md:
+               - Set `xls:` to `${{ steps.assign-number.outputs.xls_number }}`
+               - Set `status:` to `Draft`
+
+            ---
+            *This comment was automatically generated. The XLS number is based on the highest existing number in the repository at the time this PR was opened.*

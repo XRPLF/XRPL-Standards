@@ -1,13 +1,15 @@
 <pre>
-    xls: 16
-    title: NFT Metadata
-    author: Hubert Getrouw (@HubertG97)
-    created: 2021-03-17
-    status: Stagnant
-    category: Ecosystem
+  xls: 16
+  title: NFT Metadata
+  description: Standard for NFT metadata
+  author: Hubert Getrouw (@HubertG97)
+  created: 2021-03-17
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/37
+  status: Stagnant
+  category: Ecosystem
 </pre>
 
-In addition to @WietseWind 's [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30) and @RichardAH 's proposal [XLS-15d](https://github.com/XRPLF/XRPL-Standards/discussions/34) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code.
+In addition to @WietseWind 's [XLS-14](https://github.com/XRPLF/XRPL-Standards/discussions/30) and @RichardAH 's proposal [XLS-15](../XLS-0015-concise-tx-id/README.md) here is a proposal to create a standard for the creation of metadata for the tokens created with a CTI in the currency code.
 
 When issuing an indivisible token on the XRPL the only data given is the currency code. For optimal usage, there has to be more metadata for an NFT. For example a description and a URI to an IPFS file.
 Using the Concise Transaction Identifier, a prior transaction can be used to mark the metadata contained in the memo's field for the use of the NFT.
@@ -40,7 +42,7 @@ For the metadata, there has to be created a transaction from the same address as
 The currency code for an NFT consists of 3 parts:
 
 - Prefix 02 for HEX currency code
-- [CTI](https://github.com/XRPLF/XRPL-Standards/discussions/34) (Concise Transaction Identifier)
+- [CTI](../XLS-0015-concise-tx-id/README.md) (Concise Transaction Identifier)
 - Short name converted to HEX for the NFT to a maximum of 12 characters or less (filled up with 0's if it's less)
 
 After this, a Trust line can be set up using the above currency code and the NFTs being transferred from the issuing address to the hot wallet.
@@ -137,7 +139,7 @@ Make sure the issuer address has an `AccountSet` of `SetFlag` to `8`
 
 In the currency field the HEX converted currency code is used.
 The value is set to `1000000000000000e-95` which will result in 10 NFTs.
-More explanation about this can be found in @WietseWind's proposal [XLS-14d](https://github.com/XRPLF/XRPL-Standards/discussions/30)
+More explanation about this can be found in @WietseWind's proposal [XLS-14](https://github.com/XRPLF/XRPL-Standards/discussions/30)
 
 Last step is to send the tokens from the issuer to the hot wallet.
 
