@@ -50,7 +50,7 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
 
 ### 1.1 Overview
 
-The **Single Asset Vault** is an on-chain object that aggregates assets from one or more depositors and represents ownership through shares. Other protocols, such as the [Lending Protocol](https://github.com/XRPLF/XRPL-Standards/discussions/190), can access these assets via the vault, whether or not they generate yield. Currently, other protocols must be created by the same Account that created the Vault. However, this may change in the future.
+The **Single Asset Vault** is an on-chain object that aggregates assets from one or more depositors and represents ownership through shares. Other protocols, such as the [Lending Protocol](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0066-lending-protocol), can access these assets via the vault, whether or not they generate yield. Currently, other protocols must be created by the same Account that created the Vault. However, this may change in the future.
 
 The specification introduces a new `Vault` ledger entry, which contains key details such as available assets, shares, total value, and other relevant information.
 
@@ -96,7 +96,7 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 ### 1.4 Connecting to the Vault
 
-A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](https://github.com/XRPLF/XRPL-Standards/discussions/190) specification.
+A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0066-lending-protocol) specification.
 
 [**Return to Index**](#index)
 
