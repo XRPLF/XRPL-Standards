@@ -527,6 +527,13 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 | `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `61`      | Transaction type.                                      |
 | `VaultID`         |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
 | `Amount`          |   Yes    | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
+| `Flags`           |    No    |       `number`       |   `UINT32`    |       0       | Specifies additional flags for the transaction.        |
+
+### 6.1 Flags
+
+| Flag Name       |  Flag Value  | Description                      |
+| --------------- | :----------: | :------------------------------- |
+| `tfVaultDonate` | `0x00010000` | Donate the funds into the vault. |
 
 ### 6.2 Failure conditions
 
@@ -542,43 +549,50 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 3. The depositor does not have sufficient funds to make a deposit. (`tecINSUFFICIENT_FUNDS`)
 4. Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum` (`tecLIMIT_EXCEEDED`)
 
-5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` is not `Vault.Owner`:
+5. `tfVaultDonate` flag is set and:
+   1. `Account` submitting the transaction is not the vault owner. (`tecNO_PERMISSION`)
+   2. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`, the Vault is empty. (`tecNO_PERMISSION`)
+
+6. The `Vault` `lsfVaultPrivate` flag is set and the `Account` is not `Vault.Owner`:
    1. If `Account` credentials are expired. (`tecEXPIRED`)
    2. If `Account` does not have valid credentials. (`tecNO_AUTH`)
 
-6. If vault is insolvent, `Vault.AssetsTotal = 0` and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount > 0`. (`tecLOCKED`)
+7. If vault is insolvent, `Vault.AssetsTotal = 0` and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount > 0`. (`tecLOCKED`)
 
-7. The `Vault.Asset` is `MPT`:
+8. The `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable). (`tecNO_AUTH`)
    2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked) (`tecLOCKED`)
    3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor). (`tecLOCKED`)
    4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance). (`tecINSUFFICIENT_FUNDS`)
 
-8. The `Asset` is an `IOU`:
+9. The `Asset` is an `IOU`:
    1. `lsfDefaultRipple` flag is not set on either the issuer or the depositor. (`terNO_RIPPLE`)
    2. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen). (`tecFROZEN`)
    3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor. (`tecFROZEN`)
    4. The `RippleState` object `Balance` < `Amount` (insufficient balance). (`tecINSUFFICIENT_FUNDS`)
 
-9. `Account` is not `Vault.Owner` and `Vault.lsfVaultDepositBlocked` flag is set (`tecNO_PERMISSION`)
+10. `Account` is not `Vault.Owner` and `Vault.lsfVaultDepositBlocked` flag is set (`tecNO_PERMISSION`)
+11. `Vault.AssetsTotal + Amount > Vault.AssetsMaximum`, deposit would exceed the maximum allowed amount. (`tecLIMIT_EXCEEDED`)
 
 ### 6.3 State Changes
 
 1. If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
 
-2. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
-3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-4. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+2. If `tfVaultDonate` flag is **not** set:
+   1. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
+   2. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
-5. If the `Vault.Asset` is `XRP`:
+3. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+
+4. If the `Vault.Asset` is `XRP`:
    1. Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
    2. Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
 
-6. If the `Vault.Asset` is an `IOU`:
+5. If the `Vault.Asset` is an `IOU`:
    1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
    2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
 
-7. If the `Vault.Asset` is an `MPT`:
+6. If the `Vault.Asset` is an `MPT`:
    1. Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
    2. Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
 
