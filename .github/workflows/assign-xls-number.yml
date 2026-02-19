@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
+concurrency:
+  group: assign-xls-number-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   assign-xls-number:
     runs-on: ubuntu-latest
@@ -76,10 +80,11 @@ jobs:
           body-includes: "XLS Number Assignment"
 
       - name: Post or update PR comment
-        if: steps.check-drafts.outputs.has_drafts == 'true' && steps.find-comment.outputs.comment-id == ''
+        if: steps.check-drafts.outputs.has_drafts == 'true'
         uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
           body: |
             ## 🎫 XLS Number Assignment
 
@@ -99,4 +104,18 @@ jobs:
                - Set `status:` to `Draft`
 
             ---
-            *This comment was automatically generated. The XLS number is based on the highest existing number in the repository at the time this PR was opened.*
+            *This comment was automatically generated. The XLS number below is reserved for this PR based on existing XLS numbers in the repository and other open draft PRs.*
+
+            <!-- XLS_NUMBER:${{ steps.assign-number.outputs.xls_number }} -->
+
+      - name: Add has-xls-number label
+        if: steps.check-drafts.outputs.has_drafts == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sS \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -X POST \
+            -d '{"labels":["has-xls-number"]}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels"
