@@ -23,3 +23,8 @@ jobs:
 
       - name: Run Prettier
         run: prettier --check .
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: tcort/github-action-markdown-link-check@v1
