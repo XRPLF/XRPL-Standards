@@ -6,20 +6,25 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/144
   status: Draft
   category: Amendment
+  requires: 74
   created: 2023-11-13
 </pre>
 
 # Multiple Signer Lists
 
-## Abstract
+## 1. Abstract
 
 The XRP Ledger currently only supports one global signer list per account. However, many users (such as token issuers) require more granularity. For example, they might want to have one signer list with the ability to mint new tokens, and another signer list with the ability to create and edit trustlines.
 
 This document describes a proposal for supporting multiple signer lists per account. The current system of global signer lists will continue to be supported, but we propose adding **per-transaction-type signer lists**. Accounts can set up signer lists that only have the power to send **transactions of one specific type** on behalf of the account.
 
-This proposal is related to [XLS-31](https://github.com/XRPLF/XRPL-Standards/discussions/77), but broader in scope.
+## 2. Motivation
 
-## 1. Overview
+Global signer lists provide an "all or nothing" model of access control: any key that can sign for an account can submit all transaction types on its behalf. For complex operational setups, especially for issuers and institutional users, this makes it difficult to separate duties such as minting, trustline management, or account configuration.
+
+Supporting multiple signer lists per account, each scoped to a specific transaction type, enables more granular permissioning. This reduces the blast radius of a compromised signer, and allows organizations to delegate narrowly scoped powers (for example, minting only, or trustline management only) without granting full control over the account.
+
+## 3. Overview
 
 We propose modifying one ledger object and one transaction:
 
@@ -33,11 +38,9 @@ The important considerations to keep in mind are:
 - `rippled` must be able to retrieve all possible signer lists for a transaction type quickly and easily, in order to check if a transaction has a valid multisign list.
 - Any signer list that can sign transactions can drain the account's XRP via fees.
 
-## 2. On-Ledger Object: **`SignerList`**
+## 4. `SignerList` Ledger Object
 
 There is no change to the shape of a [`SignerList` ledger object](https://xrpl.org/signerlist.html), only in how it's used.
-
-### 2.1. Fields
 
 As a reference, the **`SignerList`** object currently has the following fields:
 
@@ -56,7 +59,7 @@ The ledger index of this object is calculated by hashing together the owner's ac
 
 The only field whose usage is changing is `SignerListID`. All other fields will be used the same as they are now.
 
-#### 2.1.1. `SignerListID`
+### 4.1. `SignerListID`
 
 This field is currently always set to `0`. The original [`Multisign` implementation](https://xrpl.org/known-amendments.html#multisign) only allowed for one signer list per account, but left the door open for the possibility of more.
 
@@ -66,11 +69,9 @@ One problem: `Payment` has transaction type `0`, which would conflict with the g
 
 Each additional `SignerList` that an account owns will, of course, cost an additional owner reserve (2 XRP at the time of writing).
 
-## 3. Transaction: **`SignerListSet`**
+## 5. `SignerListSet` Transaction
 
 The [`SignerListSet` transaction](https://xrpl.org/signerlistset.html) already exists on the XRPL. We propose a slight modification to support per-transaction-type signer lists.
-
-### 3.1. Fields
 
 As a reference, the **`SignerListSet`** transaction already has the following fields:
 
@@ -85,11 +86,23 @@ We propose adding a new optional field:
 |------------|-----------|-----------|---------------|
 |`TransactionTypeBitmask` | |`array`|`HASH256`
 
-#### 3.1.1. `TransactionTypeBitmask`
+### 5.1. `TransactionTypeBitmask`
 
 This field accepts a bitmask of transaction types, much like the [`HookOn` field](https://xrpl-hooks.readme.io/docs/hookon-field). A `0` bit is "on" and a `1` bit is "off". A value of `0` changes the global signer list. All other values change the many signer lists of the transactions they apply to, so that it is easier to modify many signer lists at once. The JSON will show a list of transactions.
 
-## 4. Security
+## 6. Rationale
+
+This proposal chooses a straightforward mapping from transaction types to separate `SignerList` entries: `SignerListID = 0` represents the existing global signer list, while `SignerListID = 1 + TxType` represents a signer list scoped to a single transaction type. This design keeps lookup logic simple, preserves existing semantics for the global list, and minimizes UX changes for wallets and other tooling.
+
+Alternative designs, such as encoding permissions via a bitmask in `SignerListID` or implementing per-transaction-type multisign using crypto-conditions, were considered. These alternatives offer additional flexibility but introduce more complexity and larger changes to transaction formats and signing workflows. They are described in more detail in Appendix B and Appendix C.
+
+## 7. Backwards Compatibility
+
+Existing signer lists with `SignerListID = 0` continue to function as global signer lists and retain their current behavior. No changes are required for accounts that only use a single global signer list.
+
+Per-transaction-type signer lists are added in a backward-compatible way by assigning nonzero `SignerListID` values derived from `1 + TxType`. Existing ledger entries and transactions remain valid, and transactions that do not use the new functionality behave exactly as before. Each additional signer list still consumes an owner reserve, as described above.
+
+## 8. Security Considerations
 
 One important fact to remember is that any signer list that can sign transactions can drain the account's XRP via fees. This was why multiple signer lists were never implemented originally. There is [an open issue](https://github.com/XRPLF/rippled/issues/4476) proposing potential ways to prevent accidental high fees on transactions.
 

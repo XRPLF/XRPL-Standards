@@ -11,11 +11,17 @@
 
 # Account Permissions
 
-## Abstract
+## 1. Abstract
 
 This document formalizes different types of transaction-based account permissions. Permissions include all transactions, a single transaction, or a subset of a transaction's capabilities.
 
-## 1. Overview
+## 2. Motivation
+
+Global signer lists and regular keys currently provide an all-or-nothing model of access control: any key or signer list that can sign for an account can submit all transaction types on its behalf. For many operational setups—for example, token issuers that want separate controls for minting, trustline management, and account configuration—this makes it hard to apply least-privilege practices and increases the blast radius of compromised keys.
+
+This XLS defines a shared, transaction-oriented account-permission namespace that other features can build on (such as multiple signer lists in [XLS-49](../XLS-0049-multiple-signer-lists/README.md) or future delegation mechanisms). By standardizing how permissions are represented, implementations can provide more granular, interoperable authorization schemes while preserving compatibility with existing global signer lists.
+
+## 3. Overview
 
 [XLS-49](../XLS-0049-multiple-signer-lists/README.md) proposed transaction-type-level permissions. These types of permissions can be used for multiple signer lists, as explained in XLS-49, but could also be used in conjunction with other features.
 
@@ -23,7 +29,7 @@ Currently, it's all or nothing - global signer lists and regular keys can do all
 
 This standard formalizes those transaction-type permissions, and also adds more granular permission options.
 
-### 1.1. Background: Integer Types
+### 3.1. Background: Integer Types
 
 An [integer](https://www.techtarget.com/whatis/definition/integer) is a whole number, a number with no decimals. It is usually shortened to `int` in programming languages.
 
@@ -59,31 +65,31 @@ The integer types that the XRPL supports are as follows:
 
 _The `sf` in the above table stands for "Serialized Field"._
 
-## 2. Permissions
+## 4. Permissions
 
 A permission is represented by a `UInt32`.
 
-### 2.1. Global Permission
+### 4.1. Global Permission
 
 The global permission value is already used in existing signer lists; they have a `SignerListID` value of `0`. This is being retroactively redefined to mean that the signer list has global permissions (i.e. can submit any transaction on behalf of an account).
 
 **`0`: all permissions**
 
-### 2.2. Transaction Type Permissions
+### 4.2. Transaction Type Permissions
 
 A transaction type is represented by a `UInt16`.
 
-Transaction type permissions were previously defined in [XLS-49](../XLS-0049-multiple-signer-lists/README.md), section `2.1.1`.
+Transaction type permissions were previously defined in [XLS-49](../XLS-0049-multiple-signer-lists/README.md), section `3.2.1`.
 
 **`1` to `65536` ($2^{16}$): all transaction types** (1 + their serialized value, which is represented by a `UInt16`)
 
 Adding a new transaction type to the XRPL will automatically be supported by any feature that uses these permissions.
 
-#### 2.2.1. `Batch` Transactions
+#### 4.2.1. `Batch` Transactions
 
 The one exception to this rule is `Batch` transactions ([XLS-56](../XLS-0056-batch/README.md)). They will not have a separate permission, since `Batch` transactions on their own do not do anything. In order to execute a `Batch` transaction with a permission, the user will need to have permissions for all the inner transactions.
 
-### 2.3. Granular Permissions
+### 4.3. Granular Permissions
 
 These permissions would support control over some smaller portion of a transaction, rather than being able to do all of the functionality that the transaction allows.
 
@@ -104,7 +110,7 @@ We are able to include these permissions because of the gap between the size of 
 | `65547` | `MPTokenIssuanceLock`    | Use the `MPTIssuanceSet` transaction to lock (freeze) a holder.            |
 | `65548` | `MPTokenIssuanceUnlock`  | Use the `MPTIssuanceSet` transaction to unlock (unfreeze) a holder.        |
 
-### 2.4. Adding Additional Granular Types
+### 4.4. Adding Additional Granular Types
 
 Many other granular permissions may be added. There is capacity for a total of 4,294,901,759 granular permissions, given the limits of the size of the `UInt32` vs. the size of the `UInt16` (for transaction types).
 
@@ -113,13 +119,19 @@ Some other potential examples include:
 - `SponsorFee` - the ability to sponsor the fee of another account (from [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md))
 - `SponsorReserve` - the ability to sponsor the fee of another account/object (from [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md))
 
-#### 2.4.1. Limitations
+#### 4.4.1. Limitations
 
 The set of permissions must be hard-coded. No custom configurations are allowed. For example, we cannot add permissions based on specific currencies - the best you could theoretically do on that front is XRP vs. issued currency.
 
 In addition, each permission needs to be implemented on its own in the source code, so adding a new permission requires an amendment.
 
-## 3. Security
+## 5. Rationale
+
+This XLS defines a shared `UInt32` namespace for account permissions so that multiple features (such as multiple signer lists, delegation, or other future mechanisms) can rely on a consistent set of values. Mapping the global permission to `0`, transaction-type permissions to `1 + TxType`, and granular permissions to higher values uses the gap between the `UInt16` transaction type space and the `UInt32` size of `SignerListID` efficiently while keeping the scheme easy to reason about.
+
+Alternative approaches, such as defining separate permission spaces for each feature or using feature-specific bitmasks, were rejected because they would fragment the permission model and make interoperability between features more difficult.
+
+## 6. Security Considerations
 
 Giving permissions to other parties requires a high degree of trust, especially when the delegated account can potentially access funds (the `Payment` permission) or charge reserves (any transaction that can create objects). In addition, any account that has permissions for the entire `AccountSet`, `SetRegularKey`, or `SignerListSet` transactions can give themselves any permissions even if this was not originally part of the intention.
 
