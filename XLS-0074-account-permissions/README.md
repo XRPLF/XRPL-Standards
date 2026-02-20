@@ -19,11 +19,11 @@ This document formalizes different types of transaction-based account permission
 
 Global signer lists and regular keys currently provide an all-or-nothing model of access control: any key or signer list that can sign for an account can submit all transaction types on its behalf. For many operational setups—for example, token issuers that want separate controls for minting, trustline management, and account configuration—this makes it hard to apply least-privilege practices and increases the blast radius of compromised keys.
 
-This XLS defines a shared, transaction-oriented account-permission namespace that other features can build on (such as multiple signer lists in [XLS-49](../XLS-0049-multiple-signer-lists/README.md) or future delegation mechanisms). By standardizing how permissions are represented, implementations can provide more granular, interoperable authorization schemes while preserving compatibility with existing global signer lists.
+This XLS defines a shared, transaction-oriented account-permission namespace that other features can build on, such as permission delegation in [XLS-75](../XLS-0075-permission-delegation/README.md) and multiple signer lists in [XLS-49](../XLS-0049-multiple-signer-lists/README.md). By standardizing how permissions are represented, implementations can provide more granular, interoperable authorization schemes while preserving compatibility with existing global signer lists.
 
 ## 3. Overview
 
-[XLS-49](../XLS-0049-multiple-signer-lists/README.md) proposed transaction-type-level permissions. These types of permissions can be used for multiple signer lists, as explained in XLS-49, but could also be used in conjunction with other features.
+This XLS introduces transaction-type-level permissions that can be used for multiple signer lists and other features which require fine-grained control over what transactions an account may authorize.
 
 Currently, it's all or nothing - global signer lists and regular keys can do all transactions. Sometimes you want to provide an account permissions to a subset of features, like with `NFTokenMinter` - maybe a few transaction types (e.g. all AMM transaction), or a single transaction type (e.g. `NFTokenMint`), or even some portion of a transaction type (e.g. authorizing trustlines).
 
@@ -79,7 +79,7 @@ The global permission value is already used in existing signer lists; they have 
 
 A transaction type is represented by a `UInt16`.
 
-Transaction type permissions were previously defined in [XLS-49](../XLS-0049-multiple-signer-lists/README.md), section `3.2.1`.
+In this scheme, each transaction type is assigned a corresponding permission value derived from its serialized transaction type identifier.
 
 **`1` to `65536` ($2^{16}$): all transaction types** (1 + their serialized value, which is represented by a `UInt16`)
 
