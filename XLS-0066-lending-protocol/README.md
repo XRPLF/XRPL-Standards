@@ -214,7 +214,25 @@ _TBD_
 
 #### 3.1.9 Example JSON
 
-_TBD_
+```json
+{
+  "LedgerEntryType": "LoanBroker",
+  "Flags": 0,
+  "PreviousTxnID": "6FCDB5135BBEA61BC2A2B07013CB9EB3015684D4536195A85D847370DECF8D0A",
+  "PreviousTxnLgrSeq": 3964034,
+  "Sequence": 3964022,
+  "LoanSequence": 2,
+  "OwnerNode": "0",
+  "VaultNode": "0",
+  "VaultID": "4AF1FD30BFAB1CDF10CF6783B37BA96873CBB7C4CE5DDFC89D9B8DB50BD29F54",
+  "Account": "rhYWLRMWzrdSM5U2jPArbpH8kPuyVuWze4",
+  "Owner": "rDNs1puRWQh4ezekGfVmtoEHAJ6fWbqCEA",
+  "OwnerCount": 1,
+  "DebtTotal": "1000.003710049006",
+  "CoverAvailable": "500",
+  "index": "18D3057DC8297940B1790354455A9108BA15760B3FBD85748137751FB781C311"
+}
+```
 
 #### 3.1.10 Accounting
 
@@ -502,7 +520,30 @@ _TBD_
 
 #### 3.2.8 Example JSON
 
-_TBD_
+```json
+{
+  "LedgerEntryType": "Loan",
+  "Flags": 0,
+  "PreviousTxnID": "6FCDB5135BBEA61BC2A2B07013CB9EB3015684D4536195A85D847370DECF8D0A",
+  "PreviousTxnLgrSeq": 3964034,
+  "LoanSequence": 1,
+  "OwnerNode": "0",
+  "LoanBrokerNode": "0",
+  "LoanBrokerID": "18D3057DC8297940B1790354455A9108BA15760B3FBD85748137751FB781C311",
+  "Borrower": "rEjXbJh2hwn2SVME1EvdCiH6TnU5TEpvf",
+  "InterestRate": 500,
+  "StartDate": 825161902,
+  "PaymentInterval": 3600,
+  "GracePeriod": 60,
+  "NextPaymentDueDate": 825165502,
+  "PaymentRemaining": 12,
+  "TotalValueOutstanding": "1000.003710049006",
+  "PrincipalOutstanding": "1000",
+  "PeriodicPayment": "83.33364250408379297",
+  "LoanScale": -12,
+  "index": "A85F331533BFD21557C30F92DC3432BDEBEC85436A937C41FFCBB21EA9C07AED"
+}
+```
 
 #### 3.2.9 Loan Total Value
 
@@ -621,7 +662,21 @@ This transaction uses the standard transaction fee.
 
 #### 3.3.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanBrokerSet",
+  "Account": "rDNs1puRWQh4ezekGfVmtoEHAJ6fWbqCEA",
+  "VaultID": "4AF1FD30BFAB1CDF10CF6783B37BA96873CBB7C4CE5DDFC89D9B8DB50BD29F54",
+  "Flags": 0,
+  "Data": "48656C6C6F20576F726C64",
+  "ManagementFeeRate": 0,
+  "DebtMaximum": "0",
+  "CoverRateMinimum": 0,
+  "CoverRateLiquidation": 0,
+  "Fee": "1",
+  "Sequence": 3964022
+}
+```
 
 ### 3.4. Transaction: `LoanBrokerDelete`
 
@@ -688,7 +743,15 @@ This transaction uses the standard transaction fee.
 
 #### 3.4.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanBrokerDelete",
+  "Account": "rDNs1puRWQh4ezekGfVmtoEHAJ6fWbqCEA",
+  "LoanBrokerID": "18D3057DC8297940B1790354455A9108BA15760B3FBD85748137751FB781C311",
+  "Fee": "1",
+  "Sequence": 3964023
+}
+```
 
 ### 3.5. Transaction: `LoanBrokerCoverDeposit`
 
@@ -756,7 +819,20 @@ This transaction uses the standard transaction fee.
 
 #### 3.5.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanBrokerCoverDeposit",
+  "Account": "rMXpwfCWRGe8L9MCmF1zur9JRKzEJUNFBZ",
+  "LoanBrokerID": "A9470DEFB52F18D1A11C2208D366D575EB4DE5A5D202AFED812F09FDA5B8D614",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "r9mLxFVg2C6vyEeUYuUe4xfibfsM9imY4B",
+    "value": "500"
+  },
+  "Fee": "1",
+  "Sequence": 3964249
+}
+```
 
 ### 3.6. Transaction: `LoanBrokerCoverWithdraw`
 
@@ -841,7 +917,20 @@ This transaction uses the standard transaction fee.
 
 #### 3.6.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanBrokerCoverWithdraw",
+  "Account": "rMXpwfCWRGe8L9MCmF1zur9JRKzEJUNFBZ",
+  "LoanBrokerID": "A9470DEFB52F18D1A11C2208D366D575EB4DE5A5D202AFED812F09FDA5B8D614",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "r9mLxFVg2C6vyEeUYuUe4xfibfsM9imY4B",
+    "value": "250"
+  },
+  "Fee": "1",
+  "Sequence": 3964250
+}
+```
 
 ### 3.7. Transaction: `LoanBrokerCoverClawback`
 
@@ -913,7 +1002,20 @@ This transaction uses the standard transaction fee.
 
 #### 3.7.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanBrokerCoverClawback",
+  "Account": "r9mLxFVg2C6vyEeUYuUe4xfibfsM9imY4B",
+  "LoanBrokerID": "A9470DEFB52F18D1A11C2208D366D575EB4DE5A5D202AFED812F09FDA5B8D614",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "r9mLxFVg2C6vyEeUYuUe4xfibfsM9imY4B",
+    "value": "100"
+  },
+  "Fee": "1",
+  "Sequence": 3964251
+}
+```
 
 ### 3.8. Transaction: `LoanSet`
 
@@ -1093,7 +1195,34 @@ The account specified in the `Account` field pays the transaction fee.
 
 #### 3.8.8 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanSet",
+  "Account": "rMXpwfCWRGe8L9MCmF1zur9JRKzEJUNFBZ",
+  "LoanBrokerID": "A9470DEFB52F18D1A11C2208D366D575EB4DE5A5D202AFED812F09FDA5B8D614",
+  "Flags": 0,
+  "Counterparty": "rEY12QsZrCoCPJuRiVz2XDWdmFDXhwH8Ws",
+  "CounterpartySignature": {
+    "SigningPubKey": "EDB2CB4FD3790665A84D241E4441483AFE51AFD1FF41338CC5FE541A36D8E251F...",
+    "TxnSignature": "02EB0F64F1CBCCF552D4F012AB41BC5C41C2E6CDD8D699AD533A4CD8A98041112..."
+  },
+  "LoanOriginationFee": "0",
+  "LoanServiceFee": "0",
+  "LatePaymentFee": "0",
+  "ClosePaymentFee": "0",
+  "OverpaymentFee": 0,
+  "InterestRate": 500,
+  "LateInterestRate": 0,
+  "CloseInterestRate": 0,
+  "OverpaymentInterestRate": 0,
+  "PrincipalRequested": "1000",
+  "PaymentTotal": 12,
+  "PaymentInterval": 3600,
+  "GracePeriod": 60,
+  "Fee": "2",
+  "Sequence": 3964250
+}
+```
 
 ### 3.9. Transaction: `LoanDelete`
 
@@ -1138,7 +1267,15 @@ This transaction uses the standard transaction fee.
 
 #### 3.9.6 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanDelete",
+  "Account": "rEY12QsZrCoCPJuRiVz2XDWdmFDXhwH8Ws",
+  "LoanID": "4879266F80767AEB8BC899AC98CA85C74563647F71E974ACC6207102EC629587",
+  "Fee": "1",
+  "Sequence": 3964247
+}
+```
 
 ### 3.10. Transaction: `LoanManage`
 
@@ -1240,7 +1377,16 @@ This transaction uses the standard transaction fee.
 
 #### 3.10.7 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanManage",
+  "Account": "rMXpwfCWRGe8L9MCmF1zur9JRKzEJUNFBZ",
+  "LoanID": "4879266F80767AEB8BC899AC98CA85C74563647F71E974ACC6207102EC629587",
+  "Flags": 65536,
+  "Fee": "1",
+  "Sequence": 3964251
+}
+```
 
 ### 3.11. Transaction: `LoanPay`
 
@@ -1388,7 +1534,21 @@ These transfers are performed according to the asset type:
 
 #### 3.11.7 Example JSON
 
-_TBD_
+```json
+{
+  "TransactionType": "LoanPay",
+  "Account": "rEY12QsZrCoCPJuRiVz2XDWdmFDXhwH8Ws",
+  "LoanID": "4879266F80767AEB8BC899AC98CA85C74563647F71E974ACC6207102EC629587",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "r9mLxFVg2C6vyEeUYuUe4xfibfsM9imY4B",
+    "value": "100"
+  },
+  "Flags": 0,
+  "Fee": "24",
+  "Sequence": 3964246
+}
+```
 
 ## 4. Rationale
 
