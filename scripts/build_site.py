@@ -120,11 +120,15 @@ def build_site():
         )
 
         # /xls/ alias: /xls/xls-<number>.html
-        redirect_xls_path = site_dir / "xls" / f"xls-{doc.number}.html"
-        with open(redirect_xls_path, "w", encoding="utf-8") as f:
-            f.write(redirect_html)
+        def add_redirect(redirect_url, target_url):
+            redirect_xls_path = site_dir / "xls" / redirect_url
+            with open(redirect_xls_path, "w", encoding="utf-8") as f:
+                f.write(redirect_html)
 
-        print(f"Generated redirect: {redirect_xls_path} -> {target_url}")
+            print(f"Generated redirect: {redirect_xls_path} -> {target_url}")
+
+        add_redirect(f"xls-{doc.number}.html", target_url)
+        add_redirect(f"xls-{doc.raw_number}.html", target_url)
 
     # Group documents by category for category pages and navigation
     categories = {}
