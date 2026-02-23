@@ -144,13 +144,11 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ## 3. Specification
 
-### 3.1. Ledger Entries
-
-#### 3.1.1. LoanBroker Ledger Entry
+### 3.1. Ledger Entry: `LoanBroker`
 
 The `LoanBroker` object captures attributes of the Lending Protocol.
 
-##### 3.1.1.1 Object Identifier
+#### 3.1.1 Object Identifier
 
 The key of the `LoanBroker` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
@@ -158,38 +156,34 @@ The key of the `LoanBroker` object is the result of [`SHA512-Half`](https://xrpl
 - The `AccountID`(<https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields>) of the account submitting the `LoanBrokerSet` transaction, i.e. `Lender`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
-##### 3.1.1.2 Fields
+#### 3.1.2 Fields
 
 The `LoanBroker` object has the following fields:
 
-| Field Name             | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                  |
-| ---------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `LedgerEntryType`      |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                          |
-| `LedgerIndex`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                    |
-| `Flags`                |      `Yes`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                         |
-| `PreviousTxnID`        |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                    |
-| `PreviousTxnLgrSeq`    |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                        |
-| `Sequence`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
-| `LoanSequence`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |       1       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                           |
-| `OwnerNode`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
-| `VaultNode`            |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's \_pseudo-account\* owner's directory.                                                                                                       |
-| `VaultID`              |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
-| `Account`              |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
-| `Owner`                |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
-| `Data`                 |      `Yes`       |   `No`    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
-| `ManagementFeeRate`    |       `No`       |   `Yes`   |                    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                 |
-| `OwnerCount`           |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                       |
-| `DebtTotal`            |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
-| `DebtMaximum`          |      `Yes`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
-| `CoverAvailable`       |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
-| `CoverRateMinimum`     |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
-| `CoverRateLiquidation` |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
+| Field Name             | Constant | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                  |
+| ---------------------- | :------: | :------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LedgerEntryType`      |   Yes    |   Yes    | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                          |
+| `LedgerIndex`          |   Yes    |   Yes    | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                    |
+| `Flags`                |    No    |   Yes    | `number`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                         |
+| `PreviousTxnID`        |    No    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                    |
+| `PreviousTxnLgrSeq`    |    No    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                        |
+| `Sequence`             |   Yes    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
+| `LoanSequence`         |    No    |   Yes    | `number`  |   `UINT32`    |       1       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                           |
+| `OwnerNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
+| `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's \_pseudo-account\* owner's directory.                                                                                                       |
+| `VaultID`              |   Yes    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
+| `Account`              |   Yes    |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
+| `Owner`                |   Yes    |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
+| `Data`                 |    No    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
+| `ManagementFeeRate`    |   Yes    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                 |
+| `OwnerCount`           |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                       |
+| `DebtTotal`            |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
+| `DebtMaximum`          |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
+| `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
+| `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
+| `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
-##### 3.1.1.3 `LoanBroker` _pseudo-account_
-
-The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
-
-##### 3.1.1.4 Ownership
+#### 3.1.3 Ownership
 
 The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the `Vault` _`pseudo-account`_. The `_pseudo_account_` `OwnerDirectory` page is captured by the `VaultNode` field.
 
@@ -198,11 +192,31 @@ The `RootIndex` of the `DirectoryNode` object is the result of [`SHA512-Half`](h
 - The `OwnerDirectory` space key `0x004F`
 - The `LoanBrokerID`
 
-##### 3.1.1.5 Reserves
+#### 3.1.4 Reserves
 
 The `LoanBroker` object costs two owner reserve for the account creating it.
 
-##### 3.1.1.6 Accounting
+#### 3.1.5 Deletion
+
+_TBD_
+
+#### 3.1.6 Pseudo-Account
+
+The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
+
+#### 3.1.7 Freeze/Lock
+
+_TBD_
+
+#### 3.1.8 Invariants
+
+_TBD_
+
+#### 3.1.9 Example JSON
+
+_TBD_
+
+#### 3.1.10 Accounting
 
 The Lending Protocol tracks the funds owed to the associated Vault in the `DebtTotal` attribute. It captures the principal amount taken from the Vault and the interest due, excluding all fees. The `DebtMaximum` attribute controls the maximum debt a Lending Protocol may incur. Whenever the Lender issues a Loan, `DebtTotal` is incremented by the Loan principal and interest, excluding fees. When $DebtTotal \geq DebtMaximum$, the Lender cannot issue new loans until some of the debt is cleared. Furthermore, the Lender may not issue a loan that would cause the `DebtTotal` to exceed `DebtMaximum`.
 
@@ -310,7 +324,7 @@ DebtTotal   = DebtTotal - PaymentPrincipalAmount - (PaymentInterestPortion - (Pa
 
 ```
 
-##### 3.1.1.7 First-Loss Capital
+#### 3.1.11 First-Loss Capital
 
 The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default by absorbing some of the loss. The following parameters control this mechanism:
 
@@ -389,11 +403,11 @@ CoverAvailable  = CoverAvailable - DefaultCovered
                 = 989.1 Tokens
 ```
 
-#### 3.1.2. `Loan` Ledger Entry
+### 3.2. Ledger Entry: `Loan`
 
 A Loan ledger entry captures various Loan terms on-chain. It is an agreement between the Borrower and the loan issuer.
 
-##### 3.1.2.1 Object Identifier
+#### 3.2.1 Object Identifier
 
 The `LoanID` is calculated as follows:
 
@@ -402,42 +416,62 @@ The `LoanID` is calculated as follows:
   - The `LoanBrokerID` of the associated `LoanBroker` object.
   - The `LoanSequence` of the `LoanBroker` object.
 
-##### 3.1.2.2 Fields
+#### 3.2.2 Fields
 
-| Field Name                 | User Modifiable? | Constant? |     Required?      | JSON Type | Internal Type |                                   Default Value                                   | Description                                                                                                                                                           |
-| -------------------------- | :--------------: | :-------: | :----------------: | :-------: | :-----------: | :-------------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                                     `0x0089`                                      | Ledger object type.                                                                                                                                                   |
-| `LedgerIndex`              |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `UINT16`    |                                       `N/A`                                       | Ledger object identifier.                                                                                                                                             |
-| `Flags`                    |      `Yes`       |   `No`    |                    | `number`  |   `UINT32`    |                                         0                                         | Ledger object flags.                                                                                                                                                  |
-| `PreviousTxnID`            |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the transaction that last modified this object.                                                                                                             |
-| `PreviousTxnLgrSeq`        |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The ledger sequence containing the transaction that last modified this object.                                                                                        |
-| `LoanSequence`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The sequence number of the Loan.                                                                                                                                      |
-| `OwnerNode`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                                |
-| `LoanBrokerNode`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                               |
-| `LoanBrokerID`             |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                        |
-| `Borrower`                 |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |  `AccountID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                                      |
-| `LoanOriginationFee`       |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                       |
-| `LoanServiceFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                        |
-| `LatePaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                         |
-| `ClosePaymentFee`          |       `No`       |   `Yes`   | :heavy_check_mark: | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a full payment is made.                                                                                    |
-| `OverpaymentFee`           |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                                     |
-| `InterestRate`             |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Annualized interest rate of the Loan in 1/10th basis points.                                                                                                          |
-| `LateInterestRate`         |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                         |
-| `CloseInterestRate`        |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                              |
-| `OverpaymentInterestRate`  |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                          |
-| `StartDate`                |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                             `CurrentLedgerTimestamp`                              | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                        |
-| `PaymentInterval`          |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | Number of seconds between Loan payments.                                                                                                                              |
-| `GracePeriod`              |       `No`       |   `Yes`   | :heavy_check_mark: | `number`  |   `UINT32`    |                                       `N/A`                                       | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                               |
-| `PreviousPaymentDueDate`   |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
-| `NextPaymentDueDate`       |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                   `LoanSet.StartDate + LoanSet.PaymentInterval`                   | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).              |
-| `PaymentRemaining`         |       `No`       |   `No`    | :heavy_check_mark: | `number`  |   `UINT32`    |                              `LoanSet.PaymentTotal`                               | The number of payments remaining on the Loan.                                                                                                                         |
-| `TotalValueOutstanding`    |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |                             `TotalValueOutstanding()`                             | The total outstanding value of the Loan, including all fees and interest.                                                                                             |
-| `PrincipalOutstanding`     |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |                           `LoanSet.PrincipalRequested`                            | The principal amount that the Borrower still owes.                                                                                                                    |
-| `ManagementFeeOutstanding` |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    | `(TotalValueOutstanding() - PrincipalOutstanding) x LoanBroker.ManagementFeeRate` | The remaining Management Fee owed to the LoanBroker.                                                                                                                  |
-| `PeriodicPayment`          |       `No`       |   `No`    | :heavy_check_mark: | `string`  |   `NUMBER`    |                              `LoanPeriodicPayment()`                              | The calculated periodic payment amount for each payment interval.                                                                                                     |
-| `LoanScale`                |       `No`       |   `Yes`   |                    | `number`  |    `INT32`    |                                `LoanTotalValue()`                                 | The scale factor that ensures all computed amounts are rounded to the same number of decimal places. It is determined based on the total loan value at creation time. |
+| Field Name                 | Constant | Required | JSON Type | Internal Type |                                   Default Value                                   | Description                                                                                                                                                           |
+| -------------------------- | :------: | :------: | :-------: | :-----------: | :-------------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`          |   Yes    |   Yes    | `string`  |   `UINT16`    |                                     `0x0089`                                      | Ledger object type.                                                                                                                                                   |
+| `LedgerIndex`              |   Yes    |   Yes    | `string`  |   `UINT16`    |                                       `N/A`                                       | Ledger object identifier.                                                                                                                                             |
+| `Flags`                    |    No    |    No    | `number`  |   `UINT32`    |                                         0                                         | Ledger object flags.                                                                                                                                                  |
+| `PreviousTxnID`            |    No    |   Yes    | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the transaction that last modified this object.                                                                                                             |
+| `PreviousTxnLgrSeq`        |    No    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | The ledger sequence containing the transaction that last modified this object.                                                                                        |
+| `LoanSequence`             |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | The sequence number of the Loan.                                                                                                                                      |
+| `OwnerNode`                |   Yes    |   Yes    | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                                |
+| `LoanBrokerNode`           |   Yes    |   Yes    | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                               |
+| `LoanBrokerID`             |   Yes    |   Yes    | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                        |
+| `Borrower`                 |   Yes    |   Yes    | `string`  |  `AccountID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                                      |
+| `LoanOriginationFee`       |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                       |
+| `LoanServiceFee`           |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                        |
+| `LatePaymentFee`           |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                         |
+| `ClosePaymentFee`          |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a full payment is made.                                                                                    |
+| `OverpaymentFee`           |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                                     |
+| `InterestRate`             |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | Annualized interest rate of the Loan in 1/10th basis points.                                                                                                          |
+| `LateInterestRate`         |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | A premium is added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                         |
+| `CloseInterestRate`        |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                              |
+| `OverpaymentInterestRate`  |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                                          |
+| `StartDate`                |   Yes    |   Yes    | `number`  |   `UINT32`    |                             `CurrentLedgerTimestamp`                              | The timestamp of when the Loan started [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).                        |
+| `PaymentInterval`          |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | Number of seconds between Loan payments.                                                                                                                              |
+| `GracePeriod`              |   Yes    |   Yes    | `number`  |   `UINT32`    |                                       `N/A`                                       | The number of seconds after the Loan's Payment Due Date that the Loan can be Defaulted.                                                                               |
+| `PreviousPaymentDueDate`   |    No    |   Yes    | `number`  |   `UINT32`    |                                        `0`                                        | The timestamp of when the previous payment was made in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).        |
+| `NextPaymentDueDate`       |    No    |   Yes    | `number`  |   `UINT32`    |                   `LoanSet.StartDate + LoanSet.PaymentInterval`                   | The timestamp of when the next payment is due in [Ripple Epoch](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#specifying-time).              |
+| `PaymentRemaining`         |    No    |   Yes    | `number`  |   `UINT32`    |                              `LoanSet.PaymentTotal`                               | The number of payments remaining on the Loan.                                                                                                                         |
+| `TotalValueOutstanding`    |    No    |   Yes    | `string`  |   `NUMBER`    |                             `TotalValueOutstanding()`                             | The total outstanding value of the Loan, including all fees and interest.                                                                                             |
+| `PrincipalOutstanding`     |    No    |   Yes    | `string`  |   `NUMBER`    |                           `LoanSet.PrincipalRequested`                            | The principal amount that the Borrower still owes.                                                                                                                    |
+| `ManagementFeeOutstanding` |    No    |   Yes    | `string`  |   `NUMBER`    | `(TotalValueOutstanding() - PrincipalOutstanding) x LoanBroker.ManagementFeeRate` | The remaining Management Fee owed to the LoanBroker.                                                                                                                  |
+| `PeriodicPayment`          |    No    |   Yes    | `string`  |   `NUMBER`    |                              `LoanPeriodicPayment()`                              | The calculated periodic payment amount for each payment interval.                                                                                                     |
+| `LoanScale`                |   Yes    |    No    | `number`  |    `INT32`    |                                `LoanTotalValue()`                                 | The scale factor that ensures all computed amounts are rounded to the same number of decimal places. It is determined based on the total loan value at creation time. |
 
-###### 3.1.2.2.1 Flags
+##### 3.2.2.1 TotalValueOutstanding
+
+The total outstanding value of the Loan, including management fee charged against the interest.
+
+##### 3.2.2.2 PrincipalOutstanding
+
+The principal amount that the Borrower still owes. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
+
+##### 3.2.2.3 ManagementFeeOutstanding
+
+The remaining Management Fee owed to the LoanBroker. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
+
+##### 3.2.2.4 TotalInterestOutstanding
+
+TotalInterestOutstanding represents the interest amount due from the Borrower. This value is not stored explicitly but is derived using the following formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
+
+##### 3.2.2.5 PeriodicPayment
+
+The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `11` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
+
+#### 3.2.3 Flags
 
 The `Loan` object supports the following flags:
 
@@ -447,38 +481,30 @@ The `Loan` object supports the following flags:
 | `lsfLoanImpaired`    | `0x00020000` |    `Yes`    |      If set, indicates that the Loan is impaired.      |
 | `lsfLoanOverpayment` | `0x00040000` |    `No`     | If set, indicates that the Loan supports overpayments. |
 
-###### 3.1.2.2.2 TotalValueOutstanding
-
-The total outstanding value of the Loan, including management fee charged against the interest.
-
-###### 3.1.2.2.3 PrincipalOutstanding
-
-The principal amount that the Borrower still owes. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
-
-###### 3.1.2.2.4 ManagementFeeOutstanding
-
-The remaining Management Fee owed to the LoanBroker. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
-
-###### 3.1.2.2.5 TotalInterestOutstanding
-
-TotalInterestOutstanding represents the interest amount due from the Borrower. This value is not stored explicitly but is derived using the following formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
-
-###### 3.1.2.2.6 PeriodicPayment
-
-The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `11` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
-
-##### 3.1.2.3 Ownership
+#### 3.2.4 Ownership
 
 The `Loan` objects are stored in the ledger and tracked in two [Owner Directories](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode).
 
 - The `OwnerNode` is the `Owner Directory` of the `Borrower` who is the main `Owner` of the `Loan` object, and therefore is responsible for the owner reserve.
 - The `LoanBrokerNode` is the `Owner Directory` for the `LoanBroker` _pseudo-account_ to track all loans associated with the same `LoanBroker` object.
 
-##### 3.1.2.4 Reserves
+#### 3.2.5 Reserves
 
 The `Loan` object costs one owner reserve for the `Borrower`.
 
-##### 3.1.2.5 Loan Total Value
+#### 3.2.6 Deletion
+
+_TBD_
+
+#### 3.2.7 Invariants
+
+_TBD_
+
+#### 3.2.8 Example JSON
+
+_TBD_
+
+#### 3.2.9 Loan Total Value
 
 The loan's financial state is tracked through three key components:
 
@@ -504,402 +530,428 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 **Late Payment Interest Treatment**: Late payment penalties and additional interest charges are calculated and collected separately from the core loan value. These charges do not modify the `TotalValueOutstanding` calculation, which remains anchored to the original scheduled payment terms.
 
-##### 3.1.2.6 Impairment
+#### 3.2.10 Impairment
 
 When the Loan Broker discovers that the Borower cannot make an upcoming payment, impairment allows the Loan Broker to register a "paper loss" with the Vault. The impairment mechanism moves the Next Payment Due Date to the time the Loan was impaired, allowing to default the Loan more quickly. However, if the Borrower makes a payment, the impairment status is automatically cleared.
 
-### 3.2. Transactions
-
-#### 3.2.1. `LoanBroker` Transactions
-
-In this section we specify the transactions associated with the `LoanBroker` ledger entry.
-
-##### 3.2.1.1 `LoanBrokerSet`
+### 3.3. Transaction: `LoanBrokerSet`
 
 The transaction creates a new `LoanBroker` object or updates an existing one.
 
-| Field Name             |     Required?      | Modifiable? | JSON Type | Internal Type | Default Value | Description                                                                                                                                        |
-| ---------------------- | :----------------: | :---------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`      | :heavy_check_mark: |    `No`     | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
-| `VaultID`              | :heavy_check_mark: |    `No`     | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity.                                                                               |
-| `LoanBrokerID`         |                    |    `No`     | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
-| `Flags`                |                    |    `Yes`    | `number`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
-| `Data`                 |                    |    `Yes`    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
-| `ManagementFeeRate`    |                    |    `No`     | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
-| `DebtMaximum`          |                    |    `Yes`    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
-| `CoverRateMinimum`     |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
-| `CoverRateLiquidation` |                    |    `No`     | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+#### 3.3.1 Fields
 
-###### 3.2.1.1.1 Failure Conditions
+| Field Name             | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                        |
+| ---------------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`      |   Yes    | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
+| `VaultID`              |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity.                                                                               |
+| `LoanBrokerID`         |    No    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
+| `Flags`                |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
+| `Data`                 |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
+| `ManagementFeeRate`    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
+| `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
+| `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
-**General Field Validation:**
+#### 3.3.2 Transaction Fee
 
-- `VaultID` is zero.
-- `Data` field is present, non-empty, and exceeds 256 bytes.
-- `ManagementFeeRate` is outside valid range (0 to 10000).
-- `CoverRateMinimum` is outside valid range (0 to 100000).
-- `CoverRateLiquidation` is outside valid range (0 to 100000).
-- `DebtMaximum` is negative or exceeds maximum allowed value.
-- One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
+This transaction uses the standard transaction fee.
 
-**If `LoanBrokerID` is not specified (creating new):**
+#### 3.3.3 Failure Conditions
 
-- `Vault` object with the specified `VaultID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
-- Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues).
-- The Vault _pseudo-account_ is frozen for the `Vault.Asset`.
-- The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves).
+##### 3.3.3.1 Data Verification
 
-**If `LoanBrokerID` is specified (modifying existing):**
+1. `VaultID` is zero.
+2. `Data` field is present, non-empty, and exceeds 256 bytes.
+3. `ManagementFeeRate` is outside valid range (0 to 10000).
+4. `CoverRateMinimum` is outside valid range (0 to 100000).
+5. `CoverRateLiquidation` is outside valid range (0 to 100000).
+6. `DebtMaximum` is negative or exceeds maximum allowed value.
+7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
+8. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT).
 
-- `LoanBrokerID` is zero.
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-- The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`.
-- The submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`).
-- `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`.
-
-**Precision Validation:**
-
-- Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT).
-
-###### 3.2.1.1.2 State Changes
+##### 3.3.3.2 Protocol-Level Failures
 
 **If `LoanBrokerID` is not specified (creating new):**
 
-- Create `LoanBroker` ledger object
-
-- Create pseudo-account `AccountRoot` for the `LoanBroker`:
-  - Set `AccountRoot.LoanBrokerID` to the new `LoanBrokerID`
-
-- Add asset holding for the `pseudo-account`:
-  - If the `Vault(VaultID).Asset` is an `IOU`:
-    - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
-  - If the `Vault(VaultID).Asset` is an `MPT`:
-    - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
-
-- Directory linking:
-  - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account (sets `OwnerNode`).
-  - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's _pseudo-account_ (sets `VaultNode`).
-
-- Update submitting account:
-  - Increment the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
+1. `Vault` object with the specified `VaultID` does not exist on the ledger.
+2. The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
+3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues).
+4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`.
+5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves).
 
 **If `LoanBrokerID` is specified (modifying existing):**
 
-- Update `LoanBroker.Data` if provided in the transaction.
-- Update `LoanBroker.DebtMaximum` if provided in the transaction.
+6. `LoanBrokerID` is zero.
+7. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+8. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+9. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`.
+10. The submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`).
+11. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`.
 
-###### 3.2.1.1.3 Invariants
+#### 3.3.4 State Changes
+
+**If `LoanBrokerID` is not specified (creating new):**
+
+1. Create `LoanBroker` ledger object.
+
+2. Create pseudo-account `AccountRoot` for the `LoanBroker`:
+   - Set `AccountRoot.LoanBrokerID` to the new `LoanBrokerID`.
+
+3. Add asset holding for the `pseudo-account`:
+   - If the `Vault(VaultID).Asset` is an `IOU`:
+     - Create a `RippleState` object between the `Issuer` and the `LoanBroker` _pseudo-account_.
+   - If the `Vault(VaultID).Asset` is an `MPT`:
+     - Create an `MPToken` object for the `LoanBroker` _pseudo-account_.
+
+4. Directory linking:
+   - Add `LoanBrokerID` to the `OwnerDirectory` of the submitting account (sets `OwnerNode`).
+   - Add `LoanBrokerID` to the `OwnerDirectory` of the Vault's _pseudo-account_ (sets `VaultNode`).
+
+5. Update submitting account:
+   - Increment the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
+
+**If `LoanBrokerID` is specified (modifying existing):**
+
+6. Update `LoanBroker.Data` if provided in the transaction.
+7. Update `LoanBroker.DebtMaximum` if provided in the transaction.
+
+#### 3.3.5 Invariants
 
 **TBD**
 
-##### 3.2.1.2 `LoanBrokerDelete`
+#### 3.3.6 Example JSON
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                          |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `75`      | The transaction type.                                |
-| `LoanBrokerID`    | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is deleting. |
+_TBD_
 
-###### 3.2.1.2.1 Failure Conditions
+### 3.4. Transaction: `LoanBrokerDelete`
 
-- `LoanBrokerID` is zero.
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-- `LoanBroker.OwnerCount != 0` (has outstanding loans).
-- `Vault(LoanBroker.VaultID)` does not exist.
-- `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`).
-- `LoanBroker.CoverAvailable > 0`:
-  - If `Vault.Asset` is an `IOU`:
-    - If Broker Owner is deep frozen for the `Vault.Asset`:
-      - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-    - The LoanBroker _pseudo-account_ `RippleState` balance is greater than zero.
-  - If `Vault.Asset` is an `MPT`:
-    - If Broker Owner is deep frozen for the `Vault.Asset`:
-      - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
-    - The LoanBroker _pseudo-account_ `MPToken.MPTAmount` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
-  - If the `Vault.Asset` is `XRP`:
-    - The LoanBroker _pseudo-account_ `AccountRoot.Balance` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
+#### 3.4.1 Fields
 
-###### 3.2.1.2.2 State Changes
+| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                          |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------------------- |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `75`      | The transaction type.                                |
+| `LoanBrokerID`    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is deleting. |
 
-- Remove `LoanBrokerID` from the `OwnerDirectory` of the submitting account (using `OwnerNode`).
-- Remove `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_ (using `VaultNode`).
-- Transfer `LoanBroker.CoverAvailable` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
-  - If `Vault.Asset` is `XRP`:
-    - Decrease the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
-    - Increase the `Balance` field of the submitting account `AccountRoot` by `CoverAvailable`.
+#### 3.4.2 Transaction Fee
 
-  - If `Vault.Asset` is an `IOU`:
-    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `CoverAvailable`.
-    - Increase the `RippleState` balance between the submitting account and the `Issuer` by `CoverAvailable`.
+This transaction uses the standard transaction fee.
 
-  - If `Vault.Asset` is an `MPT`:
-    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `CoverAvailable`.
-    - Increase the `MPToken.MPTAmount` of the submitting account `MPToken` object by `CoverAvailable`.
+#### 3.4.3 Failure Conditions
 
-- Remove the empty asset holding from the broker _pseudo-account_:
-  - If `Vault.Asset` is an `IOU`: Delete the `RippleState` object between the broker _pseudo-account_ and the `Issuer`.
-  - If `Vault.Asset` is an `MPT`: Delete the `MPToken` object for the broker _pseudo-account_.
+##### 3.4.3.1 Data Verification
 
-- Delete the `LoanBroker` _pseudo-account_ `AccountRoot` object.
-- Delete the `LoanBroker` ledger object.
-- Decrement the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
+1. `LoanBrokerID` is zero.
 
-###### 3.2.1.2.3 Invariants
+##### 3.4.3.2 Protocol-Level Failures
+
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+3. `LoanBroker.OwnerCount != 0` (has outstanding loans).
+4. `Vault(LoanBroker.VaultID)` does not exist.
+5. `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`).
+6. `LoanBroker.CoverAvailable > 0`:
+   - If `Vault.Asset` is an `IOU`:
+     - If Broker Owner is deep frozen for the `Vault.Asset`:
+       - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+     - The LoanBroker _pseudo-account_ `RippleState` balance is greater than zero.
+   - If `Vault.Asset` is an `MPT`:
+     - If Broker Owner is deep frozen for the `Vault.Asset`:
+       - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
+     - The LoanBroker _pseudo-account_ `MPToken.MPTAmount` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
+   - If the `Vault.Asset` is `XRP`:
+     - The LoanBroker _pseudo-account_ `AccountRoot.Balance` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
+
+#### 3.4.4 State Changes
+
+1. Remove `LoanBrokerID` from the `OwnerDirectory` of the submitting account (using `OwnerNode`).
+2. Remove `LoanBrokerID` from the `OwnerDirectory` of the Vault's _pseudo-account_ (using `VaultNode`).
+3. Transfer `LoanBroker.CoverAvailable` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
+   - If `Vault.Asset` is `XRP`:
+     - Decrease the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `CoverAvailable`.
+     - Increase the `Balance` field of the submitting account `AccountRoot` by `CoverAvailable`.
+   - If `Vault.Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `CoverAvailable`.
+     - Increase the `RippleState` balance between the submitting account and the `Issuer` by `CoverAvailable`.
+   - If `Vault.Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `CoverAvailable`.
+     - Increase the `MPToken.MPTAmount` of the submitting account `MPToken` object by `CoverAvailable`.
+4. Remove the empty asset holding from the broker _pseudo-account_:
+   - If `Vault.Asset` is an `IOU`: Delete the `RippleState` object between the broker _pseudo-account_ and the `Issuer`.
+   - If `Vault.Asset` is an `MPT`: Delete the `MPToken` object for the broker _pseudo-account_.
+5. Delete the `LoanBroker` _pseudo-account_ `AccountRoot` object.
+6. Delete the `LoanBroker` ledger object.
+7. Decrement the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
+
+#### 3.4.5 Invariants
 
 - If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
 
-##### 3.2.1.3 `LoanBrokerCoverDeposit`
+#### 3.4.6 Example JSON
+
+_TBD_
+
+### 3.5. Transaction: `LoanBrokerCoverDeposit`
 
 The transaction deposits First-Loss Capital into the `LoanBroker` object.
 
-| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                |
-| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `76`      | The transaction type.                                      |
-| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to which to deposit First-Loss Capital. |
-| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.                   |
+#### 3.5.1 Fields
 
-###### 3.2.1.3.1 Failure Conditions
+| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                |
+| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------- |
+| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `76`      | The transaction type.                                      |
+| `LoanBrokerID`    |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to which to deposit First-Loss Capital. |
+| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.                   |
 
-- `LoanBrokerID` is zero.
-- `Amount <= 0`.
-- `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+#### 3.5.2 Transaction Fee
 
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+This transaction uses the standard transaction fee.
 
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-- `Vault(LoanBroker.VaultID)` does not exist.
+#### 3.5.3 Failure Conditions
 
-- The asset is not transferable:
-  - If `Vault.Asset` is an `MPT`: The `MPTokenIssuance` does not have the `lsfMPTCanTransfer` flag set.
+##### 3.5.3.1 Data Verification
 
-- The submitting account is frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` object between the submitter and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+1. `LoanBrokerID` is zero.
+2. `Amount <= 0`.
+3. `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
 
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the submitter has the `lsfMPTLocked` flag set.
-    - The `MPTokenIssuance` has the `lsfMPTLocked` flag set.
+##### 3.5.3.2 Protocol-Level Failures
 
-- The broker _pseudo-account_ is deep frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` object between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set.
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+3. `Vault(LoanBroker.VaultID)` does not exist.
+4. The asset is not transferable:
+   - If `Vault.Asset` is an `MPT`: The `MPTokenIssuance` does not have the `lsfMPTCanTransfer` flag set.
+5. The submitting account is frozen for the asset:
+   - If `Vault.Asset` is an `IOU`:
+     - The `RippleState` object between the submitter and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+     - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+   - If `Vault.Asset` is an `MPT`:
+     - The `MPToken` object for the submitter has the `lsfMPTLocked` flag set.
+     - The `MPTokenIssuance` has the `lsfMPTLocked` flag set.
+6. The broker _pseudo-account_ is deep frozen for the asset:
+   - If `Vault.Asset` is an `IOU`:
+     - The `RippleState` object between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+   - If `Vault.Asset` is an `MPT`:
+     - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set.
+7. The submitting account is not authorized for the asset.
+8. The submitting account has insufficient funds to deposit the `Amount`.
 
-- The submitting account is not authorized for the asset.
-- The submitting account has insufficient funds to deposit the `Amount`.
+#### 3.5.4 State Changes
 
-###### 3.2.1.3.2 State Changes
+1. Transfer `Amount` from the submitting account to the broker _pseudo-account_ (transfer fee waived):
+   - If `Vault.Asset` is `XRP`:
+     - Decrease the `Balance` field of the submitting account `AccountRoot` by `Amount`.
+     - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
+   - If `Vault.Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the submitting account and the `Issuer` by `Amount`.
+     - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `Amount`.
+   - If `Vault.Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` of the submitting account `MPToken` object by `Amount`.
+     - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `Amount`.
+2. Increase `LoanBroker.CoverAvailable` by `Amount`.
 
-- Transfer `Amount` from the submitting account to the broker _pseudo-account_ (transfer fee waived):
-  - If `Vault.Asset` is `XRP`:
-    - Decrease the `Balance` field of the submitting account `AccountRoot` by `Amount`.
-    - Increase the `Balance` field of the `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
-
-  - If `Vault.Asset` is an `IOU`:
-    - Decrease the `RippleState` balance between the submitting account and the `Issuer` by `Amount`.
-    - Increase the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `Amount`.
-
-  - If `Vault.Asset` is an `MPT`:
-    - Decrease the `MPToken.MPTAmount` of the submitting account `MPToken` object by `Amount`.
-    - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `Amount`.
-
-- Increase `LoanBroker.CoverAvailable` by `Amount`.
-
-###### 3.2.1.3.3 Invariants
+#### 3.5.5 Invariants
 
 **TBD**
 
-##### 3.2.1.4 `LoanBrokerCoverWithdraw`
+#### 3.5.6 Example JSON
+
+_TBD_
+
+### 3.6. Transaction: `LoanBrokerCoverWithdraw`
 
 The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from the `LoanBroker`.
 
-| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                  |
-| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                            |
-| `LoanBrokerID`    | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
-| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
-| `Destination`     |                    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
-| `DestinationTag`  |                    |                                                       `number`                                                       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
+#### 3.6.1 Fields
 
-###### 3.2.1.4.1 Failure Conditions
+| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                  |
+| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                            |
+| `LoanBrokerID`    |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
+| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
+| `Destination`     |    No    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
+| `DestinationTag`  |    No    |                                                       `number`                                                       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
 
-- `LoanBrokerID` is zero.
-- `Amount` is not a legal net amount.
-- `Destination` is specified and is zero.
-- `Destination` (or submitter if not specified) is a _pseudo-account_.
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-- `Vault(LoanBroker.VaultID)` does not exist.
-- `Amount.asset` does not match `Vault.Asset`.
-- The `Destination` account is specified and it does not have permission to receive the asset.
+#### 3.6.2 Transaction Fee
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-  - If the `Destination` field is not specified:
-    - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+This transaction uses the standard transaction fee.
 
-  - If the `Destination` field is specified:
-    - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
-    - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+#### 3.6.3 Failure Conditions
 
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+##### 3.6.3.1 Data Verification
 
-- If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-  - If the `Destination` field is not specified:
-    - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+1. `LoanBrokerID` is zero.
+2. `Amount` is not a legal net amount.
+3. `Destination` is specified and is zero.
+4. `Destination` (or submitter if not specified) is a _pseudo-account_.
+5. `Amount.asset` does not match `Vault.Asset`.
 
-  - If the `Destination` field specified:
-    - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
-    - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
+##### 3.6.3.2 Protocol-Level Failures
 
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set and `Destination` is not the `Issuer` of the asset.
-  - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set and `Destination` is not the `Issuer` of the asset (the asset is not transferable).
-  - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
+3. `Vault(LoanBroker.VaultID)` does not exist.
+4. The `Destination` account is specified and it does not have permission to receive the asset.
+5. If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
+   - If the `Destination` field is not specified:
+     - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+   - If the `Destination` field is specified:
+     - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
+     - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
+   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
+6. If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
+   - If the `Destination` field is not specified:
+     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
+   - If the `Destination` field specified:
+     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
+     - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
+   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set and `Destination` is not the `Issuer` of the asset.
+   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set and `Destination` is not the `Issuer` of the asset (the asset is not transferable).
+   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+7. The `LoanBroker.CoverAvailable` < `Amount`.
+8. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
 
-- The `LoanBroker.CoverAvailable` < `Amount`.
+#### 3.6.4 State Changes
 
-- `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+1. Decrease `LoanBroker.CoverAvailable` by `Amount`.
+2. Transfer `Amount` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
+   - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
+     - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
+     - If `Destination` field is not specified:
+       - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
+     - If `Destination` field is specified:
+       - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
+   - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+     - If `Destination` field is not specified:
+       - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+     - If `Destination` field is specified:
+       - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+   - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+     - If `Destination` field is not specified:
+       - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
+     - If `Destination` field is specified:
+       - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
 
-###### 3.2.1.4.2 State Changes
-
-- Decrease `LoanBroker.CoverAvailable` by `Amount`.
-
-- Transfer `Amount` from the broker _pseudo-account_ to the submitting account (transfer fee waived):
-  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is `XRP`:
-    - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `Amount`.
-    - If `Destination` field is not specified:
-      - Increase the `Balance` field of the submitter `AccountRoot` by `Amount`.
-
-    - If `Destination` field is specified:
-      - Increase the `Balance` field of the `Destination` `AccountRoot` by `Amount`.
-
-  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-    - If `Destination` field is not specified:
-      - Increase the `RippleState` balance between the submitter `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-    - If `Destination` field is specified:
-      - Increase the `RippleState` balance between the `Destination` `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-
-  - If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-    - Decrease the `MPToken.MPTAmount` by `Amount` of the `LoanBroker` _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-    - If `Destination` field is not specified:
-      - Increase the `MPToken.MPTAmount` by `Amount` of the submitter `MPToken` object for the `Vault.Asset`.
-
-    - If `Destination` field is specified:
-      - Increase the `MPToken.MPTAmount` by `Amount` of the `Destination` `MPToken` object for the `Vault.Asset`.
-
-###### 3.2.1.4.3 Invariants
+#### 3.6.5 Invariants
 
 **TBD**
 
-##### 3.2.1.5 `LoanBrokerCoverClawback`
+#### 3.6.6 Example JSON
+
+_TBD_
+
+### 3.7. Transaction: `LoanBrokerCoverClawback`
 
 The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from the `LoanBroker`. The transaction can only be submitted by the Issuer of the Loan asset. Furthermore, the transaction can only clawback funds up to the minimum cover required for the current loans.
 
-| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                                                                                                            |
-| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                                                                      |
-| `LoanBrokerID`    |                    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to clawback First-Loss Capital. Must be provided if the `Amount` is an MPT, or `Amount` is an IOU and `issuer` is specified as the `Account` submitting the transaction. |
-| `Amount`          |                    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.                                            |
+#### 3.7.1 Fields
 
-###### 3.2.1.5.1 Failure Conditions
+| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                                                                 |
+| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                           |
+| `LoanBrokerID`    |    No    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to clawback First-Loss Capital.                                                                                               |
+| `Amount`          |    No    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. |
 
-- Neither `LoanBrokerID` nor `Amount` are specified.
-- `LoanBrokerID` is specified and is zero.
-- `Amount` is specified and `Amount < 0`.
-- `Amount` specifies an XRP amount.
+##### 3.7.1.1 `LoanBrokerID`
 
-- If `LoanBrokerID` is not specified:
-  - `Amount` specifies an MPT.
-  - `Amount` specifies an IOU, and `Amount.issuer` is the submitter `Account` or zero.
-  - The `Account(Amount.issuer)` does not exist.
-  - The `Account(Amount.issuer)` exists but does not have `LoanBrokerID` set (not a LoanBroker _pseudo-account_). If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
+The `LoanBrokerID` field identifies the `LoanBroker` from which to clawback First-Loss Capital. It must be provided if the `Amount` is an MPT, or if `Amount` is an IOU and the `issuer` is specified as the `Account` submitting the transaction. If `LoanBrokerID` is not provided, it is derived from the `Amount.issuer` field by looking up the corresponding _pseudo-account_ and reading its `LoanBrokerID`.
 
-- `LoanBroker` object with the specified (or derived) `LoanBrokerID` does not exist on the ledger.
-- `Vault(LoanBroker.VaultID)` does not exist.
-- `Vault.Asset` is `XRP` (cannot clawback native asset).
-- The submitter is not the `Issuer` of the `Vault.Asset`.
+#### 3.7.2 Transaction Fee
 
-- If `Amount` is specified:
-  - `Amount.asset` does not match `Vault.Asset` (allowing `Amount.issuer` to be either the submitter or `LoanBroker.Account` for IOUs).
+This transaction uses the standard transaction fee.
 
-- If `Vault.Asset` is an `IOU`:
-  - The `AccountRoot` of the `Issuer` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
-  - The `AccountRoot` of the `Issuer` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+#### 3.7.3 Failure Conditions
 
-- If `Vault.Asset` is an `MPT`:
-  - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback).
+##### 3.7.3.1 Data Verification
 
-- `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum).
+1. Neither `LoanBrokerID` nor `Amount` are specified.
+2. `LoanBrokerID` is specified and is zero.
+3. `Amount` is specified and `Amount < 0`.
+4. `Amount` specifies an XRP amount.
 
-###### 3.2.1.5.2 State Changes
+##### 3.7.3.2 Protocol-Level Failures
 
-- Compute `LoanBrokerID`:
-  - If `LoanBrokerID` is specified, use that.
-  - Otherwise: `LoanBrokerID = Account(Amount.issuer).LoanBrokerID`.
+1. If `LoanBrokerID` is not specified:
+   - `Amount` specifies an MPT.
+   - `Amount` specifies an IOU, and `Amount.issuer` is the submitter `Account` or zero.
+   - The `Account(Amount.issuer)` does not exist.
+   - The `Account(Amount.issuer)` exists but does not have `LoanBrokerID` set (not a LoanBroker _pseudo-account_). If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
+2. `LoanBroker` object with the specified (or derived) `LoanBrokerID` does not exist on the ledger.
+3. `Vault(LoanBroker.VaultID)` does not exist.
+4. `Vault.Asset` is `XRP` (cannot clawback native asset).
+5. The submitter is not the `Issuer` of the `Vault.Asset`.
+6. If `Amount` is specified:
+   - `Amount.asset` does not match `Vault.Asset` (allowing `Amount.issuer` to be either the submitter or `LoanBroker.Account` for IOUs).
+7. If `Vault.Asset` is an `IOU`:
+   - The `AccountRoot` of the `Issuer` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+   - The `AccountRoot` of the `Issuer` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+8. If `Vault.Asset` is an `MPT`:
+   - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback).
+9. `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum).
 
-- Compute `ClawAmount`:
-  - If `Amount` is 0 or unset: `ClawAmount = LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum)`.
-  - Otherwise: `ClawAmount = min(Amount, LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum))`.
+#### 3.7.4 State Changes
 
-- Decrease `LoanBroker.CoverAvailable` by `ClawAmount`.
+1. Compute `LoanBrokerID`:
+   - If `LoanBrokerID` is specified, use that.
+   - Otherwise: `LoanBrokerID = Account(Amount.issuer).LoanBrokerID`.
+2. Compute `ClawAmount`:
+   - If `Amount` is 0 or unset: `ClawAmount = LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum)`.
+   - Otherwise: `ClawAmount = min(Amount, LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum))`.
+3. Decrease `LoanBroker.CoverAvailable` by `ClawAmount`.
+4. Transfer `ClawAmount` from the broker _pseudo-account_ to the submitter (transfer fee waived):
+   - If `Vault.Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `ClawAmount`.
+   - If `Vault.Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `ClawAmount`.
 
-- Transfer `ClawAmount` from the broker _pseudo-account_ to the submitter (transfer fee waived):
-  - If `Vault.Asset` is an `IOU`:
-    - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `ClawAmount`.
-  - If `Vault.Asset` is an `MPT`:
-    - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `ClawAmount`.
+#### 3.7.5 Invariants
 
-#### 3.2.2. `Loan` Transactions
+**TBD**
 
-In this section we specify transactions associated with the `Loan` ledger entry.
+#### 3.7.6 Example JSON
 
-##### 3.2.2.1 `LoanSet` Transaction
+_TBD_
+
+### 3.8. Transaction: `LoanSet`
 
 The transaction creates a new `Loan` object.
 
-| Field Name                |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                   |
-| ------------------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`         | :heavy_check_mark: | `string`  |   `UINT16`    |     `80`      | The transaction type.                                                                                                                         |
-| `LoanBrokerID`            | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
-| `Flags`                   |                    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
-| `Data`                    |                    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
-| `Counterparty`            |                    | `string`  |  `AccountID`  |     `N/A`     | The address of the counterparty of the Loan.                                                                                                  |
-| `CounterpartySignature`   | :heavy_check_mark: | `string`  |  `STObject`   |     `N/A`     | The signature of the counterparty over the transaction.                                                                                       |
-| `LoanOriginationFee`      |                    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
-| `LoanServiceFee`          |                    | `string`  |   `NUMBER`    |       0       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
-| `LatePaymentFee`          |                    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
-| `ClosePaymentFee`         |                    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when an early full repayment is made.                                                   |
-| `OverpaymentFee`          |                    | `number`  |   `UINT32`    |       0       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                             |
-| `InterestRate`            |                    | `number`  |   `UINT32`    |       0       | Annualized interest rate of the Loan in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                   |
-| `LateInterestRate`        |                    | `number`  |   `UINT32`    |       0       | A premium added to the interest rate for late payments in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%) |
-| `CloseInterestRate`       |                    | `number`  |   `UINT32`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
-| `OverpaymentInterestRate` |                    | `number`  |   `UINT32`    |       0       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
-| `PrincipalRequested`      | :heavy_check_mark: | `string`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
-| `PaymentTotal`            |                    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
-| `PaymentInterval`         |                    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
-| `GracePeriod`             |                    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
+#### 3.8.1 Fields
 
-###### 3.2.2.1.1 `Flags`
+| Field Name                | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                   |
+| ------------------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`         |   Yes    | `string`  |   `UINT16`    |     `80`      | The transaction type.                                                                                                                         |
+| `LoanBrokerID`            |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
+| `Flags`                   |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
+| `Data`                    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
+| `Counterparty`            |    No    | `string`  |  `AccountID`  |     `N/A`     | The address of the counterparty of the Loan.                                                                                                  |
+| `CounterpartySignature`   |   Yes    | `string`  |  `STObject`   |     `N/A`     | The signature of the counterparty over the transaction.                                                                                       |
+| `LoanOriginationFee`      |    No    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
+| `LoanServiceFee`          |    No    | `string`  |   `NUMBER`    |       0       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
+| `LatePaymentFee`          |    No    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
+| `ClosePaymentFee`         |    No    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when an early full repayment is made.                                                   |
+| `OverpaymentFee`          |    No    | `number`  |   `UINT32`    |       0       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                             |
+| `InterestRate`            |    No    | `number`  |   `UINT32`    |       0       | Annualized interest rate of the Loan in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                   |
+| `LateInterestRate`        |    No    | `number`  |   `UINT32`    |       0       | A premium added to the interest rate for late payments in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%) |
+| `CloseInterestRate`       |    No    | `number`  |   `UINT32`    |       0       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
+| `OverpaymentInterestRate` |    No    | `number`  |   `UINT32`    |       0       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
+| `PrincipalRequested`      |   Yes    | `string`  |   `NUMBER`    |     `N/A`     | The principal amount requested by the Borrower.                                                                                               |
+| `PaymentTotal`            |    No    | `number`  |   `UINT32`    |       1       | The total number of payments to be made against the Loan.                                                                                     |
+| `PaymentInterval`         |    No    | `number`  |   `UINT32`    |      60       | Number of seconds between Loan payments.                                                                                                      |
+| `GracePeriod`             |    No    | `number`  |   `UINT32`    |      60       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
 
-| Flag Name           |  Flag Value  | Description                                    |
-| ------------------- | :----------: | :--------------------------------------------- |
-| `tfLoanOverpayment` | `0x00010000` | Indicates that the loan supports overpayments. |
-
-###### 3.2.2.1.2 `CounterpartySignature`
+##### 3.8.1.1 `CounterpartySignature`
 
 An inner object that contains the signature of the Lender over the transaction. The fields contained in this object are:
 
-| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                        |
-| --------------- | :-------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` |           | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
-| `TxnSignature`  |           | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
-| `Signers`       |           |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
+| Field Name      | Required | JSON Type | Internal Type | Default Value | Description                                                                                                        |
+| --------------- | :------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
+| `SigningPubKey` |    No    | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
+| `TxnSignature`  |    No    | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `Signers`       |    No    |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
 The final transaction must include exactly one of
 
@@ -912,7 +964,13 @@ If the `LoanSet` transaction is **not** part of a [`Batch` transaction](https://
 
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
-###### 3.2.2.1.3 Multi-Signing
+#### 3.8.2 `Flags`
+
+| Flag Name           |  Flag Value  | Description                                    |
+| ------------------- | :----------: | :--------------------------------------------- |
+| `tfLoanOverpayment` | `0x00010000` | Indicates that the loan supports overpayments. |
+
+#### 3.8.3 Multi-Signing
 
 The `LoanSet` transaction is a mutual agreement between the `Borrower` and the `LoanBroke.Owner` to create a Loan. Therefore, the `LoanSet` transaction must be signed by both parties.
 
@@ -938,151 +996,161 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
   5. The `Borrower` signs the transaction, filling the `CounterpartySignature` field.
   6. The `Borrower` submits the transaction.
 
-###### 3.2.2.1.4 Fees
+#### 3.8.4 Transaction Fee
 
 The account specified in the `Account` field pays the transaction fee.
 
-###### 3.2.2.1.5 Failure Conditions
+#### 3.8.5 Failure Conditions
 
-- `LoanBrokerID` is specified and is zero.
-- `Data` field is present, non-empty, and exceeds 256 bytes.
-- `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative.
-- `PrincipalRequested <= 0`.
-- `LoanOriginationFee` is negative or exceeds `PrincipalRequested`.
-- `InterestRate` exceeds maximum allowed value.
-- `OverpaymentFee` exceeds maximum allowed value.
-- `LateInterestRate` exceeds maximum allowed value.
-- `CloseInterestRate` exceeds maximum allowed value.
-- `OverpaymentInterestRate` exceeds maximum allowed value.
-- `PaymentTotal <= 0`.
-- `PaymentInterval` is less than `60` seconds.
-- `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`.
-- Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
+##### 3.8.5.1 Data Verification
 
-- `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-- Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`.
-- The `Counterparty` field is not specified and the `CounterpartySignature` is not from the `LoanBroker.Owner`.
-- The `CounterpartySignature` is invalid.
-- The `Borrower` `AccountRoot` object does not exist.
+1. `LoanBrokerID` is specified and is zero.
+2. `Data` field is present, non-empty, and exceeds 256 bytes.
+3. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative.
+4. `PrincipalRequested <= 0`.
+5. `LoanOriginationFee` is negative or exceeds `PrincipalRequested`.
+6. `InterestRate` exceeds maximum allowed value.
+7. `OverpaymentFee` exceeds maximum allowed value.
+8. `LateInterestRate` exceeds maximum allowed value.
+9. `CloseInterestRate` exceeds maximum allowed value.
+10. `OverpaymentInterestRate` exceeds maximum allowed value.
+11. `PaymentTotal <= 0`.
+12. `PaymentInterval` is less than `60` seconds.
+13. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`.
+14. Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
+15. Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss.
 
-- The loan schedule (`PaymentInterval × PaymentTotal + GracePeriod`) would overflow protocol time limits.
+##### 3.8.5.2 Protocol-Level Failures
 
-- If `Vault.Asset` is an `IOU`:
-  - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set.
-  - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
-  - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is deep frozen).
-  - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set (The borrower is frozen).
-  - The `RippleState` object between the `LoanBroker.Owner` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The broker owner is deep frozen).
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
+2. Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`.
+3. The `Counterparty` field is not specified and the `CounterpartySignature` is not from the `LoanBroker.Owner`.
+4. The `CounterpartySignature` is invalid.
+5. The `Borrower` `AccountRoot` object does not exist.
+6. The loan schedule (`PaymentInterval × PaymentTotal + GracePeriod`) would overflow protocol time limits.
+7. If `Vault.Asset` is an `IOU`:
+   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+   - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set.
+   - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
+   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is deep frozen).
+   - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set (The borrower is frozen).
+   - The `RippleState` object between the `LoanBroker.Owner` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The broker owner is deep frozen).
+8. If `Vault.Asset` is an `MPT`:
+   - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
+   - The `MPTokenIssuance` object has the `lsfMPTRequireAuth` flag set and the `MPToken` of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
+   - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
+   - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
+   - The `MPToken` object for the Borrower `AccountRoot` has the `lsfMPTLocked` flag set (The Borrower MPToken is locked).
+   - The `MPToken` object for the `LoanBroker.Owner` has the `lsfMPTLocked` flag set (The broker owner is locked).
+9. The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. This can happen if the loan term is too short or the principal is too small for any interest to accrue to a representable value.
+10. The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. This prevents the loan from being amortized correctly.
+11. The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision (e.g., drops for XRP, or the smallest unit of an IOU/MPT).
+12. The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan is less than the specified `PaymentTotal`.
+13. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity).
+14. `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault).
+15. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt).
+16. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital).
+17. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap).
+18. The Borrower does not have sufficient reserve for the `Loan` object.
 
-- If `Vault.Asset` is an `MPT`:
-  - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
-  - The `MPTokenIssuance` object has the `lsfMPTRequireAuth` flag set and the `MPToken` of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
-  - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
-  - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-  - The `MPToken` object for the Borrower `AccountRoot` has the `lsfMPTLocked` flag set (The Borrower MPToken is locked).
-  - The `MPToken` object for the `LoanBroker.Owner` has the `lsfMPTLocked` flag set (The broker owner is locked).
+#### 3.8.6 State Changes
 
-- Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss.
-- The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. This can happen if the loan term is too short or the principal is too small for any interest to accrue to a representable value.
-- The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. This prevents the loan from being amortized correctly.
-- The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision (e.g., drops for XRP, or the smallest unit of an IOU/MPT).
-- The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan is less than the specified `PaymentTotal`.
+1. Create the `Loan` object with computed fields (`TotalValueOutstanding`, `PeriodicPayment`, `ManagementFeeOutstanding`, `LoanScale`, etc.).
+2. Increment `AccountRoot(Borrower).OwnerCount` by `1`.
+3. Create asset holding for the Borrower if one does not exist:
+   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `Borrower`.
+   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `Borrower`.
+4. Create asset holding for the `LoanBroker.Owner` if one does not exist and `LoanOriginationFee > 0`:
+   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `LoanBroker.Owner`.
+   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `LoanBroker.Owner`.
+5. Transfer funds from Vault _pseudo-account_ (transfer fee waived):
+   - If `Vault.Asset` is `XRP`:
+     - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `PrincipalRequested`.
+     - Increase the `Balance` field of `Borrower` `AccountRoot` by `PrincipalRequested - LoanOriginationFee`.
+     - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `LoanOriginationFee`.
+   - If `Vault.Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `PrincipalRequested`.
+     - Increase the `RippleState` balance between the `Borrower` and the `Issuer` by `PrincipalRequested - LoanOriginationFee`.
+     - Increase the `RippleState` balance between the `LoanBroker.Owner` and the `Issuer` by `LoanOriginationFee`.
+   - If `Vault.Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `PrincipalRequested`.
+     - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object by `PrincipalRequested - LoanOriginationFee`.
+     - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `LoanOriginationFee`.
+6. Update `Vault` object:
+   - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
+   - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
+7. Update `LoanBroker` object:
+   - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
+   - Increment `LoanBroker.OwnerCount` by `1`.
+   - Increment `LoanBroker.LoanSequence` by `1`.
+8. Directory linking:
+   - Add `LoanID` to the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (sets `LoanBrokerNode`).
+   - Add `LoanID` to the `OwnerDirectory` of the `Borrower` (sets `OwnerNode`).
 
-- `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity).
-- `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault).
-- `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt).
-- `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital).
-- `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap).
-- The Borrower does not have sufficient reserve for the `Loan` object.
-
-###### 3.2.2.1.6 State Changes
-
-- Create the `Loan` object with computed fields (`TotalValueOutstanding`, `PeriodicPayment`, `ManagementFeeOutstanding`, `LoanScale`, etc.).
-- Increment `AccountRoot(Borrower).OwnerCount` by `1`.
-
-- Create asset holding for the Borrower if one does not exist:
-  - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `Borrower`.
-  - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `Borrower`.
-
-- Create asset holding for the `LoanBroker.Owner` if one does not exist and `LoanOriginationFee > 0`:
-  - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `LoanBroker.Owner`.
-  - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `LoanBroker.Owner`.
-
-- Transfer funds from Vault _pseudo-account_ (transfer fee waived):
-  - If `Vault.Asset` is `XRP`:
-    - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `PrincipalRequested`.
-    - Increase the `Balance` field of `Borrower` `AccountRoot` by `PrincipalRequested - LoanOriginationFee`.
-    - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `LoanOriginationFee`.
-
-  - If `Vault.Asset` is an `IOU`:
-    - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `PrincipalRequested`.
-    - Increase the `RippleState` balance between the `Borrower` and the `Issuer` by `PrincipalRequested - LoanOriginationFee`.
-    - Increase the `RippleState` balance between the `LoanBroker.Owner` and the `Issuer` by `LoanOriginationFee`.
-
-  - If `Vault.Asset` is an `MPT`:
-    - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `PrincipalRequested`.
-    - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object by `PrincipalRequested - LoanOriginationFee`.
-    - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `LoanOriginationFee`.
-
-- Update `Vault` object:
-  - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
-  - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
-
-- Update `LoanBroker` object:
-  - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
-  - Increment `LoanBroker.OwnerCount` by `1`.
-  - Increment `LoanBroker.LoanSequence` by `1`.
-
-- Directory linking:
-  - Add `LoanID` to the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (sets `LoanBrokerNode`).
-  - Add `LoanID` to the `OwnerDirectory` of the `Borrower` (sets `OwnerNode`).
-
-###### 3.2.2.1.7 Invariants
+#### 3.8.7 Invariants
 
 **TBD**
 
-##### 3.2.2.2 `LoanDelete` Transaction
+#### 3.8.8 Example JSON
+
+_TBD_
+
+### 3.9. Transaction: `LoanDelete`
 
 The transaction deletes an existing `Loan` object.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `81`      | The transaction type.                    |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be deleted. |
+#### 3.9.1 Fields
 
-###### 3.2.2.2.1 Failure Conditions
+| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                              |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `81`      | The transaction type.                    |
+| `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be deleted. |
 
-- `LoanID` is zero.
-- `Loan` object with the specified `LoanID` does not exist on the ledger.
-- `Loan.PaymentRemaining > 0` (loan is still active).
-- The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`.
+#### 3.9.2 Transaction Fee
 
-###### 3.2.2.2.2 State Changes
+This transaction uses the standard transaction fee.
 
-- Remove `LoanID` from the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (using `LoanBrokerNode`).
-- Remove `LoanID` from the `OwnerDirectory` of the `Borrower` (using `OwnerNode`).
-- Delete the `Loan` object.
+#### 3.9.3 Failure Conditions
 
-- Decrement `LoanBroker.OwnerCount` by `1`.
-- If `LoanBroker.OwnerCount == 0` and `LoanBroker.DebtTotal != 0`:
-  - Set `LoanBroker.DebtTotal = 0` (forgive any remaining rounding dust).
+##### 3.9.3.1 Data Verification
 
-- Decrement `AccountRoot(Borrower).OwnerCount` by `1`.
+1. `LoanID` is zero.
 
-###### 3.2.2.2.3 Invariants
+##### 3.9.3.2 Protocol-Level Failures
+
+1. `Loan` object with the specified `LoanID` does not exist on the ledger.
+2. `Loan.PaymentRemaining > 0` (loan is still active).
+3. The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`.
+
+#### 3.9.4 State Changes
+
+1. Remove `LoanID` from the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (using `LoanBrokerNode`).
+2. Remove `LoanID` from the `OwnerDirectory` of the `Borrower` (using `OwnerNode`).
+3. Delete the `Loan` object.
+4. Decrement `LoanBroker.OwnerCount` by `1`.
+5. If `LoanBroker.OwnerCount == 0` and `LoanBroker.DebtTotal != 0`:
+   - Set `LoanBroker.DebtTotal = 0` (forgive any remaining rounding dust).
+6. Decrement `AccountRoot(Borrower).OwnerCount` by `1`.
+
+#### 3.9.5 Invariants
 
 - If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0 && Loan.TotalValueOutstanding = 0`
 
-##### 3.2.2.3 `LoanManage` Transaction
+#### 3.9.6 Example JSON
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                              |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `82`      | The transaction type.                    |
-| `LoanID`          | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be updated. |
-| `Flags`           |                    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.        |
+_TBD_
 
-###### 3.2.2.3.1 `Flags`
+### 3.10. Transaction: `LoanManage`
+
+#### 3.10.1 Fields
+
+| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                              |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `82`      | The transaction type.                    |
+| `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be updated. |
+| `Flags`           |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.        |
+
+#### 3.10.2 `Flags`
 
 `LoanManage` transaction `Flags` are mutually exclusive.
 
@@ -1092,103 +1160,102 @@ The transaction deletes an existing `Loan` object.
 | `tfLoanImpair`   | `0x00020000` | Indicates that the Loan should be impaired.    |
 | `tfLoanUnimpair` | `0x00040000` | Indicates that the Loan should be un-impaired. |
 
-###### 3.2.2.3.2 Failure Conditions
+#### 3.10.3 Transaction Fee
 
-- `LoanID` is zero.
-- More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive).
+This transaction uses the standard transaction fee.
 
-- `Loan` object with the specified `LoanID` does not exist on the ledger.
-- `Loan.Flags` has `lsfLoanDefault` set (a defaulted loan cannot be modified).
-- `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan).
-- `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan).
-- `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified).
+#### 3.10.4 Failure Conditions
 
-- `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed.
+##### 3.10.4.1 Data Verification
 
-- `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets).
+1. `LoanID` is zero.
+2. More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive).
 
-- The submitter is not the `LoanBroker.Owner`.
+##### 3.10.4.2 Protocol-Level Failures
 
-###### 3.2.2.3.3 State Changes
+1. `Loan` object with the specified `LoanID` does not exist on the ledger.
+2. `Loan.Flags` has `lsfLoanDefault` set (a defaulted loan cannot be modified).
+3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan).
+4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan).
+5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified).
+6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed.
+7. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets).
+8. The submitter is not the `LoanBroker.Owner`.
 
-- If the `tfLoanDefault` flag is specified:
-  - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
-  - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
-  - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`.
-  - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
+#### 3.10.5 State Changes
 
-  - Update `Vault` object:
-    - Decrease `Vault.AssetsTotal` by `VaultLoss`.
-    - Increase `Vault.AssetsAvailable` by `DefaultCovered`.
-    - If `Loan.Flags` has `lsfLoanImpaired` set:
-      - Decrease `Vault.LossUnrealized` by `DefaultAmount`.
+1. If the `tfLoanDefault` flag is specified:
+   - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
+   - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
+   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`.
+   - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
+   - Update `Vault` object:
+     - Decrease `Vault.AssetsTotal` by `VaultLoss`.
+     - Increase `Vault.AssetsAvailable` by `DefaultCovered`.
+     - If `Loan.Flags` has `lsfLoanImpaired` set:
+       - Decrease `Vault.LossUnrealized` by `DefaultAmount`.
+   - Update `LoanBroker` object:
+     - Decrease `LoanBroker.DebtTotal` by `DefaultAmount`.
+     - Decrease `LoanBroker.CoverAvailable` by `DefaultCovered`.
+   - Update `Loan` object:
+     - Set `lsfLoanDefault` flag.
+     - Set `Loan.TotalValueOutstanding = 0`.
+     - Set `Loan.PaymentRemaining = 0`.
+     - Set `Loan.PrincipalOutstanding = 0`.
+     - Set `Loan.ManagementFeeOutstanding = 0`.
+     - Set `Loan.NextPaymentDueDate = 0`.
+   - Transfer `DefaultCovered` from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_ (transfer fee waived):
+     - If `Vault.Asset` is `XRP`:
+       - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+       - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
+     - If `Vault.Asset` is an `IOU`:
+       - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
+       - Increase the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
+     - If `Vault.Asset` is an `MPT`:
+       - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `DefaultCovered`.
+       - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `DefaultCovered`.
+2. If the `tfLoanImpair` flag is specified:
+   - Compute `LossUnrealized = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+   - Update `Vault` object:
+     - Increase `Vault.LossUnrealized` by `LossUnrealized`.
+   - Update `Loan` object:
+     - Set `lsfLoanImpaired` flag.
+     - If `Loan.NextPaymentDueDate` has not yet passed:
+       - Set `Loan.NextPaymentDueDate = currentTime`.
+3. If the `tfLoanUnimpair` flag is specified:
+   - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+   - Update `Vault` object:
+     - Decrease `Vault.LossUnrealized` by `LossReversed`.
+   - Update `Loan` object:
+     - Clear `lsfLoanImpaired` flag.
+     - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
+     - If `NormalDueDate` has not yet passed:
+       - Set `Loan.NextPaymentDueDate = NormalDueDate`.
+     - Otherwise:
+       - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
 
-  - Update `LoanBroker` object:
-    - Decrease `LoanBroker.DebtTotal` by `DefaultAmount`.
-    - Decrease `LoanBroker.CoverAvailable` by `DefaultCovered`.
-
-  - Update `Loan` object:
-    - Set `lsfLoanDefault` flag.
-    - Set `Loan.TotalValueOutstanding = 0`.
-    - Set `Loan.PaymentRemaining = 0`.
-    - Set `Loan.PrincipalOutstanding = 0`.
-    - Set `Loan.ManagementFeeOutstanding = 0`.
-    - Set `Loan.NextPaymentDueDate = 0`.
-
-  - Transfer `DefaultCovered` from the `LoanBroker` _pseudo-account_ to the `Vault` _pseudo-account_ (transfer fee waived):
-    - If `Vault.Asset` is `XRP`:
-      - Decrease the `Balance` field of `LoanBroker` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
-      - Increase the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `DefaultCovered`.
-
-    - If `Vault.Asset` is an `IOU`:
-      - Decrease the `RippleState` balance between the `LoanBroker` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
-      - Increase the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `DefaultCovered`.
-
-    - If `Vault.Asset` is an `MPT`:
-      - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `DefaultCovered`.
-      - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `DefaultCovered`.
-
-- If the `tfLoanImpair` flag is specified:
-  - Compute `LossUnrealized = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
-
-  - Update `Vault` object:
-    - Increase `Vault.LossUnrealized` by `LossUnrealized`.
-
-  - Update `Loan` object:
-    - Set `lsfLoanImpaired` flag.
-    - If `Loan.NextPaymentDueDate` has not yet passed:
-      - Set `Loan.NextPaymentDueDate = currentTime`.
-
-- If the `tfLoanUnimpair` flag is specified:
-  - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
-
-  - Update `Vault` object:
-    - Decrease `Vault.LossUnrealized` by `LossReversed`.
-
-  - Update `Loan` object:
-    - Clear `lsfLoanImpaired` flag.
-    - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
-    - If `NormalDueDate` has not yet passed:
-      - Set `Loan.NextPaymentDueDate = NormalDueDate`.
-    - Otherwise:
-      - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
-
-###### 3.2.2.3.4 Invariants
+#### 3.10.6 Invariants
 
 **TBD**
 
-##### 3.2.2.4 `LoanPay` Transaction
+#### 3.10.7 Example JSON
+
+_TBD_
+
+### 3.11. Transaction: `LoanPay`
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For complete payment processing logic, formulas, and implementation pseudo-code, see [Appendix A-3](#a-3-loanpay-implementation-reference).
 
-| Field Name        |     Required?      |                                                      JSON Type                                                       | Internal Type | Default Value | Description                               |
-| ----------------- | :----------------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |                                                       `string`                                                       |   `UINT16`    |     `83`      | The transaction type.                     |
-| `LoanID`          | :heavy_check_mark: |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
-| `Amount`          | :heavy_check_mark: | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
-| `Flags`           |                    |                                                       `number`                                                       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
+#### 3.11.1 Fields
 
-###### 3.2.2.4.1 `Flags`
+| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                               |
+| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------- |
+| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `83`      | The transaction type.                     |
+| `LoanID`          |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
+| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
+| `Flags`           |    No    |                                                       `number`                                                       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
+
+#### 3.11.2 `Flags`
 
 | Flag Name           |  Flag Value  | Description                                                                  |
 | ------------------- | :----------: | :--------------------------------------------------------------------------- |
@@ -1198,50 +1265,50 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 
 For detailed processing logic for each flag, see: [Late Payment](#a-322-late-payment), [Full Payment](#a-324-early-full-repayment), and [Overpayment](#a-323-loan-overpayment).
 
-###### 3.2.2.4.2 Failure Conditions
+#### 3.11.3 Transaction Fee
 
-- `LoanID` is zero.
-- `Amount <= 0`.
-- More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
+This transaction uses the standard transaction fee.
 
-- `Loan` object with the specified `LoanID` does not exist on the ledger.
-- The submitter is not the `Loan.Borrower`.
-- `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
-- `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
-- `Amount.asset` does not match `Vault.Asset`.
+#### 3.11.4 Failure Conditions
 
-- The Borrower is frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-    - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
-    - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
+##### 3.11.4.1 Data Verification
 
-- The Vault _pseudo-account_ is deep frozen for the asset:
-  - If `Vault.Asset` is an `IOU`:
-    - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-  - If `Vault.Asset` is an `MPT`:
-    - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
+1. `LoanID` is zero.
+2. `Amount <= 0`.
+3. More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
+4. `Amount.asset` does not match `Vault.Asset`.
 
-- The Borrower is not authorized for the asset.
+##### 3.11.4.2 Protocol-Level Failures
 
-- The Borrower has insufficient funds to pay `Amount`.
+1. `Loan` object with the specified `LoanID` does not exist on the ledger.
+2. The submitter is not the `Loan.Borrower`.
+3. `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
+4. `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
+5. The Borrower is frozen for the asset:
+   - If `Vault.Asset` is an `IOU`:
+     - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
+     - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
+   - If `Vault.Asset` is an `MPT`:
+     - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
+     - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
+6. The Vault _pseudo-account_ is deep frozen for the asset:
+   - If `Vault.Asset` is an `IOU`:
+     - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
+   - If `Vault.Asset` is an `MPT`:
+     - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
+7. The Borrower is not authorized for the asset.
+8. The Borrower has insufficient funds to pay `Amount`.
+9. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
+10. If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
+    - The `tfLoanLatePayment` flag is not specified in the transaction.
+    - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
+11. If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
+    - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
+12. If the `tfLoanFullPayment` flag is specified:
+    - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
+    - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
 
-- Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
-
-- If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
-  - The `tfLoanLatePayment` flag is not specified in the transaction.
-  - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
-
-- If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
-  - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
-
-- If the `tfLoanFullPayment` flag is specified:
-  - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
-  - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
-
-###### 3.2.2.4.3 State Changes
+#### 3.11.5 State Changes
 
 Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in [Appendix A-3](#a-3-loanpay-implementation-reference). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
 
@@ -1249,60 +1316,56 @@ Upon successful validation, the `LoanPay` transaction is processed according to 
 
 First, the system determines the final destination of all funds.
 
-1.  **Determine Fee Destination**: All collected fees are directed to one of two places:
-    - **If ALL of the following conditions are met**, fees are paid to the `LoanBroker.Owner`:
-      - First-Loss Capital is sufficient: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
-      - The `LoanBroker.Owner` is NOT deep frozen for the asset.
-      - The `LoanBroker.Owner` is authorized for the asset.
-    - **Otherwise**: The fees are added to the `LoanBroker` pseudo-account's first-loss pool (`CoverAvailable`).
-
-2.  **Define Final Fund Flows**:
-    - `totalPaidByBorrower = principalPaid + interestPaid + feePaid`
-    - `totalToVault = principalPaid + interestPaid` (rounded to the vault's asset scale)
-    - `totalToBroker = feePaid`, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
+1. **Determine Fee Destination**: All collected fees are directed to one of two places:
+   - **If ALL of the following conditions are met**, fees are paid to the `LoanBroker.Owner`:
+     - First-Loss Capital is sufficient: `LoanBroker.CoverAvailable >= LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`
+     - The `LoanBroker.Owner` is NOT deep frozen for the asset.
+     - The `LoanBroker.Owner` is authorized for the asset.
+   - **Otherwise**: The fees are added to the `LoanBroker` pseudo-account's first-loss pool (`CoverAvailable`).
+2. **Define Final Fund Flows**:
+   - `totalPaidByBorrower = principalPaid + interestPaid + feePaid`
+   - `totalToVault = principalPaid + interestPaid` (rounded to the vault's asset scale)
+   - `totalToBroker = feePaid`, directed to either the `LoanBroker.Owner` or the `LoanBroker` pseudo-account's cover pool.
 
 **2. `Loan` Object State Changes**
 
 The `Loan` object is updated to reflect the payment.
 
-- If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3233-tfloanunimpair-state-changes) for details).
-
-- **For a Full Repayment**:
-  - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
-  - `PaymentRemaining` is set to `0`.
-
-- **For Other Payments**:
-  - `PrincipalOutstanding` is decreased by the `principal` portion of each periodic payment settled.
-  - `ManagementFeeOutstanding` is decreased by the `managementFee` portion of each periodic payment settled.
-  - `TotalValueOutstanding` is decreased by the sum of the `principal`, `interest`, and `managementFee` portions of each periodic payment settled.
-  - If an overpayment occurred, `TotalValueOutstanding` is further adjusted by the `valueChange` resulting from re-amortization. It is **not** adjusted for `valueChange` from late payment interest, as that interest was not part of the original loan value.
-  - `PaymentRemaining` is decreased by `1` for each full periodic payment cycle covered.
-  - `NextPaymentDueDate` is advanced by `Loan.PaymentInterval` for each periodic payment cycle covered.
-  - `PreviousPaymentDueDate` is updated.
-  - If an overpayment was made:
-    - `PeriodicPayment` is recalculated based on the new outstanding principal and remaining term.
+3. If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3105-state-changes) for details).
+4. **For a Full Repayment**:
+   - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
+   - `PaymentRemaining` is set to `0`.
+5. **For Other Payments**:
+   - `PrincipalOutstanding` is decreased by the `principal` portion of each periodic payment settled.
+   - `ManagementFeeOutstanding` is decreased by the `managementFee` portion of each periodic payment settled.
+   - `TotalValueOutstanding` is decreased by the sum of the `principal`, `interest`, and `managementFee` portions of each periodic payment settled.
+   - If an overpayment occurred, `TotalValueOutstanding` is further adjusted by the `valueChange` resulting from re-amortization. It is **not** adjusted for `valueChange` from late payment interest, as that interest was not part of the original loan value.
+   - `PaymentRemaining` is decreased by `1` for each full periodic payment cycle covered.
+   - `NextPaymentDueDate` is advanced by `Loan.PaymentInterval` for each periodic payment cycle covered.
+   - `PreviousPaymentDueDate` is updated.
+   - If an overpayment was made:
+     - `PeriodicPayment` is recalculated based on the new outstanding principal and remaining term.
 
 **3. `LoanBroker` and `Vault` Object State Changes**
 
 The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
 
-- **`LoanBroker` Updates**:
-  - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
-    - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
-    - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
-  - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
-
-- **`Vault` Updates**:
-  - `Vault.AssetsAvailable` increases by `totalToVault`.
-  - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+6. **`LoanBroker` Updates**:
+   - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
+     - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
+     - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
+   - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
+7. **`Vault` Updates**:
+   - `Vault.AssetsAvailable` increases by `totalToVault`.
+   - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
 
 **4. Asset Transfers**
 
 Finally, the actual asset transfers are executed on the ledger. All transfers are performed with **transfer fees waived**.
 
-- The borrower's balance is **decreased** by `totalToVault + totalToBroker`.
-- The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
-- The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
+8. The borrower's balance is **decreased** by `totalToVault + totalToBroker`.
+9. The `Vault` pseudo-account's balance is **increased** by `totalToVault`.
+10. The `LoanBroker.Owner`'s balance OR the `LoanBroker` pseudo-account's balance is **increased** by `totalToBroker`, depending on the fee destination.
 
 These transfers are performed according to the asset type:
 
@@ -1319,9 +1382,13 @@ These transfers are performed according to the asset type:
   - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
   - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
 
-###### 3.2.2.4.4 Invariants
+#### 3.11.6 Invariants
 
 **TBD**
+
+#### 3.11.7 Example JSON
+
+_TBD_
 
 ## 4. Rationale
 
