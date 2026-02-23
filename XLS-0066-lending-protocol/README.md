@@ -198,7 +198,11 @@ The `LoanBroker` object costs two owner reserve for the account creating it.
 
 #### 3.1.5 Deletion
 
-_TBD_
+- All Loans associated with the LoanBroker must be deleted first.
+- The LoanBroker must have no outstanding debt owed to the Vault.
+- Any remaining First-Loss Capital is automatically transferred back to the broker owner upon deletion. The deletion will fail if the broker owner is deep frozen for the asset, preventing the return of funds.
+
+**Account Deletion Blocker:** Yes. This object must be deleted before its owner account can be deleted.
 
 #### 3.1.6 Pseudo-Account
 
@@ -512,7 +516,10 @@ The `Loan` object costs one owner reserve for the `Borrower`.
 
 #### 3.2.6 Deletion
 
-_TBD_
+- The Loan must be fully paid or defaulted. A Loan with remaining payments cannot be deleted.
+- Either the Borrower or the LoanBroker owner may submit the deletion.
+
+**Account Deletion Blocker:** Yes. This object must be deleted before the Borrower's account can be deleted.
 
 #### 3.2.7 Invariants
 
