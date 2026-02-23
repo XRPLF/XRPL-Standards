@@ -24,7 +24,7 @@ This version intentionally skips the complex mechanisms of automated on-chain co
 
 ## 2. Introduction
 
-The Lending Protocol uses the [Vault](https://github.com/XRPLF/XRPL-Standards/discussions/192) on-chain object to provision assets from one or more depositors. A Loan Broker is responsible for managing the Lending Protocol and the associated Vault. The Vault Owner and Loan Broker must be on the same account, but this may change in the future.
+The Lending Protocol uses the [Vault](../XLS-0065-single-asset-vault/README.md) on-chain object to provision assets from one or more depositors. A Loan Broker is responsible for managing the Lending Protocol and the associated Vault. The Vault Owner and Loan Broker must be on the same account, but this may change in the future.
 
 The specification introduces two new ledger entries: `LoanBroker` and `Loan`. The `LoanBroker` object captures the Lending Protocol-specific details, such as fees and First-Loss Capital cover. Furthermore, it tracks the funds taken from the `Vault`. The `Loan` object captures the Loan agreement between the Loan Broker and the Borrower.
 
@@ -1534,7 +1534,41 @@ These transfers are performed according to the asset type:
 
 ## 4. Rationale
 
-_TBD_
+### 4.1 Uncollateralized Lending
+
+Most DeFi lending protocols (e.g., Aave, Compound) require on-chain collateral and automated liquidation mechanisms. This protocol deliberately omits these in favor of uncollateralized loans with off-chain underwriting. The rationale is as follows: the real-world lending market is predominantly uncollateralized, and providing on-chain primitives for this use case enables a much broader set of financial applications. Off-chain credit assessment allows loan brokers to leverage existing credit infrastructure while benefiting from on-chain settlement and transparency.
+
+### 4.2 Fixed-Term Amortized Loans
+
+Fixed-term loans are simpler to reason about on-chain, provide predictable cash flows for vault depositors, and have well-understood amortization mathematics. This design also avoids the complexity of variable-rate adjustments and utilization-based pricing, keeping the on-chain logic minimal while still supporting the most common loan structure in traditional finance.
+
+### 4.3 LoanBroker as Intermediary
+
+The `LoanBroker` object serves as an intermediary between the `Vault` (liquidity source) and the `Loan` (borrower agreement). An alternative design would have loans reference the Vault directly. The LoanBroker was introduced to separate protocol management concerns (fees, first-loss capital, debt tracking) from the Vault's asset custody role. This separation allows a single Vault to serve multiple lending protocols with different terms, and enables the LoanBroker to maintain its own accounting independent of the Vault's share-based accounting.
+
+### 4.4 First-Loss Capital Design
+
+The First-Loss Capital mechanism is optional rather than mandatory. This allows loan brokers to choose whether to provide additional depositor protection based on their market and risk profile.
+
+### 4.5 Dual-Signature Loan Creation
+
+The `LoanSet` transaction requires signatures from both parties (borrower and loan broker) via the `CounterpartySignature` field, rather than using a two-step propose/accept flow. This design was chosen because a two-transaction approach would require an intermediate on-chain state (a pending loan offer), adding ledger bloat and reserve costs. The dual-signature approach settles the loan atomically in a single transaction, ensuring both parties have agreed to the exact same terms before any funds are transferred.
+
+### 4.6 Fee Redirection When Cover is Insufficient
+
+When the First-Loss Capital falls below the required minimum, broker fees are redirected to the cover pool rather than blocking loan payments entirely. This ensures that borrowers can always make payments regardless of the broker's capital position, while simultaneously rebuilding the cover pool. Blocking payments would harm borrowers who have no control over the broker's capital management, and could cascade into unnecessary defaults.
+
+### 4.7 Pseudo-Accounts for Asset Custody
+
+The LoanBroker uses a pseudo-account to hold First-Loss Capital to separate Single Asset Vault funds and LoanBroker funds.
+
+### 4.8 Precision Handling and Rounding
+
+The protocol mandates specific rounding strategies: `TotalValueOutstanding` is rounded up (ensuring borrowers never underpay), while `PrincipalOutstanding` and `ManagementFeeOutstanding` are rounded to the nearest even number (minimizing cumulative bias). Stored ledger values are authoritative over theoretical formulas because rounding errors accumulate differently in practice than in theory. Recalculating from formulas mid-loan could cause discrepancies that prevent the loan from settling cleanly on the final payment.
+
+### 4.9 Management Fee as Interest Percentage
+
+The management fee is calculated as a percentage of interest earned rather than as a flat fee or percentage of principal. This aligns the broker's incentives with the depositors' returns — the broker only earns when the depositors earn. A flat fee would not scale with loan size or duration, while a principal-based fee would incentivize brokers to issue larger loans regardless of interest terms. The interest-percentage model ensures that the broker's compensation is proportional to the value they generate for the liquidity pool.
 
 ## 5. Security Considerations
 
