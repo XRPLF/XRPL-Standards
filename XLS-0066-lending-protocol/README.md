@@ -210,7 +210,31 @@ The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited 
 
 #### 3.1.7 Freeze/Lock
 
-_TBD_
+The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. The effects depend on the freeze level:
+
+**Freeze on the _pseudo-account_:**
+
+- Prevents the LoanBroker from creating new Loans (`LoanSet` fails), because the Vault _pseudo-account_ cannot transfer funds through a frozen intermediary.
+- Prevents withdrawing First-Loss Capital (`LoanBrokerCoverWithdraw` fails).
+- Does **not** prevent existing Loans from being paid. Borrower payments flow directly to the Vault _pseudo-account_ and do not require the LoanBroker _pseudo-account_ to send funds.
+- Does **not** prevent depositing additional First-Loss Capital (`LoanBrokerCoverDeposit` succeeds as long as the _pseudo-account_ is not deep frozen).
+
+**Deep Freeze on the _pseudo-account_:**
+
+- All effects of a regular freeze, plus:
+- Prevents Loan payments (`LoanPay` fails), because payments cannot be received by the deep-frozen _pseudo-account_ for fee routing.
+  - A Deep Freeze does not affect Loan payment schedule.
+- Prevents depositing First-Loss Capital (`LoanBrokerCoverDeposit` fails), because the _pseudo-account_ cannot receive funds.
+
+**Deep Freeze on the LoanBroker Owner:**
+
+- Prevents the LoanBroker owner from receiving fees directly. When the owner is deep frozen, fees are redirected to the LoanBroker _pseudo-account_'s First-Loss Capital pool instead.
+- Prevents creating new Loans (`LoanSet` fails).
+- Prevents deleting the LoanBroker (`LoanBrokerDelete` fails) if First-Loss Capital remains, because the capital cannot be returned to a deep-frozen owner.
+
+**Global Freeze:**
+
+- Prevents all Loan creation, Loan payments, and First-Loss Capital deposits/withdrawals for the affected asset.
 
 #### 3.1.8 Invariants
 
