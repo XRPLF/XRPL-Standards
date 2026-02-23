@@ -632,33 +632,36 @@ This transaction uses the standard transaction fee.
 
 ##### 3.3.3.1 Data Verification
 
-1. `VaultID` is zero.
-2. `Data` field is present, non-empty, and exceeds 256 bytes.
-3. `ManagementFeeRate` is outside valid range (0 to 10000).
-4. `CoverRateMinimum` is outside valid range (0 to 100000).
-5. `CoverRateLiquidation` is outside valid range (0 to 100000).
-6. `DebtMaximum` is negative or exceeds maximum allowed value.
-7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero)
-8. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT).
+1. `VaultID` is zero. (`temINVALID`)
+2. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
+3. `ManagementFeeRate` is outside valid range (0 to 10000). (`temINVALID`)
+4. `CoverRateMinimum` is outside valid range (0 to 100000). (`temINVALID`)
+5. `CoverRateLiquidation` is outside valid range (0 to 100000). (`temINVALID`)
+6. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
+7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
+8. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+9. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
 
 ##### 3.3.3.2 Protocol-Level Failures
 
 **If `LoanBrokerID` is not specified (creating new):**
 
-1. `Vault` object with the specified `VaultID` does not exist on the ledger.
-2. The submitter `AccountRoot.Account != Vault(VaultID).Owner`.
-3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues).
-4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`.
-5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves).
+1. `Vault` object with the specified `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitter `AccountRoot.Account != Vault(VaultID).Owner`. (`tecNO_PERMISSION`)
+3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
+4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves). (`tecINSUFFICIENT_RESERVE`)
 
 **If `LoanBrokerID` is specified (modifying existing):**
 
-6. `LoanBrokerID` is zero.
-7. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-8. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-9. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`.
-10. The submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`).
-11. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`.
+6. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+7. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+8. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
+9. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
+
+**Precision Validation:**
+
+10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
 
 #### 3.3.4 State Changes
 
@@ -726,26 +729,15 @@ This transaction uses the standard transaction fee.
 
 ##### 3.4.3.1 Data Verification
 
-1. `LoanBrokerID` is zero.
+1. `LoanBrokerID` is zero. (`temINVALID`)
 
 ##### 3.4.3.2 Protocol-Level Failures
 
-1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-3. `LoanBroker.OwnerCount != 0` (has outstanding loans).
-4. `Vault(LoanBroker.VaultID)` does not exist.
-5. `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`).
-6. `LoanBroker.CoverAvailable > 0`:
-   - If `Vault.Asset` is an `IOU`:
-     - If Broker Owner is deep frozen for the `Vault.Asset`:
-       - The `RippleState` object between the broker owner (submitting account) and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-     - The LoanBroker _pseudo-account_ `RippleState` balance is greater than zero.
-   - If `Vault.Asset` is an `MPT`:
-     - If Broker Owner is deep frozen for the `Vault.Asset`:
-       - The `MPToken` object for the `Vault.Asset` of the broker owner (submitting account) has the `lsfMPTLocked` flag set.
-     - The LoanBroker _pseudo-account_ `MPToken.MPTAmount` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
-   - If the `Vault.Asset` is `XRP`:
-     - The LoanBroker _pseudo-account_ `AccountRoot.Balance` is greater than zero. (defensive check-should always be equal to `LoanBroker.CoverAvailable`)
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+3. `LoanBroker.OwnerCount != 0` (has outstanding loans). (`tecHAS_OBLIGATIONS`)
+4. `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`). (`tecHAS_OBLIGATIONS`)
+5. `LoanBroker.CoverAvailable > 0` and the broker owner is deep frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 
 #### 3.4.4 State Changes
 
@@ -804,31 +796,20 @@ This transaction uses the standard transaction fee.
 
 ##### 3.5.3.1 Data Verification
 
-1. `LoanBrokerID` is zero.
-2. `Amount <= 0`.
-3. `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`.
+1. `LoanBrokerID` is zero. (`temINVALID`)
+2. `Amount <= 0`. (`temBAD_AMOUNT`)
+3. `Amount` is not a legal net amount. (`temBAD_AMOUNT`)
 
 ##### 3.5.3.2 Protocol-Level Failures
 
-1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-3. `Vault(LoanBroker.VaultID)` does not exist.
-4. The asset is not transferable:
-   - If `Vault.Asset` is an `MPT`: The `MPTokenIssuance` does not have the `lsfMPTCanTransfer` flag set.
-5. The submitting account is frozen for the asset:
-   - If `Vault.Asset` is an `IOU`:
-     - The `RippleState` object between the submitter and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-     - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-   - If `Vault.Asset` is an `MPT`:
-     - The `MPToken` object for the submitter has the `lsfMPTLocked` flag set.
-     - The `MPTokenIssuance` has the `lsfMPTLocked` flag set.
-6. The broker _pseudo-account_ is deep frozen for the asset:
-   - If `Vault.Asset` is an `IOU`:
-     - The `RippleState` object between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-   - If `Vault.Asset` is an `MPT`:
-     - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set.
-7. The submitting account is not authorized for the asset.
-8. The submitting account has insufficient funds to deposit the `Amount`.
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+3. `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`. (`tecWRONG_ASSET`)
+4. The asset is not transferable (e.g., MPT without `lsfMPTCanTransfer`). (`tecNO_PERMISSION`)
+5. The submitting account is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+6. The broker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+7. The submitting account is not authorized for the asset. (`tecNO_AUTH`)
+8. The submitting account has insufficient funds to deposit the `Amount`. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.5.4 State Changes
 
@@ -887,37 +868,25 @@ This transaction uses the standard transaction fee.
 
 ##### 3.6.3.1 Data Verification
 
-1. `LoanBrokerID` is zero.
-2. `Amount` is not a legal net amount.
-3. `Destination` is specified and is zero.
-4. `Destination` (or submitter if not specified) is a _pseudo-account_.
-5. `Amount.asset` does not match `Vault.Asset`.
+1. `LoanBrokerID` is zero. (`temINVALID`)
+2. `Amount <= 0` or is not a legal net amount. (`temBAD_AMOUNT`)
+3. `Destination` is specified and is zero. (`temMALFORMED`)
 
 ##### 3.6.3.2 Protocol-Level Failures
 
-1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`.
-3. `Vault(LoanBroker.VaultID)` does not exist.
-4. The `Destination` account is specified and it does not have permission to receive the asset.
-5. If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `IOU`:
-   - If the `Destination` field is not specified:
-     - The `RippleState` object between the submitter account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-   - If the `Destination` field is specified:
-     - The `RippleState` object between the `Destination` account and the `Issuer` of the asset does not exist.
-     - If `Destination` is not the `Issuer` and the `RippleState` object between the `Destination` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set and `Destination` is not the `Issuer` of the asset.
-   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Loan Broker _pseudo-account_ is frozen).
-6. If the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` is an `MPT`:
-   - If the `Destination` field is not specified:
-     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the submitter `AccountRoot` has `lsfMPTLocked` flag set.
-   - If the `Destination` field specified:
-     - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` does not exist.
-     - If the `Destination` is not the `Issuer` and the `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `Destination` `AccountRoot` has `lsfMPTLocked` flag set.
-   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` has the `lsfMPTLocked` flag set and `Destination` is not the `Issuer` of the asset.
-   - The `MPTokenIssuance` object of the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` does not have the `lsfMPTCanTransfer` flag set and `Destination` is not the `Issuer` of the asset (the asset is not transferable).
-   - The `MPToken` object for the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset` of the `LoanBroker.Account` `AccountRoot` has `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-7. The `LoanBroker.CoverAvailable` < `Amount`.
-8. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`.
+1. `Destination` (or submitter if not specified) is a _pseudo-account_. (`tecPSEUDO_ACCOUNT`)
+2. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+3. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+4. `Amount.asset` does not match `Vault.Asset`. (`tecWRONG_ASSET`)
+5. The asset is not transferable (e.g., MPT without `lsfMPTCanTransfer`) and `Destination` is not the `Issuer`. (`tecNO_PERMISSION`)
+6. If `Destination` is a third party, the destination account does not exist on the ledger. (`tecNO_DST`)
+7. If `Destination` is a third party, the destination account requires a destination tag (`lsfRequireDestTag`) and no `DestinationTag` is provided. (`tecDST_TAG_NEEDED`)
+8. If `Destination` is a third party, the destination account has deposit authorization (`lsfDepositAuth`) enabled and no preauthorization exists for the submitter. (`tecNO_PERMISSION`)
+9. The destination account is not authorized for the asset (e.g., missing trust line or MPToken). (`tecNO_AUTH`)
+10. The broker _pseudo-account_ is frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+11. The destination account is deep frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+12. `LoanBroker.CoverAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
+13. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.6.4 State Changes
 
@@ -987,30 +956,30 @@ This transaction uses the standard transaction fee.
 
 ##### 3.7.3.1 Data Verification
 
-1. Neither `LoanBrokerID` nor `Amount` are specified.
-2. `LoanBrokerID` is specified and is zero.
-3. `Amount` is specified and `Amount < 0`.
-4. `Amount` specifies an XRP amount.
+1. Neither `LoanBrokerID` nor `Amount` are specified. (`temINVALID`)
+2. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+3. `Amount` is specified and `Amount < 0`. (`temBAD_AMOUNT`)
+4. `Amount` specifies an XRP amount. (`temBAD_AMOUNT`)
+5. `Amount` is specified and is not a legal net amount. (`temBAD_AMOUNT`)
+6. `LoanBrokerID` is not specified and `Amount` specifies an MPT. (`temINVALID`)
+7. `LoanBrokerID` is not specified, `Amount` specifies an IOU, and `Amount.issuer` is the submitter `Account` or zero. (`temINVALID`)
 
 ##### 3.7.3.2 Protocol-Level Failures
 
 1. If `LoanBrokerID` is not specified:
-   - `Amount` specifies an MPT.
-   - `Amount` specifies an IOU, and `Amount.issuer` is the submitter `Account` or zero.
-   - The `Account(Amount.issuer)` does not exist.
-   - The `Account(Amount.issuer)` exists but does not have `LoanBrokerID` set (not a LoanBroker _pseudo-account_). If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction.
-2. `LoanBroker` object with the specified (or derived) `LoanBrokerID` does not exist on the ledger.
-3. `Vault(LoanBroker.VaultID)` does not exist.
-4. `Vault.Asset` is `XRP` (cannot clawback native asset).
-5. The submitter is not the `Issuer` of the `Vault.Asset`.
-6. If `Amount` is specified:
-   - `Amount.asset` does not match `Vault.Asset` (allowing `Amount.issuer` to be either the submitter or `LoanBroker.Account` for IOUs).
-7. If `Vault.Asset` is an `IOU`:
-   - The `AccountRoot` of the `Issuer` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
-   - The `AccountRoot` of the `Issuer` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
-8. If `Vault.Asset` is an `MPT`:
-   - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback).
-9. `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum).
+   - The `Account(Amount.issuer)` does not exist. (`tecNO_ENTRY`)
+   - The `Account(Amount.issuer)` exists but does not have `LoanBrokerID` set (not a LoanBroker _pseudo-account_). If it is set, treat `LoanBrokerID` as `Account(Amount.issuer).LoanBrokerID` for the rest of this transaction. (`tecOBJECT_NOT_FOUND`)
+2. `LoanBroker` object with the specified (or derived) `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+3. `Vault.Asset` is `XRP` (cannot clawback native asset). (`tecNO_PERMISSION`)
+4. The submitter is not the `Issuer` of the `Vault.Asset`. (`tecNO_PERMISSION`)
+5. If `Amount` is specified, `Amount.asset` does not match `Vault.Asset` (allowing `Amount.issuer` to be either the submitter or `LoanBroker.Account` for IOUs). (`tecWRONG_ASSET`)
+6. If `Vault.Asset` is an `IOU`:
+   - The `AccountRoot` of the `Issuer` does not have the `lsfAllowTrustLineClawback` flag set (the asset does not support clawback). (`tecNO_PERMISSION`)
+   - The `AccountRoot` of the `Issuer` has the `lsfNoFreeze` flag set (the asset cannot be frozen). (`tecNO_PERMISSION`)
+7. If `Vault.Asset` is an `MPT`:
+   - The `MPTokenIssuance` object does not exist on the ledger. (`tecOBJECT_NOT_FOUND`)
+   - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback). (`tecNO_PERMISSION`)
+8. `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum). (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.7.4 State Changes
 
@@ -1137,54 +1106,49 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.8.5.1 Data Verification
 
-1. `LoanBrokerID` is specified and is zero.
-2. `Data` field is present, non-empty, and exceeds 256 bytes.
-3. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative.
-4. `PrincipalRequested <= 0`.
-5. `LoanOriginationFee` is negative or exceeds `PrincipalRequested`.
-6. `InterestRate` exceeds maximum allowed value.
-7. `OverpaymentFee` exceeds maximum allowed value.
-8. `LateInterestRate` exceeds maximum allowed value.
-9. `CloseInterestRate` exceeds maximum allowed value.
-10. `OverpaymentInterestRate` exceeds maximum allowed value.
-11. `PaymentTotal <= 0`.
-12. `PaymentInterval` is less than `60` seconds.
-13. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`.
-14. Either of the `tfLoanDefault`, `tfLoanImpair` or `tfLoanUnimpair` flags are set.
-15. Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss.
+1. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+2. `CounterpartySignature` is not present and the transaction is not part of a `Batch` inner transaction. (`temBAD_SIGNER`)
+3. The transaction is a `Batch` inner transaction and the `Counterparty` field is not specified. (`temBAD_SIGNER`)
+4. `CounterpartySignature` contains an invalid signing key. (`temBAD_SIGNER`)
+5. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
+6. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative. (`temINVALID`)
+7. `PrincipalRequested <= 0`. (`temINVALID`)
+8. `LoanOriginationFee` is negative or exceeds `PrincipalRequested`. (`temINVALID`)
+9. `InterestRate` exceeds maximum allowed value. (`temINVALID`)
+10. `OverpaymentFee` exceeds maximum allowed value. (`temINVALID`)
+11. `LateInterestRate` exceeds maximum allowed value. (`temINVALID`)
+12. `CloseInterestRate` exceeds maximum allowed value. (`temINVALID`)
+13. `OverpaymentInterestRate` exceeds maximum allowed value. (`temINVALID`)
+14. `PaymentTotal <= 0`. (`temINVALID`)
+15. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
+16. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
 
 ##### 3.8.5.2 Protocol-Level Failures
 
-1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger.
-2. Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`.
-3. The `Counterparty` field is not specified and the `CounterpartySignature` is not from the `LoanBroker.Owner`.
-4. The `CounterpartySignature` is invalid.
-5. The `Borrower` `AccountRoot` object does not exist.
-6. The loan schedule (`PaymentInterval × PaymentTotal + GracePeriod`) would overflow protocol time limits.
-7. If `Vault.Asset` is an `IOU`:
-   - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-   - The `AccountRoot` object of the `Issuer` has the `lsfRequireAuth` flag set, and the `RippleState` object between the `Issuer` and the Borrower does not have the `lsfLowAuth` and `lsfHighAuth` flags set.
-   - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set. (The Vault _pseudo-account_ is frozen).
-   - The `RippleState` between the `LoanBroker.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set. (The Loan Broker _pseudo-account_ is deep frozen).
-   - The `RippleState` object between the Borrower account and the `Issuer` of the asset has the `lsfLowFreeze` or `lsfHighFreeze` flag set (The borrower is frozen).
-   - The `RippleState` object between the `LoanBroker.Owner` account and the `Issuer` of the asset has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set (The broker owner is deep frozen).
-8. If `Vault.Asset` is an `MPT`:
-   - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
-   - The `MPTokenIssuance` object has the `lsfMPTRequireAuth` flag set and the `MPToken` of the Borrower `AccountRoot` does not have the `lsfMPTAuthorized` flag set.
-   - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set. (The Vault _pseudo-account_ is locked).
-   - The `MPToken` object for the `LoanBroker.Account` has the `lsfMPTLocked` flag set. (The Loan Broker _pseudo-account_ is locked).
-   - The `MPToken` object for the Borrower `AccountRoot` has the `lsfMPTLocked` flag set (The Borrower MPToken is locked).
-   - The `MPToken` object for the `LoanBroker.Owner` has the `lsfMPTLocked` flag set (The broker owner is locked).
-9. The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. This can happen if the loan term is too short or the principal is too small for any interest to accrue to a representable value.
-10. The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. This prevents the loan from being amortized correctly.
-11. The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision (e.g., drops for XRP, or the smallest unit of an IOU/MPT).
-12. The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan is less than the specified `PaymentTotal`.
-13. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity).
-14. `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault).
-15. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt).
-16. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital).
-17. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap).
-18. The Borrower does not have sufficient reserve for the `Loan` object.
+1. The `Counterparty` field is not specified and the `CounterpartySignature` is not from the `LoanBroker.Owner`. (`temBAD_SIGNER`)
+2. The loan schedule (`PaymentInterval × PaymentTotal + GracePeriod`) would overflow protocol time limits. (`tecKILLED`)
+3. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+4. Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
+5. The `Borrower` `AccountRoot` object does not exist. (`terNO_ACCOUNT`)
+6. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity). (`tecLIMIT_EXCEEDED`)
+7. Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss. (`tecPRECISION_LOSS`)
+8. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
+9. The Vault _pseudo-account_ is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+10. The LoanBroker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+11. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+12. The `LoanBroker.Owner` is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+13. `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault). (`tecINSUFFICIENT_FUNDS`)
+14. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap). (`tecLIMIT_EXCEEDED`)
+15. The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. (`tecPRECISION_LOSS`)
+16. The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. (`tecPRECISION_LOSS`)
+17. The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision. (`tecPRECISION_LOSS`)
+18. The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan differs from the specified `PaymentTotal`. (`tecPRECISION_LOSS`)
+19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
+20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
+21. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
+22. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
+23. The `LoanBroker.Owner` is not authorized for the asset. (`tecNO_AUTH`)
+24. The `LoanBroker.LoanSequence` has reached its maximum value. (`tecMAX_SEQUENCE_REACHED`)
 
 #### 3.8.6 State Changes
 
@@ -1274,13 +1238,13 @@ This transaction uses the standard transaction fee.
 
 ##### 3.9.3.1 Data Verification
 
-1. `LoanID` is zero.
+1. `LoanID` is zero. (`temINVALID`)
 
 ##### 3.9.3.2 Protocol-Level Failures
 
-1. `Loan` object with the specified `LoanID` does not exist on the ledger.
-2. `Loan.PaymentRemaining > 0` (loan is still active).
-3. The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`.
+1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. `Loan.PaymentRemaining > 0` (loan is still active). (`tecHAS_OBLIGATIONS`)
+3. The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`. (`tecNO_PERMISSION`)
 
 #### 3.9.4 State Changes
 
@@ -1336,19 +1300,19 @@ This transaction uses the standard transaction fee.
 
 ##### 3.10.4.1 Data Verification
 
-1. `LoanID` is zero.
-2. More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive).
+1. `LoanID` is zero. (`temINVALID`)
+2. More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive). (`temINVALID_FLAG`)
 
 ##### 3.10.4.2 Protocol-Level Failures
 
-1. `Loan` object with the specified `LoanID` does not exist on the ledger.
-2. `Loan.Flags` has `lsfLoanDefault` set (a defaulted loan cannot be modified).
-3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan).
-4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan).
-5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified).
-6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed.
-7. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets).
-8. The submitter is not the `LoanBroker.Owner`.
+1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. `Loan.Flags` has `lsfLoanDefault` set (a defaulted loan cannot be modified). (`tecNO_PERMISSION`)
+3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan). (`tecNO_PERMISSION`)
+4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
+5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
+6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
+7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
+8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
 #### 3.10.5 State Changes
 
@@ -1450,40 +1414,27 @@ This transaction uses the standard transaction fee.
 
 ##### 3.11.4.1 Data Verification
 
-1. `LoanID` is zero.
-2. `Amount <= 0`.
-3. More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive).
-4. `Amount.asset` does not match `Vault.Asset`.
+1. `LoanID` is zero. (`temINVALID`)
+2. `Amount <= 0`. (`temBAD_AMOUNT`)
+3. More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive). (`temINVALID_FLAG`)
 
 ##### 3.11.4.2 Protocol-Level Failures
 
-1. `Loan` object with the specified `LoanID` does not exist on the ledger.
-2. The submitter is not the `Loan.Borrower`.
-3. `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
-4. `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid).
-5. The Borrower is frozen for the asset:
-   - If `Vault.Asset` is an `IOU`:
-     - The `RippleState` object between the Borrower and the `Issuer` has the `lsfLowFreeze` or `lsfHighFreeze` flag set.
-     - The `AccountRoot` object of the `Issuer` has the `lsfGlobalFreeze` flag set.
-   - If `Vault.Asset` is an `MPT`:
-     - The `MPToken` object for the Borrower has the `lsfMPTLocked` flag set.
-     - The `MPTokenIssuance` object has the `lsfMPTLocked` flag set.
-6. The Vault _pseudo-account_ is deep frozen for the asset:
-   - If `Vault.Asset` is an `IOU`:
-     - The `RippleState` between the `Vault.Account` and the `Issuer` has the `lsfLowDeepFreeze` or `lsfHighDeepFreeze` flag set.
-   - If `Vault.Asset` is an `MPT`:
-     - The `MPToken` object for the `Vault.Account` has the `lsfMPTLocked` flag set.
-7. The Borrower is not authorized for the asset.
-8. The Borrower has insufficient funds to pay `Amount`.
-9. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination).
-10. If the payment is late (`currentTime > Loan.NextPaymentDueDate`):
-    - The `tfLoanLatePayment` flag is not specified in the transaction.
-    - The `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`).
-11. If the payment is on-time (`currentTime <= Loan.NextPaymentDueDate`):
-    - The `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`).
-12. If the `tfLoanFullPayment` flag is specified:
-    - `Loan.PaymentRemaining == 1` (use regular payment for the final payment).
-    - The `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`).
+1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitter is not the `Loan.Borrower`. (`tecNO_PERMISSION`)
+3. `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object. (`temINVALID_FLAG`)
+4. `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid). (`tecKILLED`)
+5. `Amount.asset` does not match `Vault.Asset`. (`tecWRONG_ASSET`)
+6. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+7. The Vault _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
+9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
+10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+11. The payment is late (`currentTime > Loan.NextPaymentDueDate`) and the `tfLoanLatePayment` flag is not specified in the transaction. (`tecEXPIRED`)
+12. The payment is late and the `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`). (`tecINSUFFICIENT_PAYMENT`)
+13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
+14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
+15. The `tfLoanFullPayment` flag is specified and the `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`). (`tecINSUFFICIENT_PAYMENT`)
 
 #### 3.11.5 State Changes
 
