@@ -144,7 +144,7 @@ The `LoanBroker` object has the following fields:
 | `Sequence`             |   Yes    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
 | `LoanSequence`         |    No    |   Yes    | `number`  |   `UINT32`    |       1       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                           |
 | `OwnerNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
-| `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                       |
+| `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                         |
 | `VaultID`              |   Yes    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
 | `Account`              |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
 | `Owner`                |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
@@ -240,109 +240,87 @@ _TBD_
 
 The Lending Protocol tracks the funds owed to the associated Vault in the `DebtTotal` attribute. It captures the principal amount taken from the Vault and the interest due, excluding all fees. The `DebtMaximum` attribute controls the maximum debt a Lending Protocol may incur. Whenever the Lender issues a Loan, `DebtTotal` is incremented by the Loan principal and interest, excluding fees. When $DebtTotal \geq DebtMaximum$, the Lender cannot issue new loans until some of the debt is cleared. Furthermore, the Lender may not issue a loan that would cause the `DebtTotal` to exceed `DebtMaximum`.
 
-**Example**
+**Examples**
 
-```
-Example 1: # Issuing a Loan #
+**Example 1: Issuing a Loan**
 
-** Initial States **
+_Initial States_
 
--- Vault --
-AssetsTotal         = 100,000 Tokens
-AssetsAvailable     = 100,000 Tokens
-SharesTotal         = 100,000 Shares
+Vault:
 
--- Lending Protocol --
-DebtTotal           = 0
-# The fee charged by the Lending Protocol against any interest.
-ManagementFeeRate   = 0.1 (10%)
+- AssetsTotal = 100,000 Tokens
+- AssetsAvailable = 100,000 Tokens
+- SharesTotal = 100,000 Shares
 
+Lending Protocol:
 
-# The Lender issues the following Loan
--- Loan --
-PrincipalRequested = 1,000 Tokens
-InterestRate       = 0.1 (10%)
+- DebtTotal = 0
+- ManagementFeeRate = 0.1 (10%) — the fee charged against any interest
 
-# SIMPLIFIED
-TotalInterestOutstanding        = PrincipalRequested x InterestRate
-                    = 100 Tokens
+Loan (issued by the Lender):
 
-** State Changes **
+- PrincipalRequested = 1,000 Tokens
+- InterestRate = 0.1 (10%)
+- TotalInterestOutstanding = PrincipalRequested × InterestRate = 100 Tokens _(simplified)_
 
--- Vault --
-# Increase the potential value of the Vault
-AssetsTotal     = AssetsTotal + ((TotalInterestOutstanding - (TotalInterestOutstanding x ManagementFeeRate)))
-                = 100,000 + (100 - (100 x 0.1)) = 100,000 + 90
-                = 100,090 Tokens
+_State Changes_
 
-# Decrease Asset Available in the Vault
-AssetsAvailable = AssetsAvailable - PrincipalRequested
-                = 100,000 - 1,000
-                = 99,000 Tokens
+Vault:
 
-SharesTotal     = (UNCHANGED)
+- AssetsTotal = AssetsTotal + (TotalInterestOutstanding − (TotalInterestOutstanding × ManagementFeeRate))
+  = 100,000 + (100 − (100 × 0.1)) = 100,000 + 90 = **100,090 Tokens**
+- AssetsAvailable = AssetsAvailable − PrincipalRequested
+  = 100,000 − 1,000 = **99,000 Tokens**
+- SharesTotal = (UNCHANGED)
 
--- Lending Protocol --
-# Increase Lending Protocol Debt
-DebtTotal   = DebtTotal + PrincipalRequested + (TotalInterestOutstanding - (TotalInterestOutstanding x ManagementFeeRate))
-            = 0 + 1,000 + (100 - (100 x 0.1)) = 1,000 + 90
-            = 1,090 Tokens
+Lending Protocol:
 
+- DebtTotal = DebtTotal + PrincipalRequested + (TotalInterestOutstanding − (TotalInterestOutstanding × ManagementFeeRate))
+  = 0 + 1,000 + (100 − (100 × 0.1)) = 1,000 + 90 = **1,090 Tokens**
 
----------------------------------------------------------------------------------------------------
+---
 
-Example 2: # Loan Payment #
+**Example 2: Loan Payment**
 
-** Initial States **
+_Initial States_
 
--- Vault --
-AssetsTotal         = 100,090 Tokens
-AssetsAvailable     = 99,000 Tokens
-SharesTotal         = 100,000 Shares
+Vault:
 
--- Lending Protocol --
-DebtTotal           = 1,090 Tokens
-# The fee charged by the Lending Protocol against any interest.
-ManagementFeeRate   = 0.1 (10%)
+- AssetsTotal = 100,090 Tokens
+- AssetsAvailable = 99,000 Tokens
+- SharesTotal = 100,000 Shares
 
--- Loan --
-PrincipalRequested = 1,000 Tokens
-InterestRate       = 0.1 (10%)
-# SIMPLIFIED
-PaymentRemaining   = 2
+Lending Protocol:
 
-# SIMPLIFIED
-TotalInterestOutstanding = PrincipalRequested x InterestRate
-                         = 100 Tokens
+- DebtTotal = 1,090 Tokens
+- ManagementFeeRate = 0.1 (10%) — the fee charged against any interest
 
+Loan:
 
-# The Borrower makes a single payment
+- PrincipalRequested = 1,000 Tokens
+- InterestRate = 0.1 (10%)
+- PaymentRemaining = 2 _(simplified)_
+- TotalInterestOutstanding = PrincipalRequested × InterestRate = 100 Tokens _(simplified)_
 
-PaymentAmount           = 550 Tokens
-PaymentPrincipalPortion = 500 Tokens
-PaymentInterestPortion  = 50 Tokens
+The Borrower makes a single payment:
 
+- PaymentAmount = 550 Tokens
+- PaymentPrincipalPortion = 500 Tokens
+- PaymentInterestPortion = 50 Tokens
 
-** State Changes **
+_State Changes_
 
--- Vault --
-AssetsTotal     = (UNCHANGED)
+Vault:
 
-# Increase Asset Available in the Vault
-AssetsAvailable = AssetsAvailable + PaymentPrincipalPortion + (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate))
-                = 99,000 + 500 + (50 - (50 x 0.1))
-                = 99,545 Tokens
+- AssetsTotal = (UNCHANGED)
+- AssetsAvailable = AssetsAvailable + PaymentPrincipalPortion + (PaymentInterestPortion − (PaymentInterestPortion × ManagementFeeRate))
+  = 99,000 + 500 + (50 − (50 × 0.1)) = **99,545 Tokens**
+- SharesTotal = (UNCHANGED)
 
-SharesTotal     = (UNCHANGED)
+Lending Protocol:
 
--- Lending Protocol --
-
-# Decrease Lending Protocol Debt
-DebtTotal   = DebtTotal - PaymentPrincipalAmount - (PaymentInterestPortion - (PaymentInterestPortion x ManagementFeeRate)
-            = 1,090 - 500 - (50 - (50 x 0.1))
-            = 545 Tokens
-
-```
+- DebtTotal = DebtTotal − PaymentPrincipalPortion − (PaymentInterestPortion − (PaymentInterestPortion × ManagementFeeRate))
+  = 1,090 − 500 − (50 − (50 × 0.1)) = **545 Tokens**
 
 #### 3.1.11 First-Loss Capital
 
@@ -359,69 +337,56 @@ Whenever the available cover falls below the minimum cover required, two consequ
 
 **Examples**
 
-```
-Example 1: Loan Default
+**Example 1: Loan Default**
 
-** Initial States **
+_Initial States_
 
--- Vault --
-AssetsTotal             = 100,090 Tokens
-AssetsAvailable         = 99,000 Tokens
-SharesTotal             = 100,000 Tokens
+Vault:
 
--- Lending Protocol --
-DebtTotal               = 1,090 Tokens
-CoverRateMinimum        = 0.1 (10%)
-CoverRateLiquidation    = 0.1 (10%)
-CoverAvailable          = 1,000 Tokens
+- AssetsTotal = 100,090 Tokens
+- AssetsAvailable = 99,000 Tokens
+- SharesTotal = 100,000 Tokens
 
--- Loan --
-PrincipleOutstanding  = 1,000 Tokens
-InterestOutstanding   = 90 Tokens
+Lending Protocol:
 
+- DebtTotal = 1,090 Tokens
+- CoverRateMinimum = 0.1 (10%)
+- CoverRateLiquidation = 0.1 (10%)
+- CoverAvailable = 1,000 Tokens
 
-# First-Loss Capital liquidation maths
+Loan:
 
-DefaultAmount = PrincipleOutstanding + InterestOutstanding
-              = 1,000 + 90
-              = 1,090
+- PrincipleOutstanding = 1,000 Tokens
+- InterestOutstanding = 90 Tokens
 
-# The amount of the default that the first-loss capital scheme will cover
-DefaultCovered      = min((DebtTotal x CoverRateMinimum) x CoverRateLiquidation, DefaultAmount)
-                    = min((1,090 * 0.1) * 0.1, 1,090) = min(10.9, 1,090)
-                    = 10.9 Tokens
+_First-Loss Capital liquidation_
 
-Loss                = DefaultAmount - DefaultCovered
-                    = 1,090 - 10.9
-                    = 1,079.1 Tokens
+- DefaultAmount = PrincipleOutstanding + InterestOutstanding
+  = 1,000 + 90 = 1,090 Tokens
+- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)
+  = min((1,090 × 0.1) × 0.1, 1,090) = min(10.9, 1,090) = **10.9 Tokens**
+- Loss = DefaultAmount − DefaultCovered
+  = 1,090 − 10.9 = **1,079.1 Tokens**
+- FundsReturned = DefaultCovered = **10.9 Tokens**
 
-FundsReturned       = DefaultCovered
-                    = 10.9
+> Note: Loss + FundsReturned must equal PrincipleOutstanding + InterestOutstanding.
 
-# Note, Loss + FundsReturned MUST be equal to PrincipleOutstanding + InterestOutstanding
+_State Changes_
 
-** State Changes **
+Vault:
 
--- Vault --
-AssetsTotal     = AssetsTotal - Loss
-                = 100,090 - 1,079.1
-                = 99,010.9 Tokens
+- AssetsTotal = AssetsTotal − Loss
+  = 100,090 − 1,079.1 = **99,010.9 Tokens**
+- AssetsAvailable = AssetsAvailable + FundsReturned
+  = 99,000 + 10.9 = **99,010.9 Tokens**
+- SharesTotal = (UNCHANGED)
 
-AssetsAvailable = AssetsAvailable + FundsReturned
-                = 99,000 + 10.9
-                = 99,010.9 Tokens
+Lending Protocol:
 
-SharesTotal = (UNCHANGED)
-
--- Lending Protocol --
-DebtTotal       = DebtTotal - PrincipleOutstanding + InterestOutstanding
-                = 1,090 - (1,000 + 90)
-                = 0 Tokens
-
-CoverAvailable  = CoverAvailable - DefaultCovered
-                = 1,000 - 10.9
-                = 989.1 Tokens
-```
+- DebtTotal = DebtTotal − (PrincipleOutstanding + InterestOutstanding)
+  = 1,090 − (1,000 + 90) = **0 Tokens**
+- CoverAvailable = CoverAvailable − DefaultCovered
+  = 1,000 − 10.9 = **989.1 Tokens**
 
 ### 3.2. Ledger Entry: `Loan`
 
