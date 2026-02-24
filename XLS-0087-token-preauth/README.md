@@ -4,11 +4,10 @@
   description: Allow issuers to pre-authorize token holders via accounts, credentials, or domains.
   author: Mayukha Vadari (@mvadari)
   category: Amendment
-  status: Draft
+  status: Stagnant
   requires: XLS-70, XLS-80
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/258
   created: 2024-12-11
-  updated: 2026-02-24
 </pre>
 
 # Token Pre-Authorization
