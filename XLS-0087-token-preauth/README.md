@@ -6,6 +6,7 @@
   category: Amendment
   status: Draft
   requires: XLS-70, XLS-80
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/258
   created: 2024-12-11
   updated: 2026-02-24
 </pre>
