@@ -114,33 +114,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ### 2.6 System Diagram
 
-```
-+-----------------+                          +-----------------+                       +-----------------+
-|    Depositor    |                          |    LoanBroker   |                       |     Borrower    |
-|   AccountRoot   |                          |   AccountRoot   |                       |   AccountRoot   |
-|-----------------|                          |-----------------|                       |-----------------|
-| Owner Directory |                          | Owner Directory | <-----OwnerNode       | Owner Directory | <---------
-+-----------------+                          +-----------------+           |           +-----------------+          |
-      ^         |                                     |                    |                    |                   |
-      |       Reserve                  ____________Reserve____________     |                  Reserve               |
-   Account      |                     |                               |    |                    |                   |
-      |         V                     V                               V    |                    V                   |
-+-----------------+          +-----------------+          +-----------------+          +-----------------+          |
-|                 |          |                 |1        N|                 |1        N|                 |          |
-|     MPToken     |          |      Vault      |--------->|   LoanBroker    |--------->|       Loan      |-OwnerNode-
-|                 |          |                 |          |                 |          |                 |
-+-----------------+          +-----------------+          +-----------------+          +-----------------+
-         |                            ^                        |    ^                            |
-      Issuance                        |                        |    |                            |
-         |                         Account                     | Account                         |
-         V                            |              -VaultNode-    |                            |
-+-----------------+          +-----------------+     |    +-----------------+                    |
-|      Share      |          |  Pseudo-Account |     |    |  Pseudo-Account |                    |
-| MPTokenIssuance |<--Issuer-|   AccountRoot   |     |    |   AccountRoot   |                    |
-|                 |          |-----------------|     |    |-----------------|                    |
-+-----------------+          | Owner Directory | <----    | Owner Directory | <- LoanBrokerNode---
-                             +-----------------+          +-----------------+
-```
+![Architecture Graph](./architecture.svg)
 
 ## 3. Specification
 
