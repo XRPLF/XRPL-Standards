@@ -63,7 +63,7 @@ def find_draft_xls_files(changed_files: list[str]) -> list[str]:
     Returns:
         List of draft XLS directory names (e.g., ["XLS-draft-my-feature"])
     """
-    draft_pattern = re.compile(r"^(XLS-draft-[^/]+)/README\.md$")
+    draft_pattern = re.compile(r"^((XLS|xls)-draft[^/]+)/README\.md$")
     drafts = []
 
     for file_path in changed_files:
@@ -76,9 +76,15 @@ def find_draft_xls_files(changed_files: list[str]) -> list[str]:
 
 def main():
     """Main entry point for the script."""
-    # Get repository root (parent of .github directory)
-    script_dir = Path(__file__).resolve().parent
-    repo_root = script_dir.parent.parent
+    # Get repository root from environment variable (set by GitHub Actions)
+    # or fall back to calculating from script location
+    repo_root_env = os.environ.get("REPO_ROOT")
+    if repo_root_env:
+        repo_root = Path(repo_root_env)
+    else:
+        # Fallback: parent of .github directory
+        script_dir = Path(__file__).resolve().parent
+        repo_root = script_dir.parent.parent
 
     # Get changed files from command line arguments or environment variable
     if len(sys.argv) > 1:
@@ -121,7 +127,7 @@ def main():
 
     for draft_dir in sorted(draft_dirs):
         assigned_number = next_number
-        new_dir_name = re.sub(r"^XLS-draft-", f"XLS-{assigned_number:04d}-", draft_dir)
+        new_dir_name = re.sub(r"^xls-draft-", f"xls-{assigned_number:04d}-", draft_dir.lower())
         assignments.append({
             "draft": draft_dir,
             "number": assigned_number,
@@ -143,7 +149,7 @@ def main():
 
     # For single draft case, also output individual values for easy access
     if len(assignments) == 1:
-        set_github_output("xls_number", f"{assignments[0]['number']:04d}")
+        set_github_output("xls_number", f"{assignments[0]['number']}")
         set_github_output("draft_dir", assignments[0]['draft'])
         set_github_output("new_dir_name", assignments[0]['new_name'])
 

@@ -420,7 +420,8 @@ main {
 .document-content h3,
 .document-content h4,
 .document-content h5,
-.document-content h6 {
+.document-content h6,
+.document-content .toctitle {
   margin-top: 32px;
   margin-bottom: 16px;
   color: var(--text-color);
@@ -430,6 +431,11 @@ main {
 .document-content h1 {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
+  font-size: 32px;
+}
+
+.document-content .toctitle {
+  padding-bottom: 16px;
   font-size: 32px;
 }
 
