@@ -76,9 +76,15 @@ def find_draft_xls_files(changed_files: list[str]) -> list[str]:
 
 def main():
     """Main entry point for the script."""
-    # Get repository root (parent of .github directory)
-    script_dir = Path(__file__).resolve().parent
-    repo_root = script_dir.parent.parent
+    # Get repository root from environment variable (set by GitHub Actions)
+    # or fall back to calculating from script location
+    repo_root_env = os.environ.get("REPO_ROOT")
+    if repo_root_env:
+        repo_root = Path(repo_root_env)
+    else:
+        # Fallback: parent of .github directory
+        script_dir = Path(__file__).resolve().parent
+        repo_root = script_dir.parent.parent
 
     # Get changed files from command line arguments or environment variable
     if len(sys.argv) > 1:
