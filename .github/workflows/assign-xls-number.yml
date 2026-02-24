@@ -63,8 +63,6 @@ jobs:
         if: steps.check-drafts.outputs.has_drafts == 'true'
         id: assign-number
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
           REPO_ROOT: ${{ github.workspace }}
         run: |
           echo ${{ steps.check-drafts.outputs.draft_files }}
