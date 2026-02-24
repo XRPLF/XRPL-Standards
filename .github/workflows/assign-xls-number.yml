@@ -27,15 +27,29 @@ jobs:
 
             // Check each approver's permission level
             for (const approval of approvals) {
+              const user = approval.user;
+
+              // Skip approvals without a valid user (e.g., deleted accounts)
+              if (!user || !user.login) {
+                console.log('Skipping approval with missing user information');
+                continue;
+              }
+
+              // Skip bot approvals
+              if (user.type === 'Bot' || user.login.endsWith('[bot]')) {
+                console.log(`Skipping bot approval from ${user.login}`);
+                continue;
+              }
+
               const { data: permissionLevel } = await github.rest.repos.getCollaboratorPermissionLevel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                username: approval.user.login
+                username: user.login
               });
 
               const permission = permissionLevel.permission;
               if (['write', 'admin', 'maintain'].includes(permission)) {
-                console.log(`Found write+ approval from ${approval.user.login} (${permission})`);
+                console.log(`Found write+ approval from ${user.login} (${permission})`);
                 core.setOutput('has_write_approval', 'true');
                 return;
               }
