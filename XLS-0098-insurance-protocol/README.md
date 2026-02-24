@@ -119,11 +119,3 @@ Test suite: https://github.com/wflores9/ward-protocol/tree/main/tests
 **Key Management:** Operator account uses multi-signature (3-of-5) with cold storage for reserve keys.
 
 **No Smart Contracts:** All transactions use native XRPL transaction types only.
----
-xls: 98
-title: Institutional DeFi Insurance Protocol
-status: Draft
-type: draft
----
-
-# XLS-98d Institutional DeFi Insurance Protocol
