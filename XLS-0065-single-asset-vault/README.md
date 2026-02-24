@@ -17,31 +17,6 @@
 
 A Single Asset Vault is a new on-chain primitive for aggregating assets from one or more depositors, and making the assets available for other on-chain protocols. The Single Asset Vault uses [Multi-Purpose-Token](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens) to represent ownership shares of the Vault. The Vault serves diverse purposes, such as lending markets, aggregators, yield-bearing tokens, asset management, etc. The Single Asset Vault decouples the liquidity provision functionality from the specific protocol logic.
 
-## Index
-
-- [**1. Introduction**](#1-introduction)
-  - [**1.1. Feature Overview**](#11-overview)
-  - [**1.2. Terminology**](#12-terminology)
-  - [**1.3. Actors**](#13-actors)
-  - [**1.4 Connecting to the Vault**](#14-connecting-to-the-vault)
-- [**2. Ledger Entry: `Vault`**](#2-ledger-entry-vault)
-  - [**2.1. Object Identifier**](#21-object-identifier)
-  - [**2.2. Fields**](#22-fields)
-  - [**2.3. Vault _pseudo-account_**](#23-vault-_pseudo-account_)
-  - [**2.4. Ownership**](#24-ownership)
-  - [**2.5. Owner Reserve**](#25-owner-reserve)
-  - [**2.6. Vault Shares**](#26-vault-shares)
-  - [**2.7. Exchange Algorithm**](#27-exchange-algorithm)
-- [**3. Transaction: `VaultCreate`**](#3-transaction-vaultcreate)
-- [**4. Transaction: `VaultSet`**](#4-transaction-vaultset)
-- [**5. Transaction: `VaultDelete`**](#5-transaction-vaultdelete)
-- [**6. Transaction: `VaultDeposit`**](#6-transaction-vaultdeposit)
-- [**7. Transaction: `VaultWithdraw`**](#7-transaction-vaultwithdraw)
-- [**8. Transaction: `VaultClawback`**](#8-transaction-vaultclawback)
-- [**9. Transaction: `Payment`**](#9-transaction-payment)
-- [**10. API**](#10-api)
-- [Appendix](#appendix)
-
 ## 1. Introduction
 
 ### 1.1 Overview
@@ -94,7 +69,6 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](https://github.com/XRPLF/XRPL-Standards/discussions/190) specification.
 
-[**Return to Index**](#index)
 
 ## 2. Ledger Entry: `Vault`
 
@@ -344,7 +318,25 @@ The issuer of the Vaults asset may enact a freeze either through a [Global Freez
 
 The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/tokens/transfer-fees) to `VaultDeposit` and `VaultWithdraw` transactions. Furthermore, whenever a protocol moves assets from or to a Vault, the `Transfer Fee` must not be charged.
 
-### 2.10 Example JSON
+### 2.10 Invariants
+
+- A transaction must not modify more than one `Vault` object.
+- `<Vault>.Asset == <Vault>'.Asset` (the asset is immutable).
+- `<Vault>.Account == <Vault>'.Account` (the _pseudo-account_ is immutable).
+- `<Vault>.ShareMPTID == <Vault>'.ShareMPTID` (the share MPT ID is immutable).
+- An updated `Vault` must always have an associated `MPTokenIssuance` (shares) object.
+- `IF MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0 THEN <Vault>'.AssetsTotal == 0 AND <Vault>'.AssetsAvailable == 0`.
+- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount <= MPTokenIssuance(Vault.ShareMPTID).MaximumAmount`.
+- `<Vault>'.AssetsAvailable >= 0`.
+- `<Vault>'.AssetsAvailable <= <Vault>'.AssetsTotal`.
+- `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable`.
+- `<Vault>'.AssetsTotal >= 0`.
+- `<Vault>'.AssetsMaximum >= 0`.
+- Only `VaultCreate` may create a new `Vault` object.
+- Only `VaultDelete` may delete a `Vault` object.
+- `<Vault>.LossUnrealized == <Vault>'.LossUnrealized` for all vault transactions (only protocol transactions such as `LoanManage` and `LoanPay` may change `LossUnrealized`).
+
+### 2.11 Example JSON
 
 ```json
 {
@@ -372,7 +364,6 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 3. Transaction: `VaultCreate`
 
@@ -449,7 +440,11 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ### 3.7 Invariants
 
-**TBD**
+- The transaction must not modify an existing `Vault` object (i.e. no before-state).
+- `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
+- `<Vault>'.Account == MPTokenIssuance(Vault.ShareMPTID).Issuer` (shares issuer must equal the vault's _pseudo-account_).
+- The shares issuer `AccountRoot` must exist and must be a _pseudo-account_.
+- The shares issuer _pseudo-account_ must reference the created vault via its `VaultID` field.
 
 ### 3.8 Example JSON
 
@@ -469,7 +464,6 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 4. Transaction: `VaultSet`
 
@@ -505,7 +499,11 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 ### 4.4 Invariants
 
-**TBD**
+- The _pseudo-account_ asset balance must not change.
+- `<Vault>.AssetsTotal == <Vault>'.AssetsTotal` (assets total must not change).
+- `<Vault>.AssetsAvailable == <Vault>'.AssetsAvailable` (assets available must not change).
+- `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
+- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must not change.
 
 ### 4.5 Example JSON
 
@@ -521,7 +519,6 @@ The `VaultSet` updates an existing `Vault` ledger object.
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 5. Transaction: `VaultDelete`
 
@@ -551,7 +548,11 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ### 5.4 Invariants
 
-**TBD**
+- The `Vault` object must be deleted (i.e. no after-state).
+- The `MPTokenIssuance` object for the vault shares must also be deleted.
+- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (no shares outstanding at time of deletion).
+- `<Vault>.AssetsTotal == 0` (no assets outstanding at time of deletion).
+- `<Vault>.AssetsAvailable == 0` (no assets available at time of deletion).
 
 ### 5.5 Example JSON
 
@@ -565,7 +566,6 @@ The `VaultDelete` transaction deletes an existing vault object.
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 6. Transaction: `VaultDeposit`
 
@@ -620,7 +620,16 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ### 6.4 Invariants
 
-**TBD**
+Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the depositor's share balance.
+
+- The _pseudo-account_ asset balance must increase: $\Delta_{asset} > 0$.
+- $\Delta_{asset}$ must not exceed `Amount`.
+- The depositor's asset balance must decrease by $\Delta_{asset}$ (unless the depositor is the asset issuer).
+- `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
+- $\Delta_{share} > 0$ (depositor shares must increase).
+- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
+- `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+- `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
 
 ### 6.5 Example JSON
 
@@ -639,7 +648,6 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 7. Transaction: `VaultWithdraw`
 
@@ -723,7 +731,14 @@ In sections below assume the following variables:
 
 ### 7.4 Invariants
 
-**TBD**
+Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the withdrawer's share balance.
+
+- The _pseudo-account_ asset balance must decrease: $\Delta_{asset} < 0$.
+- Exactly one destination account balance must increase by $|\Delta_{asset}|$ (unless the destination is the asset issuer).
+- $\Delta_{share} < 0$ (withdrawer shares must decrease).
+- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
+- `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+- `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
 
 ### 7.5 Example JSON
 
@@ -742,7 +757,6 @@ In sections below assume the following variables:
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 8. Transaction: `VaultClawback`
 
@@ -794,7 +808,14 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 ### 8.4 Invariants
 
-**TBD**
+Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the holder's share balance.
+
+- The transaction submitter must be the asset issuer, or the vault owner of an empty vault with outstanding shares.
+- If the vault holds assets: $\Delta_{asset} < 0$ (vault balance must decrease).
+- If the vault holds assets: `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+- If the vault holds assets: `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
+- $\Delta_{share} < 0$ (holder shares must decrease).
+- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
 
 ### 8.5 Example JSON
 
@@ -810,13 +831,16 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 }
 ```
 
-[**Return to Index**](#index)
 
 ## 9. Transaction: `Payment`
 
 The Single Asset Vault does not introduce new `Payment` transaction fields. However, it adds additional failure conditions and state changes when transfering Vault shares.
 
-### 9.1 Failure Conditions
+### 9.1 Fields
+
+The Single Asset Vault does not introduce or modify any `Payment` transaction fields. Refer to the existing [Payment transaction fields](https://xrpl.org/docs/references/protocol/transactions/types/payment).
+
+### 9.2 Failure Conditions
 
 1. If `Payment.Amount` is a `Vault` share AND:
    1. The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain of the Vaults Share.
@@ -835,205 +859,222 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
       3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
       4. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `pseudo-account`.
 
-### 9.2 State Changes
+### 9.3 State Changes
 
 1. If `MPToken`object for shares does not exist for the destination account, create one.
 
-### 9.3 Example JSON
+### 9.4 Example JSON
 
 ```json
 {}
 ```
 
-[**Return to Index**](#index)
 
-## 10. API
-
-### 10.1 RPC `vault_info`
+## 10. RPC: `vault_info`
 
 This RPC retrieves the Vault ledger entry and the IDs associated with it.
 
-#### 10.1.1 Request Fields
+### 10.1 Request Fields
 
-We propose adding the following fields to the `ledger_entry` method:
+| Field Name | Required? | JSON Type |                Description                 |
+| ---------- | :-------: | :-------: | :----------------------------------------: |
+| `command`  |    Yes    | `string`  |        Must be `"vault_info"`.             |
+| `vault`    |    Yes    | `string`  | The object ID of the Vault to be returned. |
 
-| Field Name | Required | JSON Type |                Description                 |
-| ---------- | :------: | :-------: | :----------------------------------------: |
-| `vault`    |   Yes    | `string`  | The object ID of the Vault to be returned. |
+### 10.2 Response Fields
 
-#### 10.1.2 Response
+| Field Name                       | Always Present? | JSON Type | Description                                                                                                                                            |
+| -------------------------------- | :-------------: | :-------: | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vault`                          |       Yes       | `object`  | Root object representing the vault.                                                                                                                    |
+| `vault.Account`                  |       Yes       | `string`  | The pseudo-account ID of the vault.                                                                                                                    |
+| `vault.Asset`                    |       Yes       | `object`  | Object representing the asset held in the vault.                                                                                                       |
+| `vault.Asset.currency`           | Conditional     | `string`  | Currency code of the asset. Present when the asset is `XRP` or an `IOU`.                                                                               |
+| `vault.Asset.issuer`             | Conditional     | `string`  | Issuer address of the asset. Present when the asset is an `IOU`.                                                                                       |
+| `vault.Asset.mpt_issuance_id`    | Conditional     | `string`  | The `MPTokenIssuance` ID of the asset. Present when the asset is an `MPT`.                                                                             |
+| `vault.AssetsAvailable`          |       Yes       | `string`  | Amount of assets currently available for withdrawal.                                                                                                   |
+| `vault.AssetsTotal`              |       Yes       | `string`  | Total amount of assets in the vault.                                                                                                                   |
+| `vault.Data`                     |       No        | `string`  | Arbitrary metadata about the Vault, in hex format.                                                                                                     |
+| `vault.Flags`                    |       Yes       | `number`  | Bit-field flags associated with the vault.                                                                                                             |
+| `vault.LedgerEntryType`          |       Yes       | `string`  | Ledger entry type, always `"Vault"`.                                                                                                                   |
+| `vault.LossUnrealized`           |       Yes       | `string`  | Unrealized loss associated with the vault.                                                                                                             |
+| `vault.Owner`                    |       Yes       | `string`  | ID of the Vault Owner account.                                                                                                                         |
+| `vault.OwnerNode`                |       Yes       | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
+| `vault.PreviousTxnID`            |       Yes       | `string`  | Transaction ID of the last modification to this vault.                                                                                                 |
+| `vault.PreviousTxnLgrSeq`        |       Yes       | `number`  | Ledger sequence number of the last transaction modifying this vault.                                                                                   |
+| `vault.Scale`                    |       Yes       | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `vault.Sequence`                 |       Yes       | `number`  | Sequence number of the vault entry.                                                                                                                    |
+| `vault.ShareMPTID`               |       Yes       | `string`  | Multi-purpose token ID associated with the vault's shares.                                                                                             |
+| `vault.WithdrawalPolicy`         |       Yes       | `number`  | Policy defining withdrawal conditions.                                                                                                                 |
+| `vault.index`                    |       Yes       | `string`  | Unique index of the vault ledger entry.                                                                                                                |
+| `vault.shares`                   |       Yes       | `object`  | Object containing details about issued shares.                                                                                                         |
+| `vault.shares.DomainID`          |       No        | `string`  | The `PermissionedDomain` object ID associated with the shares, if set.                                                                                 |
+| `vault.shares.Flags`             |       Yes       | `number`  | Bit-field flags associated with the shares issuance.                                                                                                   |
+| `vault.shares.Issuer`            |       Yes       | `string`  | The ID of the Issuer of the Share. It will always be the pseudo-account ID.                                                                            |
+| `vault.shares.LedgerEntryType`   |       Yes       | `string`  | Ledger entry type, always `"MPTokenIssuance"`.                                                                                                         |
+| `vault.shares.MPTokenMetadata`   |       No        | `string`  | Arbitrary metadata about the share MPT, in hex format.                                                                                                 |
+| `vault.shares.OutstandingAmount` |       Yes       | `string`  | Total outstanding shares issued.                                                                                                                       |
+| `vault.shares.OwnerNode`         |       Yes       | `string`  | Identifier for the owner node of the shares.                                                                                                           |
+| `vault.shares.PreviousTxnID`     |       Yes       | `string`  | Transaction ID of the last modification to the shares issuance.                                                                                        |
+| `vault.shares.PreviousTxnLgrSeq` |       Yes       | `number`  | Ledger sequence number of the last transaction modifying the shares issuance.                                                                          |
+| `vault.shares.Sequence`          |       Yes       | `number`  | Sequence number of the shares issuance entry.                                                                                                          |
+| `vault.shares.index`             |       Yes       | `string`  | Unique index of the shares ledger entry.                                                                                                               |
+| `vault.shares.mpt_issuance_id`   |       Yes       | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
 
-| Field Name                       | Required | JSON Type | Description                                                                                                                                            |
-| -------------------------------- | -------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `vault`                          | yes      | `object`  | Root object representing the vault.                                                                                                                    |
-| `vault.Account`                  | yes      | `string`  | The pseudo-account ID of the vault.                                                                                                                    |
-| `vault.Asset`                    | yes      | `object`  | Object representing the asset held in the vault.                                                                                                       |
-| `vault.Asset.currency`           | yes      | `string`  | Currency code of the asset stored in the vault.                                                                                                        |
-| `vault.Asset.issuer`             | no       | `string`  | Issuer address of the asset.                                                                                                                           |
-| `vault.AssetsAvailable`          | yes      | `string`  | Amount of assets currently available for withdrawal.                                                                                                   |
-| `vault.AssetsTotal`              | yes      | `string`  | Total amount of assets in the vault.                                                                                                                   |
-| `vault.Flags`                    | no       | `number`  | Bit-field flags associated with the vault.                                                                                                             |
-| `vault.LedgerEntryType`          | yes      | `string`  | Ledger entry type, always "Vault".                                                                                                                     |
-| `vault.LossUnrealized`           | no       | `string`  | Unrealized loss associated with the vault.                                                                                                             |
-| `vault.Owner`                    | yes      | `string`  | ID of the Vault Owner account.                                                                                                                         |
-| `vault.OwnerNode`                | no       | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
-| `vault.PreviousTxnID`            | yes      | `string`  | Transaction ID of the last modification to this vault.                                                                                                 |
-| `vault.PreviousTxnLgrSeq`        | yes      | `number`  | Ledger sequence number of the last transaction modifying this vault.                                                                                   |
-| `vault.Sequence`                 | yes      | `number`  | Sequence number of the vault entry.                                                                                                                    |
-| `vault.ShareMPTID`               | no       | `string`  | Multi-purpose token ID associated with this vault.                                                                                                     |
-| `vault.WithdrawalPolicy`         | no       | `number`  | Policy defining withdrawal conditions.                                                                                                                 |
-| `vault.index`                    | yes      | `string`  | Unique index of the vault ledger entry.                                                                                                                |
-| `vault.shares`                   | yes      | `object`  | Object containing details about issued shares.                                                                                                         |
-| `vault.shares.Flags`             | no       | `number`  | Bit-field flags associated with the shares issuance.                                                                                                   |
-| `vault.shares.Issuer`            | yes      | `string`  | The ID of the Issuer of the Share. It will always be the pseudo-account ID.                                                                            |
-| `vault.shares.LedgerEntryType`   | yes      | `string`  | Ledger entry type, always "MPTokenIssuance".                                                                                                           |
-| `vault.shares.OutstandingAmount` | yes      | `string`  | Total outstanding shares issued.                                                                                                                       |
-| `vault.shares.OwnerNode`         | no       | `string`  | Identifier for the owner node of the shares.                                                                                                           |
-| `vault.shares.PreviousTxnID`     | yes      | `string`  | Transaction ID of the last modification to the shares issuance.                                                                                        |
-| `vault.shares.PreviousTxnLgrSeq` | yes      | `number`  | Ledger sequence number of the last transaction modifying the shares issuance.                                                                          |
-| `vault.shares.Sequence`          | yes      | `number`  | Sequence number of the shares issuance entry.                                                                                                          |
-| `vault.shares.index`             | yes      | `string`  | Unique index of the shares ledger entry.                                                                                                               |
-| `vault.shares.mpt_issuance_id`   | no       | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
-| `vault.Scale`                    | yes      | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+### 10.3 Failure Conditions
 
-##### 10.1.2.1 Example
+1. The `vault` field is not provided or is not a valid object ID (`invalidParams`).
+2. The `Vault` object with the specified ID does not exist on the ledger (`entryNotFound`).
+
+### 10.4 Example Request
+
+```json
+{
+  "command": "vault_info",
+  "vault": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7"
+}
+```
+
+### 10.5 Example Response
 
 Vault holding an `IOU`:
 
-```type-script
- "result" :
- {
-  "ledger_current_index" : 7,
-  "status" : "success",
-  "validated" : false,
-  "vault" :
-  {
-   "Account" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
-   "Asset" :
-   {
-    "currency" : "IOU",
-    "issuer" : "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
-   },
-   "AssetsAvailable" : "100",
-   "AssetsTotal" : "100",
-   "Flags" : 0,
-   "LedgerEntryType" : "Vault",
-   "LossUnrealized" : "0",
-   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-   "OwnerNode" : "0",
-   "PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
-   "PreviousTxnLgrSeq" : 6,
-   "Sequence" : 5,
-   "ShareMPTID" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E",
-   "WithdrawalPolicy" : 1,
-   "index" : "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
-   "shares" :
-   {
-    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
-    "Flags" : 0,
-    "Issuer" : "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
-    "LedgerEntryType" : "MPTokenIssuance",
-    "OutstandingAmount" : "100",
-    "OwnerNode" : "0",
-    "PreviousTxnID" : "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
-    "PreviousTxnLgrSeq" : 6,
-    "Sequence" : 1,
-    "index" : "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
-    "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
-   },
-   "Scale": 6,
-  }
- }
+```json
+{
+  "result": {
+    "ledger_current_index": 7,
+    "validated": false,
+    "vault": {
+      "Account": "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+      "Asset": {
+        "currency": "USD",
+        "issuer": "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
+      },
+      "AssetsAvailable": "100",
+      "AssetsTotal": "100",
+      "Flags": 0,
+      "LedgerEntryType": "Vault",
+      "LossUnrealized": "0",
+      "Owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+      "OwnerNode": "0",
+      "PreviousTxnID": "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
+      "PreviousTxnLgrSeq": 6,
+      "Sequence": 5,
+      "ShareMPTID": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E",
+      "WithdrawalPolicy": 1,
+      "index": "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
+      "shares": {
+        "DomainID": "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
+        "Flags": 0,
+        "Issuer": "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+        "LedgerEntryType": "MPTokenIssuance",
+        "OutstandingAmount": "100",
+        "OwnerNode": "0",
+        "PreviousTxnID": "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
+        "PreviousTxnLgrSeq": 6,
+        "Sequence": 1,
+        "index": "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
+        "mpt_issuance_id": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
+      }
+    }
+  },
+  "status": "success",
+  "type": "response"
+}
 ```
 
 Vault holding an `MPT`:
 
-```
+```json
 {
-  "LedgerEntryType": "Vault",
-  "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
-  "Flags": "0",
-  "PreviousTxnID": "9A8765B4321CDE987654321CDE987654321CDE987654321CDE987654321CDE98",
-  "PreviousTxnLgrSeq": 12345678,
-  "Sequence": 1,
-  "OwnerNode": 2,
-  "Owner": "rEXAMPLE9AbCdEfGhIjKlMnOpQrStUvWxYz",
-  "Account": "rPseudoAcc1234567890abcdef1234567890abcdef",
-  "Data": "5468697320697320617262697472617279206D657461646174612061626F757420746865207661756C742E",
-  "Asset": {
-    "currency": "USD",
-    "issuer": "rIssuer1234567890abcdef1234567890abcdef",
-    "value": "1000"
+  "result": {
+    "ledger_current_index": 3990828,
+    "validated": false,
+    "vault": {
+      "Account": "rQhUcbJoDfvgXr1EkMwarLP5QT3XinEBDg",
+      "Asset": {
+        "mpt_issuance_id": "002F830036E4E56185F871D70CFFC7BDD554F897606BB6D3"
+      },
+      "Data": "50726976617465207661756C7420666F72207475746F7269616C73",
+      "Flags": 65536,
+      "LedgerEntryType": "Vault",
+      "Owner": "rJdYtgaiEgzL7xD2QdPKg5xoHkWc7CZjvm",
+      "OwnerNode": "0",
+      "PreviousTxnID": "F73B073028D7EF14C5DD907591E579EBFEDBA891F4AE0B951439C240C42AE0D4",
+      "PreviousTxnLgrSeq": 3113735,
+      "Sequence": 3113728,
+      "ShareMPTID": "00000001FCE5D5E313303F3D0C700789108CC6BE7D711493",
+      "WithdrawalPolicy": 1,
+      "index": "9E48171960CD9F62C3A7B6559315A510AE544C3F51E02947B5D4DAC8AA66C3BA",
+      "shares": {
+        "DomainID": "17060E04AD63975CDE5E4B0C6ACB95ABFA2BA1D569473559448B6E556F261D4A",
+        "Flags": 60,
+        "Issuer": "rQhUcbJoDfvgXr1EkMwarLP5QT3XinEBDg",
+        "LedgerEntryType": "MPTokenIssuance",
+        "MPTokenMetadata": "7B226163223A2264656669222C226169223A7B226578616D706C655F696E666F223A2274657374227D2C2264223A2250726F706F7274696F6E616C206F776E65727368697020736861726573206F6620746865207661756C74222C2269223A226578616D706C652E636F6D2F7661756C742D7368617265732D69636F6E2E706E67222C22696E223A225661756C74204F776E6572222C226E223A225661756C7420536861726573222C2274223A22534841524531222C227573223A5B7B2263223A2277656273697465222C2274223A2241737365742057656273697465222C2275223A226578616D706C652E636F6D2F6173736574227D2C7B2263223A22646F6373222C2274223A22446F6373222C2275223A226578616D706C652E636F6D2F646F6373227D5D7D",
+        "OutstandingAmount": "0",
+        "OwnerNode": "0",
+        "PreviousTxnID": "F73B073028D7EF14C5DD907591E579EBFEDBA891F4AE0B951439C240C42AE0D4",
+        "PreviousTxnLgrSeq": 3113735,
+        "Sequence": 1,
+        "index": "F231A0382544EC0ABE810A9D292F3BD455A21CD13CC1DFF75EAFE957A1C8CAB4",
+        "mpt_issuance_id": "00000001FCE5D5E313303F3D0C700789108CC6BE7D711493"
+      }
+    }
   },
-  "AssetsTotal": 1000000,
-  "AssetsAvailable": 800000,
-  "LossUnrealized": 200000,
-  "AssetsMaximum": 0,
-  "Share": {
-    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-    "value": "1",
-  },
-  "ShareTotal": 5000,
-  "WithdrawalPolicy": "0x0001",
-  "Scale": 0
+  "status": "success",
+  "type": "response"
 }
 ```
 
 Vault holding `XRP`:
 
-```type-script
+```json
 {
- "result" :
- {
-  "ledger_hash" : "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
-  "ledger_index" : 6,
-  "status" : "success",
-  "validated" : true,
-  "vault" :
-  {
-   "Account" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-   "Asset" :
-   {
-    "currency" : "XRP"
-   },
-   "AssetsAvailable" : "0",
-   "AssetsTotal" : "0",
-   "Flags" : 0,
-   "LedgerEntryType" : "Vault",
-   "LossUnrealized" : "0",
-   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-   "OwnerNode" : "0",
-   "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-   "PreviousTxnLgrSeq" : 5,
-   "Sequence" : 4,
-   "ShareMPTID" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
-   "WithdrawalPolicy" : 1,
-   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
-   "shares" :
-   {
-    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
-    "Flags" : 56,
-    "Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-    "LedgerEntryType" : "MPTokenIssuance",
-    "OutstandingAmount" : "0",
-    "OwnerNode" : "0",
-    "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-    "PreviousTxnLgrSeq" : 5,
-    "Sequence" : 1,
-    "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
-    "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
-   },
-   "Scale": 0
-  }
- }
+  "result": {
+    "ledger_hash": "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+    "ledger_index": 6,
+    "validated": true,
+    "vault": {
+      "Account": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+      "Asset": {
+        "currency": "XRP"
+      },
+      "AssetsAvailable": "0",
+      "AssetsTotal": "0",
+      "Flags": 0,
+      "LedgerEntryType": "Vault",
+      "LossUnrealized": "0",
+      "Owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+      "OwnerNode": "0",
+      "PreviousTxnID": "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+      "PreviousTxnLgrSeq": 5,
+      "Sequence": 4,
+      "ShareMPTID": "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
+      "WithdrawalPolicy": 1,
+      "index": "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+      "shares": {
+        "DomainID": "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
+        "Flags": 56,
+        "Issuer": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+        "LedgerEntryType": "MPTokenIssuance",
+        "OutstandingAmount": "0",
+        "OwnerNode": "0",
+        "PreviousTxnID": "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+        "PreviousTxnLgrSeq": 5,
+        "Sequence": 1,
+        "index": "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
+        "mpt_issuance_id": "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
+      }
+    }
+  },
+  "status": "success",
+  "type": "response"
 }
 ```
 
-[**Return to Index**](#index)
 
 # Appendix
 
-[**Return to Index**](#index)
 
 ## A-1 F.A.Q.
 
