@@ -305,9 +305,12 @@ Submitting a transaction typically requires paying a transaction fee. A typical 
 
 ###### 4.4.3.3.4. Failure Conditions
 
-This section describes the conditions under which the transaction will fail. This must be an exhaustive, descriptive list. Each condition should ideally map to a specific error code. The list should be indexed for easy reference.
+This section describes all conditions under which the transaction will fail. Each condition must map to a specific error code. The list must be exhaustive, descriptive, and indexed for easy reference.
 
-When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`).
+Failure conditions are grouped into two categories:
+
+- Data validation failures: Return a `tem` code
+- Protocol-level failures: Return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code. If another error code must be returned, justification must be provided.
 
 In case of a transaction failure, an XRP Ledger server returns an error code indicating the outcome. These codes are crucial for clients to understand why a transaction was not successful. Please refer to the [documentation](https://xrpl.org/docs/references/protocol/transactions/transaction-results) for existing error codes. When defining failure conditions for a new transaction type in an XLS, reuse existing codes whenever an existing code accurately describes the failure condition. This helps maintain consistency and avoids unnecessary proliferation of codes.
 
@@ -315,7 +318,7 @@ If the new transaction logic introduces novel failure reasons not adequately cov
 
 ###### 4.4.3.3.5. State Changes
 
-This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). Indexed for clarity. A successfully applied transaction must return a `tesSUCCESS` code.
+This section describes the changes made to the ledger state if the transaction executes successfully. It should omit default state changes common to all transactions (e.g., fee processing, sequence number increment, setting `PreviousTxnID`/`PreviousTxnLgrSeq` on modified objects). The list must be exhaustive, descriptive, and indexed for easy reference. When using the same transaction to create and update an object, the expected behavior is identified by the presence or absence of the object identifier (e.g., `tx.ExampleID`). A successfully applied transaction must return a `tesSUCCESS` code.
 
 ###### 4.4.3.3.6. Metadata Fields
 
