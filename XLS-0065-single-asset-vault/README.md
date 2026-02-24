@@ -344,6 +344,34 @@ The issuer of the Vaults asset may enact a freeze either through a [Global Freez
 
 The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/tokens/transfer-fees) to `VaultDeposit` and `VaultWithdraw` transactions. Furthermore, whenever a protocol moves assets from or to a Vault, the `Transfer Fee` must not be charged.
 
+### 2.10 Example JSON
+
+```json
+{
+  "LedgerEntryType": "Vault",
+  "LedgerIndex": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Flags": 0,
+  "PreviousTxnID": "",
+  "PreviousTxnLgrSeq": 0,
+  "Sequence": 3990518,
+  "OwnerNode": "0",
+  "Owner": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
+  "Account": "rDe7soaAox8bk2Srfi7n7Y1wzbmcn8RksQ",
+  "Data": "555344204C656E64696E67205661756C74",
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb"
+  },
+  "AssetsTotal": "0",
+  "AssetsAvailable": "0",
+  "LossUnrealized": "0",
+  "AssetsMaximum": "100000",
+  "ShareMPTID": "000000018AB77A8ADC472FBB7991AA311AAEB5D2FA7A793B",
+  "WithdrawalPolicy": 1,
+  "Scale": 6
+}
+```
+
 [**Return to Index**](#index)
 
 ## 3. Transaction: `VaultCreate`
@@ -423,6 +451,24 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 **TBD**
 
+### 3.8 Example JSON
+
+```json
+{
+  "TransactionType": "VaultCreate",
+  "Flags": 0,
+  "Data": "555344204C656E64696E67205661756C74",
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb"
+  },
+  "AssetsMaximum": "100000",
+  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
+  "Fee": "200000",
+  "Sequence": 3990518
+}
+```
+
 [**Return to Index**](#index)
 
 ## 4. Transaction: `VaultSet`
@@ -461,6 +507,20 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 **TBD**
 
+### 4.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultSet",
+  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Data": "5570646174656420566F756C74204D65746164617461",
+  "AssetsMaximum": "200000",
+  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
+  "Fee": "10",
+  "Sequence": 3990519
+}
+```
+
 [**Return to Index**](#index)
 
 ## 5. Transaction: `VaultDelete`
@@ -492,6 +552,18 @@ The `VaultDelete` transaction deletes an existing vault object.
 ### 5.4 Invariants
 
 **TBD**
+
+### 5.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultDelete",
+  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
+  "Fee": "10",
+  "Sequence": 3990520
+}
+```
 
 [**Return to Index**](#index)
 
@@ -549,6 +621,23 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 ### 6.4 Invariants
 
 **TBD**
+
+### 6.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultDeposit",
+  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
+    "value": "5000"
+  },
+  "Account": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
+  "Fee": "1",
+  "Sequence": 3990518
+}
+```
 
 [**Return to Index**](#index)
 
@@ -636,6 +725,23 @@ In sections below assume the following variables:
 
 **TBD**
 
+### 7.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultWithdraw",
+  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Amount": {
+    "currency": "USD",
+    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
+    "value": "4083.333642504084"
+  },
+  "Account": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
+  "Fee": "1",
+  "Sequence": 3990519
+}
+```
+
 [**Return to Index**](#index)
 
 ## 8. Transaction: `VaultClawback`
@@ -690,6 +796,20 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 **TBD**
 
+### 8.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultClawback",
+  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
+  "Holder": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
+  "Amount": "4083333642504084",
+  "Account": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
+  "Fee": "1",
+  "Sequence": 3990520
+}
+```
+
 [**Return to Index**](#index)
 
 ## 9. Transaction: `Payment`
@@ -718,6 +838,12 @@ The Single Asset Vault does not introduce new `Payment` transaction fields. Howe
 ### 9.2 State Changes
 
 1. If `MPToken`object for shares does not exist for the destination account, create one.
+
+### 9.3 Example JSON
+
+```json
+{}
+```
 
 [**Return to Index**](#index)
 
