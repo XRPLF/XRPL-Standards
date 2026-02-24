@@ -222,11 +222,23 @@ _[If Custom]: This transaction requires `[X]` drops because `[reason]`._
 
 ### 3.4. Failure Conditions
 
-_[List all conditions that cause the transaction to fail, with corresponding error codes]_
+_[An indexed list of all conditions that cause the transaction to fail, with corresponding error codes. Group failure conditions into two categories: data verification, invalid field values, protocol-level logic.]_
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+#### 3.4.1. Data Verification
+
+[All Data Verification failures return a `tem` level error.]
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
+
+#### 3.4.2. Protocol-Level Failures
+
+_[Protocol-level failures return `tec` codes. With rare exceptions they may return a `ter`, `tef`, or `tel` code.]_
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 _[For new error codes, provide justification for why existing codes are insufficient]_
 
@@ -265,17 +277,17 @@ _[Only include this section if the transaction adds or modifies metadata fields.
 
 _[If your specification introduces new permissions, document each permission in its own numbered section following this part of the template. Otherwise, do not include any sections with this title.]_
 
-### 4.1. Transaction Types Affected
+### 4.1. Permission Description
+
+_[Describe how this permission interacts with existing permissions and what it allows/restricts. Describe what the granular permission controls.]_
+
+### 4.2. Transaction Types Affected
 
 _[List transaction types that this permission applies to]_
 
-### 4.2. Permission Scope
+### 4.3. Permission Value
 
-_[Describe what the granular permission controls]_
-
-### 4.3. Permission Description
-
-_[Describe how this permission interacts with existing permissions and what it allows/restricts]_
+_[Specify the numeric value for the permission]_
 
 ## 5. RPC: `[rpc_method_name]`
 
@@ -297,9 +309,11 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.3. Failure Conditions
 
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
-- `[Description of failure condition]` (`[ERROR_CODE]`)
+_[An indexed list of RPC error codes.]_
+
+1. `[Description of failure condition]` (`[ERROR_CODE]`)
+2. `[Description of failure condition]` (`[ERROR_CODE]`)
+3. `[Description of failure condition]` (`[ERROR_CODE]`)
 
 ### 5.4. Example Request
 

@@ -1,7 +1,7 @@
 <pre>
     xls: 17
     title: XFL Developer-friendly representation of XRPL balances
-    descrption: Introduces developer-friendly representation of XRPL balances.
+    description: Introduces developer-friendly representation of XRPL balances.
     author: RichardAH (@RichardAH)
     proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/39
     created: 2021-03-19

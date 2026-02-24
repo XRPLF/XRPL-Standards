@@ -100,6 +100,36 @@ def build_site():
     # Sort documents by number in reverse order (later ones more relevant)
     xls_docs.sort(key=lambda x: int(x.number), reverse=True)
 
+    # Generate simple redirect pages so /xls-<number>.html redirects to
+    # the canonical document URL under /xls/<folder>.html.
+    redirect_template = env.get_template("redirect.html")
+    for doc in xls_docs:
+        # Redirect pages live under /xls/, next to the canonical XLS HTML files.
+        # For local builds (base_url == "."), use a relative URL that does *not*
+        # add another /xls/ segment; otherwise we create /xls/xls/<file>.html.
+        if base_url == ".":
+            # From scripts/_site/xls/xls-<number>.html → ./<folder>.html
+            target_url = f"./{doc.folder}.html"
+        else:
+            # On GitHub Pages, use an absolute URL with the base path.
+            target_url = f"{base_url}/xls/{doc.folder}.html"
+
+        redirect_html = redirect_template.render(
+            title=f"XLS-{doc.number}: {doc.title}",
+            target_url=target_url,
+        )
+
+        # /xls/ alias: /xls/xls-<number>.html
+        def add_redirect(redirect_url, target_url):
+            redirect_xls_path = site_dir / "xls" / redirect_url
+            with open(redirect_xls_path, "w", encoding="utf-8") as f:
+                f.write(redirect_html)
+
+            print(f"Generated redirect: {redirect_xls_path} -> {target_url}")
+
+        add_redirect(f"xls-{doc.number}.html", target_url)
+        add_redirect(f"xls-{doc.raw_number}.html", target_url)
+
     # Group documents by category for category pages and navigation
     categories = {}
     for doc in xls_docs:
