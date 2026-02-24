@@ -172,8 +172,8 @@ The `LoanBroker` object has the following fields:
 | `OwnerNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
 | `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's \_pseudo-account\* owner's directory.                                                                                                       |
 | `VaultID`              |   Yes    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
-| `Account`              |   Yes    |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
-| `Owner`                |   Yes    |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
+| `Account`              |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
+| `Owner`                |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
 | `Data`                 |    No    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
 | `ManagementFeeRate`    |   Yes    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                 |
 | `OwnerCount`           |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                       |
@@ -475,7 +475,7 @@ The `LoanID` is calculated as follows:
 | `OwnerNode`                |   Yes    |   Yes    | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `Borrower` owner's directory.                                                                                |
 | `LoanBrokerNode`           |   Yes    |   Yes    | `number`  |   `UINT64`    |                                       `N/A`                                       | Identifies the page where this item is referenced in the `LoanBroker`s owner directory.                                                                               |
 | `LoanBrokerID`             |   Yes    |   Yes    | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the `LoanBroker` associated with this Loan Instance.                                                                                                        |
-| `Borrower`                 |   Yes    |   Yes    | `string`  |  `AccountID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                                      |
+| `Borrower`                 |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |                                       `N/A`                                       | The address of the account that is the borrower.                                                                                                                      |
 | `LoanOriginationFee`       |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                                                       |
 | `LoanServiceFee`           |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                                        |
 | `LatePaymentFee`           |   Yes    |   Yes    | `string`  |   `NUMBER`    |                                       `N/A`                                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                                         |
@@ -497,23 +497,23 @@ The `LoanID` is calculated as follows:
 | `PeriodicPayment`          |    No    |   Yes    | `string`  |   `NUMBER`    |                              `LoanPeriodicPayment()`                              | The calculated periodic payment amount for each payment interval.                                                                                                     |
 | `LoanScale`                |   Yes    |    No    | `number`  |    `INT32`    |                                `LoanTotalValue()`                                 | The scale factor that ensures all computed amounts are rounded to the same number of decimal places. It is determined based on the total loan value at creation time. |
 
-##### 3.2.2.1 TotalValueOutstanding
+##### 3.2.2.1 `TotalValueOutstanding`
 
 The total outstanding value of the Loan, including management fee charged against the interest.
 
-##### 3.2.2.2 PrincipalOutstanding
+##### 3.2.2.2 `PrincipalOutstanding`
 
 The principal amount that the Borrower still owes. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
 
-##### 3.2.2.3 ManagementFeeOutstanding
+##### 3.2.2.3 `ManagementFeeOutstanding`
 
 The remaining Management Fee owed to the LoanBroker. This amount decreases each time the borrower makes a successful loan payment. This field ensures that the loan is fully settled on the final payment.
 
-##### 3.2.2.4 TotalInterestOutstanding
+##### 3.2.2.4 `TotalInterestOutstanding`
 
 TotalInterestOutstanding represents the interest amount due from the Borrower. This value is not stored explicitly but is derived using the following formula: `TotalInterestOutstanding = TotalValueOutstanding - PrincipalOutstanding - ManagementFeeOutstanding`.
 
-##### 3.2.2.5 PeriodicPayment
+##### 3.2.2.5 `PeriodicPayment`
 
 The periodic payment amount represents the precise sum the Borrower must pay during each payment cycle. For practical implementation, this value should be rounded UP when processing payments. The system automatically recalculates the PeriodicPayment following any overpayment by the borrower. For instance, when dealing with MPT loans, the calculated `PeriodicPayment` may be `10.251`. However, since MPTs only support whole number representations, the borrower would need to pay `11` units. The system maintains the precise periodic payment value at maximum accuracy since it is frequently referenced throughout loan payment computations.
 
@@ -782,11 +782,11 @@ The transaction deposits First-Loss Capital into the `LoanBroker` object.
 
 #### 3.5.1 Fields
 
-| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                |
-| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------- |
-| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `76`      | The transaction type.                                      |
-| `LoanBrokerID`    |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID to which to deposit First-Loss Capital. |
-| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.                   |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :--------------------------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `76`      | The transaction type.                                      |
+| `LoanBrokerID`    |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The Loan Broker ID to which to deposit First-Loss Capital. |
+| `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to deposit.                   |
 
 #### 3.5.2 Transaction Fee
 
@@ -852,13 +852,13 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 #### 3.6.1 Fields
 
-| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                  |
-| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `77`      | Transaction type.                                                            |
-| `LoanBrokerID`    |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
-| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
-| `Destination`     |    No    |                                                       `string`                                                       |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
-| `DestinationTag`  |    No    |                                                       `number`                                                       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                  |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `77`      | Transaction type.                                                            |
+| `LoanBrokerID`    |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
+| `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
+| `Destination`     |    No    |       `string`       |  `ACCOUNTID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
+| `DestinationTag`  |    No    |       `number`       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
 
 #### 3.6.2 Transaction Fee
 
@@ -938,11 +938,11 @@ The `LoanBrokerCoverClawback` transaction claws back the First-Loss Capital from
 
 #### 3.7.1 Fields
 
-| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                                                                                                                                                 |
-| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                           |
-| `LoanBrokerID`    |    No    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to clawback First-Loss Capital.                                                                                               |
-| `Amount`          |    No    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                                                                                                 |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `78`      | Transaction type.                                                                                                                                           |
+| `LoanBrokerID`    |    No    |       `string`       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to clawback First-Loss Capital.                                                                                               |
+| `Amount`          |    No    | `string` or `object` |   `AMOUNT`    |       0       | The First-Loss Capital amount to clawback. If the amount is `0` or not provided, clawback funds up to `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. |
 
 ##### 3.7.1.1 `LoanBrokerID`
 
@@ -1029,8 +1029,8 @@ The transaction creates a new `Loan` object.
 | `LoanBrokerID`            |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID associated with the loan.                                                                                                  |
 | `Flags`                   |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.                                                                                                             |
 | `Data`                    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
-| `Counterparty`            |    No    | `string`  |  `AccountID`  |     `N/A`     | The address of the counterparty of the Loan.                                                                                                  |
-| `CounterpartySignature`   |   Yes    | `string`  |  `STObject`   |     `N/A`     | The signature of the counterparty over the transaction.                                                                                       |
+| `Counterparty`            |    No    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the counterparty of the Loan.                                                                                                  |
+| `CounterpartySignature`   |   Yes    | `string`  |  `STOBJECT`   |     `N/A`     | The signature of the counterparty over the transaction.                                                                                       |
 | `LoanOriginationFee`      |    No    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
 | `LoanServiceFee`          |    No    | `string`  |   `NUMBER`    |       0       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
 | `LatePaymentFee`          |    No    | `string`  |   `NUMBER`    |       0       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
@@ -1051,18 +1051,18 @@ An inner object that contains the signature of the Lender over the transaction. 
 
 | Field Name      | Required | JSON Type | Internal Type | Default Value | Description                                                                                                        |
 | --------------- | :------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` |    No    | `string`  |   `STBlob`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
-| `TxnSignature`  |    No    | `string`  |   `STBlob`    |     `N/A`     | The signature of over all signing fields.                                                                          |
-| `Signers`       |    No    |  `list`   |   `STArray`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
+| `SigningPubKey` |    No    | `string`  |   `STBLOB`    |     `N/A`     | The Public Key to be used to verify the validity of the signature.                                                 |
+| `TxnSignature`  |    No    | `string`  |   `STBLOB`    |     `N/A`     | The signature of over all signing fields.                                                                          |
+| `Signers`       |    No    |  `list`   |   `STARRAY`   |     `N/A`     | An array of transaction signatures from the `Counterparty` signers to indicate their approval of this transaction. |
 
 The final transaction must include exactly one of
 
 1. The `SigningPubKey` and `TxnSignature` fields, or
 2. The `Signers` field and, optionally, an empty `SigningPubKey`.
 
-The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum additional fee will be $(|signatures|) \times base\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
+The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum additional fee will be $(|signatures|) \times base\\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
-If the `LoanSet` transaction is **not** part of a [`Batch` transaction](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch), the total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\_fee$. Otherwise, the fee is based on the total number of signatures in the outer transaction. See [Batch Fees](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0056-batch#22-transaction-fee) for further details.
+If the `LoanSet` transaction is **not** part of a [`Batch` transaction](../XLS-0056-batch/README.md), the total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\\_fee$. Otherwise, the fee is based on the total number of signatures in the outer transaction. See [Batch Fees](../XLS-0056-batch/README.md#22-transaction-fee) for further details.
 
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
@@ -1389,12 +1389,12 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 
 #### 3.11.1 Fields
 
-| Field Name        | Required |                                                      JSON Type                                                       | Internal Type | Default Value | Description                               |
-| ----------------- | :------: | :------------------------------------------------------------------------------------------------------------------: | :-----------: | :-----------: | :---------------------------------------- |
-| `TransactionType` |   Yes    |                                                       `string`                                                       |   `UINT16`    |     `83`      | The transaction type.                     |
-| `LoanID`          |   Yes    |                                                       `string`                                                       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
-| `Amount`          |   Yes    | [Currency Amount](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts) |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
-| `Flags`           |    No    |                                                       `number`                                                       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                               |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `83`      | The transaction type.                     |
+| `LoanID`          |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
+| `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
+| `Flags`           |    No    |       `number`       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
 
 #### 3.11.2 `Flags`
 
