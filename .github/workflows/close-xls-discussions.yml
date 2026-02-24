@@ -1,0 +1,75 @@
+name: Close XLS Discussions
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "XLS-*/README.md"
+  workflow_dispatch:
+    inputs:
+      scan_all:
+        description: "Scan all XLS folders (not just changed files)"
+        required: false
+        default: true
+        type: boolean
+      dry_run:
+        description: "Dry run mode (no actual changes)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  discussions: write
+  contents: read
+
+env:
+  CLOSE_MESSAGE: |
+    This discussion has been merged into an XLS and is now being closed.
+
+    Thank you for your contribution to the XRP Ledger Standards process!
+
+jobs:
+  close-discussions:
+    runs-on: ubuntu-latest
+    if: github.repository == 'XRPLF/XRPL-Standards'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Get changed XLS files
+        id: changed-files
+        if: github.event_name == 'push'
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            XLS-*/README.md
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install beautifulsoup4
+
+      - name: Generate token from GitHub App
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Close merged XLS discussions
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+          CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
+          SCAN_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.scan_all || 'false' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          python .github/scripts/close-xls-discussions.py
