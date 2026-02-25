@@ -36,19 +36,19 @@ The specification includes the following transactions:
 - **`VaultDeposit`**: Deposits a specified number of assets into the Vault in exchange for shares.
 - **`VaultWithdraw`**: Withdraws a specified number of assets from the Vault in exchange for shares.
 
-Additionally, an issuer can perform a **Clawback** operation:
+Additionally, an issuer can perform a **Clawback** operation: 
 
 - **`VaultClawback`**: Allows the issuer of an IOU or MPT to claw back funds from the vault, as outlined in the [Clawback documentation](https://xrpl.org/docs/use-cases/tokenization/stablecoin-issuer#clawback).
 
-#### 2.0.1 Vault Ownership and Management
+**Vault Ownership and Management**
 
 A Single Asset Vault is owned and managed by an account called the **Vault Owner**. The account is reponsible for creating, updating and deleting the Vault object.
 
-#### 2.0.2 Access Control
+**Access Control**
 
 A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](../XLS-0080-permissioned-domains/README.md), which use on-chain [Credentials](../XLS-0070-credentials/README.md) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
 
-#### 2.0.3 Yield Bearing Shares
+**Yield Bearing Shares**
 
 Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](../XLS-0033-multi-purpose-tokens/README.md). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
 
@@ -114,7 +114,7 @@ The `Vault` object supports the following flags:
 | ----------------- | :----------: | :---------: | :------------------------------------------: |
 | `lsfVaultPrivate` | `0x00010000` |     No      | If set, indicates that the vault is private. |
 
-#### 3.1.3 Vault `_pseudo-account_`
+#### 3.1.3 Pseudo-Account
 
 An AccountRoot entry holds the XRP, IOU or MPT deposited into the vault. It also acts as the issuer of the vault's shares. The _pseudo-account_ follows the XLS-64 specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
