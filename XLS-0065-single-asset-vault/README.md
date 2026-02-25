@@ -116,7 +116,6 @@ The `Vault` object supports the following flags:
 | `lsfVaultDepositBlocked`       | `0x00020000` |    `No`     |   If set, indicates that deposits to a vault are blocked.   |
 | `lsfVaultOwnerCanBlockDeposit` | `0x00040000` |    `No`     | If set, indicates that the Vault Owner can block a deposit. |
 
-
 #### 3.1.3 Vault `_pseudo-account_`
 
 An AccountRoot entry holds the XRP, IOU or MPT deposited into the vault. It also acts as the issuer of the vault's shares. The _pseudo-account_ follows the XLS-64 specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
