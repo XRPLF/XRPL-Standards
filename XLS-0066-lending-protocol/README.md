@@ -156,6 +156,7 @@ The `LoanBroker` object has the following fields:
 | `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
 | `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
 | `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
+| `DomainID`             |    No    |    No    | `string`  |   `HASH256`   |     None      | The `PermissionedDomain` object ID associated with the `LoanBroker`.                                                                                                                                         |
 
 #### 3.1.3 Ownership
 
@@ -562,6 +563,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+| `DomainID`             |    No    | `string`  |   `HASH256`   |     Empty     | TThe `PermissionedDomain` object ID associated with the `LoanBroker`.                                                                              |
 
 #### 3.3.2 Transaction Fee
 
@@ -580,6 +582,7 @@ This transaction uses the standard transaction fee.
 7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
 8. `LoanBrokerID` is specified and is zero. (`temINVALID`)
 9. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
+10. `DomainID` is provided but is zero. (`temMALFORMED`)
 
 ##### 3.3.3.2 Protocol-Level Failures
 
@@ -590,17 +593,19 @@ This transaction uses the standard transaction fee.
 3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
 4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves). (`tecINSUFFICIENT_RESERVE`)
+6. The `PermissionedDomain` object does not exist for the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
 
 **If `LoanBrokerID` is specified (modifying existing):**
 
-6. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
-7. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
-8. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
-9. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
+1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+3. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
+4. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
+5. `DomainID` is provided, is non-zero, and the `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
 
 **Precision Validation:**
 
-10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+1. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
 
 #### 3.3.4 State Changes
 
@@ -624,10 +629,15 @@ This transaction uses the standard transaction fee.
 5. Update submitting account:
    - Increment the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
 
+6. If `DomainID` is provided:
+   1. Set `LoanBroker.DomainID = DomainID` (Set the Permissioned Domain).
+
 **If `LoanBrokerID` is specified (modifying existing):**
 
-6. Update `LoanBroker.Data` if provided in the transaction.
-7. Update `LoanBroker.DebtMaximum` if provided in the transaction.
+1. Update `LoanBroker.Data` if provided in the transaction.
+2. Update `LoanBroker.DebtMaximum` if provided in the transaction.
+3. If `DomainID` is provided:
+   1. Set `LoanBroker.DomainID = DomainID` (Set the Permissioned Domain).
 
 #### 3.3.5 Invariants
 
@@ -1374,6 +1384,7 @@ This transaction uses the standard transaction fee.
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
 15. The `tfLoanFullPayment` flag is specified and the `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`). (`tecINSUFFICIENT_PAYMENT`)
+16. `LoanBroker.DomainID` is set and the borrower does not have valid credentials in the LoanBroker's `PermissionedDomain`. (`tecNO_AUTH` / `tecOBJECT_NOT_FOUND`)
 
 #### 3.11.5 State Changes
 
