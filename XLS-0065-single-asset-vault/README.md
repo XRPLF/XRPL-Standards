@@ -137,10 +137,11 @@ A vault has the following fields:
 
 The `Vault` object supports the following flags:
 
-| Flag Name                |  Flag Value  | Modifiable? |                       Description                       |
-| ------------------------ | :----------: | :---------: | :-----------------------------------------------------: |
-| `lsfVaultPrivate`        | `0x00010000` |    `No`     |      If set, indicates that the vault is private.       |
-| `lsfVaultDepositBlocked` | `0x00020000` |    `No`     | If set, indicates that deposits to a vault are blocked. |
+| Flag Name                      |  Flag Value  | Modifiable? |                         Description                         |
+| ------------------------------ | :----------: | :---------: | :---------------------------------------------------------: |
+| `lsfVaultPrivate`              | `0x00010000` |    `No`     |        If set, indicates that the vault is private.         |
+| `lsfVaultDepositBlocked`       | `0x00020000` |    `No`     |   If set, indicates that deposits to a vault are blocked.   |
+| `lsfVaultOwnerCanBlockDeposit` | `0x00040000` |    `No`     | If set, indicates that the Vault Owner can block a deposit. |
 
 ### 2.3 Vault `_pseudo-account_`
 
@@ -373,6 +374,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | ----------------------------- | :----------: | :--------------------------------------------------------------------------------------- |
 | `tfVaultPrivate`              | `0x00010000` | Indicates that the vault is private. It can only be set during Vault creation.           |
 | `tfVaultShareNonTransferable` | `0x00020000` | Indicates the vault share is non-transferable. It can only be set during Vault creation. |
+| `tfVaultOwnerCanBlockDeposit` | `0x00040000` | Indicates the vault owner can block deposits. It can only be set during Vault creation.  |
 
 #### 3.3 WithdrawalPolicy
 
@@ -466,7 +468,9 @@ The `VaultSet` updates an existing `Vault` ledger object.
 4. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecNO_OBJECT_NOT_FOUND`)
 5. If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
    1. The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`). (`tecLIMIT_EXCEEDED`)
-6. `Vault.lsfVaultDepositBlocked` is set and `tfVaultDepositBlock` is set. (`tecNO_PERMISSION`)
+6. `Vault.lsfVaultDepositBlocked` is set and `tfVaultDepositBlock` is set (cannot block an already blocked vault). (`tecNO_PERMISSION`)
+7. `Vault.lsfVaultDepositBlocked` is **not** set and `tfVaultDepositUnblock` is set (cannot unblock an already unblocked vault). (`tecNO_PERMISSION`)
+8. `Vault.lsfVaultOwnerCanBlockDeposit` is **not** set, and `tfVaultDepositBlock` or `tfVaultDepositUnblock` are set. (`tecNO_PERMISSION`)
 
 ### 4.4. State Changes
 
@@ -571,7 +575,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
    3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor. (`tecFROZEN`)
    4. The `RippleState` object `Balance` < `Amount` (insufficient balance). (`tecINSUFFICIENT_FUNDS`)
 
-10. `Account` is not `Vault.Owner` and `Vault.lsfVaultDepositBlocked` flag is set (`tecNO_PERMISSION`)
+10. `Vault.lsfVaultDepositBlocked` flag is set (deposits are not permitted). (`tecNO_PERMISSION`)
 11. `Vault.AssetsTotal + Amount > Vault.AssetsMaximum`, deposit would exceed the maximum allowed amount. (`tecLIMIT_EXCEEDED`)
 
 ### 6.3 State Changes
