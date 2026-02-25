@@ -36,7 +36,7 @@ The specification includes the following transactions:
 - **`VaultDeposit`**: Deposits a specified number of assets into the Vault in exchange for shares.
 - **`VaultWithdraw`**: Withdraws a specified number of assets from the Vault in exchange for shares.
 
-Additionally, an issuer can perform a **Clawback** operation: 
+Additionally, an issuer can perform a **Clawback** operation:
 
 - **`VaultClawback`**: Allows the issuer of an IOU or MPT to claw back funds from the vault, as outlined in the [Clawback documentation](https://xrpl.org/docs/use-cases/tokenization/stablecoin-issuer#clawback).
 
