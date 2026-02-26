@@ -5,7 +5,7 @@
   implementation: https://github.com/XRPLF/rippled/pull/5702
   author: Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
   category: System
-  status: Draft
+  status: Final
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/418
   created: 2025-11-25
 </pre>
