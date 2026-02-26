@@ -220,7 +220,7 @@ If the `DID` object associated with the `Account` does not exist,
 - The `DID` space key (`0x0049`)
 - The Account ID of the `Account`, i.e. rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 
-#### DID associated with this object is:
+#### DID associated with this object is
 
 ```
 did:xrpl:1:rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh

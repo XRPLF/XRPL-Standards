@@ -923,7 +923,7 @@ Vault holding `XRP`:
 
 [**Return to Index**](#index)
 
-## A-1 F.A.Q.
+## A-1 FAQ
 
 ### A-1.1 Why does the specification allow both `Withdraw` and `Redeem` and not just one of them?
 

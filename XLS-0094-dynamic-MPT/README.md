@@ -203,7 +203,7 @@ The ability to modify `TransferFee` depends on two flags:
 
 And `lsfMPTCanTransfer` can be modified through `tmfMPTSetCanTransfer`/`tmfMPTClearCanTransfer` if `lsmfMPTCanMutateCanTransfer` is set.
 
-#### Because these flags overlap in function, the rules break down as follows:
+#### Because these flags overlap in function, the rules break down as follows
 
 **Case1**: `lsfMPTCanTransfer` not set:
 

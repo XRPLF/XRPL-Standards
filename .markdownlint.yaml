@@ -32,10 +32,6 @@ MD024:
 # Disabled: Some specs have multiple H1s for structure
 MD025: false
 
-# MD026: Trailing punctuation in heading
-# Disabled: Specs sometimes use colons in headings (e.g., "Example:")
-MD026: false
-
 # MD028: Blank line inside blockquote
 # Disabled: Multi-paragraph blockquotes are valid
 MD028: false

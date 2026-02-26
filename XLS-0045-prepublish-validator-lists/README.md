@@ -405,7 +405,7 @@ pending VL sequence `n` needs to be replaced, it may be replaced with
 `n+1` with an earlier `effective` date, but sequence `n` should be
 removed from the published site.
 
-#### File processing.
+#### File processing
 
 File download code will not need any changes.
 

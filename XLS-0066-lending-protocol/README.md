@@ -1515,7 +1515,7 @@ The protocol makes strong trust assumptions between Vault Depositors, LoanBroker
 
 # Appendix
 
-## A-1 F.A.Q.
+## A-1 FAQ
 
 ### A-1.1. What is the `LoanBroker.LoanSequence` field?
 

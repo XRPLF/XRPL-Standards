@@ -187,7 +187,7 @@ No, unless they are also the issuer of said credential.
 
 No.
 
-### A.8: Why not have a ledger object for each domain rule, instead of having it all in one object? Then you wouldn't have any limitations on how many rules a domain could have.
+### A.8: Why not have a ledger object for each domain rule (instead of having it all in one object), to avoid having any limitations on how many rules a domain could have?
 
 This won't work.
 

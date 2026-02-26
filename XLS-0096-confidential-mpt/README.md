@@ -412,7 +412,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
 ## 10. Transaction: `ConfidentialMPTConvertBack`
 
-### 10.1 Purpose: Convert confidential into public MPT value.
+### 10.1 Purpose: Convert confidential into public MPT value
 
 - For a holder: restore public balance from CB_S.
 - For the issuer’s second account: return confidential supply to issuer reserve.
@@ -489,7 +489,7 @@ If the transaction is successful:
 }
 ```
 
-### 10.7. Edge Case Analysis (Low-Volume Transaction Flow):
+### 10.7. Edge Case Analysis (Low-Volume Transaction Flow)
 
 \*\* Alice, the issuer, converts 50 ConfidentialMPT into her second account, performs a single confidential send of 20 to Bob (a holder), and then executes a ConvertBack of 30\.
 
@@ -511,12 +511,12 @@ Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
 - Ledger effect: OA ↓ 30, COA ↓ 30, IPB ↑ 30
 - Alice’s confidential balance is now 0, but outsiders cannot know this since ElGamal ciphertexts for 0 look indistinguishable from nonzero.
 
-### 10.7.1 What Outsiders can Infer:
+### 10.7.1 What Outsiders can Infer
 
 - Net change in the confidential pool is 50  −  30  = 20\. So, 20 CMPT remain somewhere in confidential circulation.
 - But they cannot know whether Bob got 20, 15, 5, or even 0 — because Alice’s second account may still hold some of the 20\.
 
-### 10.7.2 Why no exact leakage:
+### 10.7.2 Why no exact leakage
 
 - ElGamal ciphertexts are randomized: encrypting 0 produces a different-looking ciphertext each time.
 - Outsiders cannot look at the second account’s balance ciphertext and say it is zero.

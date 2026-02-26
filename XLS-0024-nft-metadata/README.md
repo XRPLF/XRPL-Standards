@@ -64,7 +64,7 @@ To learn more about JSON schemas, check out relevant resources here:
 
 Utilizing JSON schemas, we as a community can define and version our metadata as the XRPL NFT space evolves. For different nftTypes, we expect community leaders of those NFT types to contribute and derive a set of schema definitions for those use cases and implementations.
 
-## Defining a schema for an nftType:
+## Defining a schema for an nftType
 
 To create/update a schema for a specific nftType, it is important to consider the process as a set of building blocks;
 If a schema for a specific nftType has not yet been defined, then it is up to it's creator to decide what are the absolute
@@ -123,17 +123,17 @@ Defining the required metadata fields and schemas for different use cases and as
 
 Versioning of nftTypes will allow for backwards compatability for legacy NFTs as new implementations and applications arise. Advancing an nftType should be backwards compatible with previous versions such that all prior required properties are included and required in the latter. These properties and schemas can be derived from definitions of the specific asset type found on [schema.org](https://schema.org/).
 
-## Art/Collectible NFT Guidance:
+## Art/Collectible NFT Guidance
 
 Many of the pioneering projects in the XRPL NFT space fall under the art/collectible category; for this reason we deemed it important to derive the foundational 'art.v0' metadata format for projects and creators to adopt. After much discussion and debate on what the foundational art.v0 type should be, it became clear that the legacy 'art.v0' nftType should be a representation of other familiar standards which were previously mentioned in the original version of this proposal.
 
-### art.v0:
+### art.v0
 
 The schema provided in revision 1 was meant to be an example and not a final version. Here you can find the final schema which can be used to validate nfts of the art.v0 nftType.
 
 **Art and collectible projects that are following this guidance should note that the nftType and schema should remain constant as art.v0 and ipfs://QmNpi8rcXEkohca8iXu7zysKKSJYqCvBJn3xJwga8jXqWU respectively. The contributing marketplaces, minting and viewing applications will post an updated nftType (art.v1) and schema as the ecosystem evolves! Since versioned nftTypes are backwards compatible, there won't be any issues when nftTypes are updated. Since the content of the art.v0 schema doesn't change, uploading and pinning the schema to IPFS would result in an identical CID. If your project is utilizing IPFS, it is encouraged that you pin the schema to contribute to it availability and longevity.**
 
-### Changes from the r1 example schema to the final art.v0 schema:
+### Changes from the r1 example schema to the final art.v0 schema
 
 1. Removal of $id property.
    - In JSON-Schema Definitions, the $id property is used to reference a baseURL where "$ref" properties within the schema can retrieve additional schema definitions when validating an input. This definition does not refer to any external schemas and thus should not include the property. The removal of this property would also result in having an identical schema accross all issuers, an identical ipfs hash and ultimately more availability for the schema definition.
@@ -146,7 +146,7 @@ The schema provided in revision 1 was meant to be an example and not a final ver
 5. Changed attribute.value types from ["string", "int", "float"] to ["string", "integer", "number"]
    - There was a mistake here in the nomenclature of the types.
 
-### Schema File:
+### Schema File
 
 ```
 {
@@ -245,7 +245,7 @@ If an NFT creator is using IPFS and following the art.v0 schema, it is encourage
 
 The contents of QmNpi8rcXEkohca8iXu7zysKKSJYqCvBJn3xJwga8jXqWUcan be found [here](https://x-tokenize.mypinata.cloud/ipfs/QmNpi8rcXEkohca8iXu7zysKKSJYqCvBJn3xJwga8jXqWU).
 
-### Example 1) nftType: art.v0 with only required properties:
+### Example 1) nftType: art.v0 with only required properties
 
 ```
 {
@@ -262,7 +262,7 @@ Example 1 shows a valid art.v0 metadata file which includes the bare minimum req
 [Mint Tx](https://xls20.bithomp.com/explorer/D2B52B4C076F5E7C54EE6246AB094215A3E693FFAB1F9FA489EE02D742F0DC2A)
 [IPFS Hash: QmPeitiHkxakhdqZsAFo4QdkkNUkCjSSzrXzCEw8sAnGAD](https://x-tokenize.mypinata.cloud/ipfs/QmPeitiHkxakhdqZsAFo4QdkkNUkCjSSzrXzCEw8sAnGAD)
 
-### Example 2) nftType: art.v0 with all supported properties:
+### Example 2) nftType: art.v0 with all supported properties
 
 ```
 {
@@ -300,7 +300,7 @@ Example 2 shows a valid art.v0 metadata file which includes all of the supported
 [Mint Tx](https://xls20.bithomp.com/explorer/9033810BA9575F5922F0C84DEFA7C7D2840B290B734A1539661960B71E2C4E77)
 [IPFS Hash: QmXA1nR96522ygY33KQoMk94LLHZLwfYkFhPU3c9jJ192o](https://x-tokenize.mypinata.cloud/ipfs/QmXA1nR96522ygY33KQoMk94LLHZLwfYkFhPU3c9jJ192o)
 
-### Example 3) nftType: art.v0 with all supported properties and additional properties:
+### Example 3) nftType: art.v0 with all supported properties and additional properties
 
 ```
 {
@@ -340,7 +340,7 @@ Example 3 shows a valid art.v0 metadata file which includes all of the supported
 [Mint Tx](https://xls20.bithomp.com/explorer/F4BBDC5FDC97833481E694FF37FC18BD822A3A22BA2B3C0E455CD6EEC6FBD43F)
 [IPFS Hash: QmfYHzY8UwyobMqbQyCTbeUNfy9EJv2KvEvk6ouhUmdUj5](https://x-tokenize.mypinata.cloud/ipfs/QmfYHzY8UwyobMqbQyCTbeUNfy9EJv2KvEvk6ouhUmdUj5)
 
-### Asset Property Media Types:
+### Asset Property Media Types
 
 When declaring a "contentMediaType" for a property, JSON-Schema only allows for a single definition and is limiting. Marketplaces and viewing applications plan to support several media types for most of the asset properites (image, animation, video, audio, file). With this in mind below we have included a list of common media types for the different properties. These are not yet considered to be universally accepted. It is best to consult with your marketplace/viewing application of choice to determine their accepted content media types.
 

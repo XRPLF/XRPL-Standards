@@ -161,7 +161,7 @@ or other service to provide the ability to query this data; instead, a `NFTokenM
 
 Implementations should check for the presence of `URI` field first to retrieve the associated data and/or metadata. If the `URI` field does not exist, implementations should check for the presence of `Domain` field. Nothing happens, if neither of the fields exist. Implementations should be prepared to handle HTTP redirections (e.g., using HTTP responses 301, 302, 307 and 308) from the URI.
 
-###### TXT Record Format:
+###### TXT Record Format
 
 ```
 xrpl-nft-data-token-info-v1 IN TXT "https://host.example.com/api/token-info/{:NFTokenID:}"

@@ -30,7 +30,7 @@ Oracles could supply dynamic real-world data to NFTs. To illustrate, a `dynamic 
 
 ### 3. New Transactors and Flags
 
-### We will specify the following:
+We will specify the following:
 
      New Transactor
         - NFTokenModify

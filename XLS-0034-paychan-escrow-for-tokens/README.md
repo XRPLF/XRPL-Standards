@@ -46,7 +46,7 @@ The destination may not have a Trustline yet. This is not a bar to creating the 
 
 Settlement of an Instrument (e.g. `EscrowFinish`, `PaymentChannelClaim`) carries the same semantics as crossing an offer: If no Trustline exists on the destination side, then a Trustline with zero limit is created and the tokens (balance) are placed into that line. However creation of a Trustline requires the transaction to be signed by the receiving account (because it creates an on-ledger object and increases the Owner Count and thus the XRP reserve locked by the destination account.)
 
-### 3.1. New Field: `LockedBalance`.
+### 3.1. New Field: `LockedBalance`
 
 If all or some of the Trustline balance is locked by a `PayChannel` or an `Escrow` then this amount is accounted for in the `LockedBalance` field. The Trustline Balance less the Locked Balance is the user's spendable balance for that asset. This may be zero if the whole balance is locked.
 
@@ -64,13 +64,13 @@ For each Instrument (e.g. `Escrow`, `PayChan`) a user holds that locks up some t
 - If the Instrument is cancelled in whole or in part, the amount returned to the first party is decremented from the LockedBalance.
 - Multiple Instruments acting on the same Trustline accumulate toward the LockedBalance.
 
-### 3.2. New Field: `LockCount`.
+### 3.2. New Field: `LockCount`
 
 The LockCount field on a RippleState ledger object indicates the total number of locks held against the balance of the Trustline. This is always exactly the number of Instruments (e.g. `Escrows`, `PayChannels`) locking a non-zero amount of the Trustline balance. Adding an additional instrument increments the LockCount. Removing an instrument decrements the LockCount.
 
 The LockCount field exists to account for any floating point _dust_ that is left after the final instrument locking a trustline balance is released. If the LockCount reaches zero but the LockBalance is non-zero (typically extrtemely small) then the LockBalance is assumed to be zero, and is thus deleted.
 
-### 3.3. New Field: `TransferRate`.
+### 3.3. New Field: `TransferRate`
 
 The TransferRate field on a `PayChannel` or `Escrow` ledger object indicates the current `TransferRate` at which the funds are locked.
 
@@ -78,7 +78,7 @@ The TransferRate is set at the time of instrument creation and is updated on sub
 
 The TransferRate always favours the instrument holder. If the TransferRate is better than the current transfer rate for the asset, then settlement will occur at the better rate, and visa versa. If the current transfer rate is higher than the TransferRate then the preceding still applies but in the case of a PayChan no further PaymentChannelFund transactions are allowed.
 
-### 3.4. The impact on Trustlines.
+### 3.4. The impact on Trustlines
 
 It is possible an Issuer causes an Instrument that uses some of their issued tokens to become frozen. They can do this by simply freezing their side of their Trustline with either of the parties to the Instrument. This prevents the Instrument from being resolved or cancelled until the freeze is lifted.
 
