@@ -62,6 +62,8 @@ jobs:
       - name: Assign XLS number
         if: steps.check-drafts.outputs.has_drafts == 'true'
         id: assign-number
+        env:
+          REPO_ROOT: ${{ github.workspace }}
         run: |
           echo ${{ steps.check-drafts.outputs.draft_files }}
           python base-repo/.github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}

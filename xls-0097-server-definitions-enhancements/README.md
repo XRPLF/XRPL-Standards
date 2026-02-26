@@ -5,7 +5,7 @@
   implementation: https://github.com/XRPLF/rippled/pull/5702
   author: Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
   category: System
-  status: Draft
+  status: Final
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/418
   created: 2025-11-25
 </pre>
@@ -159,6 +159,6 @@ A reference implementation can be found [here](https://github.com/XRPLF/rippled/
 
 The information returned by the `server_definitions` RPC is already available in various configuration files across rippled. No private or confidential information is revealed by this proposal.
 
-This RPC also does not modify any ledger state.
+This RPC also does not modify or access any ledger state.
 
 The server caches the `server_definitions` response, since it does not change while the server is running. This severely mitigates DoS risks.

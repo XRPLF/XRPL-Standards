@@ -29,6 +29,7 @@ class XLSDocument:
     """Represents an XLS document with metadata."""
 
     number: str
+    raw_number: int
     title: str
     description: str
     authors: List[Tuple[str, str]]  # Tuple of (author_name, author_link)
@@ -123,11 +124,14 @@ def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument
     xls_match = re.match(r"XLS-(\d+)([d]?)", folder_name)
     if xls_match:
         number = xls_match.group(1)
+        raw_number = int(number)
     else:
         number = "000"
+        raw_number = 0
 
     return XLSDocument(
         number=number,
+        raw_number=raw_number,
         title=metadata.get("title", "Unknown Title"),
         description=metadata.get("description", "No description available"),
         authors=metadata.get("authors", [("Unknown Author", "")]),
