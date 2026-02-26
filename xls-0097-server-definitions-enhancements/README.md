@@ -74,7 +74,6 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
 
-A sample response can be [found here](https://gist.github.com/ckeshava/ff5d513a0c4c1c5f8f5bbba5309378cd).
 
 <a id="optionality-map"></a>
 
@@ -104,8 +103,6 @@ The format of this field is an `object`, with the keys being the ledger entry ty
 
 Only ledger entry types that have flags are included in this.
 
-A sample response can be [found here](https://gist.github.com/ckeshava/4741c3562f26f01a61f295f03a5d460b).
-
 ##### 3.2.1.4. TRANSACTION_FLAGS
 
 The format of this field is an `object`, with the keys being the transaction type name (e.g. `OfferCreate`) and the values being another `object`. This nested `object`'s keys are the `tf` name (e.g. `tfPassive`), and its values are the corresponding integer values (e.g. `65536`).
@@ -132,7 +129,7 @@ There are no changes to the failure conditions of the `server_definitions` RPC. 
 
 ### 3.5. Sample Response
 
-A sample response is available [here](https://gist.github.com/mvadari/407732fee9d37678b372b4f9df01a311).
+A sample response is available [here](https://gist.github.com/ckeshava/2c082bff3d80131dc77bc136b1a155fb).
 
 ## 4. Rationale
 
