@@ -72,7 +72,7 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example output for this field:
 ```json
@@ -120,12 +120,10 @@ Here is an example output for this field:
         "optionality": 1
       }
     ],
-    // include the format of other ledger objects here
+    ...
   }
 }
 ```
-
-<a id="optionality-map"></a>
 
 ##### 3.2.1.1.1 `optionality` number-text map
 
@@ -145,7 +143,7 @@ The format of this field is an `object`. The keys of the `object` are the transa
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example response for this section:
 ```json
@@ -204,7 +202,7 @@ Here is an example output for this field:
       "lsfRequireAuth": 262144,
       "lsfRequireDestTag": 131072
     },
-    // include the other ledger-object-flags here
+    ...
   }
 }
 ```
@@ -230,7 +228,7 @@ Here is an example response for this section:
       "tfTwoAsset": 1048576,
       "tfTwoAssetIfEmpty": 8388608
     },
-    // include the other transaction-flags here
+    ...
   }
 }
 ```
@@ -279,7 +277,7 @@ There are no changes to the failure conditions of the `server_definitions` RPC. 
 
 ### 3.5. Sample Response
 
-A sample response is available [here](https://gist.github.com/ckeshava/2c082bff3d80131dc77bc136b1a155fb).
+A sample response is available [here](./sample-response.json).
 
 ## 4. Rationale
 
