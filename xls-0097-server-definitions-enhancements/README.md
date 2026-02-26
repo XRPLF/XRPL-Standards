@@ -204,7 +204,7 @@ Here is an example output for this field:
       "lsfRequireAuth": 262144,
       "lsfRequireDestTag": 131072
     },
-    // include the other ledger-object-flags here
+    ...
   }
 }
 ```
