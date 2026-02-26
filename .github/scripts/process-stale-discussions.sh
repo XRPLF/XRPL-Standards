@@ -131,8 +131,11 @@ echo ""
 echo "Bot login: $BOT_LOGIN"
 
 # Verify bot login is accessible
-if ! BOT_INFO=$(gh api /users/$BOT_LOGIN 2>&1); then
-  echo "Warning: Could not verify bot user '$BOT_LOGIN'" >&2
+# Note: The REST API uses the [bot] suffix for GitHub App bots, while the GraphQL API
+# returns author.login without the suffix. We verify using the [bot] suffix.
+BOT_LOGIN_FOR_REST="${BOT_LOGIN}[bot]"
+if ! BOT_INFO=$(gh api "/users/$BOT_LOGIN_FOR_REST" 2>&1); then
+  echo "Warning: Could not verify bot user '$BOT_LOGIN_FOR_REST'" >&2
   echo "The script will continue, but make sure BOT_LOGIN is correct." >&2
   echo "API Response: $BOT_INFO" >&2
 else

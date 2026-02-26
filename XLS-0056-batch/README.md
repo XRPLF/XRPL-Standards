@@ -565,6 +565,39 @@ Namely:
 - Inner transactions may not be broadcast (and won't be accepted if they happen to be broadcast, e.g. from a malicious node). They must be generated from the `Batch` outer transaction instead.
 - Inner transactions may not be directly submitted via the `submit` RPC.
 
+## 6. Integration Considerations
+
+- An outer `Batch` transaction will return `tesSUCCESS` if the outer transaction succeeds, even if the inner transactions fail. The inner transaction metadata and result codes must be used to determine the actual outcome of each inner transaction.
+  - The inner transactions, if validated, **will** be in the same ledger. If it is not in the same ledger, then it is likely a fraud attempt.
+- An inner `Batch` transaction will not be validated on its own.
+- Systems that don't specifically handle `Batch` transactions should be able to support them without any changes, since each inner transaction will be a valid transaction on its own.
+  - All inner transactions that have a `tes` (success) or `tec` result code will be accessible via standard transaction-fetching mechanisms (such as `tx` and `account_tx`).
+- Since only the inner transactions and batch mode flags are signed in a multi-account `Batch` transaction, the relayer (submitter of the outer transaction) can adjust the sequence number and fee of the outer transaction as needed, without needing to coordinate with the other parties.
+
+### 6.1. Client Libraries
+
+- `Batch` transactions have a special fee calculation that includes the sum of the inner transaction fees. Client libraries should provide a helper method to calculate the fee for a `Batch` transaction.
+- Multi-account `Batch` transactions require a special signing flow where one party signs the outer transaction and the other parties sign the inner transactions. Client libraries should provide a helper method to construct a multi-account `Batch` transaction.
+- When auto-filling a `Batch` transaction, the inner transactions must have their `Fee` set to 0 and the `SigningPubKey` and `TxnSignature` fields must be empty. Client libraries should provide a helper method to auto-fill a `Batch` transaction.
+
+### 6.2. Wallets
+
+Wallets should:
+
+- Clearly display all inner transactions to users before requesting a signature, so users understand the full scope of what they are approving.
+- For multi-account `Batch` transactions, provide a workflow for users to review and sign their portion of the batch, then export it for other parties to sign.
+- Warn users if they are signing a `Batch` transaction that includes inner transactions from other accounts, as they are approving the entire batch.
+- Display the batch mode (`ALLORNOTHING`, `ONLYONE`, `UNTILFAILURE`, `INDEPENDENT`) and explain its implications.
+- Not auto-increment sequence numbers after successes/failures, since it depends on what/how many transactions are validated.
+
+### 6.3. Explorers and Indexers
+
+Explorers and indexers should:
+
+- Display the relationship between outer `Batch` transactions and their inner transactions using the `ParentBatchID` field.
+- Show inner transactions in context with their parent `Batch` transaction, rather than as standalone transactions.
+- Consider grouping inner transactions with their outer transaction in transaction lists for clarity.
+
 # Appendix
 
 ## Appendix A: FAQ
