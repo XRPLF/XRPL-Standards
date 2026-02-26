@@ -12,3 +12,8 @@ repos:
     rev: 5ba47274f9b181bce26a5150a725577f3c336011 # frozen: v3.6.2
     hooks:
       - id: prettier
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43 # frozen: v0.47.0
+    hooks:
+      - id: markdownlint
