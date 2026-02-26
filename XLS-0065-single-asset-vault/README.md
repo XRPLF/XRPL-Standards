@@ -85,26 +85,27 @@ The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/
 
 A vault has the following fields:
 
-| Field Name          | Constant | Required |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                            |
-| ------------------- | :------: | :------: | :----------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   |    No    |   Yes    |      `string`      |   `UINT16`    |   `0x0084`    | Ledger object type.                                                                                                                                    |
-| `LedgerIndex`       |    No    |   Yes    |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                              |
-| `Flags`             |   Yes    |   Yes    |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                   |
-| `PreviousTxnID`     |    No    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                 |
-| `PreviousTxnLgrSeq` |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
-| `Sequence`          |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
-| `OwnerNode`         |    No    |   Yes    |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
-| `Owner`             |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
-| `Account`           |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
-| `Data`              |   Yes    |    No    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
-| `Asset`             |    No    |   Yes    | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
-| `AssetsTotal`       |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
-| `AssetsAvailable`   |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
-| `LossUnrealized`    |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
-| `AssetsMaximum`     |   Yes    |    No    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
-| `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
-| `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
-| `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| Field Name           | Constant | Required |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                            |
+| -------------------- | :------: | :------: | :----------------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`    |    No    |   Yes    |      `string`      |   `UINT16`    |   `0x0084`    | Ledger object type.                                                                                                                                    |
+| `LedgerIndex`        |    No    |   Yes    |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                              |
+| `Flags`              |   Yes    |   Yes    |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                   |
+| `PreviousTxnID`      |    No    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                 |
+| `PreviousTxnLgrSeq`  |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
+| `Sequence`           |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
+| `OwnerNode`          |    No    |   Yes    |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
+| `Owner`              |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
+| `Account`            |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
+| `Data`               |   Yes    |    No    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
+| `Asset`              |    No    |   Yes    | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
+| `AssetsTotal`        |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
+| `AssetsAvailable`    |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The asset amount that is available in the vault.                                                                                                       |
+| `LossUnrealized`     |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                      |
+| `InterestUnrealized` |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The total unrealized interest not yet collected, expressed as the vault's asset. Only a protocol connected to the Vault may modify this field.         |
+| `AssetsMaximum`      |   Yes    |    No    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                      |
+| `ShareMPTID`         |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
+| `WithdrawalPolicy`   |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
+| `Scale`              |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 ##### 3.1.2.1 Flags
 
@@ -193,35 +194,32 @@ The `MPToken` values should be set as per the `MPT` [specification](../XLS-0033-
 
 Exchange Algorithm refers to the logic that is used to exchange assets into shares and shares into assets. This logic is executed when depositing or redeeming liquidity. A Vault comes with the default exchange algorithm, which is detailed below.
 
-##### 3.1.7.1 Unrealized Loss
+##### 3.1.7.1 Share Valuation
 
-A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, we introduce a concept of "paper loss," captured by the `Vault` object's `LossUnrealized` attribute. The "paper loss" captures a potential loss the vault may experience and thus temporarily decreases the vault value. Only a protocol connected to the `Vault` may increase or decrease the `LossUnrealized` attribute.
+The vault's share price is derived from a **Net Asset Value (NAV)** that excludes unrealized income and potential losses. Two state variables control this:
 
-The "paper loss" temporarily decreases the vault value. A malicious depositor may take advantage of this to deposit assets at a lowered price and withdraw them once the price increases.
+1. **Unrealized Interest ($\Omega$)**: Future interest that has been added to `AssetsTotal` by a connected protocol (e.g. when a loan is created) but has not yet been paid. The `InterestUnrealized` field tracks this amount. Only a protocol connected to the Vault may increase or decrease `InterestUnrealized`.
 
-Consider a vault with a total value of $1.0m and total shares of $1.0m. Assume the "paper loss" for the vault is $900k. The new exchange rate is as follows:
+2. **Unrealized Loss ($\iota$)**: A potential loss the vault may experience, captured by the `LossUnrealized` field. A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, the "paper loss" temporarily decreases the vault's withdrawal value. Only a protocol connected to the Vault may increase or decrease `LossUnrealized`.
 
-$$
-exchangeRate = \frac{AssetsTotal - LossUnrealized}{SharesTotal}
-$$
+The vault uses an **asymmetric** valuation model to compute deposit and withdrawal exchange rates:
 
-$$
-exchangeRate = \frac{1,000,000 - 900,000}{1,000,000} = 0.1
-$$
+- **Deposit valuation**: $\text{NAV}_{deposit} = \Gamma_{assets} - \Omega$
+- **Withdrawal valuation**: $\text{NAV}_{withdraw} = \Gamma_{assets} - \Omega - \iota$
 
-After the "paper loss" is cleared, the new effective exchange rate would be as follows:
+Unrealized interest ($\Omega$) is excluded from both directions. This ensures that the share price reflects only realized value — it remains stable when a loan is issued and increases only when the borrower actually repays interest.
 
-$$
-exchangeRate = \frac{AssetsTotal}{SharesTotal}
-$$
+Unrealized loss ($\iota$) is excluded from the withdrawal valuation only. By making the withdrawal price lower while keeping the deposit price higher, the protocol discourages existing shareholders from escaping the vault the moment a loan looks risky. This prevents "bank runs" that would leave only the most passive users holding bad debt. New depositors can see the vault's impairment status and decide for themselves whether to enter at the current price.
+
+**Example**: Consider a vault with `AssetsTotal` = \$1,000, `InterestUnrealized` ($\Omega$) = \$50, `LossUnrealized` ($\iota$) = \$100, and `SharesTotal` = 1,000.
 
 $$
-exchangeRate = \frac{1,000,000}{1,000,000} = 1.0
+\text{Deposit share price} = \frac{\Gamma_{assets} - \Omega}{\Gamma_{shares}} = \frac{1{,}000 - 50}{1{,}000} = 0.95
 $$
 
-A depositor could deposit $100k assets at a 0.1 exchange rate and get 1.0m shares. Once the "paper loss" is cleared, their shares would be worth $1.0m.
-
-To account for this problem, the Vault must use two different exchange rate models: one for depositing assets and one for withdrawing them.
+$$
+\text{Withdrawal share price} = \frac{\Gamma_{assets} - \Omega - \iota}{\Gamma_{shares}} = \frac{1{,}000 - 50 - 100}{1{,}000} = 0.85
+$$
 
 ##### 3.1.7.2 Exchange Rate Algorithms
 
@@ -233,6 +231,7 @@ This section details the algorithms used to calculate the exchange between asset
 - **$\Gamma_{shares}$**: The total number of shares currently issued by the vault.
 - **$\Delta_{assets}$**: The amount of assets being deposited, withdrawn, or redeemed.
 - **$\Delta_{shares}$**: The number of shares being issued or burned.
+- **$\Omega$**: The vault's total **unrealized interest** not yet collected.
 - **$\iota$**: The vault's total **unrealized loss**.
 - **$\sigma$**: The scaling factor derived from `Scale`, used to convert fractional assets into integer shares.
 
@@ -247,12 +246,12 @@ The calculation depends on whether the vault is empty.
 - **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{Scale}}$, to properly represent fractional assets as whole numbers.
   $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
-- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
-  $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets}}$$
+- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally using the deposit NAV ($\Gamma_{assets} - \Omega$). The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
+  $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets} - \Omega}$$
 
 Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated.
 
-$$\Delta_{assets'} = \frac{\Delta_{shares} \times \Gamma_{assets}}{\Gamma_{shares}}$$
+$$\Delta_{assets'} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega)}{\Gamma_{shares}}$$
 
 ##### Vault State Update
 
@@ -267,9 +266,9 @@ The redeem function calculates the asset payout for a user burning a specific nu
 
 **Calculation Logic**
 
-The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's total holdings, accounting for any unrealized loss ($\iota$).
+The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$), which accounts for both unrealized interest and unrealized loss.
 
-$$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+$$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
 **Vault State Update**
 
@@ -282,15 +281,15 @@ The vault's totals are reduced after the redemption.
 
 The withdraw function handles a request for a specific amount of assets, which involves a two-step process to determine the final payout.
 
-First, the requested asset amount ($\Delta_{assets\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's real value.
+First, the requested asset amount ($\Delta_{assets\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$).
 
-$$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \iota)}$$
+$$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
 
 This calculated $\Delta_{shares}$ amount is **rounded to the nearest whole number**.
 
 Next, the rounded number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
 
-$$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+$$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
 Due to the rounding in Step 1, this final payout may differ slightly from the user's requested amount.
 
@@ -328,12 +327,15 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 - `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount <= MPTokenIssuance(Vault.ShareMPTID).MaximumAmount`.
 - `<Vault>'.AssetsAvailable >= 0`.
 - `<Vault>'.AssetsAvailable <= <Vault>'.AssetsTotal`.
-- `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable`.
+- `<Vault>'.InterestUnrealized >= 0`.
+- `<Vault>'.InterestUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable` (unrealized interest cannot exceed what is lent out).
+- `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable - <Vault>'.InterestUnrealized` (unrealized loss cannot exceed the outstanding principal).
 - `<Vault>'.AssetsTotal >= 0`.
 - `<Vault>'.AssetsMaximum >= 0`.
 - Only `VaultCreate` may create a new `Vault` object.
 - Only `VaultDelete` may delete a `Vault` object.
 - `<Vault>.LossUnrealized == <Vault>'.LossUnrealized` for all vault transactions (only protocol transactions such as `LoanManage` and `LoanPay` may change `LossUnrealized`).
+- `<Vault>.InterestUnrealized == <Vault>'.InterestUnrealized` for all vault transactions (only protocol transactions may change `InterestUnrealized`).
 
 #### 3.1.11 Example JSON
 
@@ -356,6 +358,7 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
   "AssetsTotal": "0",
   "AssetsAvailable": "0",
   "LossUnrealized": "0",
+  "InterestUnrealized": "0",
   "AssetsMaximum": "100000",
   "ShareMPTID": "000000018AB77A8ADC472FBB7991AA311AAEB5D2FA7A793B",
   "WithdrawalPolicy": 1,
@@ -443,7 +446,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 #### 3.2.7 Invariants
 
 - The transaction must not modify an existing `Vault` object (i.e. no before-state).
-- `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
+- `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND <Vault>'.InterestUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
 - `<Vault>'.Account == MPTokenIssuance(Vault.ShareMPTID).Issuer` (shares issuer must equal the vault's _pseudo-account_).
 - The shares issuer `AccountRoot` must exist and must be a _pseudo-account_.
 - The shares issuer _pseudo-account_ must reference the created vault via its `VaultID` field.
@@ -607,7 +610,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 5. The `Vault.Asset` is frozen for the depositor. (`tecFROZEN` for `IOU` / `tecLOCKED` for `MPT`)
 6. The vault shares (`MPTokenIssuance`) are locked for the depositor. (`tecLOCKED`)
 7. The vault is private, the depositor is not the vault owner, and the vault has no `DomainID` set. (`tecNO_AUTH`)
-8. The vault is private, the depositor is not the vault owner, and the depositor does not have valid credentials in the vault's `PermissionedDomain`. (`tecNO_AUTH` / `tecOBJECT_NOT_FOUND`)
+8. The vault is private, the depositor is not the vault owner, and the depositor does not have valid credentials in the vault's `PermissionedDomain`. (`tecNO_AUTH` / `tecEXPIRED`)
 9. The `Vault.Asset` is an `MPT` and the depositor does not have an authorized `MPToken` for the asset. (`tecNO_AUTH`)
 10. The depositor has insufficient balance to cover `Amount`. (`tecINSUFFICIENT_FUNDS`)
 11. Depositing `Amount` would cause `Vault.AssetsTotal` to exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
@@ -911,6 +914,7 @@ This RPC retrieves the Vault ledger entry and the IDs associated with it.
 | `vault.Flags`                    |       Yes       | `number`  | Bit-field flags associated with the vault.                                                                                                             |
 | `vault.LedgerEntryType`          |       Yes       | `string`  | Ledger entry type, always `"Vault"`.                                                                                                                   |
 | `vault.LossUnrealized`           |       Yes       | `string`  | Unrealized loss associated with the vault.                                                                                                             |
+| `vault.InterestUnrealized`       |       Yes       | `string`  | Unrealized interest not yet collected, associated with the vault.                                                                                      |
 | `vault.Owner`                    |       Yes       | `string`  | ID of the Vault Owner account.                                                                                                                         |
 | `vault.OwnerNode`                |       Yes       | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
 | `vault.PreviousTxnID`            |       Yes       | `string`  | Transaction ID of the last modification to this vault.                                                                                                 |
@@ -968,6 +972,7 @@ Vault holding an `IOU`:
       "Flags": 0,
       "LedgerEntryType": "Vault",
       "LossUnrealized": "0",
+      "InterestUnrealized": "0",
       "Owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
       "OwnerNode": "0",
       "PreviousTxnID": "1484794AE38DBB7C6F4E0B7536CC560B418135BEDB0F8904349F7F8A3B496826",
@@ -1010,6 +1015,7 @@ Vault holding an `MPT`:
       },
       "Data": "50726976617465207661756C7420666F72207475746F7269616C73",
       "Flags": 65536,
+      "InterestUnrealized": "0",
       "LedgerEntryType": "Vault",
       "Owner": "rJdYtgaiEgzL7xD2QdPKg5xoHkWc7CZjvm",
       "OwnerNode": "0",
@@ -1058,6 +1064,7 @@ Vault holding `XRP`:
       "Flags": 0,
       "LedgerEntryType": "Vault",
       "LossUnrealized": "0",
+      "InterestUnrealized": "0",
       "Owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
       "OwnerNode": "0",
       "PreviousTxnID": "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
@@ -1127,3 +1134,37 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+### A.6 Why are shares valued asymmetrically?
+
+Deposits are priced at `AssetsTotal - InterestUnrealized`, and withdrawals are priced at `AssetsTotal - InterestUnrealized - LossUnrealized`. Note that the unrealised loss ($\iota$) is deducted only during withdrawals.
+
+Lowering the withdrawal price, while keeping the deposit price higher, discourages shareholders from leaving the vault when a loan appears risky. The asymmetry discourages “bank runs” that leave passive users with a loss.
+
+A symmetric loss-adjusted price for both deposits and withdrawals was considered but rejected. In that model, new depositors would purchase shares at a discount, transferring value from new users to existing ones to cover bad debt. This approach violates the protocol's fairness charter and creates a predatory environment by shifting loan default costs onto recent participants.
+
+Completely blocking deposits during impairment was also considered and rejected. Automatically locking the vault for minor or manageable `LossUnrealized` would unnecessarily hinder growth and operations. The `tfVaultBlockDeposit` flag allows owners to manually stop deposits if they determine the impairment is significant. The protocol’s philosophy is that once impairment status is visible on-chain, new depositors are responsible for assessing the risk and deciding whether to enter at the current price.
+
+### A.7 How does the new share pricing affect depositors who enter the vault while loans are outstanding?
+
+The protocol ensures that the new entrant is protected from prior issues. By excluding unrealised interest from the share price using `InterestUnrealized`, the vault prevents new depositors from being overcharged for unrealised gains or exposed to past losses. The following analysis shows this behaviour.
+
+**Setup**: User A deposits 100 assets. A loan is created for a principal of 100 + 10 in interest. User B then deposits a varying amount (ranging from 0.1x to 10x User A's deposit). After the loan resolves (either default or full repayment), User C deposits 100 assets. All users then redeem their shares.
+
+![Dilution Analysis](./dilution_analysis.png)
+
+**Top row: Loan Default scenario** (100 principal + 10 interest written off):
+
+- **Loss Socialization** (left): The fixed total loss of 110 is shared proportionally between Users A and B based on their share ownership at the time of default. As User B's deposit increases, they absorb a larger loss while User A's loss decreases. User C's loss remains at zero regardless.
+
+- **Share Distribution** (center): User A's ownership decreases from ~91% to ~9% while User B's ownership increases correspondingly.
+
+- **Final Redemption Values** (right): User A's redemption value decreases as User B's deposit grows. User B's value increases but remains below their deposit due to the shared loss. User C always receives their full deposit.
+
+**Bottom row: Loan Repayment scenario** (100 principal + 10 interest returned):
+
+- **Gain Distribution** (left): The fixed interest gain of 10 is shared proportionally between Users A and B based on their share ownership at the time of repayment. User C's gains are zero.
+
+- **Share Distribution** (center): Similar to the default scenario, share distribution depends on deposit timing, and not loan performance.
+
+- Final Redemption Values (right): User A’s redemption value decreases as User B’s deposit increases, reflecting yield dilution. User B’s value rises but stays above their deposit due to the shared gain. User C always receives exactly 100, unaffected by previous gains.
