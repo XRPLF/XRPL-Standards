@@ -6,9 +6,9 @@
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   status: Draft
   category: Amendment
-  requires: XLS-65, XLS-64
+  requires: XLS-80, XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-01-14
+  updated: 2026-02-26
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
