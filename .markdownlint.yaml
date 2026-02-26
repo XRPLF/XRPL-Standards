@@ -34,7 +34,7 @@ MD025: false
 
 # MD028: Blank line inside blockquote
 # Disabled: Multi-paragraph blockquotes are valid
-MD028: false
+# MD028: false
 
 # MD029: Ordered list item prefix (1. 2. 3. vs 1. 1. 1.)
 # Disabled: Both styles are valid, specs use various conventions

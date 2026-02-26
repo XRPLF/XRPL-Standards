@@ -180,7 +180,7 @@ _[If your specification introduces new transaction common fields, you can have a
 > - **Transaction Fee** (3.3)
 >
 > For new transaction types, all subsections are required.
-
+>
 > **Naming Convention:** Transaction names should follow the pattern `<LedgerEntryName><Verb>` (e.g., `ExampleSet`, `ExampleDelete`). Most specifications will need at least:
 >
 > - `[Object]Set` or `[Object]Create`: Creates or updates the object
