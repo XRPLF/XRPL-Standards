@@ -120,7 +120,7 @@ Here is an example output for this field:
         "optionality": 1
       }
     ],
-    // include the format of other ledger objects here
+    ...
   }
 }
 ```
