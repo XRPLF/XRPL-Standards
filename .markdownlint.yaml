@@ -1,0 +1,101 @@
+# Markdownlint configuration for XRPL Standards repository
+# Rule reference: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+default: true
+
+# MD001: Heading levels should only increment by one level at a time
+# Disabled: Specs often skip heading levels for document structure
+MD001: false
+
+# MD003: Heading style - enforce ATX style (# Heading)
+MD003:
+  style: atx
+
+# MD004: Unordered list style - enforce dashes
+MD004:
+  style: dash
+
+# MD007: Unordered list indentation - 2 spaces
+MD007:
+  indent: 2
+
+# MD013: Line length limit
+# Disabled: Technical specs often have long lines (tables, URLs, code)
+MD013: false
+
+# MD024: Multiple headings with the same content
+# Configured: Only check siblings (allows same heading in different sections)
+MD024:
+  siblings_only: true
+
+# MD025: Multiple top-level headings in the same document
+# Disabled: Some specs have multiple H1s for structure
+MD025: false
+
+# MD026: Trailing punctuation in heading
+# Disabled: Specs sometimes use colons in headings (e.g., "Example:")
+MD026: false
+
+# MD028: Blank line inside blockquote
+# Disabled: Multi-paragraph blockquotes are valid
+MD028: false
+
+# MD029: Ordered list item prefix (1. 2. 3. vs 1. 1. 1.)
+# Disabled: Both styles are valid, specs use various conventions
+MD029: false
+
+# MD030: Spaces after list markers
+# Disabled: Specs use various spacing conventions
+MD030: false
+
+# MD033: Inline HTML
+# Disabled: Specs use HTML for complex formatting (tables, metadata blocks)
+MD033: false
+
+# MD034: Bare URL used
+# Disabled: Bare URLs are common in technical references
+MD034: false
+
+# MD036: Emphasis used instead of a heading
+# Disabled: Specs use bold text for sub-section labels
+MD036: false
+
+# MD038: Spaces inside code span elements
+# Disabled: Sometimes spaces in code spans are intentional
+MD038: false
+
+# MD039: Spaces inside link text
+# Disabled: Existing content has this pattern
+MD039: false
+
+# MD040: Fenced code blocks should have a language specified
+# Disabled: Not all code blocks need syntax highlighting
+MD040: false
+
+# MD041: First line in file should be a top-level heading
+# Disabled: XLS specs start with HTML metadata block
+MD041: false
+
+# MD045: Images should have alternate text (alt text)
+# Disabled: Diagrams in specs don't always need alt text
+MD045: false
+
+# MD051: Link fragments should be valid
+# Disabled: Can produce false positives with complex heading structures
+MD051: false
+
+# MD055: Table pipe style
+# Disabled: Various table styles exist in specs
+MD055: false
+
+# MD058: Tables should be surrounded by blank lines
+# Disabled: Existing content doesn't always follow this
+MD058: false
+
+# MD059: Link text should be descriptive
+# Disabled: "here" links are common in specs
+MD059: false
+
+# MD060: Table column style (alignment)
+# Disabled: Various table alignment styles exist
+MD060: false
