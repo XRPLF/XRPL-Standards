@@ -74,6 +74,56 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
 
+Here is an example output for this field:
+```json
+{
+  "LEDGER_ENTRY_FORMATS": {
+    "AMM": [
+      {
+        "name": "Account",
+        "optionality": 0
+      },
+      {
+        "name": "TradingFee",
+        "optionality": 2
+      },
+      {
+        "name": "VoteSlots",
+        "optionality": 1
+      },
+      {
+        "name": "AuctionSlot",
+        "optionality": 1
+      },
+      {
+        "name": "LPTokenBalance",
+        "optionality": 0
+      },
+      {
+        "name": "Asset",
+        "optionality": 0
+      },
+      {
+        "name": "Asset2",
+        "optionality": 0
+      },
+      {
+        "name": "OwnerNode",
+        "optionality": 0
+      },
+      {
+        "name": "PreviousTxnID",
+        "optionality": 1
+      },
+      {
+        "name": "PreviousTxnLgrSeq",
+        "optionality": 1
+      }
+    ],
+    // include the format of other ledger objects here
+  }
+}
+```
 
 <a id="optionality-map"></a>
 
@@ -97,11 +147,67 @@ The format of this field is an `object`. The keys of the `object` are the transa
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#optionality-map). |
 
+Here is an example response for this section:
+```json
+{
+  "TRANSACTION_FORMATS": {
+    "AMMBid": [
+      {
+        "name": "Asset",
+        "optionality": 0
+      },
+      {
+        "name": "Asset2",
+        "optionality": 0
+      },
+      {
+        "name": "BidMin",
+        "optionality": 1
+      },
+      {
+        "name": "BidMax",
+        "optionality": 1
+      },
+      {
+        "name": "AuthAccounts",
+        "optionality": 1
+      }
+    ],
+  }
+}
+```
+
 ##### 3.2.1.3. LEDGER_ENTRY_FLAGS
 
 The format of this field is an `object`, with the keys being the ledger entry type name (e.g. `Offer`) and the values being another `object`. This nested `object`'s keys are the `lsf` name (e.g. `lsfSell`), and its values are the corresponding integer values (e.g. `131072`).
 
 Only ledger entry types that have flags are included in this.
+
+Here is an example output for this field:
+```json
+{
+  "LEDGER_ENTRY_FLAGS": {
+    "AccountRoot": {
+      "lsfAllowTrustLineClawback": 2147483648,
+      "lsfAllowTrustLineLocking": 1073741824,
+      "lsfDefaultRipple": 8388608,
+      "lsfDepositAuth": 16777216,
+      "lsfDisableMaster": 1048576,
+      "lsfDisallowIncomingCheck": 134217728,
+      "lsfDisallowIncomingNFTokenOffer": 67108864,
+      "lsfDisallowIncomingPayChan": 268435456,
+      "lsfDisallowIncomingTrustline": 536870912,
+      "lsfDisallowXRP": 524288,
+      "lsfGlobalFreeze": 4194304,
+      "lsfNoFreeze": 2097152,
+      "lsfPasswordSpent": 65536,
+      "lsfRequireAuth": 262144,
+      "lsfRequireDestTag": 131072
+    },
+    // include the other ledger-object-flags here
+  }
+}
+```
 
 ##### 3.2.1.4. TRANSACTION_FLAGS
 
@@ -109,9 +215,53 @@ The format of this field is an `object`, with the keys being the transaction typ
 
 Only transaction types that have flags are included in this.
 
+Here is an example response for this section:
+```json
+{
+  "TRANSACTION_FLAGS": {
+    "AMMClawback": {
+      "tfClawTwoAssets": 1
+    },
+    "AMMDeposit": {
+      "tfLPToken": 65536,
+      "tfLimitLPToken": 4194304,
+      "tfOneAssetLPToken": 2097152,
+      "tfSingleAsset": 524288,
+      "tfTwoAsset": 1048576,
+      "tfTwoAssetIfEmpty": 8388608
+    },
+    // include the other transaction-flags here
+  }
+}
+```
+
 ##### 3.2.1.5. ACCOUNT_SET_FLAGS
 
 The format of this field is an `object`, with the keys being the `asf` name (e.g. `asfDefaultRipple`) and the values being the corresponding integer values (e.g. `8`).
+
+Here is the example response for this section:
+```json
+{
+  "ACCOUNT_SET_FLAGS": {
+    "asfAccountTxnID": 5,
+    "asfAllowTrustLineClawback": 16,
+    "asfAllowTrustLineLocking": 17,
+    "asfAuthorizedNFTokenMinter": 10,
+    "asfDefaultRipple": 8,
+    "asfDepositAuth": 9,
+    "asfDisableMaster": 4,
+    "asfDisallowIncomingCheck": 13,
+    "asfDisallowIncomingNFTokenOffer": 12,
+    "asfDisallowIncomingPayChan": 14,
+    "asfDisallowIncomingTrustline": 15,
+    "asfDisallowXRP": 3,
+    "asfGlobalFreeze": 7,
+    "asfNoFreeze": 6,
+    "asfRequireAuth": 2,
+    "asfRequireDest": 1
+  }
+}
+```
 
 ### 3.3. Failure Conditions
 
