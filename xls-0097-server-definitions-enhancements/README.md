@@ -230,7 +230,7 @@ Here is an example response for this section:
       "tfTwoAsset": 1048576,
       "tfTwoAssetIfEmpty": 8388608
     },
-    // include the other transaction-flags here
+    ...
   }
 }
 ```
