@@ -57,8 +57,8 @@ Proposed additions:
 
 | Field Name             | Always Present?                                           | JSON Type | Description                                                                                                                                          |
 | :--------------------- | :-------------------------------------------------------- | :-------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LEDGER_ENTRY_FORMATS` | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all ledger entry types (`AccountRoot`, `RippleState`, `Offer`, etc.) \- namely, the fields and their optionality. |
-| `TRANSACTION_FORMATS`  | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all transaction types (`Payment`, `OfferCreate`, `TrustSet`, etc.) \- namely, the fields and their optionality.   |
+| `LEDGER_ENTRY_FORMATS` | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all ledger entry types (`AccountRoot`, `RippleState`, `Offer`, etc.) - namely, the fields and their optionality. |
+| `TRANSACTION_FORMATS`  | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all transaction types (`Payment`, `OfferCreate`, `TrustSet`, etc.) - namely, the fields and their optionality.   |
 | `LEDGER_ENTRY_FLAGS`   | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all ledger entry flags with their hexadecimal values.                                                                            |
 | `TRANSACTION_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all transaction flags with their hexadecimal values.                                                                             |
 | `ACCOUNT_SET_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all `AccountSet` flags (`asf` flags) with their hexadecimal values.                                                              |
@@ -72,7 +72,7 @@ The format of this field is an `object`. The keys of the `object` are the ledger
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example output for this field:
 ```json
@@ -143,7 +143,7 @@ The format of this field is an `object`. The keys of the `object` are the transa
 | Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
 | :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field \- one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
+| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example response for this section:
 ```json
