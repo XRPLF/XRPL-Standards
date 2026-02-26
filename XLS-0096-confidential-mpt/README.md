@@ -18,10 +18,10 @@ This specification introduces **Confidential Transfers for Multi-Purpose Tokens 
 The design provides the following properties:
 
 - **Confidentiality:** Individual balances and transfer amounts are encrypted and are not revealed to validators or external observers.
-- **Public auditability:** Issuance limits remain publicly enforceable through the existing invariant  
+- **Public auditability:** Issuance limits remain publicly enforceable through the existing invariant
   `OutstandingAmount ≤ MaxAmount`, without requiring decryption of confidential balances.
-- **Selective disclosure / view keys:** The protocol supports flexible auditability through two models:  
-  (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and  
+- **Selective disclosure / view keys:** The protocol supports flexible auditability through two models:
+  (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and
   (ii) a simpler, trust-based alternative using issuer-controlled view keys for on-demand disclosure.
 - **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback to the issuer’s reserve.
@@ -188,18 +188,18 @@ If the issuance is mutable (tmfMPTCannotMutatePrivacy is not set, which is the d
 
 ## 7. Transaction: `ConfidentialMPTConvert`
 
-**Purpose:**  
+**Purpose:**
 Converts a holder’s own visible (public) MPT balance into confidential form. The converted amount is credited to the holder’s confidential inbox balance (`CB_IN`) to avoid immediate proof staleness, requiring an explicit merge into the spending balance (`CB_S`) before use. This transaction also serves as the opt-in mechanism for confidential MPT participation: by executing it (including a zero-amount conversion), a holder’s `HolderElGamalPublicKey` is recorded on their `MPToken` object, enabling the holder to receive and manage confidential funds.
 
 This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
 
 ### 7.1 Use Cases
 
-- **Holder → self (public → confidential):**  
+- **Holder → self (public → confidential):**
   Public balance decreases and confidential balance increases; OA unchanged, COA increases (both in plaintext).
-- **Issuer second account → self (public → confidential):**  
+- **Issuer second account → self (public → confidential):**
   After being funded publicly via XLS-33 issuance, the second account converts its own balance like any holder; OA unchanged, COA increases.
-- **Hybrid circulation:**  
+- **Hybrid circulation:**
   Tokens may coexist in public and confidential form.
 
 ### 7.2 Fields
@@ -271,14 +271,14 @@ If the transaction is successful:
 
 ## 8. Transaction: `ConfidentialMPTSend`
 
-**Purpose:**  
+**Purpose:**
 Performs a confidential transfer of MPT value between accounts while keeping the transfer amount hidden. The transferred amount is credited to the receiver’s confidential inbox balance (`CB_IN`) to avoid proof staleness; the receiver may later merge these funds into the spending balance (`CB_S`) via `ConfidentialMPTMergeInbox`.
 
 ### 8.1 Use Cases
 
-- **Holder → holder (including the issuer’s second account):**  
+- **Holder → holder (including the issuer’s second account):**
   Confidential redistribution of value with the transfer amount hidden.
-- **Second account ↔ holder:**  
+- **Second account ↔ holder:**
   Confidential redistribution among non-issuer holders under identical rules.
 
 ### 8.2. Fields
@@ -391,8 +391,8 @@ If the transaction is successful:
 - Staleness control: version bump invalidates any in-flight proofs tied to old CB_S.
 - EncZero safety: inbox reset uses deterministic ciphertext of 0 so it remains a valid ElGamal ciphertext.
 
-Canonical Encrypted Zero  
-To ensure inbox fields always contain a valid ciphertext after reset:  
+Canonical Encrypted Zero
+To ensure inbox fields always contain a valid ciphertext after reset:
 EncZero(Acct, Issuer, Curr): r = H("EncZero" || Acct || Issuer || Curr) mod n, curve order n\
 return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 
