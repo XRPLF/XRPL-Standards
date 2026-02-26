@@ -443,16 +443,16 @@ While not normative, a sample XRPL DID Document MAY look like:
 
 ```
 {
-  	"@context"   : "https://w3id.org/did/v1",
-  	"id"         : "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
- 	"publicKey"  : [
-		 		{
-   	        		"id" :  "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn #keys-1",
-    	       		"type" :  ["CryptographicKey", "EcdsaKoblitzPublicKey"],
-    	       		"curve" :  "secp256k1",
-   	           		"expires" :  15674657,
-    	       		"publicKeyHex": "04f42987b7faee8b95e2c3a3345224f00e00dfc67ba882…."
-  				} ]
+      "@context"   : "https://w3id.org/did/v1",
+      "id"         : "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+     "publicKey"  : [
+                 {
+                       "id" :  "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn #keys-1",
+                       "type" :  ["CryptographicKey", "EcdsaKoblitzPublicKey"],
+                       "curve" :  "secp256k1",
+                          "expires" :  15674657,
+                       "publicKeyHex": "04f42987b7faee8b95e2c3a3345224f00e00dfc67ba882…."
+                  } ]
 }
 ```
 
