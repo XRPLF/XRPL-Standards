@@ -204,8 +204,8 @@ The vault's share price is derived from a **Net Asset Value (NAV)** that exclude
 
 The vault uses an **asymmetric** valuation model to compute deposit and withdrawal exchange rates:
 
-- **Deposit valuation**: $\text{NAV}_{deposit} = \Gamma_{assets} - \Omega$
-- **Withdrawal valuation**: $\text{NAV}_{withdraw} = \Gamma_{assets} - \Omega - \iota$
+- **Deposit valuation**: $NAV_{deposit} = \Gamma_{assets} - \Omega$
+- **Withdrawal valuation**: $NAV_{withdraw} = \Gamma_{assets} - \Omega - \iota$
 
 Unrealized interest ($\Omega$) is excluded from both directions. This ensures that the share price reflects only realized value — it remains stable when a loan is issued and increases only when the borrower actually repays interest.
 
@@ -285,13 +285,13 @@ First, the requested asset amount ($\Delta_{assets\_requested}$) is converted in
 
 $$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
 
-This calculated $\Delta_{shares}$ amount is **rounded to the nearest whole number**.
+This calculated $\Delta_{shares}$ amount is **rounded down (floor)** to the nearest whole number.
 
-Next, the rounded number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
+Next, the floored number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
 
 $$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
-Due to the rounding in Step 1, this final payout may differ slightly from the user's requested amount.
+Due to the floor rounding in Step 1, this final payout may be slightly less than the user's requested amount.
 
 **Vault State Update**
 
