@@ -55,13 +55,13 @@ Current response fields:
 
 Proposed additions:
 
-| Field Name             | Always Present?                                           | JSON Type | Description                                                                                                                                          |
-| :--------------------- | :-------------------------------------------------------- | :-------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name             | Always Present?                                           | JSON Type | Description                                                                                                                                         |
+| :--------------------- | :-------------------------------------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `LEDGER_ENTRY_FORMATS` | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all ledger entry types (`AccountRoot`, `RippleState`, `Offer`, etc.) - namely, the fields and their optionality. |
 | `TRANSACTION_FORMATS`  | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all transaction types (`Payment`, `OfferCreate`, `TrustSet`, etc.) - namely, the fields and their optionality.   |
-| `LEDGER_ENTRY_FLAGS`   | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all ledger entry flags with their hexadecimal values.                                                                            |
-| `TRANSACTION_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all transaction flags with their hexadecimal values.                                                                             |
-| `ACCOUNT_SET_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all `AccountSet` flags (`asf` flags) with their hexadecimal values.                                                              |
+| `LEDGER_ENTRY_FLAGS`   | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all ledger entry flags with their hexadecimal values.                                                                           |
+| `TRANSACTION_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all transaction flags with their hexadecimal values.                                                                            |
+| `ACCOUNT_SET_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all `AccountSet` flags (`asf` flags) with their hexadecimal values.                                                             |
 
 #### 3.2.1. Fields
 
@@ -69,12 +69,13 @@ Proposed additions:
 
 The format of this field is an `object`. The keys of the `object` are the ledger entry type name (e.g. `Offer`), or `common` (for the common fields across all ledger entries). The values of the `object` are an array of elements described as follows:
 
-| Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
-| :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
+| Field Name    | Always Present? | JSON Type | Description                                                                                                                                                        |
+| :------------ | :-------------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Yes             | `string`  | The name of the field.                                                                                                                                             |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example output for this field:
+
 ```json
 {
   "LEDGER_ENTRY_FORMATS": {
@@ -140,12 +141,13 @@ The `optionality` values are mapped to the following text <-> number combination
 
 The format of this field is an `object`. The keys of the `object` are the transaction type name (e.g. `OfferCreate`, or `common` (for the common fields across all transactions). The values of the `object` are an array of elements described as follows:
 
-| Field Name    | Always Present? | JSON Type | Description                                                                                                                           |
-| :------------ | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`        | Yes             | `string`  | The name of the field.                                                                                                                |
+| Field Name    | Always Present? | JSON Type | Description                                                                                                                                                        |
+| :------------ | :-------------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Yes             | `string`  | The name of the field.                                                                                                                                             |
 | `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example response for this section:
+
 ```json
 {
   "TRANSACTION_FORMATS": {
@@ -170,7 +172,7 @@ Here is an example response for this section:
         "name": "AuthAccounts",
         "optionality": 1
       }
-    ],
+    ]
   }
 }
 ```
@@ -182,6 +184,7 @@ The format of this field is an `object`, with the keys being the ledger entry ty
 Only ledger entry types that have flags are included in this.
 
 Here is an example output for this field:
+
 ```json
 {
   "LEDGER_ENTRY_FLAGS": {
@@ -214,6 +217,7 @@ The format of this field is an `object`, with the keys being the transaction typ
 Only transaction types that have flags are included in this.
 
 Here is an example response for this section:
+
 ```json
 {
   "TRANSACTION_FLAGS": {
@@ -238,6 +242,7 @@ Here is an example response for this section:
 The format of this field is an `object`, with the keys being the `asf` name (e.g. `asfDefaultRipple`) and the values being the corresponding integer values (e.g. `8`).
 
 Here is the example response for this section:
+
 ```json
 {
   "ACCOUNT_SET_FLAGS": {
