@@ -167,6 +167,7 @@ If the issuance is mutable (tmfMPTCannotMutatePrivacy is not set, which is the d
 
 - `ConfidentialOutstandingAmount` >= 0
 - `ConfidentialOutstandingAmount` <= `OutstandingAmount`
+- Any change to `ConfidentialOutstandingAmount` during a `Convert` or `ConvertBack` transaction must be exactly offset by an inverse change to the corresponding `MPTAmount` (i.e., `ΔCOA = -ΔMPTAmount`).
 
 ### 6.5. Example JSON
 
@@ -243,7 +244,14 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 4. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 5. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
 
-### 7.4. State Changes
+### 7.4. Invariants
+
+- **Deletion Blocker:** An `MPToken` cannot be deleted from the ledger if it contains an `sfIssuerEncryptedBalance`, `sfConfidentialBalanceInbox`, or `sfConfidentialBalanceSpending` field.
+- **Privacy Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanPrivacy` flag enabled.
+- **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
+- **Version Modification:** If `sfConfidentialBalanceSpending != sfConfidentialBalanceSpending` (the spending balance is modified), then `sfConfidentialBalanceVersion != sfConfidentialBalanceVersion` (the version must be changed).
+
+### 7.5. State Changes
 
 If the transaction is successful:
 
@@ -253,7 +261,7 @@ If the transaction is successful:
 4. The **`sfConfidentialBalanceInbox`** and **`sfIssuerEncryptedBalance`** are updated by homomorphically adding the provided ciphertexts.
 5. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
 
-### 7.5 Example JSON
+### 7.6 Example JSON
 
 ```json
 {
