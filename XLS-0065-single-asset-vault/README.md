@@ -281,15 +281,15 @@ The vault's totals are reduced after the redemption.
 
 The withdraw function handles a request for a specific amount of assets, which involves a two-step process to determine the final payout.
 
-First, the requested asset amount ($\Delta_{assets\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$).
+First, the requested asset amount ($\Delta_{assets\\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$).
 
-$$\Delta_{shares} = \frac{\Delta_{assets\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
+$$\Delta_{shares} = \frac{\Delta_{assets\\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
 
 This calculated $\Delta_{shares}$ amount is **rounded down (floor)** to the nearest whole number.
 
-Next, the floored number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\_out}$), using the same logic as a redemption.
+Next, the floored number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\\_out}$), using the same logic as a redemption.
 
-$$\Delta_{assets\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
+$$\Delta_{assets\\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
 Due to the floor rounding in Step 1, this final payout may be slightly less than the user's requested amount.
 
