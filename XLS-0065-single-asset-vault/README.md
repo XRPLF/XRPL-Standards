@@ -138,7 +138,7 @@ Shares represent the portion of the Vault assets a depositor owns. Vault Owners 
 
 The **`Scale`** field enables the vault to accurately represent fractional asset values using integer-only MPT shares, which prevents the loss of value from decimal truncation. It defines a scaling factor, calculated as $10^{\text{Scale}}$, that converts a decimal asset amount into a corresponding whole number of shares. For example, with a `Scale` of `6`, a deposit of **20.3** assets is multiplied by $10^6$ and credited as **20,300,000** shares.
 
-As a general rule, all calculations involving MPTs are executed with a precision of a single MPT, treating them as indivisible units. If a calculation results in a fractional amount, it will be rounded up, down or to the nearest whole number depending on the context. Crucially, the rounding direction is determined by the protocol and is not controlled by the transaction submitter, which may lead to unexpected results.
+As a general rule, all calculations involving MPTs are executed with a precision of a single MPT, treating them as indivisible units. If a calculation results in a fractional amount, it will be rounded up, down or to the nearest whole number depending on the context. For example, Vault shares are always rounded down. Crucially, the rounding direction is determined by the protocol and is not controlled by the transaction submitter, which may lead to unexpected results.
 
 ###### 3.1.6.1.1 `IOU`
 
@@ -246,7 +246,7 @@ The calculation depends on whether the vault is empty.
 - **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{Scale}}$, to properly represent fractional assets as whole numbers.
   $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
-- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally using the deposit NAV. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
+- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally using the deposit NAV. The resulting $\Delta_{shares}$ value is **rounded down**.
   $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets} - \Omega}$$
 
 Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated.
@@ -285,7 +285,7 @@ First, the requested asset amount is converted into the equivalent number of sha
 
 $$\Delta_{shares} = \frac{\Delta_{assets\\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
 
-This calculated $\Delta_{shares}$ amount is **rounded down (floor)** to the nearest whole number.
+This calculated $\Delta_{shares}$ amount is **rounded down (floor)**.
 
 Next, the floored number of shares from Step 1 is used to calculate the final asset payout using the same logic as a redemption.
 
