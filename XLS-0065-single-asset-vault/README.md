@@ -246,7 +246,7 @@ The calculation depends on whether the vault is empty.
 - **Initial Deposit**: For the first deposit into an empty vault, shares are calculated using a scaling factor, $\sigma = 10^{\text{Scale}}$, to properly represent fractional assets as whole numbers.
   $$\Delta_{shares} = \Delta_{assets} \times \sigma$$
 
-- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally using the deposit NAV ($\Gamma_{assets} - \Omega$). The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
+- **Subsequent Deposits**: For all other deposits, shares are calculated proportionally using the deposit NAV. The resulting $\Delta_{shares}$ value is **rounded down** to the nearest integer.
   $$\Delta_{shares} = \frac{\Delta_{assets} \times \Gamma_{shares}}{\Gamma_{assets} - \Omega}$$
 
 Because the share amount is rounded down, the actual assets taken from the depositor ($\Delta_{assets'}$) are recalculated.
@@ -266,7 +266,7 @@ The redeem function calculates the asset payout for a user burning a specific nu
 
 **Calculation Logic**
 
-The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$), which accounts for both unrealized interest and unrealized loss.
+The amount of assets a user receives is calculated by finding the proportional value of their shares relative to the vault's withdrawal NAV, which accounts for both unrealized interest and unrealized loss.
 
 $$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
@@ -281,13 +281,13 @@ The vault's totals are reduced after the redemption.
 
 The withdraw function handles a request for a specific amount of assets, which involves a two-step process to determine the final payout.
 
-First, the requested asset amount ($\Delta_{assets\\_requested}$) is converted into the equivalent number of shares to burn, based on the vault's withdrawal NAV ($\Gamma_{assets} - \Omega - \iota$).
+First, the requested asset amount is converted into the equivalent number of shares to burn, based on the vault's withdrawal NAV.
 
 $$\Delta_{shares} = \frac{\Delta_{assets\\_requested} \times \Gamma_{shares}}{(\Gamma_{assets} - \Omega - \iota)}$$
 
 This calculated $\Delta_{shares}$ amount is **rounded down (floor)** to the nearest whole number.
 
-Next, the floored number of shares from Step 1 is used to calculate the final asset payout ($\Delta_{assets\\_out}$), using the same logic as a redemption.
+Next, the floored number of shares from Step 1 is used to calculate the final asset payout using the same logic as a redemption.
 
 $$\Delta_{assets\\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
