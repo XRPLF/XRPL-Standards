@@ -83,6 +83,7 @@ The Confidential MPT protocol is built on three core design principles: the **Is
 The protocol recommends the use of an issuer-controlled **Dedicated Account** (also known as a "Confidential Vault" or "Second Account"). While this account remains under the control of the issuer, it is treated by the ledger as a standard **Holder**.
 
 The operational setup follows these steps:
+
 1.  The **Issuer** creates an `MPTokenIssuance` object.
 2.  The **Issuer** creates a **Dedicated Account** to act as the "Confidential Vault."
 3.  The **Issuer** sends a public MPT amount to the **Dedicated Account**.
