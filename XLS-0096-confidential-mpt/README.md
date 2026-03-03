@@ -383,6 +383,7 @@ If the transaction is successful:
 - **Update Spending Balance:** The current `sfConfidentialBalanceInbox` is homomorphically **added** to `sfConfidentialBalanceSpending`.
 - **Reset Inbox:** The `sfConfidentialBalanceInbox` is reset to a canonical **encrypted zero**. This ensures the account is ready to receive new transfers without arithmetic errors.
 - **Increment Version:** The `sfConfidentialBalanceVersion` is incremented by 1. If the version reaches the maximum 32-bit integer value, it wraps around to 0.
+- **No-op with encrypted zero:** If either or both of `sfConfidentialBalanceInbox` and `sfConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `sfConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
 
 ### 9.4. Rationale & Safety
 
