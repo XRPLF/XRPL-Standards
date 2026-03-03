@@ -1,7 +1,7 @@
 <pre>
     title:  Confidential Transfers for Multi-Purpose Tokens
     description: This amendment introduces Confidential Transfers for Multi-Purpose Tokens (MPTs) on the XRP Ledger.
-    author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>
+    author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>, Peter Chen <ychen@ripple.com>
     proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/372
     status: Draft
     category: Amendment
@@ -76,13 +76,17 @@ This XLS specifies the protocol changes required to support confidential MPTs, i
 
 ## 5. Protocol Overview
 
-The Confidential MPT protocol is built on three core design principles: the issuer second account model, the split-balance model for reliable transfers, and a multi-ciphertext architecture for privacy and compliance.
+The Confidential MPT protocol is built on three core design principles: the **Issuer Second Account** model, the **Split-Balance** model for reliable transfers, and a **Multi-Ciphertext** architecture for privacy and compliance.
 
 ### 5.1 The Issuer Second Account Model
 
-To introduce confidential tokens without modifying the supply semantics of XLS-33, the protocol uses an issuer-controlled second account that is treated by the ledger as a standard non-issuer holder.
+The protocol recommends the use of an issuer-controlled **Dedicated Account** (also known as a "Confidential Vault" or "Second Account"). While this account remains under the control of the issuer, it is treated by the ledger as a standard **Holder**.
 
-- **Issuing into circulation:** The issuer introduces confidential supply by executing a `ConfidentialMPTConvert` transaction, moving funds from its public reserve into the issuer’s second account.
+The operational setup follows these steps:
+1.  The **Issuer** creates an `MPTokenIssuance` object.
+2.  The **Issuer** creates a **Dedicated Account** to act as the "Confidential Vault."
+3.  The **Issuer** sends a public MPT amount to the **Dedicated Account**.
+4.  The **Dedicated Account** converts the public balance to a confidential balance.
 
 - **Preserving invariants:** Because the second account is a non-issuer, its balance is included in `OutstandingAmount` (OA). This preserves the existing `OA ≤ MaxAmount` invariant and allows validators to enforce the supply cap without decrypting confidential balances. All subsequent confidential transfers between non-issuer holders are redistributions that do not modify OA.
 
@@ -106,6 +110,7 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 The protocol relies on a set of ZKPs to validate confidential transactions without revealing balances or transfer amounts. The following proof types are used:
 
+- **Proof of Knowledge (PoK) of the Secret Key (Schnorr PoK):** Proves that the sender knows the private key corresponding to the `HolderElGamalPublicKey` used in the transaction. This ensures the user actually controls the ElGamal key pair being registered.
 - **Plaintext–ciphertext equality proofs:** Prove that a publicly known amount `m` is correctly encrypted. In transactions where the blinding factor is
   disclosed (e.g., Convert and ConvertBack), this verification is performed
   deterministically instead of via a ZKP.
@@ -234,7 +239,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 5. The length of `sfBlindingFactor` is not exactly 32 bytes. (`temMALFORMED`)
 6. The length of `sfZKProof` is not exactly 65 bytes. (`temMALFORMED`)
 7. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-8. `MPTAmount` is zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
+8. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
 
 #### 7.3.2. Protocol-Level Failures
 
