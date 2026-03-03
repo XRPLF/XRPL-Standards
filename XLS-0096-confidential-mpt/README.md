@@ -111,7 +111,7 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 The protocol relies on a set of ZKPs to validate confidential transactions without revealing balances or transfer amounts. The following proof types are used:
 
-- **Proof of Knowledge (PoK) of the Secret Key (Schnorr PoK):** Proves that the sender knows the private key corresponding to the `HolderElGamalPublicKey` used in the transaction. This ensures the user actually controls the ElGamal key pair being registered.
+- **Schnorr Proof of Knowledge**: Proves ownership of the private key is associated with the ElGamal public key.
 - **Plaintext–ciphertext equality proofs:** Prove that a publicly known amount `m` is correctly encrypted. In transactions where the blinding factor is
   disclosed (e.g., Convert and ConvertBack), this verification is performed
   deterministically instead of via a ZKP.
