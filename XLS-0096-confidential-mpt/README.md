@@ -285,8 +285,10 @@ If the transaction is successful:
 
 ## 8. Transaction: `ConfidentialMPTSend`
 
-**Purpose:**  
+**Purpose:**
 Performs a confidential transfer of MPT value between accounts while keeping the transfer amount hidden. The transferred amount is credited to the receiver’s confidential inbox balance (`CB_IN`) to avoid proof staleness; the receiver may later merge these funds into the spending balance (`CB_S`) via `ConfidentialMPTMergeInbox`.
+
+This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), ensuring that confidential transfers respect the same authorization requirements as standard MPT payments.
 
 ### 8.1 Use Cases
 
@@ -310,6 +312,7 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 | `BalanceCommitment`          | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the user's confidential spending balance.                             |
 | `AmountCommitment`           | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the amount being transferred.                                         |
 | `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `sfAuditorElGamalPublicKey` is present on the issuance. |
+| `CredentialIDs`              | No        | `array`   | `Vector256`   | N/A           | Credential(s) to attach to the transaction for authorization purposes (XLS-70).                     |
 
 ### 8.3. Failure Conditions
 
@@ -328,6 +331,13 @@ Performs a confidential transfer of MPT value between accounts while keeping the
 4. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderElGamalPublicKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
 5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
 6. Either the sender's or receiver's balance is currently frozen. (`terFROZEN`)
+
+##### 8.3.2.1. Authorization Failures
+
+1. The destination account has Deposit Authorization enabled (`lsfDepositAuth`), and the sender is not preauthorized. (`tecNO_PERMISSION`)
+2. The destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
+3. A credential ID specified in `CredentialIDs` does not exist on the ledger. (`tecNO_ENTRY`)
+4. A credential specified in `CredentialIDs` has expired. (`tecEXPIRED`)
 
 ### 8.4. State Changes
 
@@ -352,6 +362,7 @@ If the transaction is successful:
   "BalanceCommitment": "038A...",
   "AmountCommitment": "049B...",
   "IssuerEncryptedAmount": "BC2E...",
+  "CredentialIDs": ["DD40031C6C21164E7673...17D467CEEE9"],  // Optional: for credential-based authorization
   "ZKProof": "84af..."
 }
 ```
