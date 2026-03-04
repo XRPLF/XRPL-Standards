@@ -318,7 +318,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
 6. Either the sender's or receiver's balance is currently frozen. (`terFROZEN`)
 
-#### 8.3.3. Authorization Failures
+##### 8.3.2.1. Authorization Failures
 
 1. The destination account has Deposit Authorization enabled (`lsfDepositAuth`), and the sender is not preauthorized. (`tecNO_PERMISSION`)
 2. The destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
