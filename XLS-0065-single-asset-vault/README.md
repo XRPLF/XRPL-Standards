@@ -287,7 +287,7 @@ $$\Delta_{shares} = \frac{\Delta_{assets\\_requested} \times \Gamma_{shares}}{(\
 
 This calculated $\Delta_{shares}$ amount is **rounded down (floor)**.
 
-Next, the floored number of shares from Step 1 is used to calculate the final asset payout using the same logic as a redemption.
+Next, the rounded number of shares from Step 1 is used to calculate the final asset payout using the same logic as a redemption.
 
 $$\Delta_{assets\\_out} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \Omega - \iota)}{\Gamma_{shares}}$$
 
@@ -297,7 +297,7 @@ Due to the floor rounding in Step 1, this final payout may be slightly less than
 
 The vault's totals are reduced by the final calculated amounts.
 
-- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets\_out}$
+- **New Total Assets**: $\Gamma_{assets} \leftarrow \Gamma_{assets} - \Delta_{assets\\_out}$
 - **New Total Shares**: $\Gamma_{shares} \leftarrow \Gamma_{shares} - \Delta_{shares}$
 
 ##### 3.1.7.3 Withdrawal Policy
