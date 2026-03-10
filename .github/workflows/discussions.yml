@@ -10,7 +10,7 @@ permissions:
   contents: read # Required to checkout the repository
 
 env:
-  STALE_DAYS: 730 # Number of days without updates to consider a discussion stale (2 years)
+  STALE_DAYS: 550 # Number of days without updates to consider a discussion stale (1.5 years)
   WARNING_DAYS: 30 # Number of days to wait after warning before closing
   WARNING_MESSAGE:
     | # note: the marker is necessary for the script and should not be removed
@@ -42,7 +42,7 @@ jobs:
       - name: Fetch and process stale discussions
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}[bot]
+          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}
           STALE_DAYS: ${{ env.STALE_DAYS }}
           WARNING_DAYS: ${{ env.WARNING_DAYS }}
           WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}
