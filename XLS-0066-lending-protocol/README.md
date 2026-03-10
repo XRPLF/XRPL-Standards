@@ -1115,6 +1115,7 @@ The account specified in the `Account` field pays the transaction fee.
 6. Update `Vault` object:
    - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
    - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
+   - Increase `Vault.InterestUnrealized` by `InterestDue` (interest owed to the Vault, excluding management fee).
 7. Update `LoanBroker` object:
    - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
    - Increment `LoanBroker.OwnerCount` by `1`.
@@ -1263,6 +1264,7 @@ This transaction uses the standard transaction fee.
    - Update `Vault` object:
      - Decrease `Vault.AssetsTotal` by `VaultLoss`.
      - Increase `Vault.AssetsAvailable` by `DefaultCovered`.
+     - Decrease `Vault.InterestUnrealized` by `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding - Loan.PrincipalOutstanding` (the outstanding interest that was pre-loaded at loan creation but will never be collected).
      - If `Loan.Flags` has `lsfLoanImpaired` set:
        - Decrease `Vault.LossUnrealized` by `DefaultAmount`.
    - Update `LoanBroker` object:
@@ -1425,6 +1427,10 @@ The `LoanBroker` and `Vault` objects are updated to reflect the new accounting s
 7. **`Vault` Updates**:
    - `Vault.AssetsAvailable` increases by `totalToVault`.
    - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+   - `Vault.InterestUnrealized` decreases by `interestPaid - valueChange` (the portion of pre-loaded interest that has now been realized).
+     - No flags: `valueChange = 0`, so `InterestUnrealized` decreases by `interestPaid`.
+     - `tfLoanLatePayment`: `valueChange > 0` (the late penalty interest was not pre-loaded), so only the scheduled portion `interestPaid - valueChange` is cleared from `InterestUnrealized`.
+     - `tfLoanOverpayment` / `tfLoanFullPayment`: `valueChange` is typically negative (re-amortization savings or forgiven future interest outweighs any penalty interest charged), so `InterestUnrealized` decreases by more than `interestPaid`, clearing both the realized interest and the cancelled future interest. However, `valueChange` can be positive if a large overpayment interest or prepayment penalty exceeds the forgiven future interest, in which case `InterestUnrealized` decreases by less than `interestPaid`.
 
 **4. Asset Transfers**
 
