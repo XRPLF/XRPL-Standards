@@ -1,5 +1,5 @@
 <pre>
-  xls: [To be assigned]
+  xls: 98
   title: Concentrated Liquidity Automated Market Maker
   description: A capital-efficient AMM allowing liquidity providers to concentrate capital within specific price ranges
   author: Romain Thepaut (@RomThpt)
