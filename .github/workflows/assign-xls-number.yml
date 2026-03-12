@@ -5,9 +5,66 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
+  check-approval:
+    runs-on: ubuntu-latest
+    name: Check for Write+ Approval
+    outputs:
+      has_write_approval: ${{ steps.check-approval.outputs.has_write_approval }}
+    steps:
+      - name: Check for write+ approval
+        id: check-approval
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.setOutput('has_write_approval', 'false');
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+
+            // Get only approved reviews
+            const approvals = reviews.filter(review => review.state === 'APPROVED');
+
+            // Check each approver's permission level
+            for (const approval of approvals) {
+              const user = approval.user;
+
+              // Skip approvals without a valid user (e.g., deleted accounts)
+              if (!user || !user.login) {
+                console.log('Skipping approval with missing user information');
+                continue;
+              }
+
+              // Skip bot approvals
+              if (user.type === 'Bot' || user.login.endsWith('[bot]')) {
+                console.log(`Skipping bot approval from ${user.login}`);
+                continue;
+              }
+
+              const { data: permissionLevel } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: user.login
+              });
+
+              const permission = permissionLevel.permission;
+              if (['write', 'admin', 'maintain'].includes(permission)) {
+                console.log(`Found write+ approval from ${user.login} (${permission})`);
+                core.setOutput('has_write_approval', 'true');
+                return;
+              }
+            }
+
+            console.log('No write+ approval found');
+            core.setOutput('has_write_approval', 'false');
+
   assign-xls-number:
     runs-on: ubuntu-latest
     name: Assign XLS Number to Draft
+    needs: check-approval
+    if: needs.check-approval.outputs.has_write_approval == 'true'
     permissions:
       pull-requests: write
       issues: write
