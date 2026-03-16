@@ -636,7 +636,7 @@ The existing `MPTokenIssuanceSet` transaction is extended to manage the confiden
 
 This transaction is the only method to register keys or modify the confidential amount status (via the `MutableFlags` field with `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount` bit flags) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
-### 12.2. MutableFlags Field - Transaction Flags
+### 12.2. MutableFlags Field
 
 This extension introduces new bit flags for the `MutableFlags` field in `MPTokenIssuanceSet` transactions to enable or disable the confidential amount feature. These flags follow the DynamicMPT pattern for mutable flag management.
 
