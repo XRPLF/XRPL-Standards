@@ -151,7 +151,7 @@ def extract_xls_number_from_comments(
 def get_reserved_xls_numbers_from_prs(
     token: str, repo: str, current_pr_number: int | None
 ) -> tuple[set[int], int | None]:
-    """Find XLS numbers reserved by open PRs with the 'has-xls-number' label.
+    """Find XLS numbers reserved by open PRs with the 'has XLS number' label.
 
     Returns a tuple of (set of reserved numbers, number assigned to the current PR
     if any).
@@ -176,7 +176,7 @@ def get_reserved_xls_numbers_from_prs(
             token,
             {
                 "state": "open",
-                "labels": "has-xls-number",
+                "labels": "has XLS number",
                 "per_page": 100,
                 "page": page,
             },
@@ -191,7 +191,9 @@ def get_reserved_xls_numbers_from_prs(
                 continue
 
             issue_number = issue.get("number")
-            num = extract_xls_number_from_comments(owner, repo_name, token, issue_number)
+            num = extract_xls_number_from_comments(
+                owner, repo_name, token, issue_number
+            )
             if num is None:
                 continue
 
@@ -275,7 +277,9 @@ def main():
     # Get existing XLS numbers from the base branch
     existing_numbers = get_existing_xls_numbers(repo_root)
     print(f"Found {len(existing_numbers)} existing XLS numbers in the repository.")
-    print(f"Highest existing number: {max(existing_numbers) if existing_numbers else 0}")
+    print(
+        f"Highest existing number: {max(existing_numbers) if existing_numbers else 0}"
+    )
 
     all_numbers = existing_numbers | reserved_numbers
 
@@ -292,21 +296,25 @@ def main():
     for draft_dir in sorted(draft_dirs):
         assigned_number = next_number
         all_numbers.add(assigned_number)
-        new_dir_name = re.sub(r"^xls-draft-", f"xls-{assigned_number:04d}-", draft_dir.lower())
-        assignments.append({
-            "draft": draft_dir,
-            "number": assigned_number,
-            "new_name": new_dir_name,
-        })
+        new_dir_name = re.sub(
+            r"^xls-draft-", f"xls-{assigned_number:04d}-", draft_dir.lower()
+        )
+        assignments.append(
+            {
+                "draft": draft_dir,
+                "number": assigned_number,
+                "new_name": new_dir_name,
+            }
+        )
         # Calculate the next free number for any additional drafts
         next_number = get_next_xls_number(all_numbers)
 
     # Output results
     print("\n=== XLS Number Assignments ===")
     for assignment in assignments:
-        draft = assignment['draft']
-        new_name = assignment['new_name']
-        num = assignment['number']
+        draft = assignment["draft"]
+        new_name = assignment["new_name"]
+        num = assignment["number"]
         print(f"  {draft} -> {new_name} (XLS-{num:04d})")
 
     # Set GitHub Actions outputs
@@ -316,8 +324,8 @@ def main():
     # For single draft case, also output individual values for easy access
     if len(assignments) == 1:
         set_github_output("xls_number", f"{assignments[0]['number']}")
-        set_github_output("draft_dir", assignments[0]['draft'])
-        set_github_output("new_dir_name", assignments[0]['new_name'])
+        set_github_output("draft_dir", assignments[0]["draft"])
+        set_github_output("new_dir_name", assignments[0]["new_name"])
 
 
 if __name__ == "__main__":
