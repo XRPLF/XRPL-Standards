@@ -636,7 +636,14 @@ The existing `MPTokenIssuanceSet` transaction is extended to manage the confiden
 
 This transaction is the only method to register keys or modify the confidential amount status (via the `MutableFlags` field with `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount` bit flags) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
-### 12.2. MutableFlags Field
+### 12.2. Fields
+
+| Field Name             | Required? | JSON Type | Internal Type | Default Value | Description                                                                      |
+| :--------------------- | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------------- |
+| `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
+| `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
+
+#### 12.2.1. `MutableFlags` Field
 
 This extension introduces new bit flags for the `MutableFlags` field in `MPTokenIssuanceSet` transactions to enable or disable the confidential amount feature. These flags follow the DynamicMPT pattern for mutable flag management.
 
@@ -653,16 +660,9 @@ This extension introduces new bit flags for the `MutableFlags` field in `MPToken
 - Setting `tmfMPTClearCanConfidentialAmount` disables confidential transfers, but only if `ConfidentialOutstandingAmount` is zero.
 - These flags are mutually exclusive and cannot be used together in the same transaction.
 
-### 12.3. Fields
+### 12.3. Failure Conditions
 
-| Field Name             | Required? | JSON Type | Internal Type | Default Value | Description                                                                      |
-| :--------------------- | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------------- |
-| `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
-| `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
-
-### 12.4. Failure Conditions
-
-#### 12.4.1. Data Verification
+#### 12.3.1. Data Verification
 
 1. The `featureConfidentialTransfer` is not enabled. (`temDISABLED`)
 2. The provided Public Key is not exactly 33 bytes (`ecPubKeyLength`). (`temMALFORMED`)
@@ -670,7 +670,7 @@ This extension introduces new bit flags for the `MutableFlags` field in `MPToken
 4. The transaction contains `sfAuditorEncryptionKey` but does **not** contain `sfIssuerEncryptionKey`. (`temMALFORMED`)
 5. Both `tmfMPTSetCanConfidentialAmount` and `tmfMPTClearCanConfidentialAmount` are set in the same transaction. (`temINVALID_FLAG`)
 
-#### 12.4.2. Protocol-Level Failures
+#### 12.3.2. Protocol-Level Failures
 
 1. The transaction attempts to set or clear the `lsfMPTCanConfidentialAmount` flag, but the `sfConfidentialOutstandingAmount` is greater than 0. (`tecNO_PERMISSION`)
 2. The transaction attempts to use `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount`, but the `lsmfMPTCannotMutateCanConfidentialAmount` flag is set (feature is immutable). (`tecNO_PERMISSION`)
@@ -678,16 +678,16 @@ This extension introduces new bit flags for the `MutableFlags` field in `MPToken
 4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled (and is not enabling it in this transaction). (`tecNO_PERMISSION`)
 5. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
-### 12.5. State Changes
+### 12.4. State Changes
 
 If successful:
 
 - **Flags:** The `lsfMPTCanConfidentialAmount` flag is updated (if mutable).
 - **Keys:** The `sfIssuerEncryptionKey` and/or `sfAuditorEncryptionKey` are stored on the `MPTokenIssuance` ledger entry.
 
-### 12.6. Example JSON
+### 12.5. Example JSON
 
-#### 12.6.1. Enabling Confidential Amount Feature
+#### 12.5.1. Enabling Confidential Amount Feature
 
 ```json
 {
@@ -702,7 +702,7 @@ If successful:
 
 This transaction enables the confidential amount feature by setting the `tmfMPTSetCanConfidentialAmount` bit flag in the `MutableFlags` field, and registers the encryption keys.
 
-#### 12.6.2. Disabling Confidential Amount Feature
+#### 12.5.2. Disabling Confidential Amount Feature
 
 ```json
 {
