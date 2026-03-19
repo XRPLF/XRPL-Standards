@@ -647,9 +647,9 @@ The following fields are introduced by this extension to support encryption key 
 
 The following existing field is extended with new bit flags to support toggling the confidential amount feature post-issuance:
 
-| Field Name     | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                               |
-| :------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MutableFlags` | No        | `number`  | `UINT32`      | Existing field from [XLS-94 (DynamicMPT)](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT#31-new-optional-field-mutableflags). Extended with new bit flags for confidential MPT. |
+| Field Name     | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                             |
+| :------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MutableFlags` | No        | `number`  | `UINT32`      | Indicates which fields or flags of this token issuance can be modified after creation. See [MPTokenIssuance MutableFlags](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT#31-new-optional-field-mutableflags). |
 
 #### 12.2.1. `MutableFlags` Bit Flags
 
