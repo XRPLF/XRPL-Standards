@@ -638,23 +638,30 @@ This transaction is the only method to register keys or modify the confidential 
 
 ### 12.2. Fields
 
-| Field Name             | Required? | JSON Type | Internal Type | Default Value | Description                                                                      |
-| :--------------------- | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------------- |
-| `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
-| `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | N/A           | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
+The following fields are introduced by this extension to support encryption key registration on the `MPTokenIssuance` object:
 
-#### 12.2.1. `MutableFlags` Field
+| Field Name             | Required? | JSON Type | Internal Type | Description                                                                      |
+| :--------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------- |
+| `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
+| `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
 
-This extension introduces new bit flags for the `MutableFlags` field in `MPTokenIssuanceSet` transactions to enable or disable the confidential amount feature. These flags follow the DynamicMPT pattern for mutable flag management.
+The following existing field is extended with new bit flags to support toggling the confidential amount feature post-issuance:
 
-| Flag Name                          | Field          | Hex Value    | Decimal Value | Description                                                                                                                                  |
-| :--------------------------------- | :------------- | :----------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmfMPTSetCanConfidentialAmount`   | `MutableFlags` | `0x00001000` | 4096          | Sets the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set.   |
-| `tmfMPTClearCanConfidentialAmount` | `MutableFlags` | `0x00002000` | 8192          | Clears the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set. |
+| Field Name     | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                               |
+| :------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MutableFlags` | No        | `number`  | `UINT32`      | Existing field from [XLS-94 (DynamicMPT)](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT#31-new-optional-field-mutableflags). Extended with new bit flags for confidential MPT. |
+
+#### 12.2.1. `MutableFlags` Bit Flags
+
+The following bit flags are added to the `MutableFlags` field to enable or disable the confidential amount feature:
+
+| Flag Name                          | Hex Value    | Decimal Value | Description                                                                                                                                  |
+| :--------------------------------- | :----------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmfMPTSetCanConfidentialAmount`   | `0x00001000` | 4096          | Sets the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set.   |
+| `tmfMPTClearCanConfidentialAmount` | `0x00002000` | 8192          | Clears the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set. |
 
 **Usage Notes:**
 
-- These are **bit flags** used in the `MutableFlags` field of the `MPTokenIssuanceSet` transaction.
 - These flags can only be used if the `lsmfMPTCannotMutateCanConfidentialAmount` flag was **not** set during `MPTokenIssuanceCreate`.
 - Setting `tmfMPTSetCanConfidentialAmount` enables confidential transfers for the token.
 - Setting `tmfMPTClearCanConfidentialAmount` disables confidential transfers, but only if `ConfidentialOutstandingAmount` is zero.
