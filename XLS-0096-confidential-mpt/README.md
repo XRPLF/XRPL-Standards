@@ -221,7 +221,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 | `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the holder's $inline$CB\_{IN}$inline$.                                                                       |
 | `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the issuer's mirror balance.                                                                                 |
 | `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                    |
-| `BlindingFactor`         | Yes       | `string`  | `BLOB`        | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.                    |
+| `BlindingFactor`         | Yes       | `string`  | `UINT256`     | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.                    |
 | `ZKProof`                | No        | `string`  | `BLOB`        | N/A           | A Schnorr Proof of Knowledge (PoK). **Required** only when `HolderEncryptionKey` is present. **MUST** be absent when `HolderEncryptionKey` is absent. |
 
 **Notes:**
@@ -373,6 +373,8 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 
 **Purpose:** Moves all funds from the inbox balance into the spending balance, then resets the inbox to a canonical encrypted zero (EncZero). This ensures that proofs reference only stable spending balances and prevents staleness from incoming transfers.
 
+This transaction respects **authorization** and **lock** constraints, ensuring that unauthorized or locked holders cannot merge funds.
+
 ### 9.1 Use Cases
 
 - A holder merges newly received confidential transfers into their spendable balance.
@@ -399,7 +401,10 @@ Net effect: Public balances unchanged; confidential amount is redistributed (sen
 1. The `MPTokenIssuance` or the user's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanConfidentialAmount` flag set. (`tecNO_PERMISSION`)
 3. The user's `MPToken` object has not been initialized (missing `sfConfidentialBalanceInbox` or `sfConfidentialBalanceSpending`). (`tecNO_PERMISSION`)
-4. A system invariant failure where the issuer attempts to merge. (`tefINTERNAL`)
+4. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
+5. The holder's `MPToken` is **locked** at the individual level (the `lsfMPTLocked` flag is set on the `MPToken`). (`tecLOCKED`)
+6. The entire token issuance is **locked** (the `lsfMPTLocked` flag is set on the `MPTokenIssuance`). (`tecLOCKED`)
+7. A system invariant failure where the issuer attempts to merge. (`tefINTERNAL`)
 
 ### 9.3. State Changes
 
@@ -460,7 +465,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 | `MPTAmount`              | Yes       | `number`  | `UINT64`      | N/A           | The plaintext amount to credit to the public balance.                                                                              |
 | `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`.                                           |
 | `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the issuer's mirror balance.                                                            |
-| `BlindingFactor`         | Yes       | `string`  | `BLOB`        | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
+| `BlindingFactor`         | Yes       | `string`  | `UINT256`     | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. |
 | `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                         |
 | `BalanceCommitment`      | Yes       | `string`  | `BLOB`        | N/A           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                    |
 | `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | A bundle containing the **Pedersen Linkage Proof** (linking the ElGamal balance to the commitment) and the **Range Proof**.        |
@@ -636,6 +641,8 @@ The existing `MPTokenIssuanceSet` transaction is extended to manage the confiden
 
 This transaction is the only method to register keys or modify the confidential amount status (via the `MutableFlags` field with `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount` bit flags) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
+**Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanConfidentialAmount` flag using `tmfMPTSetCanConfidentialAmount`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
+
 ### 12.2. Fields
 
 The following fields are introduced by this extension to support encryption key registration on the `MPTokenIssuance` object:
@@ -676,13 +683,15 @@ The following bit flags are added to the `MutableFlags` field to enable or disab
 3. The transaction attempts to mutate confidential amount fields while also acting as a Holder. (`temMALFORMED`)
 4. The transaction contains `sfAuditorEncryptionKey` but does **not** contain `sfIssuerEncryptionKey`. (`temMALFORMED`)
 5. Both `tmfMPTSetCanConfidentialAmount` and `tmfMPTClearCanConfidentialAmount` are set in the same transaction. (`temINVALID_FLAG`)
+6. The transaction provides encryption keys (`sfIssuerEncryptionKey` or `sfAuditorEncryptionKey`) while also setting `tmfMPTClearCanConfidentialAmount`. (`temINVALID_FLAG`)
 
 #### 12.3.2. Protocol-Level Failures
 
 1. The transaction attempts to set or clear the `lsfMPTCanConfidentialAmount` flag, but the `sfConfidentialOutstandingAmount` is greater than 0. (`tecNO_PERMISSION`)
 2. The transaction attempts to use `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount`, but the `lsmfMPTCannotMutateCanConfidentialAmount` flag is set (feature is immutable). (`tecNO_PERMISSION`)
 3. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
-4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled (and is not enabling it in this transaction). (`tecNO_PERMISSION`)
+4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled. (`tecNO_PERMISSION`)
+   - **Exception:** Keys can be set if the `lsfMPTCanConfidentialAmount` flag is being enabled in the same transaction via `tmfMPTSetCanConfidentialAmount`. (`tecNO_PERMISSION`)
 5. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
 ### 12.4. State Changes
@@ -707,7 +716,7 @@ If successful:
 }
 ```
 
-This transaction enables the confidential amount feature by setting the `tmfMPTSetCanConfidentialAmount` bit flag in the `MutableFlags` field, and registers the encryption keys.
+This transaction enables the confidential amount feature by setting the `tmfMPTSetCanConfidentialAmount` bit flag in the `MutableFlags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanConfidentialAmount` flag is being enabled in the same transaction.
 
 #### 12.5.2. Disabling Confidential Amount Feature
 
