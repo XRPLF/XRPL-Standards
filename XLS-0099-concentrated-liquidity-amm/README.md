@@ -186,32 +186,34 @@ The `CLAMM` ledger entry represents a concentrated liquidity pool.
 
 ##### 4.1.1.1 Object Identifier
 
-**Key Space:** `0x0043` ("C" for CLAMM)
+**Key Space:** `0x008A`
 
 **ID Calculation Algorithm:**
-The ID is calculated by hashing the key space prefix `0x0043`, the `Asset` issue, the `Asset2` issue, and the `FeeTier` value. This ensures one pool per asset pair per fee tier.
+The ID is calculated by hashing the key space prefix `0x008A`, the `Asset` issue, the `Asset2` issue, and the `FeeTier` value. This ensures one pool per asset pair per fee tier.
 
 ##### 4.1.1.2 Fields
 
 | Field Name          | Constant | Required | JSON Type | Internal Type | Default Value | Description                           |
 | ------------------- | -------- | -------- | --------- | ------------- | ------------- | ------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | `string`  | UINT16        | `0x0043`      | Identifies this as a CLAMM object     |
+| `LedgerEntryType`   | Yes      | Yes      | `string`  | UINT16        | `0x008A`      | Identifies this as a CLAMM object     |
+| `Account`           | Yes      | Yes      | `string`  | ACCOUNTID     | N/A           | Pool pseudo-account (see 4.1.1.7)    |
 | `Asset`             | Yes      | Yes      | `object`  | ISSUE         | N/A           | First asset in the pair               |
 | `Asset2`            | Yes      | Yes      | `object`  | ISSUE         | N/A           | Second asset in the pair              |
 | `FeeTier`           | Yes      | Yes      | `number`  | UINT8         | N/A           | Fee tier (0-3)                        |
 | `TickSpacing`       | Yes      | Yes      | `number`  | UINT16        | N/A           | Derived from FeeTier                  |
-| `TradingFee`        | No       | Yes      | `number`  | UINT32        | N/A           | Trading fee in 1/1,000,000            |
+| `TradingFee`        | No       | Yes      | `number`  | UINT16        | N/A           | Trading fee in 1/1,000,000            |
 | `CurrentTick`       | No       | Yes      | `number`  | INT32         | N/A           | Current active tick index             |
 | `SqrtPrice`         | No       | Yes      | `string`  | UINT128       | N/A           | Current sqrt price (Q64.96)           |
-| `Liquidity`         | No       | Yes      | `string`  | UINT128       | `"0"`         | Currently active liquidity            |
-| `FeeGrowthGlobal0`  | No       | Yes      | `string`  | UINT128       | `"0"`         | Global fee growth for Asset           |
-| `FeeGrowthGlobal1`  | No       | Yes      | `string`  | UINT128       | `"0"`         | Global fee growth for Asset2          |
-| `ProtocolFees0`     | No       | Yes      | `string`  | UINT64        | `"0"`         | Accumulated protocol fees for Asset   |
-| `ProtocolFees1`     | No       | Yes      | `string`  | UINT64        | `"0"`         | Accumulated protocol fees for Asset2  |
+| `LiquidityAmount`   | No       | No       | `string`  | UINT128       | Absent        | Currently active liquidity            |
+| `FeeGrowthGlobal0`  | No       | No       | `string`  | UINT128       | Absent        | Global fee growth for Asset           |
+| `FeeGrowthGlobal1`  | No       | No       | `string`  | UINT128       | Absent        | Global fee growth for Asset2          |
+| `ProtocolFees0`     | No       | No       | `string`  | UINT64        | Absent        | Accumulated protocol fees for Asset   |
+| `ProtocolFees1`     | No       | No       | `string`  | UINT64        | Absent        | Accumulated protocol fees for Asset2  |
 | `AuctionSlot`       | No       | No       | `object`  | STOBJECT      | N/A           | Current auction slot holder (see 4.4) |
+| `VoteSlots`         | No       | No       | `array`   | STARRAY       | N/A           | Liquidity-weighted fee votes          |
 | `OwnerNode`         | No       | Yes      | `string`  | UINT64        | N/A           | Directory hint                        |
-| `PreviousTxnID`     | No       | Yes      | `string`  | HASH256       | N/A           | Previous modifying transaction        |
-| `PreviousTxnLgrSeq` | No       | Yes      | `number`  | UINT32        | N/A           | Previous modifying ledger             |
+| `PreviousTxnID`     | No       | No       | `string`  | HASH256       | N/A           | Previous modifying transaction        |
+| `PreviousTxnLgrSeq` | No       | No       | `number`  | UINT32        | N/A           | Previous modifying ledger             |
 
 **Field Details:**
 
@@ -337,22 +339,22 @@ The `CLAMMTick` ledger entry stores per-tick liquidity and fee data. Only ticks 
 
 ##### 4.1.2.1 Object Identifier
 
-**Key Space:** `0x0054` ("T" for Tick)
+**Key Space:** `0x008B`
 
 **ID Calculation Algorithm:**
-The ID is calculated by hashing the key space prefix `0x0054`, the parent `PoolID`, and the `TickIndex` value. This ensures one tick entry per tick index per pool.
+The ID is calculated by hashing the key space prefix `0x008B`, the parent `PoolID`, and the `TickIndex` value. This ensures one tick entry per tick index per pool.
 
 ##### 4.1.2.2 Fields
 
 | Field Name          | Constant | Required | JSON Type | Internal Type | Default Value | Description                           |
 | ------------------- | -------- | -------- | --------- | ------------- | ------------- | ------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | `string`  | UINT16        | `0x0054`      | Identifies this as a CLAMMTick        |
+| `LedgerEntryType`   | Yes      | Yes      | `string`  | UINT16        | `0x008B`      | Identifies this as a CLAMMTick        |
 | `PoolID`            | Yes      | Yes      | `string`  | HASH256       | N/A           | Reference to parent CLAMM             |
 | `TickIndex`         | Yes      | Yes      | `number`  | INT32         | N/A           | Tick index (divisible by TickSpacing) |
-| `LiquidityGross`    | No       | Yes      | `string`  | UINT128       | `"0"`         | Total liquidity referencing this tick |
-| `LiquidityNet`      | No       | Yes      | `string`  | INT128        | `"0"`         | Net liquidity change when crossing    |
-| `FeeGrowthOutside0` | No       | Yes      | `string`  | UINT128       | `"0"`         | Fee growth outside for Asset          |
-| `FeeGrowthOutside1` | No       | Yes      | `string`  | UINT128       | `"0"`         | Fee growth outside for Asset2         |
+| `LiquidityGross`    | No       | No       | `string`  | UINT128       | Absent        | Total liquidity referencing this tick |
+| `LiquidityNet`      | No       | No       | `string`  | UINT128       | Absent        | Net liquidity change when crossing (two's complement signed) |
+| `FeeGrowthOutside0` | No       | No       | `string`  | UINT128       | Absent        | Fee growth outside for Asset          |
+| `FeeGrowthOutside1` | No       | No       | `string`  | UINT128       | Absent        | Fee growth outside for Asset2         |
 | `OwnerNode`         | No       | Yes      | `string`  | UINT64        | N/A           | Directory hint                        |
 | `PreviousTxnID`     | No       | Yes      | `string`  | HASH256       | N/A           | Previous modifying transaction        |
 | `PreviousTxnLgrSeq` | No       | Yes      | `number`  | UINT32        | N/A           | Previous modifying ledger             |
@@ -434,22 +436,22 @@ The `CLAMMPosition` ledger entry represents an LP's liquidity position, linked t
 
 ##### 4.1.3.1 Object Identifier
 
-**Key Space:** `0x0050` ("P" for Position)
+**Key Space:** `0x008C`
 
 **ID Calculation Algorithm:**
-The ID is calculated by hashing the key space prefix `0x0050` and the `NFTokenID`. This creates a 1:1 mapping between NFToken and position.
+The ID is calculated by hashing the key space prefix `0x008C` and the `NFTokenID`. This creates a 1:1 mapping between NFToken and position.
 
 ##### 4.1.3.2 Fields
 
 | Field Name             | Constant | Required | JSON Type | Internal Type | Default Value | Description                        |
 | ---------------------- | -------- | -------- | --------- | ------------- | ------------- | ---------------------------------- |
-| `LedgerEntryType`      | Yes      | Yes      | `string`  | UINT16        | `0x0050`      | Identifies this as a CLAMMPosition |
+| `LedgerEntryType`      | Yes      | Yes      | `string`  | UINT16        | `0x008C`      | Identifies this as a CLAMMPosition |
 | `PoolID`               | Yes      | Yes      | `string`  | HASH256       | N/A           | Reference to parent CLAMM          |
 | `NFTokenID`            | Yes      | Yes      | `string`  | HASH256       | N/A           | Associated NFToken                 |
 | `Owner`                | No       | Yes      | `string`  | ACCOUNTID     | N/A           | Current position owner             |
 | `LowerTick`            | Yes      | Yes      | `number`  | INT32         | N/A           | Lower bound tick                   |
 | `UpperTick`            | Yes      | Yes      | `number`  | INT32         | N/A           | Upper bound tick                   |
-| `Liquidity`            | No       | Yes      | `string`  | UINT128       | N/A           | Liquidity amount                   |
+| `LiquidityAmount`      | No       | Yes      | `string`  | UINT128       | N/A           | Liquidity amount                   |
 | `FeeGrowthInside0Last` | No       | Yes      | `string`  | UINT128       | `"0"`         | Fee growth snapshot for Asset      |
 | `FeeGrowthInside1Last` | No       | Yes      | `string`  | UINT128       | `"0"`         | Fee growth snapshot for Asset2     |
 | `TokensOwed0`          | No       | Yes      | `string`  | UINT64        | `"0"`         | Uncollected fees for Asset         |
@@ -722,11 +724,15 @@ Adds liquidity within a price range and mints a position NFToken.
 | ----------------- | ----------- | --------- | ------------- | -------------- | --------------------------------------- |
 | `TransactionType` | Yes         | `string`  | UINT16        | `CLAMMDeposit` | Identifies this transaction             |
 | `Account`         | Yes         | `string`  | ACCOUNTID     | N/A            | LP's account                            |
-| `PoolID`          | Yes         | `string`  | HASH256       | N/A            | Target pool                             |
+| `PoolID`          | Conditional | `string`  | HASH256       | N/A            | Target pool (or use Asset/Asset2/FeeTier) |
+| `Asset`           | Conditional | `object`  | ISSUE         | N/A            | First asset (alternative to PoolID)     |
+| `Asset2`          | Conditional | `object`  | ISSUE         | N/A            | Second asset (alternative to PoolID)    |
+| `FeeTier`         | Conditional | `number`  | UINT8         | N/A            | Fee tier (alternative to PoolID)        |
 | `LowerTick`       | Yes         | `number`  | INT32         | N/A            | Lower bound tick                        |
 | `UpperTick`       | Yes         | `number`  | INT32         | N/A            | Upper bound tick                        |
-| `Amount`          | Yes         | `object`  | AMOUNT        | N/A            | Maximum Asset to deposit                |
-| `Amount2`         | Yes         | `object`  | AMOUNT        | N/A            | Maximum Asset2 to deposit               |
+| `Amount`          | No          | `object`  | AMOUNT        | N/A            | Maximum Asset to deposit                |
+| `Amount2`         | No          | `object`  | AMOUNT        | N/A            | Maximum Asset2 to deposit               |
+| `LiquidityAmount` | No          | `string`  | UINT128       | N/A            | Target liquidity to add                 |
 | `MinLiquidity`    | No          | `string`  | UINT128       | N/A            | Minimum liquidity (slippage protection) |
 | `NFTokenID`       | No          | `string`  | HASH256       | N/A            | Existing position to add to             |
 
@@ -823,7 +829,7 @@ Removes liquidity from a position.
 | `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMWithdraw` | Identifies this transaction |
 | `Account`         | Yes       | `string`  | ACCOUNTID     | N/A             | LP's account              |
 | `NFTokenID`       | Yes       | `string`  | HASH256       | N/A             | Position NFToken          |
-| `LiquidityAmount` | Yes       | `string`  | UINT128       | N/A             | Liquidity to remove       |
+| `LiquidityAmount` | No        | `string`  | UINT128       | N/A             | Liquidity to remove (omit for full withdrawal) |
 | `MinAmount`       | No        | `object`  | AMOUNT        | N/A             | Minimum Asset to receive  |
 | `MinAmount2`      | No        | `object`  | AMOUNT        | N/A             | Minimum Asset2 to receive |
 
@@ -899,12 +905,15 @@ Executes a swap through the pool.
 
 | Field Name        | Required? | JSON Type | Internal Type | Default Value | Description                          |
 | ----------------- | --------- | --------- | ------------- | ------------- | ------------------------------------ |
-| `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMSwap`   | Identifies this transaction          |
-| `Account`         | Yes       | `string`  | ACCOUNTID     | N/A           | Trader's account                     |
-| `PoolID`          | Yes       | `string`  | HASH256       | N/A           | Target pool                          |
-| `AmountIn`        | Yes       | `object`  | AMOUNT        | N/A           | Amount to swap in                    |
-| `MinAmountOut`    | No        | `object`  | AMOUNT        | N/A           | Minimum output (slippage protection) |
-| `SqrtPriceLimit`  | No        | `string`  | UINT128       | N/A           | Price limit for partial fills        |
+| `TransactionType` | Yes         | `string`  | UINT16        | `CLAMMSwap`   | Identifies this transaction          |
+| `Account`         | Yes         | `string`  | ACCOUNTID     | N/A           | Trader's account                     |
+| `PoolID`          | Conditional | `string`  | HASH256       | N/A           | Target pool (or use Asset/Asset2/FeeTier) |
+| `Asset`           | Conditional | `object`  | ISSUE         | N/A           | First asset (alternative to PoolID)  |
+| `Asset2`          | Conditional | `object`  | ISSUE         | N/A           | Second asset (alternative to PoolID) |
+| `FeeTier`         | Conditional | `number`  | UINT8         | N/A           | Fee tier (alternative to PoolID)     |
+| `Amount`          | Yes         | `object`  | AMOUNT        | N/A           | Amount to swap in                    |
+| `DeliverMin`      | No          | `object`  | AMOUNT        | N/A           | Minimum output (slippage protection) |
+| `SqrtPriceLimit`  | No          | `string`  | UINT128       | N/A           | Price limit for partial fills        |
 
 **Field Details:**
 
@@ -1054,11 +1063,14 @@ Votes on auction slot parameters. Voting weight is proportional to liquidity.
 
 | Field Name        | Required? | JSON Type | Internal Type | Default Value | Description                                 |
 | ----------------- | --------- | --------- | ------------- | ------------- | ------------------------------------------- |
-| `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMVote`   | Identifies this transaction                 |
-| `Account`         | Yes       | `string`  | ACCOUNTID     | N/A           | LP's account                                |
-| `PoolID`          | Yes       | `string`  | HASH256       | N/A           | Target pool                                 |
-| `TradingFee`      | No        | `number`  | UINT32        | N/A           | Proposed trading fee (within tier bounds)   |
-| `DiscountedFee`   | No        | `number`  | UINT32        | N/A           | Proposed discounted fee for auction winners |
+| `TransactionType` | Yes         | `string`  | UINT16        | `CLAMMVote`   | Identifies this transaction                 |
+| `Account`         | Yes         | `string`  | ACCOUNTID     | N/A           | LP's account                                |
+| `PoolID`          | Conditional | `string`  | HASH256       | N/A           | Target pool (or use Asset/Asset2/FeeTier)   |
+| `Asset`           | Conditional | `object`  | ISSUE         | N/A           | First asset (alternative to PoolID)         |
+| `Asset2`          | Conditional | `object`  | ISSUE         | N/A           | Second asset (alternative to PoolID)        |
+| `FeeTier`         | Conditional | `number`  | UINT8         | N/A           | Fee tier (alternative to PoolID)            |
+| `TradingFee`      | Yes         | `number`  | UINT16        | N/A           | Proposed trading fee (within tier bounds)   |
+| `DiscountedFee`   | No          | `number`  | UINT16        | N/A           | Proposed discounted fee for auction winners |
 
 ##### 4.2.6.2 Flags
 
@@ -1116,9 +1128,12 @@ Bids for the auction slot to receive discounted trading fees.
 
 | Field Name        | Required? | JSON Type | Internal Type | Default Value | Description                                  |
 | ----------------- | --------- | --------- | ------------- | ------------- | -------------------------------------------- |
-| `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMBid`    | Identifies this transaction                  |
-| `Account`         | Yes       | `string`  | ACCOUNTID     | N/A           | Bidder's account                             |
-| `PoolID`          | Yes       | `string`  | HASH256       | N/A           | Target pool                                  |
+| `TransactionType` | Yes         | `string`  | UINT16        | `CLAMMBid`    | Identifies this transaction                  |
+| `Account`         | Yes         | `string`  | ACCOUNTID     | N/A           | Bidder's account                             |
+| `PoolID`          | Conditional | `string`  | HASH256       | N/A           | Target pool (or use Asset/Asset2/FeeTier)    |
+| `Asset`           | Conditional | `object`  | ISSUE         | N/A           | First asset (alternative to PoolID)          |
+| `Asset2`          | Conditional | `object`  | ISSUE         | N/A           | Second asset (alternative to PoolID)         |
+| `FeeTier`         | Conditional | `number`  | UINT8         | N/A           | Fee tier (alternative to PoolID)             |
 | `BidMin`          | No        | `object`  | AMOUNT        | N/A           | Minimum bid amount                           |
 | `BidMax`          | No        | `object`  | AMOUNT        | N/A           | Maximum bid amount                           |
 | `AuthAccounts`    | No        | `array`   | STARRAY       | N/A           | Up to 4 accounts authorized to use this slot |
@@ -1405,7 +1420,7 @@ Returns information about a CLAMM pool.
 | Field Name | Always Present? | JSON Type | Description                            |
 | ---------- | --------------- | --------- | -------------------------------------- |
 | `status`   | Yes             | `string`  | `"success"` if the request succeeded   |
-| `pool`     | Yes             | `object`  | Pool data including all CLAMM fields (pool_id, asset, asset2, fee_tier, tick_spacing, trading_fee, current_tick, sqrt_price, liquidity, fee_growth_global_0, fee_growth_global_1, auction_slot) |
+| `pool`     | Yes             | `object`  | Pool data including: pool_id, account, asset, asset2, fee_tier, tick_spacing, trading_fee, current_tick, sqrt_price, liquidity, fee_growth_global_0, fee_growth_global_1, protocol_fees_0, protocol_fees_1, amount, amount2, frozen, vote_slots, auction_slot |
 
 ##### 4.3.1.3 Failure Conditions
 
@@ -1463,26 +1478,28 @@ Returns positions owned by an account.
 
 | Field Name     | Required? | JSON Type        | Description                                        |
 | -------------- | --------- | ---------------- | -------------------------------------------------- |
-| `command`      | Yes       | `string`         | Must be `"clamm_positions"`                        |
-| `account`      | Yes       | `string`         | Account address to query positions for             |
-| `pool_id`      | No        | `string`         | Filter positions by pool ID                        |
-| `ledger_index` | No        | `string\|number` | Ledger version to query. Default `"validated"`.    |
-| `limit`        | No        | `number`         | Maximum number of results to return. Default 200.  |
-| `marker`       | No        | `string`         | Pagination marker from a previous response.        |
+| `command`      | Yes         | `string`         | Must be `"clamm_positions"`                        |
+| `account`      | Conditional | `string`         | Account address to query positions for             |
+| `nftoken_id`   | Conditional | `string`         | NFToken ID to query a single position              |
+| `pool_id`      | No          | `string`         | Filter positions by pool ID                        |
+| `ledger_index` | No          | `string\|number` | Ledger version to query. Default `"validated"`.    |
+| `limit`        | No          | `number`         | Maximum number of results to return. Default 100.  |
+| `marker`       | No          | `string`         | Pagination marker from a previous response.        |
 
 ##### 4.3.2.2 Response Fields
 
 | Field Name  | Always Present? | JSON Type | Description                                              |
 | ----------- | --------------- | --------- | -------------------------------------------------------- |
 | `status`    | Yes             | `string`  | `"success"` if the request succeeded                     |
-| `positions` | Yes             | `array`   | Array of position objects (nftoken_id, pool_id, lower_tick, upper_tick, liquidity, tokens_owed_0, tokens_owed_1, in_range) |
+| `positions` | Yes             | `array`   | Array of position objects (nftoken_id, pool_id, owner, lower_tick, upper_tick, liquidity, tokens_owed_0, tokens_owed_1, in_range). When queried by `nftoken_id`, also includes fee_growth_inside_0_last and fee_growth_inside_1_last. |
 | `marker`    | No              | `string`  | Pagination marker for retrieving the next page           |
 
 ##### 4.3.2.3 Failure Conditions
 
-1. `account` is not a valid account address. (`invalidParams`)
-2. The specified account does not exist. (`actNotFound`)
+1. Neither `account` nor `nftoken_id` is provided. (`invalidParams`)
+2. `account` is not a valid account address. (`invalidParams`)
 3. `pool_id` is provided but is not a valid 256-bit hash. (`invalidParams`)
+4. `nftoken_id` is provided but the position does not exist. (`entryNotFound`)
 4. The specified ledger version is not available. (`lgrNotFound`)
 
 ##### 4.3.2.4 Example Request
@@ -1528,27 +1545,30 @@ Returns tick data for a pool within a range.
 
 | Field Name     | Required? | JSON Type        | Description                                       |
 | -------------- | --------- | ---------------- | ------------------------------------------------- |
-| `command`      | Yes       | `string`         | Must be `"clamm_ticks"`                           |
-| `pool_id`      | Yes       | `string`         | Pool ID hash                                      |
-| `tick_lower`   | No        | `number`         | Lower bound of tick range to query                |
-| `tick_upper`   | No        | `number`         | Upper bound of tick range to query                |
-| `ledger_index` | No        | `string\|number` | Ledger version to query. Default `"validated"`.   |
-| `limit`        | No        | `number`         | Maximum number of results to return. Default 200. |
-| `marker`       | No        | `string`         | Pagination marker from a previous response.       |
+| `command`      | Yes         | `string`         | Must be `"clamm_ticks"`                           |
+| `pool_id`      | Conditional | `string`         | Pool ID hash (or use asset/asset2/fee_tier)       |
+| `asset`        | Conditional | `object`         | First asset (alternative to pool_id)              |
+| `asset2`       | Conditional | `object`         | Second asset (alternative to pool_id)             |
+| `fee_tier`     | Conditional | `number`         | Fee tier (alternative to pool_id)                 |
+| `min_tick`     | No          | `number`         | Lower bound of tick range to query                |
+| `max_tick`     | No          | `number`         | Upper bound of tick range to query                |
+| `ledger_index` | No          | `string\|number` | Ledger version to query. Default `"validated"`.   |
+| `limit`        | No          | `number`         | Maximum number of results to return. Default 100. |
+| `marker`       | No          | `string`         | Pagination marker from a previous response.       |
 
 ##### 4.3.3.2 Response Fields
 
 | Field Name | Always Present? | JSON Type | Description                                                        |
 | ---------- | --------------- | --------- | ------------------------------------------------------------------ |
 | `status`   | Yes             | `string`  | `"success"` if the request succeeded                               |
-| `ticks`    | Yes             | `array`   | Array of tick objects (tick_index, liquidity_gross, liquidity_net)  |
+| `ticks`    | Yes             | `array`   | Array of tick objects (tick_index, liquidity_gross, liquidity_net, fee_growth_outside_0, fee_growth_outside_1) |
 | `marker`   | No              | `string`  | Pagination marker for retrieving the next page                     |
 
 ##### 4.3.3.3 Failure Conditions
 
 1. `pool_id` is not a valid 256-bit hash. (`invalidParams`)
 2. The specified pool does not exist. (`entryNotFound`)
-3. `tick_lower` is greater than `tick_upper` (when both are provided). (`invalidParams`)
+3. `min_tick` is greater than `max_tick` (when both are provided). (`invalidParams`)
 4. The specified ledger version is not available. (`lgrNotFound`)
 
 ##### 4.3.3.4 Example Request
@@ -1595,23 +1615,27 @@ Returns a quote for a swap without executing it.
 
 | Field Name         | Required? | JSON Type        | Description                                     |
 | ------------------ | --------- | ---------------- | ----------------------------------------------- |
-| `command`          | Yes       | `string`         | Must be `"clamm_quote"`                         |
-| `pool_id`          | Yes       | `string`         | Pool ID hash                                    |
-| `amount_in`        | Yes       | `object`         | Amount to swap in (must match one pool asset)   |
-| `sqrt_price_limit` | No        | `string`         | Price limit for partial fills (Q64.96)          |
-| `ledger_index`     | No        | `string\|number` | Ledger version to query. Default `"validated"`. |
+| `command`          | Yes         | `string`         | Must be `"clamm_quote"`                         |
+| `pool_id`          | Conditional | `string`         | Pool ID hash (or use asset/asset2/fee_tier)     |
+| `asset`            | Conditional | `object`         | First asset (alternative to pool_id)            |
+| `asset2`           | Conditional | `object`         | Second asset (alternative to pool_id)           |
+| `fee_tier`         | Conditional | `number`         | Fee tier (alternative to pool_id)               |
+| `amount_in`        | Yes         | `object`         | Amount to swap in (must match one pool asset)   |
+| `ledger_index`     | No          | `string\|number` | Ledger version to query. Default `"validated"`. |
 
 ##### 4.3.4.2 Response Fields
 
 | Field Name         | Always Present? | JSON Type | Description                            |
 | ------------------ | --------------- | --------- | -------------------------------------- |
-| `status`           | Yes             | `string`  | `"success"` if the request succeeded   |
-| `amount_in`        | Yes             | `object`  | Input amount (echoed back)             |
-| `amount_out`       | Yes             | `object`  | Estimated output amount                |
-| `fee`              | Yes             | `object`  | Fee amount deducted from input         |
-| `price_impact`     | Yes             | `string`  | Price impact as a decimal string       |
-| `sqrt_price_after` | Yes             | `string`  | Estimated sqrt price after the swap    |
-| `ticks_crossed`    | Yes             | `number`  | Number of initialized ticks crossed    |
+| `status`             | Yes             | `string`  | `"success"` if the request succeeded   |
+| `amount_out`         | Yes             | `string`  | Estimated output amount                |
+| `fee_amount`         | Yes             | `string`  | Fee amount deducted from input         |
+| `input_asset`        | Yes             | `object`  | Input asset issue                      |
+| `output_asset`       | Yes             | `object`  | Output asset issue                     |
+| `final_tick`         | Yes             | `number`  | Tick after the swap                    |
+| `final_sqrt_price`   | Yes             | `string`  | Estimated sqrt price after the swap    |
+| `ticks_crossed`      | Yes             | `number`  | Number of initialized ticks crossed    |
+| `price_impact`       | Yes             | `string`  | Price impact as a decimal string       |
 
 ##### 4.3.4.3 Failure Conditions
 
@@ -1641,16 +1665,14 @@ Returns a quote for a swap without executing it.
 ```json
 {
     "result": {
-        "amount_in": {
-            "currency": "USD",
-            "issuer": "rIssuer...",
-            "value": "100"
-        },
-        "amount_out": { "currency": "XRP", "value": "185000000" },
-        "fee": { "currency": "USD", "issuer": "rIssuer...", "value": "0.3" },
-        "price_impact": "0.0015",
-        "sqrt_price_after": "79300000000000000000000000000",
+        "amount_out": "185000000",
+        "fee_amount": "300000",
+        "input_asset": { "currency": "USD", "issuer": "rIssuer..." },
+        "output_asset": { "currency": "XRP" },
+        "final_tick": 1248,
+        "final_sqrt_price": "79300000000000000000000000000",
         "ticks_crossed": 2,
+        "price_impact": "0.0015",
         "status": "success"
     }
 }
