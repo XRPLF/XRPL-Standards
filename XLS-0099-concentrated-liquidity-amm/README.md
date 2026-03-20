@@ -8,7 +8,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/427
   requires: XLS-20
   created: 2026-01-29
-  updated: 2026-03-11
+  updated: 2026-03-20
 </pre>
 
 # Concentrated Liquidity Automated Market Maker
@@ -26,6 +26,7 @@
         - 4.1.1 [CLAMM](#411-ledger-entry-clamm)
         - 4.1.2 [CLAMMTick](#412-ledger-entry-clammtick)
         - 4.1.3 [CLAMMPosition](#413-ledger-entry-clammposition)
+        - 4.1.4 [CLAMMTickBitmap](#414-ledger-entry-clammtickbitmap)
     - 4.2 [Transactions](#42-transactions)
         - 4.2.1 [CLAMMCreate](#421-transaction-clammcreate)
         - 4.2.2 [CLAMMDeposit](#422-transaction-clammdeposit)
@@ -34,6 +35,8 @@
         - 4.2.5 [CLAMMCollectFees](#425-transaction-clammcollectfees)
         - 4.2.6 [CLAMMVote](#426-transaction-clammvote)
         - 4.2.7 [CLAMMBid](#427-transaction-clammbid)
+        - 4.2.8 [CLAMMDelete](#428-transaction-clammdelete)
+        - 4.2.9 [CLAMMClawback](#429-transaction-clammclawback)
     - 4.3 [RPCs](#43-rpcs)
         - 4.3.1 [clamm_info](#431-rpc-clamm_info)
         - 4.3.2 [clamm_positions](#432-rpc-clamm_positions)
@@ -55,7 +58,7 @@
 
 ## 1. Abstract
 
-This specification defines a Concentrated Liquidity Automated Market Maker (CLAMM) for the XRP Ledger. Unlike the existing XLS-30 AMM which distributes liquidity uniformly across all prices, CLAMM allows liquidity providers (LPs) to concentrate their capital within specific price ranges. This design improves capital efficiency by up to 4000x for stablecoin pairs, enables tradeable LP positions via NFTokens, and allows fee collection without liquidity removal. The specification introduces three new ledger entry types (`CLAMM`, `CLAMMTick`, `CLAMMPosition`), seven new transaction types, and integrates with the existing XRPL payment engine for automatic routing.
+This specification defines a Concentrated Liquidity Automated Market Maker (CLAMM) for the XRP Ledger. Unlike the existing XLS-30 AMM which distributes liquidity uniformly across all prices, CLAMM allows liquidity providers (LPs) to concentrate their capital within specific price ranges. This design improves capital efficiency by up to 4000x for stablecoin pairs, enables tradeable LP positions via NFTokens, and allows fee collection without liquidity removal. The specification introduces four new ledger entry types (`CLAMM`, `CLAMMTick`, `CLAMMPosition`, `CLAMMTickBitmap`), nine new transaction types, and integrates with the existing XRPL payment engine for automatic routing.
 
 ---
 
@@ -146,6 +149,7 @@ This specification addresses these limitations by enabling:
 | `CLAMM`         | Pool state: current price, active liquidity, fee tier, auction state |
 | `CLAMMTick`     | Per-tick data: liquidity boundaries, fee growth tracking             |
 | `CLAMMPosition` | LP position: tick range, liquidity amount, uncollected fees          |
+| `CLAMMTickBitmap` | Compressed bitmap for efficient initialized tick lookup             |
 
 #### 3.3.2 Transactions
 
@@ -158,6 +162,8 @@ This specification addresses these limitations by enabling:
 | `CLAMMCollectFees` | Collect accumulated fees without removing liquidity       |
 | `CLAMMVote`        | Vote on auction slot parameters                           |
 | `CLAMMBid`         | Bid for the auction slot to capture arbitrage value       |
+| `CLAMMDelete`      | Remove an empty pool from the ledger                      |
+| `CLAMMClawback`    | Issuer claws back tokens from holder's CLAMM positions    |
 
 #### 3.3.3 RPCs
 
@@ -531,6 +537,96 @@ This is the name used in `account_objects` and `ledger_data` RPC calls to filter
     "OwnerNode": "0",
     "PreviousTxnID": "JKL012...",
     "PreviousTxnLgrSeq": 12345680
+}
+```
+
+---
+
+#### 4.1.4 Ledger Entry: `CLAMMTickBitmap`
+
+The `CLAMMTickBitmap` ledger entry provides a compressed bitmap for efficient lookup of initialized ticks during swaps. Each bitmap word covers 256 compressed ticks (where a compressed tick = tick index / tick spacing).
+
+##### 4.1.4.1 Object Identifier
+
+**Key Space:** `0x008D`
+
+**ID Calculation Algorithm:**
+The ID is calculated by hashing the key space prefix `0x008D`, the parent `PoolID`, and the `wordPosition` (int16). Each word position maps to a block of 256 compressed ticks.
+
+##### 4.1.4.2 Fields
+
+| Field Name          | Constant | Required | JSON Type | Internal Type | Default Value | Description                                |
+| ------------------- | -------- | -------- | --------- | ------------- | ------------- | ------------------------------------------ |
+| `LedgerEntryType`   | Yes      | Yes      | `string`  | UINT16        | `0x008D`      | Identifies this as a CLAMMTickBitmap       |
+| `PoolID`            | Yes      | Yes      | `string`  | HASH256       | N/A           | Reference to parent CLAMM                  |
+| `TickIndex`         | Yes      | Yes      | `number`  | INT32         | N/A           | Word position (int16 stored as int32)      |
+| `Digest`            | No       | Yes      | `string`  | UINT256       | `"0"`         | 256-bit bitmap of initialized ticks        |
+| `OwnerNode`         | No       | Yes      | `string`  | UINT64        | N/A           | Directory hint                             |
+| `PreviousTxnID`     | No       | Yes      | `string`  | HASH256       | N/A           | Previous modifying transaction             |
+| `PreviousTxnLgrSeq` | No       | Yes      | `number`  | UINT32        | N/A           | Previous modifying ledger                  |
+
+**Field Details:**
+
+**Bitmap Encoding:**
+
+Each bit in the `Digest` field represents one compressed tick (tick index / tick spacing). A set bit indicates that the corresponding tick has been initialized (has non-zero `LiquidityGross`). The mapping is:
+
+```
+compressedTick = tickIndex / tickSpacing
+wordPosition = compressedTick >> 8    (arithmetic right shift by 8)
+bitPosition = compressedTick & 0xFF   (lowest 8 bits)
+```
+
+When a tick is initialized (first position references it), the corresponding bit is flipped via XOR. When a tick is deinitialized (last position removed), the bit is flipped back.
+
+##### 4.1.4.3 Flags
+
+No ledger entry-specific flags are defined for `CLAMMTickBitmap`.
+
+##### 4.1.4.4 Ownership
+
+**Owner:** Pool pseudo-account
+
+**Directory Registration:** The CLAMMTickBitmap object is registered in the pool pseudo-account's owner directory.
+
+##### 4.1.4.5 Reserves
+
+**Reserve Requirement:** Standard
+
+This ledger entry requires the standard owner reserve increment. The reserve is charged to the LP account that triggers bitmap word creation and refunded when the bitmap word becomes empty (all bits zero).
+
+##### 4.1.4.6 Deletion
+
+**Deletion Transactions:** `CLAMMWithdraw` (indirectly), `CLAMMDelete`, `CLAMMClawback`
+
+**Deletion Conditions:**
+
+- `Digest` is all zeros (no initialized ticks in this word)
+
+**Account Deletion Blocker:** No. CLAMMTickBitmap objects are owned by the pool pseudo-account.
+
+##### 4.1.4.7 Invariants
+
+- `<CLAMMTickBitmap>.PoolID` references an existing `CLAMM` pool
+- Each set bit in `Digest` corresponds to an existing `CLAMMTick` entry
+
+##### 4.1.4.8 RPC Name
+
+**RPC Type Name:** `clamm_tick_bitmap`
+
+This is the name used in `account_objects` and `ledger_data` RPC calls to filter for CLAMMTickBitmap objects.
+
+##### 4.1.4.9 Example JSON
+
+```json
+{
+    "LedgerEntryType": "CLAMMTickBitmap",
+    "PoolID": "ABC123...",
+    "TickIndex": 4,
+    "Digest": "0000000000000000000000000000000000000000000000000000000000000024",
+    "OwnerNode": "0",
+    "PreviousTxnID": "MNO345...",
+    "PreviousTxnLgrSeq": 12345681
 }
 ```
 
@@ -1086,6 +1182,202 @@ Protocol-level failures return `tec` codes.
         "value": "1000000000"
     },
     "AuthAccounts": [{ "Account": "rAuth1..." }, { "Account": "rAuth2..." }]
+}
+```
+
+---
+
+#### 4.2.8 Transaction: `CLAMMDelete`
+
+Removes an empty CLAMM pool from the ledger. Any account can submit this transaction. The pool must have zero active liquidity and no outstanding positions.
+
+##### 4.2.8.1 Fields
+
+| Field Name        | Required? | JSON Type | Internal Type | Default Value  | Description                 |
+| ----------------- | --------- | --------- | ------------- | -------------- | --------------------------- |
+| `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMDelete`  | Identifies this transaction |
+| `Account`         | Yes       | `string`  | ACCOUNTID     | N/A            | Submitter's account         |
+| `Asset`           | Yes       | `object`  | ISSUE         | N/A            | First asset in the pair     |
+| `Asset2`          | Yes       | `object`  | ISSUE         | N/A            | Second asset in the pair    |
+| `FeeTier`         | Yes       | `number`  | UINT8         | N/A            | Fee tier (0-3)              |
+
+##### 4.2.8.2 Flags
+
+No transaction-specific flags are defined for `CLAMMDelete`.
+
+##### 4.2.8.3 Transaction Fee
+
+**Fee Structure:** Standard
+
+This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
+
+##### 4.2.8.4 Failure Conditions
+
+###### 4.2.8.4.1 Data Verification
+
+All Data Verification failures return a `tem` level error.
+
+1. The CLAMM amendment is not enabled. (`temDISABLED`)
+2. Invalid transaction flags. (`temINVALID_FLAG`)
+3. `FeeTier` is not 0, 1, 2, or 3. (`temBAD_FEE`)
+
+###### 4.2.8.4.2 Protocol-Level Failures
+
+Protocol-level failures return `tec` codes.
+
+1. No pool exists for the given `Asset`, `Asset2`, and `FeeTier`. (`tecNO_ENTRY`)
+2. The pool has non-zero active liquidity. (`tecAMM_NOT_EMPTY`)
+3. The pool has outstanding positions (ticks with non-zero `LiquidityGross`). (`tecAMM_NOT_EMPTY`)
+
+##### 4.2.8.5 State Changes
+
+**On Success (`tesSUCCESS`):**
+
+- Iterate the pool pseudo-account's owner directory and delete:
+    - `CLAMMTick` entries (orphaned ticks with zero liquidity gross)
+    - `CLAMMTickBitmap` entries
+    - Trust lines with zero balance
+- Remove the `CLAMM` ledger entry from the pseudo-account's directory
+- Delete the pool pseudo-account
+- Up to 512 directory entries are processed per transaction
+
+**On Partial Success (`tecINCOMPLETE`):**
+
+- If the pool directory has more than 512 entries, the transaction deletes up to 512 and returns `tecINCOMPLETE`
+- The caller must submit additional `CLAMMDelete` transactions to finish cleanup
+
+##### 4.2.8.6 Example JSON
+
+```json
+{
+    "TransactionType": "CLAMMDelete",
+    "Account": "rAnyone...",
+    "Asset": {
+        "currency": "USD",
+        "issuer": "rIssuer..."
+    },
+    "Asset2": {
+        "currency": "XRP"
+    },
+    "FeeTier": 2
+}
+```
+
+---
+
+#### 4.2.9 Transaction: `CLAMMClawback`
+
+Allows an issuer to claw back their issued tokens from a holder's CLAMM positions. The issuer must have the `lsfAllowTrustLineClawback` flag set and must not have `lsfNoFreeze`.
+
+##### 4.2.9.1 Fields
+
+| Field Name        | Required? | JSON Type | Internal Type | Default Value     | Description                                |
+| ----------------- | --------- | --------- | ------------- | ----------------- | ------------------------------------------ |
+| `TransactionType` | Yes       | `string`  | UINT16        | `CLAMMClawback`   | Identifies this transaction                |
+| `Account`         | Yes       | `string`  | ACCOUNTID     | N/A               | Issuer's account                           |
+| `Holder`          | Yes       | `string`  | ACCOUNTID     | N/A               | Holder whose positions are clawed back     |
+| `Asset`           | Yes       | `object`  | ISSUE         | N/A               | Issuer's asset to claw back                |
+| `Asset2`          | Yes       | `object`  | ISSUE         | N/A               | Second asset in the pair                   |
+| `FeeTier`         | Yes       | `number`  | UINT8         | N/A               | Fee tier (0-3)                             |
+| `Amount`          | No        | `object`  | AMOUNT        | N/A               | Maximum amount to claw back (partial claw) |
+
+##### 4.2.9.2 Flags
+
+| Flag Name          | Flag Value   | Description                                    |
+| ------------------ | ------------ | ---------------------------------------------- |
+| `tfClawTwoAssets`  | `0x00000001` | Also claw back the paired asset to the issuer  |
+
+**Flag Details:**
+
+- **Without `tfClawTwoAssets`**: The issuer's asset is sent from the pool directly to the issuer. The paired asset remains in the pool.
+- **With `tfClawTwoAssets`**: Both assets are sent from the pool to the issuer. This flag is only valid when both assets are issued by the same account.
+
+##### 4.2.9.3 Transaction Fee
+
+**Fee Structure:** Standard
+
+This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
+
+##### 4.2.9.4 Failure Conditions
+
+###### 4.2.9.4.1 Data Verification
+
+All Data Verification failures return a `tem` level error.
+
+1. The CLAMM amendment is not enabled. (`temDISABLED`)
+2. `Holder` is the same as `Account` (issuer). (`temMALFORMED`)
+3. `Asset` is XRP (XRP cannot be clawed back). (`temMALFORMED`)
+4. `Asset`'s issuer does not match `Account`. (`temMALFORMED`)
+5. `tfClawTwoAssets` is set but `Asset2`'s issuer differs from `Account`. (`temINVALID_FLAG`)
+6. `Amount` is provided but its issue does not match `Asset`. (`temBAD_AMOUNT`)
+7. `Amount` is zero or negative. (`temBAD_AMOUNT`)
+
+###### 4.2.9.4.2 Protocol-Level Failures
+
+Protocol-level failures return `tec` codes.
+
+1. The issuer account does not exist. (`terNO_ACCOUNT`)
+2. The holder account does not exist. (`terNO_ACCOUNT`)
+3. No pool exists for the given `Asset`, `Asset2`, and `FeeTier`. (`tecNO_ENTRY`)
+4. The issuer does not have `lsfAllowTrustLineClawback` set, or has `lsfNoFreeze`. (`tecNO_PERMISSION`)
+5. The holder has no positions in the specified pool. (`tecAMM_BALANCE`)
+
+##### 4.2.9.5 State Changes
+
+**On Success (`tesSUCCESS`):**
+
+- For each of the holder's positions in the pool:
+    - Compute principal amounts and accumulated fees
+    - Build a withdrawal plan: fully withdraw positions until the target clawback amount is reached, then partially withdraw the last position if needed
+    - Remove liquidity from position (update ticks, pool active liquidity)
+    - If fully withdrawn: burn the position NFToken, delete the `CLAMMPosition` entry
+    - If partially withdrawn: update position's `Liquidity`, reset fee snapshots
+- Transfer the issuer's asset from pool to issuer (clawback)
+- If `tfClawTwoAssets`: also transfer the paired asset from pool to issuer
+- If `tfClawTwoAssets` is not set: the paired asset remains in the pool
+- If `Amount` is specified: claw back at most the specified amount
+- If the pool becomes empty after clawback: auto-delete the pool (same logic as `CLAMMDelete`)
+
+##### 4.2.9.6 Example JSON
+
+```json
+{
+    "TransactionType": "CLAMMClawback",
+    "Account": "rIssuer...",
+    "Holder": "rHolder...",
+    "Asset": {
+        "currency": "USD",
+        "issuer": "rIssuer..."
+    },
+    "Asset2": {
+        "currency": "XRP"
+    },
+    "FeeTier": 2,
+    "Amount": {
+        "currency": "USD",
+        "issuer": "rIssuer...",
+        "value": "500"
+    }
+}
+```
+
+**Example with `tfClawTwoAssets`:**
+
+```json
+{
+    "TransactionType": "CLAMMClawback",
+    "Account": "rIssuer...",
+    "Holder": "rHolder...",
+    "Asset": {
+        "currency": "USD",
+        "issuer": "rIssuer..."
+    },
+    "Asset2": {
+        "currency": "EUR",
+        "issuer": "rIssuer..."
+    },
+    "FeeTier": 0,
+    "Flags": 1
 }
 ```
 
