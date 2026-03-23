@@ -690,7 +690,7 @@ The following bit flags are added to the `MutableFlags` field to enable or disab
 1. The transaction attempts to set or clear the `lsfMPTCanConfidentialAmount` flag, but the `sfConfidentialOutstandingAmount` is greater than 0. (`tecNO_PERMISSION`)
 2. The transaction attempts to use `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount`, but the `lsmfMPTCannotMutateCanConfidentialAmount` flag is set (feature is immutable). (`tecNO_PERMISSION`)
 3. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
-4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled. (`tecNO_PERMISSION`)
+4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled.
    - **Exception:** Keys can be set if the `lsfMPTCanConfidentialAmount` flag is being enabled in the same transaction via `tmfMPTSetCanConfidentialAmount`. (`tecNO_PERMISSION`)
 5. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
