@@ -189,7 +189,7 @@ The directory keylets and `NFTokenPage` were not included, since they are a bit 
 Fetch information about NFTs.
 
 | Function Signature                                                                                                                                                                                 | Description                                   | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- | :------- |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------|:---------|
 | `get_nft(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
 | `get_nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                  | Extract the NFT issuer from the NFT ID.       | 350      |
 | `get_nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                   | Extract the NFT taxon from the NFT ID.        | 350      |
@@ -202,27 +202,42 @@ Fetch information about NFTs.
 Miscellaneous utility functions.
 
 | Function Signature                                                                                                                                                                                          | Description                                                                                                              | Gas Cost |
-| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :------- |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|:---------|
 | `check_sig(`<br/>&emsp;`message_ptr: i32,`<br/>&emsp;`message_len: i32,`<br/>&emsp;`signature_ptr: i32,`<br/>&emsp;`signature_len: i32,`<br/>&emsp;`pubkey_ptr: i32,`<br/>&emsp;`pubkey_len: i32,`<br />`)` | Check the validity of a signature. Returns a `0` for invalid and `1` for valid. Supports both `ED25519` and `SECP256K1.` | 2000     |
 | `compute_sha512_half(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                          | Calculate the `sha512` half hash of provided data.                                                                       | 2000     |
 
 ### 5.8. Floats
 
-Helper functions for working with rippled-encoded floats (e.g. IOU amounts).
+Helper functions for performing floating point arithmetic via rippled. These are used for any calculation requiring
+XRPL's decimal floating point format — including IOU amounts, lending protocol math, fee calculations, or arbitrary
+numeric operations within a smart contract.
 
-| Function Signature                                                                                                                                                                                                     | Description                                                       | Gas Cost |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- | :------- |
-| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                | Create a float in rippled format from a 64-bit integer.           | 1000     |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                            | Create a float in rippled format from a 64-bit unsigned integer.  | 1000     |
-| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                        | Create a float in rippled format from an exponent and a mantissa. | 1000     |
-| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                       | Compare two floats in rippled format.                             | 1000     |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`      | Add two floats in rippled format.                                 | 1000     |
-| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Subtract two floats in rippled format.                            | 1000     |
-| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                            | 1000     |
-| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`   | Divide two floats in rippled format.                              | 1000     |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                      | Compute the nth power of a float in rippled format.               | 1000     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                    | Compute the nth root of a float in rippled format.                | 1000     |
-| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                            | Compute the 10 based log of a float in rippled format.            | 1000     |
+All float buffers (`OpaqueFloat`) are exactly **12 bytes**: a 4-byte big-endian signed exponent (`i32`) followed by
+an 8-byte big-endian signed mantissa (`i64`). Contracts must treat these buffers as opaque and must not decode or
+construct them directly — all operations must go through these host functions.
+
+The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `1` = toward zero, `2` = downward
+(floor), `3` = upward (ceiling).
+
+| Function Signature                                                                                                                                                                                                     | Description                                                                       | Gas Cost |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------|:---------|
+| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                | Create a float in rippled format from a 64-bit integer.                           | 1000     |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                            | Create a float in rippled format from a 64-bit unsigned integer.                  | 1000     |
+| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                        | Create a float in rippled format from an exponent and a mantissa.                 | 1000     |
+| `float_from_stamount(`<br/>&emsp;`stamount_buf: i32,`<br/>&emsp;`stamount_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                       | Load a float from the 8-byte amount field of a serialized STAmount (IOU variant). | 1000     |
+| `float_from_stnumber(`<br/>&emsp;`stnumber_buf: i32,`<br/>&emsp;`stnumber_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                       | Load a float from a serialized STNumber value, validating and normalizing it.     | 1000     |
+| `float_to_int(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                         | Convert a float to a signed 64-bit integer, applying the specified rounding mode. | 1000     |
+| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                       | Compare two floats in rippled format.                                             | 1000     |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`      | Add two floats in rippled format.                                                 | 1000     |
+| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Subtract two floats in rippled format.                                            | 1000     |
+| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                                            | 1000     |
+| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`   | Divide two floats in rippled format.                                              | 1000     |
+| `float_negate(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                          | Negate a float.                                                                   | 1000     |
+| `float_abs(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                             | Absolute value of a float.                                                        | 1000     |
+| `float_sign(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32`<br />`)`                                                                                                                                                | Sign of a float. Returns `-1` (negative), `0` (zero), or `1` (positive).          | 1000     |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                      | Compute the nth power of a float in rippled format.                               | 1000     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                    | Compute the nth root of a float in rippled format.                                | 1000     |
+| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                            | Compute the 10 based log of a float in rippled format.                            | 1000     |
 
 ### 5.9. Trace
 
@@ -231,7 +246,7 @@ Output debug info to the `rippled` debug log (if trace logging is enabled). The 
 Each of these host functions will return `0` on success and a negative value on failure.
 
 | Function Signature                                                                                                                                      | Description                                             | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------ | :------- |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------|:---------|
 | `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)`     | A logging helper function.                              | 500      |
 | `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                      | A logging helper function for numbers.                  | 500      |
 | `trace_opaque_float(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`opaque_float_ptr: i32,`<br/>&emsp;`opaque_float_len: i32`<br />`)` | A logging helper function for floats in rippled format. | 500      |
@@ -245,8 +260,26 @@ Update on-chain data associated with the WASM code.
 This section is the only section of functions that will likely be different for each Smart Feature. Each may have its own way of storing data.
 
 | Function Signature                                                           | Description                                                                                 | Gas Cost |
-| :--------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
+|:-----------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------|:---------|
 | `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
+
+### 5.11. Host Function Versioning Rules
+
+The following rules govern the lifecycle of all host functions in this specification and must be respected by all
+implementations:
+
+1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a
+   new function are unaffected.
+2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for
+   backward compatibility. Deployed contracts may rely on any host function that was available at deployment time.
+3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types,
+   parameter order, and observable behavior are permanently immutable.
+4. **If a buffer layout must change** (e.g. the `OpaqueFloat` encoding), new host functions with different names
+   MUST be introduced. The old functions remain callable and continue to operate on the old layout. This rule
+   exists because buffer sizes and encodings are part of a function's immutable contract.
+
+These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future
+versions of the platform.
 
 ## 6. Security
 
