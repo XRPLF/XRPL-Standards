@@ -674,3 +674,12 @@ The versioning rules in §5.11 reflect a fundamental constraint of the WASM smar
 contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue
 to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a
 preference.
+
+**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let
+old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)
+but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in
+contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
+
+**Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable
+forever) rather than on contract authors or users. This is a conservative choice appropriate for financial
+infrastructure.
