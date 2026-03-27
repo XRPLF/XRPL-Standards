@@ -298,7 +298,14 @@ use this information to construct or decode buffers — they must use the host f
 - **Exponent** (bytes 0–3): Signed 32-bit integer (`i32`), big-endian. Represents the power of 10 applied to the
   mantissa.
 - **Mantissa** (bytes 4–11): Signed 64-bit integer (`i64`), big-endian. Represents the significant digits of the value.
-  When normalized: 10^15 ≤ |mantissa| < 10^16 (i.e., 1,000,000,000,000,000 to 9,999,999,999,999,999), except for zero.
+  When normalized: 10^18 ≤ |mantissa| < 10^19 (i.e., 1,000,000,000,000,000,000 to 9,999,999,999,999,999,999), except for
+  zero. This reflects the **large-scale** normalization range used by rippled's `Number` class, which is the default when
+  the `SingleAssetVault` or `LendingProtocol` amendments are enabled. A legacy **small-scale** range
+  (10^15 ≤ |mantissa| < 10^16) applies only when both amendments are disabled for backward compatibility with the
+  `STAmount` IOU format. Note: because the large-scale mantissa can exceed `i64` max, rippled's `mantissa()` accessor
+  divides the internal value by 10 and increments the exponent by 1 before returning it, so the `i64` value returned to
+  WASM callers always fits in a signed 64-bit integer but may be one decimal digit shorter than the internal
+  representation.
 
 **Special Values** (for implementers; contracts must not rely on these byte patterns):
 
