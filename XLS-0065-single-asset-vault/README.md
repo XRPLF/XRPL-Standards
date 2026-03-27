@@ -44,6 +44,8 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
   - [**3.3. VaultClawback Transaction**](#33-vaultclawback-transaction)
   - [**3.4. Payment Transaction**](#34-payment-transaction)
 - [**4. API**](#4-api)
+  - [**4.1. RPC `vault_info`**](#41-rpc-vault_info)
+  - [**4.2. RPC `vault_list`**](#42-rpc-vault_list)
 - [Appendix](#appendix)
 
 ## 1. Introduction
@@ -916,6 +918,18 @@ Vault holding `XRP`:
  }
 }
 ```
+
+### 4.2 RPC `vault_list`
+
+#### 4.2.1 Request Fields
+
+#### 4.2.2 Response
+
+#### 4.2.3 Failure Conditions
+
+#### 4.2.4 Example Request
+
+#### 4.2.5 Example Response
 
 [**Return to Index**](#index)
 
