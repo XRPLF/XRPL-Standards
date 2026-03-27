@@ -189,7 +189,7 @@ The directory keylets and `NFTokenPage` were not included, since they are a bit 
 Fetch information about NFTs.
 
 | Function Signature                                                                                                                                                                                 | Description                                   | Gas Cost |
-|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------|:---------|
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- | :------- |
 | `get_nft(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
 | `get_nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                  | Extract the NFT issuer from the NFT ID.       | 350      |
 | `get_nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                   | Extract the NFT taxon from the NFT ID.        | 350      |
@@ -202,7 +202,7 @@ Fetch information about NFTs.
 Miscellaneous utility functions.
 
 | Function Signature                                                                                                                                                                                          | Description                                                                                                              | Gas Cost |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|:---------|
+| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :------- |
 | `check_sig(`<br/>&emsp;`message_ptr: i32,`<br/>&emsp;`message_len: i32,`<br/>&emsp;`signature_ptr: i32,`<br/>&emsp;`signature_len: i32,`<br/>&emsp;`pubkey_ptr: i32,`<br/>&emsp;`pubkey_len: i32,`<br />`)` | Check the validity of a signature. Returns a `0` for invalid and `1` for valid. Supports both `ED25519` and `SECP256K1.` | 2000     |
 | `compute_sha512_half(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                          | Calculate the `sha512` half hash of provided data.                                                                       | 2000     |
 
@@ -220,7 +220,7 @@ The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `
 (floor), `3` = upward (ceiling).
 
 | Function Signature                                                                                                                                                                                                                      | Description                                                                       | Gas Cost |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------|:---------|
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :------- |
 | `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                                 | Create a float in rippled format from a 64-bit integer.                           | 100      |
 | `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                             | Create a float in rippled format from a 64-bit unsigned integer.                  | 130      |
 | `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                         | Create a float in rippled format from an exponent and a mantissa.                 | 100      |
@@ -239,7 +239,7 @@ The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `
 | `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                       | Compute the nth power of a float in rippled format.                               | 5500     |
 | `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                     | Compute the nth root of a float in rippled format.                                | 5500     |
 | `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                             | Compute the 10 based log of a float in rippled format.                            | 12000    |
-  
+
 #### 5.8.1. OpaqueFloat Type
 
 `OpaqueFloat` is an opaque 12-byte (96-bit) floating point number, consisting of a 4-byte signed exponent followed by an
@@ -341,8 +341,8 @@ known to be correct for XRPL's numeric domain.
 Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (`f32`/`f64` ops are unavailable to
 contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that
 need fixed-point arithmetic independent of the `OpaqueFloat` host functions — for example, to work with integer ratios
-or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs 
-fixed-point 
+or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs
+fixed-point
 math
 entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
 
@@ -437,7 +437,7 @@ Output debug info to the `rippled` debug log (if trace logging is enabled). The 
 Each of these host functions will return `0` on success and a negative value on failure.
 
 | Function Signature                                                                                                                                      | Description                                             | Gas Cost |
-|:--------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------|:---------|
+| :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------ | :------- |
 | `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)`     | A logging helper function.                              | 500      |
 | `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                      | A logging helper function for numbers.                  | 500      |
 | `trace_opaque_float(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`opaque_float_ptr: i32,`<br/>&emsp;`opaque_float_len: i32`<br />`)` | A logging helper function for floats in rippled format. | 500      |
@@ -451,7 +451,7 @@ Update on-chain data associated with the WASM code.
 This section is the only section of functions that will likely be different for each Smart Feature. Each may have its own way of storing data.
 
 | Function Signature                                                           | Description                                                                                 | Gas Cost |
-|:-----------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------|:---------|
+| :--------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
 | `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
 
 ### 5.11. Host Function Versioning Rules
@@ -660,6 +660,7 @@ arithmetic logic in exactly one place.
 Using an unpacked 12-byte layout (4-byte exponent + 8-byte mantissa) rather than existing XRPL serialization formats:
 
 **Compared to STAmount (8 bytes):** OpaqueFloat uses 4 extra bytes, but provides:
+
 1. **Larger mantissa precision:** 64-bit signed mantissa vs. 54-bit mantissa in STAmount
 2. **Wider exponent range:** 32-bit signed exponent vs. 8-bit exponent in STAmount
 3. **Simpler layout:** Unpacked integer fields are straightforward to serialize and deserialize
