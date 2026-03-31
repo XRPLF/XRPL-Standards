@@ -1,7 +1,7 @@
 <pre>
   xls: 82
   title: MPT Integration into DEX
-  description: Adds Multi-purpose token support for XRPL DEX
+  description: Adds Multi-Purpose Token (MPT) support for XRPL DEX
   author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
   status: Final
