@@ -77,7 +77,17 @@ We extend the `AMMCreate` with the following failure conditions, where `MPTokenI
 
 On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT token for the AMM pseudo-account.
 
-### 2.4. Example JSON
+### 2.4. MPToken Ledger Object
+
+`MPToken` object is created for each asset representing `MPToken` as follows:
+
+| Field Name       | JSON Type | Internal Type | Description                                                          |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID        | _(Required)_ AMM Pseudo-account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount. |
+| `Flags` | String    | UINT32        | _(Required)_ `lsfMPTAMM`(0x00000004). If `MPTokenIssuance` requires explicit authorization then also `lsfMPTAuthorized`(0x00000002). |
+
+### 2.5. Example JSON
 
 ```json
 {
@@ -171,7 +181,17 @@ We extend the `AMMWithdraw` with the following failure conditions, where `MPToke
 
 On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a withdrawn token.
 
-### 4.4. Example JSON
+### 4.4. MPToken Ledger Object
+
+`MPToken` object is created as follows:
+
+| Field Name       | JSON Type | Internal Type | Description                                                          |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Liquidity Provider account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount. |
+| `Flags` | String    | UINT32        | _(Required)_ 0. |
+
+### 4.5. Example JSON
 
 ```json
 {
@@ -252,7 +272,17 @@ We extend the `AMMClawback` transaction with the following failure conditions, w
 
 On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Provider doesn't own `MPToken` object for a clawbacked token.
 
-### 6.4. Example JSON
+### 6.4. MPToken Ledger Object
+
+`MPToken` object is created as follows:
+
+| Field Name       | JSON Type | Internal Type | Description                                                          |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Liquidity Provider account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount. |
+| `Flags` | String    | UINT32        | _(Required)_ 0. |
+
+### 6.5. Example JSON
 
 ```json
 {
@@ -338,7 +368,17 @@ We extend the `CheckCash` with the following failure conditions, where `MPTokenI
 
 On success `CheckCash` creates and authorizes `MPToken` object if the account doesn't own `MPToken` object.
 
-### 8.4. Example JSON
+### 8.4. MPToken Ledger Object
+
+`MPToken` object is created as follows:
+
+| Field Name       | JSON Type | Internal Type | Description                                                          |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Destination account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Cashed amount. |
+| `Flags` | String    | UINT32        | _(Required)_ 0. |
+
+### 8.5. Example JSON
 
 ```json
 {
@@ -391,9 +431,19 @@ We extend the `OfferCreate` with the following failure conditions, where `MPToke
 
 ### 9.3. State Changes
 
-On success `OfferCreate` creates and authorizes `MPToken` object for the offer's owner account if the offer is consumed and `MPToken` object doesn't exist for `TakerPays`'s `mpt_issuance_id`.
+On success `OfferCreate` creates and authorizes `MPToken` object for the offer's owner account if the offer is consumed, the offer's owner is not `MPToken` issuer, and `MPToken` object doesn't exist for `TakerPays`'s `mpt_issuance_id`.
 
-### 9.4. Example JSON
+### 9.4. MPToken Ledger Object
+
+`MPToken` object is created as follows:
+
+| Field Name       | JSON Type | Internal Type | Description                                                          |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Offer's owner account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Buy amount. |
+| `Flags` | String    | UINT32        | _(Required)_ 0. |
+
+### 9.5. Example JSON
 
 ```json
 {
@@ -475,9 +525,13 @@ We do not introduce new state changes.
 
 We do not introduce new fields.
 
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT amount fields.
+
 ### 11.2 Response Fields
 
 We do not introduce new fields.
+
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT amount fields, and `currency` subfield in `paths_computed` field.
 
 ### 11.3 Example Request
 
@@ -540,9 +594,13 @@ We do not introduce new fields.
 
 We do not introduce new fields.
 
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT amount fields.
+
 ### 12.2 Response Fields
 
 We do not introduce new fields.
+
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT amount fields, and `currency` subfield in `paths_computed` field.
 
 ### 12.3 Example Request
 
@@ -604,9 +662,13 @@ We do not introduce new fields.
 
 We do not introduce new fields.
 
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in asset fields.
+
 ### 13.2 Response Fields
 
 We do not introduce new fields.
+
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT amount fields.
 
 ### 13.3 Example Request
 
@@ -677,9 +739,13 @@ We do not introduce new fields.
 
 We do not introduce new fields.
 
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in asset fields.
+
 ### 14.2 Response Fields
 
 We do not introduce new fields.
+
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT asset and amount fields.
 
 ### 14.3 Example Request
 
@@ -751,9 +817,13 @@ We do not introduce new fields.
 
 We do not introduce new fields.
 
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in `taker_gets` and `taker_pays` fields.
+
 ### 15.2 Response Fields
 
 We do not introduce new fields.
+
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in `TakerGets` and `TakerPays` fields.
 
 ### 15.3 Example Request
 
