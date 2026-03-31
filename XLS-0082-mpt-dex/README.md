@@ -75,7 +75,7 @@ We extend the `AMMCreate` with the following failure conditions, where `MPTokenI
 
 ### 2.3. State Changes
 
-On success `AMMCreate` creates and authorizes `MPToken` object for each MPT token for AMM pseudo-account.
+On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT token for the AMM pseudo-account.
 
 ### 2.4. Example JSON
 
