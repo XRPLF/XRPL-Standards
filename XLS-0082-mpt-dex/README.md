@@ -81,11 +81,11 @@ On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT t
 
 `MPToken` object is created for each asset representing `MPToken` as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID        | _(Required)_ AMM Pseudo-account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount. |
-| `Flags` | String    | UINT32        | _(Required)_ `lsfMPTAMM`(0x00000004). If `MPTokenIssuance` requires explicit authorization then also `lsfMPTAuthorized`(0x00000002). |
+| Field Name  | JSON Type | Internal Type | Description                                                                                                                          |
+| ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `sfAccount` | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
+| `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount.                                                                                                        |
+| `Flags`     | String    | UINT32        | _(Required)_ `lsfMPTAMM`(0x00000004). If `MPTokenIssuance` requires explicit authorization then also `lsfMPTAuthorized`(0x00000002). |
 
 ### 2.5. Example JSON
 
@@ -185,11 +185,11 @@ On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Pr
 
 `MPToken` object is created as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Liquidity Provider account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount. |
-| `Flags` | String    | UINT32        | _(Required)_ 0. |
+| Field Name  | JSON Type | Internal Type | Description                              |
+| ----------- | --------- | ------------- | ---------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount.           |
+| `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
 ### 4.5. Example JSON
 
@@ -276,11 +276,11 @@ On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Pr
 
 `MPToken` object is created as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Liquidity Provider account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount. |
-| `Flags` | String    | UINT32        | _(Required)_ 0. |
+| Field Name  | JSON Type | Internal Type | Description                              |
+| ----------- | --------- | ------------- | ---------------------------------------- |
+| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount.          |
+| `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
 ### 6.5. Example JSON
 
@@ -372,11 +372,11 @@ On success `CheckCash` creates and authorizes `MPToken` object if the account do
 
 `MPToken` object is created as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Destination account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Cashed amount. |
-| `Flags` | String    | UINT32        | _(Required)_ 0. |
+| Field Name  | JSON Type | Internal Type | Description                       |
+| ----------- | --------- | ------------- | --------------------------------- |
+| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Destination account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Cashed amount.       |
+| `Flags`     | String    | UINT32        | _(Required)_ 0.                   |
 
 ### 8.5. Example JSON
 
@@ -437,11 +437,11 @@ On success `OfferCreate` creates and authorizes `MPToken` object for the offer's
 
 `MPToken` object is created as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID        | _(Required)_ Offer's owner account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Buy amount. |
-| `Flags` | String    | UINT32        | _(Required)_ 0. |
+| Field Name  | JSON Type | Internal Type | Description                         |
+| ----------- | --------- | ------------- | ----------------------------------- |
+| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Offer's owner account. |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Buy amount.            |
+| `Flags`     | String    | UINT32        | _(Required)_ 0.                     |
 
 ### 9.5. Example JSON
 
