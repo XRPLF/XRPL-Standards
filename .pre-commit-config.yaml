@@ -1,3 +1,8 @@
+exclude: |
+  (?x)^(
+      XLS-0047-PriceOracles/README\.pdf
+  )$
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
@@ -9,6 +14,6 @@ repos:
         args: [--assume-in-merge]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: 5ba47274f9b181bce26a5150a725577f3c336011 # frozen: v3.6.2
+    rev: c2bc67fe8f8f549cc489e00ba8b45aa18ee713b1 # frozen: v3.8.1
     hooks:
       - id: prettier

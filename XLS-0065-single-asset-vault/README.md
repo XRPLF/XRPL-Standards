@@ -838,7 +838,7 @@ Vault holding an `IOU`:
 
 Vault holding an `MPT`:
 
-```
+```json
 {
   "LedgerEntryType": "Vault",
   "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
@@ -861,7 +861,7 @@ Vault holding an `MPT`:
   "AssetsMaximum": 0,
   "Share": {
     "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-    "value": "1",
+    "value": "1"
   },
   "ShareTotal": 5000,
   "WithdrawalPolicy": "0x0001",
