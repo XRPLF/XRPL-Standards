@@ -157,10 +157,12 @@ The `Vault` objects are stored in the ledger and tracked in an [Owner Directory]
 
 #### 2.1.5 Owner Reserve
 
-The `Vault` object costs one reserve fee per object created:
+Creating a `Vault` increments the owner's `OwnerCount` by **2**, corresponding to:
 
 - The `Vault` object itself.
-- The `MPTokenIssuance` associated with the shares of the Vault.
+- The `AccountRoot` for the vault's _pseudo-account_.
+
+This maps to two incremental owner reserves charged to the vault creator.
 
 #### 2.1.6 Vault Shares
 
@@ -366,7 +368,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 | Field Name         |     Required?      |     JSON Type      | Internal Type |      Default Value       | Description                                                                                                                                            |
 | ------------------ | :----------------: | :----------------: | :-----------: | :----------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  | :heavy_check_mark: |      `string`      |   `UINT16`    |           `58`           | The transaction type.                                                                                                                                  |
+| `TransactionType`  | :heavy_check_mark: |      `string`      |   `UINT16`    |           `65`           | The transaction type.                                                                                                                                  |
 | `Flags`            | :heavy_check_mark: |      `number`      |   `UINT32`    |            0             | Specifies the flags for the Vault.                                                                                                                     |
 | `Data`             |                    |      `string`      |    `BLOB`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
 | `Asset`            | :heavy_check_mark: | `string or object` |    `ISSUE`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
@@ -443,7 +445,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                             |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `59`      | The transaction type.                                                                                                                   |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `66`      | The transaction type.                                                                                                                   |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
 | `Data`            |                    | `string`  |    `Blob`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
 | `AssetsMaximum`   |                    | `number`  |   `Number`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
@@ -479,7 +481,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value |            Description             |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `60`      |         Transaction type.          |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `Uint16`    |     `67`      |         Transaction type.          |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `Hash256`   |     `N/A`     | The ID of the vault to be deleted. |
 
 ##### 3.1.3.1 Failure Conditions
@@ -515,7 +517,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 | Field Name        |     Required?      |      JSON Type       | Internal Type | Default Value | Description                                            |
 | ----------------- | :----------------: | :------------------: | :-----------: | :-----------: | :----------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: |       `string`       |   `UINT16`    |     `61`      | Transaction type.                                      |
+| `TransactionType` | :heavy_check_mark: |       `string`       |   `UINT16`    |     `68`      | Transaction type.                                      |
 | `VaultID`         | :heavy_check_mark: |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
 | `Amount`          | :heavy_check_mark: | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
 
@@ -544,7 +546,7 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 - Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
 - Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+- Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by the actual deposited amount (which may be less than the requested `Amount` due to share rounding — see [§2.1.7](#217-exchange-algorithm)).
 
 - If the `Vault.Asset` is `XRP`:
   - Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
@@ -570,7 +572,7 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                 |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `69`      | Transaction type.                                                           |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
 | `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
 | `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
@@ -658,7 +660,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 | Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                    |
 | ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `70`      | Transaction type.                                                                                              |
 | `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
 | `Holder`          | :heavy_check_mark: | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
 | `Amount`          |                    | `number`  |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
@@ -934,6 +936,8 @@ We chose this design in order to reduce the amount of off-chain math required to
 The `VaultWithdraw` transaction does not respect the permissioned domain rules. In other words, any account that holds the shares of the Vault can withdraw them.
 
 The decision was made to avoid a situation where a depositor deposits assets to a private vault to then have their access revoked by invalidating their credentials, and thus loosing access to their funds.
+
+> **Note:** Although any shareholder can submit a `VaultWithdraw`, the implementation enforces asset-level freeze checks (`fhZERO_IF_FROZEN`) on the vault shares during withdrawal. If the vault's underlying asset is frozen (e.g., global freeze on the IOU issuer), the withdrawal may fail. Since the vault pseudo-account cannot itself issue `MPTokenIssuanceSet` transactions, this path is currently unreachable for share-level locks, but the unconditional withdrawal guarantee described above is subject to freeze enforcement in the implementation.
 
 ### A-1.3 How can a depositor transfer shares to another account?
 

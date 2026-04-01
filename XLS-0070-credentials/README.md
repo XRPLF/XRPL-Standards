@@ -77,7 +77,7 @@ This ledger object is an on-chain representation of a credential.
 
 This object costs one owner reserve for either the issuer or the subject of the credential, depending on whether the subject has accepted it.
 
-The `Credential` object will live in both the `Subject` and `Issuer`'s owner directories (similar to a trustline or escrow).
+The `Credential` object will live in both the `Subject` and `Issuer`'s owner directories (similar to a trustline or escrow). For self-issued credentials (where `Subject` == `Issuer`), the object lives in only one directory; the `SubjectNode` field is omitted in this case.
 
 ### 2.1. Fields
 
@@ -334,7 +334,7 @@ The transactions that this field will be added to are:
 
 #### 8.1.1. `CredentialIDs`
 
-The credentials included must not be expired. If there are duplicates provided in the list, they will be silently de-duped.
+The credentials included must not be expired. Duplicates are not allowed in the list (see §8.2).
 
 ### 8.2. Failure Conditions
 

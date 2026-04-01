@@ -288,6 +288,8 @@ Delegating permissions to other accounts requires a high degree of trust, especi
 
 To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
+> **Note:** Although the full `AccountSet` transaction type is not delegable, the implementation permits delegation of the _granular_ `AccountSet` permissions defined in [XLS-74 §2.3](../XLS-0074-account-permissions/README.md#23-granular-permissions) — specifically `AccountDomainSet`, `AccountEmailHashSet`, `AccountMessageKeySet`, `AccountTransferRateSet`, and `AccountTickSizeSet`. When a delegate holds one of these granular permissions, the `AccountSet` transactor's `checkPermission` override allows the operation for that specific field only, without granting access to the full `AccountSet` functionality.
+
 On the other hand, this mechanism also offers a granular approach to authorization, allowing accounts to selectively grant specific permissions without compromising overall account control. This approach provides a balance between security and usability, empowering account holders to manage their assets and interactions more effectively.
 
 # Appendix

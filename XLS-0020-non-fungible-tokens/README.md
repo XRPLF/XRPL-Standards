@@ -580,7 +580,7 @@ Indicates the time after which the offer is no longer active. The value is the n
 | ------------- | :-------: | :-------: | :-----------: |
 | `Destination` |           | `string`  | `Account ID`  |
 
-Only allowed if the `lsfSellToken` flag is set. Indicates the `AccountID` that this sell offer is intended for (either a buyer or a broker). If present, only that account can accept the sell offer.
+If present, indicates the `AccountID` for which this offer is intended. For sell offers, this specifies a buyer or broker; for buy offers, this constrains which account may deliver the NFT to accept the buy offer. If present, only that account can accept the offer.
 
 ---
 
@@ -622,7 +622,7 @@ There are three defined transactions:
 
 1. **`NFTokenCreateOffer`**
 2. **`NFTokenCancelOffer`**
-3. **`NFTokenOfferAccept`**
+3. **`NFTokenAcceptOffer`**
 
 All three transactions have the generic set of transaction fields, some of which may be ommitted from this proposal for the sake of clarity.
 
@@ -707,7 +707,7 @@ Indicates the time after which the offer will no longer be valid. The value is t
 | ------------- | :-------: | :-------: | :-----------: |
 | `Destination` |           | `string`  |  `AccountID`  |
 
-Only valid if the `tfSellToken` flag is set. If present, indicates that this offer may only be accepted by the specified account (either a broker or a buyer). Attempts by other accounts to accept this offer **MUST** fail.
+If present, indicates that this offer may only be accepted by the specified account. For sell offers, this specifies a buyer or broker; for buy offers, this constrains which account may deliver the NFT to accept the buy offer. Attempts by other accounts to accept this offer **MUST** fail.
 
 If successful, the **`NFTokenCreateOffer`** transaction results in the creation of an **`NFTokenOffer`** object.
 
@@ -743,9 +743,9 @@ It is an error if an entry in this list points to an object that is not an **`NF
 
 ---
 
-### 1.5.6. **`NFTokenOfferAccept`** transaction
+### 1.5.6. **`NFTokenAcceptOffer`** transaction
 
-The **`NFTokenOfferAccept`** transaction is used to accept offers to `buy` or `sell` an **`NFToken`**. It can either:
+The **`NFTokenAcceptOffer`** transaction is used to accept offers to `buy` or `sell` an **`NFToken`**. It can either:
 
 1. Allow **one** offer to be accepted. This is called `direct` mode.
 2. Allow **two** distinct offers, one offering to buy a given **`NFToken`** and the other offering to sell the same **`NFToken`**, to be accepted in an atomic fashion. This is called `brokered` mode.
@@ -768,18 +768,18 @@ The semantics of `brokered` mode are slightly different than one in `direct` mod
 
 ##### 1.5.6.2.1. Direct Mode
 
-In `direct` mode, an **`NFTokenOfferAccept`** transaction **MUST** fail if:
+In `direct` mode, an **`NFTokenAcceptOffer`** transaction **MUST** fail if:
 
-1. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `buy`
-   the **`NFToken`** and the account executing the **`NFTokenOfferAccept`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
-2. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `sell`
+1. The **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed is an offer to `buy`
+   the **`NFToken`** and the account executing the **`NFTokenAcceptOffer`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
+2. The **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed is an offer to `sell`
    the **`NFToken`** and was placed by an account which is not, at the time of execution, the current owner of the **`NFToken`**.
-3. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is an offer to `sell`
+3. The **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed is an offer to `sell`
    the **`NFToken`** and was placed by an account which is not, at the time of execution, the `Account` in the recipient field of the **`NFTokenOffer`**, if one exists.
-4. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction
+4. The **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction
    would be included has already passed.
-5. The **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed to buy or sell the **`NFToken`**
-   is owned by the account executing the **`NFTokenOfferAccept`**.
+5. The **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed to buy or sell the **`NFToken`**
+   is owned by the account executing the **`NFTokenAcceptOffer`**.
 
 If the transaction is executed successfully then:
 
@@ -788,14 +788,14 @@ If the transaction is executed successfully then:
 
 ##### 1.5.6.2.2. Brokered Mode
 
-In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
+In `brokered` mode, **`NFTokenAcceptOffer`** transaction **MUST** fail if:
 
-1. The `buy` **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is owned by the account executing the transaction.
-2. The `sell` **`NFTokenOffer`** against which **`NFTokenOfferAccept`** transaction is placed is owned by the account executing the transaction.
+1. The `buy` **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed is owned by the account executing the transaction.
+2. The `sell` **`NFTokenOffer`** against which **`NFTokenAcceptOffer`** transaction is placed is owned by the account executing the transaction.
 3. The account which placed the offer to sell the **`NFToken`** is not, at the time of execution, the current owner of the corresponding **`NFToken`**.
 4. Either offer (`buy` or `sell`) specifies an `expiration` time and the close time field of the parent of the ledger in which the transaction would be included has already passed.
 5. The `owner` of the `sell` **`NFTokenOffer`** is the same account as the `owner` of the `buy` **`NFTokenOffer`**. In other words, the **`NFToken`** cannot be sold to the account that currently owns it.
-6. The account that submitted the **`NFTokenOfferAccept`** transaction has a different address from the address specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
+6. The account that submitted the **`NFTokenAcceptOffer`** transaction has a different address from the address specified in the `Destination` field of the `sell`/`buy` **`NFTokenOffer`**.
 
 #### 1.5.6.3. Fields
 
@@ -803,7 +803,7 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 | ----------------- | :----------------: | :-------: | :-----------: |
 | `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
 
-Indicates the transaction type **`NFTokenOfferAccept`**. The sequence number of a previous **`NFTokenCreateOffer`** transaction. The integer identifier is `29`.
+Indicates the transaction type **`NFTokenAcceptOffer`**. The sequence number of a previous **`NFTokenCreateOffer`** transaction. The integer identifier is `29`.
 
 | Field Name         | Required? | JSON Type | Internal Type |
 | ------------------ | :-------: | :-------: | :-----------: |
