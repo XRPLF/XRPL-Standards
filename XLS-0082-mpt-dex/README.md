@@ -15,7 +15,7 @@
 
 ## Abstract
 
-This proposal introduces a new amendment `MPTVersion2` as an extension to [XLS-33 Multi-Purpose Tokens](../XLS-0033-multi-purpose-tokens/README.md). `MPTVersion2` amendment enables Multi-purpose token (MPT) support on the XRPL DEX.
+This proposal introduces a new amendment `MPTVersion2` as an extension to [XLS-33 Multi-Purpose Tokens](../XLS-0033-multi-purpose-tokens/README.md). `MPTVersion2` amendment enables Multi-purpose token (MPT) support on the XRPL DEX, including offers, cross-currency payments, checks, and AMM.
 
 ## 1. Overview
 
