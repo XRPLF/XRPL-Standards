@@ -588,7 +588,7 @@ We do not introduce new fields.
 }
 ```
 
-## 12. RPC ripple_path_find
+## 12. RPC: ripple_path_find
 
 ### 12.1. Request Fields
 
