@@ -4,7 +4,7 @@
   description: Adds Multi-Purpose Token (MPT) support for XRPL DEX
   author: Gregory Tsipenyuk <gtsipenyuk@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/231
-  status: Final
+  status: Draft
   category: Amendment
   requires: XLS-33, XLS-30
   created: 2024-09-19
