@@ -656,7 +656,7 @@ We do not introduce new fields.
 }
 ```
 
-## 13. RPC amm_info
+## 13. RPC: amm_info
 
 ### 13.1. Request Fields
 
