@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate token from GitHub App
         id: generate_token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -42,7 +42,7 @@ jobs:
       - name: Fetch and process stale discussions
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}[bot]
+          BOT_LOGIN: ${{ steps.generate_token.outputs.app-slug }}
           STALE_DAYS: ${{ env.STALE_DAYS }}
           WARNING_DAYS: ${{ env.WARNING_DAYS }}
           WARNING_MESSAGE: ${{ env.WARNING_MESSAGE }}
