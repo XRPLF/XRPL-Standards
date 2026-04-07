@@ -588,7 +588,7 @@ We do not introduce new fields.
 }
 ```
 
-### 11.5. Failure conditions
+### 11.5. Failure Conditions
 
 There is no new failure conditions.
 
@@ -660,7 +660,7 @@ We do not introduce new fields.
 }
 ```
 
-### 12.5. Failure conditions
+### 12.5. Failure Conditions
 
 There is no new failure conditions.
 
@@ -741,7 +741,7 @@ We do not introduce new fields.
 }
 ```
 
-### 13.5. Failure conditions
+### 13.5. Failure Conditions
 
 There is no new failure conditions.
 
@@ -811,7 +811,7 @@ We do not introduce new fields.
 }
 ```
 
-### 14.5. Failure conditions
+### 14.5. Failure Conditions
 
 There is no new failure conditions.
 
