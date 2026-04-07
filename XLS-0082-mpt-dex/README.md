@@ -83,7 +83,7 @@ On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT t
 
 | Field Name  | JSON Type | Internal Type | Description                                                                                                                          |
 | ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `sfAccount` | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
+| `Account` | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
 | `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount.                                                                                                        |
 | `Flags`     | String    | UINT32        | _(Required)_ `lsfMPTAMM`(0x00000004). If `MPTokenIssuance` requires explicit authorization then also `lsfMPTAuthorized`(0x00000002). |
 
@@ -187,7 +187,7 @@ On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Pr
 
 | Field Name  | JSON Type | Internal Type | Description                              |
 | ----------- | --------- | ------------- | ---------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `Account` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount.           |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
@@ -278,7 +278,7 @@ On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Pr
 
 | Field Name  | JSON Type | Internal Type | Description                              |
 | ----------- | --------- | ------------- | ---------------------------------------- |
-| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `Account` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount.          |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
@@ -374,7 +374,7 @@ On success `CheckCash` creates and authorizes `MPToken` object if the account do
 
 | Field Name  | JSON Type | Internal Type | Description                       |
 | ----------- | --------- | ------------- | --------------------------------- |
-| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Destination account. |
+| `Account` | String    | ACCOUNTID     | _(Required)_ Destination account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Cashed amount.       |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                   |
 
@@ -439,7 +439,7 @@ On success `OfferCreate` creates and authorizes `MPToken` object for the offer's
 
 | Field Name  | JSON Type | Internal Type | Description                         |
 | ----------- | --------- | ------------- | ----------------------------------- |
-| `sfAccount` | String    | ACCOUNTID     | _(Required)_ Offer's owner account. |
+| `Account` | String    | ACCOUNTID     | _(Required)_ Offer's owner account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Buy amount.            |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                     |
 
