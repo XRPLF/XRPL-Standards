@@ -588,6 +588,10 @@ We do not introduce new fields.
 }
 ```
 
+### 11.5. Failure conditions
+
+There is no new failure conditions.
+
 ## 12. RPC: ripple_path_find
 
 ### 12.1. Request Fields
@@ -655,6 +659,10 @@ We do not introduce new fields.
   "validated": false
 }
 ```
+
+### 12.5. Failure conditions
+
+There is no new failure conditions.
 
 ## 13. RPC: amm_info
 
@@ -733,6 +741,10 @@ We do not introduce new fields.
 }
 ```
 
+### 13.5. Failure conditions
+
+There is no new failure conditions.
+
 ## 14. RPC: book_offers
 
 ### 14.1. Request Fields
@@ -798,6 +810,10 @@ We do not introduce new fields.
   }
 }
 ```
+
+### 14.5. Failure conditions
+
+There is no new failure conditions.
 
 ## 15. Rationale
 
