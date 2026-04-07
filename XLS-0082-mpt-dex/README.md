@@ -519,7 +519,7 @@ We do not introduce new state changes.
 }
 ```
 
-## 11. RPC path_find
+## 11. RPC: path_find
 
 ### 11.1. Request Fields
 
