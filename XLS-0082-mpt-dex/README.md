@@ -811,7 +811,7 @@ We do not introduce new fields.
 }
 ```
 
-## 15. RPC book_offers
+## 15. RPC: book_offers
 
 ### 15.1. Request Fields
 
