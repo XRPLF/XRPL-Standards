@@ -83,7 +83,7 @@ On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT t
 
 | Field Name  | JSON Type | Internal Type | Description                                                                                                                          |
 | ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `Account` | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
 | `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount.                                                                                                        |
 | `Flags`     | String    | UINT32        | _(Required)_ `lsfMPTAMM`(0x00000004). If `MPTokenIssuance` requires explicit authorization then also `lsfMPTAuthorized`(0x00000002). |
 
@@ -187,7 +187,7 @@ On success `AMMWithdraw` creates and authorizes `MPToken` object if Liquidity Pr
 
 | Field Name  | JSON Type | Internal Type | Description                              |
 | ----------- | --------- | ------------- | ---------------------------------------- |
-| `Account` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount.           |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
@@ -278,7 +278,7 @@ On success `AMMClawback` creates and authorizes `MPToken` object if Liquidity Pr
 
 | Field Name  | JSON Type | Internal Type | Description                              |
 | ----------- | --------- | ------------- | ---------------------------------------- |
-| `Account` | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount.          |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                          |
 
@@ -374,7 +374,7 @@ On success `CheckCash` creates and authorizes `MPToken` object if the account do
 
 | Field Name  | JSON Type | Internal Type | Description                       |
 | ----------- | --------- | ------------- | --------------------------------- |
-| `Account` | String    | ACCOUNTID     | _(Required)_ Destination account. |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Destination account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Cashed amount.       |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                   |
 
@@ -439,7 +439,7 @@ On success `OfferCreate` creates and authorizes `MPToken` object for the offer's
 
 | Field Name  | JSON Type | Internal Type | Description                         |
 | ----------- | --------- | ------------- | ----------------------------------- |
-| `Account` | String    | ACCOUNTID     | _(Required)_ Offer's owner account. |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Offer's owner account. |
 | `MPTAmount` | String    | UINT64        | _(Required)_ Buy amount.            |
 | `Flags`     | String    | UINT32        | _(Required)_ 0.                     |
 
@@ -733,99 +733,21 @@ We do not introduce new fields.
 }
 ```
 
-## 14. RPC ledger_entry
+## 14. RPC: book_offers
 
 ### 14.1. Request Fields
 
 We do not introduce new fields.
 
-`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in asset fields.
+`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in `taker_gets` and `taker_pays` fields.
 
 ### 14.2 Response Fields
 
 We do not introduce new fields.
 
-`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in MPT asset and amount fields.
-
-### 14.3 Example Request
-
-```json
-{
-  "command": "ledger_entry",
-  "amm": {
-    "asset": {
-      "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
-    },
-    "asset2": {
-      "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83"
-    }
-  }
-}
-```
-
-### 14.4 Example Response
-
-```json
-{
-  "index": "3B391EB8C901D850E698B80C13C98A937A8F9DF30F826D6CEB26F5616902EAF4",
-  "ledger_current_index": 8,
-  "node": {
-    "Account": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
-    "Asset": {
-      "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
-    },
-    "Asset2": {
-      "mpt_issuance_id": "000000055C488AAC5813270850685FFD89F4A4A8F4CD4C83"
-    },
-    "AuctionSlot": {
-      "Account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
-      "Expiration": 86440,
-      "Price": {
-        "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
-        "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
-        "value": "0"
-      }
-    },
-    "Flags": 0,
-    "LPTokenBalance": {
-      "currency": "033EE62589A944E08A96DC309D6ADBD2FBCFBD11",
-      "issuer": "rKM4AJ3JkgmdhKkJLpBcRUSZo7Prq13BYS",
-      "value": "100"
-    },
-    "LedgerEntryType": "AMM",
-    "OwnerNode": "0",
-    "PreviousTxnID": "C12736E829EBF9C16BB7C827D71B398232051D53A584CDFA6384AE13311BA399",
-    "PreviousTxnLgrSeq": 7,
-    "VoteSlots": [
-      {
-        "VoteEntry": {
-          "Account": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
-          "VoteWeight": 100000
-        }
-      }
-    ],
-    "index": "3B391EB8C901D850E698B80C13C98A937A8F9DF30F826D6CEB26F5616902EAF4"
-  },
-  "status": "success",
-  "validated": false
-}
-```
-
-## 15. RPC: book_offers
-
-### 15.1. Request Fields
-
-We do not introduce new fields.
-
-`mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in `taker_gets` and `taker_pays` fields.
-
-### 15.2 Response Fields
-
-We do not introduce new fields.
-
 `mpt_issuance_id` subfield replaces `currency` and `issuer` subfields in `TakerGets` and `TakerPays` fields.
 
-### 15.3 Example Request
+### 14.3 Example Request
 
 ```json
 {
@@ -841,7 +763,7 @@ We do not introduce new fields.
 }
 ```
 
-### 15.4 Example Response
+### 14.4 Example Response
 
 ```json
 {
@@ -877,7 +799,7 @@ We do not introduce new fields.
 }
 ```
 
-## 16. Rationale
+## 15. Rationale
 
 The primary motivation for integrating Multi-Purpose Tokens (MPTs) into the XRPL’s Decentralized Exchange (DEX) is to ensure that the ledger’s next-generation token standard is not siloed from its existing liquidity ecosystem. While MPTs were designed to offer a more compact, scalable, and compliant alternative to traditional Trust Line-based tokens (IOUs), their utility is fundamentally capped if they cannot interact with Automated Market Makers (AMMs) or order books. By enabling MPTs as native trading assets, the ledger provides institutional issuers with a high-performance "Version 2" fungible token that retains the XRPL's core value proposition: atomic, cross-currency settlement. Unlike other blockchains that rely on smart contract standards like ERC-20, where DEX integration requires a wrapper or a complex external contract audit, the XRPL MPT/DEX integration is embedded at the protocol level. This ensures that compliance features—such as individual locks, global freezes, and clawbacks—are automatically enforced during trading without adding the latency or security risks associated with application-layer logic.
 
@@ -885,7 +807,7 @@ A cornerstone of this design is the high degree of transparency and parity betwe
 
 Furthermore, the design prioritizes a unified liquidity model where the ledger's pathfinding logic treats MPTs and IOUs as functionally equivalent nodes. While MPTs use a unique mpt_issuance_id for technical precision, the underlying economic logic—such as cross-currency payments and order book mechanics—remains consistent. This prevents a fragmented developer experience where two different "flavors" of trading would need to be maintained. By choosing to wrap the new functionality within the ledger’s battle-tested DEX primitives, the XLS provides a robust and secure migration path, allowing institutions to adopt the more efficient MPT standard without losing access to the global liquidity and mature tooling that the XRP Ledger has cultivated over the past decade.
 
-## 17. Security
+## 16. Security
 
 While Multipurpose Tokens (MPT) inherit the core security model of the XRPL (including issuer-controlled freezes and authorization), this integration acknowledges the architectural shift from RippleState to MPT objects. Security is maintained by performing real-time verification of MPT-specific flags and ensuring that DEX quality calculations account for MPT-specific decimal scaling to prevent rounding exploits. Furthermore, the DEX engine treats MPT-specific freezes as immediate execution barriers, mirroring the existing IOU freeze behavior.
 
