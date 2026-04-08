@@ -32,6 +32,15 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
+            // If the PR already has the "has-xls-number" label, CI assigned the
+            // number so a numbered directory is expected — skip the warning.
+            const labels = context.payload.pull_request.labels || [];
+            if (labels.some(l => l.name === 'has-xls-number')) {
+              console.log('PR has "has-xls-number" label — skipping self-assigned check.');
+              core.setOutput('has_self_assigned', 'false');
+              return;
+            }
+
             const addedFiles = `${{ steps.added-numbered.outputs.added_files }}`.trim();
             if (!addedFiles) {
               core.setOutput('has_self_assigned', 'false');
