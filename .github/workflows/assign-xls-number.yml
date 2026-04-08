@@ -9,6 +9,98 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check-self-assigned-number:
+    runs-on: ubuntu-latest
+    name: Warn About Self-Assigned XLS Numbers
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Get added numbered XLS files
+        id: added-numbered
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            XLS-[0-9]{2,4}-*/README.md
+            xls-[0-9]{2,4}-*/README.md
+
+      - name: Check for self-assigned numbers above 95
+        id: check-self-assigned
+        if: steps.added-numbered.outputs.added_files != ''
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const addedFiles = `${{ steps.added-numbered.outputs.added_files }}`.trim();
+            if (!addedFiles) {
+              core.setOutput('has_self_assigned', 'false');
+              return;
+            }
+
+            const pattern = /^[Xx][Ll][Ss]-(\d{4})-[^/]+\/README\.md$/;
+            const selfAssigned = [];
+
+            for (const file of addedFiles.split(' ')) {
+              const match = file.match(pattern);
+              if (match) {
+                const num = parseInt(match[1], 10);
+                if (num > 95) {
+                  selfAssigned.push({ file, number: num });
+                }
+              }
+            }
+
+            if (selfAssigned.length === 0) {
+              console.log('No self-assigned XLS numbers > 95 found.');
+              core.setOutput('has_self_assigned', 'false');
+              return;
+            }
+
+            console.log(`Found ${selfAssigned.length} self-assigned XLS number(s) > 95:`);
+            for (const entry of selfAssigned) {
+              console.log(`  ${entry.file} (XLS-${entry.number})`);
+            }
+
+            core.setOutput('has_self_assigned', 'true');
+
+            const rows = selfAssigned.map(e =>
+              `| \`${e.file.split('/')[0]}\` | ${e.number} |`
+            ).join('\n');
+
+            core.setOutput('warning_table', rows);
+
+      - name: Check for existing warning comment
+        if: steps.check-self-assigned.outputs.has_self_assigned == 'true'
+        id: find-warning-comment
+        uses: peter-evans/find-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "Self-Assigned XLS Number Warning"
+
+      - name: Post warning comment
+        if: steps.check-self-assigned.outputs.has_self_assigned == 'true'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-warning-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            ## ⚠️ Self-Assigned XLS Number Warning
+
+            This PR adds a new XLS directory with a **self-assigned number**. XLS numbers should be assigned by the CI system using the `XLS-draft-*` naming convention.
+
+            | Directory | Self-Assigned Number |
+            |-----------|---------------------|
+            ${{ steps.check-self-assigned.outputs.warning_table }}
+
+            ### What to do
+
+            Please rename your directory to use the draft convention instead (e.g., `XLS-draft-my-feature`). An XLS number will be automatically assigned after a maintainer approves the PR.
+
+            ---
+            *This warning was automatically generated.*
+
   check-approval:
     runs-on: ubuntu-latest
     name: Check for Write+ Approval
