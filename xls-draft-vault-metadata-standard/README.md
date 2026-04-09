@@ -1,4 +1,5 @@
 <pre>
+  xls: 98
   title: Standard Metadata for Vaults
   description: Recommended use of the Vault arbitrary data field to improve discoverability, attribution, and context for Single-Asset Vaults on XRPL
   author: Ashray Chowdhry (@achowdhry-ripple), Julian Berridi (@julian78780)
