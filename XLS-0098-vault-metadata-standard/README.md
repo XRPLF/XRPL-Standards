@@ -4,7 +4,7 @@
   description: Recommended use of the Vault arbitrary data field to improve discoverability, attribution, and context for Single-Asset Vaults on XRPL
   author: Ashray Chowdhry (@achowdhry-ripple), Julian Berridi (@julian78780)
   category: Ecosystem
-  status: Final
+  status: Draft
   requires: XLS-65
   proposal-from: [https://github.com/XRPLF/XRPL-Standards/discussions/258](https://github.com/XRPLF/XRPL-Standards/discussions/456)
   created: 2026-01-28
