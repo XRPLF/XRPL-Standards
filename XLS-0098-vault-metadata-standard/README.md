@@ -6,7 +6,7 @@
   category: Ecosystem
   status: Draft
   requires: XLS-65
-  proposal-from: [https://github.com/XRPLF/XRPL-Standards/discussions/456](https://github.com/XRPLF/XRPL-Standards/discussions/456)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/456
   created: 2026-01-28
 </pre>
 
