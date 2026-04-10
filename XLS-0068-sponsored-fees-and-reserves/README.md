@@ -437,10 +437,10 @@ The `SponsorFlags` field allows the user to specify which sponsorship type(s) th
 
 There are two flag values that are supported:
 
-| Flag Name          | Flag Value   | Description                                                        |
-| ------------------ | ------------ | ------------------------------------------------------------------ |
-| `tfSponsorFee`     | `0x00000001` | Sponsoring (paying for) the fee of the transaction.                |
-| `tfSponsorReserve` | `0x00000002` | Sponsoring the reserve for any objects created in the transaction. |
+| Flag Name           | Flag Value   | Description                                                        |
+| ------------------- | ------------ | ------------------------------------------------------------------ |
+| `spfSponsorFee`     | `0x00000001` | Sponsoring (paying for) the fee of the transaction.                |
+| `spfSponsorReserve` | `0x00000002` | Sponsoring the reserve for any objects created in the transaction. |
 
 #### 8.1.2 `SponsorSignature`
 
@@ -478,7 +478,7 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
 1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
 1. Only one or two of `Sponsor`, `SponsorFlags`, and `SponsorSignature` is included (they must either all be included, if the transaction is sponsored, or none, if it is not).
-1. `SponsorFlags` includes invalid flags (currently, the only two valid flags are `tfSponsorFee` and `tfSponsorReserve`).
+1. `SponsorFlags` includes invalid flags (currently, the only two valid flags are `spfSponsorFee` and `spfSponsorReserve`).
 
 #### 8.3.2. Fee Sponsorship Failures
 
@@ -515,16 +515,16 @@ Note: if a transaction doesn't charge a reserve (such as `AccountSet`), the tran
 
 #### 8.3.4. Transactions that cannot be sponsored
 
-All transactions (other than pseudo-transactions) may use the `tfSponsorFee` flag, since they all have a fee.
+All transactions (other than pseudo-transactions) may use the `spfSponsorFee` flag, since they all have a fee.
 
-However, some transactions will not support the `tfSponsorReserve` flag.
+However, some transactions will not support the `spfSponsorReserve` flag.
 
 - [`Batch` transactions](../XLS-0056-batch/README.md)
-  - `Batch` does not create any objects on its own, and therefore its use in the outer transaction would be confusing, as users may think that that means that all inner transactions are sponsored. The inner transactions should use `tfSponsorReserve` instead.
+  - `Batch` does not create any objects on its own, and therefore its use in the outer transaction would be confusing, as users may think that that means that all inner transactions are sponsored. The inner transactions should use `spfSponsorReserve` instead.
 - All [pseudo-transactions](https://xrpl.org/docs/references/protocol/transactions/pseudo-transaction-types/pseudo-transaction-types) (currently `EnableAmendment`, `SetFee`, and `UNLModify`)
   - The fees and reserves for those objects are covered by the network, not by any one account.
 
-Also, many transactions, such as `AccountSet`, will have no change in output when using the `tfSponsorReserve` flag, if they do not create any new objects or accounts.
+Also, many transactions, such as `AccountSet`, will have no change in output when using the `spfSponsorReserve` flag, if they do not create any new objects or accounts.
 
 ### 8.4. State Changes
 
@@ -548,28 +548,30 @@ The `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` 
 
 This transaction creates, updates, and deletes the `Sponsorship` object.
 
+_Note: This transaction may still be sponsored, via the standard `Sponsor` field. This sponsor may be distinct from the sponsor who owns the `Sponsorship` object, who is referred to as the `CounterpartySponsor` in this case._
+
 ### 9.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                 |
-| --------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                    |
-| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the sponsor or the sponsee.                                                                                                         |
-| `Flags`               |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                 |
-| `CounterpartySponsor` |           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.              |
-| `Sponsee`             |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `Sponsor`.                                                                     |
-| `FeeAmount`           |           | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
-| `MaxFee`              |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                              |
-| `ReserveCount`        |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.ReserveCount` field (if it exists).  |
+| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                              |
+| --------------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                                 |
+| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the counterparty sponsor or the sponsee.                                                                                                         |
+| `Flags`               |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                              |
+| `CounterpartySponsor` |           | `string`  | `AccountID`   | The counterparty sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.              |
+| `Sponsee`             |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `CounterpartySponsor`.                                                                      |
+| `FeeAmount`           |           | `string`  | `Amount`      | The (remaining) amount of XRP that the counterparty sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
+| `MaxFee`              |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                                           |
+| `ReserveCount`        |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the counterparty sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.ReserveCount` field (if it exists).  |
 
 ### 9.2. Flags
 
-| Flag Name                                 | Flag Value   | Description                                                                                                       |
-| ----------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `tfSponsorshipSetRequireSignForFee`       | `0x00010000` | Adds the restriction that every use of this sponsor for sponsoring fees requires a signature from the sponsor.    |
-| `tfSponsorshipClearRequireSignForFee`     | `0x00020000` | Removes the restriction that every use of this sponsor for sponsoring fees requires a signature from the sponsor. |
-| `tfSponsorshipSetRequireSignForReserve`   | `0x00040000` | Adds the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor.         |
-| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this sponsor for sponsoring fees requires a signature from the sponsor.      |
-| `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                        |
+| Flag Name                                 | Flag Value   | Description                                                                                                                                 |
+| ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tfSponsorshipSetRequireSignForFee`       | `0x00010000` | Adds the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.    |
+| `tfSponsorshipClearRequireSignForFee`     | `0x00020000` | Removes the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
+| `tfSponsorshipSetRequireSignForReserve`   | `0x00040000` | Adds the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.         |
+| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.      |
+| `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                                                  |
 
 ### 9.3. Transaction Fee
 
@@ -579,34 +581,36 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 ### 9.4. Failure Conditions
 
-1. `tx.Account` is not equal to either `tx.Sponsor` or `tx.Sponsee` (`temMALFORMED`)
-1. Both `Sponsor` and `Sponsee` are specified (`temMALFORMED`)
-1. Neither `Sponsor` nor `Sponsee` is specified (`temMALFORMED`)
-1. `Sponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
-1. `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
-1. `MaxFee` is greater than `FeeAmount` (`temBAD_AMOUNT`)
-1. `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
-1. `Sponsor` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
-1. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
-1. Sponsor does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecINSUFFICIENT_RESERVE`)
-1. If `tfDeleteObject` is enabled:
-1. `FeeAmount` is specified (`temMALFORMED`)
-1. `MaxFee` is specified (`temMALFORMED`)
-1. `ReserveCount` is specified (`temMALFORMED`)
-1. `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
-1. `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
-1. `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
-1. `tfSponsorshipClearRequireSignForReserve` is enabled (`temINVALID_FLAG`)
-1. The `Sponsorship` object does not exist (`tecNO_ENTRY`)
+1. `tx.Account` is not equal to either `tx.CounterpartySponsor` or `tx.Sponsee` (`temMALFORMED`)
+2. 1. Both `CounterpartySponsor` and `Sponsee` are specified (`temMALFORMED`)
+3. Neither `CounterpartySponsor` nor `Sponsee` is specified (`temMALFORMED`)
+4. Both `tfSponsorshipSetRequireSignForFee` and `tfSponsorshipClearRequireSignForFee` are enabled (`temINVALID_FLAG`)
+5. Both `tfSponsorshipSetRequireSignForReserve` and `tfSponsorshipClearRequireSignForReserve` are enabled (`temINVALID_FLAG`)
+6. `CounterpartySponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the counterparty sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
+7. `MaxFee` is less than the base fee or is not denominated in XRP (`temBAD_AMOUNT`)
+8. `MaxFee` is greater than `FeeAmount` (`temBAD_AMOUNT`)
+9. `FeeAmount` is not denominated in XRP (`temBAD_AMOUNT`)
+10. `CounterpartySponsor` or `Sponsee` does not exist on the ledger (`terNO_ACCOUNT`)
+11. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
+12. `CounterpartySponsor` does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecINSUFFICIENT_RESERVE`)
+13. If `tfDeleteObject` is enabled:
+    1. `FeeAmount` is specified (`temMALFORMED`)
+    2. `MaxFee` is specified (`temMALFORMED`)
+    3. `ReserveCount` is specified (`temMALFORMED`)
+    4. `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
+    5. `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+    6. `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
+    7. `tfSponsorshipClearRequireSignForReserve` is enabled (`temINVALID_FLAG`)
+    8. The `Sponsorship` object does not exist (`tecNO_ENTRY`)
 
 ### 9.5. State Changes
 
 If creating a new `Sponsorship` object:
 
 - Create the `Sponsorship` ledger entry with the specified fields
-- Increment the sponsor's `OwnerCount` by 1
-- Add the object to both the sponsor's and sponsee's owner directories
-- Deduct the object reserve from the sponsor's available XRP
+- Increment the counterparty sponsor's `OwnerCount` by 1
+- Add the object to both the counterparty sponsor's and sponsee's owner directories
+- Deduct the object reserve from the counterparty sponsor's available XRP
 
 If updating an existing `Sponsorship` object:
 
@@ -614,16 +618,16 @@ If updating an existing `Sponsorship` object:
 - Update `Sponsorship.MaxFee` to `tx.MaxFee` (or remove field if omitted)
 - Update `Sponsorship.ReserveCount` to `tx.ReserveCount` (or 0 if omitted)
 - Update flags based on `tfSponsorshipSetRequireSignForFee`, `tfSponsorshipClearRequireSignForFee`, `tfSponsorshipSetRequireSignForReserve`, and `tfSponsorshipClearRequireSignForReserve`
-- If `FeeAmount` is increased, deduct the additional XRP from the sponsor's balance
-- If `FeeAmount` is decreased, return the difference to the sponsor's balance
+- If `FeeAmount` is increased, deduct the additional XRP from the counterparty sponsor's balance
+- If `FeeAmount` is decreased, return the difference to the counterparty sponsor's balance
 
 If deleting the `Sponsorship` object (`tfDeleteObject` flag):
 
 - Delete the `Sponsorship` ledger entry
-- Return all remaining XRP in `FeeAmount` to the sponsor's balance
-- Decrement the sponsor's `OwnerCount` by 1
-- Remove the object from both the sponsor's and sponsee's owner directories
-- Return the object reserve to the sponsor's available XRP
+- Return all remaining XRP in `FeeAmount` to the counterparty sponsor's balance
+- Decrement the counterparty sponsor's `OwnerCount` by 1
+- Remove the object from both the counterparty sponsor's and sponsee's owner directories
+- Return the object reserve to the counterparty sponsor's available XRP
 
 _Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `Sponsor` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used._
 
@@ -677,9 +681,9 @@ If it is not included, then it refers to the account sending the transaction.
 
 The `Sponsor` field is already added in the transaction common fields (see section [6.1.1](#611-sponsor)), but it has some additional rules associated with it on the `SponsorshipTransfer` transaction.
 
-In this case, if `Sponsor` is included with the `tfSponsorReserve` flag, then the reserve sponsorship for the provided object will be transferred to the `Sponsor` instead of passing back to the ledger object's owner.
+In this case, if `Sponsor` is included with the `spfSponsorReserve` flag, then the reserve sponsorship for the provided object will be transferred to the `Sponsor` instead of passing back to the ledger object's owner.
 
-If there is no `Sponsor` field, or if the `tfSponsorReserve` flag is not included, then the burden of the reserve will be passed back to the ledger object's owner (the former sponsee).
+If there is no `Sponsor` field, or if the `spfSponsorReserve` flag is not included, then the burden of the reserve will be passed back to the ledger object's owner (the former sponsee).
 
 ### 10.2. Transaction Flags
 
@@ -689,39 +693,41 @@ If there is no `Sponsor` field, or if the `tfSponsorReserve` flag is not include
 | `tfSponsorshipCreate`   | `0x00000002` | The sponsee is creating a new sponsored object, transferring the responsibility of the reserve to a sponsor.          |
 | `tfSponsorshipReassign` | `0x00000004` | The sponsee is reassigning a sponsorship, transferring the responsibility of the reserve from one sponsor to another. |
 
+**Exactly one of these flags must be enabled.**
+
 ### 10.3. Sponsorship Transfer Scenarios
 
 #### 10.3.1. Transferring from Sponsor to Sponsee (Sponsored to Unsponsored)
 
 This scenario ends the sponsorship for a sponsored ledger object or account. The sponsor and sponsee both have the right to end the relationship at any time. It is indicated by the `tfSponsorshipEnd` flag.
 
-The following fields indicate this scenario:
+The following fields are used in this scenario:
 
 - `ObjectID` must be included (if sponsored object)
 - `Sponsor` must be excluded
-- `SponsorFlags.tfSponsorReserve` must be excluded
+- `SponsorFlags.spfSponsorReserve` must be excluded
 - The object specified by `ObjectID` must be have a `Sponsor` field
 
 #### 10.3.2. Transferring from Sponsee to Sponsor (Unsponsored to Sponsored)
 
 This scenario sponsors an object or account that was not previously sponsored. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipCreate` flag.
 
-The following fields indicate this scenario:
+The following fields are used in this scenario:
 
 - `ObjectID` must be included (if sponsored object)
 - `Sponsor` must be included
-- `SponsorFlags.tfSponsorReserve` must be included
+- `SponsorFlags.spfSponsorReserve` must be included
 - The object specified by `ObjectID` must **not** have a `Sponsor` field
 
 #### 10.3.3. Transferring from Sponsor to New Sponsor
 
 This scenario migrates the sponsorship for a sponsored object or account to a new sponsor. Only the sponsee can submit this transaction. It is indicated by the `tfSponsorshipReassign` flag.
 
-The following fields indicate this scenario:
+The following fields are used in this scenario:
 
 - `ObjectID` must be included (if sponsored object)
 - `Sponsor` must be included
-- `SponsorFlags.tfSponsorReserve` must be included
+- `SponsorFlags.spfSponsorReserve` must be included
 - The object specified by `ObjectID` must have a `Sponsor` field
 
 _NOTE: The only difference between this scenario and the one specified in [10.3.2](#1032-transferring-from-sponsee-to-sponsor-unsponsored-to-sponsored) is that in this case, the object specified by `ObjectID` must already have a `Sponsor` field._
@@ -742,24 +748,26 @@ All failure conditions mentioned in [section 8.3](#83-failure-conditions) still 
 
 Additional failure conditions specific to `SponsorshipTransfer`:
 
-1. `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
-1. `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
-1. `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
-1. `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
-1. If dissolving the sponsorship (no `Sponsor` field or `tfSponsorReserve` flag not set):
-1. The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
-1. If creating a new sponsorship (unsponsored to sponsored):
-1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
-1. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
-1. The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
-1. The new sponsor account does not exist (`terNO_ACCOUNT`)
-1. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
-1. If transferring the sponsorship to a new sponsor:
-1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
-1. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
-1. The `SponsorFlags` field does not include the `tfSponsorReserve` flag (`temINVALID_FLAG`)
-1. The new sponsor account does not exist (`terNO_ACCOUNT`)
-1. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+1. Exactly one flag must be set (`temINVALID_FLAG`)
+2. The set of fields included in the transaction does not match the expected set for the specified flag (`temMALFORMED`)
+3. `ObjectID` is specified but does not exist on the ledger (`tecNO_TARGET`)
+4. `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
+5. `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
+6. `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
+7. If dissolving the sponsorship (no `Sponsor` field or `spfSponsorReserve` flag not set):
+   1. The owner does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+8. If creating a new sponsorship (unsponsored to sponsored):
+   1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+   2. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+   3. The `SponsorFlags` field does not include the `spfSponsorReserve` flag (`temINVALID_FLAG`)
+   4. The new sponsor account does not exist (`terNO_ACCOUNT`)
+   5. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+9. If transferring the sponsorship to a new sponsor:
+   1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+   2. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+   3. The `SponsorFlags` field does not include the `spfSponsorReserve` flag (`temINVALID_FLAG`)
+   4. The new sponsor account does not exist (`terNO_ACCOUNT`)
+   5. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
 ### 10.6. State Changes
 
@@ -897,7 +905,7 @@ The `SponsorFee` permission allows an account to delegate its ability to sponsor
 
 This permission affects all transaction types that support the `Sponsor` field (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
 
-When a transaction includes a `Sponsor` field with the `tfSponsorFee` flag enabled, the sponsor must have granted the `SponsorFee` permission to the transaction submitter (the `tx.Account`), unless:
+When a transaction includes a `Sponsor` field with the `spfSponsorFee` flag enabled, the sponsor must have granted the `SponsorFee` permission to the transaction submitter (the `tx.Account`), unless:
 
 - The sponsor is signing the transaction directly (via `SponsorSignature.SigningPubKey` and `SponsorSignature.TxnSignature` or `SponsorSignature.Signers`), OR
 - A `Sponsorship` object exists between the sponsor and sponsee with sufficient `FeeAmount`
@@ -916,7 +924,7 @@ The `SponsorFee` permission allows an account to delegate its ability to sponsor
 
 This permission affects all transaction types that support the `Sponsor` field (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) and create new ledger objects or accounts.
 
-When a transaction includes a `SponsorFlags` field with the `tfSponsorReserve` flag enabled, the sponsor must have granted the `SponsorReserve` permission to the transaction submitter (the `tx.Account`), unless:
+When a transaction includes a `SponsorFlags` field with the `spfSponsorReserve` flag enabled, the sponsor must have granted the `SponsorReserve` permission to the transaction submitter (the `tx.Account`), unless:
 
 - The sponsor is signing the transaction directly (via `SponsorSignature.SigningPubKey` and `SponsorSignature.TxnSignature` or `SponsorSignature.Signers`), OR
 - A `Sponsorship` object exists between the sponsor and sponsee with sufficient `ReserveCount`
@@ -1439,8 +1447,8 @@ This section outlines the testing strategy for the sponsored fees and reserves f
 **`Payment` Transaction Tests:**
 
 - Creating sponsored accounts using `tfSponsorCreatedAccount` flag
-- Fee sponsorship via `Sponsor` field with `tfSponsorFee` flag
-- Reserve sponsorship for new accounts via `Sponsor` field with `tfSponsorReserve` flag
+- Fee sponsorship via `Sponsor` field with `spfSponsorFee` flag
+- Reserve sponsorship for new accounts via `Sponsor` field with `spfSponsorReserve` flag
 - Combined fee and reserve sponsorship
 - Failure conditions: invalid sponsor signatures, insufficient sponsor funds
 
@@ -1456,7 +1464,7 @@ This section outlines the testing strategy for the sponsored fees and reserves f
 - Valid and invalid `Sponsor` field structures
 - Single-signature sponsorship (`SigningPubKey` + `TxnSignature`)
 - Multi-signature sponsorship (`Signers` array)
-- Validation of `tfSponsorFee` and `tfSponsorReserve` flags
+- Validation of `spfSponsorFee` and `spfSponsorReserve` flags
 - Fee calculation with sponsor signatures (multi-sig overhead)
 - Pre-funded sponsorship (using `Sponsorship` object) vs. co-signed sponsorship
 - Signature validation and replay attack prevention
@@ -1564,7 +1572,7 @@ No, there is no XRP transfer in a sponsorship relationship - the XRP stays in th
 
 ### A.2: Can a sponsor sponsor both fees and reserves for a transaction?
 
-Yes, a sponsor can sponsor both fees and reserves for a transaction, by specifying both the `tfSponsorFee` and `tfSponsorReserve` flags. The sponsor can also sponsor just one or the other.
+Yes, a sponsor can sponsor both fees and reserves for a transaction, by specifying both the `spfSponsorFee` and `spfSponsorReserve` flags. The sponsor can also sponsor just one or the other.
 
 ### A.3: What happens if you try to delete your account and you have sponsored objects?
 
