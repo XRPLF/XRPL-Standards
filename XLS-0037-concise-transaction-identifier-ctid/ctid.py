@@ -83,7 +83,7 @@ class TestEncodeAndDecodeCTID(unittest.TestCase):
         # Test case 7: ctid not a hexadecimal string
         with self.assertRaises(ValueError, msg="ctid must be a hexadecimal string or BigInt"):
             decodeCTID("C003FFFFFFFFFFFG")
-            
+
         # Test case 8: ctid not exactly 16 nibbles
         with self.assertRaises(ValueError, msg="ctid must be exactly 16 nibbles and start with a C"):
             decodeCTID("C003FFFFFFFFFFF")
