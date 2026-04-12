@@ -113,13 +113,16 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 
 - **Schnorr Proof of Knowledge (64 bytes)**: Used in `ConfidentialMPTConvert` when registering a new holder key. Proves ownership of the private key associated with the ElGamal public key.
 - **Compact sigma proofs**: Cryptographic proofs that bundle multiple ZK statements into a single fixed-size blob verified in one pass. Each transaction uses a dedicated sigma proof optimized for its specific set of hidden values.
-  - **Compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves three things: (i) all encrypted copies of the transfer amount (sender, receiver, issuer, optional auditor) encrypt the same value using shared randomness; (ii) the amount Pedersen commitment (`AmountCommitment`) commits to that same transfer amount; and (iii) the balance Pedersen commitment (`BalanceCommitment`) encodes the same spending balance as the sender's on-ledger encrypted balance, verified via knowledge of the sender's secret key.
+  - **Compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves:
+    - **Ciphertext consistency**: All encrypted copies of the transfer amount (sender, receiver, issuer, optional auditor) encrypt the same value using shared randomness.
+    - **Amount linkage**: The `AmountCommitment` commits to that same transfer amount. Critically, it intentionally reuses the ElGamal ciphertext randomness as its blinding factor rather than introducing an independent scalar, which means the relationship between the commitment and the ciphertexts is captured directly within the combined sigma proof, eliminating the need for a separate amount-linkage proof.
+    - **Balance linkage**: The `BalanceCommitment` encodes the same spending balance as the sender's on-ledger encrypted balance, verified via knowledge of the sender's secret key.
   - **Compact ConvertBack sigma proof (128 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the holder owns the spending balance and that their balance commitment is correctly derived from it.
   - **Compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
 - **Plaintext–ciphertext equality (deterministic):** In `ConfidentialMPTConvert` and `ConfidentialMPTConvertBack`, the disclosed blinding factor allows validators to verify ciphertexts deterministically without a ZKP.
-- **Range proofs (Bulletproofs):** Prove that confidential amounts and post-transfer balances lie within the valid range [0, 2^64), enforcing non-negativity and preventing overspending. The proof operates over Pedersen commitments; the remainder commitment is never transmitted on-ledger and is derived by the verifier from the submitted commitments.
-  - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount `m` and the post-transfer remainder `b − m` are in [0, 2^64), operating over `AmountCommitment` (PC_m) and a verifier-derived remainder commitment `PC_rem = PC_b − PC_m`.
-  - **Single Bulletproof (688 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the post-withdrawal remainder `b − m` is in [0, 2^64). Since `m` is publicly revealed, the verifier derives the remainder commitment directly as `PC_rem = BalanceCommitment − m·G` without any additional proof material from the sender.
+- **Range proofs (Bulletproofs):** Prove that confidential amounts and post-transfer balances lie within a valid range, enforcing non-negativity and preventing overspending.
+  - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64).
+  - **Single Bulletproof (688 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the remaining balance after withdrawal is non-negative.
 
 ## 6. Ledger Entry: `MPTokenIssuance`
 
