@@ -240,7 +240,7 @@ Each of these host functions will return `0` on success and a negative value on 
 
 ### 5.10. Smart Escrow-Specific Functions
 
-This section is the only section of functions that will likely be different for each Smart Feature.
+This section is the only section of functions that will likely be specific to Smart Escrows.
 
 | Function Signature                                                                         | Description                                                                                 | Gas Cost |
 | :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
