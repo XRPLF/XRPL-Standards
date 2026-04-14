@@ -238,15 +238,14 @@ Each of these host functions will return `0` on success and a negative value on 
 | `trace_account(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32`<br />`)`                | A logging helper function for accounts.                 | 500      |
 | `trace_amount(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`amount_ptr: i32,`<br/>&emsp;`amount_len: i32`<br />`)`                   | A logging helper function for amounts.                  | 500      |
 
-### 5.10. Updating Fields
+### 5.10. Smart Escrow-Specific Functions
 
-Update on-chain data associated with the WASM code.
+This section is the only section of functions that will likely be different for each Smart Feature.
 
-This section is the only section of functions that will likely be different for each Smart Feature. Each may have its own way of storing data.
-
-| Function Signature                                                           | Description                                                                                 | Gas Cost |
-| :--------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
-| `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
+| Function Signature                                                                         | Description                                                                                 | Gas Cost |
+| :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
+| `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)`               | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
+| `get_function_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the current `FinishFunction`.                                               | 1000     |
 
 ## 6. Security
 
