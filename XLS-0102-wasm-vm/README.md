@@ -245,7 +245,7 @@ This section is the only section of functions that will likely be different for 
 | Function Signature                                                                         | Description                                                                                 | Gas Cost |
 | :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
 | `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)`               | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
-| `get_function_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the current `FinishFunction`.                                               | 1000     |
+| `get_function_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the current `FinishFunction`.                                               | 35000    |
 
 ## 6. Security
 
