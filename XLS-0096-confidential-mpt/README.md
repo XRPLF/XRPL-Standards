@@ -26,7 +26,7 @@ The design provides the following properties:
 - **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback to the issuer’s reserve.
 
-Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through equality proofs and compact range proofs.
+Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through compact sigma proofs and range proofs.
 
 ## 2. Motivation
 
@@ -53,8 +53,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
 - **MaxAmount (MA):** The maximum allowed token supply. Invariant: `OA ≤ MA`.
 - **EC-ElGamal Encryption:** A public-key encryption scheme with additive homomorphism, used for encrypted balances and homomorphic balance updates.
 - **Zero-Knowledge Proofs (ZKPs):** Cryptographic proofs used to validate confidential transactions without revealing amounts, including:
-  - **Plaintext–ciphertext equality proofs** and **plaintext equality proofs**, ensuring consistency across ElGamal ciphertexts under different public keys.
-  - **ElGamal–Pedersen equality proofs**, linking encrypted values to Pedersen commitments.
+  - **Compact sigma proofs**, bundling ciphertext consistency, amount linkage, and balance linkage checks into a single fixed-size proof per transaction type.
   - **Range proofs**, ensuring confidential amounts and post-transfer balances are non-negative and lie within a valid range.
 - **Split-Balance Model:** Confidential balances are divided into:
   - **Spending (CB_S):** Stable balance used for spending and proofs.
@@ -101,7 +100,7 @@ To prevent stale-proof failures—where an incoming transfer could invalidate a 
 
 ### 5.3 The Multi-Ciphertext Architecture
 
-A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. ZK equality proofs ensure that all ciphertexts correspond to the same hidden amount.
+A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. Compact sigma proofs ensure that all ciphertexts correspond to the same hidden amount.
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`EncryptedBalanceIssuer`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
@@ -838,8 +837,8 @@ Every confidential transaction must carry appropriate ZKPs:
 - Convert: Deterministic ElGamal verification using the disclosed
   blinding factor. If a new holder key is registered, a Schnorr
   Proof of Knowledge is required.
-- Send: Range proof (balance ≥ transfer amount) and equality proof (ciphertexts match across holder/issuer/auditor keys).
-- Optional auditor keys: Additional equality proofs binding auditor ciphertexts to the same plaintext.
+- Send: Compact sigma proof (ciphertext consistency, amount linkage, and balance linkage) and aggregated range proof (transfer amount and remaining balance are non-negative).
+- Optional auditor keys: The auditor ciphertext is covered by the same compact sigma proof; no separate proof is required.
 
 ### 13.4 Confidential Balance Consistency
 
@@ -864,7 +863,7 @@ Every confidential transaction must carry appropriate ZKPs:
 
 ### 13.7 Auditor & Compliance Controls
 
-- If auditor is set, ciphertexts under auditor keys must be validated with equality proofs.
+- If auditor is set, ciphertexts under auditor keys are validated by the compact sigma proof alongside holder, issuer, and other recipient ciphertexts.
 - Prevents issuers from selectively encrypting incorrect balances for auditors.
 - Selective disclosure allows compliance without undermining public confidentiality.
 
@@ -943,7 +942,7 @@ The issuer utilizes a second account as a designated holder account to convert t
 
 ### A.11 Will proofs be optimized in future versions?
 
-The current design employs separate range and equality proofs for each transaction. However, future work will definitely prioritize optimizing these proofs to significantly reduce both transaction size and the associated verification cost for validators. Thorough benchmarking will be essential to find the right balance between validator performance and overall user experience.
+The original design employed separate range and equality proofs for each transaction. This has been superseded by the compact AND-composed sigma proof construction, which replaces the separate sigma proofs with a single fixed-size proof per transaction type, reducing the `ConfidentialMPTSend` sigma component from ~619 bytes to 192 bytes (a 27% reduction in total transaction size). Further optimizations to range proof aggregation or batched verification may be explored in future versions.
 
 ### A.12 Can there be more than one auditor?
 
