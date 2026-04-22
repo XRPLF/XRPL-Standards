@@ -26,7 +26,7 @@ The design provides the following properties:
 - **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback to the issuer’s reserve.
 
-Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through compact sigma proofs and range proofs.
+Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through AND-composed compact sigma proofs and range proofs.
 
 ## 2. Motivation
 
@@ -53,7 +53,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
 - **MaxAmount (MA):** The maximum allowed token supply. Invariant: `OA ≤ MA`.
 - **EC-ElGamal Encryption:** A public-key encryption scheme with additive homomorphism, used for encrypted balances and homomorphic balance updates.
 - **Zero-Knowledge Proofs (ZKPs):** Cryptographic proofs used to validate confidential transactions without revealing amounts, including:
-  - **Compact sigma proofs**, bundling ciphertext consistency, amount linkage, and balance linkage checks into a single fixed-size proof per transaction type.
+  - **AND-composed compact sigma proofs**, bundling ciphertext consistency, amount linkage, and balance linkage checks into a single fixed-size proof per transaction type.
   - **Range proofs**, ensuring confidential amounts and post-transfer balances are non-negative and lie within a valid range.
 - **Split-Balance Model:** Confidential balances are divided into:
   - **Spending (CB_S):** Stable balance used for spending and proofs.
@@ -100,7 +100,7 @@ To prevent stale-proof failures—where an incoming transfer could invalidate a 
 
 ### 5.3 The Multi-Ciphertext Architecture
 
-A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. Compact sigma proofs ensure that all ciphertexts correspond to the same hidden amount.
+A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. AND-composed compact sigma proofs ensure that all ciphertexts correspond to the same hidden amount.
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`EncryptedBalanceIssuer`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
@@ -111,13 +111,13 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 The protocol relies on a set of ZKPs to validate confidential transactions without revealing balances or transfer amounts. The following proof types are used:
 
 - **Schnorr Proof of Knowledge (64 bytes)**: Used in `ConfidentialMPTConvert` when registering a new holder key. Proves ownership of the private key associated with the ElGamal public key.
-- **Compact sigma proofs**: Cryptographic proofs that bundle multiple ZK statements into a single fixed-size blob verified in one pass. Each transaction uses a dedicated sigma proof optimized for its specific set of hidden values.
-  - **Compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves:
+- **AND-composed compact sigma proofs**: Cryptographic proofs that bundle multiple ZK statements into a single fixed-size blob verified in one pass. Each transaction uses a dedicated sigma proof optimized for its specific set of hidden values.
+  - **AND-composed compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves:
     - **Ciphertext consistency**: All encrypted copies of the transfer amount (sender, receiver, issuer, optional auditor) encrypt the same value using shared randomness.
-    - **Amount linkage**: The `AmountCommitment` commits to that same transfer amount. Critically, it intentionally reuses the ElGamal ciphertext randomness as its blinding factor rather than introducing an independent scalar, which means the relationship between the commitment and the ciphertexts is captured directly within the combined sigma proof, eliminating the need for a separate amount-linkage proof.
+    - **Amount linkage**: The `AmountCommitment` commits to that same transfer amount. Critically, it intentionally reuses the ElGamal ciphertext randomness as its blinding factor rather than introducing an independent scalar, which means the relationship between the commitment and the ciphertexts is captured directly within the AND-composed compact sigma proof, eliminating the need for a separate amount-linkage proof.
     - **Balance linkage**: The `BalanceCommitment` encodes the same spending balance as the sender's on-ledger encrypted balance, verified via knowledge of the sender's secret key.
-  - **Compact ConvertBack sigma proof (128 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the holder owns the spending balance and that their balance commitment is correctly derived from it.
-  - **Compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
+  - **AND-composed compact ConvertBack sigma proof (128 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the holder owns the spending balance and that their balance commitment is correctly derived from it.
+  - **AND-composed compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
 - **Plaintext–ciphertext equality (deterministic):** In `ConfidentialMPTConvert` and `ConfidentialMPTConvertBack`, the disclosed blinding factor allows validators to verify ciphertexts deterministically without a ZKP.
 - **Range proofs (Bulletproofs):** Prove that confidential amounts and post-transfer balances lie within a valid range, enforcing non-negativity and preventing overspending.
   - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64).
@@ -312,7 +312,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 | `SenderEncryptedAmount`      | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext used to homomorphically debit the sender's spending balance.                                                                                                                                                                                                                                                                                     |
 | `DestinationEncryptedAmount` | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext credited to the receiver's inbox balance.                                                                                                                                                                                                                                                                                                        |
 | `IssuerEncryptedAmount`      | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext used to update the issuer mirror balance.                                                                                                                                                                                                                                                                                                        |
-| `ZKProof`                    | Yes       | `string`  | `BLOB`        | N/A           | A 946-byte bundle containing a **compact AND-composed sigma proof** (192 bytes, proving ciphertext consistency across all recipients, amount linkage to `AmountCommitment`, and balance linkage to `BalanceCommitment`) and an **aggregated Bulletproof range proof** (754 bytes, proving both the transfer amount and remaining balance are non-negative). |
+| `ZKProof`                    | Yes       | `string`  | `BLOB`        | N/A           | A 946-byte bundle containing an **AND-composed compact sigma proof** (192 bytes, proving ciphertext consistency across all recipients, amount linkage to `AmountCommitment`, and balance linkage to `BalanceCommitment`) and an **aggregated Bulletproof range proof** (754 bytes, proving both the transfer amount and remaining balance are non-negative). |
 | `BalanceCommitment`          | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the user's confidential spending balance.                                                                                                                                                                                                                                                                                     |
 | `AmountCommitment`           | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the amount being transferred.                                                                                                                                                                                                                                                                                                 |
 | `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                                                                                                                                                                            |
@@ -476,7 +476,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 | `BlindingFactor`         | Yes       | `string`  | `UINT256`     | N/A           | The 32-byte scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`.                                                                                               |
 | `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                                       |
 | `BalanceCommitment`      | Yes       | `string`  | `BLOB`        | N/A           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                                                                                                                  |
-| `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | An 816-byte bundle containing a **compact AND-composed sigma proof** (128 bytes, proving balance ownership and key linkage) and a **single Bulletproof range proof** (688 bytes, proving the remaining balance is non-negative). |
+| `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | An 816-byte bundle containing an **AND-composed compact sigma proof** (128 bytes, proving balance ownership and key linkage) and a **single Bulletproof range proof** (688 bytes, proving the remaining balance is non-negative). |
 
 ### 10.4. Failure Conditions
 
@@ -496,7 +496,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 4. The issuance has `sfAuditorEncryptionKey` set, but the transaction does not include `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
 5. The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
 6. The `BlindingFactor` fails to verify the integrity of the ciphertexts. (`tecBAD_PROOF`)
-7. The `ZKProof` fails the **compact AND-composed sigma proof** check. (`tecBAD_PROOF`)
+7. The `ZKProof` fails the **AND-composed compact sigma proof** check. (`tecBAD_PROOF`)
 8. The `ZKProof` fails the **Bulletproof range proof** check. (`tecBAD_PROOF`)
 9. The account or issuance is frozen. (`terFROZEN`)
 
@@ -571,7 +571,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 ### 11.1 How the Clawback Process Works
 
 1. Issuer Decrypts and Prepares: The issuer takes the EncryptedBalanceIssuer ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
-2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes a compact Clawback sigma proof.
+2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes an AND-composed compact Clawback sigma proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that the RevealedAmount is the true value hidden in the holder's on-ledger ciphertext.
    - Ledger Changes: If the proof is valid, the validators execute all of the following changes at once:
@@ -589,7 +589,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 | `Holder`            | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account from which funds are being clawed back.                                                                        |
 | `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                |
 | `MPTAmount`         | Yes       | `number`  | `UINT64`      | N/A           | The plaintext total amount being removed.                                                                                  |
-| `ZKProof`           | Yes       | `string`  | `BLOB`        | N/A           | A 64-byte **compact Clawback sigma proof** proving that the `sfIssuerEncryptedBalance` encrypts the plaintext `MPTAmount`. |
+| `ZKProof`           | Yes       | `string`  | `BLOB`        | N/A           | A 64-byte **AND-composed compact Clawback sigma proof** proving that the `sfIssuerEncryptedBalance` encrypts the plaintext `MPTAmount`. |
 
 This single transaction securely and verifiably moves the funds directly from the holder's confidential balance to the issuer's public reserve, ensuring the integrity of the ledger's public accounting is perfectly maintained.
 
@@ -837,8 +837,8 @@ Every confidential transaction must carry appropriate ZKPs:
 - Convert: Deterministic ElGamal verification using the disclosed
   blinding factor. If a new holder key is registered, a Schnorr
   Proof of Knowledge is required.
-- Send: Compact sigma proof (ciphertext consistency, amount linkage, and balance linkage) and aggregated range proof (transfer amount and remaining balance are non-negative).
-- Optional auditor keys: The auditor ciphertext is covered by the same compact sigma proof; no separate proof is required.
+- Send: AND-composed compact sigma proof (ciphertext consistency, amount linkage, and balance linkage) and aggregated range proof (transfer amount and remaining balance are non-negative).
+- Optional auditor keys: The auditor ciphertext is covered by the same AND-composed compact sigma proof; no separate proof is required.
 
 ### 13.4 Confidential Balance Consistency
 
@@ -863,7 +863,7 @@ Every confidential transaction must carry appropriate ZKPs:
 
 ### 13.7 Auditor & Compliance Controls
 
-- If auditor is set, ciphertexts under auditor keys are validated by the compact sigma proof alongside holder, issuer, and other recipient ciphertexts.
+- If auditor is set, ciphertexts under auditor keys are validated by the AND-composed compact sigma proof alongside holder, issuer, and other recipient ciphertexts.
 - Prevents issuers from selectively encrypting incorrect balances for auditors.
 - Selective disclosure allows compliance without undermining public confidentiality.
 
@@ -879,18 +879,18 @@ Every confidential transaction must carry appropriate ZKPs:
 
 The efficiency of Confidential MPT transactions is critical to their practical deployment within XRPL’s performance constraints. This section analyzes the cryptographic payload size and verification cost of the ConfidentialMPTSend transaction, which represents the most complex confidential operation in the protocol.
 
-We assume the common configuration where the transfer amount is encrypted under four public keys (sender, receiver, issuer mirror, auditor mirror), hence Nciphers = 4 throughout this section. All estimates assume secp256k1, 32-byte scalars, compressed curve points of 33 bytes, and EC–ElGamal ciphertexts of 66 bytes. The cryptographic payload consists of ElGamal ciphertexts, two Pedersen commitments, a compact AND-composed sigma proof binding all ciphertexts under a single Fiat-Shamir challenge, and an aggregated Bulletproof enforcing range constraints.
+We assume the common configuration where the transfer amount is encrypted under four public keys (sender, receiver, issuer mirror, auditor mirror), hence Nciphers = 4 throughout this section. All estimates assume secp256k1, 32-byte scalars, compressed curve points of 33 bytes, and EC–ElGamal ciphertexts of 66 bytes. The cryptographic payload consists of ElGamal ciphertexts, two Pedersen commitments, an AND-composed compact sigma proof binding all ciphertexts under a single Fiat-Shamir challenge, and an aggregated Bulletproof enforcing range constraints.
 
 ### 14.1 Cryptographic Payload Structure (Nciphers = 4)
 
-Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 × 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 × 33 = 66 bytes. The compact AND-composed sigma proof (`ZKProof` prefix) is a fixed 192 bytes regardless of recipient count, replacing the legacy shared-randomness equality proof. An aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in [0, 2^64); for two aggregated 64-bit values, the proof size is 754 bytes. The `ZKProof` field therefore carries 192 + 754 = 946 bytes total. Combining all components:
+Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 × 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 × 33 = 66 bytes. The AND-composed compact sigma proof (`ZKProof` prefix) is a fixed 192 bytes regardless of recipient count, replacing the legacy shared-randomness equality proof. An aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in [0, 2^64); for two aggregated 64-bit values, the proof size is 754 bytes. The `ZKProof` field therefore carries 192 + 754 = 946 bytes total. Combining all components:
 
-Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 946 bytes (ZKProof: 192 compact sigma + 754 aggregated Bulletproof)
+Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 946 bytes (ZKProof: 192-byte AND-composed compact sigma proof + 754 aggregated Bulletproof)
 = 1276 bytes (with auditor). Without auditor (Nciphers = 3): 198 + 66 + 946 = 1210 bytes. Ledger metadata and transaction headers are excluded from this estimate, as the goal is to isolate the cryptographic overhead.
 
 ### 14.2 Timing and Computational Complexity
 
-To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The compact AND-composed sigma proof introduces only a small additional overhead compared to Bulletproof verification, as it consists of a fixed number of scalar multiplications and curve additions independent of the number of recipients. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
+To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The AND-composed compact sigma proof introduces only a small additional overhead compared to Bulletproof verification, as it consists of a fixed number of scalar multiplications and curve additions independent of the number of recipients. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
 These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
 
@@ -942,7 +942,7 @@ The issuer utilizes a second account as a designated holder account to convert t
 
 ### A.11 Will proofs be optimized in future versions?
 
-The original design employed separate range and equality proofs for each transaction. This has been superseded by the compact AND-composed sigma proof construction, which replaces the separate sigma proofs with a single fixed-size proof per transaction type, reducing the `ConfidentialMPTSend` sigma component from ~619 bytes to 192 bytes (a 27% reduction in total transaction size). Further optimizations to range proof aggregation or batched verification may be explored in future versions.
+The original design employed separate range and equality proofs for each transaction. This has been superseded by the AND-composed compact sigma proof construction, which replaces the separate sigma proofs with a single fixed-size proof per transaction type, reducing the `ConfidentialMPTSend` sigma component from ~619 bytes to 192 bytes (a 27% reduction in total transaction size). Further optimizations to range proof aggregation or batched verification may be explored in future versions.
 
 ### A.12 Can there be more than one auditor?
 
