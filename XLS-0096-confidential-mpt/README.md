@@ -112,12 +112,12 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 
 - **Schnorr Proof of Knowledge (64 bytes)**: Used in `ConfidentialMPTConvert` when registering a new holder key. Proves ownership of the private key associated with the ElGamal public key.
 - **compact sigma proofs**: Cryptographic proofs that bundle multiple ZK statements into a single fixed-size blob verified in one pass. Each transaction uses a dedicated sigma proof optimized for its specific set of hidden values.
-  - **AND-composed compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves:
+   - **Compact Send sigma proof (192 bytes)**: Used in `ConfidentialMPTSend`. Simultaneously proves:
     - **Ciphertext consistency**: All encrypted copies of the transfer amount (sender, receiver, issuer, optional auditor) encrypt the same value using shared randomness.
     - **Amount linkage**: The `AmountCommitment` commits to that same transfer amount. Critically, it intentionally reuses the ElGamal ciphertext randomness as its blinding factor rather than introducing an independent scalar, which means the relationship between the commitment and the ciphertexts is captured directly within the compact sigma proof, eliminating the need for a separate amount-linkage proof.
     - **Balance linkage**: The `BalanceCommitment` encodes the same spending balance as the sender's on-ledger encrypted balance, verified via knowledge of the sender's secret key.
-  - **AND-composed compact ConvertBack sigma proof (128 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the holder owns the spending balance and that their balance commitment is correctly derived from it.
-  - **AND-composed compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
+  - **Compact ConvertBack sigma proof (128 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the holder owns the spending balance and that their balance commitment is correctly derived from it.
+  - **Compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
 - **Plaintext–ciphertext equality (deterministic):** In `ConfidentialMPTConvert` and `ConfidentialMPTConvertBack`, the disclosed blinding factor allows validators to verify ciphertexts deterministically without a ZKP.
 - **Range proofs (Bulletproofs):** Prove that confidential amounts and post-transfer balances lie within a valid range, enforcing non-negativity and preventing overspending.
   - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64).
@@ -571,7 +571,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
 ### 11.1 How the Clawback Process Works
 
 1. Issuer Decrypts and Prepares: The issuer takes the EncryptedBalanceIssuer ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
-2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes an AND-composed compact Clawback sigma proof.
+2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes a  compact Clawback sigma proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that the RevealedAmount is the true value hidden in the holder's on-ledger ciphertext.
    - Ledger Changes: If the proof is valid, the validators execute all of the following changes at once:
