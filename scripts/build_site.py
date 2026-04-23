@@ -5,15 +5,45 @@ Converts markdown XLS files to HTML and creates an index page.
 """
 
 import os
-import shutil
-from pathlib import Path
 import re
+import shutil
+from collections import Counter
+from pathlib import Path
 
 import markdown
 from jinja2 import Environment, FileSystemLoader
 
 from xls_parser import find_xls_documents
-from collections import Counter
+
+
+def _convert_math_delimiters(html: str) -> str:
+    """Convert $...$ and $$...$$ to \\(...\\) and \\[...\\] in HTML.
+
+    Only matches when the closing delimiter is NOT preceded by whitespace,
+    which avoids false positives on currency like "$1.0m ... $1.0m".
+    Skips content inside <code> and <pre> tags.
+    """
+    # Split the HTML into segments: code/pre blocks vs. everything else.
+    # Process only non-code segments.
+    parts = re.split(
+        r"(<code[^>]*>.*?</code>|<pre[^>]*>.*?</pre>)", html, flags=re.DOTALL
+    )
+    for i, part in enumerate(parts):
+        if part.startswith("<code") or part.startswith("<pre"):
+            continue
+        # Display math $$...$$ → \[...\]
+        part = re.sub(r"\$\$([^\$]+?)\$\$", r"\\[\1\\]", part)
+        # Inline math $...$ → \(...\)
+        # Require: non-whitespace after opening $ and before closing $.
+        # Disallow newlines and HTML tags (<, >) inside the match to
+        # prevent spanning across HTML element boundaries.
+        part = re.sub(
+            r"(?<!\$)\$(\S(?:[^\$\n<>]*?\S)?)\$(?!\$)",
+            r"\\(\1\\)",
+            part,
+        )
+        parts[i] = part
+    return "".join(parts)
 
 
 def convert_markdown_to_html(content: str) -> str:
@@ -27,10 +57,21 @@ def convert_markdown_to_html(content: str) -> str:
         extensions=["extra", "codehilite", "toc", "tables"],
         extension_configs={
             "codehilite": {"css_class": "highlight"},
-            "toc": {"permalink": True, "baselevel": 2, "toc_depth": 3, "title": "Table of Contents"},
+            "toc": {
+                "permalink": True,
+                "baselevel": 2,
+                "toc_depth": 3,
+                "title": "Table of Contents",
+            },
         },
     )
-    return md.convert(content)
+    html = md.convert(content)
+
+    # Convert LaTeX math delimiters after markdown processing so that
+    # the markdown processor doesn't strip backslashes from \(...\).
+    html = _convert_math_delimiters(html)
+
+    return html
 
 
 def build_site():
@@ -44,7 +85,11 @@ def build_site():
     assets_dir = source_dir / "assets"
 
     # Set base URL for GitHub Pages (can be overridden with env var)
-    base_url = os.environ.get("GITHUB_PAGES_BASE_URL", "/XRPL-Standards") if "GITHUB_REPOSITORY" in os.environ else os.environ.get("GITHUB_PAGES_BASE_URL", ".")
+    base_url = (
+        os.environ.get("GITHUB_PAGES_BASE_URL", "/XRPL-Standards")
+        if "GITHUB_REPOSITORY" in os.environ
+        else os.environ.get("GITHUB_PAGES_BASE_URL", ".")
+    )
 
     # Clean and create site directory
     if site_dir.exists():
@@ -225,7 +270,9 @@ def build_site():
 
     # Count by status for reporting
     # Count documents by status (case-insensitive, no hardcoding)
-    status_counts = Counter(getattr(doc, "status", "").strip().lower() or "unknown" for doc in xls_docs)
+    status_counts = Counter(
+        getattr(doc, "status", "").strip().lower() or "unknown" for doc in xls_docs
+    )
 
     for status, count in status_counts.items():
         print(f"- {status.capitalize()}: {count}")

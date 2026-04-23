@@ -86,10 +86,13 @@
     <!-- KaTeX auto-render: render LaTeX math on page load -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        renderMathInElement(document.body, {
+        if (typeof renderMathInElement !== "function") return;
+        var content = document.querySelector("main");
+        if (!content) return;
+        renderMathInElement(content, {
           delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "\\(", right: "\\)", display: false },
           ],
           throwOnError: false,
         });
