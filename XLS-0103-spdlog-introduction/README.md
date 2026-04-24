@@ -1,19 +1,23 @@
 <pre>
-xls: 103
-title: Migrating xrpld to Structured Logging
-description: A phased migration of the xrpld core logging infrastructure from unstructured Beast log to high-performance, structured JSON logging via spdlog.
-author: Developer
-status: Draft
-category: System
-created: 2026-04-23
+  xls: 103
+  title: Migrating xrpld to Structured Logging
+  description: A phased migration of the xrpld core logging infrastructure from unstructured Beast log to high-performance, structured JSON logging via spdlog.
+  author: Jingchen Wu (@a1q123456)
+  category: System
+  status: Draft
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/524
+  created: 2026-04-23
+  updated: 2026-04-23
 </pre>
 
 # Migrating xrpld to Structured Logging
 
 ## 1. Abstract
+
 This standard proposes a phased migration of the `xrpld` core logging infrastructure from the legacy, unstructured Beast log system to a high-performance, structured JSON logging system utilizing `spdlog`. By introducing structured logging, we aim to drastically improve node observability, debugging efficiency, and interoperability with modern telemetry pipelines (e.g., OpenTelemetry, ELK stack, Datadog), while simultaneously enhancing logging performance under heavy node load.
 
 ## 2. Motivation
+
 Currently, `xrpld` relies on Beast log for emitting text-based log messages. While human-readable, unstructured text poses significant challenges for automated parsing, monitoring, and at-scale debugging. Migrating to structured (JSON) logging via `spdlog` offers significant advantages:
 
 ### 2.1. Performance Improvements
@@ -27,7 +31,10 @@ Currently, `xrpld` relies on Beast log for emitting text-based log messages. Whi
 * **Built-in Log Rotation:** The current `Logs::File` requires a manual, RPC-triggered `closeAndReopen()`. `spdlog` provides `rotating_file_sink` and `daily_file_sink` out of the box with configurable size and time policies.
 * **Native Multiple Sinks:** `spdlog` seamlessly supports writing to multiple destinations simultaneously (e.g., file, stderr, syslog) using `spdlog::sinks::dist_sink`.
 
-## 3. Detailed Design
+## 3. Specification
+
+### 3.1. Core Components
+
 The core architecture for integrating structured logging will rely on the following components and design choices:
 
 1. **`JsonLoggingPatternBuilder`**: A utility class responsible for taking a set of parameters and baking them into the JSON log pattern. It supports taking an existing log pattern and appending new parameters to it seamlessly.
@@ -62,7 +69,7 @@ rpcLogger->info("node: {key1}, some additional information: {key2}",
 }
 ```
 
-## 4. Migration Challenges & Solutions
+### 3.2. Migration Challenges & Solutions
 
 Given the pervasive nature of logging in the codebase, we anticipate several migration challenges:
 
@@ -76,7 +83,8 @@ Given the pervasive nature of logging in the codebase, we anticipate several mig
 | **JLOG lazy evaluation** | `JLOG` short-circuits `operator<<` chains when level is inactive. | Use `SPDLOG_LOGGER_CALL` macros or equivalent for runtime/compile-time elimination. |
 | **`debugLog()` global sink** | `DebugSink` is a swappable global singleton. | Replace with a named `spdlog` logger (e.g., `spdlog::get("debug")`). |
 
-## 5. Implementation Plan
+### 3.3. Implementation Plan
+
 The migration will be rolled out in distinct phases across multiple Pull Requests (PRs) to minimize disruption.
 
 * **Phase 0: Integrate spdlog (PR 1)**
@@ -92,5 +100,17 @@ The migration will be rolled out in distinct phases across multiple Pull Request
 * **Phase 3: Review exisitng logs**
   * With OpenTelemetry, we're able to tell which logs are unnecessary and should be removed.
 
-## 6. Request for Comments (Community Feedback)
-We deeply value the community's input on this transition. Your operational insights are critical to ensuring `xrpld` continues to meet your monitoring and reliability standards. While the architectural decision to move towards structured JSON logging is a necessary modernization step to keep pace with industry standards, we are eager to hear your thoughts on the mechanics of the rollout, default configurations, and formatting details. We encourage all node operators to share their feedback, detail the observability tooling they rely on, and let us know how this phased approach fits into their workflows so we can take it under thorough advisement during implementation.
+## 4. Rationale
+
+The architectural decision to move towards structured JSON logging is a necessary modernization step to keep pace with industry standards. The phased rollout approach was chosen to minimize disruption to the existing infrastructure: introducing `spdlog` as a dependency first (with no behavior change), then layering structured logging on top behind a feature flag, before finally deprecating the Beast log system. This reduces the blast radius of any single PR and allows the community to validate each phase independently.
+
+Community input is deeply valued in this transition. Node operators' operational insights are critical to ensuring `xrpld` continues to meet monitoring and reliability standards. Feedback on the mechanics of the rollout, default configurations, and formatting details — as well as details of the observability tooling operators rely on — will be taken under thorough advisement during implementation.
+
+## 5. Security Considerations
+
+The migration from Beast log to `spdlog` does not alter the logical behavior of `xrpld` or the XRP Ledger protocol. However, the following security aspects are relevant:
+
+* **Log injection:** Structured JSON logging reduces the risk of log injection attacks compared to free-text logging, as fields are serialized with strict type boundaries rather than concatenated strings.
+* **Information disclosure:** Operators should review which fields are included in structured log output (especially when enabling JSON logging in production) to ensure no sensitive data (e.g., private keys, internal state) is inadvertently emitted. The existing `scrubber` function in `Logs.cpp`, which redacts sensitive keying material before log messages are emitted, will be carried forward and applied to structured log fields in the new implementation.
+* **Async queue overflow:** The async logging mode introduces a bounded lock-free queue. Under extreme load, the queue may overflow and drop log messages. This is a reliability concern (not a security vulnerability), but operators should configure queue sizes appropriately.
+* **Dependency supply chain:** Introducing `spdlog` as a new core dependency adds a new surface for supply-chain risk. The dependency should be pinned to a reviewed version and monitored for upstream security advisories.
