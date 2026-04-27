@@ -1,7 +1,7 @@
 # Python dependencies for XLS Standards site generation and validation
 #
 # Core site generation dependencies
-markdown>=3.4.4,<4.0.0    # Markdown to HTML conversion with extensions
+markdown>=3.10.2,<4.0.0    # Markdown to HTML conversion with extensions
 jinja2>=3.1.6,<4.0.0      # HTML template engine
 beautifulsoup4>=4.14.3,<5.0.0  # HTML/XML parsing and metadata extraction
 pyyaml>=6.0.3,<7.0          # YAML configuration parsing
