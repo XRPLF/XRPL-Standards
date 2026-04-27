@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-02-11
+  updated: 2026-04-27
 </pre>
 
 # Single Asset Vault
@@ -23,7 +23,9 @@ The **Single Asset Vault** is an on-chain object that aggregates assets from one
 
 The specification introduces a new `Vault` ledger entry, which contains key details such as available assets, shares, total value, and other relevant information.
 
-The specification includes the following transactions:
+### 2.1. Transactions
+
+2.  The specification includes the following transactions:
 
 **Vault Management**:
 
@@ -40,30 +42,30 @@ Additionally, an issuer can perform a **Clawback** operation:
 
 - **`VaultClawback`**: Allows the issuer of an IOU or MPT to claw back funds from the vault, as outlined in the [Clawback documentation](https://xrpl.org/docs/use-cases/tokenization/stablecoin-issuer#clawback).
 
-**Vault Ownership and Management**
+### 2.2. Vault Ownership and Management
 
 A Single Asset Vault is owned and managed by an account called the **Vault Owner**. The account is reponsible for creating, updating and deleting the Vault object.
 
-**Access Control**
+### 2.3. Access Control
 
 A Single Asset Vault can be either public or private. Any depositor can deposit and redeem liquidity from a public vault, provided they own sufficient shares. In contrast, access to private shares is controlled via [Permissioned Domains](../XLS-0080-permissioned-domains/README.md), which use on-chain [Credentials](../XLS-0070-credentials/README.md) to manage access to the vault. Only depositors with the necessary credentials can deposit assets to a private vault. To prevent Vault Owner from locking away depositor funds, any shareholder can withdraw funds. Furthermore, the Vault Owner has an implicit permission to deposit and withdraw assets to and from the Vault. I.e. they do not have to have credentials in the Permissioned Domain.
 
-**Yield Bearing Shares**
+### 2.4. Yield Bearing Shares
 
 Shares represent the ownership of a portion of the vault's assets. On-chain shares are represented by a [Multi-Purpose Token](../XLS-0033-multi-purpose-tokens/README.md). When creating the vault, the Vault Owner can configure the shares to be non-transferable. Non-transferable shares cannot be transferred to any other account -- they can only be redeemed. If the vault is private, shares can be transferred and used in other DeFi protocols as long as the receiving account is authorized to hold the shares. The vault's shares may be yield-bearing, depending on the protocol connected to the vault, meaning that a holder may be able to withdraw more (or less) liquidity than they initially deposited.
 
-### 2.1 Terminology
+### 2.5. Terminology
 
 - **Vault**: A ledger entry for aggregating liquidity and providing this liquidity to one or more accessors.
 - **Asset**: The currency of a vault. It is either XRP, a [Fungible Token](https://xrpl.org/docs/concepts/tokens/fungible-tokens/) or a [Multi-Purpose Token](../XLS-0033-multi-purpose-tokens/README.md).
 - **Share**: Shares represent the depositors' portion of the vault's assets. Shares are a [Multi-Purpose Token](../XLS-0033-multi-purpose-tokens/README.md) created by the _pseudo-account_ of the vault.
 
-### 2.2 Actors
+### 2.6. Actors
 
 - **Vault Owner**: An account responsible for creating and deleting The Vault.
 - **Depositor**: An entity that deposits and withdraws assets to and from the vault.
 
-### 2.3 Connecting to the Vault
+### 2.7. Connecting to the Vault
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
@@ -319,21 +321,21 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 
 #### 3.1.10 Invariants
 
-- A transaction must not modify more than one `Vault` object.
-- `<Vault>.Asset == <Vault>'.Asset` (the asset is immutable).
-- `<Vault>.Account == <Vault>'.Account` (the _pseudo-account_ is immutable).
-- `<Vault>.ShareMPTID == <Vault>'.ShareMPTID` (the share MPT ID is immutable).
-- An updated `Vault` must always have an associated `MPTokenIssuance` (shares) object.
-- `IF MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0 THEN <Vault>'.AssetsTotal == 0 AND <Vault>'.AssetsAvailable == 0`.
-- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount <= MPTokenIssuance(Vault.ShareMPTID).MaximumAmount`.
-- `<Vault>'.AssetsAvailable >= 0`.
-- `<Vault>'.AssetsAvailable <= <Vault>'.AssetsTotal`.
-- `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable`.
-- `<Vault>'.AssetsTotal >= 0`.
-- `<Vault>'.AssetsMaximum >= 0`.
-- Only `VaultCreate` may create a new `Vault` object.
-- Only `VaultDelete` may delete a `Vault` object.
-- `<Vault>.LossUnrealized == <Vault>'.LossUnrealized` for all vault transactions (only protocol transactions such as `LoanManage` and `LoanPay` may change `LossUnrealized`).
+1. A transaction must not modify more than one `Vault` object.
+2. `<Vault>.Asset == <Vault>'.Asset` (the asset is immutable).
+3. `<Vault>.Account == <Vault>'.Account` (the _pseudo-account_ is immutable).
+4. `<Vault>.ShareMPTID == <Vault>'.ShareMPTID` (the share MPT ID is immutable).
+5. An updated `Vault` must always have an associated `MPTokenIssuance` (shares) object.
+6. `IF MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0 THEN <Vault>'.AssetsTotal == 0 AND <Vault>'.AssetsAvailable == 0`.
+7. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount <= MPTokenIssuance(Vault.ShareMPTID).MaximumAmount`.
+8. `<Vault>'.AssetsAvailable >= 0`.
+9. `<Vault>'.AssetsAvailable <= <Vault>'.AssetsTotal`.
+10. `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable`.
+11. `<Vault>'.AssetsTotal >= 0`.
+12. `<Vault>'.AssetsMaximum >= 0`.
+13. Only `VaultCreate` may create a new `Vault` object.
+14. Only `VaultDelete` may delete a `Vault` object.
+15. `<Vault>.LossUnrealized == <Vault>'.LossUnrealized` for all vault transactions (only protocol transactions such as `LoanManage` and `LoanPay` may change `LossUnrealized`).
 
 #### 3.1.11 Example JSON
 
@@ -442,11 +444,11 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 #### 3.2.7 Invariants
 
-- The transaction must not modify an existing `Vault` object (i.e. no before-state).
-- `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
-- `<Vault>'.Account == MPTokenIssuance(Vault.ShareMPTID).Issuer` (shares issuer must equal the vault's _pseudo-account_).
-- The shares issuer `AccountRoot` must exist and must be a _pseudo-account_.
-- The shares issuer _pseudo-account_ must reference the created vault via its `VaultID` field.
+1. The transaction must not modify an existing `Vault` object (i.e. no before-state).
+2. `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
+3. `<Vault>'.Account == MPTokenIssuance(Vault.ShareMPTID).Issuer` (shares issuer must equal the vault's _pseudo-account_).
+4. The shares issuer `AccountRoot` must exist and must be a _pseudo-account_.
+5. The shares issuer _pseudo-account_ must reference the created vault via its `VaultID` field.
 
 #### 3.2.8 Example JSON
 
@@ -505,11 +507,11 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 #### 3.3.4 Invariants
 
-- The _pseudo-account_ asset balance must not change.
-- `<Vault>.AssetsTotal == <Vault>'.AssetsTotal` (assets total must not change).
-- `<Vault>.AssetsAvailable == <Vault>'.AssetsAvailable` (assets available must not change).
-- `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
-- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must not change.
+1. The _pseudo-account_ asset balance must not change.
+2. `<Vault>.AssetsTotal == <Vault>'.AssetsTotal` (assets total must not change).
+3. `<Vault>.AssetsAvailable == <Vault>'.AssetsAvailable` (assets available must not change).
+4. `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
+5. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must not change.
 
 #### 3.3.5 Example JSON
 
@@ -561,11 +563,11 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 #### 3.4.4 Invariants
 
-- The `Vault` object must be deleted (i.e. no after-state).
-- The `MPTokenIssuance` object for the vault shares must also be deleted.
-- `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (no shares outstanding at time of deletion).
-- `<Vault>.AssetsTotal == 0` (no assets outstanding at time of deletion).
-- `<Vault>.AssetsAvailable == 0` (no assets available at time of deletion).
+1. The `Vault` object must be deleted (i.e. no after-state).
+2. The `MPTokenIssuance` object for the vault shares must also be deleted.
+3. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (no shares outstanding at time of deletion).
+4. `<Vault>.AssetsTotal == 0` (no assets outstanding at time of deletion).
+5. `<Vault>.AssetsAvailable == 0` (no assets available at time of deletion).
 
 #### 3.4.5 Example JSON
 
@@ -638,14 +640,14 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the depositor's share balance.
 
-- The _pseudo-account_ asset balance must increase: $\Delta_{asset} > 0$.
-- $\Delta_{asset}$ must not exceed `Amount`.
-- The depositor's asset balance must decrease by $\Delta_{asset}$ (unless the depositor is the asset issuer).
-- `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
-- $\Delta_{share} > 0$ (depositor shares must increase).
-- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
-- `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-- `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
+1. The _pseudo-account_ asset balance must increase: $\Delta_{asset} > 0$.
+2. $\Delta_{asset}$ must not exceed `Amount`.
+3. The depositor's asset balance must decrease by $\Delta_{asset}$ (unless the depositor is the asset issuer).
+4. `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
+5. $\Delta_{share} > 0$ (depositor shares must increase).
+6. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
+7. `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+8. `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
 
 #### 3.5.5 Example JSON
 
@@ -744,12 +746,12 @@ In sections below assume the following variables:
 
 Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the withdrawer's share balance.
 
-- The _pseudo-account_ asset balance must decrease: $\Delta_{asset} < 0$.
-- Exactly one destination account balance must increase by $|\Delta_{asset}|$ (unless the destination is the asset issuer).
-- $\Delta_{share} < 0$ (withdrawer shares must decrease).
-- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
-- `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-- `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
+1. The _pseudo-account_ asset balance must decrease: $\Delta_{asset} < 0$.
+2. Exactly one destination account balance must increase by $|\Delta_{asset}|$ (unless the destination is the asset issuer).
+3. $\Delta_{share} < 0$ (withdrawer shares must decrease).
+4. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
+5. `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+6. `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
 
 #### 3.6.5 Example JSON
 
@@ -826,12 +828,12 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the holder's share balance.
 
-- The transaction submitter must be the asset issuer, or the vault owner of an empty vault with outstanding shares.
-- If the vault holds assets: $\Delta_{asset} < 0$ (vault balance must decrease).
-- If the vault holds assets: `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-- If the vault holds assets: `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
-- $\Delta_{share} < 0$ (holder shares must decrease).
-- The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
+1. The transaction submitter must be the asset issuer, or the vault owner of an empty vault with outstanding shares.
+2. If the vault holds assets: $\Delta_{asset} < 0$ (vault balance must decrease).
+3. If the vault holds assets: `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
+4. If the vault holds assets: `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
+5. $\Delta_{share} < 0$ (holder shares must decrease).
+6. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
 
 #### 3.7.5 Example JSON
 
