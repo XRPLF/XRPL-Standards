@@ -25,7 +25,7 @@ The specification introduces a new `Vault` ledger entry, which contains key deta
 
 ### 2.1. Transactions
 
-2.  The specification includes the following transactions:
+The specification includes the following transactions:
 
 **Vault Management**:
 
