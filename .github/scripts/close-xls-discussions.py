@@ -145,8 +145,8 @@ def get_xls_folders_from_changed_files(changed_files: str) -> list[str]:
 
     xls_folders = set()
     for file_path in changed_files.split():
-        # Match XLS-*/README.md
-        match = re.match(r"(XLS-\d+[d]?)/README\.md", file_path)
+        # Match full XLS folder names such as XLS-0001-xls-process/README.md
+        match = re.match(r"(XLS-\d+[d]?-[^/]+)/README\.md", file_path)
         if match:
             xls_folders.add(match.group(1))
 
