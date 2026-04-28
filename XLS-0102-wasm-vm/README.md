@@ -108,81 +108,81 @@ Note: all these functions return an `i32`, unless otherwise noted (or there is n
 
 This section includes ledger header data, amendments, and fees.
 
-| Function Signature                                                                              | Description                                       | Gas Cost |
-| :---------------------------------------------------------------------------------------------- | :------------------------------------------------ | :------- |
-| `get_ledger_sqn(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`         | Get the sequence number of the last ledger.       | 60       |
-| `get_parent_ledger_time(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the time (in Ripple Time) of the last ledger. | 60       |
-| `get_parent_ledger_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get the hash of the last ledger.                  | 60       |
-| `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)`    | Check if a given amendment is enabled.            | 60       |
-| `get_base_fee(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`           | Get the current transaction base fee.             | 60       |
+| Function Signature                                                                           | Description                                       | Gas Cost |
+| :------------------------------------------------------------------------------------------- | :------------------------------------------------ | :------- |
+| `ldgr_index(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`          | Get the sequence number of the last ledger.       | 60       |
+| `parent_ldgr_time(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`    | Get the time (in Ripple Time) of the last ledger. | 60       |
+| `parent_ldgr_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`    | Get the hash of the last ledger.                  | 60       |
+| `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)` | Check if a given amendment is enabled.            | 60       |
+| `base_fee(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`            | Get the current transaction base fee.             | 60       |
 
 ### 5.2. Current Ledger Object data
 
 The current ledger object is the ledger object that the extension lives on - for Smart Escrows that's an `Escrow` object.
 
-| Function Signature                                                                                                                                                       | Description                                                                           | Gas Cost |
-| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ | :------- |
-| `get_current_ledger_obj_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                            | Get a top-level field from the ledger object that the extension is on.                | 70       |
-| `get_current_ledger_obj_nested_field(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get a nested field from the ledger object that the extension is on.                   | 110      |
-| `get_current_ledger_obj_array_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                                      | Get the length of an array field on the ledger object that the extension is on.       | 40       |
-| `get_current_ledger_obj_nested_array_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                           | Get the length of a nested array field on the ledger object that the extension is on. | 70       |
+| Function Signature                                                                                                                                         | Description                                                                           | Gas Cost |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ | :------- |
+| `curr_ldgr_entry_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                     | Get a top-level field from the ledger object that the extension is on.                | 70       |
+| `curr_ldgr_entry_inner(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an inner field from the ledger object that the extension is on.                   | 110      |
+| `curr_ldgr_entry_array_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                               | Get the length of an array field on the ledger object that the extension is on.       | 40       |
+| `curr_ldgr_entry_inner_array_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                     | Get the length of an inner array field on the ledger object that the extension is on. | 70       |
 
 #### 5.2.1. Locators
 
-A Locator allows a WASM developer to reference any field in any object (even nested fields) by specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4 bytes) or an `index` (4 bytes).
+A Locator allows a WASM developer to reference any field in any object (even inner fields) by specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4 bytes) or an `index` (4 bytes).
 
 ### 5.3. Current Transaction Data
 
 The current transaction is the `EscrowFinish` that is executing the WASM logic
 
-| Function Signature                                                                                                                                       | Description                                                                           | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ | :------- |
-| `get_tx_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                            | Get a top-level field from the transaction that triggered the extension.              | 70       |
-| `get_tx_nested_field(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get a nested field from the transaction that triggered the extension.                 | 110      |
-| `get_tx_array_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                                      | Get the length of an array field from the transaction that triggered the extension.   | 40       |
-| `get_tx_nested_array_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                           | Get the length of a nested array field on the ledger object that the extension is on. | 70       |
+| Function Signature                                                                                                                            | Description                                                                           | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ | :------- |
+| `tx_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                     | Get a top-level field from the transaction that triggered the extension.              | 70       |
+| `tx_inner(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an inner field from the transaction that triggered the extension.                 | 110      |
+| `tx_array_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                               | Get the length of an array field from the transaction that triggered the extension.   | 40       |
+| `tx_inner_array_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                     | Get the length of an inner array field on the ledger object that the extension is on. | 70       |
 
 ### 5.4. Any Ledger Object Data
 
 Fetch data from any other ledger object
 
-| Function Signature                                                                                                                                                                           | Description                                                    | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- | :------- |
-| `cache_ledger_obj(`<br/>&emsp;`keylet_ptr: i32,`<br/>&emsp;`keylet_len: i32,`<br/>&emsp;`cache_num: i32`<br />`)`                                                                            | Cache a ledger object so that it can be used later.            | 5000     |
-| `get_ledger_obj_field(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                            | Get a top-level field from any ledger object.                  | 70       |
-| `get_ledger_obj_nested_field(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get a nested field from any ledger object.                     | 110      |
-| `get_ledger_obj_array_len(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`field: i32`<br />`)`                                                                                                      | Get the length of an array field from any ledger object.       | 40       |
-| `get_ledger_obj_nested_array_len(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                           | Get the length of a nested array field from any ledger object. | 70       |
+| Function Signature                                                                                                                                                                | Description                                                    | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- | :------- |
+| `cache_ldgr_entry(`<br/>&emsp;`index_ptr: i32,`<br/>&emsp;`index_len: i32,`<br/>&emsp;`cache_num: i32`<br />`)`                                                                   | Cache a ledger object so that it can be used later.            | 5000     |
+| `ldgr_entry_field(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                     | Get a top-level field from any ledger object.                  | 70       |
+| `ldgr_entry_inner(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an inner field from any ledger object.                     | 110      |
+| `ldgr_entry_array_len(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`field: i32`<br />`)`                                                                                               | Get the length of an array field from any ledger object.       | 40       |
+| `ldgr_entry_inner_array_len(`<br/>&emsp;`cache_num: i32,`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                     | Get the length of an inner array field from any ledger object. | 70       |
 
-### 5.5. Keylets
+### 5.5. Indexes
 
-A keylet is a unique hash that represents a ledger object on the XRP Ledger. It is a 256-bit hash, constructed from unique identifiers for an object. For example, an `AccountRoot`'s hash is constructed from its `AccountID`, and an `Oracle`'s hash is constructed from its `Owner` and `DocumentID`.
+An index is a unique hash that represents a ledger object on the XRP Ledger. It is a 256-bit hash, constructed from unique identifiers for an object. For example, an `AccountRoot`'s hash is constructed from its `AccountID`, and an `Oracle`'s hash is constructed from its `Owner` and `DocumentID`.
 
-| Function Signature                                                                                                                                                                                                                                                                    | Description                                                | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------- | :------- |
-| `account_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate an `AccountRoot`'s keylet from its pieces.       | 350      |
-| `amm_keylet(`<br/>&emsp;`issue1_ptr: i32,`<br/>&emsp;`issue1_len: i32,`<br/>&emsp;`issue2_ptr: i32,`<br/>&emsp;`issue2_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                               | Calculate an `AMM`’s keylet from its pieces.               | 350      |
-| `check_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Check`'s keylet from its pieces.              | 350      |
-| `credential_keylet(`<br/>&emsp;`subject_ptr: i32,`<br/>&emsp;`subject_len: i32,`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`cred_type_ptr: i32,`<br/>&emsp;`cred_type_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`      | Calculate a `Credential`'s keylet from its pieces.         | 350      |
-| `delegate_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate a `Delegate`'s keylet from its pieces.           | 350      |
-| `deposit_preauth_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                           | Calculate a `DepositPreauth`'s keylet from its pieces.     | 350      |
-| `did_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                       | Calculate a `DID`'s keylet from its pieces.                | 350      |
-| `escrow_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate an `Escrow`'s keylet from its pieces.            | 350      |
-| `line_keylet(`<br/>&emsp;`account1_ptr: i32,`<br/>&emsp;`account1_len: i32,`<br/>&emsp;`account2_ptr: i32,`<br/>&emsp;`account2_len: i32,`<br/>&emsp;`currency_ptr: i32,`<br/>&emsp;`currency_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`        | Calculate a trustline’s keylet from its pieces.            | 350      |
-| `mpt_issuance_keylet(`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate an `MPTIssuance`’s keylet from its pieces.       | 350      |
-| `mptoken_keylet(`<br/>&emsp;`mptid_ptr: i32,`<br/>&emsp;`mptid_len: i32,`<br/>&emsp;`holder_ptr: i32,`<br/>&emsp;`holder_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                             | Calculate an `MPToken`’s keylet from its pieces.           | 350      |
-| `nft_offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                   | Calculate an `NFTOffer`'s keylet from its pieces.          | 350      |
-| `offer_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate an `Offer`'s keylet from its pieces.             | 350      |
-| `oracle_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`document_id_ptr: i32,`<br/>&emsp;`document_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                | Calculate an `Oracle`'s keylet from its pieces.            | 350      |
-| `paychan_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`destination_ptr: i32,`<br/>&emsp;`destination_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Calculate a `PayChannel`’s keylet from its pieces.         | 350      |
-| `permissioned_domain_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                         | Calculate a `PermissionedDomain`’s keylet from its pieces. | 350      |
-| `signers_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate a `SignerListSet`'s keylet from its pieces.      | 350      |
-| `ticket_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate a `Ticket`'s keylet from its pieces.             | 350      |
-| `vault_keylet(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Vault`’s keylet from its pieces.              | 350      |
+| Function Signature                                                                                                                                                                                                                                                                   | Description                                               | Gas Cost |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------- | :------- |
+| `account_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate an `AccountRoot`'s index from its pieces.       | 350      |
+| `amm_index(`<br/>&emsp;`issue1_ptr: i32,`<br/>&emsp;`issue1_len: i32,`<br/>&emsp;`issue2_ptr: i32,`<br/>&emsp;`issue2_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                               | Calculate an `AMM`’s index from its pieces.               | 350      |
+| `check_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Check`'s index from its pieces.              | 350      |
+| `credential_index(`<br/>&emsp;`subject_ptr: i32,`<br/>&emsp;`subject_len: i32,`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`cred_type_ptr: i32,`<br/>&emsp;`cred_type_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`      | Calculate a `Credential`'s index from its pieces.         | 350      |
+| `delegate_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate a `Delegate`'s index from its pieces.           | 350      |
+| `deposit_preauth_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`authorize_ptr: i32,`<br/>&emsp;`authorize_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                           | Calculate a `DepositPreauth`'s index from its pieces.     | 350      |
+| `did_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                       | Calculate a `DID`'s index from its pieces.                | 350      |
+| `escrow_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate an `Escrow`'s index from its pieces.            | 350      |
+| `trustline_index(`<br/>&emsp;`account1_ptr: i32,`<br/>&emsp;`account1_len: i32,`<br/>&emsp;`account2_ptr: i32,`<br/>&emsp;`account2_len: i32,`<br/>&emsp;`currency_ptr: i32,`<br/>&emsp;`currency_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`   | Calculate a trustline’s index from its pieces.            | 350      |
+| `mpt_issuance_index(`<br/>&emsp;`issuer_ptr: i32,`<br/>&emsp;`issuer_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate an `MPTIssuance`’s index from its pieces.       | 350      |
+| `mptoken_index(`<br/>&emsp;`mptid_ptr: i32,`<br/>&emsp;`mptid_len: i32,`<br/>&emsp;`holder_ptr: i32,`<br/>&emsp;`holder_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                             | Calculate an `MPToken`’s index from its pieces.           | 350      |
+| `nft_offer_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                   | Calculate an `NFTOffer`'s index from its pieces.          | 350      |
+| `offer_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate an `Offer`'s index from its pieces.             | 350      |
+| `oracle_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`document_id_ptr: i32,`<br/>&emsp;`document_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                | Calculate an `Oracle`'s index from its pieces.            | 350      |
+| `paychan_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`destination_ptr: i32,`<br/>&emsp;`destination_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Calculate a `PayChannel`’s index from its pieces.         | 350      |
+| `permissioned_domain_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                         | Calculate a `PermissionedDomain`’s index from its pieces. | 350      |
+| `signers_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                                                                                   | Calculate a `SignerListSet`'s index from its pieces.      | 350      |
+| `ticket_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                      | Calculate a `Ticket`'s index from its pieces.             | 350      |
+| `vault_index(`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32,`<br/>&emsp;`sequence_ptr: i32,`<br/>&emsp;`sequence_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                       | Calculate a `Vault`’s index from its pieces.              | 350      |
 
-The singleton keylets (e.g. `Amendments`) are a bit unnecessary to include, as a dev can simply copy the keylet directly instead. They will be included as constants in `xrpl-wasm-stdlib` as well.
+The singleton indexes (e.g. `Amendments`) are a bit unnecessary to include, as a dev can simply copy the index directly instead. They will be included as constants in `xrpl-wasm-stdlib` as well.
 
-The directory keylets and `NFTokenPage` were not included, since they are a bit more complex to parse through and it seemed unnecessary for now. These can always be added in the future.
+The directory indexes and `NFTokenPage` were not included, since they are a bit more complex to parse through and it seemed unnecessary for now. These can always be added in the future.
 
 ### 5.6. NFTs
 
@@ -190,12 +190,12 @@ Fetch information about NFTs.
 
 | Function Signature                                                                                                                                                                                 | Description                                   | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- | :------- |
-| `get_nft(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
-| `get_nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                  | Extract the NFT issuer from the NFT ID.       | 350      |
-| `get_nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                   | Extract the NFT taxon from the NFT ID.        | 350      |
-| `get_nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                 | Extract the NFT flags from the NFT ID.        | 350      |
-| `get_nft_transfer_fee(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                          | Extract the NFT transfer fee from the NFT ID. | 350      |
-| `get_nft_serial(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                  | Extract the NFT serial from the NFT ID.       | 350      |
+| `nft_uri(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
+| `nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT issuer from the NFT ID.       | 350      |
+| `nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                       | Extract the NFT taxon from the NFT ID.        | 350      |
+| `nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                     | Extract the NFT flags from the NFT ID.        | 350      |
+| `nft_xfer_fee(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                  | Extract the NFT transfer fee from the NFT ID. | 350      |
+| `nft_serial(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT serial from the NFT ID.       | 350      |
 
 ### 5.7. Utils
 
@@ -204,25 +204,25 @@ Miscellaneous utility functions.
 | Function Signature                                                                                                                                                                                          | Description                                                                                                              | Gas Cost |
 | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :------- |
 | `check_sig(`<br/>&emsp;`message_ptr: i32,`<br/>&emsp;`message_len: i32,`<br/>&emsp;`signature_ptr: i32,`<br/>&emsp;`signature_len: i32,`<br/>&emsp;`pubkey_ptr: i32,`<br/>&emsp;`pubkey_len: i32,`<br />`)` | Check the validity of a signature. Returns a `0` for invalid and `1` for valid. Supports both `ED25519` and `SECP256K1.` | 2000     |
-| `compute_sha512_half(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                          | Calculate the `sha512` half hash of provided data.                                                                       | 2000     |
+| `sha512_half(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                                  | Calculate the `sha512` half hash of provided data.                                                                       | 2000     |
 
 ### 5.8. Floats
 
 Helper functions for working with rippled-encoded floats (e.g. IOU amounts).
 
-| Function Signature                                                                                                                                                                                                     | Description                                                       | Gas Cost |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- | :------- |
-| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                | Create a float in rippled format from a 64-bit integer.           | 1000     |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                            | Create a float in rippled format from a 64-bit unsigned integer.  | 1000     |
-| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                        | Create a float in rippled format from an exponent and a mantissa. | 1000     |
-| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                       | Compare two floats in rippled format.                             | 1000     |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`      | Add two floats in rippled format.                                 | 1000     |
-| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Subtract two floats in rippled format.                            | 1000     |
-| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                            | 1000     |
-| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`   | Divide two floats in rippled format.                              | 1000     |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                      | Compute the nth power of a float in rippled format.               | 1000     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                    | Compute the nth root of a float in rippled format.                | 1000     |
-| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                            | Compute the 10 based log of a float in rippled format.            | 1000     |
+| Function Signature                                                                                                                                                                                                 | Description                                                       | Gas Cost |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- | :------- |
+| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                            | Create a float in rippled format from a 64-bit integer.           | 1000     |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Create a float in rippled format from a 64-bit unsigned integer.  | 1000     |
+| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                    | Create a float in rippled format from an exponent and a mantissa. | 1000     |
+| `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                       | Compare two floats in rippled format.                             | 1000     |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`  | Add two floats in rippled format.                                 | 1000     |
+| `float_sub(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`  | Subtract two floats in rippled format.                            | 1000     |
+| `float_mult(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                            | 1000     |
+| `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`  | Divide two floats in rippled format.                              | 1000     |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                  | Compute the nth power of a float in rippled format.               | 1000     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                | Compute the nth root of a float in rippled format.                | 1000     |
+| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                        | Compute the 10 based log of a float in rippled format.            | 1000     |
 
 ### 5.9. Trace
 
@@ -230,13 +230,13 @@ Output debug info to the `rippled` debug log (if trace logging is enabled). The 
 
 Each of these host functions will return `0` on success and a negative value on failure.
 
-| Function Signature                                                                                                                                      | Description                                             | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------ | :------- |
-| `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)`     | A logging helper function.                              | 500      |
-| `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                      | A logging helper function for numbers.                  | 500      |
-| `trace_opaque_float(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`opaque_float_ptr: i32,`<br/>&emsp;`opaque_float_len: i32`<br />`)` | A logging helper function for floats in rippled format. | 500      |
-| `trace_account(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32`<br />`)`                | A logging helper function for accounts.                 | 500      |
-| `trace_amount(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`amount_ptr: i32,`<br/>&emsp;`amount_len: i32`<br />`)`                   | A logging helper function for amounts.                  | 500      |
+| Function Signature                                                                                                                                  | Description                                             | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------ | :------- |
+| `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)` | A logging helper function.                              | 500      |
+| `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                  | A logging helper function for numbers.                  | 500      |
+| `trace_xfloat(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`xfloat_ptr: i32,`<br/>&emsp;`xfloat_len: i32`<br />`)`               | A logging helper function for floats in rippled format. | 500      |
+| `trace_acct(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32`<br />`)`               | A logging helper function for accounts.                 | 500      |
+| `trace_amt(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`amount_ptr: i32,`<br/>&emsp;`amount_len: i32`<br />`)`                  | A logging helper function for amounts.                  | 500      |
 
 ### 5.10. Updating Fields
 
@@ -244,9 +244,9 @@ Update on-chain data associated with the WASM code.
 
 This section is the only section of functions that will likely be different for each Smart Feature. Each may have its own way of storing data.
 
-| Function Signature                                                           | Description                                                                                 | Gas Cost |
-| :--------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
-| `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
+| Function Signature                                                        | Description                                                                                 | Gas Cost |
+| :------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------ | :------- |
+| `set_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
 
 ## 6. Security
 
@@ -274,7 +274,7 @@ User-provided WASM code is executed within a strict sandbox. It has no access to
 
 A new WASM VM instance will be created for each WASM module execution. This ensures that there is no state that can be leaked between different executions, and that memory cannot be corrupted between runs.
 
-WASM code cannot directly traverse arbitrary ledger directories or iterate through global ledger state. All access must be via bounded, predefined inputs (e.g., keylets or account IDs passed into the subroutine). This design ensures that malicious WASM code cannot manipulate or exfiltrate ledger state beyond the narrow scope allowed by the host API.
+WASM code cannot directly traverse arbitrary ledger directories or iterate through global ledger state. All access must be via bounded, predefined inputs (e.g., indexes or account IDs passed into the subroutine). This design ensures that malicious WASM code cannot manipulate or exfiltrate ledger state beyond the narrow scope allowed by the host API.
 
 ### 6.4. Resource Limiting
 
@@ -291,15 +291,15 @@ All future changes to this spec (even just a simple change to the gas cost of a 
 For example, this is what it might look like to add a new host function:
 
 ```c
-WASM_IMPORT_FUNC2(i, didKeylet, "did_keylet", hfs,     350);
-WASM_IMPORT_FUNC2(i, escrowKeylet, "escrow_keylet", hfs,       350);
+WASM_IMPORT_FUNC2(i, didindex, "did_index", hfs,     350);
+WASM_IMPORT_FUNC2(i, escrowindex, "escrow_index", hfs,       350);
 if (hfs->isAmendmentEnabled(featureLendingProtocol))
-    WASM_IMPORT_FUNC2(i, loanKeylet, "loan_keylet", hfs,     350);
+    WASM_IMPORT_FUNC2(i, loanindex, "loan_index", hfs,     350);
 ```
 
 _(in `WasmVM.cpp`)_
 
-This ensures that smart escrows cannot use the `loan_keylet` host function at all before the `LendingProtocol` amendment is activated, as the amendment proce`ss ensures that all nodes and validators have the code before it is run.
+This ensures that smart escrows cannot use the `loan_index` host function at all before the `LendingProtocol` amendment is activated, as the amendment proce`ss ensures that all nodes and validators have the code before it is run.
 
 # Appendix
 
