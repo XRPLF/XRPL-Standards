@@ -208,21 +208,227 @@ Miscellaneous utility functions.
 
 ### 5.8. Floats
 
-Helper functions for working with rippled-encoded floats (e.g. IOU amounts).
+Helper functions for performing floating point arithmetic via rippled. These are used for any calculation requiring
+XRPL's decimal floating point format — including IOU amounts, lending protocol math, fee calculations, or arbitrary
+numeric operations within a smart contract.
 
-| Function Signature                                                                                                                                                                                                     | Description                                                       | Gas Cost |
-| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------- | :------- |
-| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                | Create a float in rippled format from a 64-bit integer.           | 1000     |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                            | Create a float in rippled format from a 64-bit unsigned integer.  | 1000     |
-| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                        | Create a float in rippled format from an exponent and a mantissa. | 1000     |
-| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                       | Compare two floats in rippled format.                             | 1000     |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`      | Add two floats in rippled format.                                 | 1000     |
-| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Subtract two floats in rippled format.                            | 1000     |
-| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)` | Multiply two floats in rippled format.                            | 1000     |
-| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`   | Divide two floats in rippled format.                              | 1000     |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                      | Compute the nth power of a float in rippled format.               | 1000     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                    | Compute the nth root of a float in rippled format.                | 1000     |
-| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                            | Compute the 10 based log of a float in rippled format.            | 1000     |
+All float buffers (`OpaqueFloat`) are exactly **12 bytes**: a 4-byte big-endian signed exponent (`i32`) followed by
+an 8-byte big-endian signed mantissa (`i64`). Contracts must treat these buffers as opaque and must not decode or
+construct them directly — all operations must go through these host functions.
+
+The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `1` = toward zero, `2` = downward
+(floor), `3` = upward (ceiling).
+
+| Function Signature                                                                                                                                                                                                                      | Description                                                                       | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :------- |
+| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                                 | Create a float in rippled format from a 64-bit integer.                           | 100      |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                             | Create a float in rippled format from a 64-bit unsigned integer.                  | 130      |
+| `float_set(`<br/>&emsp;`exponent: i32,`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                         | Create a float in rippled format from an exponent and a mantissa.                 | 100      |
+| `float_from_stamount(`<br/>&emsp;`stamount_buf: i32,`<br/>&emsp;`stamount_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                        | Load a float from the bytes of a serialized STAmount.                             | 150      |
+| `float_from_stnumber(`<br/>&emsp;`stnumber_buf: i32,`<br/>&emsp;`stnumber_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                        | Load a float from a serialized STNumber value, validating and normalizing it.     | 150      |
+| `float_to_int(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                          | Convert a float to a signed 64-bit integer, applying the specified rounding mode. | 130      |
+| `float_to_mantissa_and_exponent(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                       | 130      |
+| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                                        | Compare two floats in rippled format.                                             | 80       |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                       | Add two floats in rippled format.                                                 | 160      |
+| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                  | Subtract two floats in rippled format.                                            | 160      |
+| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                  | Multiply two floats in rippled format.                                            | 300      |
+| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                    | Divide two floats in rippled format.                                              | 300      |
+| `float_negate(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                                           | Negate a float.                                                                   | 150      |
+| `float_abs(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                                              | Absolute value of a float.                                                        | 150      |
+| `float_sign(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32`<br />`)`                                                                                                                                                                 | Sign of a float. Returns `-1` (negative), `0` (zero), or `1` (positive).          | 150      |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                       | Compute the nth power of a float in rippled format.                               | 5500     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                     | Compute the nth root of a float in rippled format.                                | 5500     |
+| `float_log(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                             | Compute the 10 based log of a float in rippled format.                            | 12000    |
+
+#### 5.8.1. OpaqueFloat Type
+
+`OpaqueFloat` is an opaque 12-byte (96-bit) floating point number, consisting of a 4-byte signed exponent followed by an
+8-byte signed mantissa. rippled's `Number` class is the core decimal floating-point type used throughout the ledger; all
+`OpaqueFloat` arithmetic is delegated to it via host functions.
+
+**Important — treat as opaque:** Smart contracts SHOULD NOT inspect, decode, or construct `OpaqueFloat` bytes directly.
+All operations SHOULD go through the host functions defined in §5.8. A contract that reads or writes the
+individual bytes of an `OpaqueFloat` buffer is relying on an implementation detail that may change, and will produce
+incorrect or undefined behavior if it does. The buffer should be allocated, passed to host functions, and discarded —
+nothing else.
+
+**Warning — do not persist OpaqueFloat bytes:** Contracts MUST NOT write `OpaqueFloat` buffers into contract storage (
+e.g., the `data` field of a smart escrow or smart feature). The 12-byte encoding is an in-memory convention tied to a
+specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in §5.11
+explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running
+against the updated host functions.
+
+If a contract needs to persist a floating point value across invocations, it should store the **mantissa and exponent as
+separate integers** in a contract-defined format, then reconstruct the `OpaqueFloat` at runtime using
+`float_set`. For example:
+
+```rust
+// Persisting: decompose into primitive integers and write to contract data
+let exponent: i32 = /* obtained from contract logic */;
+let mantissa: i64 = /* obtained from contract logic */;
+// Store exponent (4 bytes) and mantissa (8 bytes) in your own layout
+
+// Restoring: reconstruct from stored integers
+let mut f = [0u8; 12]; float_set(exponent, mantissa, f.as_mut_ptr(), 12, 0 /* TO_NEAREST */);
+```
+
+This approach uses only stable primitive types (`i32`, `i64`) and is completely independent of any future changes to the
+`OpaqueFloat` binary layout.
+
+#### 5.8.2. OpaqueFloat Serialization Format
+
+This section documents the `OpaqueFloat` encoding for **rippled implementers and tooling authors**. Contracts must not
+use this information to construct or decode buffers — they must use the host functions in §5.8 exclusively.
+
+`OpaqueFloat` uses a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why
+`float_from_stnumber` is a conversion function rather than a no-op):
+
+- **Layout:** 12 bytes total — 4-byte big-endian signed exponent followed by 8-byte big-endian signed mantissa
+- **No type prefix:** The buffer contains only the 12 payload bytes
+- **Consensus-compatible:** Produced and consumed exclusively by rippled's host function implementations
+
+**Serialization Layout (96 bits / 12 bytes):**
+
+```
+[Signed Exponent: 4 bytes (i32, big-endian)][Signed Mantissa: 8 bytes (i64, big-endian)]
+```
+
+**Field Descriptions:**
+
+- **Exponent** (bytes 0–3): Signed 32-bit integer (`i32`), big-endian. Represents the power of 10 applied to the
+  mantissa.
+- **Mantissa** (bytes 4–11): Signed 64-bit integer (`i64`), big-endian. Represents the significant digits of the value.
+  When normalized: 10^18 ≤ |mantissa| < 10^19 (i.e., 1,000,000,000,000,000,000 to 9,999,999,999,999,999,999), except for
+  zero. This reflects the **large-scale** normalization range used by rippled's `Number` class, which is the default when
+  the `SingleAssetVault` or `LendingProtocol` amendments are enabled. A legacy **small-scale** range
+  (10^15 ≤ |mantissa| < 10^16) applies only when both amendments are disabled for backward compatibility with the
+  `STAmount` IOU format. Note: because the large-scale mantissa can exceed `i64` max, rippled's `mantissa()` accessor
+  divides the internal value by 10 and increments the exponent by 1 before returning it, so the `i64` value returned to
+  WASM callers always fits in a signed 64-bit integer but may be one decimal digit shorter than the internal
+  representation.
+
+**Special Values** (for implementers; contracts must not rely on these byte patterns):
+
+- **Zero:** Exponent and mantissa both `0` — all 12 bytes are `0x00`.
+- **Null / uninitialized:** A distinct state used internally by rippled; contracts must not rely on specific byte
+  patterns for this state.
+
+**Relationship to On-Ledger Formats:**
+
+When an `OpaqueFloat` is used to represent a fungible token amount in an `STAmount` field, the on-ledger wire format is
+unchanged:
+
+```
+[STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
+```
+
+The 12-byte `OpaqueFloat` format is strictly an in-memory buffer convention for passing values to and from WASM host
+functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions
+`float_from_stamount` and `float_from_stnumber` bridge between those formats and `OpaqueFloat`.
+
+#### 5.8.3. OpaqueFloat Motivation
+
+XRPL Smart Contracts running in WebAssembly need to perform correct decimal arithmetic. This need arises in many
+contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral
+ratios, calculating fees, and more.
+
+Getting floating-point arithmetic "right" is genuinely hard. Correct rounding, normalization, overflow handling, and
+edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is
+not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating
+all arithmetic to rippled's `Number` class via host functions, contracts get a battle-tested implementation that is
+known to be correct for XRPL's numeric domain.
+
+Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (`f32`/`f64` ops are unavailable to
+contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that
+need fixed-point arithmetic independent of the `OpaqueFloat` host functions — for example, to work with integer ratios
+or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs
+fixed-point
+math
+entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
+
+#### 5.8.4. OpaqueFloat Example Usage
+
+```rust
+#![no_std]
+#![no_main]
+
+use xrpl_wasm_stdlib::host::{
+  float_from_stamount, float_from_int, float_add, float_to_int,
+  Result, Error,
+};
+use xrpl_wasm_stdlib::host::Result::{Ok, Err};
+
+#[unsafe(no_mangle)]
+pub extern "C" fn finish() -> i32 {
+  // Load an OpaqueFloat from a serialized STAmount (IOU variant, 8 bytes)
+  let stamount_bytes = [0u8; 8]; // obtained from transaction or ledger object
+  let mut float_a = [0u8; 12];
+  if float_from_stamount(
+    stamount_bytes.as_ptr(), 8,
+    float_a.as_mut_ptr(), 12,
+  ) < 0 {
+    return 0; // error
+  }
+
+  // Convert an integer to OpaqueFloat
+  let mut float_b = [0u8; 12];
+  if float_from_int(100, float_b.as_mut_ptr(), 12, 0) < 0 {
+    return 0;
+  }
+
+  // Add the two floats
+  let mut result = [0u8; 12];
+  if float_add(
+    float_a.as_ptr(), 12,
+    float_b.as_ptr(), 12,
+    result.as_mut_ptr(), 12,
+    0, // TO_NEAREST
+  ) < 0 {
+    return 0;
+  }
+
+  // Convert result back to integer
+  let mut int_result = [0u8; 8];
+  if float_to_int(
+    result.as_ptr(), 12,
+    int_result.as_mut_ptr(), 8,
+    0, // TO_NEAREST
+  ) < 0 {
+    return 0;
+  }
+
+  1 // Success
+}
+```
+
+#### 5.8.5. OpaqueFloat Binary Format Reference
+
+> **For implementers and tooling authors only.** Contracts must never decode or construct `OpaqueFloat` bytes
+> directly. This section exists to support rippled development, debuggers, explorers, and spec verification — not
+> contract authors.
+
+**OpaqueFloat layout (12 bytes):**
+
+```
+Offset  Size  Type   Description
+------  ----  -----  -----------
+0       4     i32    Signed exponent, big-endian
+4       8     i64    Signed mantissa, big-endian
+```
+
+**Zero value (12 bytes):**
+
+```
+00 00 00 00   <- exponent: 0
+00 00 00 00 00 00 00 00   <- mantissa: 0
+```
+
+**Example: positive value with exponent -15, mantissa 10^15:**
+
+```
+FF FF FF F1   <- exponent: -15 (i32 big-endian: 0xFFFFFFF1)
+00 03 8D 7E A4 C6 80 00   <- mantissa: 1,000,000,000,000,000 (10^15)
+```
 
 ### 5.9. Trace
 
@@ -247,6 +453,23 @@ This section is the only section of functions that will likely be different for 
 | Function Signature                                                           | Description                                                                                 | Gas Cost |
 | :--------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ | :------- |
 | `update_data(`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32`<br />`)` | Update the `Data` field in the ledger object that hosts the WASM code, e.g. a Smart Escrow. | 50       |
+
+### 5.11. Host Function Versioning Rules
+
+The following rules govern the lifecycle of all host functions in this specification and must be respected by all
+implementations:
+
+1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a
+   new function are unaffected.
+2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for
+   backward compatibility. Deployed contracts may rely on any host function that was available at deployment time.
+3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types,
+   parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts
+   hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `OpaqueFloat`). If a buffer size
+   changes, a new host function with a different name MUST be introduced.
+
+These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future
+versions of the platform.
 
 ## 6. Security
 
@@ -399,3 +622,73 @@ Not all smart contract chains support refundable gas - for example, Solana does 
 ### C.4: Will transactions that use the WASM VM be testable via `simulate`?
 
 Yes, though that needs to be tested. This should make it easier for users to estimate gas usage.
+
+### C.5: Why not use native WASM floating point?
+
+WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. One might ask whether those could be used
+directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of
+non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical). In practice this would be
+insufficient for two independent reasons.
+
+First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both
+formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example,
+the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal
+arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect
+by construction.
+
+Second, and more fundamentally, XRPL's `Number` arithmetic is itself **complex, carefully specified, and subject to
+change via ledger amendment.** The rippled implementation encodes years of decisions about rounding, normalization,
+overflow handling, and edge cases for decimal calculations. There is no Rust equivalent in this library, and there
+should not be: porting that logic correctly would be a significant maintenance burden, and any divergence — even a
+single rounding edge case — would produce a contract that computes results differently from rippled. Worse, if the
+`Number` arithmetic is ever changed by a ledger amendment, contracts that embedded their own copy of the logic would
+silently continue using the old behavior while the rest of the ledger moved to the new one.
+
+The host function design ensures that **all contracts always use exactly the arithmetic rippled uses at execution time.**
+No porting, no maintenance, no drift.
+
+### C.6: Why not provide a Rust implementation of Number arithmetic in `xrpl-wasm-stdlib`?
+
+For similar reasons, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an
+implementation would face the same amendment-drift problem: it would be frozen at the version of the logic that existed
+when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled,
+rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the
+arithmetic logic in exactly one place.
+
+### C.7: Why the 12-byte encoding for OpaqueFloat?
+
+Using an unpacked 12-byte layout (4-byte exponent + 8-byte mantissa) rather than existing XRPL serialization formats:
+
+**Compared to STAmount (8 bytes):** OpaqueFloat uses 4 extra bytes, but provides:
+
+1. **Larger mantissa precision:** 64-bit signed mantissa vs. 54-bit mantissa in STAmount
+2. **Wider exponent range:** 32-bit signed exponent vs. 8-bit exponent in STAmount
+3. **Simpler layout:** Unpacked integer fields are straightforward to serialize and deserialize
+
+The 4 extra bytes per value are negligible given the `no_std` stack-only model.
+
+**Compared to STNumber (14 bytes):** OpaqueFloat is 2 bytes shorter because it omits the type prefix — the host
+functions already know they're working with a float, so the prefix is unnecessary.
+
+### C.8: Why are ledger serialization formats unchanged by OpaqueFloat?
+
+The 12-byte `OpaqueFloat` format is exclusively a host-function buffer convention. Existing ledger serialization
+formats — including the 8-byte `STAmount` IOU encoding — are unchanged by this specification.
+`float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `OpaqueFloat`
+for in-contract computation, without touching how those values are stored or transmitted on the wire.
+
+### C.9: Why is host function immutability required?
+
+The versioning rules in §5.11 reflect a fundamental constraint of the WASM smart contract platform: deployed
+contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue
+to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a
+preference.
+
+**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let
+old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)
+but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in
+contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
+
+**Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable
+forever) rather than on contract authors or users. This is a conservative choice appropriate for financial
+infrastructure.
