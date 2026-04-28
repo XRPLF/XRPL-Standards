@@ -22,6 +22,7 @@ jobs:
         id: added-numbered
         uses: tj-actions/changed-files@v47
         with:
+          use_rest_api: true
           files: |
             XLS-[0-9][0-9][0-9][0-9]-*/README.md
             xls-[0-9][0-9][0-9][0-9]-*/README.md
