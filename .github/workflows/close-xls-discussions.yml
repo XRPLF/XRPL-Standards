@@ -53,7 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install beautifulsoup4
+          pip install -r scripts/requirements.txt
 
       - name: Generate token from GitHub App
         id: generate_token
