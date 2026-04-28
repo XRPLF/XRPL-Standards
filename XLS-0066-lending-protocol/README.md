@@ -551,17 +551,23 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 #### 3.3.1 Fields
 
-| Field Name             | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                        |
-| ---------------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`      |   Yes    | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
-| `VaultID`              |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity.                                                                               |
-| `LoanBrokerID`         |    No    | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
-| `Flags`                |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
-| `Data`                 |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
-| `ManagementFeeRate`    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
-| `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
-| `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
-| `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+| Field Name             |  Required   | JSON Type | Internal Type | Default Value | Description                                                                                                                                        |
+| ---------------------- | :---------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`      |     Yes     | `string`  |   `UINT16`    |     `74`      | The transaction type.                                                                                                                              |
+| `VaultID`              | Conditional | `string`  |   `HASH256`   |     `N/A`     | The Vault ID that the Lending Protocol will use to access liquidity. See [§ 3.3.1.1](#3311-vaultid).                                               |
+| `LoanBrokerID`         |     No      | `string`  |   `HASH256`   |     `N/A`     | The Loan Broker ID that the transaction is modifying.                                                                                              |
+| `Flags`                |     No      | `number`  |   `UINT32`    |       0       | Specifies the flags for the LoanBroker.                                                                                                            |
+| `Data`                 |     No      | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
+| `ManagementFeeRate`    |     No      | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
+| `DebtMaximum`          |     No      | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
+| `CoverRateMinimum`     |     No      | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateLiquidation` |     No      | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
+
+##### 3.3.1.1 `VaultID`
+
+`VaultID` is **required** when `LoanBrokerID` is absent (i.e., the transaction is creating a new `LoanBroker`). It identifies the `Vault` that will back the lending protocol instance, and is stored permanently on the resulting `LoanBroker` object.
+
+`VaultID` must **not** be present when `LoanBrokerID` is present (i.e., the transaction is modifying an existing `LoanBroker`). The `Vault` association is fixed at creation time and cannot be changed.
 
 #### 3.3.2 Transaction Fee
 
@@ -571,15 +577,17 @@ This transaction uses the standard transaction fee.
 
 ##### 3.3.3.1 Data Verification
 
-1. `VaultID` is zero. (`temINVALID`)
-2. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
-3. `ManagementFeeRate` is outside valid range (0 to 10000). (`temINVALID`)
-4. `CoverRateMinimum` is outside valid range (0 to 100000). (`temINVALID`)
-5. `CoverRateLiquidation` is outside valid range (0 to 100000). (`temINVALID`)
-6. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
-7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
-8. `LoanBrokerID` is specified and is zero. (`temINVALID`)
-9. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
+1. `VaultID` is present and is zero. (`temINVALID`)
+2. `LoanBrokerID` is not specified (creating new) and `VaultID` is absent. (`temINVALID`)
+3. `LoanBrokerID` is specified (modifying existing) and `VaultID` is present. (`temINVALID`)
+4. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
+5. `ManagementFeeRate` is outside valid range (0 to 10000). (`temINVALID`)
+6. `CoverRateMinimum` is outside valid range (0 to 100000). (`temINVALID`)
+7. `CoverRateLiquidation` is outside valid range (0 to 100000). (`temINVALID`)
+8. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
+9. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
+10. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+11. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
 
 ##### 3.3.3.2 Protocol-Level Failures
 
@@ -595,8 +603,7 @@ This transaction uses the standard transaction fee.
 
 6. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
 7. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
-8. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
-9. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
+8. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
 
 **Precision Validation:**
 
