@@ -1018,7 +1018,7 @@ We introduce a new object field `AuctionSlot` in the **`AMM`** object associated
 | --------------- | :----------------: | :-------: | :-----------: |
 | `DiscountedFee` | :heavy_check_mark: | `string`  |   `UINT32`    |
 
-`DiscountedFee` represents the `TradingFee` to be charged to this account for trading against the AMM instance. By default it is `TradingFee`/10.
+`DiscountedFee` represents the `TradingFee` to be charged to this account for trading against the AMM instance. By default it is `TradingFee`/10, using integer division (rounding down). When `TradingFee` is between 1 and 9, the discounted fee rounds to 0.
 
 ---
 
@@ -1086,7 +1086,7 @@ We introduce a new transaction **`AMMBid`** to place a bid for the auction slot.
 | -------------- | :-------: | :-------: | :-----------: |
 | `AuthAccounts` |           |  `array`  |    `Array`    |
 
-`AuthAccounts` represents an array of XRPL account IDs that are authorized to trade at the discounted fee against the AMM instance. The proposal allows for up to a maximum of four accounts.
+`AuthAccounts` represents an array of XRPL account IDs that are authorized to trade at the discounted fee against the AMM instance. The proposal allows for up to a maximum of four accounts. The bidder's own account **MUST NOT** be included in the `AuthAccounts` list.
 
 ---
 

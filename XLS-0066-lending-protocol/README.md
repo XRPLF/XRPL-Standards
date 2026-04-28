@@ -212,7 +212,7 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
 
 #### 3.1.8 Invariants
 
-_TBD_
+- `CoverAvailable` must be greater than or equal to the actual asset balance held by the `LoanBroker` _pseudo-account_. (The implementation enforces `CoverAvailable >= pseudoAccountBalance`, which is a one-sided check — `CoverAvailable` is permitted to exceed the actual balance due to rounding.)
 
 #### 3.1.9 Example JSON
 
@@ -1497,6 +1497,8 @@ The `LoanSet` transaction requires signatures from both parties (borrower and lo
 
 When the First-Loss Capital falls below the required minimum, broker fees are redirected to the cover pool rather than blocking loan payments entirely. This ensures that borrowers can always make payments regardless of the broker's capital position, while simultaneously rebuilding the cover pool. Blocking payments would harm borrowers who have no control over the broker's capital management, and could cascade into unnecessary defaults.
 
+> **Note:** Fee redirection also occurs when the `LoanBroker.Owner` is deep-frozen for the asset or lacks asset authorization, even if the First-Loss Capital is sufficient. See §3.11.5 for the complete set of conditions.
+
 ### 4.7 Pseudo-Accounts for Asset Custody
 
 The LoanBroker uses a pseudo-account to hold First-Loss Capital to separate Single Asset Vault funds and LoanBroker funds.
@@ -1524,6 +1526,8 @@ A sequential identifier for Loans associated with a LoanBroker object. This valu
 ### A-1-2. Why can't the `LoanBrokerCoverClawback` clawback the full LoanBroker.CoverAvailable amount?
 
 The `LoanBrokerCoverClawback` transaction allows the Issuer to clawback the `LoanBroker` First-Loss Capital, specifically the `LoanBroker.CoverAvailable` amount. The transaction cannot claw back the full CoverAvailable amount because the LoanBroker must maintain a minimum level of first-loss capital to protect depositors. This minimum is calculated as `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. When a `LoanBroker` has active loans, a complete clawback would leave depositors vulnerable to unexpected losses. Therefore, the system ensures that a minimum amount of first-loss capital is always maintained.
+
+> **Note (rounding precision):** The implementation uses ceiling rounding when computing `minRequiredCover` (`DebtTotal × CoverRateMinimum`) but floor rounding for the subsequent subtraction (`CoverAvailable − minRequiredCover`) in `LoanBrokerCoverClawback`. By contrast, `LoanBrokerCoverWithdraw` uses ceiling rounding for both parts. This asymmetry means the maximum clawback-able amount may differ slightly from the maximum withdraw-able amount for the same `CoverAvailable` and `DebtTotal` values.
 
 ## A-2 Equation Glossary
 

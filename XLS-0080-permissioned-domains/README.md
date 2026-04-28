@@ -33,7 +33,7 @@ This feature will require an amendment. Since this feature doesn't bring any fun
 - **Domain**: A collection of rules indicating what accounts may be a part of it. This spec includes credential-gating, but more options could be added in the future. A domain is focused on "who can participate". The "how they can participate" (e.g. what tokens they may use) aspect can be done in other ways in the primitives they're used.
 - **Domain Rules**: The set of rules that govern a domain, i.e. the credentials it accepts.
 - **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
-- **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
+- **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain), or the domain owner. There is no explicit joining step; as long as the account has a valid credential, it is a member. The domain owner is always implicitly a member and does not need to hold any accepted credential.
 
 ## 2. On-Ledger Object: `PermissionedDomain`
 
@@ -185,7 +185,7 @@ No, unless they are also the issuer of said credential.
 
 ### A.7: Does the domain owner need to hold the credentials?
 
-No.
+No. The domain owner has implicit membership in the domain and does not need to hold any of the accepted credentials to participate.
 
 ### A.8: Why not have a ledger object for each domain rule, instead of having it all in one object? Then you wouldn't have any limitations on how many rules a domain could have.
 

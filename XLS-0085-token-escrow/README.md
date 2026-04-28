@@ -73,6 +73,10 @@ The `EscrowCreate` transaction is modified as follows:
 - **Insufficient Spendable Balance:**
   - If the source account lacks sufficient spendable balance, the transaction fails with `tecUNFUNDED`.
 
+**Note:** `EscrowCreate` does not check the destination's `lsfDepositAuth` flag. Escrows may be created targeting deposit-auth-enabled accounts; `DepositPreauth` is only enforced at `EscrowFinish` time (and is checked against the account submitting the `EscrowFinish` transaction, not the original escrow sender).
+
+**Note:** If the issuer revokes authorization (`lsfRequireAuth`) from both the escrow source and destination after escrow creation, the escrow may become permanently irrecoverable — `EscrowFinish` will fail because the destination is unauthorized, and `EscrowCancel` (for IOU escrows) will also fail because the source is unauthorized. This edge case has no automated resolution mechanism.
+
 **State Changes:**
 
 - **Adjustment from Source to Issuer:**
@@ -82,7 +86,7 @@ The `EscrowCreate` transaction is modified as follows:
   - The `Escrow` ledger object includes:
     - `Amount`: Tokens held in escrow.
     - `TransferRate`: `TransferRate` (IOUs) or `TransferFee` (MPTs) at creation.
-    - `IssuerNode`: Reference to the issuer’s ledger node if applicable.
+    - `IssuerNode`: Reference to the issuer’s ledger node if applicable. Note that the issuer's directory entry is created for tracking purposes but does not increment the issuer's `OwnerCount` or affect reserve accounting.
 
 ### 1.2.2. `EscrowFinish`
 
@@ -104,7 +108,8 @@ The `EscrowCreate` transaction is modified as follows:
     - **Deep Freeze**: If the token is deep frozen, the transaction fails with `tecFROZEN`.
     - **Global/Individual Freeze**: The transaction succeeds despite the token being globally or individually frozen.
   - **MPTs**:
-    - **Lock Conditions (Equivalent to Deep Freeze)**: Transaction fails with `tecFROZEN`.
+    - **Lock Conditions**: Transaction fails with `tecFROZEN`.
+    - **Regular Freeze (Individual)**: Transaction also fails with `tecFROZEN`. Note that this differs from IOU behavior, where individual freeze does not block `EscrowFinish`.
 
 **State Changes:**
 
@@ -165,17 +170,17 @@ The `EscrowCreate` transaction is modified as follows:
 
 ## 1.3. Key Differences Between IOU and MPT Escrows
 
-| Aspect                        | IOU Tokens                                                                                                          | Multi-Purpose Tokens (MPTs)                                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Trustlines**                | Required between accounts and issuer                                                                                | Not used                                                                                                            |
-| **Issuer Flag for Escrow**    | `lsfAllowTrustLineLocking` (account flag)                                                                           | `tfMPTCanEscrow` (token flag)                                                                                       |
-| **Transfer Flags**            | N/A                                                                                                                 | `tfMPTCanTransfer` must be enabled for escrow                                                                       |
-| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                  | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens                                |
-| **Destination Authorization** | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required |
-| **Freeze/Lock Conditions**    | **Deep Freeze** prevents `EscrowFinish`, but allows `EscrowCancel`; Global/Individual Freeze allows both operations | **Lock Conditions (Deep Freeze Equivalent)** prevent `EscrowFinish`, but allow `EscrowCancel`                       |
-| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during settlement                                                     | `TransferFee` stored at creation and applied during settlement                                                      |
-| **Outstanding Amount**        | Remains unchanged during escrow                                                                                     | Remains unchanged during escrow                                                                                     |
-| **Account Deletion**          | Escrows prevent account deletion                                                                                    | Escrows prevent account deletion                                                                                    |
+| Aspect                        | IOU Tokens                                                                                                          | Multi-Purpose Tokens (MPTs)                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Trustlines**                | Required between accounts and issuer                                                                                | Not used                                                                                                                                                       |
+| **Issuer Flag for Escrow**    | `lsfAllowTrustLineLocking` (account flag)                                                                           | `tfMPTCanEscrow` (token flag)                                                                                                                                  |
+| **Transfer Flags**            | N/A                                                                                                                 | `tfMPTCanTransfer` must be enabled for escrow                                                                                                                  |
+| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                  | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens                                                                           |
+| **Destination Authorization** | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required                                            |
+| **Freeze/Lock Conditions**    | **Deep Freeze** prevents `EscrowFinish`, but allows `EscrowCancel`; Global/Individual Freeze allows both operations | **Lock Conditions** and **Regular Freeze** prevent `EscrowFinish`, but allow `EscrowCancel` (note: unlike IOUs, regular freeze blocks `EscrowFinish` for MPTs) |
+| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during settlement                                                     | `TransferFee` stored at creation and applied during settlement                                                                                                 |
+| **Outstanding Amount**        | Remains unchanged during escrow                                                                                     | Remains unchanged during escrow                                                                                                                                |
+| **Account Deletion**          | Escrows prevent account deletion                                                                                    | Escrows prevent account deletion                                                                                                                               |
 
 ## 1.4. Transfer Rates and Fees
 
@@ -189,6 +194,7 @@ The `EscrowCreate` transaction is modified as follows:
 - **Locked Transfer Fee**: The `TransferFee` is captured at the time of `EscrowCreate` and stored in the `Escrow` object, similar to IOUs.
 - **Fee Calculation**: The escrowed amount is adjusted according to the `TransferFee` upon settlement, potentially reducing the final amount credited to the destination.
 - **Consistent Fee Application**: Both IOUs and MPTs use the transfer rate or fee stored at escrow creation, ensuring predictability for the destination.
+- **Amendment Dependency**: MPT transfer fee application at `EscrowFinish` requires the `fixTokenEscrowV1` amendment. Without this amendment, transfer fees on MPT escrow settlement are silently ignored (the net amount equals the gross amount).
 
 ## 1.5. Ledger Object Updates
 

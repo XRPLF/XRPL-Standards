@@ -135,6 +135,8 @@ A set of flags indicating properties or other options associated with this **`MP
 Except for `lsfMPTLocked`, which can be mutated via the **`MPTokenIssuanceSet`** transaction, these flags are
 **immutable** and can only be set once, at issuance creation, using the **`MPTokenIssuanceCreate`** transaction.
 
+> **Note:** When the `featureDynamicMPT` amendment is active, issuances created with `sfMutableFlags` granting clawback mutability (`lsmfMPTCanMutateCanClawback`) may have `lsfMPTCanClawback` enabled retroactively via `MPTokenIssuanceSet`, even after holders have already opted in under non-clawback terms. Holders should inspect the `sfMutableFlags` field at creation time to understand the full range of flags the issuer has reserved the right to change.
+
 ###### 2.1.1.2.3. `Issuer`
 
 The address of the account that controls both the issuance amounts and characteristics of a particular fungible token.
@@ -181,6 +183,8 @@ An unsigned 64-bit number that specifies the sum of all token amounts that have 
 value can be stored on ledger as a `default` type so that when its value is 0, it takes up less space on ledger. This
 value is increased whenever an issuer pays MPTs to a non-issuer account, and decreased whenever a non-issuer pays MPTs
 into the issuing account. The maximum value of this field is `0x7FFF'FFFF'FFFF'FFFF`.
+
+> **Note:** In 3-party `rippleSendMPT` transfers (holder-to-holder with a transfer fee), `OutstandingAmount` is temporarily incremented by the delivery amount before being decremented by the gross amount (delivery + fee) within the same transaction. This creates a transient intra-transaction state where `OutstandingAmount` may momentarily exceed its pre-transaction value before settling to the correct post-transaction value.
 
 ###### 2.1.1.2.7. `TransferFee`
 
@@ -555,6 +559,8 @@ the issuer attempts to submit this transaction, it will fail.
 
 This transaction can also be used to delete an `MPToken` object with a zero balance by submitting it with the
 `tfMPTUnauthorize` flag set.
+
+> **Note:** When the `featureSingleAssetVault` amendment is active, deletion of an `MPToken` with `lsfMPTLocked` set is blocked even if the balance is zero. Holders must first have the lock cleared (via `MPTokenIssuanceSet` by the issuer) before they can delete a zero-balance locked `MPToken`.
 
 #### 3.5.1. MPTokenAuthorize
 

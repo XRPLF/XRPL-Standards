@@ -212,7 +212,7 @@ The proposal introduces a new transaction type: **`DIDSet`** that can be used to
 
 If the `DID` object associated with the `Account` does not exist,
 
-- If either `URI`, `Data` or `DIDDocument` fields are not present in the transaction, then transaction fails.
+- If none of the `URI`, `Data`, or `DIDDocument` fields are present and non-empty in the transaction, then the transaction fails with `temEMPTY_DID`.
 - Otherwise, a successful `DIDSet` transaction creates a new `DID` object with the following object ID:
 
 `SHA-512Half` of the following values, concatenated in order:
@@ -244,7 +244,7 @@ For example, the implicit DID Document of `did:xrpl:1:0330E7FC9D56BB25D6893BA3F3
 
 If the `DID` object associated with the `Account` exists,
 
-- If `URI`, `Data` and `DIDDocument` fields are not present, then transaction fails.
+- If the update would result in a `DID` object with no non-empty content (i.e. all fields would be empty or absent after the update), the transaction fails with `temEMPTY_DID`.
 - Otherwise, a successful `DIDSet` transaction updates this object.
 
 ### 5.1.2. Transaction-specific fields
