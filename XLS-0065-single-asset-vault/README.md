@@ -163,7 +163,7 @@ Here's the table with the headings "Field," "Description," and "Value":
 
 | **Field**         | **Description**                                                                                                                 | **Value**            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `Issuer`          | The ACCOUNTID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID  |
+| `Issuer`          | The AccountID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID  |
 | `MaximumAmount`   | No limit to the number of shares that can be issued.                                                                            | `0xFFFFFFFFFFFFFFFF` |
 | `TransferFee`     | The fee paid to transfer the shares.                                                                                            | 0                    |
 | `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format.                                                                          | -                    |
