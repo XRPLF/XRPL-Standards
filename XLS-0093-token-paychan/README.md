@@ -3,7 +3,7 @@ xls: 93d
 title: Token-Enabled Payment Channels
 description: Extends Payment Channels to support IOU tokens and Multi-Purpose Tokens (MPTs).
 author: Denis Angell (@dangell7)
-discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/287
+proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/287
 category: Amendment
 status: Draft
 created: 2025-05-24
@@ -53,8 +53,8 @@ This amendment extends the functionality of payment channels to support both IOU
 
 The `PaymentChannelCreate` transaction is modified as follows:
 
-| Field    | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                              |
-|----------|-----------|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Field    | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                |
+| -------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Amount` | Yes       | Object or String | Amount        | The amount to fund the payment channel. Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). MUST always be a positive value. |
 
 ##### Failure Conditions
@@ -178,28 +178,28 @@ When closing the channel (either explicitly with the close flag, or automaticall
 
 The `PaymentChannel` ledger object is updated as follows:
 
-| Field Name     | JSON Type        | Internal Type | Description                                                                                                                                                          |
-|----------------|------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Amount`       | Object or String | Amount        | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. MUST always be a positive value.                                    |
-| `Balance`      | Object or String | Amount        | The amount already paid out from the channel. Same asset type as `Amount`.                                                                                           |
-| `TransferRate` | Number           | UInt32        | The transfer rate or fee at which the funds are held, stored at creation and used during claims. Applicable to both IOUs and MPTs.                                  |
-| `IssuerNode`   | Number           | UInt64        | *(Optional)* The ledger index of the issuer's directory node associated with the `PaymentChannel`. Used when the issuer is neither the source nor destination account. |
+| Field Name     | JSON Type        | Internal Type | Description                                                                                                                                                            |
+| -------------- | ---------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Amount`       | Object or String | Amount        | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. MUST always be a positive value.                                        |
+| `Balance`      | Object or String | Amount        | The amount already paid out from the channel. Same asset type as `Amount`.                                                                                             |
+| `TransferRate` | Number           | UInt32        | The transfer rate or fee at which the funds are held, stored at creation and used during claims. Applicable to both IOUs and MPTs.                                     |
+| `IssuerNode`   | Number           | UInt64        | _(Optional)_ The ledger index of the issuer's directory node associated with the `PaymentChannel`. Used when the issuer is neither the source nor destination account. |
 
 #### 3.3.2. `MPToken` Ledger Object
 
 The `MPToken` ledger object is updated as follows:
 
-| Field Name        | JSON Type | Internal Type | Description                                                                                  |
-|-------------------|-----------|---------------|----------------------------------------------------------------------------------------------|
-| `sfEscrowAmount`  | Object    | Amount        | *(Optional)* The total of all outstanding escrows and payment channels for this token.       |
+| Field Name       | JSON Type | Internal Type | Description                                                                            |
+| ---------------- | --------- | ------------- | -------------------------------------------------------------------------------------- |
+| `sfEscrowAmount` | Object    | Amount        | _(Optional)_ The total of all outstanding escrows and payment channels for this token. |
 
 #### 3.3.3. `MPTokenIssuance` Ledger Object
 
 The `MPTokenIssuance` ledger object is updated as follows:
 
-| Field Name        | JSON Type | Internal Type | Description                                                                                     |
-|-------------------|-----------|---------------|-------------------------------------------------------------------------------------------------|
-| `sfEscrowAmount`  | Object    | Amount        | *(Optional)* The total of all outstanding escrows and payment channels for this issuance.       |
+| Field Name       | JSON Type | Internal Type | Description                                                                               |
+| ---------------- | --------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `sfEscrowAmount` | Object    | Amount        | _(Optional)_ The total of all outstanding escrows and payment channels for this issuance. |
 
 ### 3.4. Transfer Rates and Fees
 
@@ -216,17 +216,17 @@ The `MPTokenIssuance` ledger object is updated as follows:
 
 ### 3.5. Key Differences Between IOU and MPT Payment Channels
 
-| Aspect                        | IOU Tokens                                                                                            | Multi-Purpose Tokens (MPTs)                                                                          |
-|-------------------------------|-------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| **Trustlines**                | Required between accounts and issuer                                                                  | Not used                                                                                             |
-| **Issuer Flag for Channels**  | `lsfAllowTokenEscrow` (account flag)                                                                  | `tfMPTCanEscrow` (token flag)                                                                        |
-| **Transfer Flags**            | N/A                                                                                                   | `tfMPTCanTransfer` must be enabled for payment channels                                              |
-| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                    | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens                 |
-| **Destination Authorization** | Not required at creation; required at claim; cannot be granted during claim if authorization required | Not required at creation; required at claim; cannot be granted during claim if authorization required|
-| **Freeze/Lock Conditions**    | **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows both operations  | **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure                       |
-| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                           | `TransferFee` stored at creation and applied during claims                                           |
-| **Outstanding Amount**        | Remains unchanged during channel operations                                                           | Remains unchanged during channel operations                                                          |
-| **Account Deletion**          | Payment channels prevent account deletion                                                             | Payment channels prevent account deletion                                                            |
+| Aspect                        | IOU Tokens                                                                                            | Multi-Purpose Tokens (MPTs)                                                                           |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Trustlines**                | Required between accounts and issuer                                                                  | Not used                                                                                              |
+| **Issuer Flag for Channels**  | `lsfAllowTokenEscrow` (account flag)                                                                  | `tfMPTCanEscrow` (token flag)                                                                         |
+| **Transfer Flags**            | N/A                                                                                                   | `tfMPTCanTransfer` must be enabled for payment channels                                               |
+| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                    | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens                  |
+| **Destination Authorization** | Not required at creation; required at claim; cannot be granted during claim if authorization required | Not required at creation; required at claim; cannot be granted during claim if authorization required |
+| **Freeze/Lock Conditions**    | **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows both operations  | **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure                        |
+| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                           | `TransferFee` stored at creation and applied during claims                                            |
+| **Outstanding Amount**        | Remains unchanged during channel operations                                                           | Remains unchanged during channel operations                                                           |
+| **Account Deletion**          | Payment channels prevent account deletion                                                             | Payment channels prevent account deletion                                                             |
 
 ## 4. Rationale
 
