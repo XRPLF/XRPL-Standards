@@ -3,9 +3,10 @@
     title: 21: Allocating Asset Code Prefixes
     description: This proposal defines a mechanism for setting aside prefixes for specific formats and publishing a list of formats potentially in use.
     author: Rome Reginelli (@mDuo13)
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/53
     created: 2021-07-28
     status: Stagnant
-    category: Community
+    category: Ecosystem
 </pre>
 
 # Proposal for Allocating Asset Code Prefixes
@@ -18,15 +19,15 @@ Various other formats have been proposed and even implemented, but until now the
 
 A table of asset code prefixes would be added to xrpl.org and maintained by the XRPL.org contributors. A starting point for the table might be something like this:
 
-| Prefix        | Status | Name                                        | Standard                                                           |
-| ------------- | ------ | ------------------------------------------- | ------------------------------------------------------------------ |
-| `0x00`        | ✅     | Standard Currency Codes                     | https://xrpl.org/currency-formats.html#standard-currency-codes     |
-| `0x01`        | ❌     | Interest-Bearing (Demurrage) Currency Codes | https://xrpl.org/demurrage.html                                    |
-| `0x02`        | ❌     | XLS-14d Non-Fungible Tokens                 | https://github.com/XRPLF/XRPL-Standards/discussions/30             |
-| `0x03`        | 📄     | XLS-30d AMM LP Tokens                       | https://github.com/XRPLF/XRPL-Standards/discussions/78             |
-| `0x20`—`0x7E` | ⚠️     | Full ASCII codes                            |                                                                    |
-| `0xEC`        | 📄     | Extended Prefixes.                          | Reserved for additional prefixes. [See below](#extended-prefixes). |
-| `0xFF`        | 📄     | Non-Transferrable Tokens                    | https://github.com/XRPLF/XRPL-Standards/discussions/20             |
+| Prefix        | Status | Name                                        | Standard                                                                                       |
+| ------------- | ------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `0x00`        | ✅     | Standard Currency Codes                     | https://xrpl.org/currency-formats.html#standard-currency-codes                                 |
+| `0x01`        | ❌     | Interest-Bearing (Demurrage) Currency Codes | https://xrpl.org/demurrage.html                                                                |
+| `0x02`        | ❌     | XLS-14 Non-Fungible Tokens                  | https://github.com/XRPLF/XRPL-Standards/discussions/30                                         |
+| `0x03`        | 📄     | XLS-30 AMM LP Tokens                        | https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0030-automated-market-maker/README.md  |
+| `0x20`—`0x7E` | ⚠️     | Full ASCII codes                            |                                                                                                |
+| `0xEC`        | 📄     | Extended Prefixes.                          | Reserved for additional prefixes. [See below](#extended-prefixes).                             |
+| `0xFF`        | 📄     | Non-Transferrable Tokens                    | https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0010-non-transferable-tokens/README.md |
 
 Any prefixes not listed in the table are considered available (🆓).
 

@@ -3,9 +3,9 @@
   title: Prepublish Validator Lists
   description: Future activation date and improved expiration handling of UNLs
   author: Ed Hennis <ed@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/pull/124
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/pull/124
   status: Final
-  category: Protocol
+  category: System
   created: 2020-06-17
 </pre>
 

@@ -5,6 +5,7 @@ description: A standard for a "pseudo-account" AccountRoot object to be associat
 author: Vito Tumas (@Tapanito)
 status: Draft
 category: Amendment
+proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
 updated: 2025-08-29
 </pre>

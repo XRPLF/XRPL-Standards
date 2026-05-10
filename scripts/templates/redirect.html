@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ title }}</title>
+    <link rel="canonical" href="{{ target_url }}" />
+
+    <!-- Perform a JS redirect as early as possible to minimize flicker. -->
+    <script>
+      // Use replace() so the redirect page is not kept in history
+      window.location.replace("{{ target_url }}");
+    </script>
+    <noscript>
+      <meta http-equiv="refresh" content="0; url={{ target_url }}" />
+    </noscript>
+
+    <!-- Match the site's dark background so there isn't a bright flash -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #111112; /* var(--bg-color) from main site */
+        color: #ffffff;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Redirecting to
+      <a href="{{ target_url }}">{{ title }}</a>...
+    </p>
+  </body>
+</html>

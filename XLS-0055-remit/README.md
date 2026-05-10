@@ -3,6 +3,7 @@
   title: Remit
   description: Atomic Multi-Asset Payments for XRPL Protocol Chains
   author: Richard Holland (@RichardAH)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/156
   created: 2023-12-03
   status: Final
   category: Amendment

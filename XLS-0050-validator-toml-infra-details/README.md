@@ -3,9 +3,10 @@
   title: Aiming for a healthy distribution of (validator) infrastructure
   description: Best practices for the geographical & provider distribution of validators
   author: Wietse Wind (@WietseWind)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/145
   created: 2023-11-14
   status: Final
-  category: Community
+  category: Ecosystem
 </pre>
 
 # Abstract

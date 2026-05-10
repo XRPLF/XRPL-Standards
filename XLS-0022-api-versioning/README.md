@@ -3,8 +3,9 @@
   title: rippled API Versioning
   description: The API version number allows for evolving the `rippled` API while maintaining backward compatibility
   author: Elliot Lee (@intelliot), Peng Wang (@pwang200)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/54
   status: Final
-  category: Protocol
+  category: System
   created: 2021-08-11
 </pre>
 

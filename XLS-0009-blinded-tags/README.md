@@ -4,6 +4,7 @@
     author: Nik Bougalis (@nbougalis)
     description: Introduces _tag blinding_, a blinded tag is mutated in such a way that it is meaningful only to the sender and the recipient of a transaction, but appears random to everyone else.
     created: 2020-03-31
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/22
     status: Stagnant
     category: Amendment
 </pre>

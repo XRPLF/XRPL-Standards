@@ -3,7 +3,7 @@
   title: Multiple Signer Lists
   description: A proposal to enable multiple signer lists per account on the XRP Ledger, allowing different signer lists to authorize specific transaction types.
   author: Mayukha Vadari <mvadari@ripple.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/144
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/144
   status: Draft
   category: Amendment
   created: 2023-11-13
@@ -17,7 +17,7 @@ The XRP Ledger currently only supports one global signer list per account. Howev
 
 This document describes a proposal for supporting multiple signer lists per account. The current system of global signer lists will continue to be supported, but we propose adding **per-transaction-type signer lists**. Accounts can set up signer lists that only have the power to send **transactions of one specific type** on behalf of the account.
 
-This proposal is related to [XLS-31d](https://github.com/XRPLF/XRPL-Standards/discussions/77), but broader in scope.
+This proposal is related to [XLS-31](https://github.com/XRPLF/XRPL-Standards/discussions/77), but broader in scope.
 
 ## 1. Overview
 

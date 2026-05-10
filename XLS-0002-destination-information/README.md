@@ -3,9 +3,9 @@
   title: XRPL destination information
   description: A standard for encoding destination information with backwards compatibility for web browsers
   author: Wietse Wind <w@xrpl-labs.com>
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/27
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/27
   status: Stagnant
-  category: Community
+  category: Ecosystem
   created: 2019-02-25
 </pre>
 

@@ -3,7 +3,7 @@
   title: Lite Accounts
   description: A proposal for lite accounts with reduced account reserves but limited features
   author: Wietse Wind (@WietseWind)
-  discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/56
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/56
   status: Stagnant
   category: Amendment
   created: 2021-08-27

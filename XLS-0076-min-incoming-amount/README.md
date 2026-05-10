@@ -3,21 +3,13 @@
   title: Min Incoming Amount
   description: Allow an account holder to specify a minimum amount of XRP that can be received in a Payment
   author: Kris Dangerfield (@xrpl365)
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/219
   created: 2024-08-23
   status: Deprecated
   category: Amendment
 </pre>
 
-# XLS-76d - Min Incoming Amount
-
-```
-Title:       Min Incoming Amount
-Revision:    3
-Author:      Chris Dangerfield @xrpl365
-Affiliation: XRPL 365 Ltd
-
-Attribution: Khaled Elawadi @khaledelawadi
-```
+# XLS-76 - Min Incoming Amount
 
 ## Abstract
 
