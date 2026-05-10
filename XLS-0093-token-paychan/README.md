@@ -2,7 +2,8 @@
 xls: 93d
 title: Token-Enabled Payment Channels
 description: Extends Payment Channels to support IOU tokens and Multi-Purpose Tokens (MPTs).
-author: Denis Angell <dangell7@xrpl-labs.com> (XRPL-Labs)
+author: Denis Angell (@dangell7)
+discussion-from: https://github.com/XRPLF/XRPL-Standards/discussions/287
 category: Amendment
 status: Draft
 created: 2025-05-24
