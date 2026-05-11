@@ -570,13 +570,14 @@ If no `MPToken` object exists for the depositor, create one. For object details,
 
 The `VaultWithdraw` transaction withdraws assets in exchange for the vault's shares.
 
-| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                 |
-| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
-| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
-| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
-| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
-| `DestinationTag`  |                    | `number`  |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination. |
+| Field Name        |     Required?      | JSON Type | Internal Type | Default Value | Description                                                                                                                                                 |
+| ----------------- | :----------------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                                                                                                           |
+| `VaultID`         | :heavy_check_mark: | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                                                                        |
+| `Amount`          | :heavy_check_mark: | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                                                                                                |
+| `Destination`     |                    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.                                                                                     |
+| `DestinationTag`  |                    | `number`  |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination.                                                                                 |
+| `CredentialIDs`   |                    |  `array`  |  `Vector256`  |     Empty     | Credential(s) to attach for credential-based deposit preauthorization ([XLS-70](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0070-credentials)). |
 
 - If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
 - If `Amount` is the Vaults share, calculate the assets amount using the [**Redeem formula**](#21722-redeem).
@@ -618,6 +619,10 @@ In sections below assume the following variables:
 - The `Destination` account is specified:
   - The account does not have permission to receive the asset.
   - The account does not have a `RippleState` or `MPToken` object for the asset.
+  - The destination account has Deposit Authorization enabled (`lsfDepositAuth`), and the sender is not preauthorized. (`tecNO_PERMISSION`)
+  - The destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
+  - A credential ID specified in `CredentialIDs` does not exist on the ledger. (`tecBAD_CREDENTIALS`)
+  - A credential specified in `CredentialIDs` has expired. (`tecEXPIRED`)
 
 ##### 3.2.2.2 State Changes
 
