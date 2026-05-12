@@ -75,7 +75,7 @@ Also: `Deprecated` (Final XLS no longer recommended), `Stagnant` (Draft inactive
 1. Start in GitHub Discussions (Idea or Proposal stage) — do **not** open a PR until there is community feedback.
 2. Create a directory named `XLS-draft-<short-title>/` (agents/authors must NOT self-assign numbers for XLS numbers > 95).
 3. Copy `templates/XLS_TEMPLATE.md` to `XLS-draft-<short-title>/README.md` and fill it in.
-4. Open a PR. CI will assign the official XLS number automatically after a maintainer with write access approves; the `assign-xls-number.yml` workflow renames the directory and updates the preamble.
+4. Open a PR. CI will assign the official XLS number automatically after a maintainer with write access approves; the `assign-xls-number.yml` workflow renames the directory and updates the preamble. Authors should not assign their own XLS number.
 
 ---
 
