@@ -70,6 +70,6 @@ jobs:
           CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
           SCAN_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.scan_all || 'false' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
-          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
         run: |
           python .github/scripts/close-xls-discussions.py

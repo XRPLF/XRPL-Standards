@@ -138,13 +138,13 @@ def close_and_lock_discussion(
     return True
 
 
-def get_xls_folders_from_changed_files(changed_files: str) -> list[str]:
-    """Extract XLS folder names from a space-separated list of changed files."""
-    if not changed_files:
+def get_xls_folders_from_added_files(added_files: str) -> list[str]:
+    """Extract XLS folder names from a space-separated list of added files."""
+    if not added_files:
         return []
 
     xls_folders = set()
-    for file_path in changed_files.split():
+    for file_path in added_files.split():
         # Match full XLS folder names such as XLS-0001-xls-process/README.md
         match = re.match(r"(XLS-\d+[d]?-[^/]+)/README\.md", file_path)
         if match:
@@ -163,7 +163,7 @@ def main():
     )
     scan_all = os.environ.get("SCAN_ALL", "false").lower() == "true"
     dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
-    changed_files = os.environ.get("CHANGED_FILES", "")
+    added_files = os.environ.get("ADDED_FILES", "")
 
     if not owner or not repo:
         print(
@@ -183,16 +183,16 @@ def main():
         print("Scanning all XLS folders...")
         docs = find_xls_documents(root_dir)
     else:
-        print("Scanning changed XLS folders...")
-        changed_folders = get_xls_folders_from_changed_files(changed_files)
-        print(f"Changed folders: {changed_folders}")
+        print("Scanning newly added XLS folders...")
+        added_folders = get_xls_folders_from_added_files(added_files)
+        print(f"Added folders: {added_folders}")
 
-        if not changed_folders:
-            print("No XLS folders changed. Nothing to do.")
+        if not added_folders:
+            print("No new XLS folders added. Nothing to do.")
             return
 
         docs = []
-        for folder_name in changed_folders:
+        for folder_name in added_folders:
             readme_path = root_dir / folder_name / "README.md"
             if readme_path.exists():
                 with open(readme_path, "r", encoding="utf-8") as f:
