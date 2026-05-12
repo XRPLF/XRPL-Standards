@@ -35,7 +35,8 @@ def run_graphql_query(query: str, variables: dict) -> dict:
     """Run a GraphQL query using the GitHub CLI."""
     args = ["api", "graphql", "-f", f"query={query}"]
     for key, value in variables.items():
-        args.extend(["-f", f"{key}={value}"])
+        field_flag = "-F" if isinstance(value, int) else "-f"
+        args.extend([field_flag, f"{key}={value}"])
 
     result = run_gh_command(args)
     return json.loads(result.stdout)
@@ -67,7 +68,7 @@ def get_discussion_info(owner: str, repo: str, number: int) -> dict | None:
     """
     try:
         result = run_graphql_query(
-            query, {"owner": owner, "repo": repo, "number": str(number)}
+            query, {"owner": owner, "repo": repo, "number": number}
         )
         return result.get("data", {}).get("repository", {}).get("discussion")
     except subprocess.CalledProcessError:
