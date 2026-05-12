@@ -35,8 +35,16 @@ def run_graphql_query(query: str, variables: dict) -> dict:
     """Run a GraphQL query using the GitHub CLI."""
     args = ["api", "graphql", "-f", f"query={query}"]
     for key, value in variables.items():
-        field_flag = "-F" if isinstance(value, int) else "-f"
-        args.extend([field_flag, f"{key}={value}"])
+        if isinstance(value, bool):
+            field_flag = "-F"
+            serialized_value = "true" if value else "false"
+        elif isinstance(value, int):
+            field_flag = "-F"
+            serialized_value = str(value)
+        else:
+            field_flag = "-f"
+            serialized_value = value
+        args.extend([field_flag, f"{key}={serialized_value}"])
 
     result = run_gh_command(args)
     return json.loads(result.stdout)
