@@ -24,7 +24,7 @@ The design provides the following properties:
   (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and
   (ii) a simpler, trust-based alternative using issuer-controlled view keys for on-demand disclosure.
 - **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
-- **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback to the issuer’s reserve.
+- **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback that burns the clawed-back funds.
 
 Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through AND-composed compact sigma proofs and range proofs.
 
@@ -59,7 +59,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
   - **Spending (CB_S):** Stable balance used for spending and proofs.
   - **Inbox (CB_IN):** Receives incoming transfers and must be explicitly merged into `CB_S`, preventing stale-proof rejection.
 - **Auditor Policy:** An optional issuance-level configuration that enables selective disclosure by encrypting balances under an auditor’s public key.
-- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialMPTClawback` transaction, which forcibly converts a holder’s confidential balance back into the issuer’s public reserve while preserving ledger accounting consistency through ZKPs.
+- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialMPTClawback` transaction, which forcibly burns a holder’s entire confidential balance (decreasing both COA and OA) while preserving ledger accounting consistency through ZKPs. Unlike public MPT clawback, the burned funds are not returned to the issuer’s reserve; they are permanently removed from circulation.
 
 ## 4. Scope
 
@@ -123,6 +123,10 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
   - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64).
   - **Single Bulletproof (688 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the remaining balance after withdrawal is non-negative.
 
+### 5.5. Delegate Accounts
+
+The issuer may designate one or more **delegate accounts** to act on its behalf, for example, to submit `ConfidentialMPTClawback` transactions or to manage the confidential vault (second account). Delegate accounts must be considered **fully trusted** by the issuer. A delegate account has complete operational authority within the scope delegated to it, and the protocol does not impose additional on-chain restrictions on delegate actions beyond those that apply to the issuer itself. Issuers should apply the same key-management standards to delegate accounts as to their primary issuer account.
+
 ## 6. Ledger Entry: `MPTokenIssuance`
 
 To support confidential MPTs, the existing `MPTokenIssuance` ledger object is extended. These new fields and flags serve as the global configuration and control settings for the token's confidential features.
@@ -145,6 +149,21 @@ Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that 
 | `lsmfMPTCannotMutateCanConfidentialAmount` | `sfMutableFlags` | `0x00040000` | If set, the `lsfMPTCanConfidentialAmount` flag can never be changed after the token is issued. |
 
 **Note**: `sfMutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
+
+### 6.2.1. Prerequisite: Enabling Freeze and Clawback for Confidential Funds
+
+The ability to freeze (lock) a holder's confidential balance and to perform `ConfidentialMPTClawback` depends on the `lsfMPTCanLock` and `lsfMPTCanClawback` flags respectively. These flags are governed by XLS-94 (`DynamicMPT`) mutable flags.
+
+**`lsmfMPTCanMutateCanLock` defaults to `false`**. Unless the issuer explicitly opts in at issuance time, the `lsfMPTCanLock` flag cannot be set or cleared after creation, meaning confidential balances cannot be frozen.
+
+To enable freeze and clawback of confidential funds, the issuer **must** set `tmfMPTCanMutateCanLock` (and, for clawback, `tmfMPTCanMutateCanClawback`) in the `MutableFlags` field of the `MPTokenIssuanceCreate` transaction. Once set, the issuer may later use `MPTokenIssuanceSet` with `tmfMPTSetCanLock` / `tmfMPTSetCanClawback` to activate those controls.
+
+| `MutableFlags` bit (creation) | On-ledger flag              | Effect when later set via `MPTokenIssuanceSet`                    |
+| :---------------------------- | :-------------------------- | :---------------------------------------------------------------- |
+| `tmfMPTCanMutateCanLock`      | `lsmfMPTCanMutateCanLock`   | Allows issuer to freeze/unfreeze individual or global balances.   |
+| `tmfMPTCanMutateCanClawback`  | `lsmfMPTCanMutateCanClawback` | Allows issuer to enable `lsfMPTCanClawback` for `ConfidentialMPTClawback`. |
+
+If `lsmfMPTCanMutateCanLock` is **not** set, any attempt to freeze a confidential balance or perform `ConfidentialMPTClawback` will fail with `tecNO_PERMISSION`.
 
 ### 6.3. Managing Confidentiality Settings
 
@@ -256,7 +275,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 
 ### 7.4. Invariants
 
-- **Deletion Blocker:** An `MPToken` cannot be deleted from the ledger if it contains an `sfIssuerEncryptedBalance`, `sfConfidentialBalanceInbox`, or `sfConfidentialBalanceSpending` field.
+- **Deletion Blocker:** A holder's `MPToken` cannot be deleted from the ledger once confidential fields have been initialized, even if `sfConfidentialBalanceSpending`, `sfConfidentialBalanceInbox`, and `sfIssuerEncryptedBalance` all contain the canonical encrypted zero (i.e., the holder's confidential balance is zero). The issuer may delete the `MPTokenIssuance` object only when `sfConfidentialOutstandingAmount` is 0 (in addition to the standard XLS-33 deletion requirements).
 - **Confidential Amount Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanConfidentialAmount` flag enabled.
 - **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
 - **Version Modification:** If `sfConfidentialBalanceSpending != sfConfidentialBalanceSpending` (the spending balance is modified), then `sfConfidentialBalanceVersion != sfConfidentialBalanceVersion` (the version must be changed).
@@ -438,6 +457,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 - Deterministic across validators (no randomness beacon).
 - Represents encryption of 0 under account’s key.
 - Keeps inbox proofs well-formed.
+- **Public zero visibility:** Because the canonical encrypted zero is fully deterministic, validators can compare any stored ciphertext against the known `EncZero` value for that account. If they match, the balance is publicly known to be exactly 0. This allows validators to verify that a newly initialized spending balance or a reset inbox contains no hidden value, without requiring the holder’s private key. Non-zero ciphertexts remain opaque.
 
 ### 9.5. Example JSON
 
@@ -566,7 +586,7 @@ Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
 
 Clawback involves the issuer forcibly reclaiming funds from a holder's account. This action is fundamentally incompatible with standard confidential transfers, as the issuer does not possess the holder's private ElGamal key and therefore cannot generate the required ZKPs for a normal ConfidentialMPTSend. To solve this, the protocol introduces a single and privileged transaction that allows an issuer to verifiably reclaim funds in one uninterruptible step.
 
-This issuer-only transaction is designed to convert a holder's entire confidential balance directly into the issuer's public reserve.
+This issuer-only transaction is designed to forcibly burn a holder's entire confidential balance, permanently removing those tokens from circulation. Both `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are reduced, effectively destroying the tokens rather than returning them to the issuer's reserve.
 
 ### 11.1 How the Clawback Process Works
 
@@ -578,7 +598,7 @@ This issuer-only transaction is designed to convert a holder's entire confidenti
      1. The ConfidentialBalance_Spending and ConfidentialBalance_Inbox are set to a valid encryption of zero.
      2. The global COA is decreased by the RevealedAmount.
      3. The global OA is also decreased by the RevealedAmount.
-     4. The Issuer's public issuance capacity is restored (Global OutstandingAmount is decreased by the RevealedAmount), effectively burning the clawed-back tokens.
+     4. The global `OutstandingAmount` is decreased by `RevealedAmount`, burning the clawed-back tokens. The funds are permanently removed from circulation and are **not** credited to any account.
 
 ### 11.2. Fields
 
@@ -738,7 +758,17 @@ This transaction enables the confidential amount feature by setting the `tmfMPTS
 
 This transaction disables the confidential amount feature by setting the `tmfMPTClearCanConfidentialAmount` bit flag in the `MutableFlags` field. This will only succeed if `ConfidentialOutstandingAmount` is zero and the feature was marked as mutable during creation.
 
-## 13. Security Considerations
+## 13. Transfer Fees and Confidential Transfers
+
+Confidential MPTs are **incompatible with non-zero transfer fees**. An `MPTokenIssuance` that has a non-zero `TransferFee` cannot be used for confidential transfers.
+
+Transfer fees in XLS-33 are applied as a percentage of the transferred amount. Because `ConfidentialMPTSend` hides the transfer amount, it is impossible to enforce or validate a percentage-based fee without revealing the hidden value. To preserve confidentiality guarantees, the protocol prohibits non-zero transfer fees on issuances that enable confidential transfers.
+
+### 13.1. Implication for Issuers
+
+Issuers must choose between enabling transfer fees and enabling confidential transfers — these two features are mutually exclusive on the same `MPTokenIssuance`. `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `sfTransferFee`.
+
+## 14. Security Considerations
 
 Confidential MPTs introduce cryptographic mechanisms that require careful validation and enforcement. This section summarizes key privacy guarantees, auditability mechanisms, proof requirements, and considerations against potential attack vectors.
 
