@@ -30,7 +30,7 @@ jobs:
       - name: Check for self-assigned numbers above 95
         id: check-self-assigned
         if: steps.added-numbered.outputs.added_files != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             // If the PR already has the "has-xls-number" label, CI assigned the
@@ -120,7 +120,7 @@ jobs:
     steps:
       - name: Check for write+ approval
         id: check-approval
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             core.setOutput('has_write_approval', 'false');
