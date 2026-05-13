@@ -158,9 +158,9 @@ The ability to freeze (lock) a holder's confidential balance and to perform `Con
 
 To enable freeze and clawback of confidential funds, the issuer **must** set `tmfMPTCanMutateCanLock` (and, for clawback, `tmfMPTCanMutateCanClawback`) in the `MutableFlags` field of the `MPTokenIssuanceCreate` transaction. Once set, the issuer may later use `MPTokenIssuanceSet` with `tmfMPTSetCanLock` / `tmfMPTSetCanClawback` to activate those controls.
 
-| `MutableFlags` bit (creation) | On-ledger flag              | Effect when later set via `MPTokenIssuanceSet`                    |
-| :---------------------------- | :-------------------------- | :---------------------------------------------------------------- |
-| `tmfMPTCanMutateCanLock`      | `lsmfMPTCanMutateCanLock`   | Allows issuer to freeze/unfreeze individual or global balances.   |
+| `MutableFlags` bit (creation) | On-ledger flag                | Effect when later set via `MPTokenIssuanceSet`                             |
+| :---------------------------- | :---------------------------- | :------------------------------------------------------------------------- |
+| `tmfMPTCanMutateCanLock`      | `lsmfMPTCanMutateCanLock`     | Allows issuer to freeze/unfreeze individual or global balances.            |
 | `tmfMPTCanMutateCanClawback`  | `lsmfMPTCanMutateCanClawback` | Allows issuer to enable `lsfMPTCanClawback` for `ConfidentialMPTClawback`. |
 
 If `lsmfMPTCanMutateCanLock` is **not** set, any attempt to freeze a confidential balance or perform `ConfidentialMPTClawback` will fail with `tecNO_PERMISSION`.
