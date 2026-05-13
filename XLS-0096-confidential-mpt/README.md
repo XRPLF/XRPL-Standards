@@ -23,7 +23,7 @@ The design provides the following properties:
 - **Selective disclosure / view keys:** The protocol supports flexible auditability through two models:
   (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and
   (ii) a simpler, trust-based alternative using issuer-controlled view keys for on-demand disclosure.
-- **Compatibility:** Public and confidential balances may coexist for the same token. A designated issuer second account is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
+- **Compatibility:** Public and confidential balances may coexist for the same token. The issuer account itself cannot hold confidential balances; issuers who wish to participate in confidential circulation must use a separate dedicated holder account, which is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback that burns the clawed-back funds.
 
 Confidential MPTs align directly with XLS-33 by maintaining `OutstandingAmount` as the sum of all non-issuer balances. Supply consistency is enforced deterministically by validators using plaintext ledger fields, while confidentiality is achieved at the transaction level through AND-composed compact sigma proofs and range proofs.
@@ -39,17 +39,17 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
 - Confidentiality: Hides individual balances and transfer amounts using EC-ElGamal encryption and ZKPs.
 - Auditability: Public auditability is preserved via XLS-33’s existing OA semantics.
 - Flexible Compliance: Enables selective disclosure through multiple mechanisms, including a trust-minimized on-chain model and a simpler issuer-controlled view key model.
-- Compatibility: Maintains backward compatibility with XLS-33 by treating the issuer’s second account as a standard holder.
-- Enhanced Issuer Control: Provides optional Freeze and a Clawback transaction, giving issuers the tools needed to manage assets and enforce compliance.
+- Compatibility: Maintains backward compatibility with XLS-33. The issuer account cannot hold confidential balances; any issuer-controlled dedicated holder account is treated as a standard holder.
+- Enhanced Issuer Control: Provides optional Freeze and a Clawback transaction, giving issuers the tools needed to manage assets and enforce compliance. Clawback burns the holder’s confidential balance; the tokens are not returned to the issuer’s reserve.
 
 ## 3. Definitions & Terminology
 
 - **MPT (Multi-Purpose Token):** A token standard defined by XLS-33, extended here to support confidential balances and transfers.
 - **MPTokenIssuance (Object):** Ledger object storing metadata for an MPT, including `Currency`, `Issuer`, `MaxAmount` (MA), and `OutstandingAmount` (OA).
 - **MPToken (Object):** Ledger object representing a holder’s balance of a given MPT. Extended to include confidential balance fields.
-- **Second Account (Issuer-as-Holder):** A designated account controlled by the issuer but treated by the ledger as a standard non-issuer holder.
-- **OutstandingAmount (OA):** The total of all non-issuer balances (public and confidential), including the issuer’s second account.
-- **ConfidentialOutstandingAmount (COA):** The total amount of an MPT currently held in confidential balances by non-issuers, including the issuer’s second account.
+- **Dedicated Account (Issuer-as-Holder):** An optional account controlled by the issuer but treated by the ledger as a standard non-issuer holder. The issuer account itself cannot hold confidential balances; an issuer that wishes to participate in confidential circulation must use a dedicated account. This account is sometimes called the "Confidential Vault."
+- **OutstandingAmount (OA):** The total of all non-issuer balances (public and confidential), including any issuer-controlled dedicated account.
+- **ConfidentialOutstandingAmount (COA):** The total amount of an MPT currently held in confidential balances by non-issuers, including any issuer-controlled dedicated account.
 - **MaxAmount (MA):** The maximum allowed token supply. Invariant: `OA ≤ MA`.
 - **EC-ElGamal Encryption:** A public-key encryption scheme with additive homomorphism, used for encrypted balances and homomorphic balance updates.
 - **Zero-Knowledge Proofs (ZKPs):** Cryptographic proofs used to validate confidential transactions without revealing amounts, including:
@@ -71,24 +71,24 @@ This XLS specifies the protocol changes required to support confidential MPTs, i
 - ConfidentialMPTSend: Confidential transfer of tokens between accounts, with encrypted amounts validated by ZKPs.
 - ConfidentialMPTMergeInbox: Merges a holder’s inbox balance into their spending balance, preventing stale-proof issues.
 - ConfidentialMPTConvertBack: Converts confidential balances back into public form, restoring visible balances or returning funds to the issuer’s reserve.
-- ConfidentialMPTClawback: An issuer-only transaction to forcibly convert a holder’s confidential balance back to the issuer's public reserve.
+- ConfidentialMPTClawback: An issuer-only transaction to forcibly burn a holder’s entire confidential balance, permanently removing those tokens from circulation.
 
 ## 5. Protocol Overview
 
-The Confidential MPT protocol is built on three core design principles: the **Issuer Second Account** model, the **Split-Balance** model for reliable transfers, and a **Multi-Ciphertext** architecture for privacy and compliance.
+The Confidential MPT protocol is built on three core design principles: the **Dedicated Account** model, the **Split-Balance** model for reliable transfers, and a **Multi-Ciphertext** architecture for privacy and compliance.
 
-### 5.1 The Issuer Second Account Model
+### 5.1 The Dedicated Account Model
 
-The protocol recommends the use of an issuer-controlled **Dedicated Account** (also known as a "Confidential Vault" or "Second Account"). While this account remains under the control of the issuer, it is treated by the ledger as a standard **Holder**.
+The issuer account itself **cannot** hold or convert to confidential balances. To participate in confidential circulation, the issuer may optionally use an issuer-controlled **Dedicated Account** (also known as a "Confidential Vault"). While this account remains under the control of the issuer, it is treated by the ledger as a standard **Holder** with no special privileges.
 
-The operational setup follows these steps:
+The operational setup, when the issuer wishes to seed confidential circulation, follows these steps:
 
 1.  The **Issuer** creates an `MPTokenIssuance` object.
-2.  The **Issuer** creates a **Dedicated Account** to act as the "Confidential Vault."
+2.  The **Issuer** optionally creates a **Dedicated Account** to act as the "Confidential Vault."
 3.  The **Issuer** sends a public MPT amount to the **Dedicated Account**.
 4.  The **Dedicated Account** converts the public balance to a confidential balance.
 
-- **Preserving invariants:** Because the second account is a non-issuer, its balance is included in `OutstandingAmount` (OA). This preserves the existing `OA ≤ MaxAmount` invariant and allows validators to enforce the supply cap without decrypting confidential balances. All subsequent confidential transfers between non-issuer holders are redistributions that do not modify OA.
+- **Preserving invariants:** Because the dedicated account is a non-issuer, its balance is included in `OutstandingAmount` (OA). This preserves the existing `OA ≤ MaxAmount` invariant and allows validators to enforce the supply cap without decrypting confidential balances. All subsequent confidential transfers between non-issuer holders are redistributions that do not modify OA.
 
 ### 5.2 The Split-Balance Model
 
@@ -125,7 +125,7 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 
 ### 5.5. Delegate Accounts
 
-The issuer may designate one or more **delegate accounts** to act on its behalf, for example, to submit `ConfidentialMPTClawback` transactions or to manage the confidential vault (second account). Delegate accounts must be considered **fully trusted** by the issuer. A delegate account has complete operational authority within the scope delegated to it, and the protocol does not impose additional on-chain restrictions on delegate actions beyond those that apply to the issuer itself. Issuers should apply the same key-management standards to delegate accounts as to their primary issuer account.
+The issuer may designate one or more **delegate accounts** to act on its behalf, for example, to submit `ConfidentialMPTClawback` transactions or to manage the dedicated account (Confidential Vault). Delegate accounts must be considered **fully trusted** by the issuer. A delegate account has complete operational authority within the scope delegated to it, and the protocol does not impose additional on-chain restrictions on delegate actions beyond those that apply to the issuer itself. Issuers should apply the same key-management standards to delegate accounts as to their primary issuer account.
 
 ## 6. Ledger Entry: `MPTokenIssuance`
 
@@ -221,14 +221,14 @@ If the issuance is mutable (tmfMPTCannotMutateCanConfidentialAmount is not set, 
 **Purpose:**
 Converts a holder’s own visible (public) MPT balance into confidential form. The converted amount is credited to the holder’s confidential inbox balance (`CB_IN`) to avoid immediate proof staleness, requiring an explicit merge into the spending balance (`CB_S`) before use. This transaction also serves as the opt-in mechanism for confidential MPT participation: by executing it (including a zero-amount conversion), a holder’s `HolderEncryptionKey` is recorded on their `MPToken` object, enabling the holder to receive and manage confidential funds.
 
-This transaction is a **self-conversion only**. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. The issuer’s designated second account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
+This transaction is a **self-conversion only**. The issuer account itself **cannot** execute this transaction; only non-issuer holders may convert public balances to confidential form. Issuers introduce supply exclusively through existing XLS-33 public issuance mechanisms. An issuer-controlled dedicated account participates in confidential MPTs by executing `ConfidentialMPTConvert` as a regular holder, with no special privileges. In all cases, `OutstandingAmount` (OA) and `ConfidentialOutstandingAmount` (COA) are maintained in plaintext according to existing invariants.
 
 ### 7.1 Use Cases
 
 - **Holder → self (public → confidential):**
   Public balance decreases and confidential balance increases; OA unchanged, COA increases (both in plaintext).
-- **Issuer second account → self (public → confidential):**
-  After being funded publicly via XLS-33 issuance, the second account converts its own balance like any holder; OA unchanged, COA increases.
+- **Issuer dedicated account → self (public → confidential):**
+  After being funded publicly via XLS-33 issuance, the dedicated account converts its own balance like any holder; OA unchanged, COA increases.
 - **Hybrid circulation:**
   Tokens may coexist in public and confidential form.
 
@@ -250,7 +250,7 @@ This transaction is a **self-conversion only**. Issuers introduce supply exclusi
 **Notes:**
 
 - This transaction performs **self-conversion only**; there is no `Receiver` field.
-- Issuers introduce supply via existing 00 public issuance. The issuer’s second account executes this transaction as a regular holder.
+- Issuers introduce supply via existing XLS-33 public issuance. An issuer-controlled dedicated account executes this transaction as a regular holder; the issuer account itself cannot.
 
 ### 7.3. Failure Conditions
 
@@ -315,9 +315,9 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 ### 8.1 Use Cases
 
-- **Holder → holder (including the issuer’s second account):**
+- **Holder → holder (including any issuer-controlled dedicated account):**
   Confidential redistribution of value with the transfer amount hidden.
-- **Second account ↔ holder:**
+- **Dedicated account ↔ holder:**
   Confidential redistribution among non-issuer holders under identical rules.
 
 ### 8.2. Fields
@@ -405,7 +405,7 @@ This transaction respects **authorization** and **lock** constraints, ensuring t
 ### 9.1 Use Cases
 
 - A holder merges newly received confidential transfers into their spendable balance.
-- The issuer merges its own inbox into the spending balance (applies to the second account).
+- An issuer-controlled dedicated account merges its own inbox into the spending balance, like any holder.
 - Required periodically to combine funds before subsequent confidential sends.
 
 ### 9.2 Fields
@@ -474,7 +474,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 ### 10.1 Purpose: Convert confidential into public MPT value.
 
 - For a holder: restore public balance from CB_S.
-- For the issuer’s second account: return confidential supply to issuer reserve.
+- For an issuer-controlled dedicated account: return confidential supply to public form (credited to the dedicated account’s public balance).
 
 ### 10.2 Account Effects
 
@@ -549,21 +549,21 @@ If the transaction is successful:
 
 ### 10.7. Edge Case Analysis (Low-Volume Transaction Flow):
 
-\*\* Alice, the issuer, converts 50 ConfidentialMPT into her second account, performs a single confidential send of 20 to Bob (a holder), and then executes a ConvertBack of 30\.
+\*\* Alice, the issuer, funds her dedicated account with 50 ConfidentialMPT publicly, the dedicated account converts to confidential, performs a single confidential send of 20 to Bob (a holder), and then executes a ConvertBack of 30\.
 
-Step 1. Issuer Convert (Alice → second account, 50\)
+Step 1. Issuer funds dedicated account, dedicated account converts (50\)
 
 - Publicly revealed: Amount \= 50\.
 - Ledger effect: OA ↑ 50, COA ↑ 50, IPB ↓ 50\.
 - Outsiders now know: 50 CMPT entered confidential circulation.
 
-Step 2. Confidential Send (Alice’s second account → Bob, amount 20\)
+Step 2. Confidential Send (Alice’s dedicated account → Bob, amount 20\)
 
-- Public sees: sender \= Alice’s second account, receiver \= Bob, ciphertexts, ZKPs.
+- Public sees: sender \= Alice’s dedicated account, receiver \= Bob, ciphertexts, ZKPs.
 - Amount 20 is hidden.
 - Ledger effect: OA, COA, IPB unchanged (just redistribution).
 
-Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
+Step 3. _ConvertBack_ (Alice’s dedicated account, 30\)
 
 - Publicly revealed: Amount \= 30\.
 - Ledger effect: OA ↓ 30, COA ↓ 30, IPB ↑ 30
@@ -572,13 +572,13 @@ Step 3. _ConvertBack_ (Alice’s second account → issuer reserve, 30\)
 ### 10.7.1 What Outsiders can Infer:
 
 - Net change in the confidential pool is 50  −  30  = 20\. So, 20 CMPT remain somewhere in confidential circulation.
-- But they cannot know whether Bob got 20, 15, 5, or even 0 — because Alice’s second account may still hold some of the 20\.
+- But they cannot know whether Bob got 20, 15, 5, or even 0 — because Alice’s dedicated account may still hold some of the 20\.
 
 ### 10.7.2 Why no exact leakage:
 
 - ElGamal ciphertexts are randomized: encrypting 0 produces a different-looking ciphertext each time.
-- Outsiders cannot look at the second account’s balance ciphertext and say it is zero.
-- Thus, they cannot deduce whether Alice’s second account was emptied or kept some confidential balance.
+- Outsiders cannot look at the dedicated account’s balance ciphertext and say it is zero.
+- Thus, they cannot deduce whether Alice’s dedicated account was emptied or kept some confidential balance.
 
 **Note:** This design allows tokens to move between public and private states. While the Convert and ConvertBack transactions show their amounts to provide this flexibility, they still protect the privacy of individual balances and transfers. Observers can only see the total change in circulation, not how the private supply is shared among holders. ElGamal randomization makes it impossible to tell the difference between accounts with zero balances. This ensures that outsiders cannot know if a specific account is empty or still holds private tokens.
 
@@ -783,7 +783,7 @@ Confidential MPT transactions are designed to minimize information leakage while
 - Currency code (e.g., "USD").
 - Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
 - ZKPs (non-interactive proofs of correctness).
-- For issuer funding (Convert → second account): Amount is revealed, consistent with visible mint events in XLS-33.
+- For issuer funding (issuer sends public MPT to dedicated account, which then converts): Amount is revealed, consistent with visible mint events in XLS-33.
 
 #### 13.1.2 Hidden Information
 
@@ -878,18 +878,18 @@ Every confidential transaction must carry appropriate ZKPs:
 - Auditor key(s), if enabled.
 - Validators require a proof that all ciphertexts encrypt the same plaintext, preventing divergence between views.
 
-### 13.5 Issuer Second Account Model
+### 13.5 Dedicated Account Model
 
-- Issuer must use a designated second account for confidential issuance.
+- The issuer account cannot hold or convert to confidential balances. Issuers who wish to participate in confidential circulation may optionally use a dedicated holder account (Confidential Vault), which is treated as a standard non-issuer holder.
 - Prevents redefinition of OA semantics and keeps compatibility with XLS-33.
-- Validators enforce that direct confidential issuance from the issuer account is invalid.
+- Validators enforce that `ConfidentialMPTConvert` from the issuer account is invalid.
 
 ### 13.6 Privacy Guarantees
 
 - Transaction amounts are hidden in all confidential transfers except:
   - Issuer mint events (already visible in legacy MPTs).
   - Conversion from public → confidential, where only the converted amount is disclosed once.
-- Redistribution among holders (including issuer’s second account) leaks no amounts.
+- Redistribution among holders (including any issuer-controlled dedicated account) leaks no amounts.
 
 ### 13.7 Auditor & Compliance Controls
 
@@ -966,9 +966,9 @@ Yes, confidential transactions are more expensive than standard MPT transactions
 
 If validators cannot verify a ZKP, the transaction is rejected during consensus, functioning identically to an invalid signature and thus preventing malformed or incorrect confidential balances from entering the ledger.
 
-### A.10 Why does the issuer need a second account?
+### A.10 Why can't the issuer account hold confidential balances?
 
-The issuer utilizes a second account as a designated holder account to convert their public reserve into the confidential supply. This approach is primarily used to keep the existing XLS-33 semantics intact, ensuring that the OutstandingAmount accurately reflects non-issuer balances.
+The issuer account has a special role on the ledger: its balance is excluded from `OutstandingAmount` to preserve the XLS-33 accounting invariant. Allowing the issuer to hold confidential balances directly would break this invariant, since COA and OA would need to account for the issuer's hidden balance. Instead, an issuer that wishes to participate in confidential circulation uses an optional dedicated holder account (Confidential Vault), which is treated as a standard non-issuer holder. Its confidential balance is included in both OA and COA, keeping all accounting consistent and validators able to enforce `OA ≤ MaxAmount` without decryption.
 
 ### A.11 Will proofs be optimized in future versions?
 
