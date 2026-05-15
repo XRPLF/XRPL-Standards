@@ -791,13 +791,14 @@ The `LoanBrokerCoverWithdraw` transaction withdraws the First-Loss Capital from 
 
 #### 3.6.1 Fields
 
-| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                  |
-| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :--------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `77`      | Transaction type.                                                            |
-| `LoanBrokerID`    |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                |
-| `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                    |
-| `Destination`     |    No    |       `string`       |  `ACCOUNTID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.      |
-| `DestinationTag`  |    No    |       `number`       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination. |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                                                                                                 |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `77`      | Transaction type.                                                                                                                                           |
+| `LoanBrokerID`    |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The Loan Broker ID from which to withdraw First-Loss Capital.                                                                                               |
+| `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The Fist-Loss Capital amount to withdraw.                                                                                                                   |
+| `Destination`     |    No    |       `string`       |  `ACCOUNTID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.                                                                                     |
+| `DestinationTag`  |    No    |       `number`       |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the transaction to the destination.                                                                                |
+| `CredentialIDs`   |    No    |       `array`        |  `Vector256`  |     Empty     | Credential(s) to attach for credential-based deposit preauthorization ([XLS-70](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0070-credentials)). |
 
 #### 3.6.2 Transaction Fee
 
@@ -826,6 +827,9 @@ This transaction uses the standard transaction fee.
 11. The destination account is deep frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 12. `LoanBroker.CoverAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
 13. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
+14. If `Destination` is a third party, the destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
+15. A credential ID specified in `CredentialIDs` does not exist on the ledger. (`tecBAD_CREDENTIALS`)
+16. A credential specified in `CredentialIDs` has expired. (`tecEXPIRED`)
 
 #### 3.6.4 State Changes
 
