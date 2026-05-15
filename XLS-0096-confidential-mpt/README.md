@@ -59,7 +59,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
   - **Spending (CB_S):** Stable balance used for spending and proofs.
   - **Inbox (CB_IN):** Receives incoming transfers and must be explicitly merged into `CB_S`, preventing stale-proof rejection.
 - **Auditor Policy:** An optional issuance-level configuration that enables selective disclosure by encrypting balances under an auditor’s public key.
-- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialMPTClawback` transaction, which forcibly burns a holder’s entire confidential balance (decreasing both COA and OA) while preserving ledger accounting consistency through ZKPs. The burned funds are not returned to the issuer’s reserve; they are permanently removed from circulation.
+- **Clawback:** A privileged issuer-only operation performed via a `ConfidentialMPTClawback` transaction, which forcibly burns a holder’s entire confidential balance (decreasing both COA and OA) while preserving ledger accounting consistency through ZKPs. The burned funds are permanently removed from circulation.
 
 ## 4. Scope
 
