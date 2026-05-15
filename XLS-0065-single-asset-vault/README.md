@@ -44,6 +44,8 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
   - [**3.3. VaultClawback Transaction**](#33-vaultclawback-transaction)
   - [**3.4. Payment Transaction**](#34-payment-transaction)
 - [**4. API**](#4-api)
+  - [**4.1. RPC `vault_info`**](#41-rpc-vault_info)
+  - [**4.2. RPC `vault_list`**](#42-rpc-vault_list)
 - [Appendix](#appendix)
 
 ## 1. Introduction
@@ -788,7 +790,7 @@ We propose adding the following fields to the `ledger_entry` method:
 
 Vault holding an `IOU`:
 
-```type-script
+```json
  "result" :
  {
   "ledger_current_index" : 7,
@@ -836,7 +838,7 @@ Vault holding an `IOU`:
 
 Vault holding an `MPT`:
 
-```
+```json
 {
   "LedgerEntryType": "Vault",
   "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
@@ -859,7 +861,7 @@ Vault holding an `MPT`:
   "AssetsMaximum": 0,
   "Share": {
     "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
-    "value": "1",
+    "value": "1"
   },
   "ShareTotal": 5000,
   "WithdrawalPolicy": "0x0001",
@@ -869,51 +871,236 @@ Vault holding an `MPT`:
 
 Vault holding `XRP`:
 
-```type-script
+```json
 {
- "result" :
- {
-  "ledger_hash" : "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
-  "ledger_index" : 6,
-  "status" : "success",
-  "validated" : true,
-  "vault" :
-  {
-   "Account" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-   "Asset" :
-   {
-    "currency" : "XRP"
-   },
-   "AssetsAvailable" : "0",
-   "AssetsTotal" : "0",
-   "Flags" : 0,
-   "LedgerEntryType" : "Vault",
-   "LossUnrealized" : "0",
-   "Owner" : "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
-   "OwnerNode" : "0",
-   "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-   "PreviousTxnLgrSeq" : 5,
-   "Sequence" : 4,
-   "ShareMPTID" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
-   "WithdrawalPolicy" : 1,
-   "index" : "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
-   "shares" :
-   {
-    "DomainID" : "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
-    "Flags" : 56,
-    "Issuer" : "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
-    "LedgerEntryType" : "MPTokenIssuance",
-    "OutstandingAmount" : "0",
-    "OwnerNode" : "0",
-    "PreviousTxnID" : "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
-    "PreviousTxnLgrSeq" : 5,
-    "Sequence" : 1,
-    "index" : "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
-    "mpt_issuance_id" : "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
-   },
-   "Scale": 0
+  "result": {
+    "ledger_hash": "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+    "ledger_index": 6,
+    "status": "success",
+    "validated": true,
+    "vault": {
+      "Account": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+      "Asset": {
+        "currency": "XRP"
+      },
+      "AssetsAvailable": "0",
+      "AssetsTotal": "0",
+      "Flags": 0,
+      "LedgerEntryType": "Vault",
+      "LossUnrealized": "0",
+      "Owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+      "OwnerNode": "0",
+      "PreviousTxnID": "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+      "PreviousTxnLgrSeq": 5,
+      "Sequence": 4,
+      "ShareMPTID": "00000001732B0822A31109C996BCDD7E64E05D446E7998EE",
+      "WithdrawalPolicy": 1,
+      "index": "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+      "shares": {
+        "DomainID": "3B61A239626565A3FBEFC32863AFBF1AD3325BD1669C2C9BC92954197842B564",
+        "Flags": 56,
+        "Issuer": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+        "LedgerEntryType": "MPTokenIssuance",
+        "OutstandingAmount": "0",
+        "OwnerNode": "0",
+        "PreviousTxnID": "25C3C8BF2C9EE60DFCDA02F3919D0C4D6BF2D0A4AC9354EFDA438F2ECDDA65E4",
+        "PreviousTxnLgrSeq": 5,
+        "Sequence": 1,
+        "index": "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
+        "mpt_issuance_id": "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
+      },
+      "Scale": 0
+    }
   }
- }
+}
+```
+
+### 4.2 RPC `vault_list` (Clio-only)
+
+This RPC retrieves all Vaults created for a given asset. The asset can be `XRP`, an `IOU`, or an `MPT`.
+
+Given an `asset`, this handler scans all `Vault` ledger objects and returns those whose `Asset` field matches the request. For each matching vault found, a summary is returned containing the vault ID, pseudo-account, owner, total assets, total shares, status, and flags.
+
+The matching strategy depends on the asset type:
+
+- **`MPT`**: Returns all `Vault` objects whose `Asset.mpt_issuance_id` equals the provided `mpt_issuance_id`.
+- **`IOU`**: Returns all `Vault` objects whose `Asset.currency` and `Asset.issuer` match the provided values.
+- **`XRP`**: Returns all `Vault` objects whose `Asset.currency` is `"XRP"`.
+
+#### 4.2.1 Request Fields
+
+| Field Name     |     Required?      |     JSON Type      | Description                                                                                                                                                                                          |
+| -------------- | :----------------: | :----------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `asset`        | :heavy_check_mark: | `string or object` | The asset to search for. Supports three formats: **XRP** — `{ "currency": "XRP" }`; **IOU** — `{ "currency": "<code>", "issuer": "<address>" }`; **MPT** — `{ "mpt_issuance_id": "<UINT192 hex>" }`. |
+| `ledger_hash`  |                    |      `string`      | A 20-byte hex string for the ledger version to use.                                                                                                                                                  |
+| `ledger_index` |                    | `string or number` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.                                                                                                        |
+| `limit`        |                    |      `number`      | Limit the number of Vaults returned. Min `10`, max `400`, default `200`.                                                                                                                             |
+| `marker`       |                    |      `string`      | Value from a previous paginated response. Resume retrieving data where that response left off.                                                                                                       |
+
+#### 4.2.2 Response
+
+| Field Name              | Required? | JSON Type          | Description                                                                                                          |
+| ----------------------- | --------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `asset`                 | `yes`     | `string or object` | The asset provided in the request, echoed back.                                                                      |
+| `ledger_hash`           | `yes`     | `string`           | The identifying hash of the ledger version used to generate this response.                                           |
+| `ledger_index`          | `yes`     | `number`           | The ledger index of the ledger version used to generate this response.                                               |
+| `validated`             | `yes`     | `boolean`          | If `true`, the information comes from a validated ledger version.                                                    |
+| `limit`                 | `yes`     | `number`           | The limit used in the request (after clamping).                                                                      |
+| `marker`                | `no`      | `string`           | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this left off. |
+| `vaults`                | `yes`     | `array`            | Array of vault summary objects.                                                                                      |
+| `vaults[].vault_id`     | `yes`     | `string`           | Unique index of the `Vault` ledger entry (hex).                                                                      |
+| `vaults[].account`      | `yes`     | `string`           | The address of the Vault's _pseudo-account_.                                                                         |
+| `vaults[].owner`        | `yes`     | `string`           | The account address of the Vault Owner.                                                                              |
+| `vaults[].total_assets` | `yes`     | `string`           | The total value of the vault (`AssetsTotal`).                                                                        |
+| `vaults[].total_shares` | `yes`     | `number`           | Total outstanding shares issued (`OutstandingAmount` from the share `MPTokenIssuance`).                              |
+| `vaults[].status`       | `yes`     | `string`           | Status of the vault. `"active"` if flags are `0`, otherwise `"modified"`.                                            |
+| `vaults[].flags`        | `yes`     | `number`           | Bit-field flags associated with the vault.                                                                           |
+
+#### 4.2.3 Failure Conditions
+
+- **`invalidParams`**: The `asset` field is missing, malformed, or not a valid asset object.
+- **`entryNotFound`**: The asset references a ledger object that does not exist. This applies when the asset is an `MPT` and the `MPTokenIssuance` object identified by `mpt_issuance_id` does not exist, or the asset is an `IOU` and the `issuer` account does not exist in the specified ledger.
+- Standard ledger selection errors apply if `ledger_hash` or `ledger_index` reference an unavailable ledger.
+
+> **Note:** If the specified asset is valid and exists on the ledger, but no Vaults have been created for it, the response returns an empty `vaults` array. This is not an error condition.
+
+#### 4.2.4 Example Request (MPT)
+
+```json
+{
+  "method": "vault_list",
+  "params": [
+    {
+      "asset": {
+        "mpt_issuance_id": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
+      },
+      "limit": 50
+    }
+  ]
+}
+```
+
+#### 4.2.5 Example Response (MPT)
+
+```json
+{
+  "result": {
+    "asset": {
+      "mpt_issuance_id": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
+    },
+    "ledger_hash": "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+    "ledger_index": 6,
+    "validated": true,
+    "limit": 50,
+    "vaults": [
+      {
+        "vault_id": "2DE64CA41250EF3CB7D2B127D6CEC31F747492CAE2BD1628CA02EA1FFE7475B3",
+        "account": "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
+        "owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+        "total_assets": "100",
+        "total_shares": 100,
+        "status": "active",
+        "flags": 0
+      },
+      {
+        "vault_id": "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+        "account": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+        "owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+        "total_assets": "500",
+        "total_shares": 500,
+        "status": "active",
+        "flags": 0
+      }
+    ]
+  }
+}
+```
+
+#### 4.2.6 Example Request (IOU)
+
+```json
+{
+  "method": "vault_list",
+  "params": [
+    {
+      "asset": {
+        "currency": "USD",
+        "issuer": "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
+      },
+      "limit": 20
+    }
+  ]
+}
+```
+
+#### 4.2.7 Example Response (IOU)
+
+```json
+{
+  "result": {
+    "asset": {
+      "currency": "USD",
+      "issuer": "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
+    },
+    "ledger_hash": "AB12CD34EF5678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF",
+    "ledger_index": 42,
+    "validated": true,
+    "limit": 20,
+    "vaults": [
+      {
+        "vault_id": "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2",
+        "account": "rPqR7tSzR8v1M3K2pNqL5xW9Y4Z6A8B0CD",
+        "owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+        "total_assets": "1000.50",
+        "total_shares": 1000500000,
+        "status": "active",
+        "flags": 0
+      }
+    ]
+  }
+}
+```
+
+#### 4.2.8 Example Request (XRP)
+
+```json
+{
+  "method": "vault_list",
+  "params": [
+    {
+      "asset": {
+        "currency": "XRP"
+      },
+      "limit": 100
+    }
+  ]
+}
+```
+
+#### 4.2.9 Example Response (XRP)
+
+```json
+{
+  "result": {
+    "asset": {
+      "currency": "XRP"
+    },
+    "ledger_hash": "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
+    "ledger_index": 6,
+    "validated": true,
+    "limit": 100,
+    "vaults": [
+      {
+        "vault_id": "C043BB1B350FFC5FED21E40535609D3D95BC0E3CE252E2F69F85BE0157020A52",
+        "account": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
+        "owner": "rwhaYGnJMexktjhxAKzRwoCcQ2g6hvBDWu",
+        "total_assets": "10000000",
+        "total_shares": 10000000,
+        "status": "active",
+        "flags": 0
+      }
+    ]
+  }
 }
 ```
 

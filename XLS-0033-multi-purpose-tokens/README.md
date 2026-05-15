@@ -124,13 +124,13 @@ A set of flags indicating properties or other options associated with this **`MP
 
 | Flag Name           | Flag Value | Description                                                                                                                                                                                                                               |
 | ------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lsfMPTLocked`      | ️`0x0001`  | If set, indicates that all balances are locked.                                                                                                                                                                                           |
-| `lsfMPTCanLock`     | ️`0x0002`  | If set, indicates that the issuer can lock an individual balance or all balances of this MPT. If not set, the MPT cannot be locked in any way.                                                                                            |
-| `lsfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.                                                                                                                  |
+| `lsfMPTLocked`      | ️`0x0001`   | If set, indicates that all balances are locked.                                                                                                                                                                                           |
+| `lsfMPTCanLock`     | ️`0x0002`   | If set, indicates that the issuer can lock an individual balance or all balances of this MPT. If not set, the MPT cannot be locked in any way.                                                                                            |
+| `lsfMPTRequireAuth` | ️`0x0004`   | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.                                                                                                                  |
 | `lsfMPTCanEscrow`   | `0x0008`   | If set, indicates that _individual_ holders can place their balances into an escrow.                                                                                                                                                      |
 | `lsfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX or AMM.                                                                                                                                     |
-| `lsfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
-| `lsfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.                                                                                                                         |
+| `lsfMPTCanTransfer` | ️`0x0020`   | If set, indicates that tokens held by non-issuers may be transferred to other accounts. If not set, indicates that tokens held by non-issuers may not be transferred except back to the issuer; this enables use-cases like store credit. |
+| `lsfMPTCanClawback` | ️`0x0040`   | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.                                                                                                                         |
 
 Except for `lsfMPTLocked`, which can be mutated via the **`MPTokenIssuanceSet`** transaction, these flags are
 **immutable** and can only be set once, at issuance creation, using the **`MPTokenIssuanceCreate`** transaction.
@@ -357,30 +357,30 @@ If the transaction is successful, the newly created token will be owned by the a
 
 | Field Name        | Required? | JSON Type | Internal Type |
 | ----------------- | --------- | --------- | ------------- |
-| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
+| `TransactionType` | ️ ✔        | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenIssuanceCreate`**. The integer value is `54`.
 
 | Field Name   | Required? | JSON Type | Internal Type |
 | ------------ | --------- | --------- | ------------- |
-| `AssetScale` | ️         | `number`  | `UINT8`       |
+| `AssetScale` | ️          | `number`  | `UINT8`       |
 
 An asset scale is the difference, in orders of magnitude, between a standard unit and a corresponding fractional unit. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one standard unit equals 10^(-scale) of a corresponding fractional unit. If the fractional unit equals the standard unit, then the asset scale is 0. Note that this value is optional, and will default to `0` if not supplied.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | --------- | --------- | ------------- |
-| `Flags`    | ️         | `number`  | `UINT16`      |
+| `Flags`    | ️          | `number`  | `UINT16`      |
 
 Specifies the flags for this transaction. In addition to the universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`), the following transaction-specific flags are defined and used to set the appropriate fields in the Fungible Token:
 
 | Flag Name          | Flag Value | Description                                                                                                                   |
 | ------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `tfMPTCanLock`     | ️`0x0002`  | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way. |
-| `tfMPTRequireAuth` | ️`0x0004`  | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.      |
+| `tfMPTCanLock`     | ️`0x0002`   | If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way. |
+| `tfMPTRequireAuth` | ️`0x0004`   | If set, indicates that _individual_ holders must be authorized. This enables issuers to limit who can hold their assets.      |
 | `tfMPTCanEscrow`   | `0x0008`   | If set, indicates that _individual_ holders can place their balances into an escrow.                                          |
 | `tfMPTCanTrade`    | `0x0010`   | If set, indicates that _individual_ holders can trade their balances using the XRP Ledger DEX.                                |
-| `tfMPTCanTransfer` | ️`0x0020`  | If set, indicates that tokens may be transferred to other accounts that are not the issuer.                                   |
-| `tfMPTCanClawback` | ️`0x0040`  | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.             |
+| `tfMPTCanTransfer` | ️`0x0020`   | If set, indicates that tokens may be transferred to other accounts that are not the issuer.                                   |
+| `tfMPTCanClawback` | ️`0x0040`   | If set, indicates that the issuer may use the `Clawback` transaction to clawback value from _individual_ holders.             |
 
 | Field Name    | Required? | JSON Type | Internal Type |
 | ------------- | --------- | --------- | ------------- |
@@ -464,7 +464,7 @@ Identifies the **`MPTokenIssuance`** object to be removed by the transaction.
 
 | Field Name        | Required? | JSON Type | Internal Type |
 | ----------------- | --------- | --------- | ------------- |
-| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
+| `TransactionType` | ️ ✔        | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenIssuanceSet`**. The integer value is `56`.
 
@@ -502,8 +502,8 @@ Transactions of the `MPTokenLock` type support additional values in the Flags fi
 
 | Flag Name     | Flag Value | Description                                                                |
 | ------------- | ---------- | -------------------------------------------------------------------------- |
-| `tfMPTLock`   | ️`0x0001`  | If set, indicates that all MPT balances for this asset should be locked.   |
-| `tfMPTUnlock` | ️`0x0002`  | If set, indicates that all MPT balances for this asset should be unlocked. |
+| `tfMPTLock`   | ️`0x0001`   | If set, indicates that all MPT balances for this asset should be locked.   |
+| `tfMPTUnlock` | ️`0x0002`   | If set, indicates that all MPT balances for this asset should be unlocked. |
 
 ### 3.4. The **`Payment`** Transaction
 
@@ -566,7 +566,7 @@ This address can indicate either an issuer or a potential holder of a MPT.
 
 | Field Name        | Required? | JSON Type | Internal Type |
 | ----------------- | --------- | --------- | ------------- |
-| `TransactionType` | ️ ✔      | `object`  | `UINT16`      |
+| `TransactionType` | ️ ✔        | `object`  | `UINT16`      |
 
 Indicates the new transaction type **`MPTokenAuthorize`**. The integer value is `57`.
 
@@ -593,7 +593,7 @@ Transactions of the `MPTokenAuthorize` type support additional values in the Fla
 
 | Flag Name          | Flag Value | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tfMPTUnauthorize` | ️`0x0001`  | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `MPToken`, which will be deleted as a result. If the the holder's `MPToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfMPTAuthorized` flag on the `MPToken`. |
+| `tfMPTUnauthorize` | ️`0x0001`   | If set and transaction is submitted by a holder, it indicates that the holder no longer wants to hold the `MPToken`, which will be deleted as a result. If the the holder's `MPToken` has non-zero balance while trying to set this flag, the transaction will fail. On the other hand, if set and transaction is submitted by an issuer, it would mean that the issuer wants to unauthorize the holder (only applicable for allow-listing), which would unset the `lsfMPTAuthorized` flag on the `MPToken`. |
 
 ### 3.6. The **`AccountDelete`** Transaction
 
@@ -666,16 +666,16 @@ This specification introduces a new Clio RPC called `mpt_holders` to allow query
 
 A `MPTokenIssuance` object can be queried by specifying the the `mpt_issuance` field.
 
-| Field Name     |  Type   | Description                                                                   |
-| -------------- | :-----: | ----------------------------------------------------------------------------- |
+| Field Name     |  Type  | Description                                                                   |
+| -------------- | :----: | ----------------------------------------------------------------------------- |
 | `mpt_issuance` | ️String | The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`. |
 
 ### 6.1.1. `mptoken` Field
 
 A `MPToken` object can be queried by specifying the `mptoken` field.
 
-| Field Name                |       Type        | Description                                                                                                                                                                     |
-| ------------------------- | :---------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name                |       Type       | Description                                                                                                                                                                     |
+| ------------------------- | :--------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mptoken`                 | ️Object or String | If string, interpret as ledger entry ID of the `MPToken` to retrieve. If an object, requires the sub-fields `account` and `mpt_issuance_id` to uniquely identify the `MPToken`. |
 | `mptoken.mpt_issuance_id` |      ️String      | (Required if `mptoken` is specified as an object) The 192-bit `MPTokenIssuanceID` that's associated with the `MPTokenIssuance`.                                                 |
 | `mptoken.account`         |      ️String      | (Required if `mptoken` is specified as an object) The account that owns the `MPToken`.                                                                                          |
