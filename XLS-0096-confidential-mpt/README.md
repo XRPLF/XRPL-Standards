@@ -192,13 +192,28 @@ If the issuance is mutable (tmfMPTCannotMutateCanConfidentialAmount is not set, 
 
 - **Zero Confidential Supply:** The transaction will fail if the `ConfidentialOutstandingAmount` (COA) is greater than 0. This constraint prevents user funds from being trapped in a confidential state that the ledger no longer recognizes.
 
-### 6.4. Invariants
+### 6.4. Transfer Fee Compatibility
+
+Confidential MPTs are incompatible with non-zero `TransferFee`. An `MPTokenIssuance` MUST NOT have both a non-zero `TransferFee` and `lsfMPTCanConfidentialAmount` enabled.
+
+This restriction is required because XLS-33 transfer fees are percentage-based, while `ConfidentialMPTSend` hides the transferred amount. Enforcing a percentage-based fee would require revealing, trusting, or separately proving the hidden transfer amount, which is outside the scope of this amendment.
+
+The following cases are invalid:
+
+- `MPTokenIssuanceCreate` with both a non-zero `TransferFee` and `tfMPTCanConfidentialAmount`. (`temBAD_TRANSFER_FEE`)
+- `MPTokenIssuanceSet` that sets `tmfMPTSetCanConfidentialAmount` while the issuance already has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
+- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` while the issuance already has `lsfMPTCanConfidentialAmount`. (`tecNO_PERMISSION`)
+- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` and `tmfMPTSetCanConfidentialAmount` in the same transaction. (`temBAD_TRANSFER_FEE`)
+
+`ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `TransferFee`.
+
+### 6.5. Invariants
 
 - `ConfidentialOutstandingAmount` >= 0
 - `ConfidentialOutstandingAmount` <= `OutstandingAmount`
 - Any change to `ConfidentialOutstandingAmount` during a `Convert` or `ConvertBack` transaction must be exactly offset by an inverse change to the corresponding `MPTAmount` (i.e., `ΔCOA = -ΔMPTAmount`).
 
-### 6.5. Example JSON
+### 6.6. Example JSON
 
 ```json
 {
@@ -758,13 +773,7 @@ This transaction enables the confidential amount feature by setting the `tmfMPTS
 
 This transaction disables the confidential amount feature by setting the `tmfMPTClearCanConfidentialAmount` bit flag in the `MutableFlags` field. This will only succeed if `ConfidentialOutstandingAmount` is zero and the feature was marked as mutable during creation.
 
-## 13. Transfer Fees and Confidential Transfers
-
-Confidential MPTs are **incompatible with non-zero transfer fees**. An `MPTokenIssuance` that has a non-zero `TransferFee` cannot be used for confidential transfers.
-
-Transfer fees in XLS-33 are applied as a percentage of the transferred amount. Because `ConfidentialMPTSend` hides the transfer amount, it is impossible to enforce or validate a percentage-based fee without revealing the hidden value. To preserve confidentiality guarantees, the protocol prohibits non-zero transfer fees on issuances that enable confidential transfers.
-
-### 13.1. Implication for Issuers
+## 13. Operational Considerations
 
 Issuers must choose between enabling transfer fees and enabling confidential transfers — these two features are mutually exclusive on the same `MPTokenIssuance`. `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `sfTransferFee`.
 
