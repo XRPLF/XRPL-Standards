@@ -321,49 +321,7 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 
 #### 3.1.10 Invariants
 
-1. A transaction must not modify more than one `Vault` object.
-2. `<Vault>.Asset == <Vault>'.Asset` (the asset is immutable).
-3. `<Vault>.Account == <Vault>'.Account` (the _pseudo-account_ is immutable).
-4. `<Vault>.ShareMPTID == <Vault>'.ShareMPTID` (the share MPT ID is immutable).
-5. An updated `Vault` must always have an associated `MPTokenIssuance` (shares) object.
-6. `IF MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0 THEN <Vault>'.AssetsTotal == 0 AND <Vault>'.AssetsAvailable == 0`.
-7. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount <= MPTokenIssuance(Vault.ShareMPTID).MaximumAmount`.
-8. `<Vault>'.AssetsAvailable >= 0`.
-9. `<Vault>'.AssetsAvailable <= <Vault>'.AssetsTotal`.
-10. `<Vault>'.LossUnrealized <= <Vault>'.AssetsTotal - <Vault>'.AssetsAvailable`.
-11. `<Vault>'.AssetsTotal >= 0`.
-12. `<Vault>'.AssetsMaximum >= 0`.
-13. Only `VaultCreate` may create a new `Vault` object.
-14. Only `VaultDelete` may delete a `Vault` object.
-15. `<Vault>.LossUnrealized == <Vault>'.LossUnrealized` for all vault transactions (only protocol transactions such as `LoanManage` and `LoanPay` may change `LossUnrealized`).
-
-#### 3.1.11 Example JSON
-
-```json
-{
-  "LedgerEntryType": "Vault",
-  "LedgerIndex": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Flags": 0,
-  "PreviousTxnID": "",
-  "PreviousTxnLgrSeq": 0,
-  "Sequence": 3990518,
-  "OwnerNode": "0",
-  "Owner": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
-  "Account": "rDe7soaAox8bk2Srfi7n7Y1wzbmcn8RksQ",
-  "Data": "555344204C656E64696E67205661756C74",
-  "Asset": {
-    "currency": "USD",
-    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb"
-  },
-  "AssetsTotal": "0",
-  "AssetsAvailable": "0",
-  "LossUnrealized": "0",
-  "AssetsMaximum": "100000",
-  "ShareMPTID": "000000018AB77A8ADC472FBB7991AA311AAEB5D2FA7A793B",
-  "WithdrawalPolicy": 1,
-  "Scale": 6
-}
-```
+**TBD**
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -408,25 +366,19 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.2.5.1 Data Verification
 
-1. `Data` field exceeds 256 bytes. (`temMALFORMED`)
-2. `WithdrawalPolicy` is provided and is not `first-come-first-serve`. (`temMALFORMED`)
-3. `DomainID` is provided but is zero. (`temMALFORMED`)
-4. `DomainID` is provided but `tfVaultPrivate` flag is not set. (`temMALFORMED`)
-5. `AssetsMaximum` is negative. (`temMALFORMED`)
-6. `MPTokenMetadata` is provided but is empty or exceeds the maximum length. (`temMALFORMED`)
-7. `Scale` is provided and the `Asset` is `XRP` or `MPT` (only valid for `IOU`). (`temMALFORMED`)
-8. `Scale` is provided and exceeds 18. (`temMALFORMED`)
+1. The `Asset` is `XRP` and the `Scale` parameter is provided.
+2. The `Asset` is `MPT` and the `Scale` parameter is provided.
+3. The `Asset` is an `IOU` and the `Scale` parameter is provided and is less than **0** or greater than **18**.
+4. The `tfVaultPrivate` flag is not set and `DomainID` is provided.
+5. The `Data` field is larger than 256 bytes.
 
 ##### 3.2.5.2 Protocol-Level Failures
 
-1. The `Asset` is an `IOU` and the issuer account does not exist. (`terNO_ACCOUNT`)
-2. The `Asset` is an `IOU` and the issuer has not enabled `lsfDefaultRipple`. (`terNO_RIPPLE`)
-3. The `Asset` is an `MPT` and the `MPTokenIssuance` object does not exist. (`tecOBJECT_NOT_FOUND`)
-4. The `Asset` is an `MPT` and `lsfMPTCanTransfer` is not set on the `MPTokenIssuance`. (`tecNO_AUTH`)
-5. The `Asset`'s issuer is a pseudo-account (e.g. vault shares or AMM LP tokens). (`tecWRONG_ASSET`)
-6. The `Asset` is frozen or locked for the transaction submitter. (`tecFROZEN` for `IOU` / `tecLOCKED` for `MPT`)
-7. The `PermissionedDomain` object does not exist for the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
-8. The submitting account has insufficient balance to meet the owner reserve. (`tecINSUFFICIENT_RESERVE`)
+1. The `Asset` is `MPT` and `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object (the asset is not transferable).
+2. The `Asset` is `MPT` and the `lsfMPTLocked` flag is set in the `MPTokenIssuance` object (the asset is locked).
+3. The `Asset` is an `IOU` and the `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+4. The `PermissionedDomain` object does not exist with the provided `DomainID`.
+5. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
 
 #### 3.2.6 State Changes
 
@@ -444,29 +396,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 #### 3.2.7 Invariants
 
-1. The transaction must not modify an existing `Vault` object (i.e. no before-state).
-2. `<Vault>'.AssetsAvailable == 0 AND <Vault>'.AssetsTotal == 0 AND <Vault>'.LossUnrealized == 0 AND MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (created vault must be empty).
-3. `<Vault>'.Account == MPTokenIssuance(Vault.ShareMPTID).Issuer` (shares issuer must equal the vault's _pseudo-account_).
-4. The shares issuer `AccountRoot` must exist and must be a _pseudo-account_.
-5. The shares issuer _pseudo-account_ must reference the created vault via its `VaultID` field.
-
-#### 3.2.8 Example JSON
-
-```json
-{
-  "TransactionType": "VaultCreate",
-  "Flags": 0,
-  "Data": "555344204C656E64696E67205661756C74",
-  "Asset": {
-    "currency": "USD",
-    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb"
-  },
-  "AssetsMaximum": "100000",
-  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
-  "Fee": "200000",
-  "Sequence": 3990518
-}
-```
+**TBD**
 
 ### 3.3 Transaction: `VaultSet`
 
@@ -486,18 +416,17 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 ##### 3.3.2.1 Data Verification
 
-1. `VaultID` is zero. (`temMALFORMED`)
-2. `Data` is present but empty or exceeds 256 bytes. (`temMALFORMED`)
-3. `AssetsMaximum` is negative. (`temMALFORMED`)
-4. None of `DomainID`, `AssetsMaximum`, or `Data` are present (nothing to update). (`temMALFORMED`)
+1. The `Data` field is larger than 256 bytes.
+2. The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
+3. The transaction is attempting to modify an immutable field.
+4. The transaction does not specify any of the modifiable fields.
 
 ##### 3.3.2.2 Protocol-Level Failures
 
-1. `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
-2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
-3. `DomainID` is provided and the vault does not have `lsfVaultPrivate` set. (`tecNO_PERMISSION`)
-4. `DomainID` is provided, is non-zero, and the `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
-5. `AssetsMaximum` is non-zero and less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
+1. `Vault` object with the specified `VaultID` does not exist on the ledger.
+2. The submitting account is not the `Owner` of the vault.
+3. `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND the `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
+4. The `PermissionedDomain` object does not exist with the provided `DomainID`.
 
 #### 3.3.3 State Changes
 
@@ -507,25 +436,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 #### 3.3.4 Invariants
 
-1. The _pseudo-account_ asset balance must not change.
-2. `<Vault>.AssetsTotal == <Vault>'.AssetsTotal` (assets total must not change).
-3. `<Vault>.AssetsAvailable == <Vault>'.AssetsAvailable` (assets available must not change).
-4. `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
-5. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must not change.
-
-#### 3.3.5 Example JSON
-
-```json
-{
-  "TransactionType": "VaultSet",
-  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Data": "5570646174656420566F756C74204D65746164617461",
-  "AssetsMaximum": "200000",
-  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
-  "Fee": "10",
-  "Sequence": 3990519
-}
-```
+**TBD**
 
 ### 3.4 Transaction: `VaultDelete`
 
@@ -542,16 +453,14 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ##### 3.4.2.1 Data Verification
 
-1. `VaultID` is zero. (`temMALFORMED`)
+_None._
 
 ##### 3.4.2.2 Protocol-Level Failures
 
-1. `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
-2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
-3. `Vault.AssetsAvailable` is greater than zero. (`tecHAS_OBLIGATIONS`)
-4. `Vault.AssetsTotal` is greater than zero. (`tecHAS_OBLIGATIONS`)
-5. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is greater than zero. (`tecHAS_OBLIGATIONS`)
-6. The vault pseudo-account's `OwnerCount` is non-zero. (`tecHAS_OBLIGATIONS`)
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. The submitting account is not the `Owner` of the vault.
+3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
+4. The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
 
 #### 3.4.3 State Changes
 
@@ -563,23 +472,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 #### 3.4.4 Invariants
 
-1. The `Vault` object must be deleted (i.e. no after-state).
-2. The `MPTokenIssuance` object for the vault shares must also be deleted.
-3. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0` (no shares outstanding at time of deletion).
-4. `<Vault>.AssetsTotal == 0` (no assets outstanding at time of deletion).
-5. `<Vault>.AssetsAvailable == 0` (no assets available at time of deletion).
-
-#### 3.4.5 Example JSON
-
-```json
-{
-  "TransactionType": "VaultDelete",
-  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Account": "rfMpGAdXe6pjgnVisNe5FbCSxQ7YkfQG2D",
-  "Fee": "10",
-  "Sequence": 3990520
-}
-```
+**TBD**
 
 ### 3.5 Transaction: `VaultDeposit`
 
@@ -597,24 +490,22 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ##### 3.5.2.1 Data Verification
 
-1. `VaultID` is zero. (`temMALFORMED`)
-2. `Amount` is zero or negative. (`temBAD_AMOUNT`)
+_None._
 
 ##### 3.5.2.2 Protocol-Level Failures
 
-1. `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
-2. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
-3. The `Vault.Asset` is an `MPT` and `lsfMPTCanTransfer` is not set on the `MPTokenIssuance` (asset is non-transferable). (`tecNO_AUTH`)
-4. The `Vault.Asset` is an `IOU` and rippling is disabled on both the depositor's and vault's trust lines with the issuer. (`terNO_RIPPLE`)
-5. The `Vault.Asset` is frozen for the depositor. (`tecFROZEN` for `IOU` / `tecLOCKED` for `MPT`)
-6. The vault shares (`MPTokenIssuance`) are locked for the depositor. (`tecLOCKED`)
-7. The vault is private, the depositor is not the vault owner, and the vault has no `DomainID` set. (`tecNO_AUTH`)
-8. The vault is private, the depositor is not the vault owner, and the depositor does not have valid credentials in the vault's `PermissionedDomain`. (`tecNO_AUTH` / `tecOBJECT_NOT_FOUND`)
-9. The `Vault.Asset` is an `MPT` and the depositor does not have an authorized `MPToken` for the asset. (`tecNO_AUTH`)
-10. The depositor has insufficient balance to cover `Amount`. (`tecINSUFFICIENT_FUNDS`)
-11. Depositing `Amount` would cause `Vault.AssetsTotal` to exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
-12. The deposit amount rounds down to zero shares due to precision loss. (`tecPRECISION_LOSS`)
-13. An arithmetic overflow occurs during share calculation (e.g. large `Scale`). (`tecPATH_DRY`)
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. The asset type of the vault does not match the asset type the depositor is depositing.
+3. The depositor does not have sufficient funds to make a deposit.
+4. Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
+5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
+6. The `Vault.Asset` is `MPT` and `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+7. The `Vault.Asset` is `MPT` and `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+8. The `Vault.Asset` is `MPT` and `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
+9. The `Vault.Asset` is `MPT` and `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
+10. The `Asset` is an `IOU` and the `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+11. The `Asset` is an `IOU` and the `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
+12. The `Asset` is an `IOU` and the `RippleState` object `Balance` < `Amount` (insufficient balance).
 
 #### 3.5.3 State Changes
 
@@ -638,33 +529,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 #### 3.5.4 Invariants
 
-Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the depositor's share balance.
-
-1. The _pseudo-account_ asset balance must increase: $\Delta_{asset} > 0$.
-2. $\Delta_{asset}$ must not exceed `Amount`.
-3. The depositor's asset balance must decrease by $\Delta_{asset}$ (unless the depositor is the asset issuer).
-4. `IF <Vault>'.AssetsMaximum > 0 THEN <Vault>'.AssetsTotal <= <Vault>'.AssetsMaximum`.
-5. $\Delta_{share} > 0$ (depositor shares must increase).
-6. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
-7. `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-8. `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
-
-#### 3.5.5 Example JSON
-
-```json
-{
-  "TransactionType": "VaultDeposit",
-  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Amount": {
-    "currency": "USD",
-    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
-    "value": "5000"
-  },
-  "Account": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
-  "Fee": "1",
-  "Sequence": 3990518
-}
-```
+**TBD**
 
 ### 3.6 Transaction: `VaultWithdraw`
 
@@ -695,27 +560,25 @@ In sections below assume the following variables:
 
 ##### 3.6.2.1 Data Verification
 
-1. `VaultID` is zero. (`temMALFORMED`)
-2. `Amount` is zero or negative. (`temBAD_AMOUNT`)
-3. `Destination` is present but is zero. (`temMALFORMED`)
+_None._
 
 ##### 3.6.2.2 Protocol-Level Failures
 
-1. `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
-2. The `Amount` asset is neither `Vault.Asset` nor the vault's share `MPTokenIssuance`. (`tecWRONG_ASSET`)
-3. The `Vault.Asset` is an `MPT` and `lsfMPTCanTransfer` is not set on the `MPTokenIssuance` (asset is non-transferable). (`tecNO_AUTH`)
-4. The `Vault.Asset` is an `IOU` and rippling is disabled on both the vault's and destination's trust lines with the issuer. (`terNO_RIPPLE`)
-5. The destination account does not exist. (`tecNO_DST`)
-6. The destination account requires a destination tag and none was provided. (`tecDST_TAG_NEEDED`)
-7. The destination account has `lsfDepositAuth` set and the submitting account is not preauthorized. (`tecNO_PERMISSION`)
-8. The `Vault.Asset` is an `IOU`, the destination is a third party, and the withdrawal amount would exceed the destination's trust line limit. (`tecNO_LINE`)
-9. The destination's `IOU` trust line does not exist or is not authorized. (`tecNO_LINE` / `tecNO_AUTH`)
-10. The `Vault.Asset` is frozen for the destination account. (`tecFROZEN` for `IOU` / `tecLOCKED` for `MPT`)
-11. The vault shares are frozen for the submitting account. (`tecLOCKED`)
-12. The submitting account holds fewer shares than required to cover the withdrawal. (`tecINSUFFICIENT_FUNDS`)
-13. `Vault.AssetsAvailable` is less than the assets to be withdrawn. (`tecINSUFFICIENT_FUNDS`)
-14. The withdrawal amount rounds down to zero shares due to precision loss. (`tecPRECISION_LOSS`)
-15. An arithmetic overflow occurs during share calculation (e.g. large `Scale`). (`tecPATH_DRY`)
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. The `Vault.Asset` is `MPT` and `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
+3. The `Vault.Asset` is `MPT` and `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
+4. The `Vault.Asset` is `MPT` and `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
+5. The `Asset` is an `IOU` and the `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
+6. The `Asset` is an `IOU` and the `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
+7. The unit of `Amount` is not shares of the vault.
+8. The unit of `Amount` is not asset of the vault.
+9. `Amount` is the vault's share and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
+10. `Amount` is the vault's share and the shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
+11. `Amount` is the vault's share and `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
+12. `Amount` is the vault's asset and the shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
+13. `Amount` is the vault's asset and `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
+14. The `Destination` account is specified and does not have permission to receive the asset.
+15. The `Destination` account is specified and does not have a `RippleState` or `MPToken` object for the asset.
 
 #### 3.6.3 State Changes
 
@@ -744,31 +607,7 @@ In sections below assume the following variables:
 
 #### 3.6.4 Invariants
 
-Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the withdrawer's share balance.
-
-1. The _pseudo-account_ asset balance must decrease: $\Delta_{asset} < 0$.
-2. Exactly one destination account balance must increase by $|\Delta_{asset}|$ (unless the destination is the asset issuer).
-3. $\Delta_{share} < 0$ (withdrawer shares must decrease).
-4. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
-5. `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-6. `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
-
-#### 3.6.5 Example JSON
-
-```json
-{
-  "TransactionType": "VaultWithdraw",
-  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Amount": {
-    "currency": "USD",
-    "issuer": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
-    "value": "4083.333642504084"
-  },
-  "Account": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
-  "Fee": "1",
-  "Sequence": 3990519
-}
-```
+**TBD**
 
 ### 3.7 Transaction: `VaultClawback`
 
@@ -787,25 +626,19 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 ##### 3.7.2.1 Data Verification
 
-1. `VaultID` is zero. (`temMALFORMED`)
-2. `Amount` is negative. (`temBAD_AMOUNT`)
-3. `Amount` is provided and the asset is `XRP`. (`temMALFORMED`)
+_None._
 
 ##### 3.7.2.2 Protocol-Level Failures
 
-1. `Vault` object with the provided `VaultID` does not exist. (`tecNO_ENTRY`)
-2. `Amount` is not provided and `Vault.Asset` is not `XRP`, and the asset issuer is the vault owner — the caller must specify an explicit `Amount` to resolve the ambiguity. (`tecWRONG_ASSET`)
-3. The resolved clawback asset is the vault share (`MPTokenIssuance`) and the submitting account is not the vault owner. (`tecNO_PERMISSION`)
-4. The resolved clawback asset is the vault share and `Vault.AssetsTotal` or `Vault.AssetsAvailable` is non-zero (vault owner can only burn shares when vault has no assets). (`tecNO_PERMISSION`)
-5. The resolved clawback asset is the vault share, `Amount` is non-zero, and it does not equal the holder's full share balance (vault owner must burn all shares at once). (`tecLIMIT_EXCEEDED`)
-6. The resolved clawback asset is `Vault.Asset` and `Vault.Asset` is `XRP`. (`tecNO_PERMISSION`)
-7. The resolved clawback asset is `Vault.Asset` and the submitting account is not the asset issuer. (`tecNO_PERMISSION`)
-8. The submitting account and `Holder` are the same account (issuer cannot clawback from itself). (`tecNO_PERMISSION`)
-9. The `Vault.Asset` is an `MPT` and the `MPTokenIssuance` object does not exist. (`tecOBJECT_NOT_FOUND`)
-10. The `Vault.Asset` is an `MPT` and `lsfMPTCanClawback` is not set on the `MPTokenIssuance`. (`tecNO_PERMISSION`)
-11. The `Vault.Asset` is an `IOU` and the issuer does not have `lsfAllowTrustLineClawback` set, or has `lsfNoFreeze` set. (`tecNO_PERMISSION`)
-12. The resolved clawback amount rounds down to zero shares due to precision loss. (`tecPRECISION_LOSS`)
-13. An arithmetic overflow occurs during share calculation (e.g. large `Scale`). (`tecPATH_DRY`)
+1. `Vault` object with the `VaultID` does not exist on the ledger.
+2. `Vault.Asset` is `XRP`.
+3. `Vault.Asset` is an `IOU` and the `Issuer` account is not the submitter of the transaction.
+4. `Vault.Asset` is an `IOU` and the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
+5. `Vault.Asset` is an `IOU` and the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+6. `Vault.Asset` is an `MPT` and `MPTokenIssuance.Issuer` is not the submitter of the transaction.
+7. `Vault.Asset` is an `MPT` and `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
+8. `Vault.Asset` is an `MPT` and the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
+9. The `MPToken` object for the `Vault.ShareMPTID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
 #### 3.7.3 State Changes
 
@@ -826,28 +659,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 #### 3.7.4 Invariants
 
-Let $\Delta_{asset}$ denote the change in the _pseudo-account_ asset balance and $\Delta_{share}$ denote the change in the holder's share balance.
-
-1. The transaction submitter must be the asset issuer, or the vault owner of an empty vault with outstanding shares.
-2. If the vault holds assets: $\Delta_{asset} < 0$ (vault balance must decrease).
-3. If the vault holds assets: `<Vault>.AssetsTotal +` $\Delta_{asset}$ `== <Vault>'.AssetsTotal`.
-4. If the vault holds assets: `<Vault>.AssetsAvailable +` $\Delta_{asset}$ `== <Vault>'.AssetsAvailable`.
-5. $\Delta_{share} < 0$ (holder shares must decrease).
-6. The change in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal $\Delta_{share}$.
-
-#### 3.7.5 Example JSON
-
-```json
-{
-  "TransactionType": "VaultClawback",
-  "VaultID": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7",
-  "Holder": "raZazWJ29vzR4EdcqKi9fh3TARP6Y11jQx",
-  "Amount": "4083333642504084",
-  "Account": "rGTx5c5zRFtUXj3zsAaTEEhnAkYaH1bFAb",
-  "Fee": "1",
-  "Sequence": 3990520
-}
-```
+**TBD**
 
 ### 3.8 Transaction: `Payment`
 
@@ -866,8 +678,8 @@ The Single Asset Vault does not introduce or modify any `Payment` transaction fi
    3. The `Vault.Asset` is `MPT`:
       1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
       2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-      3. `MPToken(MPTokenIssuanceID, ACCOUNTID).lsfMPTLocked` flag is set (the asset is locked for the payer).
-      4. `MPToken(MPTokenIssuanceID, PseudoACCOUNTID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
+      3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
+      4. `MPToken(MPTokenIssuanceID, PseudoAccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
       5. `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
 
    4. The `Vault.Asset` is an `IOU`:
@@ -880,21 +692,16 @@ The Single Asset Vault does not introduce or modify any `Payment` transaction fi
 
 1. If `MPToken`object for shares does not exist for the destination account, create one.
 
-#### 3.8.4 Example JSON
-
-```json
-{}
-```
-
 ### 3.9 RPC: `vault_info`
 
 This RPC retrieves the Vault ledger entry and the IDs associated with it.
 
 #### 3.9.1 Request Fields
 
+We propose adding the following fields to the `ledger_entry` method:
+
 | Field Name | Required? | JSON Type |                Description                 |
 | ---------- | :-------: | :-------: | :----------------------------------------: |
-| `command`  |    Yes    | `string`  |          Must be `"vault_info"`.           |
 | `vault`    |    Yes    | `string`  | The object ID of the Vault to be returned. |
 
 #### 3.9.2 Response Fields
@@ -904,51 +711,41 @@ This RPC retrieves the Vault ledger entry and the IDs associated with it.
 | `vault`                          |       Yes       | `object`  | Root object representing the vault.                                                                                                                    |
 | `vault.Account`                  |       Yes       | `string`  | The pseudo-account ID of the vault.                                                                                                                    |
 | `vault.Asset`                    |       Yes       | `object`  | Object representing the asset held in the vault.                                                                                                       |
-| `vault.Asset.currency`           |   Conditional   | `string`  | Currency code of the asset. Present when the asset is `XRP` or an `IOU`.                                                                               |
-| `vault.Asset.issuer`             |   Conditional   | `string`  | Issuer address of the asset. Present when the asset is an `IOU`.                                                                                       |
-| `vault.Asset.mpt_issuance_id`    |   Conditional   | `string`  | The `MPTokenIssuance` ID of the asset. Present when the asset is an `MPT`.                                                                             |
+| `vault.Asset.currency`           |       Yes       | `string`  | Currency code of the asset stored in the vault.                                                                                                        |
+| `vault.Asset.issuer`             |       No        | `string`  | Issuer address of the asset.                                                                                                                           |
 | `vault.AssetsAvailable`          |       Yes       | `string`  | Amount of assets currently available for withdrawal.                                                                                                   |
 | `vault.AssetsTotal`              |       Yes       | `string`  | Total amount of assets in the vault.                                                                                                                   |
-| `vault.Data`                     |       No        | `string`  | Arbitrary metadata about the Vault, in hex format.                                                                                                     |
-| `vault.Flags`                    |       Yes       | `number`  | Bit-field flags associated with the vault.                                                                                                             |
-| `vault.LedgerEntryType`          |       Yes       | `string`  | Ledger entry type, always `"Vault"`.                                                                                                                   |
-| `vault.LossUnrealized`           |       Yes       | `string`  | Unrealized loss associated with the vault.                                                                                                             |
+| `vault.Flags`                    |       No        | `number`  | Bit-field flags associated with the vault.                                                                                                             |
+| `vault.LedgerEntryType`          |       Yes       | `string`  | Ledger entry type, always "Vault".                                                                                                                     |
+| `vault.LossUnrealized`           |       No        | `string`  | Unrealized loss associated with the vault.                                                                                                             |
 | `vault.Owner`                    |       Yes       | `string`  | ID of the Vault Owner account.                                                                                                                         |
-| `vault.OwnerNode`                |       Yes       | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
+| `vault.OwnerNode`                |       No        | `string`  | Identifier for the owner node in the ledger tree.                                                                                                      |
 | `vault.PreviousTxnID`            |       Yes       | `string`  | Transaction ID of the last modification to this vault.                                                                                                 |
 | `vault.PreviousTxnLgrSeq`        |       Yes       | `number`  | Ledger sequence number of the last transaction modifying this vault.                                                                                   |
-| `vault.Scale`                    |       Yes       | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 | `vault.Sequence`                 |       Yes       | `number`  | Sequence number of the vault entry.                                                                                                                    |
-| `vault.ShareMPTID`               |       Yes       | `string`  | Multi-purpose token ID associated with the vault's shares.                                                                                             |
-| `vault.WithdrawalPolicy`         |       Yes       | `number`  | Policy defining withdrawal conditions.                                                                                                                 |
+| `vault.ShareMPTID`               |       No        | `string`  | Multi-purpose token ID associated with this vault.                                                                                                     |
+| `vault.WithdrawalPolicy`         |       No        | `number`  | Policy defining withdrawal conditions.                                                                                                                 |
 | `vault.index`                    |       Yes       | `string`  | Unique index of the vault ledger entry.                                                                                                                |
 | `vault.shares`                   |       Yes       | `object`  | Object containing details about issued shares.                                                                                                         |
-| `vault.shares.DomainID`          |       No        | `string`  | The `PermissionedDomain` object ID associated with the shares, if set.                                                                                 |
-| `vault.shares.Flags`             |       Yes       | `number`  | Bit-field flags associated with the shares issuance.                                                                                                   |
+| `vault.shares.Flags`             |       No        | `number`  | Bit-field flags associated with the shares issuance.                                                                                                   |
 | `vault.shares.Issuer`            |       Yes       | `string`  | The ID of the Issuer of the Share. It will always be the pseudo-account ID.                                                                            |
-| `vault.shares.LedgerEntryType`   |       Yes       | `string`  | Ledger entry type, always `"MPTokenIssuance"`.                                                                                                         |
-| `vault.shares.MPTokenMetadata`   |       No        | `string`  | Arbitrary metadata about the share MPT, in hex format.                                                                                                 |
+| `vault.shares.LedgerEntryType`   |       Yes       | `string`  | Ledger entry type, always "MPTokenIssuance".                                                                                                           |
 | `vault.shares.OutstandingAmount` |       Yes       | `string`  | Total outstanding shares issued.                                                                                                                       |
-| `vault.shares.OwnerNode`         |       Yes       | `string`  | Identifier for the owner node of the shares.                                                                                                           |
+| `vault.shares.OwnerNode`         |       No        | `string`  | Identifier for the owner node of the shares.                                                                                                           |
 | `vault.shares.PreviousTxnID`     |       Yes       | `string`  | Transaction ID of the last modification to the shares issuance.                                                                                        |
 | `vault.shares.PreviousTxnLgrSeq` |       Yes       | `number`  | Ledger sequence number of the last transaction modifying the shares issuance.                                                                          |
 | `vault.shares.Sequence`          |       Yes       | `number`  | Sequence number of the shares issuance entry.                                                                                                          |
 | `vault.shares.index`             |       Yes       | `string`  | Unique index of the shares ledger entry.                                                                                                               |
-| `vault.shares.mpt_issuance_id`   |       Yes       | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
+| `vault.shares.mpt_issuance_id`   |       No        | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
+| `vault.Scale`                    |       Yes       | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 3.9.3 Failure Conditions
 
-1. The `vault` field is not provided or is not a valid object ID (`invalidParams`).
-2. The `Vault` object with the specified ID does not exist on the ledger (`entryNotFound`).
+**TBD**
 
 #### 3.9.4 Example Request
 
-```json
-{
-  "command": "vault_info",
-  "vault": "48B33DBFA762ECA23CF37CF1A4F93D6D3EBBA710F62F357CF9ADF1146A0E92B7"
-}
-```
+**TBD**
 
 #### 3.9.5 Example Response
 
@@ -958,11 +755,12 @@ Vault holding an `IOU`:
 {
   "result": {
     "ledger_current_index": 7,
+    "status": "success",
     "validated": false,
     "vault": {
       "Account": "rKwvc1mgHLyHKY3yRUqVwffWtsxYb3QLWf",
       "Asset": {
-        "currency": "USD",
+        "currency": "IOU",
         "issuer": "r9cZ5oHbdL4Z9Maj6TdnfAos35nVzYuNds"
       },
       "AssetsAvailable": "100",
@@ -990,11 +788,10 @@ Vault holding an `IOU`:
         "Sequence": 1,
         "index": "F84AE266C348540D7134F1A683392C3B97C3EEFDE9FEF6F2055B3B92550FB44A",
         "mpt_issuance_id": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
-      }
+      },
+      "Scale": 6
     }
-  },
-  "status": "success",
-  "type": "response"
+  }
 }
 ```
 
@@ -1002,43 +799,32 @@ Vault holding an `MPT`:
 
 ```json
 {
-  "result": {
-    "ledger_current_index": 3990828,
-    "validated": false,
-    "vault": {
-      "Account": "rQhUcbJoDfvgXr1EkMwarLP5QT3XinEBDg",
-      "Asset": {
-        "mpt_issuance_id": "002F830036E4E56185F871D70CFFC7BDD554F897606BB6D3"
-      },
-      "Data": "50726976617465207661756C7420666F72207475746F7269616C73",
-      "Flags": 65536,
-      "LedgerEntryType": "Vault",
-      "Owner": "rJdYtgaiEgzL7xD2QdPKg5xoHkWc7CZjvm",
-      "OwnerNode": "0",
-      "PreviousTxnID": "F73B073028D7EF14C5DD907591E579EBFEDBA891F4AE0B951439C240C42AE0D4",
-      "PreviousTxnLgrSeq": 3113735,
-      "Sequence": 3113728,
-      "ShareMPTID": "00000001FCE5D5E313303F3D0C700789108CC6BE7D711493",
-      "WithdrawalPolicy": 1,
-      "index": "9E48171960CD9F62C3A7B6559315A510AE544C3F51E02947B5D4DAC8AA66C3BA",
-      "shares": {
-        "DomainID": "17060E04AD63975CDE5E4B0C6ACB95ABFA2BA1D569473559448B6E556F261D4A",
-        "Flags": 60,
-        "Issuer": "rQhUcbJoDfvgXr1EkMwarLP5QT3XinEBDg",
-        "LedgerEntryType": "MPTokenIssuance",
-        "MPTokenMetadata": "7B226163223A2264656669222C226169223A7B226578616D706C655F696E666F223A2274657374227D2C2264223A2250726F706F7274696F6E616C206F776E65727368697020736861726573206F6620746865207661756C74222C2269223A226578616D706C652E636F6D2F7661756C742D7368617265732D69636F6E2E706E67222C22696E223A225661756C74204F776E6572222C226E223A225661756C7420536861726573222C2274223A22534841524531222C227573223A5B7B2263223A2277656273697465222C2274223A2241737365742057656273697465222C2275223A226578616D706C652E636F6D2F6173736574227D2C7B2263223A22646F6373222C2274223A22446F6373222C2275223A226578616D706C652E636F6D2F646F6373227D5D7D",
-        "OutstandingAmount": "0",
-        "OwnerNode": "0",
-        "PreviousTxnID": "F73B073028D7EF14C5DD907591E579EBFEDBA891F4AE0B951439C240C42AE0D4",
-        "PreviousTxnLgrSeq": 3113735,
-        "Sequence": 1,
-        "index": "F231A0382544EC0ABE810A9D292F3BD455A21CD13CC1DFF75EAFE957A1C8CAB4",
-        "mpt_issuance_id": "00000001FCE5D5E313303F3D0C700789108CC6BE7D711493"
-      }
-    }
+  "LedgerEntryType": "Vault",
+  "LedgerIndex": "E123F4567890ABCDE123F4567890ABCDEF1234567890ABCDEF1234567890ABCD",
+  "Flags": "0",
+  "PreviousTxnID": "9A8765B4321CDE987654321CDE987654321CDE987654321CDE987654321CDE98",
+  "PreviousTxnLgrSeq": 12345678,
+  "Sequence": 1,
+  "OwnerNode": 2,
+  "Owner": "rEXAMPLE9AbCdEfGhIjKlMnOpQrStUvWxYz",
+  "Account": "rPseudoAcc1234567890abcdef1234567890abcdef",
+  "Data": "5468697320697320617262697472617279206D657461646174612061626F757420746865207661756C742E",
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rIssuer1234567890abcdef1234567890abcdef",
+    "value": "1000"
   },
-  "status": "success",
-  "type": "response"
+  "AssetsTotal": 1000000,
+  "AssetsAvailable": 800000,
+  "LossUnrealized": 200000,
+  "AssetsMaximum": 0,
+  "Share": {
+    "mpt_issuance_id": "0000012FFD9EE5DA93AC614B4DB94D7E0FCE415CA51BED47",
+    "value": "1"
+  },
+  "ShareTotal": 5000,
+  "WithdrawalPolicy": "0x0001",
+  "Scale": 0
 }
 ```
 
@@ -1049,6 +835,7 @@ Vault holding `XRP`:
   "result": {
     "ledger_hash": "6FFF56DF92D54D01EE3D5487787F4430D66F89C6BC74B00C276262A0207B2FAD",
     "ledger_index": 6,
+    "status": "success",
     "validated": true,
     "vault": {
       "Account": "rBVxExjRR6oDMWCeQYgJP7q4JBLGeLBPyv",
@@ -1080,27 +867,20 @@ Vault holding `XRP`:
         "Sequence": 1,
         "index": "4B25BDE141E248E5D585FEB6100E137D3C2475CEE62B28446391558F0BEA23B5",
         "mpt_issuance_id": "00000001732B0822A31109C996BCDD7E64E05D446E7998EE"
-      }
+      },
+      "Scale": 0
     }
-  },
-  "status": "success",
-  "type": "response"
+  }
 }
 ```
 
 ## 4. Rationale
 
-The Single Asset Vault is intentionally decoupled from the protocols that rely on it for liquidity. Rather than embedding liquidity provisioning logic into each protocol the vault provides a reusable on-chain building block that a protocol can connect to. This separation means that protocol developers do not need to implement liquidity provisioning mechanics they simply draw from and return assets to the vault, while the vault handles share accounting, access control, and asset custody independently.
-
-This design was chosen over a tightly-coupled alternative where each protocol manages its own depositor pool, because:
-
-- **Reusability**: A single vault implementation serves multiple protocols, reducing code duplication and the surface area for bugs.
-- **Composability**: Vault shares are first-class MPT assets that can be transferred, escrowed, or used in other DeFi protocols.
-- **Separation of concerns**: Protocols connecting to the vault only need to track their debt and update vault state through well-defined interfaces, rather than managing individual depositor balances.
+_TBD_
 
 ## 5. Security Considerations
 
-The security properties of the Single Asset Vault are enforced through the invariant checks described in sections 3.1.10 and 3.2.7 through 3.7.4. These invariants guarantee conservation of assets across deposits, withdrawals, and clawbacks, immutability of critical vault parameters, and correctness of share issuance and redemption.
+_TBD_
 
 # Appendix
 
