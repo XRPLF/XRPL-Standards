@@ -80,7 +80,7 @@ The **`Vault`** ledger entry describes the state of the tokenized vault.
 The key of the `Vault` object is the result of [`SHA512-Half`](https://xrpl.org/docs/references/protocol/data-types/basic-data-types/#hashes) of the following values concatenated in order:
 
 - The `Vault` space key `0x0056` (capital V)
-- The [`ACCOUNTID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
+- The [`AccountID`](https://xrpl.org/docs/references/protocol/binary-format/#accountid-fields) of the account submitting the `VaultSet`transaction, i.e.`VaultOwner`.
 - The transaction `Sequence` number. If the transaction used a [Ticket](https://xrpl.org/docs/concepts/accounts/tickets/), use the `TicketSequence` value.
 
 #### 3.1.2 Fields
@@ -96,8 +96,8 @@ A vault has the following fields:
 | `PreviousTxnLgrSeq` |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
 | `Sequence`          |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The transaction sequence number that created the vault.                                                                                                |
 | `OwnerNode`         |    No    |   Yes    |      `number`      |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                            |
-| `Owner`             |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
-| `Account`           |    No    |   Yes    |      `string`      |  `ACCOUNTID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
+| `Owner`             |    No    |   Yes    |      `string`      |  `AccountID`  |     `N/A`     | The account address of the Vault Owner.                                                                                                                |
+| `Account`           |    No    |   Yes    |      `string`      |  `AccountID`  |     `N/A`     | The address of the Vaults _pseudo-account_.                                                                                                            |
 | `Data`              |   Yes    |    No    |      `string`      |    `BLOB`     |     None      | Arbitrary metadata about the Vault. Limited to 256 bytes.                                                                                              |
 | `Asset`             |    No    |   Yes    | `string or object` |    `ISSUE`    |     `N/A`     | The asset of the vault. The vault supports `XRP`, `IOU` and `MPT`.                                                                                     |
 | `AssetsTotal`       |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The total value of the vault.                                                                                                                          |
@@ -557,7 +557,7 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
 | `Amount`          |   Yes    | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
-| `Destination`     |    No    | `string`  |  `ACCOUNTID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
+| `Destination`     |    No    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
 | `DestinationTag`  |    No    | `number`  |   `UINT32`    |     Empty     | Arbitrary tag identifying the reason for the withdrawal to the destination. |
 
 - If `Amount` is the Vaults asset, calculate the share cost using the [**Withdraw formula**](#21723-withdraw).
@@ -646,7 +646,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
-| `Holder`          |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
+| `Holder`          |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
 | `Amount`          |    No    | `number`  |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
 
 #### 3.7.2 Failure Conditions
@@ -718,7 +718,7 @@ _None._
       1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
       2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
       3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
-      4. `MPToken(MPTokenIssuanceID, PseudoAccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
+      4. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
       5. `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
 
    4. The `Vault.Asset` is an `IOU`:
