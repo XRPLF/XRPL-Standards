@@ -25,25 +25,25 @@ It contains the following fields:
 
 | Field | Type | Bytes | Required | Lite Account |
 | ----- | ---- | ----- | -------- | ------------ |
-| sfLedgerEntryType | UInt16 | 3 | ✅ | ✅  |
-| sfFlags | UInt32 | 5 | ✅ | ✅  |
-| sfAccount | AccountID | 22 | ✅ | ✅  |
-| sfSequence | UInt32 | 5 | ✅ | ✅  |
-| sfBalance | Amount | 9 | ✅ | ✅  |
-| sfOwnerCount | UInt32 | 5 | ✅ | ✅  |
-| sfPreviousTxnID | UInt256 | 33 | ✅ | ✅  |
-| sfPreviousTxnLgrSeq | UInt32 | 5 | ✅ | ✅  |
-| sfAccountTxnID | UInt256 | 33 |   |   |
-| sfRegularKey | AccountID | 22 |   |   |
-| sfEmailHash | UInt128 | 17 |   |   |
-| sfWalletLocator | UInt256 | 33 |   |   |
-| sfWalletSize | UInt32 | 5 |   |   |
-| sfMessageKey | Blob | 33 |   |   |
-| sfTransferRate | UInt32 | 5 |   |   |
-| sfDomain | Blob | at most 256 |   |   |
-| sfTickSize | UInt8 | 4 |   |   |
-| sfTicketCount | UInt32 | 6 |   |   |
-| sfSponsor^^ | AccountID | 22 |   | ✅  |
+| sfLedgerEntryType | UInt16 | 3 | ✅ | ✅ |
+| sfFlags | UInt32 | 5 | ✅ | ✅ |
+| sfAccount | AccountID | 22 | ✅ | ✅ |
+| sfSequence | UInt32 | 5 | ✅ | ✅ |
+| sfBalance | Amount | 9 | ✅ | ✅ |
+| sfOwnerCount | UInt32 | 5 | ✅ | ✅ |
+| sfPreviousTxnID | UInt256 | 33 | ✅ | ✅ |
+| sfPreviousTxnLgrSeq | UInt32 | 5 | ✅ | ✅ |
+| sfAccountTxnID | UInt256 | 33 | | |
+| sfRegularKey | AccountID | 22 | | |
+| sfEmailHash | UInt128 | 17 | | |
+| sfWalletLocator | UInt256 | 33 | | |
+| sfWalletSize | UInt32 | 5 | | |
+| sfMessageKey | Blob | 33 | | |
+| sfTransferRate | UInt32 | 5 | | |
+| sfDomain | Blob | at most 256 | | |
+| sfTickSize | UInt8 | 4 | | |
+| sfTicketCount | UInt32 | 6 | | |
+| sfSponsor^^ | AccountID | 22 | | ✅ |
 
 ^^ Part of this proposal
 
