@@ -1,0 +1,6666 @@
+{
+  "result": {
+    "ACCOUNT_SET_FLAGS": {
+      "asfAccountTxnID": 5,
+      "asfAllowTrustLineClawback": 16,
+      "asfAllowTrustLineLocking": 17,
+      "asfAuthorizedNFTokenMinter": 10,
+      "asfDefaultRipple": 8,
+      "asfDepositAuth": 9,
+      "asfDisableMaster": 4,
+      "asfDisallowIncomingCheck": 13,
+      "asfDisallowIncomingNFTokenOffer": 12,
+      "asfDisallowIncomingPayChan": 14,
+      "asfDisallowIncomingTrustline": 15,
+      "asfDisallowXRP": 3,
+      "asfGlobalFreeze": 7,
+      "asfNoFreeze": 6,
+      "asfRequireAuth": 2,
+      "asfRequireDest": 1
+    },
+    "FIELDS": [
+      [
+        "Generic",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 0,
+          "type": "Unknown"
+        }
+      ],
+      [
+        "Invalid",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": -1,
+          "type": "Unknown"
+        }
+      ],
+      [
+        "ObjectEndMarker",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "STObject"
+        }
+      ],
+      [
+        "ArrayEndMarker",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "STArray"
+        }
+      ],
+      [
+        "taker_gets_funded",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 258,
+          "type": "Amount"
+        }
+      ],
+      [
+        "taker_pays_funded",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 259,
+          "type": "Amount"
+        }
+      ],
+      [
+        "VoteEntry",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookGrant",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookParameter",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 23,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookDefinition",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookExecution",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "STObject"
+        }
+      ],
+      [
+        "EmittedTxn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "STObject"
+        }
+      ],
+      [
+        "DisabledValidator",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "STObject"
+        }
+      ],
+      [
+        "Majority",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "STObject"
+        }
+      ],
+      [
+        "TemplateEntry",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "STObject"
+        }
+      ],
+      [
+        "NewFields",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "STObject"
+        }
+      ],
+      [
+        "FinalFields",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "STObject"
+        }
+      ],
+      [
+        "PreviousFields",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "STObject"
+        }
+      ],
+      [
+        "ModifiedNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "STObject"
+        }
+      ],
+      [
+        "DeletedNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "STObject"
+        }
+      ],
+      [
+        "CreatedNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "STObject"
+        }
+      ],
+      [
+        "TransactionMetaData",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "STObject"
+        }
+      ],
+      [
+        "XChainBridge",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "XChainBridge"
+        }
+      ],
+      [
+        "Asset2",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "Issue"
+        }
+      ],
+      [
+        "Asset",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "Issue"
+        }
+      ],
+      [
+        "IssuingChainIssue",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Issue"
+        }
+      ],
+      [
+        "LockingChainIssue",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Issue"
+        }
+      ],
+      [
+        "QuoteAsset",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Currency"
+        }
+      ],
+      [
+        "BaseAsset",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Currency"
+        }
+      ],
+      [
+        "Counterparty",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 26,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Borrower",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 25,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Subject",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 24,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "IssuingChainDoor",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 23,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "LockingChainDoor",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 22,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "AttestationRewardAccount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 21,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "AttestationSignerAccount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 20,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "OtherChainDestination",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 19,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "OtherChainSource",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 18,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "HookAccount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 16,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Delegate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 12,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Holder",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 11,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "EmitCallback",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 10,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "NFTokenMinter",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 9,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Unauthorize",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 6,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Authorize",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 5,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Issuer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 4,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Destination",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 3,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Owner",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 2,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "Account",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 1,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "CredentialType",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 31,
+          "type": "Blob"
+        }
+      ],
+      [
+        "MPTokenMetadata",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 30,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Provider",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 29,
+          "type": "Blob"
+        }
+      ],
+      [
+        "AssetClass",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 28,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Data",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 27,
+          "type": "Blob"
+        }
+      ],
+      [
+        "DIDDocument",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 26,
+          "type": "Blob"
+        }
+      ],
+      [
+        "HookParameterValue",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 25,
+          "type": "Blob"
+        }
+      ],
+      [
+        "HookParameterName",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 24,
+          "type": "Blob"
+        }
+      ],
+      [
+        "HookReturnString",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 23,
+          "type": "Blob"
+        }
+      ],
+      [
+        "HookStateData",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 22,
+          "type": "Blob"
+        }
+      ],
+      [
+        "ValidatorToReEnable",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 21,
+          "type": "Blob"
+        }
+      ],
+      [
+        "ValidatorToDisable",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 20,
+          "type": "Blob"
+        }
+      ],
+      [
+        "UNLModifyValidator",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 19,
+          "type": "Blob"
+        }
+      ],
+      [
+        "MasterSignature",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": true,
+          "nth": 18,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Condition",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 17,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Fulfillment",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 16,
+          "type": "Blob"
+        }
+      ],
+      [
+        "MemoData",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 13,
+          "type": "Blob"
+        }
+      ],
+      [
+        "MemoType",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 12,
+          "type": "Blob"
+        }
+      ],
+      [
+        "CreateCode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 11,
+          "type": "Blob"
+        }
+      ],
+      [
+        "ExpireCode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 10,
+          "type": "Blob"
+        }
+      ],
+      [
+        "RemoveCode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 9,
+          "type": "Blob"
+        }
+      ],
+      [
+        "FundCode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 8,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Domain",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 7,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Signature",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": true,
+          "nth": 6,
+          "type": "Blob"
+        }
+      ],
+      [
+        "URI",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 5,
+          "type": "Blob"
+        }
+      ],
+      [
+        "TxnSignature",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": true,
+          "nth": 4,
+          "type": "Blob"
+        }
+      ],
+      [
+        "SigningPubKey",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 3,
+          "type": "Blob"
+        }
+      ],
+      [
+        "MessageKey",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 2,
+          "type": "Blob"
+        }
+      ],
+      [
+        "PublicKey",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 1,
+          "type": "Blob"
+        }
+      ],
+      [
+        "LPTokenBalance",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "Amount"
+        }
+      ],
+      [
+        "MinAccountCreateAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "Amount"
+        }
+      ],
+      [
+        "SignatureReward",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "Amount"
+        }
+      ],
+      [
+        "Price",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "Amount"
+        }
+      ],
+      [
+        "EPrice",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "Amount"
+        }
+      ],
+      [
+        "LPTokenIn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "Amount"
+        }
+      ],
+      [
+        "LPTokenOut",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "Amount"
+        }
+      ],
+      [
+        "ReserveIncrementDrops",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "Amount"
+        }
+      ],
+      [
+        "ReserveBaseDrops",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 23,
+          "type": "Amount"
+        }
+      ],
+      [
+        "BaseFeeDrops",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "Amount"
+        }
+      ],
+      [
+        "NFTokenBrokerFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "Amount"
+        }
+      ],
+      [
+        "DeliveredAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "Amount"
+        }
+      ],
+      [
+        "RippleEscrow",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "Amount"
+        }
+      ],
+      [
+        "MinimumOffer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "Amount"
+        }
+      ],
+      [
+        "BidMax",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "Amount"
+        }
+      ],
+      [
+        "BidMin",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "Amount"
+        }
+      ],
+      [
+        "CredentialIDs",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 5,
+          "type": "Vector256"
+        }
+      ],
+      [
+        "Amount2",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "Amount"
+        }
+      ],
+      [
+        "LoanScale",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Int32"
+        }
+      ],
+      [
+        "LatePaymentFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "Number"
+        }
+      ],
+      [
+        "LoanServiceFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "Number"
+        }
+      ],
+      [
+        "RegularKey",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 8,
+          "type": "AccountID"
+        }
+      ],
+      [
+        "ShareMPTID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Hash192"
+        }
+      ],
+      [
+        "CoverRateMinimum",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 62,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LoanBrokerNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "LoanSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 61,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "VaultNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "PaymentTotal",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 60,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LockedAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "NextPaymentDueDate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 58,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "IssuerNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "WithdrawalPolicy",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "PreviousPaymentDueDate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 57,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "MPTAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "WasLockingChainSend",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "GracePeriod",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 56,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "OutstandingAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "PaymentInterval",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 55,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "HookResult",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "MaximumAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "UNLModifyDisabling",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "StartDate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 54,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "AssetPrice",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 23,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "TickSize",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "MutableFlags",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 53,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "XChainAccountClaimCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "ManagementFeeOutstanding",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "Number"
+        }
+      ],
+      [
+        "PermissionValue",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 52,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "XChainAccountCreateCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "PeriodicPayment",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "Number"
+        }
+      ],
+      [
+        "OracleDocumentID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 51,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "XChainClaimID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "TotalValueOutstanding",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 15,
+          "type": "Number"
+        }
+      ],
+      [
+        "FirstNFTokenSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 50,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ReferenceCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "Validation",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 257,
+          "type": "Validation"
+        }
+      ],
+      [
+        "PrincipalRequested",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 14,
+          "type": "Number"
+        }
+      ],
+      [
+        "HookReturnCode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "PrincipalOutstanding",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "Number"
+        }
+      ],
+      [
+        "VoteWeight",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 48,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "HookInstructionCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "ClosePaymentFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "Number"
+        }
+      ],
+      [
+        "HookOn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "LoanOriginationFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "Number"
+        }
+      ],
+      [
+        "MPTokenIssuanceID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Hash192"
+        }
+      ],
+      [
+        "BurnedNFTokens",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 44,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitBurden",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "NFTokenOffers",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 4,
+          "type": "Vector256"
+        }
+      ],
+      [
+        "DeliverMin",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "Amount"
+        }
+      ],
+      [
+        "CoverAvailable",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "Number"
+        }
+      ],
+      [
+        "MintedNFTokens",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 43,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "NFTokenOfferNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "Amendments",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 3,
+          "type": "Vector256"
+        }
+      ],
+      [
+        "SendMax",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "Amount"
+        }
+      ],
+      [
+        "DebtMaximum",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "Number"
+        }
+      ],
+      [
+        "AssetScale",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "NFTokenTaxon",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 42,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ServerVersion",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "Hashes",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 2,
+          "type": "Vector256"
+        }
+      ],
+      [
+        "Fee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "Amount"
+        }
+      ],
+      [
+        "DebtTotal",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "Number"
+        }
+      ],
+      [
+        "TicketSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 41,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Scale",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "Cookie",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "Indexes",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 1,
+          "type": "Vector256"
+        }
+      ],
+      [
+        "LoanID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 38,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "HighLimit",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "Amount"
+        }
+      ],
+      [
+        "LossUnrealized",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "Number"
+        }
+      ],
+      [
+        "TransactionResult",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "TicketCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 40,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "DestinationNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "LoanBrokerID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 37,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "LowLimit",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "Amount"
+        }
+      ],
+      [
+        "AssetsTotal",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "Number"
+        }
+      ],
+      [
+        "Method",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "SettleDelay",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 39,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "HighNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "ParentBatchID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 36,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerGets",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "Amount"
+        }
+      ],
+      [
+        "AssetsMaximum",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "Number"
+        }
+      ],
+      [
+        "CloseResolution",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "UInt8"
+        }
+      ],
+      [
+        "SignerListID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 38,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LowNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "VaultID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 35,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerPays",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "Amount"
+        }
+      ],
+      [
+        "AssetsAvailable",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Number"
+        }
+      ],
+      [
+        "BatchSigners",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "STArray"
+        }
+      ],
+      [
+        "FinishAfter",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 37,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ExchangeRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "DomainID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 34,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "LimitAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "Amount"
+        }
+      ],
+      [
+        "Number",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Number"
+        }
+      ],
+      [
+        "RawTransactions",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "STArray"
+        }
+      ],
+      [
+        "CancelAfter",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 36,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "BaseFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "HookSetTxnID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 33,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Balance",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Amount"
+        }
+      ],
+      [
+        "Permissions",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "STArray"
+        }
+      ],
+      [
+        "SignerQuorum",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 35,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "OwnerNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "HookNamespace",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 32,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Amount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Amount"
+        }
+      ],
+      [
+        "AcceptedCredentials",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "STArray"
+        }
+      ],
+      [
+        "ClearFlag",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 34,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "BookNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "UnauthorizeCredentials",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "STArray"
+        }
+      ],
+      [
+        "SetFlag",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 33,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "IndexPrevious",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "AuthorizeCredentials",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "STArray"
+        }
+      ],
+      [
+        "ReserveIncrement",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 32,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "IndexNext",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "CoverRateLiquidation",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 63,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmailHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Hash128"
+        }
+      ],
+      [
+        "SignerWeight",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "OverpaymentInterestRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 68,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "TransactionType",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "CloseInterestRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 67,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "InterestRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 65,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "OverpaymentFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 64,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "index",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 258,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "hash",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 257,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "SubjectNode",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "UInt64"
+        }
+      ],
+      [
+        "PaymentRemaining",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 59,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitGeneration",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 46,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "HookStateCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 45,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "HookHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "HookStateKey",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "NFTokenSellOffer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "AuthAccounts",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "STArray"
+        }
+      ],
+      [
+        "ReserveBase",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "NextPageMin",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "OperationLimit",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "PreviousPageMin",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "MemoFormat",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": true,
+          "nth": 14,
+          "type": "Blob"
+        }
+      ],
+      [
+        "Transaction",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 257,
+          "type": "Transaction"
+        }
+      ],
+      [
+        "XChainCreateAccountAttestations",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "STArray"
+        }
+      ],
+      [
+        "TransactionIndex",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ValidatedHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "XChainClaimAttestations",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "STArray"
+        }
+      ],
+      [
+        "LastLedgerSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "CheckID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "HookGrants",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "STArray"
+        }
+      ],
+      [
+        "FirstLedgerSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ConsensusHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 23,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "HookParameters",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "STArray"
+        }
+      ],
+      [
+        "OfferSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 25,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Channel",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "HookExecutions",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "STArray"
+        }
+      ],
+      [
+        "LoadFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Digest",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "DisabledValidators",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "STArray"
+        }
+      ],
+      [
+        "BondAmount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 23,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Majorities",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "STArray"
+        }
+      ],
+      [
+        "StampEscrow",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Amendment",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "QualityOut",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Nickname",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "QualityIn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "InvoiceID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "AdditionalBooks",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "STArray"
+        }
+      ],
+      [
+        "LowQualityOut",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "BookDirectory",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "VoteSlots",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "STArray"
+        }
+      ],
+      [
+        "LowQualityIn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Hooks",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "STArray"
+        }
+      ],
+      [
+        "HighQualityOut",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "AMMID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 14,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "NFTokens",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "STArray"
+        }
+      ],
+      [
+        "HighQualityIn",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitHookHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Memos",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "STArray"
+        }
+      ],
+      [
+        "LastUpdateTime",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 15,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitNonce",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerGetsIssuer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "Hash160"
+        }
+      ],
+      [
+        "AffectedNodes",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "STArray"
+        }
+      ],
+      [
+        "DestinationTag",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 14,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitParentTxnID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerGetsCurrency",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "Hash160"
+        }
+      ],
+      [
+        "Sufficient",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "STArray"
+        }
+      ],
+      [
+        "OwnerCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "RootIndex",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "SignerEntries",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "STArray"
+        }
+      ],
+      [
+        "BatchSigner",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 35,
+          "type": "STObject"
+        }
+      ],
+      [
+        "Expiration",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Paths",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "PathSet"
+        }
+      ],
+      [
+        "WalletLocator",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Signers",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "STArray"
+        }
+      ],
+      [
+        "RawTransaction",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 34,
+          "type": "STObject"
+        }
+      ],
+      [
+        "SigningTime",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LedgerIndex",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Credential",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 33,
+          "type": "STObject"
+        }
+      ],
+      [
+        "ParentCloseTime",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 8,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "PreviousTxnID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "PriceData",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 32,
+          "type": "STObject"
+        }
+      ],
+      [
+        "CloseTime",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 7,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "AccountHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "XChainCreateAccountAttestationCollectionElement",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 31,
+          "type": "STObject"
+        }
+      ],
+      [
+        "LedgerSequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "TransactionHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "XChainClaimAttestationCollectionElement",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "STObject"
+        }
+      ],
+      [
+        "PreviousTxnLgrSeq",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "ParentHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "XChainCreateAccountProofSig",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 29,
+          "type": "STObject"
+        }
+      ],
+      [
+        "Sequence",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Signer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "STObject"
+        }
+      ],
+      [
+        "ManagementFeeRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 22,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "LedgerHash",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "XChainClaimProofSig",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "STObject"
+        }
+      ],
+      [
+        "SourceTag",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 3,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Permission",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 15,
+          "type": "STObject"
+        }
+      ],
+      [
+        "LedgerFixType",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 21,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "AuthAccount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 27,
+          "type": "STObject"
+        }
+      ],
+      [
+        "Flags",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Hook",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 14,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookApiVersion",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 20,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "NFToken",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookEmitCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 18,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "SignerEntry",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookStateChangeCount",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 17,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "Memo",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "STObject"
+        }
+      ],
+      [
+        "Version",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 16,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "TransferFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 4,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "DiscountedFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "LateInterestRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 66,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LedgerEntryType",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "TradingFee",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "UInt16"
+        }
+      ],
+      [
+        "AccountTxnID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 9,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerPaysCurrency",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "Hash160"
+        }
+      ],
+      [
+        "Template",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 5,
+          "type": "STArray"
+        }
+      ],
+      [
+        "Book",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 36,
+          "type": "STObject"
+        }
+      ],
+      [
+        "TransferRate",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 11,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "Generic",
+        {
+          "isSerialized": false,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 0,
+          "type": "Unknown"
+        }
+      ],
+      [
+        "NFTokenID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 10,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "TakerPaysIssuer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 2,
+          "type": "Hash160"
+        }
+      ],
+      [
+        "Necessary",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 6,
+          "type": "STArray"
+        }
+      ],
+      [
+        "CounterpartySignature",
+        {
+          "isSerialized": true,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 37,
+          "type": "STObject"
+        }
+      ],
+      [
+        "WalletSize",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 12,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "NFTokenBuyOffer",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 28,
+          "type": "Hash256"
+        }
+      ],
+      [
+        "Metadata",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 257,
+          "type": "Metadata"
+        }
+      ],
+      [
+        "PriceDataSeries",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 24,
+          "type": "STArray"
+        }
+      ],
+      [
+        "ReferenceFeeUnits",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 30,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "LedgerEntry",
+        {
+          "isSerialized": false,
+          "isSigningField": false,
+          "isVLEncoded": false,
+          "nth": 257,
+          "type": "LedgerEntry"
+        }
+      ],
+      [
+        "AuctionSlot",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 26,
+          "type": "STObject"
+        }
+      ],
+      [
+        "NetworkID",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 1,
+          "type": "UInt32"
+        }
+      ],
+      [
+        "EmitDetails",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 13,
+          "type": "STObject"
+        }
+      ],
+      [
+        "HookExecutionIndex",
+        {
+          "isSerialized": true,
+          "isSigningField": true,
+          "isVLEncoded": false,
+          "nth": 19,
+          "type": "UInt16"
+        }
+      ]
+    ],
+    "LEDGER_ENTRY_FLAGS": {
+      "AccountRoot": {
+        "lsfAllowTrustLineClawback": 2147483648,
+        "lsfAllowTrustLineLocking": 1073741824,
+        "lsfDefaultRipple": 8388608,
+        "lsfDepositAuth": 16777216,
+        "lsfDisableMaster": 1048576,
+        "lsfDisallowIncomingCheck": 134217728,
+        "lsfDisallowIncomingNFTokenOffer": 67108864,
+        "lsfDisallowIncomingPayChan": 268435456,
+        "lsfDisallowIncomingTrustline": 536870912,
+        "lsfDisallowXRP": 524288,
+        "lsfGlobalFreeze": 4194304,
+        "lsfNoFreeze": 2097152,
+        "lsfPasswordSpent": 65536,
+        "lsfRequireAuth": 262144,
+        "lsfRequireDestTag": 131072
+      },
+      "Credential": {
+        "lsfAccepted": 65536
+      },
+      "DirNode": {
+        "lsfNFTokenBuyOffers": 1,
+        "lsfNFTokenSellOffers": 2
+      },
+      "Loan": {
+        "lsfLoanDefault": 65536,
+        "lsfLoanImpaired": 131072,
+        "lsfLoanOverpayment": 262144
+      },
+      "MPToken": {
+        "lsfMPTAuthorized": 2,
+        "lsfMPTLocked": 1
+      },
+      "MPTokenIssuance": {
+        "lsfMPTCanClawback": 64,
+        "lsfMPTCanEscrow": 8,
+        "lsfMPTCanLock": 2,
+        "lsfMPTCanTrade": 16,
+        "lsfMPTCanTransfer": 32,
+        "lsfMPTLocked": 1,
+        "lsfMPTRequireAuth": 4
+      },
+      "MPTokenIssuanceMutable": {
+        "lsmfMPTCanMutateCanClawback": 64,
+        "lsmfMPTCanMutateCanEscrow": 8,
+        "lsmfMPTCanMutateCanLock": 2,
+        "lsmfMPTCanMutateCanTrade": 16,
+        "lsmfMPTCanMutateCanTransfer": 32,
+        "lsmfMPTCanMutateMetadata": 65536,
+        "lsmfMPTCanMutateRequireAuth": 4,
+        "lsmfMPTCanMutateTransferFee": 131072
+      },
+      "NFTokenOffer": {
+        "lsfSellNFToken": 1
+      },
+      "Offer": {
+        "lsfHybrid": 262144,
+        "lsfPassive": 65536,
+        "lsfSell": 131072
+      },
+      "RippleState": {
+        "lsfAMMNode": 16777216,
+        "lsfHighAuth": 524288,
+        "lsfHighDeepFreeze": 67108864,
+        "lsfHighFreeze": 8388608,
+        "lsfHighNoRipple": 2097152,
+        "lsfHighReserve": 131072,
+        "lsfLowAuth": 262144,
+        "lsfLowDeepFreeze": 33554432,
+        "lsfLowFreeze": 4194304,
+        "lsfLowNoRipple": 1048576,
+        "lsfLowReserve": 65536
+      },
+      "SignerList": {
+        "lsfOneOwnerCount": 65536
+      },
+      "Vault": {
+        "lsfVaultPrivate": 65536
+      }
+    },
+    "LEDGER_ENTRY_FORMATS": {
+      "AMM": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "TradingFee",
+          "optionality": 2
+        },
+        {
+          "name": "VoteSlots",
+          "optionality": 1
+        },
+        {
+          "name": "AuctionSlot",
+          "optionality": 1
+        },
+        {
+          "name": "LPTokenBalance",
+          "optionality": 0
+        },
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 1
+        }
+      ],
+      "AccountRoot": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "Balance",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerCount",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "AccountTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "RegularKey",
+          "optionality": 1
+        },
+        {
+          "name": "EmailHash",
+          "optionality": 1
+        },
+        {
+          "name": "WalletLocator",
+          "optionality": 1
+        },
+        {
+          "name": "WalletSize",
+          "optionality": 1
+        },
+        {
+          "name": "MessageKey",
+          "optionality": 1
+        },
+        {
+          "name": "TransferRate",
+          "optionality": 1
+        },
+        {
+          "name": "Domain",
+          "optionality": 1
+        },
+        {
+          "name": "TickSize",
+          "optionality": 1
+        },
+        {
+          "name": "TicketCount",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokenMinter",
+          "optionality": 1
+        },
+        {
+          "name": "MintedNFTokens",
+          "optionality": 2
+        },
+        {
+          "name": "BurnedNFTokens",
+          "optionality": 2
+        },
+        {
+          "name": "FirstNFTokenSequence",
+          "optionality": 1
+        },
+        {
+          "name": "AMMID",
+          "optionality": 1
+        },
+        {
+          "name": "VaultID",
+          "optionality": 1
+        },
+        {
+          "name": "LoanBrokerID",
+          "optionality": 1
+        }
+      ],
+      "Amendments": [
+        {
+          "name": "Amendments",
+          "optionality": 1
+        },
+        {
+          "name": "Majorities",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 1
+        }
+      ],
+      "Bridge": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        },
+        {
+          "name": "MinAccountCreateAmount",
+          "optionality": 1
+        },
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimID",
+          "optionality": 0
+        },
+        {
+          "name": "XChainAccountCreateCount",
+          "optionality": 0
+        },
+        {
+          "name": "XChainAccountClaimCount",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "Check": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "SendMax",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "DestinationNode",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "InvoiceID",
+          "optionality": 1
+        },
+        {
+          "name": "SourceTag",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "Credential": [
+        {
+          "name": "Subject",
+          "optionality": 0
+        },
+        {
+          "name": "Issuer",
+          "optionality": 0
+        },
+        {
+          "name": "CredentialType",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "IssuerNode",
+          "optionality": 0
+        },
+        {
+          "name": "SubjectNode",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "DID": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "DIDDocument",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "Delegate": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Authorize",
+          "optionality": 0
+        },
+        {
+          "name": "Permissions",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "DepositPreauth": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Authorize",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "AuthorizeCredentials",
+          "optionality": 1
+        }
+      ],
+      "DirectoryNode": [
+        {
+          "name": "Owner",
+          "optionality": 1
+        },
+        {
+          "name": "TakerPaysCurrency",
+          "optionality": 1
+        },
+        {
+          "name": "TakerPaysIssuer",
+          "optionality": 1
+        },
+        {
+          "name": "TakerGetsCurrency",
+          "optionality": 1
+        },
+        {
+          "name": "TakerGetsIssuer",
+          "optionality": 1
+        },
+        {
+          "name": "ExchangeRate",
+          "optionality": 1
+        },
+        {
+          "name": "Indexes",
+          "optionality": 0
+        },
+        {
+          "name": "RootIndex",
+          "optionality": 0
+        },
+        {
+          "name": "IndexNext",
+          "optionality": 1
+        },
+        {
+          "name": "IndexPrevious",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokenID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        }
+      ],
+      "Escrow": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 1
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Condition",
+          "optionality": 1
+        },
+        {
+          "name": "CancelAfter",
+          "optionality": 1
+        },
+        {
+          "name": "FinishAfter",
+          "optionality": 1
+        },
+        {
+          "name": "SourceTag",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "DestinationNode",
+          "optionality": 1
+        },
+        {
+          "name": "TransferRate",
+          "optionality": 1
+        },
+        {
+          "name": "IssuerNode",
+          "optionality": 1
+        }
+      ],
+      "FeeSettings": [
+        {
+          "name": "BaseFee",
+          "optionality": 1
+        },
+        {
+          "name": "ReferenceFeeUnits",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveBase",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveIncrement",
+          "optionality": 1
+        },
+        {
+          "name": "BaseFeeDrops",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveBaseDrops",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveIncrementDrops",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 1
+        }
+      ],
+      "LedgerHashes": [
+        {
+          "name": "FirstLedgerSequence",
+          "optionality": 1
+        },
+        {
+          "name": "LastLedgerSequence",
+          "optionality": 1
+        },
+        {
+          "name": "Hashes",
+          "optionality": 0
+        }
+      ],
+      "Loan": [
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "LoanBrokerNode",
+          "optionality": 0
+        },
+        {
+          "name": "LoanBrokerID",
+          "optionality": 0
+        },
+        {
+          "name": "LoanSequence",
+          "optionality": 0
+        },
+        {
+          "name": "Borrower",
+          "optionality": 0
+        },
+        {
+          "name": "LoanOriginationFee",
+          "optionality": 2
+        },
+        {
+          "name": "LoanServiceFee",
+          "optionality": 2
+        },
+        {
+          "name": "LatePaymentFee",
+          "optionality": 2
+        },
+        {
+          "name": "ClosePaymentFee",
+          "optionality": 2
+        },
+        {
+          "name": "OverpaymentFee",
+          "optionality": 2
+        },
+        {
+          "name": "InterestRate",
+          "optionality": 2
+        },
+        {
+          "name": "LateInterestRate",
+          "optionality": 2
+        },
+        {
+          "name": "CloseInterestRate",
+          "optionality": 2
+        },
+        {
+          "name": "OverpaymentInterestRate",
+          "optionality": 2
+        },
+        {
+          "name": "StartDate",
+          "optionality": 0
+        },
+        {
+          "name": "PaymentInterval",
+          "optionality": 0
+        },
+        {
+          "name": "GracePeriod",
+          "optionality": 2
+        },
+        {
+          "name": "PreviousPaymentDueDate",
+          "optionality": 2
+        },
+        {
+          "name": "NextPaymentDueDate",
+          "optionality": 2
+        },
+        {
+          "name": "PaymentRemaining",
+          "optionality": 2
+        },
+        {
+          "name": "PeriodicPayment",
+          "optionality": 0
+        },
+        {
+          "name": "PrincipalOutstanding",
+          "optionality": 2
+        },
+        {
+          "name": "TotalValueOutstanding",
+          "optionality": 2
+        },
+        {
+          "name": "ManagementFeeOutstanding",
+          "optionality": 2
+        },
+        {
+          "name": "LoanScale",
+          "optionality": 2
+        }
+      ],
+      "LoanBroker": [
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "VaultNode",
+          "optionality": 0
+        },
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "LoanSequence",
+          "optionality": 0
+        },
+        {
+          "name": "Data",
+          "optionality": 2
+        },
+        {
+          "name": "ManagementFeeRate",
+          "optionality": 2
+        },
+        {
+          "name": "OwnerCount",
+          "optionality": 2
+        },
+        {
+          "name": "DebtTotal",
+          "optionality": 2
+        },
+        {
+          "name": "DebtMaximum",
+          "optionality": 2
+        },
+        {
+          "name": "CoverAvailable",
+          "optionality": 2
+        },
+        {
+          "name": "CoverRateMinimum",
+          "optionality": 2
+        },
+        {
+          "name": "CoverRateLiquidation",
+          "optionality": 2
+        }
+      ],
+      "MPToken": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "MPTokenIssuanceID",
+          "optionality": 0
+        },
+        {
+          "name": "MPTAmount",
+          "optionality": 2
+        },
+        {
+          "name": "LockedAmount",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "MPTokenIssuance": [
+        {
+          "name": "Issuer",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "TransferFee",
+          "optionality": 2
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "AssetScale",
+          "optionality": 2
+        },
+        {
+          "name": "MaximumAmount",
+          "optionality": 1
+        },
+        {
+          "name": "OutstandingAmount",
+          "optionality": 0
+        },
+        {
+          "name": "LockedAmount",
+          "optionality": 1
+        },
+        {
+          "name": "MPTokenMetadata",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "MutableFlags",
+          "optionality": 2
+        }
+      ],
+      "NFTokenOffer": [
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "NFTokenID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "NFTokenOfferNode",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "NFTokenPage": [
+        {
+          "name": "PreviousPageMin",
+          "optionality": 1
+        },
+        {
+          "name": "NextPageMin",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokens",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "NegativeUNL": [
+        {
+          "name": "DisabledValidators",
+          "optionality": 1
+        },
+        {
+          "name": "ValidatorToDisable",
+          "optionality": 1
+        },
+        {
+          "name": "ValidatorToReEnable",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 1
+        }
+      ],
+      "Offer": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "TakerPays",
+          "optionality": 0
+        },
+        {
+          "name": "TakerGets",
+          "optionality": 0
+        },
+        {
+          "name": "BookDirectory",
+          "optionality": 0
+        },
+        {
+          "name": "BookNode",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "AdditionalBooks",
+          "optionality": 1
+        }
+      ],
+      "Oracle": [
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "OracleDocumentID",
+          "optionality": 1
+        },
+        {
+          "name": "Provider",
+          "optionality": 0
+        },
+        {
+          "name": "PriceDataSeries",
+          "optionality": 0
+        },
+        {
+          "name": "AssetClass",
+          "optionality": 0
+        },
+        {
+          "name": "LastUpdateTime",
+          "optionality": 0
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "PayChannel": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 1
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Balance",
+          "optionality": 0
+        },
+        {
+          "name": "PublicKey",
+          "optionality": 0
+        },
+        {
+          "name": "SettleDelay",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "CancelAfter",
+          "optionality": 1
+        },
+        {
+          "name": "SourceTag",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "DestinationNode",
+          "optionality": 1
+        }
+      ],
+      "PermissionedDomain": [
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "AcceptedCredentials",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "RippleState": [
+        {
+          "name": "Balance",
+          "optionality": 0
+        },
+        {
+          "name": "LowLimit",
+          "optionality": 0
+        },
+        {
+          "name": "HighLimit",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "LowNode",
+          "optionality": 1
+        },
+        {
+          "name": "LowQualityIn",
+          "optionality": 1
+        },
+        {
+          "name": "LowQualityOut",
+          "optionality": 1
+        },
+        {
+          "name": "HighNode",
+          "optionality": 1
+        },
+        {
+          "name": "HighQualityIn",
+          "optionality": 1
+        },
+        {
+          "name": "HighQualityOut",
+          "optionality": 1
+        }
+      ],
+      "SignerList": [
+        {
+          "name": "Owner",
+          "optionality": 1
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "SignerQuorum",
+          "optionality": 0
+        },
+        {
+          "name": "SignerEntries",
+          "optionality": 0
+        },
+        {
+          "name": "SignerListID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "Ticket": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "TicketSequence",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "Vault": [
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        },
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "AssetsTotal",
+          "optionality": 2
+        },
+        {
+          "name": "AssetsAvailable",
+          "optionality": 2
+        },
+        {
+          "name": "AssetsMaximum",
+          "optionality": 2
+        },
+        {
+          "name": "LossUnrealized",
+          "optionality": 2
+        },
+        {
+          "name": "ShareMPTID",
+          "optionality": 0
+        },
+        {
+          "name": "WithdrawalPolicy",
+          "optionality": 0
+        },
+        {
+          "name": "Scale",
+          "optionality": 2
+        }
+      ],
+      "XChainOwnedClaimID": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimID",
+          "optionality": 0
+        },
+        {
+          "name": "OtherChainSource",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimAttestations",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "XChainOwnedCreateAccountClaimID": [
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "XChainAccountCreateCount",
+          "optionality": 0
+        },
+        {
+          "name": "XChainCreateAccountAttestations",
+          "optionality": 0
+        },
+        {
+          "name": "OwnerNode",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnLgrSeq",
+          "optionality": 0
+        }
+      ],
+      "common": [
+        {
+          "name": "LedgerIndex",
+          "optionality": 1
+        },
+        {
+          "name": "LedgerEntryType",
+          "optionality": 0
+        },
+        {
+          "name": "Flags",
+          "optionality": 0
+        }
+      ]
+    },
+    "LEDGER_ENTRY_TYPES": {
+      "AMM": 121,
+      "AccountRoot": 97,
+      "Amendments": 102,
+      "Bridge": 105,
+      "Check": 67,
+      "Credential": 129,
+      "DID": 73,
+      "Delegate": 131,
+      "DepositPreauth": 112,
+      "DirectoryNode": 100,
+      "Escrow": 117,
+      "FeeSettings": 115,
+      "Invalid": -1,
+      "LedgerHashes": 104,
+      "Loan": 137,
+      "LoanBroker": 136,
+      "MPToken": 127,
+      "MPTokenIssuance": 126,
+      "NFTokenOffer": 55,
+      "NFTokenPage": 80,
+      "NegativeUNL": 78,
+      "Offer": 111,
+      "Oracle": 128,
+      "PayChannel": 120,
+      "PermissionedDomain": 130,
+      "RippleState": 114,
+      "SignerList": 83,
+      "Ticket": 84,
+      "Vault": 132,
+      "XChainOwnedClaimID": 113,
+      "XChainOwnedCreateAccountClaimID": 116
+    },
+    "TRANSACTION_FLAGS": {
+      "AMMClawback": {
+        "tfClawTwoAssets": 1
+      },
+      "AMMDeposit": {
+        "tfLPToken": 65536,
+        "tfLimitLPToken": 4194304,
+        "tfOneAssetLPToken": 2097152,
+        "tfSingleAsset": 524288,
+        "tfTwoAsset": 1048576,
+        "tfTwoAssetIfEmpty": 8388608
+      },
+      "AMMWithdraw": {
+        "tfLPToken": 65536,
+        "tfLimitLPToken": 4194304,
+        "tfOneAssetLPToken": 2097152,
+        "tfOneAssetWithdrawAll": 262144,
+        "tfSingleAsset": 524288,
+        "tfTwoAsset": 1048576,
+        "tfWithdrawAll": 131072
+      },
+      "AccountSet": {
+        "tfAllowXRP": 2097152,
+        "tfDisallowXRP": 1048576,
+        "tfOptionalAuth": 524288,
+        "tfOptionalDestTag": 131072,
+        "tfRequireAuth": 262144,
+        "tfRequireDestTag": 65536
+      },
+      "Batch": {
+        "tfAllOrNothing": 65536,
+        "tfIndependent": 524288,
+        "tfOnlyOne": 131072,
+        "tfUntilFailure": 262144
+      },
+      "EnableAmendment": {
+        "tfGotMajority": 65536,
+        "tfLostMajority": 131072
+      },
+      "LoanManage": {
+        "tfLoanDefault": 65536,
+        "tfLoanImpair": 131072,
+        "tfLoanUnimpair": 262144
+      },
+      "LoanPay": {
+        "tfLoanFullPayment": 131072,
+        "tfLoanLatePayment": 262144,
+        "tfLoanOverpayment": 65536
+      },
+      "LoanSet": {
+        "tfLoanOverpayment": 65536
+      },
+      "MPTokenAuthorize": {
+        "tfMPTUnauthorize": 1
+      },
+      "MPTokenIssuanceCreate": {
+        "tfMPTCanClawback": 64,
+        "tfMPTCanEscrow": 8,
+        "tfMPTCanLock": 2,
+        "tfMPTCanTrade": 16,
+        "tfMPTCanTransfer": 32,
+        "tfMPTRequireAuth": 4
+      },
+      "MPTokenIssuanceSet": {
+        "tfMPTLock": 1,
+        "tfMPTUnlock": 2
+      },
+      "NFTokenCreateOffer": {
+        "tfSellNFToken": 1
+      },
+      "NFTokenMint": {
+        "tfBurnable": 1,
+        "tfMutable": 16,
+        "tfOnlyXRP": 2,
+        "tfTransferable": 8
+      },
+      "OfferCreate": {
+        "tfFillOrKill": 262144,
+        "tfHybrid": 1048576,
+        "tfImmediateOrCancel": 131072,
+        "tfPassive": 65536,
+        "tfSell": 524288
+      },
+      "Payment": {
+        "tfLimitQuality": 262144,
+        "tfNoRippleDirect": 65536,
+        "tfPartialPayment": 131072
+      },
+      "PaymentChannelClaim": {
+        "tfClose": 131072,
+        "tfRenew": 65536
+      },
+      "TrustSet": {
+        "tfClearDeepFreeze": 8388608,
+        "tfClearFreeze": 2097152,
+        "tfClearNoRipple": 262144,
+        "tfSetDeepFreeze": 4194304,
+        "tfSetFreeze": 1048576,
+        "tfSetNoRipple": 131072,
+        "tfSetfAuth": 65536
+      },
+      "VaultCreate": {
+        "tfVaultPrivate": 65536,
+        "tfVaultShareNonTransferable": 131072
+      },
+      "XChainModifyBridge": {
+        "tfClearAccountCreateAmount": 65536
+      },
+      "universal": {
+        "tfFullyCanonicalSig": 2147483648,
+        "tfInnerBatchTxn": 1073741824
+      }
+    },
+    "TRANSACTION_FORMATS": {
+      "AMMBid": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "BidMin",
+          "optionality": 1
+        },
+        {
+          "name": "BidMax",
+          "optionality": 1
+        },
+        {
+          "name": "AuthAccounts",
+          "optionality": 1
+        }
+      ],
+      "AMMClawback": [
+        {
+          "name": "Holder",
+          "optionality": 0
+        },
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        }
+      ],
+      "AMMCreate": [
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Amount2",
+          "optionality": 0
+        },
+        {
+          "name": "TradingFee",
+          "optionality": 0
+        }
+      ],
+      "AMMDelete": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        }
+      ],
+      "AMMDeposit": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        },
+        {
+          "name": "Amount2",
+          "optionality": 1
+        },
+        {
+          "name": "EPrice",
+          "optionality": 1
+        },
+        {
+          "name": "LPTokenOut",
+          "optionality": 1
+        },
+        {
+          "name": "TradingFee",
+          "optionality": 1
+        }
+      ],
+      "AMMVote": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "TradingFee",
+          "optionality": 0
+        }
+      ],
+      "AMMWithdraw": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "Asset2",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        },
+        {
+          "name": "Amount2",
+          "optionality": 1
+        },
+        {
+          "name": "EPrice",
+          "optionality": 1
+        },
+        {
+          "name": "LPTokenIn",
+          "optionality": 1
+        }
+      ],
+      "AccountDelete": [
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "CredentialIDs",
+          "optionality": 1
+        }
+      ],
+      "AccountSet": [
+        {
+          "name": "EmailHash",
+          "optionality": 1
+        },
+        {
+          "name": "WalletLocator",
+          "optionality": 1
+        },
+        {
+          "name": "WalletSize",
+          "optionality": 1
+        },
+        {
+          "name": "MessageKey",
+          "optionality": 1
+        },
+        {
+          "name": "Domain",
+          "optionality": 1
+        },
+        {
+          "name": "TransferRate",
+          "optionality": 1
+        },
+        {
+          "name": "SetFlag",
+          "optionality": 1
+        },
+        {
+          "name": "ClearFlag",
+          "optionality": 1
+        },
+        {
+          "name": "TickSize",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokenMinter",
+          "optionality": 1
+        }
+      ],
+      "Batch": [
+        {
+          "name": "RawTransactions",
+          "optionality": 0
+        },
+        {
+          "name": "BatchSigners",
+          "optionality": 1
+        }
+      ],
+      "CheckCancel": [
+        {
+          "name": "CheckID",
+          "optionality": 0
+        }
+      ],
+      "CheckCash": [
+        {
+          "name": "CheckID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        },
+        {
+          "name": "DeliverMin",
+          "optionality": 1
+        }
+      ],
+      "CheckCreate": [
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "SendMax",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "InvoiceID",
+          "optionality": 1
+        }
+      ],
+      "Clawback": [
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Holder",
+          "optionality": 1
+        }
+      ],
+      "CredentialAccept": [
+        {
+          "name": "Issuer",
+          "optionality": 0
+        },
+        {
+          "name": "CredentialType",
+          "optionality": 0
+        }
+      ],
+      "CredentialCreate": [
+        {
+          "name": "Subject",
+          "optionality": 0
+        },
+        {
+          "name": "CredentialType",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        }
+      ],
+      "CredentialDelete": [
+        {
+          "name": "Subject",
+          "optionality": 1
+        },
+        {
+          "name": "Issuer",
+          "optionality": 1
+        },
+        {
+          "name": "CredentialType",
+          "optionality": 0
+        }
+      ],
+      "DIDDelete": [],
+      "DIDSet": [
+        {
+          "name": "DIDDocument",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        }
+      ],
+      "DelegateSet": [
+        {
+          "name": "Authorize",
+          "optionality": 0
+        },
+        {
+          "name": "Permissions",
+          "optionality": 0
+        }
+      ],
+      "DepositPreauth": [
+        {
+          "name": "Authorize",
+          "optionality": 1
+        },
+        {
+          "name": "Unauthorize",
+          "optionality": 1
+        },
+        {
+          "name": "AuthorizeCredentials",
+          "optionality": 1
+        },
+        {
+          "name": "UnauthorizeCredentials",
+          "optionality": 1
+        }
+      ],
+      "EnableAmendment": [
+        {
+          "name": "LedgerSequence",
+          "optionality": 0
+        },
+        {
+          "name": "Amendment",
+          "optionality": 0
+        }
+      ],
+      "EscrowCancel": [
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "OfferSequence",
+          "optionality": 0
+        }
+      ],
+      "EscrowCreate": [
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Condition",
+          "optionality": 1
+        },
+        {
+          "name": "CancelAfter",
+          "optionality": 1
+        },
+        {
+          "name": "FinishAfter",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        }
+      ],
+      "EscrowFinish": [
+        {
+          "name": "Owner",
+          "optionality": 0
+        },
+        {
+          "name": "OfferSequence",
+          "optionality": 0
+        },
+        {
+          "name": "Fulfillment",
+          "optionality": 1
+        },
+        {
+          "name": "Condition",
+          "optionality": 1
+        },
+        {
+          "name": "CredentialIDs",
+          "optionality": 1
+        }
+      ],
+      "LedgerStateFix": [
+        {
+          "name": "LedgerFixType",
+          "optionality": 0
+        },
+        {
+          "name": "Owner",
+          "optionality": 1
+        }
+      ],
+      "LoanBrokerCoverClawback": [
+        {
+          "name": "LoanBrokerID",
+          "optionality": 1
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        }
+      ],
+      "LoanBrokerCoverDeposit": [
+        {
+          "name": "LoanBrokerID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        }
+      ],
+      "LoanBrokerCoverWithdraw": [
+        {
+          "name": "LoanBrokerID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        }
+      ],
+      "LoanBrokerDelete": [
+        {
+          "name": "LoanBrokerID",
+          "optionality": 0
+        }
+      ],
+      "LoanBrokerSet": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "LoanBrokerID",
+          "optionality": 1
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        },
+        {
+          "name": "ManagementFeeRate",
+          "optionality": 1
+        },
+        {
+          "name": "DebtMaximum",
+          "optionality": 1
+        },
+        {
+          "name": "CoverRateMinimum",
+          "optionality": 1
+        },
+        {
+          "name": "CoverRateLiquidation",
+          "optionality": 1
+        }
+      ],
+      "LoanDelete": [
+        {
+          "name": "LoanID",
+          "optionality": 0
+        }
+      ],
+      "LoanManage": [
+        {
+          "name": "LoanID",
+          "optionality": 0
+        }
+      ],
+      "LoanPay": [
+        {
+          "name": "LoanID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        }
+      ],
+      "LoanSet": [
+        {
+          "name": "LoanBrokerID",
+          "optionality": 0
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        },
+        {
+          "name": "Counterparty",
+          "optionality": 1
+        },
+        {
+          "name": "CounterpartySignature",
+          "optionality": 1
+        },
+        {
+          "name": "LoanOriginationFee",
+          "optionality": 1
+        },
+        {
+          "name": "LoanServiceFee",
+          "optionality": 1
+        },
+        {
+          "name": "LatePaymentFee",
+          "optionality": 1
+        },
+        {
+          "name": "ClosePaymentFee",
+          "optionality": 1
+        },
+        {
+          "name": "OverpaymentFee",
+          "optionality": 1
+        },
+        {
+          "name": "InterestRate",
+          "optionality": 1
+        },
+        {
+          "name": "LateInterestRate",
+          "optionality": 1
+        },
+        {
+          "name": "CloseInterestRate",
+          "optionality": 1
+        },
+        {
+          "name": "OverpaymentInterestRate",
+          "optionality": 1
+        },
+        {
+          "name": "PrincipalRequested",
+          "optionality": 0
+        },
+        {
+          "name": "PaymentTotal",
+          "optionality": 1
+        },
+        {
+          "name": "PaymentInterval",
+          "optionality": 1
+        },
+        {
+          "name": "GracePeriod",
+          "optionality": 1
+        }
+      ],
+      "MPTokenAuthorize": [
+        {
+          "name": "MPTokenIssuanceID",
+          "optionality": 0
+        },
+        {
+          "name": "Holder",
+          "optionality": 1
+        }
+      ],
+      "MPTokenIssuanceCreate": [
+        {
+          "name": "AssetScale",
+          "optionality": 1
+        },
+        {
+          "name": "TransferFee",
+          "optionality": 1
+        },
+        {
+          "name": "MaximumAmount",
+          "optionality": 1
+        },
+        {
+          "name": "MPTokenMetadata",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "MutableFlags",
+          "optionality": 1
+        }
+      ],
+      "MPTokenIssuanceDestroy": [
+        {
+          "name": "MPTokenIssuanceID",
+          "optionality": 0
+        }
+      ],
+      "MPTokenIssuanceSet": [
+        {
+          "name": "MPTokenIssuanceID",
+          "optionality": 0
+        },
+        {
+          "name": "Holder",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "MPTokenMetadata",
+          "optionality": 1
+        },
+        {
+          "name": "TransferFee",
+          "optionality": 1
+        },
+        {
+          "name": "MutableFlags",
+          "optionality": 1
+        }
+      ],
+      "NFTokenAcceptOffer": [
+        {
+          "name": "NFTokenBuyOffer",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokenSellOffer",
+          "optionality": 1
+        },
+        {
+          "name": "NFTokenBrokerFee",
+          "optionality": 1
+        }
+      ],
+      "NFTokenBurn": [
+        {
+          "name": "NFTokenID",
+          "optionality": 0
+        },
+        {
+          "name": "Owner",
+          "optionality": 1
+        }
+      ],
+      "NFTokenCancelOffer": [
+        {
+          "name": "NFTokenOffers",
+          "optionality": 0
+        }
+      ],
+      "NFTokenCreateOffer": [
+        {
+          "name": "NFTokenID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        },
+        {
+          "name": "Owner",
+          "optionality": 1
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        }
+      ],
+      "NFTokenMint": [
+        {
+          "name": "NFTokenTaxon",
+          "optionality": 0
+        },
+        {
+          "name": "TransferFee",
+          "optionality": 1
+        },
+        {
+          "name": "Issuer",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        }
+      ],
+      "NFTokenModify": [
+        {
+          "name": "NFTokenID",
+          "optionality": 0
+        },
+        {
+          "name": "Owner",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        }
+      ],
+      "OfferCancel": [
+        {
+          "name": "OfferSequence",
+          "optionality": 0
+        }
+      ],
+      "OfferCreate": [
+        {
+          "name": "TakerPays",
+          "optionality": 0
+        },
+        {
+          "name": "TakerGets",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        },
+        {
+          "name": "OfferSequence",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        }
+      ],
+      "OracleDelete": [
+        {
+          "name": "OracleDocumentID",
+          "optionality": 0
+        }
+      ],
+      "OracleSet": [
+        {
+          "name": "OracleDocumentID",
+          "optionality": 0
+        },
+        {
+          "name": "Provider",
+          "optionality": 1
+        },
+        {
+          "name": "URI",
+          "optionality": 1
+        },
+        {
+          "name": "AssetClass",
+          "optionality": 1
+        },
+        {
+          "name": "LastUpdateTime",
+          "optionality": 0
+        },
+        {
+          "name": "PriceDataSeries",
+          "optionality": 0
+        }
+      ],
+      "Payment": [
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "SendMax",
+          "optionality": 1
+        },
+        {
+          "name": "Paths",
+          "optionality": 2
+        },
+        {
+          "name": "InvoiceID",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "DeliverMin",
+          "optionality": 1
+        },
+        {
+          "name": "CredentialIDs",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        }
+      ],
+      "PaymentChannelClaim": [
+        {
+          "name": "Channel",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        },
+        {
+          "name": "Balance",
+          "optionality": 1
+        },
+        {
+          "name": "Signature",
+          "optionality": 1
+        },
+        {
+          "name": "PublicKey",
+          "optionality": 1
+        },
+        {
+          "name": "CredentialIDs",
+          "optionality": 1
+        }
+      ],
+      "PaymentChannelCreate": [
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "SettleDelay",
+          "optionality": 0
+        },
+        {
+          "name": "PublicKey",
+          "optionality": 0
+        },
+        {
+          "name": "CancelAfter",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        }
+      ],
+      "PaymentChannelFund": [
+        {
+          "name": "Channel",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Expiration",
+          "optionality": 1
+        }
+      ],
+      "PermissionedDomainDelete": [
+        {
+          "name": "DomainID",
+          "optionality": 0
+        }
+      ],
+      "PermissionedDomainSet": [
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "AcceptedCredentials",
+          "optionality": 0
+        }
+      ],
+      "SetFee": [
+        {
+          "name": "LedgerSequence",
+          "optionality": 1
+        },
+        {
+          "name": "BaseFee",
+          "optionality": 1
+        },
+        {
+          "name": "ReferenceFeeUnits",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveBase",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveIncrement",
+          "optionality": 1
+        },
+        {
+          "name": "BaseFeeDrops",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveBaseDrops",
+          "optionality": 1
+        },
+        {
+          "name": "ReserveIncrementDrops",
+          "optionality": 1
+        }
+      ],
+      "SetRegularKey": [
+        {
+          "name": "RegularKey",
+          "optionality": 1
+        }
+      ],
+      "SignerListSet": [
+        {
+          "name": "SignerQuorum",
+          "optionality": 0
+        },
+        {
+          "name": "SignerEntries",
+          "optionality": 1
+        }
+      ],
+      "TicketCreate": [
+        {
+          "name": "TicketCount",
+          "optionality": 0
+        }
+      ],
+      "TrustSet": [
+        {
+          "name": "LimitAmount",
+          "optionality": 1
+        },
+        {
+          "name": "QualityIn",
+          "optionality": 1
+        },
+        {
+          "name": "QualityOut",
+          "optionality": 1
+        }
+      ],
+      "UNLModify": [
+        {
+          "name": "UNLModifyDisabling",
+          "optionality": 0
+        },
+        {
+          "name": "LedgerSequence",
+          "optionality": 0
+        },
+        {
+          "name": "UNLModifyValidator",
+          "optionality": 0
+        }
+      ],
+      "VaultClawback": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "Holder",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 1
+        }
+      ],
+      "VaultCreate": [
+        {
+          "name": "Asset",
+          "optionality": 0
+        },
+        {
+          "name": "AssetsMaximum",
+          "optionality": 1
+        },
+        {
+          "name": "MPTokenMetadata",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "WithdrawalPolicy",
+          "optionality": 1
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        },
+        {
+          "name": "Scale",
+          "optionality": 1
+        }
+      ],
+      "VaultDelete": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        }
+      ],
+      "VaultDeposit": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        }
+      ],
+      "VaultSet": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "AssetsMaximum",
+          "optionality": 1
+        },
+        {
+          "name": "DomainID",
+          "optionality": 1
+        },
+        {
+          "name": "Data",
+          "optionality": 1
+        }
+      ],
+      "VaultWithdraw": [
+        {
+          "name": "VaultID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        }
+      ],
+      "XChainAccountCreateCommit": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        }
+      ],
+      "XChainAddAccountCreateAttestation": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "AttestationSignerAccount",
+          "optionality": 0
+        },
+        {
+          "name": "PublicKey",
+          "optionality": 0
+        },
+        {
+          "name": "Signature",
+          "optionality": 0
+        },
+        {
+          "name": "OtherChainSource",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "AttestationRewardAccount",
+          "optionality": 0
+        },
+        {
+          "name": "WasLockingChainSend",
+          "optionality": 0
+        },
+        {
+          "name": "XChainAccountCreateCount",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        }
+      ],
+      "XChainAddClaimAttestation": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "AttestationSignerAccount",
+          "optionality": 0
+        },
+        {
+          "name": "PublicKey",
+          "optionality": 0
+        },
+        {
+          "name": "Signature",
+          "optionality": 0
+        },
+        {
+          "name": "OtherChainSource",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "AttestationRewardAccount",
+          "optionality": 0
+        },
+        {
+          "name": "WasLockingChainSend",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimID",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 1
+        }
+      ],
+      "XChainClaim": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimID",
+          "optionality": 0
+        },
+        {
+          "name": "Destination",
+          "optionality": 0
+        },
+        {
+          "name": "DestinationTag",
+          "optionality": 1
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        }
+      ],
+      "XChainCommit": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "XChainClaimID",
+          "optionality": 0
+        },
+        {
+          "name": "Amount",
+          "optionality": 0
+        },
+        {
+          "name": "OtherChainDestination",
+          "optionality": 1
+        }
+      ],
+      "XChainCreateBridge": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        },
+        {
+          "name": "MinAccountCreateAmount",
+          "optionality": 1
+        }
+      ],
+      "XChainCreateClaimID": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 0
+        },
+        {
+          "name": "OtherChainSource",
+          "optionality": 0
+        }
+      ],
+      "XChainModifyBridge": [
+        {
+          "name": "XChainBridge",
+          "optionality": 0
+        },
+        {
+          "name": "SignatureReward",
+          "optionality": 1
+        },
+        {
+          "name": "MinAccountCreateAmount",
+          "optionality": 1
+        }
+      ],
+      "common": [
+        {
+          "name": "TransactionType",
+          "optionality": 0
+        },
+        {
+          "name": "Flags",
+          "optionality": 1
+        },
+        {
+          "name": "SourceTag",
+          "optionality": 1
+        },
+        {
+          "name": "Account",
+          "optionality": 0
+        },
+        {
+          "name": "Sequence",
+          "optionality": 0
+        },
+        {
+          "name": "PreviousTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "LastLedgerSequence",
+          "optionality": 1
+        },
+        {
+          "name": "AccountTxnID",
+          "optionality": 1
+        },
+        {
+          "name": "Fee",
+          "optionality": 0
+        },
+        {
+          "name": "OperationLimit",
+          "optionality": 1
+        },
+        {
+          "name": "Memos",
+          "optionality": 1
+        },
+        {
+          "name": "SigningPubKey",
+          "optionality": 0
+        },
+        {
+          "name": "TicketSequence",
+          "optionality": 1
+        },
+        {
+          "name": "TxnSignature",
+          "optionality": 1
+        },
+        {
+          "name": "Signers",
+          "optionality": 1
+        },
+        {
+          "name": "NetworkID",
+          "optionality": 1
+        },
+        {
+          "name": "Delegate",
+          "optionality": 1
+        }
+      ]
+    },
+    "TRANSACTION_RESULTS": {
+      "tecAMM_ACCOUNT": 168,
+      "tecAMM_BALANCE": 163,
+      "tecAMM_EMPTY": 166,
+      "tecAMM_FAILED": 164,
+      "tecAMM_INVALID_TOKENS": 165,
+      "tecAMM_NOT_EMPTY": 167,
+      "tecARRAY_EMPTY": 190,
+      "tecARRAY_TOO_LARGE": 191,
+      "tecBAD_CREDENTIALS": 193,
+      "tecCANT_ACCEPT_OWN_NFTOKEN_OFFER": 158,
+      "tecCLAIM": 100,
+      "tecCRYPTOCONDITION_ERROR": 146,
+      "tecDIR_FULL": 121,
+      "tecDST_TAG_NEEDED": 143,
+      "tecDUPLICATE": 149,
+      "tecEMPTY_DID": 187,
+      "tecEXPIRED": 148,
+      "tecFAILED_PROCESSING": 105,
+      "tecFROZEN": 137,
+      "tecHAS_OBLIGATIONS": 151,
+      "tecINCOMPLETE": 169,
+      "tecINSUFFICIENT_FUNDS": 159,
+      "tecINSUFFICIENT_PAYMENT": 161,
+      "tecINSUFFICIENT_RESERVE": 141,
+      "tecINSUFF_FEE": 136,
+      "tecINSUF_RESERVE_LINE": 122,
+      "tecINSUF_RESERVE_OFFER": 123,
+      "tecINTERNAL": 144,
+      "tecINVALID_UPDATE_TIME": 188,
+      "tecINVARIANT_FAILED": 147,
+      "tecKILLED": 150,
+      "tecLIMIT_EXCEEDED": 195,
+      "tecLOCKED": 192,
+      "tecMAX_SEQUENCE_REACHED": 154,
+      "tecNEED_MASTER_KEY": 142,
+      "tecNFTOKEN_BUY_SELL_MISMATCH": 156,
+      "tecNFTOKEN_OFFER_TYPE_MISMATCH": 157,
+      "tecNO_ALTERNATIVE_KEY": 130,
+      "tecNO_AUTH": 134,
+      "tecNO_DST": 124,
+      "tecNO_DST_INSUF_XRP": 125,
+      "tecNO_ENTRY": 140,
+      "tecNO_ISSUER": 133,
+      "tecNO_LINE": 135,
+      "tecNO_LINE_INSUF_RESERVE": 126,
+      "tecNO_LINE_REDUNDANT": 127,
+      "tecNO_PERMISSION": 139,
+      "tecNO_REGULAR_KEY": 131,
+      "tecNO_SUITABLE_NFTOKEN_PAGE": 155,
+      "tecNO_TARGET": 138,
+      "tecOBJECT_NOT_FOUND": 160,
+      "tecOVERSIZE": 145,
+      "tecOWNERS": 132,
+      "tecPATH_DRY": 128,
+      "tecPATH_PARTIAL": 101,
+      "tecPRECISION_LOSS": 197,
+      "tecPSEUDO_ACCOUNT": 196,
+      "tecTOKEN_PAIR_NOT_FOUND": 189,
+      "tecTOO_SOON": 152,
+      "tecUNFUNDED": 129,
+      "tecUNFUNDED_ADD": 102,
+      "tecUNFUNDED_AMM": 162,
+      "tecUNFUNDED_OFFER": 103,
+      "tecUNFUNDED_PAYMENT": 104,
+      "tecWRONG_ASSET": 194,
+      "tecXCHAIN_ACCOUNT_CREATE_PAST": 181,
+      "tecXCHAIN_ACCOUNT_CREATE_TOO_MANY": 182,
+      "tecXCHAIN_BAD_CLAIM_ID": 172,
+      "tecXCHAIN_BAD_PUBLIC_KEY_ACCOUNT_PAIR": 185,
+      "tecXCHAIN_BAD_TRANSFER_ISSUE": 170,
+      "tecXCHAIN_CLAIM_NO_QUORUM": 173,
+      "tecXCHAIN_CREATE_ACCOUNT_DISABLED": 186,
+      "tecXCHAIN_CREATE_ACCOUNT_NONXRP_ISSUE": 175,
+      "tecXCHAIN_INSUFF_CREATE_AMOUNT": 180,
+      "tecXCHAIN_NO_CLAIM_ID": 171,
+      "tecXCHAIN_NO_SIGNERS_LIST": 178,
+      "tecXCHAIN_PAYMENT_FAILED": 183,
+      "tecXCHAIN_PROOF_UNKNOWN_KEY": 174,
+      "tecXCHAIN_REWARD_MISMATCH": 177,
+      "tecXCHAIN_SELF_COMMIT": 184,
+      "tecXCHAIN_SENDING_ACCOUNT_MISMATCH": 179,
+      "tecXCHAIN_WRONG_CHAIN": 176,
+      "tefALREADY": -198,
+      "tefBAD_ADD_AUTH": -197,
+      "tefBAD_AUTH": -196,
+      "tefBAD_AUTH_MASTER": -183,
+      "tefBAD_LEDGER": -195,
+      "tefBAD_QUORUM": -185,
+      "tefBAD_SIGNATURE": -186,
+      "tefCREATED": -194,
+      "tefEXCEPTION": -193,
+      "tefFAILURE": -199,
+      "tefINTERNAL": -192,
+      "tefINVALID_LEDGER_FIX_TYPE": -178,
+      "tefINVARIANT_FAILED": -182,
+      "tefMASTER_DISABLED": -188,
+      "tefMAX_LEDGER": -187,
+      "tefNFTOKEN_IS_NOT_TRANSFERABLE": -179,
+      "tefNOT_MULTI_SIGNING": -184,
+      "tefNO_AUTH_REQUIRED": -191,
+      "tefNO_TICKET": -180,
+      "tefPAST_SEQ": -190,
+      "tefTOO_BIG": -181,
+      "tefWRONG_PRIOR": -189,
+      "telBAD_DOMAIN": -398,
+      "telBAD_PATH_COUNT": -397,
+      "telBAD_PUBLIC_KEY": -396,
+      "telCAN_NOT_QUEUE": -392,
+      "telCAN_NOT_QUEUE_BALANCE": -391,
+      "telCAN_NOT_QUEUE_BLOCKED": -389,
+      "telCAN_NOT_QUEUE_BLOCKS": -390,
+      "telCAN_NOT_QUEUE_FEE": -388,
+      "telCAN_NOT_QUEUE_FULL": -387,
+      "telENV_RPC_FAILED": -383,
+      "telFAILED_PROCESSING": -395,
+      "telINSUF_FEE_P": -394,
+      "telLOCAL_ERROR": -399,
+      "telNETWORK_ID_MAKES_TX_NON_CANONICAL": -384,
+      "telNO_DST_PARTIAL": -393,
+      "telREQUIRES_NETWORK_ID": -385,
+      "telWRONG_NETWORK": -386,
+      "temARRAY_EMPTY": -253,
+      "temARRAY_TOO_LARGE": -252,
+      "temBAD_AMM_TOKENS": -261,
+      "temBAD_AMOUNT": -298,
+      "temBAD_CURRENCY": -297,
+      "temBAD_EXPIRATION": -296,
+      "temBAD_FEE": -295,
+      "temBAD_ISSUER": -294,
+      "temBAD_LIMIT": -293,
+      "temBAD_NFTOKEN_TRANSFER_FEE": -262,
+      "temBAD_OFFER": -292,
+      "temBAD_PATH": -291,
+      "temBAD_PATH_LOOP": -290,
+      "temBAD_QUORUM": -271,
+      "temBAD_REGKEY": -289,
+      "temBAD_SEND_XRP_LIMIT": -288,
+      "temBAD_SEND_XRP_MAX": -287,
+      "temBAD_SEND_XRP_NO_DIRECT": -286,
+      "temBAD_SEND_XRP_PARTIAL": -285,
+      "temBAD_SEND_XRP_PATHS": -284,
+      "temBAD_SEQUENCE": -283,
+      "temBAD_SIGNATURE": -282,
+      "temBAD_SIGNER": -272,
+      "temBAD_SRC_ACCOUNT": -281,
+      "temBAD_TICK_SIZE": -269,
+      "temBAD_TRANSFER_FEE": -251,
+      "temBAD_TRANSFER_RATE": -280,
+      "temBAD_WEIGHT": -270,
+      "temCANNOT_PREAUTH_SELF": -267,
+      "temDISABLED": -273,
+      "temDST_IS_SRC": -279,
+      "temDST_NEEDED": -278,
+      "temEMPTY_DID": -254,
+      "temINVALID": -277,
+      "temINVALID_ACCOUNT_ID": -268,
+      "temINVALID_COUNT": -266,
+      "temINVALID_FLAG": -276,
+      "temINVALID_INNER_BATCH": -250,
+      "temMALFORMED": -299,
+      "temREDUNDANT": -275,
+      "temRIPPLE_EMPTY": -274,
+      "temSEQ_AND_TICKET": -263,
+      "temUNCERTAIN": -265,
+      "temUNKNOWN": -264,
+      "temXCHAIN_BAD_PROOF": -259,
+      "temXCHAIN_BRIDGE_BAD_ISSUES": -258,
+      "temXCHAIN_BRIDGE_BAD_MIN_ACCOUNT_CREATE_AMOUNT": -256,
+      "temXCHAIN_BRIDGE_BAD_REWARD_AMOUNT": -255,
+      "temXCHAIN_BRIDGE_NONDOOR_OWNER": -257,
+      "temXCHAIN_EQUAL_DOOR_ACCOUNTS": -260,
+      "terADDRESS_COLLISION": -86,
+      "terFUNDS_SPENT": -98,
+      "terINSUF_FEE_B": -97,
+      "terLAST": -91,
+      "terNO_ACCOUNT": -96,
+      "terNO_AMM": -87,
+      "terNO_AUTH": -95,
+      "terNO_DELEGATE_PERMISSION": -85,
+      "terNO_LINE": -94,
+      "terNO_RIPPLE": -90,
+      "terOWNERS": -93,
+      "terPRE_SEQ": -92,
+      "terPRE_TICKET": -88,
+      "terQUEUED": -89,
+      "terRETRY": -99,
+      "tesSUCCESS": 0
+    },
+    "TRANSACTION_TYPES": {
+      "AMMBid": 39,
+      "AMMClawback": 31,
+      "AMMCreate": 35,
+      "AMMDelete": 40,
+      "AMMDeposit": 36,
+      "AMMVote": 38,
+      "AMMWithdraw": 37,
+      "AccountDelete": 21,
+      "AccountSet": 3,
+      "Batch": 71,
+      "CheckCancel": 18,
+      "CheckCash": 17,
+      "CheckCreate": 16,
+      "Clawback": 30,
+      "CredentialAccept": 59,
+      "CredentialCreate": 58,
+      "CredentialDelete": 60,
+      "DIDDelete": 50,
+      "DIDSet": 49,
+      "DelegateSet": 64,
+      "DepositPreauth": 19,
+      "EnableAmendment": 100,
+      "EscrowCancel": 4,
+      "EscrowCreate": 1,
+      "EscrowFinish": 2,
+      "Invalid": -1,
+      "LedgerStateFix": 53,
+      "LoanBrokerCoverClawback": 78,
+      "LoanBrokerCoverDeposit": 76,
+      "LoanBrokerCoverWithdraw": 77,
+      "LoanBrokerDelete": 75,
+      "LoanBrokerSet": 74,
+      "LoanDelete": 81,
+      "LoanManage": 82,
+      "LoanPay": 84,
+      "LoanSet": 80,
+      "MPTokenAuthorize": 57,
+      "MPTokenIssuanceCreate": 54,
+      "MPTokenIssuanceDestroy": 55,
+      "MPTokenIssuanceSet": 56,
+      "NFTokenAcceptOffer": 29,
+      "NFTokenBurn": 26,
+      "NFTokenCancelOffer": 28,
+      "NFTokenCreateOffer": 27,
+      "NFTokenMint": 25,
+      "NFTokenModify": 61,
+      "OfferCancel": 8,
+      "OfferCreate": 7,
+      "OracleDelete": 52,
+      "OracleSet": 51,
+      "Payment": 0,
+      "PaymentChannelClaim": 15,
+      "PaymentChannelCreate": 13,
+      "PaymentChannelFund": 14,
+      "PermissionedDomainDelete": 63,
+      "PermissionedDomainSet": 62,
+      "SetFee": 101,
+      "SetRegularKey": 5,
+      "SignerListSet": 12,
+      "TicketCreate": 10,
+      "TrustSet": 20,
+      "UNLModify": 102,
+      "VaultClawback": 70,
+      "VaultCreate": 65,
+      "VaultDelete": 67,
+      "VaultDeposit": 68,
+      "VaultSet": 66,
+      "VaultWithdraw": 69,
+      "XChainAccountCreateCommit": 44,
+      "XChainAddAccountCreateAttestation": 46,
+      "XChainAddClaimAttestation": 45,
+      "XChainClaim": 43,
+      "XChainCommit": 42,
+      "XChainCreateBridge": 48,
+      "XChainCreateClaimID": 41,
+      "XChainModifyBridge": 47
+    },
+    "TYPES": {
+      "AccountID": 8,
+      "Amount": 6,
+      "Blob": 7,
+      "Currency": 26,
+      "Done": -1,
+      "Hash128": 4,
+      "Hash160": 17,
+      "Hash192": 21,
+      "Hash256": 5,
+      "Hash384": 22,
+      "Hash512": 23,
+      "Int32": 10,
+      "Int64": 11,
+      "Issue": 24,
+      "LedgerEntry": 10002,
+      "Metadata": 10004,
+      "NotPresent": 0,
+      "Number": 9,
+      "PathSet": 18,
+      "STArray": 15,
+      "STObject": 14,
+      "Transaction": 10001,
+      "UInt16": 1,
+      "UInt32": 2,
+      "UInt64": 3,
+      "UInt8": 16,
+      "UInt96": 20,
+      "Unknown": -2,
+      "Validation": 10003,
+      "Vector256": 19,
+      "XChainBridge": 25
+    },
+    "hash": "4F8D5DB98DB5C3543B5055D85139968C75BA52350F48E3B724F191ED765AC91A",
+    "status": "success"
+  }
+}

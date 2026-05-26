@@ -182,7 +182,7 @@ The `MutableFlags` use `tmf` as prefix.
 | `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present | `temMALFORMED` |
 | `TransferFee` exceeds the limit, which is 50000 | `temBAD_TRANSFER_FEE` |
 | `MPTokenMetadata` length exceeds the limit, which is 1024 | `temMALFORMED` |
-| Setting and clearing the same flag simultaneously, e.g., specifying both `tmfMPTSetCanLock` and `tmfMPTClearCanLock` | `temMALFORMED` |
+| Setting and clearing the same flag simultaneously, e.g., specifying both `tmfMPTSetCanLock` and `tmfMPTClearCanLock` | `temINVALID_FLAG` |
 | Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not set | `temMALFORMED` |
 | Including a non-zero `TransferFee` and `tmfMPTClearCanTransfer` in the same transaction | `temMALFORMED` |
 | `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled | `temDISABLED` |
