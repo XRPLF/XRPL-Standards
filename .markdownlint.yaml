@@ -20,8 +20,12 @@ MD007:
   indent: 2
 
 # MD013: Line length limit
-# Disabled: Technical specs often have long lines (tables, URLs, code)
-MD013: false
+# Configured: Keep prose reasonably readable without fighting tables/code/URLs
+MD013:
+  line_length: 120
+  heading_line_length: 120
+  code_blocks: false
+  tables: false
 
 # MD024: Multiple headings with the same content
 # Configured: Only check siblings (allows same heading in different sections)
@@ -37,15 +41,20 @@ MD025: false
 # MD028: false
 
 # MD029: Ordered list item prefix (1. 2. 3. vs 1. 1. 1.)
-# Disabled: Both styles are valid, specs use various conventions
-MD029: false
+# Configured: Allow either repeated 1. or explicit ordered numbering
+MD029:
+  style: one_or_ordered
 
 # MD030: Spaces after list markers
-# Disabled: Specs use various spacing conventions
-MD030: false
+# Configured: Enforce one space after list markers
+MD030:
+  ul_single: 1
+  ol_single: 1
+  ul_multi: 1
+  ol_multi: 1
 
 # MD033: Inline HTML
-# Disabled: Specs use HTML for complex formatting (tables, metadata blocks)
+# Disabled: Specs use HTML plus angle-bracket placeholders and metadata
 MD033: false
 
 # MD034: Bare URL used
@@ -57,41 +66,42 @@ MD034: false
 MD036: false
 
 # MD038: Spaces inside code span elements
-# Disabled: Sometimes spaces in code spans are intentional
-MD038: false
+# Enabled: Usually indicates accidental spacing that affects rendered Markdown
+MD038: true
 
 # MD039: Spaces inside link text
-# Disabled: Existing content has this pattern
-MD039: false
+MD039: true
 
 # MD040: Fenced code blocks should have a language specified
-# Disabled: Not all code blocks need syntax highlighting
-MD040: false
+# Configured: Require explicit language, using "text" for plain examples
+MD040: true
 
 # MD041: First line in file should be a top-level heading
 # Disabled: XLS specs start with HTML metadata block
 MD041: false
 
 # MD045: Images should have alternate text (alt text)
-# Disabled: Diagrams in specs don't always need alt text
-MD045: false
+# Enabled: Improves accessibility for diagrams and screenshots
+MD045: true
 
 # MD051: Link fragments should be valid
-# Disabled: Can produce false positives with complex heading structures
-MD051: false
+# Enabled: Catches broken intra-document heading links
+MD051: true
 
 # MD055: Table pipe style
-# Disabled: Various table styles exist in specs
-MD055: false
+# Configured: Leading and trailing pipes improve readability and portability
+MD055:
+  style: leading_and_trailing
 
 # MD058: Tables should be surrounded by blank lines
-# Disabled: Existing content doesn't always follow this
-MD058: false
+# Enabled: Helps parsers reliably detect tables
+MD058: true
 
 # MD059: Link text should be descriptive
-# Disabled: "here" links are common in specs
-MD059: false
+# Enabled: Improves accessibility and scanability
+MD059: true
 
 # MD060: Table column style (alignment)
-# Disabled: Various table alignment styles exist
-MD060: false
+# Configured: Allow aligned/compact/tight table styles, but reject malformed ones
+MD060:
+  style: any
