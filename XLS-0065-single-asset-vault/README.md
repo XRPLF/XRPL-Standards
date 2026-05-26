@@ -256,7 +256,7 @@ Because the share amount is rounded down, the actual assets taken from the depos
 
 $$\Delta_{assets'} = \frac{\Delta_{shares} \times \Gamma_{assets}}{\Gamma_{shares}}$$
 
-##### Vault State Update
+###### 3.1.7.2.1.1 Vault State Update
 
 The vault's totals are updated with the final calculated amounts.
 
