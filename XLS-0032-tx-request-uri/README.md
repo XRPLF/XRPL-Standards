@@ -290,11 +290,11 @@ As we continue to build on the XRP Ledger, it is imperative to work together as 
 
 The following summarizes the main points within this proposal.
 
-1.  Interoperability should be a key focus when sharing data between different applications and ecosystems.
+1. Interoperability should be a key focus when sharing data between different applications and ecosystems.
 
-2.  (7) type categories are presented to help describe the data contained within the requested QR code or link.
+2. (7) type categories are presented to help describe the data contained within the requested QR code or link.
 
-3.  Considerations are made for security, resolve mechanism, size limits, and backward compatibility.
+3. Considerations are made for security, resolve mechanism, size limits, and backward compatibility.
 
 ### Call to Action
 

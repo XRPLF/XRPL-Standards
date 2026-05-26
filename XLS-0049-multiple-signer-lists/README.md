@@ -41,16 +41,16 @@ There is no change to the shape of a [`SignerList` ledger object](https://xrpl.o
 
 As a reference, the **`SignerList`** object currently has the following fields:
 
-| Field Name          | Required? | JSON Type | Internal Type |
-| ------------------- | --------- | --------- | ------------- |
-| `LedgerIndex`       | ✔️        | `string`  | `HASH256`     |
-| `LedgerEntryType`   | ✔️        | `string`  | `UINT16`      |
-| `SignerEntries`     | ✔️        | `array`   | `STARRAY`     |
-| `SignerQuorum`      | ✔️        | `number`  | `UINT32`      |
-| `SignerListID`      | ✔️        | `number`  | `UINT32`      |
-| `OwnerNode`         | ✔️        | `string`  | `UINT64`      |
-| `PreviousTxnID`     | ✔️        | `string`  | `HASH256`     |
-| `PreviousTxnLgrSeq` | ✔️        | `number`  | `UINT32`      |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LedgerIndex` | ✔️ | `string` | `HASH256` |
+| `LedgerEntryType` | ✔️ | `string` | `UINT16` |
+| `SignerEntries` | ✔️ | `array` | `STARRAY` |
+| `SignerQuorum` | ✔️ | `number` | `UINT32` |
+| `SignerListID` | ✔️ | `number` | `UINT32` |
+| `OwnerNode` | ✔️ | `string` | `UINT64` |
+| `PreviousTxnID` | ✔️ | `string` | `HASH256` |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UINT32` |
 
 The ledger index of this object is calculated by hashing together the owner's account ID with the value of `0`.
 
@@ -74,16 +74,17 @@ The [`SignerListSet` transaction](https://xrpl.org/signerlistset.html) already e
 
 As a reference, the **`SignerListSet`** transaction already has the following fields:
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | --------- | --------- | ------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      |
-| `SignerEntries`   | ✔️        | `array`   | `STARRAY`     |
-| `SignerQuorum`    | ✔️        | `number`  | `UInt32`      |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` |
+| `SignerEntries` | ✔️ | `array` | `STARRAY` |
+| `SignerQuorum` | ✔️ | `number` | `UInt32` |
 
 We propose adding a new optional field:
+
 | Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
-|`TransactionTypeBitmask` | |`array`|`HASH256`
+| ---------- | --------- | --------- | ------------- |
+| `TransactionTypeBitmask` | | `array` | `HASH256` |
 
 #### 3.1.1. `TransactionTypeBitmask`
 

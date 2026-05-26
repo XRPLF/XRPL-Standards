@@ -101,21 +101,21 @@ A cross-chain transfer moves assets from the locking chain to the issuing chain,
 
 In this scenario, a user is trying to transfer funds from their account on the source chain to their account on the destination chain.
 
-1.  The user creates a cross-chain claim ID on the destination chain, via the **`XChainCreateClaimID`** transaction. This creates a **`XChainOwnedClaimID`** ledger object. The ledger object must specify the source account on the source chain.
-2.  The user submits a **`XChainCommit`** transaction on the source chain, attaching the claimed cross-chain claim ID and including a reward amount (`SignatureReward`) for the witness servers. This locks or burns the asset on the source chain, depending on whether the source chain is a locking or issuing chain. This transaction must be submitted from the same account that was specified when creating the claim ID.
-3.  The **witness server** signs an attestation saying that the funds were locked/burned on the source chain. This is then submitted as a **`XChainAddClaimAttestation`** transaction on the destination chain.
-4.  When there is a quorum of witness attestations, the funds can be claimed on the destination chain. If a destination account is included in the initial transfer, then the funds automatically transfer when quorum is reached. Otherwise, the user can submit a **`XChainClaim`** transaction for the transferred value on the destination chain.
+1. The user creates a cross-chain claim ID on the destination chain, via the **`XChainCreateClaimID`** transaction. This creates a **`XChainOwnedClaimID`** ledger object. The ledger object must specify the source account on the source chain.
+2. The user submits a **`XChainCommit`** transaction on the source chain, attaching the claimed cross-chain claim ID and including a reward amount (`SignatureReward`) for the witness servers. This locks or burns the asset on the source chain, depending on whether the source chain is a locking or issuing chain. This transaction must be submitted from the same account that was specified when creating the claim ID.
+3. The **witness server** signs an attestation saying that the funds were locked/burned on the source chain. This is then submitted as a **`XChainAddClaimAttestation`** transaction on the destination chain.
+4. When there is a quorum of witness attestations, the funds can be claimed on the destination chain. If a destination account is included in the initial transfer, then the funds automatically transfer when quorum is reached. Otherwise, the user can submit a **`XChainClaim`** transaction for the transferred value on the destination chain.
     - The rewards are then automatically distributed to the witness servers’ accounts on the destination chain.
 
 **![Diagram of a cross-chain transfer](https://user-images.githubusercontent.com/8029314/220456650-fd888ef7-00e5-4a7a-a8bb-5a11865f5f72.png)**
 
 #### 1.3.2. Setting Up a Cross-Chain Bridge
 
-1.  The witness server(s) are spun up.
-2.  The bridge is initialized on both of the chains via **`XChainCreateBridge`** transactions sent by the door accounts, which creates a **`Bridge`** ledger object on each chain. Each chain has a **door account** that controls that end of the bridge on-chain. On one chain, currency is locked and unlocked (the **locking chain**). On the other chain, currency is minted and burned, or issued and reclaimed (the **issuing chain**).
+1. The witness server(s) are spun up.
+2. The bridge is initialized on both of the chains via **`XChainCreateBridge`** transactions sent by the door accounts, which creates a **`Bridge`** ledger object on each chain. Each chain has a **door account** that controls that end of the bridge on-chain. On one chain, currency is locked and unlocked (the **locking chain**). On the other chain, currency is minted and burned, or issued and reclaimed (the **issuing chain**).
     - The `Bridge` ledger object can be modified via the **`XChainModifyBridge`** transaction.
-3.  Both chains’ door accounts set up a signer list (via a `SignerListSet` transaction) using the witness servers’ signing keys, so that they control the funds that the bridge controls.
-4.  Both chains’ door accounts disable the master key (via an `AccountSet` transaction), so that the witness servers as a collective have total control of the bridge.
+3. Both chains’ door accounts set up a signer list (via a `SignerListSet` transaction) using the witness servers’ signing keys, so that they control the funds that the bridge controls.
+4. Both chains’ door accounts disable the master key (via an `AccountSet` transaction), so that the witness servers as a collective have total control of the bridge.
 
 #### 1.3.3. Account Creation
 
@@ -150,15 +150,15 @@ _Note:_ The signatures used to attest to chain events are on the `XChainOwnedCla
 
 A **`Bridge`** object has the following fields:
 
-| Field Name                 | Required? | JSON Type         | Internal Type   |
-| -------------------------- | --------- | ----------------- | --------------- |
-| `LedgerIndex`              | ✔️        | `string`          | `HASH256`       |
-| `XChainBridge`             | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `SignatureReward`          | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `MinAccountCreateAmount`   |           | `Currency Amount` | `AMOUNT`        |
-| `XChainAccountCreateCount` | ✔️        | `number`          | `UINT64`        |
-| `XChainAccountClaimCount`  | ✔️        | `number`          | `UINT64`        |
-| `XChainClaimID`            | ✔️        | `number`          | `UINT64`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LedgerIndex` | ✔️ | `string` | `HASH256` |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `MinAccountCreateAmount` | | `Currency Amount` | `AMOUNT` |
+| `XChainAccountCreateCount` | ✔️ | `number` | `UINT64` |
+| `XChainAccountClaimCount` | ✔️ | `number` | `UINT64` |
+| `XChainClaimID` | ✔️ | `number` | `UINT64` |
 
 ###### 2.1.1.1.1. `LedgerIndex`
 
@@ -172,12 +172,12 @@ This is the identity of the bridge and cannot be changed, as if it were to chang
 
 It is used everywhere where a `XChainBridge` field exists. This is easier for users instead of expecting them to use the ledger object ID.
 
-| Field Name          | Required? | JSON Type | Internal Type |
-| ------------------- | --------- | --------- | ------------- |
-| `LockingChainDoor`  | ✔️        | `string`  | `ACCOUNT`     |
-| `LockingChainIssue` | ✔️        | `Issue`   | `ISSUE`       |
-| `IssuingChainDoor`  | ✔️        | `string`  | `ACCOUNT`     |
-| `IssuingChainIssue` | ✔️        | `Issue`   | `ISSUE`       |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LockingChainDoor` | ✔️ | `string` | `ACCOUNT` |
+| `LockingChainIssue` | ✔️ | `Issue` | `ISSUE` |
+| `IssuingChainDoor` | ✔️ | `string` | `ACCOUNT` |
+| `IssuingChainIssue` | ✔️ | `Issue` | `ISSUE` |
 
 **`LockingChainDoor`**
 
@@ -225,14 +225,14 @@ A `XChainCreateClaimID` transaction is used to create a new `XChainOwnedClaimID`
 
 A **`XChainOwnedClaimID`** object may have the following fields:
 
-| Field Name                | Required? | JSON Type         | Internal Type   |
-| ------------------------- | --------- | ----------------- | --------------- |
-| `LedgerIndex`             | ✔️        | `string`          | `HASH256`       |
-| `XChainBridge`            | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `OtherChainSource`        | ✔️        | `string`          | `ACCOUNT`       |
-| `SignatureReward`         | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `XChainClaimAttestations` | ✔️        | `array`           | `ARRAY`         |
-| `XChainClaimID`           | ✔️        | `string`          | `UINT64`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LedgerIndex` | ✔️ | `string` | `HASH256` |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `OtherChainSource` | ✔️ | `string` | `ACCOUNT` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `XChainClaimAttestations` | ✔️ | `array` | `ARRAY` |
+| `XChainClaimID` | ✔️ | `string` | `UINT64` |
 
 ###### 2.1.2.1.1. `LedgerIndex`
 
@@ -269,12 +269,12 @@ The `XChainOwnedCreateAccountClaimID` ledger object is used to collect attestati
 
 A **`XChainOwnedCreateAccountClaimID`** object may have the following fields:
 
-| Field Name                        | Required? | JSON Type      | Internal Type   |
-| --------------------------------- | --------- | -------------- | --------------- |
-| `LedgerIndex`                     | ✔️        | `string`       | `HASH256`       |
-| `XChainBridge`                    | ✔️        | `XChainBridge` | `XCHAIN_BRIDGE` |
-| `XChainAccountCreateCount`        | ✔️        | `number`       | `UINT64`        |
-| `XChainCreateAccountAttestations` | ✔️        | `array`        | `ARRAY`         |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LedgerIndex` | ✔️ | `string` | `HASH256` |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `XChainAccountCreateCount` | ✔️ | `number` | `UINT64` |
+| `XChainCreateAccountAttestations` | ✔️ | `array` | `ARRAY` |
 
 ###### 2.1.3.1.1. `LedgerIndex`
 
@@ -313,11 +313,11 @@ For an IOU-IOU bridge, the issuer of the IOU cannot have the `lsfAllowTrustLineC
 
 The `XChainCreateBridge` transaction contains the following fields:
 
-| Field Name               | Required? | JSON Type         | Internal Type   |
-| ------------------------ | --------- | ----------------- | --------------- |
-| `XChainBridge`           | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `SignatureReward`        | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `MinAccountCreateAmount` |           | `Currency Amount` | `AMOUNT`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `MinAccountCreateAmount` | | `Currency Amount` | `AMOUNT` |
 
 ###### 2.2.1.1.1. `XChainBridge`
 
@@ -344,12 +344,12 @@ Note that the signer list for the bridge is not modified through this transactio
 
 The `XChainModifyBridge` transaction contains the following fields:
 
-| Field Name               | Required? | JSON Type         | Internal Type   |
-| ------------------------ | --------- | ----------------- | --------------- |
-| `XChainBridge`           | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `SignatureReward`        |           | `Currency Amount` | `AMOUNT`        |
-| `MinAccountCreateAmount` |           | `Currency Amount` | `AMOUNT`        |
-| `Flags`                  | ✔️        | `number`          | `UINT32`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `SignatureReward` | | `Currency Amount` | `AMOUNT` |
+| `MinAccountCreateAmount` | | `Currency Amount` | `AMOUNT` |
+| `Flags` | ✔️ | `number` | `UINT32` |
 
 ###### 2.2.2.1.1. `XChainBridge`
 
@@ -367,8 +367,8 @@ The minimum amount, in XRP, required for a `XChainAccountCreateCommit` transacti
 
 Specifies the flags for this transaction. In addition to the universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`), the following transaction-specific flags are defined:
 
-| Flag Name                    | Flag Value   | Description                                        |
-| ---------------------------- | ------------ | -------------------------------------------------- |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
 | `tfClearAccountCreateAmount` | `0x00010000` | Clears the `MinAccountCreateAmount` of the bridge. |
 
 ### 2.3. Transactions for Cross-Chain Transfers
@@ -382,11 +382,11 @@ justification). The actual claim ID must be retrieved from a validated ledger.
 
 The `XChainCreateClaimID` transaction contains the following fields:
 
-| Field Name         | Required? | JSON Type         | Internal Type   |
-| ------------------ | --------- | ----------------- | --------------- |
-| `XChainBridge`     | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `SignatureReward`  | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `OtherChainSource` | ✔️        | `string`          | `ACCOUNT`       |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `OtherChainSource` | ✔️ | `string` | `ACCOUNT` |
 
 ###### 2.3.1.1.1. `XChainBridge`
 
@@ -414,12 +414,12 @@ The `XChainCommit` transaction is the second step in a cross-chain transfer. It 
 
 The `XChainCommit` transaction contains the following fields:
 
-| Field Name              | Required? | JSON Type         | Internal Type   |
-| ----------------------- | --------- | ----------------- | --------------- |
-| `XChainBridge`          | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `XChainClaimID`         | ✔️        | `string`          | `UINT64`        |
-| `Amount`                | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `OtherChainDestination` |           | `string`          | `ACCOUNT`       |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `XChainClaimID` | ✔️ | `string` | `UINT64` |
+| `Amount` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `OtherChainDestination` | | `string` | `ACCOUNT` |
 
 ###### 2.3.2.1.1. `XChainBridge`
 
@@ -459,18 +459,18 @@ _Note:_ A quorum of signers need to agree on the `SignatureReward`, the same way
 
 The `XChainAddClaimAttestation` transaction contains the following fields:
 
-| Field Name                 | Required? | JSON Type         | Internal Type   |
-| -------------------------- | --------- | ----------------- | --------------- |
-| `Amount`                   | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `AttestationRewardAccount` | ✔️        | `string`          | `ACCOUNT`       |
-| `AttestationSignerAccount` | ✔️        | `string`          | `ACCOUNT`       |
-| `Destination`              |           | `string`          | `ACCOUNT`       |
-| `OtherChainSource`         | ✔️        | `string`          | `ACCOUNT`       |
-| `PublicKey`                | ✔️        | `string`          | `BLOB`          |
-| `Signature`                | ✔️        | `string`          | `BLOB`          |
-| `WasLockingChainSend`      | ✔️        | `number`          | `UINT8`         |
-| `XChainBridge`             | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `XChainClaimID`            | ✔️        | `string`          | `UINT64`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `Amount` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `AttestationRewardAccount` | ✔️ | `string` | `ACCOUNT` |
+| `AttestationSignerAccount` | ✔️ | `string` | `ACCOUNT` |
+| `Destination` | | `string` | `ACCOUNT` |
+| `OtherChainSource` | ✔️ | `string` | `ACCOUNT` |
+| `PublicKey` | ✔️ | `string` | `BLOB` |
+| `Signature` | ✔️ | `string` | `BLOB` |
+| `WasLockingChainSend` | ✔️ | `number` | `UINT8` |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `XChainClaimID` | ✔️ | `string` | `UINT64` |
 
 ###### 2.3.3.1.1. `Amount`
 
@@ -528,13 +528,13 @@ If the transaction succeeds in moving funds, the referenced `XChainOwnedClaimID`
 
 The `XChainClaim` transaction contains the following fields:
 
-| Field Name       | Required? | JSON Type         | Internal Type   |
-| ---------------- | --------- | ----------------- | --------------- |
-| `XChainBridge`   | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `XChainClaimID`  | ✔️        | `string`          | `UINT64`        |
-| `Destination`    | ✔️        | `string`          | `ACCOUNT`       |
-| `DestinationTag` |           | `int`             | `UINT32`        |
-| `Amount`         | ✔️        | `Currency Amount` | `AMOUNT`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `XChainClaimID` | ✔️ | `string` | `UINT64` |
+| `Destination` | ✔️ | `string` | `ACCOUNT` |
+| `DestinationTag` | | `int` | `UINT32` |
+| `Amount` | ✔️ | `Currency Amount` | `AMOUNT` |
 
 ###### 2.3.4.1.1. `XChainBridge`
 
@@ -578,12 +578,12 @@ _Note:_ If this account already exists, the XRP is transferred to the existing a
 
 The `XChainAccountCreateCommit` transaction contains the following fields:
 
-| Field Name        | Required? | JSON Type         | Internal Type   |
-| ----------------- | --------- | ----------------- | --------------- |
-| `XChainBridge`    | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
-| `SignatureReward` | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `Destination`     | ✔️        | `string`          | `ACCOUNT`       |
-| `Amount`          | ✔️        | `Currency Amount` | `AMOUNT`        |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `Destination` | ✔️ | `string` | `ACCOUNT` |
+| `Amount` | ✔️ | `Currency Amount` | `AMOUNT` |
 
 ###### 2.4.1.1.1. `XChainBridge`
 
@@ -619,19 +619,19 @@ _Note:_ A quorum of signers need to agree on the `SignatureReward`, the same way
 
 The `XChainAddAccountCreateAttestation` transaction contains the following fields:
 
-| Field Name                 | Required? | JSON Type         | Internal Type   |
-| -------------------------- | --------- | ----------------- | --------------- |
-| `Amount`                   | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `AttestationRewardAccount` | ✔️        | `string`          | `ACCOUNT`       |
-| `AttestationSignerAccount` | ✔️        | `string`          | `ACCOUNT`       |
-| `Destination`              | ✔️        | `string`          | `ACCOUNT`       |
-| `OtherChainSource`         | ✔️        | `string`          | `ACCOUNT`       |
-| `PublicKey`                | ✔️        | `string`          | `BLOB`          |
-| `Signature`                | ✔️        | `string`          | `BLOB`          |
-| `SignatureReward`          | ✔️        | `Currency Amount` | `AMOUNT`        |
-| `WasLockingChainSend`      | ✔️        | `number`          | `UINT8`         |
-| `XChainAccountCreateCount` | ✔️        | `string`          | `UINT64`        |
-| `XChainBridge`             | ✔️        | `XChainBridge`    | `XCHAIN_BRIDGE` |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `Amount` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `AttestationRewardAccount` | ✔️ | `string` | `ACCOUNT` |
+| `AttestationSignerAccount` | ✔️ | `string` | `ACCOUNT` |
+| `Destination` | ✔️ | `string` | `ACCOUNT` |
+| `OtherChainSource` | ✔️ | `string` | `ACCOUNT` |
+| `PublicKey` | ✔️ | `string` | `BLOB` |
+| `Signature` | ✔️ | `string` | `BLOB` |
+| `SignatureReward` | ✔️ | `Currency Amount` | `AMOUNT` |
+| `WasLockingChainSend` | ✔️ | `number` | `UINT8` |
+| `XChainAccountCreateCount` | ✔️ | `string` | `UINT64` |
+| `XChainBridge` | ✔️ | `XChainBridge` | `XCHAIN_BRIDGE` |
 
 ###### 2.4.2.1.1. `Amount`
 
@@ -692,9 +692,9 @@ It is possible for a witness server to provide attestations for one chain only -
 
 The current design envisions two models for how witness servers are used:
 
-1.  The servers are completely private. They submit transactions to the chains themselves and collect the rewards themselves. Allowing the servers to be private has the advantage of greatly reducing the attack surface on these servers. They won't have to deal with adversarial input to their RPC commands, and since their ip address will be unknown, it will be hard to mount an DOS attack.
+1. The servers are completely private. They submit transactions to the chains themselves and collect the rewards themselves. Allowing the servers to be private has the advantage of greatly reducing the attack surface on these servers. They won't have to deal with adversarial input to their RPC commands, and since their ip address will be unknown, it will be hard to mount an DOS attack.
 
-2.  The witness server monitors events on a chain, but does not submit their signatures themselves. Instead, another party will pay the witness server for their signature (for example, through a subscription fee), and the witness server allows that party to collect the signer's reward. The account that receives the signature reward is part of the message that the witness server signs.
+2. The witness server monitors events on a chain, but does not submit their signatures themselves. Instead, another party will pay the witness server for their signature (for example, through a subscription fee), and the witness server allows that party to collect the signer's reward. The account that receives the signature reward is part of the message that the witness server signs.
 
 _Note:_ since submitting a signature requires submitting a transaction and paying a fee, supporting rewards for signatures is an important requirement. Of course, the reward can be higher than the fee, providing an incentive to run a witness server.
 
@@ -708,27 +708,27 @@ The witness configuration is stored in a file called `witness.json`.
 
 #### 3.2.1. Fields
 
-| Field Name       | Required? | JSON Type      |
-| ---------------- | --------- | -------------- |
-| `LockingChain`   | ✔️        | `object`       |
-| `IssuingChain`   | ✔️        | `object`       |
-| `RPCEndpoint`    | ✔️        | `object`       |
-| `LogFile`        | ✔️        | `string`       |
-| `LogLevel`       | ✔️        | `string`       |
-| `DBDir`          | ✔️        | `string`       |
-| `SigningKeySeed` | ✔️        | `string`       |
-| `SigningKeyType` | ✔️        | `string`       |
-| `XChainBridge`   | ✔️        | `XChainBridge` |
+| Field Name | Required? | JSON Type |
+| ---------- | --------- | --------- |
+| `LockingChain` | ✔️ | `object` |
+| `IssuingChain` | ✔️ | `object` |
+| `RPCEndpoint` | ✔️ | `object` |
+| `LogFile` | ✔️ | `string` |
+| `LogLevel` | ✔️ | `string` |
+| `DBDir` | ✔️ | `string` |
+| `SigningKeySeed` | ✔️ | `string` |
+| `SigningKeyType` | ✔️ | `string` |
+| `XChainBridge` | ✔️ | `XChainBridge` |
 
 ##### 3.2.1.1. `LockingChain`
 
 The parameters for interacting with the locking chain.
 
-| Field Name      | Required? | JSON Type |
-| --------------- | --------- | --------- |
-| `Endpoint`      | ✔️        | `object`  |
-| `TxnSubmit`     | ✔️        | `object`  |
-| `RewardAccount` | ✔️        | `string`  |
+| Field Name | Required? | JSON Type |
+| ---------- | --------- | --------- |
+| `Endpoint` | ✔️ | `object` |
+| `TxnSubmit` | ✔️ | `object` |
+| `RewardAccount` | ✔️ | `string` |
 
 ###### 3.2.1.1.1. `Endpoint`
 
@@ -738,8 +738,8 @@ The fields are as follows:
 
 | Field Name | Required? | JSON Type |
 | ---------- | --------- | --------- |
-| `IP`       | ✔️        | `string`  |
-| `Port`     | ✔️        | `string`  |
+| `IP` | ✔️ | `string` |
+| `Port` | ✔️ | `string` |
 
 **`IP`**
 
@@ -755,12 +755,12 @@ The port used for the websocket endpoint.
 
 The parameters for transaction submission on the locking chain.
 
-| Field Name          | Required? | JSON Type |
-| ------------------- | --------- | --------- |
-| `ShouldSubmit`      | ✔️        | `boolean` |
-| `SigningKeySeed`    |           | `string`  |
-| `SigningKeyType`    |           | `string`  |
-| `SubmittingAccount` |           | `string`  |
+| Field Name | Required? | JSON Type |
+| ---------- | --------- | --------- |
+| `ShouldSubmit` | ✔️ | `boolean` |
+| `SigningKeySeed` | | `string` |
+| `SigningKeyType` | | `string` |
+| `SubmittingAccount` | | `string` |
 
 **`ShouldSubmit`**
 
@@ -794,8 +794,8 @@ The endpoint for RPC requests to the witness server.
 
 | Field Name | Required? | JSON Type |
 | ---------- | --------- | --------- |
-| `IP`       | ✔️        | `string`  |
-| `Port`     | ✔️        | `string`  |
+| `IP` | ✔️ | `string` |
+| `Port` | ✔️ | `string` |
 
 ###### 3.2.1.3.1. `IP`
 
@@ -899,9 +899,9 @@ The witness servers are trusted, and if a quorum of them collude they can steal 
 
 The public keys that the witness servers use must match the public keys on that door's signer's list. But this isn't the only way to implement this. A bridge ledger object could contain a signer list that's independent from the door account. The reasons for using the door account's signers list are:
 
-1.  The bridge signers list can be used to move funds from the account. Putting this list on the door account emphasizes this trust model.
-2.  It allows for emergency action. If something goes very, very wrong, funds could still be moved if the entities on the signer list sign a regular `Payment` transaction.
-3.  It's a more natural way to modify bridge parameters.
+1. The bridge signers list can be used to move funds from the account. Putting this list on the door account emphasizes this trust model.
+2. It allows for emergency action. If something goes very, very wrong, funds could still be moved if the entities on the signer list sign a regular `Payment` transaction.
+3. It's a more natural way to modify bridge parameters.
 
 ### 5.2. Transaction Replay Attacks
 

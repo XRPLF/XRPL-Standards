@@ -20,12 +20,8 @@ MD007:
   indent: 2
 
 # MD013: Line length limit
-# Configured: Keep prose reasonably readable without fighting tables/code/URLs
-MD013:
-  line_length: 120
-  heading_line_length: 120
-  code_blocks: false
-  tables: false
+# Disabled: Technical specs often have long lines (tables, URLs, code, paragraphs)
+MD013: false
 
 # MD024: Multiple headings with the same content
 # Configured: Only check siblings (allows same heading in different sections)
@@ -41,12 +37,11 @@ MD025: false
 # MD028: false
 
 # MD029: Ordered list item prefix (1. 2. 3. vs 1. 1. 1.)
-# Configured: Allow either repeated 1. or explicit ordered numbering
-MD029:
-  style: one_or_ordered
+# Disabled: Existing specs use both styles and occasionally split ordered lists
+MD029: false
 
 # MD030: Spaces after list markers
-# Configured: Enforce one space after list markers
+# Enabled: Autofixable spacing rule
 MD030:
   ul_single: 1
   ol_single: 1
@@ -66,42 +61,44 @@ MD034: false
 MD036: false
 
 # MD038: Spaces inside code span elements
-# Enabled: Usually indicates accidental spacing that affects rendered Markdown
+# Enabled: Autofixable spacing rule
 MD038: true
 
 # MD039: Spaces inside link text
+# Enabled: Autofixable spacing rule
 MD039: true
 
 # MD040: Fenced code blocks should have a language specified
-# Configured: Require explicit language, using "text" for plain examples
-MD040: true
+# Disabled: Many existing examples intentionally omit syntax highlighting
+MD040: false
 
 # MD041: First line in file should be a top-level heading
 # Disabled: XLS specs start with HTML metadata block
 MD041: false
 
 # MD045: Images should have alternate text (alt text)
-# Enabled: Improves accessibility for diagrams and screenshots
-MD045: true
+# Disabled: Existing diagrams do not all have alt text
+MD045: false
 
 # MD051: Link fragments should be valid
-# Enabled: Catches broken intra-document heading links
-MD051: true
+# Disabled: Existing specs use complex generated heading anchors
+MD051: false
 
 # MD055: Table pipe style
-# Configured: Leading and trailing pipes improve readability and portability
+# Enabled: Autofixable table formatting rule
 MD055:
   style: leading_and_trailing
 
 # MD058: Tables should be surrounded by blank lines
-# Enabled: Helps parsers reliably detect tables
+# Enabled: Autofixable table formatting rule
 MD058: true
 
 # MD059: Link text should be descriptive
-# Enabled: Improves accessibility and scanability
-MD059: true
+# Disabled: "here" links are common in existing specs
+MD059: false
 
 # MD060: Table column style (alignment)
-# Configured: Allow aligned/compact/tight table styles, but reject malformed ones
+# Configured: Keep tables compact with readable delimiter alignment
 MD060:
-  style: any
+  style: compact
+  aligned_delimiter: true

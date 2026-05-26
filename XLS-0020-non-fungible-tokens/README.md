@@ -61,9 +61,9 @@ An **`NFToken`** object can have the following required and optional fields. Not
 
 ---
 
-| Field Name  |     Required?      | JSON Type | Internal Type |
-| ----------- | :----------------: | :-------: | :-----------: |
-| `NFTokenID` | :heavy_check_mark: | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenID` | :heavy_check_mark: | `string` | `UINT256` |
 
 This composite field uniquely identifiers a token; it contains:
 
@@ -80,13 +80,13 @@ The 16-bit flags and transfer fee fields, and the 32-bit taxon and sequence numb
 
 A set of flags indicating properties or other options associated with this **`NFToken`** object. The type-specific flags proposed at this are:
 
-> |     Flag Name     | Flag Value | Description                                                                                                                                         |
-> | :---------------: | :--------: | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-> |   `lsfBurnable`   |  `0x0001`  | If set, indicates that the issuer (or an entity authorized by the issuer) can destroy the object. The object's owner can _always_ do so.            |
-> |   `lsfOnlyXRP`    |  `0x0002`  | If set, indicates that the tokens can only be offered or sold for XRP.                                                                              |
-> |  `lsfTrustLine`   |  `0x0004`  | (**DEPRECATED**) If set, indicates that the issuer wants a trustline to be automatically created.                                                   |
-> | `lsfTransferable` |  `0x0008`  | If set, indicates that this NFT can be transferred. This flag has no effect if the token is being transferred _from_ the issuer or _to_ the issuer. |
-> | `lsfReservedFlag` |  `0x8000`  | This proposal reserves this flag for future use. Attempts to set this flag should fail.                                                             |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
+> | `lsfBurnable` | `0x0001` | If set, indicates that the issuer (or an entity authorized by the issuer) can destroy the object. The object's owner can _always_ do so. |
+> | `lsfOnlyXRP` | `0x0002` | If set, indicates that the tokens can only be offered or sold for XRP. |
+> | `lsfTrustLine` | `0x0004` | (**DEPRECATED**) If set, indicates that the issuer wants a trustline to be automatically created. |
+> | `lsfTransferable` | `0x0008` | If set, indicates that this NFT can be transferred. This flag has no effect if the token is being transferred _from_ the issuer or _to_ the issuer. |
+> | `lsfReservedFlag` | `0x8000` | This proposal reserves this flag for future use. Attempts to set this flag should fail. |
 
 These flags are **immutable**: they can only be set during the **`NFTokenMint`** transaction and cannot be changed later.
 
@@ -129,7 +129,7 @@ For example, the `NFTokenID` `000B013A95F14B0E44F78A264E41713C64B5F89242540EE2BC
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `URI`      |           | `string`  |    `BLOB`     |
+| `URI` | | `string` | `BLOB` |
 
 A URI that points to the data and/or metadata associated with the NFT. This field need not be an HTTP or HTTPS URL; it could be an IPFS URI, a magnet link, immediate data encoded as an RFC2379 ["data" URL](https://datatracker.ietf.org/doc/html/rfc2397), or even an opaque issuer-specific encoding. The URI is **NOT** checked for validity, but the field is limited to a maximum length of 256 bytes.
 
@@ -183,49 +183,49 @@ In the interest of minimizing the size of a page and optimizing storage, the `Ow
 
 An **`NFTokenPage`** object may have the following required and optional fields:
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `LedgerEntryType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `LedgerEntryType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Identifies the type of ledger object. This proposal recommends the value `0x0050` as the reserved ledger entry type.
 
 ---
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | :-------: | :-------: | :-----------: |
-| `PreviousPageMin` |           | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousPageMin` | | `string` | `UINT256` |
 
 The locator of the previous page, if any. Details about this field and how it should be used are outlined below, after the construction of the **`NFTokenPageID`** is explained.
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `NextPageMin` |           | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NextPageMin` | | `string` | `UINT256` |
 
 The locator of the next page, if any. Details about this field and how it should be used are outlined below, after the construction of the **`NFTokenPageID`** is explained.
 
 ---
 
-| Field Name      | Required? | JSON Type | Internal Type |
-| --------------- | :-------: | :-------: | :-----------: |
-| `PreviousTxnID` |           | `string`  |   `HASH256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnID` | | `string` | `HASH256` |
 
 Identifies the transaction ID of the transaction that most recently modified this **`NFTokenPage`** object.
 
 ---
 
-| Field Name          | Required? | JSON Type | Internal Type |
-| ------------------- | :-------: | :-------: | :-----------: |
-| `PreviousTxnLgrSeq` |           | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnLgrSeq` | | `number` | `UINT32` |
 
 The sequence of the ledger that contains the transaction that most recently modified this **`NFTokenPage`** object.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `NFTokens` | :heavy_check_mark: | `object`  |    `TOKEN`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokens` | :heavy_check_mark: | `object` | `TOKEN` |
 
 The collection of **`NFToken`** objects contained in this **`NFTokenPage`** object. This specification places an upper bound of 32 **`NFToken`** objects per page. Objects should be stored in sorted order, from low to high with the low order 96-bit of the `NFTokenID` used as the sorting parameter.
 
@@ -289,11 +289,11 @@ Each **`NFTokenPage`** costs an incremental reserve to the owner account. This s
 
 The value of the incremental reserve is, as of this writing, 2 XRP. The table below shows what the _effective_ reserve per token is, if a given page contains 1, 8, 16, 32 and 64 NFTs:
 
-| Incremental Reserve |   1 NFT   |    8 NFTs    |    16 NFTs    |    32 NFTs     |     64 NFTs     |
-| :-----------------: | :-------: | :----------: | :-----------: | :------------: | :-------------: |
-|        5 XRP        |   5 XRP   |  0.625 XRP   |  0.3125 XRP   |  0.15625 XRP   |   0.07812 XRP   |
-|      **2 XRP**      | **2 XRP** | **0.25 XRP** | **0.125 XRP** | **0.0625 XRP** | **0.03125 XRP** |
-|        1 XRP        |   1 XRP   |  0.125 XRP   |  0.0625 XRP   |  0.03125 XRP   |   0.01562 XRP   |
+| Incremental Reserve | 1 NFT | 8 NFTs | 16 NFTs | 32 NFTs | 64 NFTs |
+| :-----------------: | :---: | :----: | :-----: | :-----: | :-----: |
+| 5 XRP | 5 XRP | 0.625 XRP | 0.3125 XRP | 0.15625 XRP | 0.07812 XRP |
+| **2 XRP** | **2 XRP** | **0.25 XRP** | **0.125 XRP** | **0.0625 XRP** | **0.03125 XRP** |
+| 1 XRP | 1 XRP | 0.125 XRP | 0.0625 XRP | 0.03125 XRP | 0.01562 XRP |
 
 ## Transactions
 
@@ -312,15 +312,15 @@ If the transaction is successful, the newly minted NFToken will be owned by the 
 
 #### Transaction-specific Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`NFTokenMint`**. The integer value is `25`.
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  | `ACCOUNT ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `ACCOUNT ID` |
 
 Indicates the account which is minting the token. The account MUST _either_:
 
@@ -329,15 +329,15 @@ Indicates the account which is minting the token. The account MUST _either_:
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Issuer`   |           | `string`  | `ACCOUNT ID`  |
+| `Issuer` | | `string` | `ACCOUNT ID` |
 
 Indicates the account that should be the issuer of this token. This value is _optional_ and should only be specified if the account executing the transaction is not the `Issuer` of the **`NFToken`** object. If it is present, the `NFTokenMinter` field in the `AccountRoot` of the `Issuer` field must match the `Account`, otherwise the transaction will fail.
 
 ---
 
-| Field Name     |     Required?      | JSON Type | Internal Type |
-| -------------- | :----------------: | :-------: | :-----------: |
-| `NFTokenTaxon` | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenTaxon` | :heavy_check_mark: | `number` | `UINT32` |
 
 Indicates the taxon associated with this token. The taxon is generally a value chosen by the `NFTokenMinter` of the token and a given taxon may be used for multiple tokens. Taxons have a valid range range from 0x0 to 0xFFFFFFFF.
 
@@ -345,22 +345,22 @@ Indicates the taxon associated with this token. The taxon is generally a value c
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Flags`    |           | `number`  |   `UINT32`    |
+| `Flags` | | `number` | `UINT32` |
 
 Specifies the flags for this transaction. In addition to the universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`), the following transaction-specific flags are defined and used to set the appropriate fields in the NFT:
 
-> |    Flag Name     |  Flag Value  | Description                                                                    |
-> | :--------------: | :----------: | :----------------------------------------------------------------------------- |
-> |   `tfBurnable`   | `0x00000001` | If set, indicates that the `lsfBurnable` flag should be set.                   |
-> |   `tfOnlyXRP`    | `0x00000002` | If set, indicates that the `lsfOnlyXRP` flag should be set.                    |
-> |  `tfTrustLine`   | `0x00000004` | (**DEPRECATED**) If set, indicates that the `lsfTrustLine` flag should be set. |
-> | `tfTransferable` | `0x00000008` | If set, indicates that the `lsfTransferable` flag should be set.               |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
+> | `tfBurnable` | `0x00000001` | If set, indicates that the `lsfBurnable` flag should be set. |
+> | `tfOnlyXRP` | `0x00000002` | If set, indicates that the `lsfOnlyXRP` flag should be set. |
+> | `tfTrustLine` | `0x00000004` | (**DEPRECATED**) If set, indicates that the `lsfTrustLine` flag should be set. |
+> | `tfTransferable` | `0x00000008` | If set, indicates that the `lsfTransferable` flag should be set. |
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `TransferFee` |           | `number`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransferFee` | | `number` | `UINT16` |
 
 The value specifies the fee to charged by the issuer for secondary sales of the Token, if such sales are allowed. Valid values for this field are between 0 and 50,000 inclusive, allowing transfer rates of between 0.000% and 50.000% in increments of 0.001.
 
@@ -370,7 +370,7 @@ The field MUST NOT be present if the `tfTransferable` flag is not set. If it is,
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `URI`      |           | `string`  |    `BLOB`     |
+| `URI` | | `string` | `BLOB` |
 
 A URI that points to the data and/or metadata associated with the NFT. This field need not be an HTTP or HTTPS URL; it could be an IPFS URI, a magnet link, immediate data encoded as an RFC2379 ["data" URL](https://datatracker.ietf.org/doc/html/rfc2397), or even an opaque issuer-specific encoding. The URI is **NOT** checked for validity, but the field is limited to a maximum length of 256 bytes.
 
@@ -416,25 +416,25 @@ If this operation succeeds, the corresponding **`NFToken`** is removed. If this 
 
 #### Transaction-specific Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`NFTokenBurn`**. The integer value is `26`.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  | `ACCOUNT ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `ACCOUNT ID` |
 
 Indicates the `AccountID` that submitted this transaction. The account MUST be either the present `owner` of the token or, if the **`lsfBurnable`** flag is set in the **`NFToken`**, either the `issuer` account or an account authorized by the issuer, i.e., `NFTokenMinter`.
 
 ---
 
-| Field Name  |     Required?      | JSON Type | Internal Type |
-| ----------- | :----------------: | :-------: | :-----------: |
-| `NFTokenID` | :heavy_check_mark: | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenID` | :heavy_check_mark: | `string` | `UINT256` |
 
 Identifies the **`NFToken`** object to be removed by the transaction.
 
@@ -463,9 +463,9 @@ This proposal introduces 3 additional fields in an `AccountRoot`:
 
 It is likely that issuers may want to issue NFTs from their well known account, while, at the same time, wanting to delegate the issuance of such NFTs to a mint or other third party. To enable this use case, this specification introduces a new, optional field in the `AccountRoot` object.
 
-| Field Name      | Required? | JSON Type | Internal Type |
-| --------------- | :-------: | :-------: | :-----------: |
-| `NFTokenMinter` |           | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenMinter` | | `string` | `AccountID` |
 
 The `NFTokenMinter` field, if set, specifies an alternate account which is allowed to execute the **`NFTokenMint`** and **`NFTokenBurn`** operations on behalf of the account.
 
@@ -505,62 +505,62 @@ The unique ID, a.k.a **`NFTokenOfferID`**, of the **`NFTokenOffer`** object is t
 
 #### Fields
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Owner`    | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Owner` | :heavy_check_mark: | `string` | `AccountID` |
 
 Indicates the `Owner` of the account that is creating and owns the offer. Only the current `Owner` of an **`NFToken`** can create an offer to **sell** an **`NFToken`**, but any account can create an offer to **buy** an **`NFToken`**.
 
 ---
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `LedgerEntryType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `LedgerEntryType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the type of ledger object. This proposal recommends using the value `0x0074`.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Flags`    | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Flags` | :heavy_check_mark: | `number` | `UINT32` |
 
 A set of flags associated with this object, used to specify various options or settings. This proposal only defines one flag at this time, used to determine if this is a `Buy`
 or `Sell` offer:
 
-> |   Flag Name    |  Flag Value  | Description                                                                            |
-> | :------------: | :----------: | :------------------------------------------------------------------------------------- |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
 > | `lsfSellToken` | `0x00000001` | If set, indicates that the offer is a sell offer. Otherwise, the offer is a buy offer. |
 
 ---
 
-| Field Name      |     Required?      | JSON Type | Internal Type |
-| --------------- | :----------------: | :-------: | :-----------: |
-| `PreviousTxnID` | :heavy_check_mark: | `string`  |   `Hash256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnID` | :heavy_check_mark: | `string` | `Hash256` |
 
 Indicates the identifying hash of the transaction that most recently modified this object.
 
 ---
 
-| Field Name          |     Required?      | JSON Type | Internal Type |
-| ------------------- | :----------------: | :-------: | :-----------: |
-| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number` | `UINT32` |
 
 Indicates the index of the ledger that contains the transaction that most recently modified this object.
 
 ---
 
-| Field Name  |     Required?      | JSON Type | Internal Type |
-| ----------- | :----------------: | :-------: | :-----------: |
-| `NFTokenID` | :heavy_check_mark: | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenID` | :heavy_check_mark: | `string` | `UINT256` |
 
 Specifies the **`NFTokenID`** of the **`NFToken`** object being referenced by this offer.
 
 ---
 
-| Field Name |     Required?      |      JSON Type       | Internal Type |
-| ---------- | :----------------: | :------------------: | :-----------: |
-| `Amount`   | :heavy_check_mark: | `object` or `string` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | :heavy_check_mark: | `object` or `string` | `AMOUNT` |
 
 Indicates the amount expected or offered for the **`NFToken`**. If the token has the `lsfOnlyXRP` flag set, the amount **MUST** be specified in XRP.
 
@@ -568,33 +568,33 @@ Sell offers that specify assets other than XRP must specify a non-zero amount. S
 
 ---
 
-| Field Name   | Required? | JSON Type | Internal Type |
-| ------------ | :-------: | :-------: | :-----------: |
-| `Expiration` |           | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Expiration` | | `number` | `UINT32` |
 
 Indicates the time after which the offer is no longer active. The value is the number of seconds since the [Ripple Epoch](https://xrpl.org/basic-data-types.html#specifying-time).
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `Destination` |           | `string`  | `Account ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Destination` | | `string` | `Account ID` |
 
 Only allowed if the `lsfSellToken` flag is set. Indicates the `AccountID` that this sell offer is intended for (either a buyer or a broker). If present, only that account can accept the sell offer.
 
 ---
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | :-------: | :-------: | :-----------: |
-| `OwnerNode` |           | `string`  |   `UINT64`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `OwnerNode` | | `string` | `UINT64` |
 
 Internal bookkeeping, indicating the page inside the owner directory where this token is being tracked. This field allows of the efficient deletion of offers.
 
 ---
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | :-------: | :-------: | :-----------: |
-| `NFTokenOfferNode` |           | `string`  |   `UINT64`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenOfferNode` | | `string` | `UINT64` |
 
 Internal bookkeeping, indicating the page inside the token buy or sell offer directory, as appropriate, where this token is being tracked. This field allows of the efficient deletion of offers.
 
@@ -634,17 +634,17 @@ Each offer costs one incremental reserve.
 
 #### 1.5.4.1. Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`NFTokenCreateOffer`**. The integer identifier is `27`.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 Indicates the `AccountID` of the account that initiated the transaction.
 
@@ -652,7 +652,7 @@ Indicates the `AccountID` of the account that initiated the transaction.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Owner`    |           | `string`  |  `AccountID`  |
+| `Owner` | | `string` | `AccountID` |
 
 Indicates the `AccountID` of the account that owns the corresponding **`NFToken`**.
 
@@ -661,15 +661,15 @@ Indicates the `AccountID` of the account that owns the corresponding **`NFToken`
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Flags`    | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Flags` | :heavy_check_mark: | `number` | `UINT32` |
 
 A set of flags that specifies options or controls the behavior of the transaction. This proposal only defines one flag at this time:
 
-> |   Flag Name   |  Flag Value  | Description                                                                     |
-> | :-----------: | :----------: | :------------------------------------------------------------------------------ | --- |
-> | `tfSellToken` | `0x00000001` | If set, indicates that the offer is a sell offer. Otherwise, it is a buy offer. |     |
+> | Flag Name | Flag Value | Description |
+> | :---: | :---: | :--- | --- |
+> | `tfSellToken` | `0x00000001` | If set, indicates that the offer is a sell offer. Otherwise, it is a buy offer. | |
 
 Note that the `Flags` field includes both transaction-specific and generic flags. This proposal only specifies the transaction-specific flags; all currently valid generic flags (e.g., `tfFullyCanonicalSig`) are applicable, but not listed here.
 
@@ -677,17 +677,17 @@ The transactor **SHOULD NOT** allow unknown flags to be set.
 
 ---
 
-| Field Name  |     Required?      | JSON Type | Internal Type |
-| ----------- | :----------------: | :-------: | :-----------: |
-| `NFTokenID` | :heavy_check_mark: | `string`  |   `Hash256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenID` | :heavy_check_mark: | `string` | `Hash256` |
 
 Identifies the **`NFTokenID`** of the **`NFToken`** object that the offer references.
 
 ---
 
-| Field Name |     Required?      |     JSON Type     | Internal Type |
-| ---------- | :----------------: | :---------------: | :-----------: |
-| `Amount`   | :heavy_check_mark: | `Currency Amount` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | :heavy_check_mark: | `Currency Amount` | `AMOUNT` |
 
 Indicates the amount expected or offered for the **`Token`**.
 
@@ -695,17 +695,17 @@ The amount must be non-zero, except where this is an offer is an offer to sell a
 
 ---
 
-| Field Name   | Required? | JSON Type | Internal Type |
-| ------------ | :-------: | :-------: | :-----------: |
-| `Expiration` |           | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Expiration` | | `number` | `UINT32` |
 
 Indicates the time after which the offer will no longer be valid. The value is the number of seconds since the [Ripple Epoch](https://xrpl.org/basic-data-types.html#specifying-time).
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `Destination` |           | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Destination` | | `string` | `AccountID` |
 
 Only valid if the `tfSellToken` flag is set. If present, indicates that this offer may only be accepted by the specified account (either a broker or a buyer). Attempts by other accounts to accept this offer **MUST** fail.
 
@@ -727,15 +727,15 @@ This transaction removes the listed **`NFTokenOffer`** object from the ledger, i
 
 #### Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`NFTokenCancelOffer`**. The integer identifier is `28`.
 
-| Field Name      |     Required?      | JSON Type | Internal Type |
-| --------------- | :----------------: | :-------: | :-----------: |
-| `NFTokenOffers` | :heavy_check_mark: |  `array`  |  `VECTOR256`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenOffers` | :heavy_check_mark: | `array` | `VECTOR256` |
 
 An array of ledger entry IDs, each identifying an **`NFTokenOffer`** object that should be cancelled by this transaction.
 
@@ -754,11 +754,11 @@ The **`NFTokenOfferAccept`** transaction is used to accept offers to `buy` or `s
 
 The mode in which the transaction operates depends on the presence of the `NFTokenSellOffer` and `NFTokenBuyOffer` fields of the transaction:
 
-| `NFTokenSellOffer` | `NFTokenBuyOffer`  |   Mode   |
-| :----------------: | :----------------: | :------: |
+| `NFTokenSellOffer` | `NFTokenBuyOffer` | Mode |
+| :----------------: | :---------------: | :--: |
 | :heavy_check_mark: | :heavy_check_mark: | Brokered |
-| :heavy_check_mark: |        :x:         |  Direct  |
-|        :x:         | :heavy_check_mark: |  Direct  |
+| :heavy_check_mark: | :x: | Direct |
+| :x: | :heavy_check_mark: | Direct |
 
 If neither of those fields is specified, the transaction is malformed and shall produce a `tem` class error.
 
@@ -799,31 +799,31 @@ In `brokered` mode, **`NFTokenOfferAccept`** transaction **MUST** fail if:
 
 #### 1.5.6.3. Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the transaction type **`NFTokenOfferAccept`**. The sequence number of a previous **`NFTokenCreateOffer`** transaction. The integer identifier is `29`.
 
-| Field Name         | Required? | JSON Type | Internal Type |
-| ------------------ | :-------: | :-------: | :-----------: |
-| `NFTokenSellOffer` |           | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenSellOffer` | | `string` | `UINT256` |
 
 Identifies the **`NFTokenOffer`** that offers to sell the **`NFToken`**.
 
 :memo: In direct mode this field is optional, but either `NFTokenSellOffer` or `NFTokenBuyOffer` must be specified. In brokered mode, both `NFTokenSellOffer` and `NFTokenBuyOffer` MUST be specified.
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | :-------: | :-------: | :-----------: |
-| `NFTokenBuyOffer` |           | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenBuyOffer` | | `string` | `UINT256` |
 
 Identifies the **`NFTokenOffer`** that offers to buy the **`NFToken`**.
 
 :memo: In direct mode this field is optional, but either `NFTokenSellOffer` or `NFTokenBuyOffer` must be specified. In brokered mode, both `NFTokenSellOffer` and `NFTokenBuyOffer` MUST be specified.
 
-|     Field Name     | Required? |      JSON Type       | Internal Type |
-| :----------------: | :-------: | :------------------: | :-----------: |
-| `NFTokenBrokerFee` |           | `object` or `string` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| :--------: | :-------: | :-------: | :-----------: |
+| `NFTokenBrokerFee` | | `object` or `string` | `AMOUNT` |
 
 This field is only valid in brokered mode. It specifies the amount that the broker will keep as part of their fee for bringing the two offers together; the remaining amount will be sent to the seller of the **`NFToken`** being bought. If specified, the fee must be such that, prior to accounting for the transfer fee charged by the issuer, the amount that the seller would receive is at least as much as the amount indicated in the sell offer.
 

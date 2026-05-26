@@ -39,54 +39,54 @@ MPTs include a 1024-byte field for arbitrary metadata. The metadata field is par
 
 ## 2. Base Metadata Schema
 
-| Field             | Key  | Description                                                                                          | Example                                                                                               | Allowed Values                                                  | Type                  | Required? |
-| ----------------- | ---- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | --------------------- | --------- |
-| `ticker`          | `t`  | Ticker symbol used to represent the token                                                            | EXMPL                                                                                                 | Uppercase letters (A-Z) and digits (0-9) only. Max 6 chars      | string                | ✔️        |
-| `name`            | `n`  | Display name of the token                                                                            | Example Token                                                                                         | Any UTF-8 string                                                | string                | ✔️        |
-| `desc`            | `d`  | Short description of the token                                                                       | A sample token used for demonstration                                                                 | Any UTF-8 string                                                | string                |           |
-| `icon`            | `i`  | URI to the token icon                                                                                | example.org/token-icon, ipfs://token-icon.png                                                         | `hostname/path` (HTTPS assumed) or full URI for other protocols | string                | ✔️        |
-| `asset_class`     | `ac` | Top-level classification of token purpose                                                            | rwa                                                                                                   | rwa, memes, wrapped, gaming, defi, other                        | string                | ✔️        |
-| `asset_subclass`  | `as` | Optional subcategory, required if `asset_class = rwa`                                                | See 2.2 _asset_subclass_                                                                              | See 2.2 _asset_subclass_                                        | string                |           |
-| `issuer_name`     | `in` | The name of the issuer account                                                                       | Example Issuer                                                                                        | Any UTF-8 string                                                | string                | ✔️        |
-| `uris`            | `us` | List of related URIs (site, dashboard, social media, etc.)                                           | See 2.3 _uris_                                                                                        | See 2.3 _uris_                                                  | array                 |           |
-| `additional_info` | `ai` | Freeform field for key token details like interest rate, maturity date, term, or other relevant info | {"interest_rate": "4.75%", "maturity_date": "2030-06-30", "term": "10Y", "issuer_type": "government"} | Any valid JSON object or UTF-8 string                           | JSON object or string |           |
+| Field | Key | Description | Example | Allowed Values | Type | Required? |
+| ----- | --- | ----------- | ------- | -------------- | ---- | --------- |
+| `ticker` | `t` | Ticker symbol used to represent the token | EXMPL | Uppercase letters (A-Z) and digits (0-9) only. Max 6 chars | string | ✔️ |
+| `name` | `n` | Display name of the token | Example Token | Any UTF-8 string | string | ✔️ |
+| `desc` | `d` | Short description of the token | A sample token used for demonstration | Any UTF-8 string | string | |
+| `icon` | `i` | URI to the token icon | example.org/token-icon, ipfs://token-icon.png | `hostname/path` (HTTPS assumed) or full URI for other protocols | string | ✔️ |
+| `asset_class` | `ac` | Top-level classification of token purpose | rwa | rwa, memes, wrapped, gaming, defi, other | string | ✔️ |
+| `asset_subclass` | `as` | Optional subcategory, required if `asset_class = rwa` | See 2.2 _asset_subclass_ | See 2.2 _asset_subclass_ | string | |
+| `issuer_name` | `in` | The name of the issuer account | Example Issuer | Any UTF-8 string | string | ✔️ |
+| `uris` | `us` | List of related URIs (site, dashboard, social media, etc.) | See 2.3 _uris_ | See 2.3 _uris_ | array | |
+| `additional_info` | `ai` | Freeform field for key token details like interest rate, maturity date, term, or other relevant info | {"interest_rate": "4.75%", "maturity_date": "2030-06-30", "term": "10Y", "issuer_type": "government"} | Any valid JSON object or UTF-8 string | JSON object or string | |
 
 ---
 
 ### 2.1 asset_class
 
-| Category  | Definition                                                                                                                                            |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rwa`     | Tokens representing real-world assets (RWAs), which derive value from legally enforceable claims on physical or off-chain financial assets            |
-| `memes`   | Tokens primarily driven by community, internet culture, or speculation, without intrinsic backing or utility claims                                   |
-| `wrapped` | Tokens that represent assets from other blockchains, typically backed 1:1 and issued by bridges or custodians                                         |
-| `gaming`  | Tokens used in games or virtual worlds, often representing in-game currency, assets, or rewards                                                       |
-| `defi`    | Tokens native to or used within decentralized finance protocols, including governance tokens, DEX tokens, and lending assets                          |
-| `other`   | Tokens that do not clearly fit into the defined categories. This may include experimental, test, or those with unique use cases not covered elsewhere |
+| Category | Definition |
+| -------- | ---------- |
+| `rwa` | Tokens representing real-world assets (RWAs), which derive value from legally enforceable claims on physical or off-chain financial assets |
+| `memes` | Tokens primarily driven by community, internet culture, or speculation, without intrinsic backing or utility claims |
+| `wrapped` | Tokens that represent assets from other blockchains, typically backed 1:1 and issued by bridges or custodians |
+| `gaming` | Tokens used in games or virtual worlds, often representing in-game currency, assets, or rewards |
+| `defi` | Tokens native to or used within decentralized finance protocols, including governance tokens, DEX tokens, and lending assets |
+| `other` | Tokens that do not clearly fit into the defined categories. This may include experimental, test, or those with unique use cases not covered elsewhere |
 
 ---
 
 ### 2.2 asset_subclass
 
-| Asset Type       | Description                                                                                                                             |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `stablecoin`     | Tokens pegged to a stable value (typically fiat currencies like USD), backed by reserves such as cash, treasuries, or crypto collateral |
-| `commodity`      | Tokens representing physical commodities like gold, silver, or oil, often redeemable or legally linked to off-chain reserves            |
-| `real_estate`    | Tokens representing ownership or claims on real estate, including fractionalized property shares or REIT-like instruments               |
-| `private_credit` | Tokens representing debt obligations from private entities, such as loans, invoices, or receivables                                     |
-| `equity`         | Tokens representing ownership shares in companies, similar to traditional stock or equity instruments                                   |
-| `treasury`       | Tokens backed by or referencing government debt instruments, such as U.S. Treasury bills or bonds                                       |
-| `other`          | Tokens that do not fit into the predefined categories above, including experimental, hybrid, or emerging real-world asset types         |
+| Asset Type | Description |
+| ---------- | ----------- |
+| `stablecoin` | Tokens pegged to a stable value (typically fiat currencies like USD), backed by reserves such as cash, treasuries, or crypto collateral |
+| `commodity` | Tokens representing physical commodities like gold, silver, or oil, often redeemable or legally linked to off-chain reserves |
+| `real_estate` | Tokens representing ownership or claims on real estate, including fractionalized property shares or REIT-like instruments |
+| `private_credit` | Tokens representing debt obligations from private entities, such as loans, invoices, or receivables |
+| `equity` | Tokens representing ownership shares in companies, similar to traditional stock or equity instruments |
+| `treasury` | Tokens backed by or referencing government debt instruments, such as U.S. Treasury bills or bonds |
+| `other` | Tokens that do not fit into the predefined categories above, including experimental, hybrid, or emerging real-world asset types |
 
 ---
 
 ### 2.3 uris
 
-| Field      | Key | Description                         | Example                                  | Allowed Values                                                  | Required |
-| ---------- | --- | ----------------------------------- | ---------------------------------------- | --------------------------------------------------------------- | -------- |
-| `uri`      | `u` | URI to the related resource         | exampleyield.com/tbill, ipfs://abc123... | `hostname/path` (HTTPS assumed) or full URI for other protocols | ✔️       |
-| `category` | `c` | The category of the link            | website                                  | website, social, docs, other                                    | ✔️       |
-| `title`    | `t` | A human-readable label for the link | Product Page                             | Any UTF-8 string                                                | ✔️       |
+| Field | Key | Description | Example | Allowed Values | Required |
+| ----- | --- | ----------- | ------- | -------------- | -------- |
+| `uri` | `u` | URI to the related resource | exampleyield.com/tbill, ipfs://abc123... | `hostname/path` (HTTPS assumed) or full URI for other protocols | ✔️ |
+| `category` | `c` | The category of the link | website | website, social, docs, other | ✔️ |
+| `title` | `t` | A human-readable label for the link | Product Page | Any UTF-8 string | ✔️ |
 
 ---
 

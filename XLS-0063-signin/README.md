@@ -25,11 +25,11 @@ The `SignIn` transaction is a new transaction type that allows users to sign an 
 
 The transaction has the following fields:
 
-| Field             | Type           | Required | Description                                                               |
-| ----------------- | -------------- | -------- | ------------------------------------------------------------------------- |
-| sfTransactionType | String         | ✔️       | The type of transaction, which is "SignIn" for this proposal.             |
-| sfAccount         | AccountID      | ✔️       | The account of the user signing in.                                       |
-| sfData            | VariableLength | ✔️       | The arbitrary data to be signed by the user, represented as a hex string. |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfTransactionType | String | ✔️ | The type of transaction, which is "SignIn" for this proposal. |
+| sfAccount | AccountID | ✔️ | The account of the user signing in. |
+| sfData | VariableLength | ✔️ | The arbitrary data to be signed by the user, represented as a hex string. |
 
 Example `SignIn` transaction:
 

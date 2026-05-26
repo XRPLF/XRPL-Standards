@@ -53,8 +53,8 @@ This proposal introduces no new on ledger structures.
 
 This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot`:
 
-|          Flag Name          |  Flag Value  |
-| :-------------------------: | :----------: |
+| Flag Name | Flag Value |
+| :-------: | :--------: |
 | `lsfAllowTrustLineClawback` | `0x80000000` |
 
 Clawback is disabled by default. The account must set this flag through an `AccountSet` transaction, which is successful only if the account has an empty owner directory, meaning they have no trustlines, offers, escrows, payment channels, or checks. Otherwise, the `AccountSet` returns `tecOWNERS`. After this flag has been successfully set, it cannot reverted, and the account permanently gains the ability to clawback on trustlines.
@@ -75,15 +75,15 @@ The transaction supports all the existing "common" fields for a transaction.
 
 ##### Transaction-specific Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`Clawback`**. The integer value is `30`. The recommended name is `ttCLAWBACK`.
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  | `ACCOUNT ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `ACCOUNT ID` |
 
 Indicates the account which is executing this transaction. The account **MUST** be the issuer of the asset being clawed back. Note that in the XRP Ledger, trustlines are bidirectional and, under some configurations, both sides can be seen as the "issuer" of an asset. In this specification, the term issuer is used to mean the side of the trustline that has an outstanding balance (i.e. 'owes' the issued asset) that it wishes to claw back.
 
@@ -91,15 +91,15 @@ Indicates the account which is executing this transaction. The account **MUST** 
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Flags`    |           | `number`  |   `UINT32`    |
+| `Flags` | | `number` | `UINT32` |
 
 The universal transaction flags that are applicable to all transactions (e.g., `tfFullyCanonicalSig`) are valid. This proposal introduces no new transaction-specific flags.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Amount`   | :heavy_check_mark: | `object`  |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | :heavy_check_mark: | `object` | `AMOUNT` |
 
 Indicates the amount being clawed back, as well as the counterparty from which the amount is being clawed back from. It is not an error if the amount exceeds the holder's balance; in that case, the maximum available balance is clawed back. It returns `temBAD_AMOUNT` is the amount is zero.
 

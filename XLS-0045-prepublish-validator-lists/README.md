@@ -76,17 +76,17 @@ The following is an example of how you can document new object types and fields:
 
 ---
 
-| Field Name        | Required?        |  JSON Type      | Internal Type     |
-|-------------------|:----------------:|:---------------:|:-----------------:|
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
 | `<field name>` | :heavy_check_mark: | `<string, number, object, array, boolean>` | `<UINT128, UINT160, UINT256, ...>` |
 
 <Any explanatory text about specific fields>
 
 ###### Flags
 
-> | Flag Name            | Flag Value  | Description |
->|:---------------------:|:-----------:|:------------|
->| `lsf<flag name>` | `0x0001`| <flag description> |
+> | Flag Name | Flag Value | Description |
+>| :---: | :---: | :--- |
+>| `lsf<flag name>` | `0x0001` | <flag description> |
 
 <Any explanatory text about specific flags>
 -->
@@ -107,11 +107,11 @@ The following is an example of how you can document new object types and fields:
 
 #### Glossary
 
-| Term or acronym       | Definition                                                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| VL                    | **V**alidator **L**ist. Also known as the "UNL", this is the list of validators that a server trusts not to collude.      |
-| UNL                   | **U**nique **N**ode **L**ist. Also known as the "VL", this is the list of validators that a server trusts not to collude. |
-| UNL file (or VL file) | A file containing a publisher's manifest, public key, etc., and one or more UNLs.                                         |
+| Term or acronym | Definition |
+| --------------- | ---------- |
+| VL | **V**alidator **L**ist. Also known as the "UNL", this is the list of validators that a server trusts not to collude. |
+| UNL | **U**nique **N**ode **L**ist. Also known as the "VL", this is the list of validators that a server trusts not to collude. |
+| UNL file (or VL file) | A file containing a publisher's manifest, public key, etc., and one or more UNLs. |
 
 #### Current format
 

@@ -49,11 +49,11 @@ This proposal introduces changes to the behavior of the `AMMDeposit` transaction
 
 Assume we have created an Automated Market Maker (AMM) pool with two assets: A and B. Currently, asset A is frozen (either individually or globally). The following table outlines whether specific scenarios are allowed or prohibited for the current behavior and proposed behavior:
 
-| Scenario                | Current Behavior | Proposed Behavior |
-| ----------------------- | ---------------- | ----------------- |
-| Double-Asset Deposit    | Prohibited       | Prohibited        |
-| Only Deposit A (frozen) | Prohibited       | Prohibited        |
-| Only Deposit B          | Allowed          | Prohibited        |
+| Scenario | Current Behavior | Proposed Behavior |
+| -------- | ---------------- | ----------------- |
+| Double-Asset Deposit | Prohibited | Prohibited |
+| Only Deposit A (frozen) | Prohibited | Prohibited |
+| Only Deposit B | Allowed | Prohibited |
 
 As illustrated in the table above, the primary change is that when one asset in the AMM pool is frozen, depositing the other asset is no longer allowed. This means that deposits are prohibited for the non-frozen asset when its paired asset is frozen.
 
@@ -62,11 +62,11 @@ As illustrated in the table above, the primary change is that when one asset in 
 Assume we have created an Automated Market Maker (AMM) pool with two assets: A and B. The issuer of A has set `lsfRequireAuth` and the holder is not authorized to hold A.
 The table below summarizes the allowed and prohibited scenarios under the current and proposed behavior:
 
-| Scenario                      | Current Behavior | Proposed Behavior |
-| ----------------------------- | ---------------- | ----------------- |
-| Double-Asset Deposit          | Prohibited       | Prohibited        |
-| Only Deposit A (Unauthorized) | Prohibited       | Prohibited        |
-| Only Deposit B                | Allowed          | Prohibited        |
+| Scenario | Current Behavior | Proposed Behavior |
+| -------- | ---------------- | ----------------- |
+| Double-Asset Deposit | Prohibited | Prohibited |
+| Only Deposit A (Unauthorized) | Prohibited | Prohibited |
+| Only Deposit B | Allowed | Prohibited |
 
 The primary change is that when the holder is not allowed to hold one of the token in the AMM pool, depositing the other asset is no longer allowed.
 
@@ -111,63 +111,63 @@ By designating the holder account, asset, asset2 and amount, this transaction wi
 
 #### 2.3.1. Fields for AMMClawback transaction
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type `AMMClawback`. The integer value is 31. The recommended name is `ttAMM_CLAWBACK`.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  | `ACCOUNT ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `ACCOUNT ID` |
 
 `Account` designates the issuer of the asset being clawed back, and must match the account submitting the transaction.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Holder`   | :heavy_check_mark: | `string`  | `ACCOUNT ID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Holder` | :heavy_check_mark: | `string` | `ACCOUNT ID` |
 
 `Holder` specifies the holder account of the asset to be clawed back.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies the token that the issuer wants to claw back from the AMM pool. `Asset`'s issuer must match with `Account`. If it does not, the system will return an error: `temMALFORMED`. Notice always put the token to be clawed back in `Asset` insead of `Asset2`.
 
 It has the following subfields:
 
-| Field name |     Required?      | Description                                                                                       |
-| :--------: | :----------------: | :------------------------------------------------------------------------------------------------ |
-|  `issuer`  | :heavy_check_mark: | specifies the issuer of the token being clawed back, this should be the same as the Account field |
-| `currency` | :heavy_check_mark: | specifies the currency to be clawed back                                                          |
-
----
-
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
-
-`Asset2` specifies the other asset in the AMM pool.
-
-It has the following subfields:
-
-| Field name |     Required?      | Description                                       |
-| :--------: | :----------------: | :------------------------------------------------ |
-|  `issuer`  |                    | specifies the paired token's issuer, omit for xrp |
-| `currency` | :heavy_check_mark: | specifies the paired token's currency             |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the issuer of the token being clawed back, this should be the same as the Account field |
+| `currency` | :heavy_check_mark: | specifies the currency to be clawed back |
 
 ---
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Amount`   |           | `object`  |   `AMOUNT`    |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
+
+`Asset2` specifies the other asset in the AMM pool.
+
+It has the following subfields:
+
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | | specifies the paired token's issuer, omit for xrp |
+| `currency` | :heavy_check_mark: | specifies the paired token's currency |
+
+---
+
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | | `object` | `AMOUNT` |
 
 `Amount` specifies the amount of token to be clawed back from the AMM account. It should match the `Asset` field.
 
@@ -176,18 +176,18 @@ It has the following subfields:
 
 It has the following subfields:
 
-| Field name |     Required?      | Description                                                                                       |
-| :--------: | :----------------: | :------------------------------------------------------------------------------------------------ |
-|  `issuer`  | :heavy_check_mark: | specifies the issuer of the token being clawed back, this should be the same as the Account field |
-| `currency` | :heavy_check_mark: | specifies the currency to be clawed back                                                          |
-|  `value`   | :heavy_check_mark: | specifies the maximum amount of this currency to be clawed back                                   |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the issuer of the token being clawed back, this should be the same as the Account field |
+| `currency` | :heavy_check_mark: | specifies the currency to be clawed back |
+| `value` | :heavy_check_mark: | specifies the maximum amount of this currency to be clawed back |
 
 ---
 
 #### 2.3.2. Flags
 
-| Flag Name         | Hex Value  |                                                    Description                                                    |
-| ----------------- | :--------: | :---------------------------------------------------------------------------------------------------------------: |
+| Flag Name | Hex Value | Description |
+| --------- | :-------: | :---------: |
 | `tfClawTwoAssets` | 0x00000001 | Indicates if the issuer wants to claw back both tokens in the pool. The two assets must both issued by the issuer |
 
 - It can be set only when the issuer issues both assets in the AMM pool.

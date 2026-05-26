@@ -623,11 +623,11 @@ A more sustainable approach for multiple transaction creators is that each party
 
 ##### Parameters
 
-| Field            | Style    | Description                                                                                                           |
-| ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
-| `Account`        | Required | The account that is adding one or more Tickets.                                                                       |
-| `TicketCount`    | Required | The number of Tickets to add to the account.                                                                          |
-| `Sequence`       | Required | The Sequence number of the transaction or zero.                                                                       |
+| Field | Style | Description |
+| ----- | ----- | ----------- |
+| `Account` | Required | The account that is adding one or more Tickets. |
+| `TicketCount` | Required | The number of Tickets to add to the account. |
+| `Sequence` | Required | The Sequence number of the transaction or zero. |
 | `TicketSequence` | Optional | The `TicketSequence` number to consume for the transaction. The corresponding `Ticket` must already be in the ledger. |
 
 The following example is a `TicketCreate` transaction that creates 250 `Ticket`s and includes 4 multisigners.
@@ -702,9 +702,9 @@ All transactions associated with an account (i.e., not pseudo-transactions) can 
 
 In order to submit a transaction that uses a `Ticket` instead of a `Sequence` you must make the following adjustments to the transaction.
 
-| Field            | Description                                                                                                                               |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sequence`       | The `Sequence` field must be present and must contain zero.                                                                               |
+| Field | Description |
+| ----- | ----------- |
+| `Sequence` | The `Sequence` field must be present and must contain zero. |
 | `TicketSequence` | The `TicketSequence` field must be present and contain the `TicketSequence` value of a `Ticket` that is currently owned by the `Account`. |
 
 In order to allow `Ticket`s to be consumed by transactions, all transactions associated with an account allow an optional `TicketSequence` field.
@@ -715,13 +715,13 @@ In order to allow `Ticket`s to be consumed by transactions, all transactions ass
 
 A `Ticket` in the ledger has the following fields:
 
-| Field                 | Style    | Description                                                          |
-| --------------------- | -------- | -------------------------------------------------------------------- |
-| `sfAccount`           | Required | The ID of the account that owns the `Ticket`.                        |
-| `sfTicketSequence`    | Required | The `TicketSequence`, an unsigned 32-bit integer.                    |
-| `sfOwnerNode`         | Required | The page number for this `Ticket` in the `Ticket` owner's directory. |
-| `sfPreviousTxnID`     | Required | Transaction threading support.                                       |
-| `sfPreviousTxnLgrSeq` | Required | Transaction threading support.                                       |
+| Field | Style | Description |
+| ----- | ----- | ----------- |
+| `sfAccount` | Required | The ID of the account that owns the `Ticket`. |
+| `sfTicketSequence` | Required | The `TicketSequence`, an unsigned 32-bit integer. |
+| `sfOwnerNode` | Required | The page number for this `Ticket` in the `Ticket` owner's directory. |
+| `sfPreviousTxnID` | Required | Transaction threading support. |
+| `sfPreviousTxnLgrSeq` | Required | Transaction threading support. |
 
 #### `Ticket` Indexing Function
 

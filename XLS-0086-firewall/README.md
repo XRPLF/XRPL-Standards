@@ -114,16 +114,16 @@ Where:
 
 ##### 4.1.1.2. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                |
-| ----------------- | -------- | -------- | ------------- | ------------- | ---------------------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x0085        | Identifies this as a Firewall object                       |
-| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                    |
-| Owner             | Yes      | Yes      | ACCOUNT       | N/A           | Account that owns this firewall                            |
-| Counterparty      | No       | Yes      | ACCOUNT       | N/A           | Account authorized to countersign firewall updates         |
-| MaxFee            | No       | No       | AMOUNT        | N/A           | Maximum transaction fee allowed (in drops)                 |
-| OwnerNode         | Yes      | Yes      | UINT64        | N/A           | Directory page storing this object                         |
-| PreviousTxnID     | Yes      | Yes      | HASH256       | N/A           | Hash of the previous transaction that modified this object |
-| PreviousTxnLgrSeq | Yes      | Yes      | UINT32        | N/A           | Ledger sequence of the previous transaction                |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| ---------- | -------- | -------- | ------------- | ------------- | ----------- |
+| LedgerEntryType | Yes | Yes | UINT16 | 0x0085 | Identifies this as a Firewall object |
+| Flags | No | Yes | UINT32 | 0 | Reserved for future use |
+| Owner | Yes | Yes | ACCOUNT | N/A | Account that owns this firewall |
+| Counterparty | No | Yes | ACCOUNT | N/A | Account authorized to countersign firewall updates |
+| MaxFee | No | No | AMOUNT | N/A | Maximum transaction fee allowed (in drops) |
+| OwnerNode | Yes | Yes | UINT64 | N/A | Directory page storing this object |
+| PreviousTxnID | Yes | Yes | HASH256 | N/A | Hash of the previous transaction that modified this object |
+| PreviousTxnLgrSeq | Yes | Yes | UINT32 | N/A | Ledger sequence of the previous transaction |
 
 ##### 4.1.1.3. Ownership
 
@@ -169,16 +169,16 @@ SHA512Half(KeySpace || OwnerAccountID || AuthorizedAccountID || DestinationTag)
 
 ##### 4.1.2.2. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                                 |
-| ----------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x0856        | Identifies as WithdrawPreauth               |
-| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                     |
-| Account           | Yes      | Yes      | ACCOUNT       | N/A           | Account that owns this preauth              |
-| Authorize         | Yes      | Yes      | ACCOUNT       | N/A           | Account authorized to receive assets        |
-| DestinationTag    | No       | No       | UINT32        | N/A           | Optional destination tag                    |
-| OwnerNode         | Yes      | Yes      | UINT64        | N/A           | Directory page storing this                 |
-| PreviousTxnID     | Yes      | Yes      | HASH256       | N/A           | Hash of the previous transaction            |
-| PreviousTxnLgrSeq | Yes      | Yes      | UINT32        | N/A           | Ledger sequence of the previous transaction |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| ---------- | -------- | -------- | ------------- | ------------- | ----------- |
+| LedgerEntryType | Yes | Yes | UINT16 | 0x0856 | Identifies as WithdrawPreauth |
+| Flags | No | Yes | UINT32 | 0 | Reserved for future use |
+| Account | Yes | Yes | ACCOUNT | N/A | Account that owns this preauth |
+| Authorize | Yes | Yes | ACCOUNT | N/A | Account authorized to receive assets |
+| DestinationTag | No | No | UINT32 | N/A | Optional destination tag |
+| OwnerNode | Yes | Yes | UINT64 | N/A | Directory page storing this |
+| PreviousTxnID | Yes | Yes | HASH256 | N/A | Hash of the previous transaction |
+| PreviousTxnLgrSeq | Yes | Yes | UINT32 | N/A | Ledger sequence of the previous transaction |
 
 ##### 4.1.2.3. Ownership
 
@@ -213,15 +213,15 @@ Can be deleted via WithdrawPreauth transaction with counterparty signature.
 
 ##### 4.2.1.1. Fields
 
-| Field Name            | Required?   | JSON Type | Internal Type | Default Value | Description                                 |
-| --------------------- | ----------- | --------- | ------------- | ------------- | ------------------------------------------- |
-| TransactionType       | Yes         | string    | BLOB          | N/A           | Value: "FirewallSet"                        |
-| Counterparty          | Conditional | string    | ACCOUNT       | N/A           | Required for creation, Optional for updates |
-| Backup                | Conditional | string    | ACCOUNT       | N/A           | Required for creation                       |
-| MaxFee                | No          | string    | AMOUNT        | N/A           | Maximum transaction fee allowed (in drops)  |
-| DestinationTag        | No          | number    | UINT32        | N/A           | Tag for backup preauth                      |
-| FirewallID            | Conditional | string    | HASH256       | N/A           | Required for updates                        |
-| CounterpartySignature | Conditional | array     | ARRAY         | N/A           | Required for updates                        |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | string | BLOB | N/A | Value: "FirewallSet" |
+| Counterparty | Conditional | string | ACCOUNT | N/A | Required for creation, Optional for updates |
+| Backup | Conditional | string | ACCOUNT | N/A | Required for creation |
+| MaxFee | No | string | AMOUNT | N/A | Maximum transaction fee allowed (in drops) |
+| DestinationTag | No | number | UINT32 | N/A | Tag for backup preauth |
+| FirewallID | Conditional | string | HASH256 | N/A | Required for updates |
+| CounterpartySignature | Conditional | array | ARRAY | N/A | Required for updates |
 
 **Conditional Requirements:**
 
@@ -319,11 +319,11 @@ Can be deleted via WithdrawPreauth transaction with counterparty signature.
 
 ##### 4.2.2.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Default Value | Description             |
-| --------------------- | --------- | --------- | ------------- | ------------- | ----------------------- |
-| TransactionType       | Yes       | string    | BLOB          | N/A           | Value: "FirewallDelete" |
-| FirewallID            | Yes       | string    | HASH256       | N/A           | Firewall to delete      |
-| CounterpartySignature | Yes       | array     | ARRAY         | N/A           | Counterparty signatures |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | string | BLOB | N/A | Value: "FirewallDelete" |
+| FirewallID | Yes | string | HASH256 | N/A | Firewall to delete |
+| CounterpartySignature | Yes | array | ARRAY | N/A | Counterparty signatures |
 
 ##### 4.2.2.2. Failure Conditions
 
@@ -363,14 +363,14 @@ Can be deleted via WithdrawPreauth transaction with counterparty signature.
 
 ##### 4.2.3.1. Fields
 
-| Field Name            | Required?   | JSON Type | Internal Type | Default Value | Description              |
-| --------------------- | ----------- | --------- | ------------- | ------------- | ------------------------ |
-| TransactionType       | Yes         | string    | BLOB          | N/A           | Value: "WithdrawPreauth" |
-| Authorize             | Conditional | string    | ACCOUNT       | N/A           | Account to authorize     |
-| Unauthorize           | Conditional | string    | ACCOUNT       | N/A           | Account to unauthorize   |
-| DestinationTag        | No          | number    | UINT32        | N/A           | Optional destination tag |
-| FirewallID            | Yes         | string    | HASH256       | N/A           | Associated firewall      |
-| CounterpartySignature | Yes         | array     | ARRAY         | N/A           | Counterparty signatures  |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | string | BLOB | N/A | Value: "WithdrawPreauth" |
+| Authorize | Conditional | string | ACCOUNT | N/A | Account to authorize |
+| Unauthorize | Conditional | string | ACCOUNT | N/A | Account to unauthorize |
+| DestinationTag | No | number | UINT32 | N/A | Optional destination tag |
+| FirewallID | Yes | string | HASH256 | N/A | Associated firewall |
+| CounterpartySignature | Yes | array | ARRAY | N/A | Counterparty signatures |
 
 **Conditional Requirements:**
 
@@ -513,58 +513,58 @@ enum FirewallAction { check, allow, block };
 
 The classification is embedded in the transaction definition macro system:
 
-| Transaction Type            | FirewallAction | Rationale                                          |
-| --------------------------- | -------------- | -------------------------------------------------- |
-| **Payment**                 | check          | Must validate destination is preauthorized         |
-| **EscrowCreate**            | check          | Creates future payment obligation                  |
-| **EscrowFinish**            | check          | Releases funds to destination                      |
-| **EscrowCancel**            | check          | Returns funds (may have different destination)     |
-| **AccountSet**              | allow          | Only modifies account settings                     |
-| **SetRegularKey**           | allow          | Key management (requires counterparty for changes) |
-| **OfferCreate**             | block          | Could result in uncontrolled asset exchange        |
-| **OfferCancel**             | allow          | Only cancels existing offers                       |
-| **TicketCreate**            | allow          | Only reserves sequence numbers                     |
-| **SignerListSet**           | allow          | Signer management (requires counterparty)          |
-| **PaymentChannelCreate**    | check          | Creates payment channel to destination             |
-| **PaymentChannelFund**      | block          | Adds funds to existing channel                     |
-| **PaymentChannelClaim**     | allow          | Claims from existing channel                       |
-| **CheckCreate**             | check          | Creates check for destination                      |
-| **CheckCash**               | allow          | Cashes existing check                              |
-| **CheckCancel**             | allow          | Cancels existing check                             |
-| **DepositPreauth**          | allow          | Manages incoming payment authorization             |
-| **TrustSet**                | allow          | Trust line management                              |
-| **AccountDelete**           | allow          | Account deletion (significant action)              |
-| **NFTokenMint**             | check          | May have destination                               |
-| **NFTokenBurn**             | allow          | Destroys token                                     |
-| **NFTokenCreateOffer**      | check          | Creates offer with potential destination           |
-| **NFTokenCancelOffer**      | allow          | Cancels existing offer                             |
-| **NFTokenAcceptOffer**      | allow          | Accepts existing offer                             |
-| **Clawback**                | allow          | Issuer right (cannot be blocked)                   |
-| **AMMClawback**             | allow          | Issuer right for AMM                               |
-| **AMMCreate**               | block          | Creates AMM with uncontrolled trading              |
-| **AMMDeposit**              | block          | Adds liquidity to AMM                              |
-| **AMMWithdraw**             | block          | Removes liquidity from AMM                         |
-| **AMMVote**                 | block          | Participates in AMM governance                     |
-| **AMMBid**                  | block          | Bids for AMM auction slot                          |
-| **AMMDelete**               | block          | Deletes empty AMM                                  |
-| **XChain\*** (all)          | block          | Cross-chain operations too complex to validate     |
-| **DIDSet/Delete**           | allow          | DID management                                     |
-| **OracleSet/Delete**        | allow          | Oracle management                                  |
-| **LedgerStateFix**          | allow          | System operation                                   |
-| **MPTokenIssuance\***       | allow          | Token issuance management                          |
-| **MPTokenAuthorize**        | allow          | Token authorization                                |
-| **Credential\***            | allow          | Credential management                              |
-| **NFTokenModify**           | allow          | Modifies existing NFT                              |
-| **PermissionedDomain\***    | allow          | Domain management                                  |
-| **DelegateSet**             | allow          | Delegation management                              |
-| **VaultCreate/Set/Delete**  | block          | Vault management                                   |
-| **VaultDeposit**            | block          | Adds assets to vault                               |
-| **VaultWithdraw**           | block          | Withdraws to destination                           |
-| **VaultClawback**           | block          | Issuer right                                       |
-| **Batch**                   | allow          | Batch processing (individual txns checked)         |
-| **WithdrawPreauth**         | allow          | Firewall preauth management                        |
-| **FirewallSet/Delete**      | allow          | Firewall management                                |
-| **Amendment/Fee/UNLModify** | allow          | System transactions                                |
+| Transaction Type | FirewallAction | Rationale |
+| ---------------- | -------------- | --------- |
+| **Payment** | check | Must validate destination is preauthorized |
+| **EscrowCreate** | check | Creates future payment obligation |
+| **EscrowFinish** | check | Releases funds to destination |
+| **EscrowCancel** | check | Returns funds (may have different destination) |
+| **AccountSet** | allow | Only modifies account settings |
+| **SetRegularKey** | allow | Key management (requires counterparty for changes) |
+| **OfferCreate** | block | Could result in uncontrolled asset exchange |
+| **OfferCancel** | allow | Only cancels existing offers |
+| **TicketCreate** | allow | Only reserves sequence numbers |
+| **SignerListSet** | allow | Signer management (requires counterparty) |
+| **PaymentChannelCreate** | check | Creates payment channel to destination |
+| **PaymentChannelFund** | block | Adds funds to existing channel |
+| **PaymentChannelClaim** | allow | Claims from existing channel |
+| **CheckCreate** | check | Creates check for destination |
+| **CheckCash** | allow | Cashes existing check |
+| **CheckCancel** | allow | Cancels existing check |
+| **DepositPreauth** | allow | Manages incoming payment authorization |
+| **TrustSet** | allow | Trust line management |
+| **AccountDelete** | allow | Account deletion (significant action) |
+| **NFTokenMint** | check | May have destination |
+| **NFTokenBurn** | allow | Destroys token |
+| **NFTokenCreateOffer** | check | Creates offer with potential destination |
+| **NFTokenCancelOffer** | allow | Cancels existing offer |
+| **NFTokenAcceptOffer** | allow | Accepts existing offer |
+| **Clawback** | allow | Issuer right (cannot be blocked) |
+| **AMMClawback** | allow | Issuer right for AMM |
+| **AMMCreate** | block | Creates AMM with uncontrolled trading |
+| **AMMDeposit** | block | Adds liquidity to AMM |
+| **AMMWithdraw** | block | Removes liquidity from AMM |
+| **AMMVote** | block | Participates in AMM governance |
+| **AMMBid** | block | Bids for AMM auction slot |
+| **AMMDelete** | block | Deletes empty AMM |
+| **XChain\*** (all) | block | Cross-chain operations too complex to validate |
+| **DIDSet/Delete** | allow | DID management |
+| **OracleSet/Delete** | allow | Oracle management |
+| **LedgerStateFix** | allow | System operation |
+| **MPTokenIssuance\*** | allow | Token issuance management |
+| **MPTokenAuthorize** | allow | Token authorization |
+| **Credential\*** | allow | Credential management |
+| **NFTokenModify** | allow | Modifies existing NFT |
+| **PermissionedDomain\*** | allow | Domain management |
+| **DelegateSet** | allow | Delegation management |
+| **VaultCreate/Set/Delete** | block | Vault management |
+| **VaultDeposit** | block | Adds assets to vault |
+| **VaultWithdraw** | block | Withdraws to destination |
+| **VaultClawback** | block | Issuer right |
+| **Batch** | allow | Batch processing (individual txns checked) |
+| **WithdrawPreauth** | allow | Firewall preauth management |
+| **FirewallSet/Delete** | allow | Firewall management |
+| **Amendment/Fee/UNLModify** | allow | System transactions |
 
 ## 5. Rationale
 

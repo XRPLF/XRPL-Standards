@@ -344,13 +344,13 @@ Example 3 shows a valid art.v0 metadata file which includes all of the supported
 
 When declaring a "contentMediaType" for a property, JSON-Schema only allows for a single definition and is limiting. Marketplaces and viewing applications plan to support several media types for most of the asset properites (image, animation, video, audio, file). With this in mind below we have included a list of common media types for the different properties. These are not yet considered to be universally accepted. It is best to consult with your marketplace/viewing application of choice to determine their accepted content media types.
 
-| Asset Property | Common Content Media Types     |
-| -------------- | ------------------------------ |
-| image          | .png, .jpg, .svg, .apng        |
-| animation      | .gif, .mp4, .mpeg, .avi, .mov  |
-| video          | .mp4, .mov, .wmv, .flv         |
-| audio          | .mp4, .mp3, .wav, .m4a, .flac  |
-| file           | .pdf, .doc, .docx, .xls, .html |
+| Asset Property | Common Content Media Types |
+| -------------- | -------------------------- |
+| image | .png, .jpg, .svg, .apng |
+| animation | .gif, .mp4, .mpeg, .avi, .mov |
+| video | .mp4, .mov, .wmv, .flv |
+| audio | .mp4, .mp3, .wav, .m4a, .flac |
+| file | .pdf, .doc, .docx, .xls, .html |
 
 In the coming weeks, we will post a concise overview of known supported media types for all of the properties accross many of the popular NFT marketplaces and viewing applications.
 

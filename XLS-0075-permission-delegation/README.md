@@ -51,16 +51,16 @@ This object represents a set of permissions that an account has delegated to ano
 
 ### 2.1. Fields
 
-| Field Name          | Required? | JSON Type | Internal Type | Description                                                                                                                          |
-| ------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `LedgerIndex`       | ✔️        | `string`  | `Hash256`     | The unique ID of the ledger object.                                                                                                  |
-| `LedgerEntryType`   | ✔️        | `string`  | `UInt16`      | The ledger object's type (`Delegate`).                                                                                               |
-| `Account`           | ✔️        | `string`  | `AccountID`   | The account that wants to authorize another account.                                                                                 |
-| `Authorize`         | ✔️        | `string`  | `AccountID`   | The authorized account.                                                                                                              |
-| `Permissions`       | ✔️        | `string`  | `STArray`     | The transaction permissions that the account has access to.                                                                          |
-| `OwnerNode`         | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. |
-| `PreviousTxnID`     | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this object.                                                     |
-| `PreviousTxnLgrSeq` | ✔️        | `number`  | `UInt32`      | The index of the ledger that contains the transaction that most recently modified this object.                                       |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `LedgerIndex` | ✔️ | `string` | `Hash256` | The unique ID of the ledger object. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The ledger object's type (`Delegate`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account that wants to authorize another account. |
+| `Authorize` | ✔️ | `string` | `AccountID` | The authorized account. |
+| `Permissions` | ✔️ | `string` | `STArray` | The transaction permissions that the account has access to. |
+| `OwnerNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. |
+| `PreviousTxnID` | ✔️ | `string` | `Hash256` | The identifying hash of the transaction that most recently modified this object. |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UInt32` | The index of the ledger that contains the transaction that most recently modified this object. |
 
 #### 2.1.1. Object ID
 
@@ -80,12 +80,12 @@ This transaction allows an account to delegate certain permissions to another ac
 
 ### 3.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                    |
-| ----------------- | --------- | --------- | ------------- | -------------------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`DelegateSet`).                          |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account that wants to authorize another account.           |
-| `Authorize`       | ✔️        | `string`  | `AccountID`   | The authorized account.                                        |
-| `Permissions`     | ✔️        | `string`  | `STArray`     | The transaction permissions that the account has been granted. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`DelegateSet`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account that wants to authorize another account. |
+| `Authorize` | ✔️ | `string` | `AccountID` | The authorized account. |
+| `Permissions` | ✔️ | `string` | `STArray` | The transaction permissions that the account has been granted. |
 
 #### 3.1.1. `Permissions`
 
@@ -118,9 +118,9 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/co
 
 We propose these modifications:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                           |
-| ---------- | --------- | --------- | ------------- | ----------------------------------------------------- |
-| `Delegate` |           | `string`  | `AccountID`   | The delegate account that is sending the transaction. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Delegate` | | `string` | `AccountID` | The delegate account that is sending the transaction. |
 
 #### 4.1.1. `Delegate`
 

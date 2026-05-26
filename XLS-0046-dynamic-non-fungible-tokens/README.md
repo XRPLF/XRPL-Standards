@@ -42,8 +42,8 @@ We will specify the following:
 
 New flags for `NFTokenMint`:
 
-| Flag Name   |  Flag Value  |                               Description                               |
-| ----------- | :----------: | :---------------------------------------------------------------------: |
+| Flag Name | Flag Value | Description |
+| --------- | :--------: | :---------: |
 | `tfMutable` | `0x00000010` | `Allow issuer (or an entity authorized by the issuer) to modify “URI”.` |
 
 ### 3.2 NFTokenModify
@@ -52,28 +52,28 @@ New flags for `NFTokenMint`:
 
 Transaction-specific Fields
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | :-------: | :-------: | :-----------: |
-| `TransactionType` |   `✔️`    | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | `✔️` | `string` | `UINT16` |
 
 Indicates the `account` which is owning the NFT, in case of `Owner` not specified, it's implied that the submitting `account` is also the `Owner` of the NFT.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Owner`    |           | `string`  | `ACCOUNT ID`  |
+| `Owner` | | `string` | `ACCOUNT ID` |
 
 Indicates the `NFToken` object to be modified.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | :-------: | :-------: | :-----------: |
-| `NFTokenID` |   `✔️`    | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `NFTokenID` | `✔️` | `string` | `UINT256` |
 
 The new `URI` that points to data and/or metadata associated with the NFT.
 If a `URI` is omitted then the corresponding `URI` record in the XRP ledger, if present, is removed.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `URI`      |           | `string`  |    `BLOB`     |
+| `URI` | | `string` | `BLOB` |
 
 Example (modify URI):
 

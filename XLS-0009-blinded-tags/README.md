@@ -43,25 +43,25 @@ Two corresponding [AccountSet flags](https://xrpl.org/accountset.html#accountset
 
 If the existing `lsfRequireDest` account flag is set on an account, then all transactions for which a `DestinationTag` can be specified must include a destination tag. For accounts which support blinded tags, the `BlindedDestinationTag` may be specified instead. More specifically:
 
-|  `lsfRequireDest`  | `lsfSupportsBlindedTags` | `lsfRequiresBlindedTags` | Description                                                                        |
-| :----------------: | :----------------------: | :----------------------: | :--------------------------------------------------------------------------------- |
-|        :x:         |           :x:            |           :x:            | The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
-|        :x:         |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used. |
-|        :x:         |    :heavy_check_mark:    |           :x:            | The `DestinationTag` or `BlindedDestinationTag` may be used.                       |
-|        :x:         |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
-| :heavy_check_mark: |           :x:            |           :x:            | The `DestinationTag` is required. The `BlindedDestinationTag` may not be used.     |
-| :heavy_check_mark: |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` is required. The `DestinationTag` may not be used.     |
-| :heavy_check_mark: |    :heavy_check_mark:    |           :x:            | Either the `DestinationTag` or `BlindedDestinationTag` is required.                |
-| :heavy_check_mark: |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
+| `lsfRequireDest` | `lsfSupportsBlindedTags` | `lsfRequiresBlindedTags` | Description |
+| :--------------: | :----------------------: | :----------------------: | :---------- |
+| :x: | :x: | :x: | The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
+| :x: | :x: | :heavy_check_mark: | The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used. |
+| :x: | :heavy_check_mark: | :x: | The `DestinationTag` or `BlindedDestinationTag` may be used. |
+| :x: | :heavy_check_mark: | :heavy_check_mark: | Invalid configuration. |
+| :heavy_check_mark: | :x: | :x: | The `DestinationTag` is required. The `BlindedDestinationTag` may not be used. |
+| :heavy_check_mark: | :x: | :heavy_check_mark: | The `BlindedDestinationTag` is required. The `DestinationTag` may not be used. |
+| :heavy_check_mark: | :heavy_check_mark: | :x: | Either the `DestinationTag` or `BlindedDestinationTag` is required. |
+| :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | Invalid configuration. |
 
 #### New optional Transaction fields
 
-|           Tag           |     Type     | Description                                                                                                                       |
-| :---------------------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------- |
-|   `BlindedSourceTag`    | 64-bit UInt  | Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided.                               |
-| `BlindedDestinationTag` | 64-bit UInt  | Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided.                     |
-|     `KeyIdentifier`     | 32-bit UInt  | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
-|      `RandomValue`      | 256-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+| Tag | Type | Description |
+| :-: | :--: | :---------- |
+| `BlindedSourceTag` | 64-bit UInt | Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided. |
+| `BlindedDestinationTag` | 64-bit UInt | Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided. |
+| `KeyIdentifier` | 32-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+| `RandomValue` | 256-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
 
 **Note:** The new fields are supported on transaction which support the `DestinationTag` and `SourceTag` fields. Not all transaction types support them.
 

@@ -135,3 +135,20 @@ The roles and responsibilities around XLS authorship and editing are defined in 
   - Do **not** decide which technical direction is “correct” when there are competing proposals; their role is editorial and administrative.
 
 If you are unsure how to proceed at any step, open a Discussion or PR and explicitly ask for help from the XLS Editors; they will guide you according to XLS-1.
+
+## 8. Local linting
+
+This repository uses [pre-commit](https://pre-commit.com/) to run formatting and Markdown checks before changes are committed. To set it up locally:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+To run the same checks that CI runs:
+
+```bash
+pre-commit run --all-files
+```
+
+Markdown files are checked with `markdownlint-cli` using [.markdownlint.yaml](./.markdownlint.yaml). The CI workflow pins the same markdownlint version as [.pre-commit-config.yaml](./.pre-commit-config.yaml).

@@ -37,15 +37,15 @@ The `ltURI_TOKEN` object is an owned first-class on-ledger object which lives in
 
 The object has the following fields:
 
-| Field         | Type      | Required | Description                                                                                              |
-| ------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------- |
-| sfIssuer      | AccountID | ✔️       | The minter who issued the token.                                                                         |
-| sfOwner       | AccountID | ✔️       | The current owner of the token.                                                                          |
-| sfURI         | VL blob   | ✔️       | The URI the token points to.                                                                             |
-| sfFlags       | UInt32    | ✔️       | A flag indicating whether or not the URIToken is burnable, and whether or not it is for sale.            |
-| sfDigest      | Hash256   | ❌       | An sha512half integrity digest of the contents pointed to by the URI                                     |
-| sfAmount      | Amount    | ❌       | If the URIToken is for sale, then this is the amount the seller is asking for.                           |
-| sfDestination | AccountID | ❌       | If the URIToken is for sale and this field has been set then only this AccountID may purchase the token. |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfIssuer | AccountID | ✔️ | The minter who issued the token. |
+| sfOwner | AccountID | ✔️ | The current owner of the token. |
+| sfURI | VL blob | ✔️ | The URI the token points to. |
+| sfFlags | UInt32 | ✔️ | A flag indicating whether or not the URIToken is burnable, and whether or not it is for sale. |
+| sfDigest | Hash256 | ❌ | An sha512half integrity digest of the contents pointed to by the URI |
+| sfAmount | Amount | ❌ | If the URIToken is for sale, then this is the amount the seller is asking for. |
+| sfDestination | AccountID | ❌ | If the URIToken is for sale and this field has been set then only this AccountID may purchase the token. |
 
 Example URIToken object:
 
@@ -61,11 +61,11 @@ Example URIToken object:
 
 ## New Transaction Type: `URITokenMint`
 
-| Field    | Type    | Required | Description                                                           |
-| -------- | ------- | -------- | --------------------------------------------------------------------- |
-| sfURI    | VL blob | ✔️       | The URI the token points to.                                          |
-| sfDigest | Hash256 | ❌       | An SHA512-Half integrity digest of the contents pointed to by the URI |
-| sfFlags  | UInt32  | ❌       | tfBurnable (0x00000001) or 0 or absent                                |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfURI | VL blob | ✔️ | The URI the token points to. |
+| sfDigest | Hash256 | ❌ | An SHA512-Half integrity digest of the contents pointed to by the URI |
+| sfFlags | UInt32 | ❌ | tfBurnable (0x00000001) or 0 or absent |
 
 If `sfDigest` is specified then the minted token will contain the hash specified by this field. For the end user this means they can verify the content served at the URI against this immutable hash, to ensure, for example that the properties of the NFT are not maliciously altered by changing the content at the URI. It may also be desirable to have a dynamic NFT where the content is intended to be altered, in which case simply omit `sfDigest` during minting, and the resulting URIToken will not contain this field.
 
@@ -84,9 +84,9 @@ Example Mint:
 
 ## New Transaction Type: `URITokenBurn`
 
-| Field        | Type    | Required | Description                                        |
-| ------------ | ------- | -------- | -------------------------------------------------- |
-| sfURITokenID | Hash256 | ✔️       | The Keylet for the URIToken object being destroyed |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfURITokenID | Hash256 | ✔️ | The Keylet for the URIToken object being destroyed |
 
 The current owner of the URIToken can burn it at any time.
 
@@ -112,11 +112,11 @@ To offer the URIToken for sale: specify its `URITokenID`, an `Amount` to sell fo
 
 If a previous sell offer was present on the URIToken then it is simply replaced with the new offer.
 
-| Field         | Type      | Required | Description                                                                          |
-| ------------- | --------- | -------- | ------------------------------------------------------------------------------------ |
-| sfURITokenID  | Hash256   | ✔️       | The Keylet for the URIToken object being offered for sale                            |
-| sfAmount      | Amount    | ✔️       | The minimum amount a buyer must pay to purchase this URIToken. May be an IOU or XRP. |
-| sfDestination | AccountID | ❌       | If provided then only this account may purchase the URIToken.                        |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfURITokenID | Hash256 | ✔️ | The Keylet for the URIToken object being offered for sale |
+| sfAmount | Amount | ✔️ | The minimum amount a buyer must pay to purchase this URIToken. May be an IOU or XRP. |
+| sfDestination | AccountID | ❌ | If provided then only this account may purchase the URIToken. |
 
 Example Sell:
 
@@ -138,10 +138,10 @@ Whether a URIToken is for sale is indicated by the presence of the `Amount` fiel
 
 To purchase the URIToken, a user specifies its `URITokenID` and a purchase `Amount`. The purchase amount must be at least the amount specified in the sell offer (but may also exceed if the user wishes to tip the seller.) The purchase amount must be the same currency as the amount in the sell offer. No pathing is allowed in this transaction. The user must have sufficient currency available to cover the purchase.
 
-| Field        | Type    | Required | Description                                                                                                                         |
-| ------------ | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| sfURITokenID | Hash256 | ✔️       | The Keylet for the URIToken object being purchased.                                                                                 |
-| sfAmount     | Amount  | ✔️       | The purchase price the buyer is willing to send. Must be the same currency as the sell offer. May not be less than the sale amount. |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfURITokenID | Hash256 | ✔️ | The Keylet for the URIToken object being purchased. |
+| sfAmount | Amount | ✔️ | The purchase price the buyer is willing to send. Must be the same currency as the sell offer. May not be less than the sale amount. |
 
 Example Buy:
 
@@ -158,9 +158,9 @@ Example Buy:
 
 When a user has offered their URIToken for sale and later changes their mind, they may perform a clear operation. A clear operation simply clears the current sell offer from the URIToken.
 
-| Field        | Type    | Required | Description                                                                |
-| ------------ | ------- | -------- | -------------------------------------------------------------------------- |
-| sfURITokenID | Hash256 | ✔️       | The Keylet for the URIToken object being cleared of any active sell offer. |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| sfURITokenID | Hash256 | ✔️ | The Keylet for the URIToken object being cleared of any active sell offer. |
 
 Example Clear
 

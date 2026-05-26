@@ -128,9 +128,9 @@ Note that in this version, only equal-weighted two asset pools are supported. Ho
 
 We introduce a new field called `AMMID` to the `AccountRoot` object. It provides an easy link to the corresponding `AMM` object and a way to identify the AMM `AccountRoot`.
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `AMMID`    | :heavy_check_mark: | `string`  |   `UINT256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `AMMID` | :heavy_check_mark: | `string` | `UINT256` |
 
 `AMMID` specifies the `AMMID` as described below.
 
@@ -179,17 +179,17 @@ Notes:
 
 #### 2.2.1. Transaction fields for **`AMMCreate`** transaction
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMCreate`**. The integer value is 35.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Fee`      | :heavy_check_mark: | `string`  |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Fee` | :heavy_check_mark: | `string` | `AMOUNT` |
 
 `Fee` specifies the integer amount of XRP, in drops, to be destroyed as a cost of creating an AMM instance. We DO NOT propose to keep a reserve for the AMM instance.
 
@@ -197,17 +197,17 @@ Notes:
 
 <NOTE to self: Decide on the special fee for this transaction>
 
-| Field Name |     Required?      |      JSON Type       | Internal Type |
-| ---------- | :----------------: | :------------------: | :-----------: |
-| `Amount`   | :heavy_check_mark: | `string` or `object` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | :heavy_check_mark: | `string` or `object` | `AMOUNT` |
 
 `Amount` specifies one of the pool assets (XRP or token) of the AMM instance.
 
 ---
 
-| Field Name |     Required?      |      JSON Type       | Internal Type |
-| ---------- | :----------------: | :------------------: | :-----------: |
-| `Amount2`  | :heavy_check_mark: | `string` or `object` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount2` | :heavy_check_mark: | `string` or `object` | `AMOUNT` |
 
 `Amount2` specifies the other pool asset of the AMM instance.
 
@@ -215,9 +215,9 @@ Both `Amount` and `Amount2` that represent issued assets MUST have `value` subfi
 
 ---
 
-| Field Name   |     Required?      | JSON Type | Internal Type |
-| ------------ | :----------------: | :-------: | :-----------: |
-| `TradingFee` | :heavy_check_mark: | `number`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TradingFee` | :heavy_check_mark: | `number` | `UINT16` |
 
 `TradingFee` specifies the fee, in basis point, to be charged to the traders for the trades executed against the AMM instance. Trading fee is a percentage of the trading volume. Valid values for this field are between 0 and 1000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing trading fee between 0% and 1%.
 
@@ -281,41 +281,41 @@ In order to avoid destroying assets of the AMM instance, the implementation of t
 
 ---
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMDelete`**. The integer value is 40.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies one of the assets of the AMM instance against which the transaction is to be executed. The `ISSUE` `object` may have the following subfields:
 
-| Field name |     Required?      | Description                                                                  |
-| :--------: | :----------------: | :--------------------------------------------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
-| `currency` | :heavy_check_mark: | arbitrary code for currency to issue                                         |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
+| `currency` | :heavy_check_mark: | arbitrary code for currency to issue |
 
 If the asset is XRP, then the issuer subfield is not mentioned.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset2` specifies the other asset of the AMM instance against which the transaction is to be executed. The `ISSUE` `object` may have the following subfields:
 
 ---
 
-| Field name |     Required?      | Description                                                                  |
-| :--------: | :----------------: | :--------------------------------------------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
-| `currency` | :heavy_check_mark: | arbitrary code for currency to issue                                         |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
+| `currency` | :heavy_check_mark: | arbitrary code for currency to issue |
 
 ### 2.4. AMM trade transactions
 
@@ -334,54 +334,54 @@ With **`AMMDeposit`** transaction, XRPL AMM allows for both:
 
 ##### 2.4.1.1 Fields for AMMDeposit transaction
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMDeposit`**. The integer value is 36.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies one of the assets of the AMM instance against which the transaction is to be executed. The `ISSUE` `object` may have the following subfields:
 
-| Field name |     Required?      | Description                                                                  |
-| :--------: | :----------------: | :--------------------------------------------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
-| `currency` | :heavy_check_mark: | arbitrary code for currency to issue                                         |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
+| `currency` | :heavy_check_mark: | arbitrary code for currency to issue |
 
 If the asset is XRP, then the issuer subfield is not mentioned.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset2` specifies the other asset of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name | Required? |      JSON Type       | Internal Type |
-| ---------- | :-------: | :------------------: | :-----------: |
-| `Amount`   |           | `string` or `object` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | | `string` or `object` | `AMOUNT` |
 
 `Amount` specifies the amount of one of the pools assets. If the asset is XRP, then the `Amount` is a `string` specifying the number of drops. Otherwise it is an `object` with the following subfields:
 
-| Field name |     Required?      | Description                                                                                                 |
-| :--------: | :----------------: | :---------------------------------------------------------------------------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency                                |
-| `currency` | :heavy_check_mark: | arbitrary code for currency to issue                                                                        |
-|  `value`   |                    | specifies the maximum amount of this currency, in decimal representation, that the trader is willing to add |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the unique XRPL account address of the entity issuing the currency |
+| `currency` | :heavy_check_mark: | arbitrary code for currency to issue |
+| `value` | | specifies the maximum amount of this currency, in decimal representation, that the trader is willing to add |
 
 ---
 
-| Field Name | Required? |      JSON Type       | Internal Type |
-| ---------- | :-------: | :------------------: | :-----------: |
-| `Amount2`  |           | `string` or `object` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount2` | | `string` or `object` | `AMOUNT` |
 
 `Amount2` specifies the details of other pool asset that the trader is willing to add.
 
@@ -389,7 +389,7 @@ If the asset is XRP, then the issuer subfield is not mentioned.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `EPrice`   |           | `string`  |   `AMOUNT`    |
+| `EPrice` | | `string` | `AMOUNT` |
 
 `EPrice` specifies the effective-price of the token out after successful execution of the transaction. For **`AMMDeposit`** transaction, the token out is always `LPToken`.
 
@@ -398,17 +398,17 @@ Note that the relative pricing does not change in case of **all-asset** deposit 
 
 ---
 
-| Field Name   | Required? | JSON Type | Internal Type |
-| ------------ | :-------: | :-------: | :-----------: |
-| `LPTokenOut` |           | `string`  |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `LPTokenOut` | | `string` | `AMOUNT` |
 
 `LPTokenOut` specifies the amount of shares of the AMM instance pools.
 
 ---
 
-| Field Name   | Required? | JSON Type | Internal Type |
-| ------------ | :-------: | :-------: | :-----------: |
-| `TradingFee` |           | `string`  |    `UINT8`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TradingFee` | | `string` | `UINT8` |
 
 `TradingFee` specifies the trading fee for the AMM instance. This field is only valid if the option flag `tfTwoAssetIfEmpty` is set. In this case, the AMM instance is in the empty state and `AMMDeposit` becomes `AMMCreate` type transaction.
 
@@ -472,15 +472,15 @@ Following is the updated pool composition of the AMM instance after successful t
 The proposal allows for traders to specify different combinations of the above mentioned fields for **`AMMDeposit`** transaction. The implementation will determine the best possible sub operations based on trader's specifications.
 We introduce the following flags to the `AMMDeposit` transaction to identify valid parameter combinations.
 
-| Flag Name           | Hex Value  |                                                     Description                                                     |
-| ------------------- | :--------: | :-----------------------------------------------------------------------------------------------------------------: |
-| `tfLPToken`         | 0x00010000 |      If set, it indicates `LPTokenOut` parameter and may optionally include `Amount` and `Amount2` combination      |
-| `tfSingleAsset`     | 0x00080000 |              If set, it indicates `Amount` parameter and may optionally include `LPTokenOut` parameter              |
-| `tfTwoAsset`        | 0x00100000 | If set, it indicates `Amount` and `Amount2` parameter combination and may optionally include `LPTokenOut` parameter |
-| `tfOneAssetLPToken` | 0x00200000 |                        If set, it indicates `Amount` and `LPTokenOut` parameter combination                         |
-| `tfLimitLPToken`    | 0x00400000 |                          If set, it indicates `Amount` and `EPrice` parameter combination                           |
-| `tfWithdrawAll`     | 0x00020000 |                           If set, it indicates proportional withdrawal of all `LPTokens`                            |
-| `tfTwoAssetIfEmpty` | 0x00800000 |         If set, it indicates that this deposit can only be submitted on an empty state AMM (LPTokens == 0)          |
+| Flag Name | Hex Value | Description |
+| --------- | :-------: | :---------: |
+| `tfLPToken` | 0x00010000 | If set, it indicates `LPTokenOut` parameter and may optionally include `Amount` and `Amount2` combination |
+| `tfSingleAsset` | 0x00080000 | If set, it indicates `Amount` parameter and may optionally include `LPTokenOut` parameter |
+| `tfTwoAsset` | 0x00100000 | If set, it indicates `Amount` and `Amount2` parameter combination and may optionally include `LPTokenOut` parameter |
+| `tfOneAssetLPToken` | 0x00200000 | If set, it indicates `Amount` and `LPTokenOut` parameter combination |
+| `tfLimitLPToken` | 0x00400000 | If set, it indicates `Amount` and `EPrice` parameter combination |
+| `tfWithdrawAll` | 0x00020000 | If set, it indicates proportional withdrawal of all `LPTokens` |
+| `tfTwoAssetIfEmpty` | 0x00800000 | If set, it indicates that this deposit can only be submitted on an empty state AMM (LPTokens == 0) |
 
 If `tfTwoAssetIfEmpty` is set, both amounts have to be specified and deposited into AMM as is. It is sort of like `AMMCreate` in an empty AMM state.
 
@@ -548,47 +548,47 @@ With `AMMWithdraw` transaction, this proposal allows for both the following:
 
 #### 2.4.2.1 Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMWithdraw`**. The integer value is 37.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies one of the assets of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset2` specifies the other asset of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name | Required? |      JSON Type       | Internal Type |
-| ---------- | :-------: | :------------------: | :-----------: |
-| `Amount`   |           | `object` or `string` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | | `object` or `string` | `AMOUNT` |
 
 `Amount` specifies one of the pools assets that the trader wants to remove. If the asset is XRP, then the `Amount` is a `string` specifying the number of drops. Otherwise it is an `object` with the following subfields:
 
-| Field name |     Required?      | Description                                                                        |
-| :--------: | :----------------: | :--------------------------------------------------------------------------------- |
-|  `issuer`  | :heavy_check_mark: | specifies the XRPL address of the issuer of the currency                           |
-| `currency` | :heavy_check_mark: | specifies the currency code of the issued currency                                 |
-|  `value`   |                    | specifies the minimum amount of this asset that the trader is willing to withdraw. |
+| Field name | Required? | Description |
+| :--------: | :-------: | :---------- |
+| `issuer` | :heavy_check_mark: | specifies the XRPL address of the issuer of the currency |
+| `currency` | :heavy_check_mark: | specifies the currency code of the issued currency |
+| `value` | | specifies the minimum amount of this asset that the trader is willing to withdraw. |
 
 ---
 
-| Field Name | Required? |      JSON Type       | Internal Type |
-| ---------- | :-------: | :------------------: | :-----------: |
-| `Amount2`  |           | `string` or `object` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount2` | | `string` or `object` | `AMOUNT` |
 
 `Amount2` specifies the other asset that the trader wants to remove.
 
@@ -596,7 +596,7 @@ With `AMMWithdraw` transaction, this proposal allows for both the following:
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `EPrice`   |           | `object`  |   `AMOUNT`    |
+| `EPrice` | | `object` | `AMOUNT` |
 
 `EPrice` specifies the effective-price of the token out after successful execution of the transaction. For `AMMWithdraw` transaction, the out is either XRP or issued token. The asset in is always `LPToken`. So `EPrice` is always an `object`.
 
@@ -604,9 +604,9 @@ Note that the relative pricing does not change in case of **all-asset** withdraw
 
 ---
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | :-------: | :-------: | :-----------: |
-| `LPTokenIn` |           | `object`  |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `LPTokenIn` | | `object` | `AMOUNT` |
 
 `LPTokenIn` specifies the amount of shares of the AMM instance pools that the trader wants to redeem or trade in.
 
@@ -666,14 +666,14 @@ The proposal allows for traders to specify different combinations of the above m
 
 We introduce the following six transaction flags to the `AMMWithdraw` transaction to identify valid parameter combinations. Other invalid combinations may result in the failure of transaction.
 
-| Flag Name               | Hex Value  |                                           Description                                            |
-| ----------------------- | :--------: | :----------------------------------------------------------------------------------------------: |
-| `tfLPToken`             | 0x00010000 |                         If set, it indicates `LPTokenIn` field parameter                         |
-| `tfSingleAsset`         | 0x00080000 |                          If set, it indicates `Amount` field parameter                           |
-| `tfTwoAsset`            | 0x00100000 |             If set, it indicates `Amount` and `Amount2` fields parameter combination             |
-| `tfOneAssetLPToken`     | 0x00200000 |            If set, it indicates `Amount` and `LPTokenIn` fields parameter combination            |
-| `tfLimitLPToken`        | 0x00400000 |             If set, it indicates `Amount` and `EPrice` fields parameter combination              |
-| `tfWithdrawAll`         | 0x00020000 | If set, it indicates withdrawal of both assets equivalent to all `LPTokens` held by the account  |
+| Flag Name | Hex Value | Description |
+| --------- | :-------: | :---------: |
+| `tfLPToken` | 0x00010000 | If set, it indicates `LPTokenIn` field parameter |
+| `tfSingleAsset` | 0x00080000 | If set, it indicates `Amount` field parameter |
+| `tfTwoAsset` | 0x00100000 | If set, it indicates `Amount` and `Amount2` fields parameter combination |
+| `tfOneAssetLPToken` | 0x00200000 | If set, it indicates `Amount` and `LPTokenIn` fields parameter combination |
+| `tfLimitLPToken` | 0x00400000 | If set, it indicates `Amount` and `EPrice` fields parameter combination |
+| `tfWithdrawAll` | 0x00020000 | If set, it indicates withdrawal of both assets equivalent to all `LPTokens` held by the account |
 | `tfOneAssetWithdrawAll` | 0x00040000 | If set, it indicates withdrawal of single asset equivalent to all `LPTokens` held by the account |
 
 - `LPTokenIn`
@@ -778,21 +778,21 @@ Following updates after a successful transaction:
 
 An XRPL **`Payment`** transaction represents a transfer of value from one account to another. This transaction type can be used for several types of payments. One can accomplish an equivalent of a swap with the **`Payment`** transaction. Following are the relevant fields of a **`Payment`** transaction.
 
-| Field Name | Required? |     JSON Type     | Internal Type |
-| ---------- | :-------: | :---------------: | :-----------: |
-| `Amount`   |           | `Currency Amount` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | | `Currency Amount` | `AMOUNT` |
 
 `Amount` field is used to specify the amount of currency that the trader wants to deliver to a destination account. For an AMM swap, this is the amount of currency that the trader wants to swap out of the pool.
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `Destination` |           | `String`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Destination` | | `String` | `AccountID` |
 
 `Destination` field is used to specify the account that the trader wants to deliver the currency to. This should be either the same account as the transaction or any other account that the trader wishes to send this currency amount to.
 
-| Field Name | Required? |     JSON Type     | Internal Type |
-| ---------- | :-------: | :---------------: | :-----------: |
-| `SendMax`  |           | `Currency Amount` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `SendMax` | | `Currency Amount` | `AMOUNT` |
 
 `SendMax` field is used to specify the maximum amount of currency that the trader is willing to send from the account issuing the transaction. For an AMM swap, this is the amount of currency that the trader is willing to swap into the pool.
 
@@ -817,9 +817,9 @@ This proposal allows for the `TradingFee` of the AMM instance be a votable param
 
 We introduce a new field `VoteSlots` associated with each AMM instance in the **`AMM`** ledger entry. The `VoteSlots` field keeps a track of up to eight active votes for the instance.
 
-| Field Name  | Required? | JSON Type | Internal Type |
-| ----------- | :-------: | :-------: | :-----------: |
-| `VoteSlots` |           |  `array`  |    `ARRAY`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `VoteSlots` | | `array` | `ARRAY` |
 
 `VoteSlots` is an array of `VoteEntry` objects representing the LPs and their vote on the `TradingFee` for this AMM instance.
 
@@ -827,25 +827,25 @@ We introduce a new field `VoteSlots` associated with each AMM instance in the **
 
 Each member of the `VoteSlots` field is an object that describes the vote for the trading fee by the LP of that instance. A `VoteEntry` object has the following fields:
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 `Account` specifies the XRPL address of the LP.
 
 ---
 
-| Field Name   |     Required?      | JSON Type | Internal Type |
-| ------------ | :----------------: | :-------: | :-----------: |
-| `TradingFee` | :heavy_check_mark: | `number`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TradingFee` | :heavy_check_mark: | `number` | `UINT16` |
 
 `TradingFee` specifies the fee, in basis point. Valid values for this field are between 0 and 1000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing trading fee between 0% and 1%.
 
 ---
 
-| Field Name   |     Required?      | JSON Type | Internal Type |
-| ------------ | :----------------: | :-------: | :-----------: |
-| `VoteWeight` | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `VoteWeight` | :heavy_check_mark: | `number` | `UINT32` |
 
 `VoteWeight` specifies the `LPTokens` owned by the account that issued the transaction. It is specified in basis points. Valid values for this field are between 0 and 100000. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing the percentage ownership in the instance between 0% and 100%.
 
@@ -863,41 +863,41 @@ We introduce the new **`AMMVote`** transaction. Any XRPL account that holds `LPT
 
 #### 3.2.1. Fields
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 `Account` specifies the XRPL account that submits the transaction.
 
 ---
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMVote`**. The integer value is 38.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies one of the assets of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset2` specifies the other asset of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name   |     Required?      | JSON Type | Internal Type |
-| ------------ | :----------------: | :-------: | :-----------: |
-| `TradingFee` | :heavy_check_mark: | `number`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TradingFee` | :heavy_check_mark: | `number` | `UINT16` |
 
 `TradingFee` specifies the fee, in basis point. Valid values for this field are between 0 and 1000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%, allowing trading fee between 0% and 1%.
 
@@ -958,11 +958,11 @@ II. Slot state - **Occupied**, then
 
 Let the price at which the slot is bought be `B` - specified in `Amount` of `LPTokens`. Let `t` represent the fraction of used slot time for the current slot-holder. Note that for each interval `t` has a discrete value (0.05, 0.1, , ..., 1). Let `M` represent the minimum slot price.
 
-| Interval | `t`  |
-| :------- | :--: |
-| (0,1]    | 0.05 |
-| (1,2]    | 0.1  |
-| (19, 20] |  1   |
+| Interval | `t` |
+| :------- | :-: |
+| (0,1] | 0.05 |
+| (1,2] | 0.1 |
+| (19, 20] | 1 |
 
 The algorithm to compute the minimum bid price of the slot at any given time enforces the following rules:
 
@@ -970,7 +970,7 @@ The algorithm to compute the minimum bid price of the slot at any given time enf
 
 $$ f(t) = B \* 1.05 + M $$
 
-1.  The slot price decays exponentially over time. For the price to decay very very slowly for most of the time intervals (~95%) and instantly drop to the **MinSlotPrice** as the slot gets closer to the expiration time (~5%), we choose a heuristic function that produces this behavior. The following equation determines the minimum bid price of the slot for $t \in [0.1, 1]$ :
+1. The slot price decays exponentially over time. For the price to decay very very slowly for most of the time intervals (~95%) and instantly drop to the **MinSlotPrice** as the slot gets closer to the expiration time (~5%), we choose a heuristic function that produces this behavior. The following equation determines the minimum bid price of the slot for $t \in [0.1, 1]$ :
 
 $$ f(t) = B _ 1.05_(1-t^{60}) + M $$
 
@@ -998,41 +998,41 @@ $$M = LPTokens * \frac{tradingFee}{25}$$
 
 We introduce a new object field `AuctionSlot` in the **`AMM`** object associated with each AMM instance. The `AuctionSlot` field has the following subfields:
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 `Account` represents the XRPL account that currently owns the auction slot.
 
 ---
 
-| Field Name   |     Required?      | JSON Type | Internal Type |
-| ------------ | :----------------: | :-------: | :-----------: |
-| `Expiration` | :heavy_check_mark: | `string`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Expiration` | :heavy_check_mark: | `string` | `UINT32` |
 
 `Expiration` represents the number of seconds since the [Ripple Epoch](https://xrpl.org/basic-data-types.html#specifying-time). This marks the end of the time from when slot was bought.
 
 ---
 
-| Field Name      |     Required?      | JSON Type | Internal Type |
-| --------------- | :----------------: | :-------: | :-----------: |
-| `DiscountedFee` | :heavy_check_mark: | `string`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `DiscountedFee` | :heavy_check_mark: | `string` | `UINT32` |
 
 `DiscountedFee` represents the `TradingFee` to be charged to this account for trading against the AMM instance. By default it is `TradingFee`/10.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Price`    | :heavy_check_mark: | `string`  |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Price` | :heavy_check_mark: | `string` | `AMOUNT` |
 
 `Price` represents the price paid for the slot specified in units of `LPTokens` of the AMM instance.
 
 ---
 
-| Field Name     | Required? | JSON Type | Internal Type |
-| -------------- | :-------: | :-------: | :-----------: |
-| `AuthAccounts` |           |  `array`  |    `Array`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `AuthAccounts` | | `array` | `Array` |
 
 `AuthAccounts` represents an array of XRPL account IDs that are authorized to trade at the discounted fee against the AMM instance. The proposal allows for up to a maximum of four accounts.
 
@@ -1042,57 +1042,57 @@ We introduce a new object field `AuctionSlot` in the **`AMM`** object associated
 
 We introduce a new transaction **`AMMBid`** to place a bid for the auction slot. The transaction may have the following optional and required fields:
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 `Account` represents the XRPL account that submits the transaction.
 
 ---
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 `TransactionType` specifies the new transaction type **`AMMBid`**. The integer value is 39.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset`    | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset` specifies one of the assets of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Asset2`   | :heavy_check_mark: | `object`  |    `ISSUE`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Asset2` | :heavy_check_mark: | `object` | `ISSUE` |
 
 `Asset2` specifies the other asset of the AMM instance against which the transaction is to be executed.
 
 ---
 
-| Field Name    | Required? | JSON Type |  Internal Type  |
-| ------------- | :-------: | :-------: | :-------------: |
-| `MinBidPrice` |           | `string`  | `STRING NUMBER` |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `MinBidPrice` | | `string` | `STRING NUMBER` |
 
 `MinBidPrice` represents the minimum price that the bidder wants to pay for the slot. It is specified in units of `LPTokens`. This is not a required field. If specified let `MinBidPrice` be `X` and let the slot-price computed by price scheduling algorithm be `Y`, then bidder always pays the max(X, Y).
 
 ---
 
-| Field Name     | Required? | JSON Type | Internal Type |
-| -------------- | :-------: | :-------: | :-----------: |
-| `AuthAccounts` |           |  `array`  |    `Array`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `AuthAccounts` | | `array` | `Array` |
 
 `AuthAccounts` represents an array of XRPL account IDs that are authorized to trade at the discounted fee against the AMM instance. The proposal allows for up to a maximum of four accounts.
 
 ---
 
-| Field Name    | Required? | JSON Type |  Internal Type  |
-| ------------- | :-------: | :-------: | :-------------: |
-| `MaxBidPrice` |           | `string`  | `STRING NUMBER` |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `MaxBidPrice` | | `string` | `STRING NUMBER` |
 
 `MaxBidPrice` represents the maximum price that the bidder wants to pay for the slot. It is specified in units of `LPTokens`. This is not a required field. If specified let `MaxBidPrice` be `X` and let the slot-price computed by price scheduling algorithm be `Y`, then bidder always pays the min(X, Y).
 

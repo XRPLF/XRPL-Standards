@@ -44,12 +44,12 @@ A nonce-based approach is used to generate the unique `AccountRoot` ID:
 
 ###### **Fields**
 
-| Field Name   | Constant | Required | Internal Type | Default Value | Description                                                                        |
-| :----------- | :------: | :------: | :-----------: | :-----------: | :--------------------------------------------------------------------------------- |
-| `<Object>ID` |   Yes    |   Yes    |   `HASH256`   |      N/A      | The unique identifier of the ledger object this pseudo-account is associated with. |
-| `Flags`      |   Yes    |   Yes    |   `UINT32`    |      N/A      | A set of flags that must be set for a pseudo-account.                              |
-| `Sequence`   |   Yes    |   Yes    |   `UINT32`    |      `0`      | The sequence number, which must be `0`.                                            |
-| `RegularKey` |   Yes    |    No    |   `ACCOUNT`   |      N/A      | A regular key, which must not be set for a pseudo-account.                         |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| :--------- | :------: | :------: | :-----------: | :-----------: | :---------- |
+| `<Object>ID` | Yes | Yes | `HASH256` | N/A | The unique identifier of the ledger object this pseudo-account is associated with. |
+| `Flags` | Yes | Yes | `UINT32` | N/A | A set of flags that must be set for a pseudo-account. |
+| `Sequence` | Yes | Yes | `UINT32` | `0` | The sequence number, which must be `0`. |
+| `RegularKey` | Yes | No | `ACCOUNT` | N/A | A regular key, which must not be set for a pseudo-account. |
 
 A detailed description of these fields follows:
 
@@ -64,10 +64,10 @@ This field links the pseudo-account to its parent ledger object. Any protocol in
 
 The following flags must be set on a pseudo-account's `AccountRoot` and must be immutable:
 
-| Flag Name          |  Hex Value   | Description                                                                                                                                                                        |
-| :----------------- | :----------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lsfDisableMaster` | `0x00040000` | Disables the master key pair, ensuring no entity can sign transactions directly for this account. Control is ceded entirely to protocol rules.                                     |
-| `lsfDepositAuth`   | `0x01000000` | Requires authorization for deposits, typically meaning that funds can only be sent to this account via specific protocol transactions rather than standard `Payment` transactions. |
+| Flag Name | Hex Value | Description |
+| :-------- | :-------: | :---------- |
+| `lsfDisableMaster` | `0x00040000` | Disables the master key pair, ensuring no entity can sign transactions directly for this account. Control is ceded entirely to protocol rules. |
+| `lsfDepositAuth` | `0x01000000` | Requires authorization for deposits, typically meaning that funds can only be sent to this account via specific protocol transactions rather than standard `Payment` transactions. |
 
 **`Sequence`**
 

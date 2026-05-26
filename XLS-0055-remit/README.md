@@ -35,17 +35,18 @@ The transactor has the following behaviours:
 ## Specification
 
 A _Remit_ transaction contains the following fields:
-Field | Required | Type | Description
--|-|-|-
-sfAccount | ✅ |AccountID | The sender
-sfDestination | ✅ |AccountID | The recipient. Does not need to exist. Will be created if doesn't exist.
-sfDestinationTag | ❌ |UInt32 | May be used by the destination to differentiate sub-accounts.
-sfAmounts | ❌|Array of Amounts | Each of the currencies (if any) to send to the destination. Sender must have funded trustlines for each. Destination does not need trustlines.
-sfURITokenIDs | ❌| Array of URITokenIDs | Each of the URITokens (if any) to send to the destination.
-sfMintURIToken | ❌| URIToken | If included, an inline URIToken to be created and delivered to the destination, for example a receipt.
-sfBlob | ❌ | Blob | A hex blob up to 128 kib to supply to a receiving Hook at the destination.
-sfInform | ❌ | AccountID | A third party. If supplied, their Hooks will be weakly executed (but the sender will pay for that execution).
-sfInvoiceID | ❌ | UInt256 | An arbitrary identifier for this remittance.
+
+| Field | Required | Type | Description |
+| ----- | -------- | ---- | ----------- |
+| sfAccount | ✅ | AccountID | The sender |
+| sfDestination | ✅ | AccountID | The recipient. Does not need to exist. Will be created if doesn't exist. |
+| sfDestinationTag | ❌ | UInt32 | May be used by the destination to differentiate sub-accounts. |
+| sfAmounts | ❌ | Array of Amounts | Each of the currencies (if any) to send to the destination. Sender must have funded trustlines for each. Destination does not need trustlines. |
+| sfURITokenIDs | ❌ | Array of URITokenIDs | Each of the URITokens (if any) to send to the destination. |
+| sfMintURIToken | ❌ | URIToken | If included, an inline URIToken to be created and delivered to the destination, for example a receipt. |
+| sfBlob | ❌ | Blob | A hex blob up to 128 kib to supply to a receiving Hook at the destination. |
+| sfInform | ❌ | AccountID | A third party. If supplied, their Hooks will be weakly executed (but the sender will pay for that execution). |
+| sfInvoiceID | ❌ | UInt256 | An arbitrary identifier for this remittance. |
 
 ## Example Transaction
 

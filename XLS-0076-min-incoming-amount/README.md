@@ -31,9 +31,9 @@ This field allows users to define the minimum amount of XRP that their account i
 
 ## New Field on `AccountRoot`
 
-| Field           | Type   | Required | Description                                                                  |
-| :-------------- | :----- | :------- | :--------------------------------------------------------------------------- |
-| `sfIncomingMin` | Amount |          | Specifies the minimum amount of XRP (in drops) that the account will accept. |
+| Field | Type | Required | Description |
+| :---- | :--- | :------- | :---------- |
+| `sfIncomingMin` | Amount | | Specifies the minimum amount of XRP (in drops) that the account will accept. |
 
 ## Updating the `AccountSet` Transaction
 

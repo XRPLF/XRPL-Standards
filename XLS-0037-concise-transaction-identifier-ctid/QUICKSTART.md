@@ -10,22 +10,22 @@ CXXXXXXXYYYYZZZZ
 
 The identifier is divided into three fields.
 
-| Char Offset | Field   | Size (bits) | Explanation                                   |
-| ----------- | ------- | ----------- | --------------------------------------------- |
-| 0           | C       | 4           | Lead-in (ignore)                              |
-| 1-7         | XXXXXXX | 28          | Ledger Sequence                               |
-| 8-11        | YYYY    | 16          | Transaction index (offset) within that ledger |
-| 12-16       | ZZZZ    | 16          | Network ID.                                   |
+| Char Offset | Field | Size (bits) | Explanation |
+| ----------- | ----- | ----------- | ----------- |
+| 0 | C | 4 | Lead-in (ignore) |
+| 1-7 | XXXXXXX | 28 | Ledger Sequence |
+| 8-11 | YYYY | 16 | Transaction index (offset) within that ledger |
+| 12-16 | ZZZZ | 16 | Network ID. |
 
 Reference implementations are available for several languages. Click below to dive in.
 
-| Language   | Implementation                                               |
-| ---------- | ------------------------------------------------------------ |
-| Javascript | [ctid.js](https://github.com/XRPLF/ctid/blob/main/ctid.js)   |
-| Typescript | [ctid.ts](https://github.com/XRPLF/ctid/blob/main/ctid.ts)   |
-| C++        | [ctid.cpp](https://github.com/XRPLF/ctid/blob/main/ctid.cpp) |
-| Python 3   | [ctid.py](https://github.com/XRPLF/ctid/blob/main/ctid.py)   |
-| PHP 5      | [ctid.php](https://github.com/XRPLF/ctid/blob/main/ctid.php) |
+| Language | Implementation |
+| -------- | -------------- |
+| Javascript | [ctid.js](https://github.com/XRPLF/ctid/blob/main/ctid.js) |
+| Typescript | [ctid.ts](https://github.com/XRPLF/ctid/blob/main/ctid.ts) |
+| C++ | [ctid.cpp](https://github.com/XRPLF/ctid/blob/main/ctid.cpp) |
+| Python 3 | [ctid.py](https://github.com/XRPLF/ctid/blob/main/ctid.py) |
+| PHP 5 | [ctid.php](https://github.com/XRPLF/ctid/blob/main/ctid.php) |
 
 ### Function prototypes (pseudocode)
 
