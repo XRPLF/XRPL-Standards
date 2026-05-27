@@ -407,7 +407,10 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 #### 3.2.7 Invariants
 
-**TBD**
+1. `VaultCreate` must create exactly one new `Vault` object and must not modify an existing vault.
+2. After creation: `Vault.AssetsTotal == 0`, `Vault.AssetsAvailable == 0`, `Vault.LossUnrealized == 0`, and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`.
+3. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (share issuer equals the vault pseudo-account).
+4. `AccountRoot(Vault.Account)` must be a _pseudo-account_ with `VaultID` pointing to this vault.
 
 ### 3.3 Transaction: `VaultSet`
 
