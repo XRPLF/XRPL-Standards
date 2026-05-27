@@ -580,25 +580,29 @@ In sections below assume the following variables:
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The `Amount` asset is neither `Vault.Asset` nor the vault share (`Vault.ShareMPTID`). (`tecWRONG_ASSET`)
 3. If `Vault.Asset` is an `IOU`:
-   1. The asset is globally frozen, or the destination account\'s trust line is frozen. (`tecFROZEN`)
+   1. The asset is globally frozen, or the destination account's trust line is frozen. (`tecFROZEN`)
+
 4. If `Vault.Asset` is an `MPT`:
    1. The asset is globally or individually locked for the destination account. (`tecLOCKED`)
+
 5. The vault shares are frozen or locked for the submitting account. (`tecFROZEN` / `tecLOCKED`)
 6. The destination account does not have a required authorized holding for the vault asset. (`tecNO_AUTH`)
 7. The `Destination` account, if specified, does not exist on the ledger. (`tecNO_DST`)
 8. The `Destination` account, if specified, requires a destination tag but none is provided. (`tecDST_TAG_NEEDED`)
 9. The `Destination` account, if specified, requires deposit authorization and the sender is not authorized. (`tecNO_PERMISSION`)
+
 10. There is insufficient liquidity to fill the request:
     1. If `Amount` is shares: the submitter holds fewer shares than `Amount`. (`tecINSUFFICIENT_FUNDS`)
     2. If `Amount` is shares: `Vault.AssetsAvailable` is less than the computed $\Delta_{asset}$. (`tecINSUFFICIENT_FUNDS`)
     3. If `Amount` is the vault asset: the submitter holds insufficient shares to cover the withdrawal. (`tecINSUFFICIENT_FUNDS`)
     4. If `Amount` is the vault asset: `Vault.AssetsAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
+
 11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
 12. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
 
 #### 3.6.3 State Changes
 
-1. Decrease the `MPToken.MPTAmount` of the submitter\'s share `MPToken` by $\Delta_{share}$.
+1. Decrease the `MPToken.MPTAmount` of the submitter's share `MPToken` by $\Delta_{share}$.
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
 3. If the submitter is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
 4. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
