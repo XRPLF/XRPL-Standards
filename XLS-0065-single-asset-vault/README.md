@@ -549,7 +549,12 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 #### 3.5.4 Invariants
 
-**TBD**
+1. The vault pseudo-account's asset balance must increase by a positive amount not exceeding the transaction `Amount`.
+2. Unless the depositor is the asset issuer, the depositor's asset balance must decrease by the same amount as the vault increases.
+3. The depositor's share `MPToken.MPTAmount` must increase by a positive amount.
+4. The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
+5. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by exactly the vault's asset balance increase.
+6. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.6 Transaction: `VaultWithdraw`
 
