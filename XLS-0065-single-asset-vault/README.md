@@ -461,26 +461,31 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 ##### 3.4.2.1 Data Verification
 
-_None._
+1. The `VaultID` field is zero. (`temMALFORMED`)
 
 ##### 3.4.2.2 Protocol-Level Failures
 
-1. `Vault` object with the `VaultID` does not exist on the ledger.
-2. The submitting account is not the `Owner` of the vault.
-3. `AssetsTotal`, `AssetsAvailable`, or `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` are greater than zero.
-4. The `OwnerDirectory` of the Vault _pseudo-account_ contains pointers to objects other than the `Vault`, the `MPTokenIssuance` for its shares, or an `MPToken` or trust line for its asset.
+1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
+3. `Vault.AssetsAvailable` is greater than zero. (`tecHAS_OBLIGATIONS`)
+4. `Vault.AssetsTotal` is greater than zero. (`tecHAS_OBLIGATIONS`)
+5. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is greater than zero (outstanding shares remain). (`tecHAS_OBLIGATIONS`)
+6. The _pseudo-account_'s `OwnerDirectory` still contains objects after cleanup (unexpected obligations remain). (`tecHAS_OBLIGATIONS`)
 
 #### 3.4.3 State Changes
 
-1. Delete the `MPTokenIssuance` object for the vault shares.
-2. Delete the `MPToken` or `RippleState` object corresponding to the vault's holding of the asset, if one exists.
-3. Delete the `AccountRoot` object of the _pseudo-account_, and its `DirectoryNode` objects.
-4. Release the Owner Reserve to the `Vault.Owner` account.
-5. Delete the `Vault` object.
+1. Delete the `MPToken` or `RippleState` object corresponding to the vault's holding of the asset, if one exists.
+2. Delete the vault owner's `MPToken` for vault shares, if one exists.
+3. Delete the `MPTokenIssuance` object for the vault shares.
+4. Delete the `AccountRoot` object of the _pseudo-account_, and its `DirectoryNode` objects.
+5. Remove the `Vault` object from the `Vault.Owner`'s `DirectoryNode` and decrement `OwnerCount` by 2.
+6. Delete the `Vault` object.
 
 #### 3.4.4 Invariants
 
-**TBD**
+1. Only a `VaultDelete` transaction may delete a `Vault` object; only `VaultDelete` may succeed without an after-state for the vault.
+2. `VaultDelete` must also delete the share `MPTokenIssuance`.
+3. At deletion: `Vault.AssetsTotal == 0`, `Vault.AssetsAvailable == 0`, and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`.
 
 ### 3.5 Transaction: `VaultDeposit`
 
