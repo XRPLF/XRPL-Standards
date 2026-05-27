@@ -571,65 +571,66 @@ In sections below assume the following variables:
 
 ##### 3.6.2.1 Data Verification
 
-_None._
+1. The `VaultID` field is zero. (`temMALFORMED`)
+2. The `Amount` field is zero or negative. (`temBAD_AMOUNT`)
+3. The `Destination` field, if provided, is zero. (`temMALFORMED`)
 
 ##### 3.6.2.2 Protocol-Level Failures
 
-1. The `Vault` object corresponding to the `VaultID` field does not exist on the ledger.
+1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The `Amount` asset is neither `Vault.Asset` nor the vault share (`Vault.ShareMPTID`). (`tecWRONG_ASSET`)
+3. If `Vault.Asset` is an `IOU`:
+   1. The asset is globally frozen, or the destination account's trust line is frozen. (`tecFROZEN`)
 
-2. If the `Vault.Asset` is `MPT`:
-   1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-   2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-   3. `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
+4. If `Vault.Asset` is an `MPT`:
+   1. The asset is globally or individually locked for the destination account. (`tecLOCKED`)
 
-3. If the `Asset` is an `IOU`:
-   1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-   2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
+5. The vault shares are frozen or locked for the submitting account. (`tecFROZEN` / `tecLOCKED`)
+6. The destination account does not have a required authorized holding for the vault asset. (`tecNO_AUTH`)
+7. The `Destination` account, if specified, does not exist on the ledger. (`tecNO_DST`)
+8. The `Destination` account, if specified, requires a destination tag but none is provided. (`tecDST_TAG_NEEDED`)
+9. The `Destination` account, if specified, requires deposit authorization and the sender is not authorized. (`tecNO_PERMISSION`)
 
-4. The unit of `Amount` is not shares or the asset of the vault.
+10. There is insufficient liquidity to fill the request:
+    1. If `Amount` is shares: the submitter holds fewer shares than `Amount`. (`tecINSUFFICIENT_FUNDS`)
+    2. If `Amount` is shares: `Vault.AssetsAvailable` is less than the computed $\Delta_{asset}$. (`tecINSUFFICIENT_FUNDS`)
+    3. If `Amount` is the vault asset: the submitter holds insufficient shares to cover the withdrawal. (`tecINSUFFICIENT_FUNDS`)
+    4. If `Amount` is the vault asset: `Vault.AssetsAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
 
-5. There is insufficient liquidity in the vault to fill the request:
-   1. If `Amount` is the vaults share:
-      1. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
-      2. The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
-      3. `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
-
-   2. If `Amount` is the vault's asset:
-      1. The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
-      2. `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
-
-6. The `Destination` account is specified:
-   1. The account does not have permission to receive the asset.
-   2. The account does not have a `RippleState` or `MPToken` object for the asset.
+11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
+12. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
 
 #### 3.6.3 State Changes
 
-1. If the `Vault.Asset` is XRP:
-   1. Decrease the `Balance` field of _pseudo-account_ `AccountRoot` by $\Delta_{asset}$.
-   2. Increase the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
+1. Decrease the `MPToken.MPTAmount` of the submitter's share `MPToken` by $\Delta_{share}$.
+2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
+3. If the submitter is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
+4. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
 
-2. If the `Vault.Asset` is an `IOU`:
-   1. If the Depositor account does not have a `RippleState` object for the Vault's Asset, create the `RippleState` object.
+5. If `Vault.Asset` is `XRP`:
+   1. Decrease the `Balance` field of the _pseudo-account_ `AccountRoot` by $\Delta_{asset}$.
+   2. Increase the `Balance` field of the destination `AccountRoot` by $\Delta_{asset}$.
+
+6. If `Vault.Asset` is an `IOU`:
+   1. If the destination does not have a `RippleState` object for the vault asset, create one.
    2. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
-   3. Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
+   3. Increase the `RippleState` balance between the destination `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
-3. If the `Vault.Asset` is an `MPT`:
-   1. If the Depositor account does not have a `MPToken` object for the Vault's Asset, create the `MPToken` object.
-   2. Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-   3. Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
+7. If `Vault.Asset` is an `MPT`:
+   1. If the destination does not have an `MPToken` object for the vault asset, create one.
+   2. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
+   3. Increase the `MPToken.MPTAmount` of the destination `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
 
-4. Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
-   1. Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
-   2. If `MPToken.MPTAmount == 0`, delete the object.
-
-5. Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
-   1. Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-
-6. Decrease the `AssetsTotal` and `AssetsAvailable` by $\Delta_{asset}$
+> **Note:** "destination" is the `Destination` field if provided, otherwise the submitting `Account`.
 
 #### 3.6.4 Invariants
 
-**TBD**
+1. The vault pseudo-account's asset balance must decrease by a positive amount.
+2. Unless the destination is the asset issuer, the destination's asset balance must increase (within sub-ULP precision tolerance for IOU assets at a coarser trust line scale).
+3. The vault outflow and destination inflow must match in magnitude (within the same precision tolerance).
+4. The submitter's share `MPToken.MPTAmount` must decrease by a positive amount.
+5. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
+6. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by exactly the vault's asset balance decrease.
 
 ### 3.7 Transaction: `VaultClawback`
 
