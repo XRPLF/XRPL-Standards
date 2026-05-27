@@ -625,7 +625,12 @@ In sections below assume the following variables:
 
 #### 3.6.4 Invariants
 
-**TBD**
+1. The vault pseudo-account's asset balance must decrease by a positive amount.
+2. Unless the destination is the asset issuer, the destination's asset balance must increase (within sub-ULP precision tolerance for IOU assets at a coarser trust line scale).
+3. The vault outflow and destination inflow must match in magnitude (within the same precision tolerance).
+4. The submitter's share `MPToken.MPTAmount` must decrease by a positive amount.
+5. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
+6. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by exactly the vault's asset balance decrease.
 
 ### 3.7 Transaction: `VaultClawback`
 
