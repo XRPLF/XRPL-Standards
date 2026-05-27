@@ -648,42 +648,49 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 ##### 3.7.2.1 Data Verification
 
-_None._
+1. The `VaultID` field is zero. (`temMALFORMED`)
+2. The `Amount` field, if provided, is negative. (`temBAD_AMOUNT`)
+3. The `Amount` field, if provided, specifies `XRP`. (`temMALFORMED`)
 
 ##### 3.7.2.2 Protocol-Level Failures
 
-1. `Vault` object with the `VaultID` does not exist on the ledger.
+1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 
-2. If `Vault.Asset` is `XRP`.
+2. The `Amount` asset is the vault share (`Vault.ShareMPTID`) — the vault owner is burning stranded shares:
+   1. The submitter is not the vault owner. (`tecNO_PERMISSION`)
+   2. There are no outstanding shares (`OutstandingAmount == 0`), or the vault still holds assets (`AssetsTotal > 0` or `AssetsAvailable > 0`). (`tecNO_PERMISSION`)
+   3. The `Amount` is non-zero and does not equal the total shares held by `Holder`. (`tecLIMIT_EXCEEDED`)
 
-3. If `Vault.Asset` is an `IOU` and:
-   1. The `Issuer` account is not the submitter of the transaction.
-   2. If the `AccountRoot(Issuer)` object does not have `lsfAllowTrustLineClawback` flag set (the asset does not support clawback).
-   3. If the `AccountRoot(Issuer)` has the `lsfNoFreeze` flag set (the asset cannot be frozen).
+3. The `Amount` asset is `Vault.Asset` — the asset issuer is clawing back deposited funds:
+   1. `Vault.Asset` is `XRP` (XRP cannot be clawed back). (`tecNO_PERMISSION`)
+   2. The submitter is not the issuer of `Vault.Asset`. (`tecNO_PERMISSION`)
+   3. The `Holder` is the same account as the submitter (cannot clawback from yourself). (`tecNO_PERMISSION`)
+   4. If `Vault.Asset` is an `MPT`: the `MPTokenIssuance` object does not exist. (`tecOBJECT_NOT_FOUND`)
+   5. If `Vault.Asset` is an `MPT`: `lsfMPTCanClawback` is not set on the `MPTokenIssuance`. (`tecNO_PERMISSION`)
+   6. If `Vault.Asset` is an `IOU`: `lsfAllowTrustLineClawback` is not set on the issuer account, or `lsfNoFreeze` is set on the issuer account. (`tecNO_PERMISSION`)
 
-4. If `Vault.Asset` is an `MPT` and:
-   1. `MPTokenIssuance.Issuer` is not the submitter of the transaction.
-   2. `MPTokenIssuance.lsfMPTCanClawback` flag is not set (the asset does not support clawback).
-   3. If the `MPTokenIssuance.lsfMPTCanLock` flag is NOT set (the asset cannot be locked).
+4. `Vault.Asset` is not `XRP`, the issuer of `Vault.Asset` is the vault owner, and no `Amount` is specified (ambiguous clawback target). (`tecWRONG_ASSET`)
 
-5. The `MPToken` object for the `Vault.ShareMPTID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
+5. The computed asset or share amount to clawback is zero. (`tecPRECISION_LOSS`)
+
+6. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
 
 #### 3.7.3 State Changes
 
-1. If the `Vault.Asset` is an `IOU`:
-   1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`.
+1. Decrease the `MPToken.MPTAmount` of the `Holder`\'s share `MPToken` by $\Delta_{share}$.
+2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
+3. If the `Holder` is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
 
-2. If the `Vault.Asset` is an `MPT`:
-   1. Decrease the `MPToken.MPTAmount` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
+4. If the submitter is the vault owner (share burn — vault has shares but no assets):
+   1. `Vault.AssetsTotal` and `Vault.AssetsAvailable` remain unchanged (no asset transfer occurs).
 
-3. Update the `MPToken` object for the `Vault.ShareMPTID` of the depositor `AccountRoot`:
-   1. Decrease the `MPToken.MPTAmount` by $\Delta_{share}$.
-   2. If `MPToken.MPTAmount == 0`, delete the object.
-
-4. Update the `MPTokenIssuance` object for the `Vault.ShareMPTID`:
-   1. Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-
-5. Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
+5. If the submitter is the asset `Issuer` (asset clawback):
+   1. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
+   2. If `Vault.Asset` is an `IOU`:
+      1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
+   3. If `Vault.Asset` is an `MPT`:
+      1. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
+      2. Increase the `MPToken.MPTAmount` of the `Issuer` `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
 
 #### 3.7.4 Invariants
 
