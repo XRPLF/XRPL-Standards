@@ -656,12 +656,12 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 
-2. The `Amount` asset is the vault share (`Vault.ShareMPTID`) — the vault owner is burning stranded shares:
+2. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — the vault owner is burning stranded shares:
    1. The submitter is not the vault owner. (`tecNO_PERMISSION`)
    2. There are no outstanding shares (`OutstandingAmount == 0`), or the vault still holds assets (`AssetsTotal > 0` or `AssetsAvailable > 0`). (`tecNO_PERMISSION`)
    3. The `Amount` is non-zero and does not equal the total shares held by `Holder`. (`tecLIMIT_EXCEEDED`)
 
-3. The `Amount` asset is `Vault.Asset` — the asset issuer is clawing back deposited funds:
+3. If the `Amount` asset is `Vault.Asset` — the asset issuer is clawing back deposited funds:
    1. `Vault.Asset` is `XRP` (XRP cannot be clawed back). (`tecNO_PERMISSION`)
    2. The submitter is not the issuer of `Vault.Asset`. (`tecNO_PERMISSION`)
    3. The `Holder` is the same account as the submitter (cannot clawback from yourself). (`tecNO_PERMISSION`)
@@ -677,7 +677,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 #### 3.7.3 State Changes
 
-1. Decrease the `MPToken.MPTAmount` of the `Holder`\'s share `MPToken` by $\Delta_{share}$.
+1. Decrease the `MPToken.MPTAmount` of the `Holder`'s share `MPToken` by $\Delta_{share}$.
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
 3. If the `Holder` is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
 
