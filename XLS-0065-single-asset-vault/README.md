@@ -694,7 +694,11 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 #### 3.7.4 Invariants
 
-**TBD**
+1. `VaultClawback` may only be executed by the asset issuer (asset clawback), or by the vault owner to burn stranded shares from an empty vault (share burn).
+2. When clawing back assets: the vault pseudo-account's asset balance must decrease, and `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the same amount.
+3. When burning stranded shares: the vault pseudo-account's asset balance must not change.
+4. The `Holder`'s share `MPToken.MPTAmount` must decrease by a positive amount.
+5. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the `Holder`'s share balance.
 
 ### 3.8 Transaction: `Payment`
 
