@@ -505,14 +505,18 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
-3. The vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
+
+3. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
    1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
    2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
+
 4. If `Vault.Asset` is an `MPT`:
    1. The `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object (the asset is not transferable). (`tecNO_AUTH`)
    2. The asset is globally or individually locked for the depositor. (`tecLOCKED`)
+
 5. If `Vault.Asset` is an `IOU`:
    1. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
+
 6. The vault shares are locked for the depositor. (`tecLOCKED`)
 7. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
 8. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
@@ -525,7 +529,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 #### 3.5.3 State Changes
 
 1. If no share `MPToken` object exists for the depositor, create one. For private vaults, the `MPToken` is created only after domain authorization is verified.
-2. Increase the `MPTAmount` field of the depositor\'s share `MPToken` by $\Delta_{share}$.
+2. Increase the `MPTAmount` field of the depositor's share `MPToken` by $\Delta_{share}$.
 3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` by $\Delta_{share}$.
 4. Increase `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
 
