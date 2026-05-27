@@ -443,7 +443,10 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 #### 3.3.4 Invariants
 
-**TBD**
+1. `VaultSet` must not change the vault pseudo-account's asset balance.
+2. `VaultSet` must not change `Vault.AssetsTotal` or `Vault.AssetsAvailable`.
+3. `VaultSet` must not change `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount`.
+4. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.4 Transaction: `VaultDelete`
 
