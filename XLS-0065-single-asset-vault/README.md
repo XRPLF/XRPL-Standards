@@ -159,8 +159,6 @@ The `MPTokenIssuance` object represents the share on the ledger. It is created a
 
 ###### 3.1.6.2.1 `MPTokenIssuance` Values
 
-Here's the table with the headings "Field," "Description," and "Value":
-
 | **Field**         | **Description**                                                                                                                 | **Value**            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `Issuer`          | The AccountID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID  |
@@ -229,7 +227,7 @@ To account for this problem, the Vault must use two different exchange rate mode
 
 This section details the algorithms used to calculate the exchange between assets and shares for deposits, redemptions, and withdrawals.
 
-##### Key Variables
+The following are the **key variables** used in the calculations:
 
 - **$\Gamma_{assets}$**: The total balance of assets held within the vault.
 - **$\Gamma_{shares}$**: The total number of shares currently issued by the vault.
@@ -325,23 +323,21 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 
 ### 3.2 Transaction: `VaultCreate`
 
-All transactions introduced by this proposal incorporate the [common transaction fields](https://xrpl.org/docs/references/protocol/transactions/common-fields) that are shared by all transactions. Standard fields are only documented in this proposal if needed because this proposal introduces new possible values for such fields.
-
 The `VaultCreate` transaction creates a new `Vault` object.
 
 #### 3.2.1 Fields
 
-| Field Name         | Required |     JSON Type      | Internal Type |      Default Value       | Description                                                                                                                                            |
-| ------------------ | :------: | :----------------: | :-----------: | :----------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |           `58`           | The transaction type.                                                                                                                                  |
-| `Flags`            |   Yes    |      `number`      |   `UINT32`    |            0             | Specifies the flags for the Vault.                                                                                                                     |
-| `Data`             |    No    |      `string`      |    `BLOB`     |                          | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
-| `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
-| `AssetsMaximum`    |    No    |      `number`      |   `NUMBER`    |            0             | The maximum asset amount that can be held in a vault.                                                                                                  |
-| `MPTokenMetadata`  |    No    |      `string`      |    `BLOB`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
+| Field Name         | Required |     JSON Type      | Internal Type |      Default Value      | Description                                                                                                                                            |
+| ------------------ | :------: | :----------------: | :-----------: | :---------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `58`           | The transaction type.                                                                                                                                  |
+| `Flags`            |   Yes    |      `number`      |   `UINT32`    |            0            | Specifies the flags for the Vault.                                                                                                                     |
+| `Data`             |    No    |      `string`      |    `BLOB`     |                         | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
+| `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`          | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
+| `AssetsMaximum`    |    No    |      `number`      |   `NUMBER`    |            0            | The maximum asset amount that can be held in a vault.                                                                                                  |
+| `MPTokenMetadata`  |    No    |      `string`      |    `BLOB`     |                         | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
 | `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `"FirstComeFirstServe"` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
-| `DomainID`         |    No    |      `string`      |   `HASH256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
-| `Scale`            |    No    |      `number`      |    `UINT8`    |            6             | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `DomainID`         |    No    |      `string`      |   `HASH256`   |                         | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
+| `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
 #### 3.2.2 Flags
 
@@ -512,13 +508,13 @@ _None._
 4. Adding the `Amount` to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`.
 5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets is not a member of the `MPTokenIssuance(Vault.ShareMPTID).DomainID` permissioned domain.
 
-6. The `Vault.Asset` is `MPT`:
+6. If the `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
    2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
    3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
    4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
 
-7. The `Asset` is an `IOU`:
+7. If the `Vault.Asset` is an `IOU`:
    1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
    2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
    3. The `RippleState` object `Balance` < `Amount` (insufficient balance).
@@ -581,20 +577,19 @@ _None._
 
 1. The `Vault` object corresponding to the `VaultID` field does not exist on the ledger.
 
-2. The `Vault.Asset` is `MPT`:
+2. If the `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
    2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
    3. `MPToken(MPTokenIssuanceID, AccountID | Destination).lsfMPTLocked` flag is set (the asset is locked for the depositor or the destination).
 
-3. The `Asset` is an `IOU`:
+3. If the `Asset` is an `IOU`:
    1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
    2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the `AccountRoot` of the `AccountID` or the `Destination`.
 
-4. The unit of `Amount` is not shares of the vault.
-5. The unit of `Amount` is not asset of the vault.
+4. The unit of `Amount` is not shares or the asset of the vault.
 
-6. There is insufficient liquidity in the vault to fill the request:
-   1. If `Amount` is the vault's share:
+5. There is insufficient liquidity in the vault to fill the request:
+   1. If `Amount` is the vaults share:
       1. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
       2. The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
       3. `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
@@ -603,7 +598,7 @@ _None._
       1. The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
       2. `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
-7. The `Destination` account is specified:
+6. The `Destination` account is specified:
    1. The account does not have permission to receive the asset.
    2. The account does not have a `RippleState` or `MPToken` object for the asset.
 
@@ -714,14 +709,14 @@ _None._
    1. The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account is not a member of the permissioned domain specified at `MPTokenIssuance(Vault.ShareMPTID).DomainID`.
    2. The `Vault` `tfVaultShareNonTransferable` flag is set.
 
-   3. The `Vault.Asset` is `MPT`:
+   3. If the `Vault.Asset` is `MPT`:
       1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
       2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
       3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the payer).
       4. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the `pseudo-account`).
       5. `MPToken(MPTokenIssuanceID, Destination).lsfMPTLocked` flag is set (the asset is locked for the destination account).
 
-   4. The `Vault.Asset` is an `IOU`:
+   4. If the `Vault.Asset` is an `IOU`:
       1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
       2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the payer account.
       3. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the destination account.
@@ -736,8 +731,6 @@ _None._
 This RPC retrieves the Vault ledger entry and the IDs associated with it.
 
 #### 3.9.1 Request Fields
-
-We propose adding the following fields to the `ledger_entry` method:
 
 | Field Name | Required? | JSON Type |                Description                 |
 | ---------- | :-------: | :-------: | :----------------------------------------: |
