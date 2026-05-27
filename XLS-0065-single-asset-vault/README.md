@@ -339,7 +339,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`           | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
 | `AssetsMaximum`    |    No    |      `number`      |   `NUMBER`    |            0             | The maximum asset amount that can be held in a vault.                                                                                                  |
 | `MPTokenMetadata`  |    No    |      `string`      |    `BLOB`     |                          | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
-| `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `strFirstComeFirstServe` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
+| `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `"FirstComeFirstServe"` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `DomainID`         |    No    |      `string`      |   `HASH256`   |                          | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
 | `Scale`            |    No    |      `number`      |    `UINT8`    |            6             | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
 
@@ -375,24 +375,24 @@ _TBD_
 
 2. The `Asset` is `MPT`:
    1. The `Scale` parameter is provided.
-   2. The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object. (the asset is not transferable).
-   3. The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object. (the asset is locked).
+   2. The `lsfMPTCanTransfer` is not set in the `MPTokenIssuance` object (the asset is not transferable).
+   3. The `lsfMPTLocked` flag is set in the `MPTokenIssuance` object (the asset is locked).
 
 3. The `Asset` is an `IOU`:
    1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
    2. The `Scale` parameter is provided, and is less than **0** or greater than **18**.
 
-4. The `tfVaultPrivate` flag is not set and the `DomainID` is provided. (The VaultOwner is attempting to create a public Vault with a PermissionedDomain)
+4. The `tfVaultPrivate` flag is not set and the `DomainID` is provided (the Vault Owner is attempting to create a public Vault with a PermissionedDomain)
 
 5. The `PermissionedDomain` object does not exist with the provided `DomainID`.
 
 6. The `Data` field is larger than 256 bytes.
-7. The account submiting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
+7. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve.
 
 #### 3.2.6 State Changes
 
 1. Create a new `Vault` ledger object.
-2. Create a new `MPTokenIssuance` ledger object for the vault shares.
+2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
    1. If the `DomainID` is provided:
       1. `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
    2. Create an `MPToken` object for the Vault Owner to hold Vault Shares.
@@ -433,8 +433,8 @@ _TBD_
 1. `Vault` object with the specified `VaultID` does not exist on the ledger.
 2. The submitting account is not the `Owner` of the vault.
 3. The `Data` field is larger than 256 bytes.
-4. If `Vault.AssetsMaximum` > `0` AND `AssetsMaximum` > 0 AND:
-   1. The `AssetsMaximum` < `Vault.AssetsTotal` (new `AssetsMaximum` cannot be lower than the current `AssetsTotal`).
+4. If `Vault.AssetsMaximum` > `0` AND `tx.AssetsMaximum` > 0 AND:
+   1. The `tx.AssetsMaximum` < `Vault.AssetsTotal` (new `tx.AssetsMaximum` cannot be lower than the current `AssetsTotal`).
 5. The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
 6. The `PermissionedDomain` object does not exist with the provided `DomainID`.
 7. The transaction is attempting to modify an immutable field.
@@ -509,8 +509,8 @@ _None._
 1. `Vault` object with the `VaultID` does not exist on the ledger.
 2. The asset type of the vault does not match the asset type the depositor is depositing.
 3. The depositor does not have sufficient funds to make a deposit.
-4. Adding the `Amount` to the `AssetsTotal` of the vault would exceed the `AssetsMaximum`.
-5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets does not have credentials in the permissioned domain of the share.
+4. Adding the `Amount` to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`.
+5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets is not a member of the `MPTokenIssuance(Vault.ShareMPTID).DomainID` permissioned domain.
 
 6. The `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
@@ -579,7 +579,7 @@ _None._
 
 ##### 3.6.2.2 Protocol-Level Failures
 
-1. `Vault` object with the `VaultID` does not exist on the ledger.
+1. The `Vault` object corresponding to the `VaultID` field does not exist on the ledger.
 
 2. The `Vault.Asset` is `MPT`:
    1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
@@ -594,12 +594,12 @@ _None._
 5. The unit of `Amount` is not asset of the vault.
 
 6. There is insufficient liquidity in the vault to fill the request:
-   1. If `Amount` is the vaults share:
+   1. If `Amount` is the vault's share:
       1. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` < `Amount` (attempt to withdraw more shares than there are in total).
       2. The shares `MPToken.MPTAmount` of the `Account` is less than `Amount` (attempt to withdraw more shares than owned).
       3. `Vault.AssetsAvailable` < $\Delta_{asset}$ (the vault has insufficient assets).
 
-   2. If `Amount` is the vaults asset:
+   2. If `Amount` is the vault's asset:
       1. The shares `MPToken.MPTAmount` of the `Account` is less than $\Delta_{share}$ (attempt to withdraw more shares than owned).
       2. `Vault.AssetsAvailable` < `Amount` (the vault has insufficient assets).
 
@@ -614,12 +614,12 @@ _None._
    2. Increase the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
 
 2. If the `Vault.Asset` is an `IOU`:
-   1. If the Depositor account does not have a `RippleState` object for the Vaults Asset, create the `RippleState` object.
+   1. If the Depositor account does not have a `RippleState` object for the Vault's Asset, create the `RippleState` object.
    2. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
    3. Increase the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
 3. If the `Vault.Asset` is an `MPT`:
-   1. If the Depositor account does not have a `MPToken` object for the Vaults Asset, create the `MPToken` object.
+   1. If the Depositor account does not have a `MPToken` object for the Vault's Asset, create the `MPToken` object.
    2. Decrease the `MPToken.MPTAmount` by $\Delta_{asset}$ of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
    3. Increase the `MPToken.MPTAmount` by $\Delta_{asset}$ of the depositor `MPToken` object for the `Vault.Asset`.
 
@@ -696,7 +696,7 @@ _None._
 
 ### 3.8 Transaction: `Payment`
 
-The Single Asset Vault does not introduce new `Payment` transaction fields. However, it adds additional failure conditions and state changes when transfering Vault shares.
+The Single Asset Vault does not introduce new `Payment` transaction fields. However, it adds additional failure conditions and state changes when transferring Vault shares.
 
 #### 3.8.1 Fields
 
@@ -711,7 +711,7 @@ _None._
 ##### 3.8.2.2 Protocol-Level Failures
 
 1. If `Payment.Amount` is a `Vault` share AND:
-   1. The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account does not have credentials in the permissioned domain of the Vaults Share.
+   1. The `Vault` `lsfVaultPrivate` flag is set and the `Payment.Destination` account is not a member of the permissioned domain specified at `MPTokenIssuance(Vault.ShareMPTID).DomainID`.
    2. The `Vault` `tfVaultShareNonTransferable` flag is set.
 
    3. The `Vault.Asset` is `MPT`:
