@@ -32,29 +32,29 @@ The [`Escrow` object](https://xrpl.org/escrow-object.html) already exists on the
 
 As a reference, these are the existing escrow object fields.
 
-| Field Name               | Required? | JSON Type | Internal Type |
-| ------------------------ | --------- | --------- | ------------- |
-| `LedgerIndex`            | ✔️        | `string`  | `HASH256`     |
-| `LedgerEntryType`        | ✔️        | `string`  | `UINT16`      |
-| `Owner`                  | ✔️        | `string`  | `AccountID`   |
-| `OwnerNode`              | ✔️        | `string`  | `UInt32`      |
-| `Amount`                 | ✔️        | `Amount`  | `Amount`      |
-| `Condition`              |           | `string`  | `Blob`        |
-| `CancelAfter`            |           | `number`  | `UInt32`      |
-| `FinishAfter`            |           | `number`  | `UInt32`      |
-| `Destination`            | ✔️        | `string`  | `AccountID`   |
-| `DestinationNode`        | ✔️        | `string`  | `UInt32`      |
-| `DestinationTag`         |           | `number`  | `UInt32`      |
-| `PreviousTxnId`          | ✔️        | `string`  | `HASH256`     |
-| `PreviousLedgerSequence` | ✔️        | `number`  | `UInt32`      |
-| `SourceTag`              |           | `number`  | `UInt32`      |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `LedgerIndex` | ✔️ | `string` | `HASH256` |
+| `LedgerEntryType` | ✔️ | `string` | `UINT16` |
+| `Owner` | ✔️ | `string` | `AccountID` |
+| `OwnerNode` | ✔️ | `string` | `UInt32` |
+| `Amount` | ✔️ | `Amount` | `Amount` |
+| `Condition` | | `string` | `Blob` |
+| `CancelAfter` | | `number` | `UInt32` |
+| `FinishAfter` | | `number` | `UInt32` |
+| `Destination` | ✔️ | `string` | `AccountID` |
+| `DestinationNode` | ✔️ | `string` | `UInt32` |
+| `DestinationTag` | | `number` | `UInt32` |
+| `PreviousTxnId` | ✔️ | `string` | `HASH256` |
+| `PreviousLedgerSequence` | ✔️ | `number` | `UInt32` |
+| `SourceTag` | | `number` | `UInt32` |
 
 We propose these modifications:
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | --------- | --------- | ------------- |
-| `Amount`   |           | `Amount`  | `Amount`      |
-| `NFTokens` |           | `array`   | `STArray`     |
+| `Amount` | | `Amount` | `Amount` |
+| `NFTokens` | | `array` | `STArray` |
 
 #### 2.1.1. `Amount`
 
@@ -74,23 +74,24 @@ The [`EscrowCreate` transaction](https://xrpl.org/escrowcreate.html) already exi
 
 As a reference, these are the existing `EscrowCreate` fields:
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | --------- | --------- | ------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      |
-| `Account`         | ✔️        | `string`  | `AccountID`   |
-| `Amount`          | ✔️        | `Amount`  | `Amount`      |
-| `Destination`     | ✔️        | `string`  | `AccountID`   |
-| `Condition`       |           | `string`  | `Blob`        |
-| `CancelAfter`     |           | `number`  | `UInt32`      |
-| `FinishAfter`     |           | `number`  | `UInt32`      |
-| `SourceTag`       |           | `number`  | `UInt32`      |
-| `DestinationTag`  |           | `number`  | `UInt32`      |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | --------- | --------- | ------------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` |
+| `Account` | ✔️ | `string` | `AccountID` |
+| `Amount` | ✔️ | `Amount` | `Amount` |
+| `Destination` | ✔️ | `string` | `AccountID` |
+| `Condition` | | `string` | `Blob` |
+| `CancelAfter` | | `number` | `UInt32` |
+| `FinishAfter` | | `number` | `UInt32` |
+| `SourceTag` | | `number` | `UInt32` |
+| `DestinationTag` | | `number` | `UInt32` |
 
 We propose these modifications:
+
 | Field Name | Required? | JSON Type | Internal Type |
-|------------|-----------|-----------|---------------|
-|`Amount`| |`Amount`|`Amount`|
-|`NFTokenIDs`| |`array`|`STArray`|
+| ---------- | --------- | --------- | ------------- |
+| `Amount` | | `Amount` | `Amount` |
+| `NFTokenIDs` | | `array` | `STArray` |
 
 #### 3.1.1. `Amount`
 

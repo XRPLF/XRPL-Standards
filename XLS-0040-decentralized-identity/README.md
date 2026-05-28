@@ -65,25 +65,25 @@ We propose a new ledger object called **`DID`** that holds references to or data
 
 `DID` object may have the following required and optional fields.
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `LedgerEntryType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `LedgerEntryType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Identifies the type of ledger object. The proposal recommends the value `0x0049` as the reserved entry type.
 
 ---
 
-| Field Name      |     Required?      | JSON Type | Internal Type |
-| --------------- | :----------------: | :-------: | :-----------: |
-| `PreviousTxnID` | :heavy_check_mark: | `string`  |   `Hash256`   |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnID` | :heavy_check_mark: | `string` | `Hash256` |
 
 The identifying hash of the transaction that most recently modified this object.
 
 ---
 
-| Field Name          |     Required?      | JSON Type | Internal Type |
-| ------------------- | :----------------: | :-------: | :-----------: |
-| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number`  |   `UINT32`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `PreviousTxnLgrSeq` | :heavy_check_mark: | `number` | `UINT32` |
 
 The index of the ledger that contains the transaction that most recently modified this object.
 
@@ -91,7 +91,7 @@ The index of the ledger that contains the transaction that most recently modifie
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `URI`      |           | `string`  |    `BLOB`     |
+| `URI` | | `string` | `BLOB` |
 
 `URI` specifies a Universal Resource Identifier, a.k.a. URI that SHOULD point to the corresponding DID document or to the data associated with the DID. This field could be an HTTP(S) URL or IPFS URI. The `URI` field is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
 
@@ -99,15 +99,15 @@ The index of the ledger that contains the transaction that most recently modifie
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Data`     |           | `string`  |    `BLOB`     |
+| `Data` | | `string` | `BLOB` |
 
 `Data` field SHOULD contain the public attestations of identity credentials associated with the DID. The `Data` field is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `DIDDocument` |           | `string`  |    `BLOB`     |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `DIDDocument` | | `string` | `BLOB` |
 
 `DIDDocument` field SHOULD contain the <a href="https://www.w3.org/TR/did-core/#did-documents"> DID document </a> per W3C standards associated with the DID. The `DIDDocument` field is NOT checked for validity, and is limited to a maximum length of 256 bytes.
 
@@ -220,7 +220,7 @@ If the `DID` object associated with the `Account` does not exist,
 - The `DID` space key (`0x0049`)
 - The Account ID of the `Account`, i.e. rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 
-#### DID associated with this object is:
+#### DID associated with this object is
 
 ```
 did:xrpl:1:rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
@@ -249,25 +249,25 @@ If the `DID` object associated with the `Account` exists,
 
 ### 5.1.2. Transaction-specific fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`DIDSet`**. The integer value is 40.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 Indicates the account which initiates the `DIDSet` transaction. This account MUST be a funded account on ledger.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Fee`      | :heavy_check_mark: | `number`  |   `Amount`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Fee` | :heavy_check_mark: | `number` | `Amount` |
 
 Indicates the fee that the account submitting this transaction is willing to pay.
 
@@ -275,7 +275,7 @@ Indicates the fee that the account submitting this transaction is willing to pay
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `URI`      |           | `string`  |    `BLOB`     |
+| `URI` | | `string` | `BLOB` |
 
 Indicates the `URI` field for this object.
 
@@ -283,15 +283,15 @@ Indicates the `URI` field for this object.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Data`     |           | `string`  |    `BLOB`     |
+| `Data` | | `string` | `BLOB` |
 
 Indicates the `Data` field for this object.
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `DIDDocument` |           | `string`  |    `BLOB`     |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `DIDDocument` | | `string` | `BLOB` |
 
 Indicates the DID document for this object.
 
@@ -383,25 +383,25 @@ A successful `DIDDelete` transaction deletes the `DID` object corresponding to t
 
 ### 5.3.2. Transaction-Specific Fields
 
-| Field Name        |     Required?      | JSON Type | Internal Type |
-| ----------------- | :----------------: | :-------: | :-----------: |
-| `TransactionType` | :heavy_check_mark: | `string`  |   `UINT16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `TransactionType` | :heavy_check_mark: | `string` | `UINT16` |
 
 Indicates the new transaction type **`DIDDelete`**. The integer value is 41.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Account`  | :heavy_check_mark: | `string`  |  `AccountID`  |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Account` | :heavy_check_mark: | `string` | `AccountID` |
 
 Indicates the account that initiated the transaction.
 
 ---
 
-| Field Name |     Required?      | JSON Type | Internal Type |
-| ---------- | :----------------: | :-------: | :-----------: |
-| `Fee`      | :heavy_check_mark: | `string`  |   `Amount`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Fee` | :heavy_check_mark: | `string` | `Amount` |
 
 Indicates the fee that the account is willing to pay for this transaction.
 
@@ -443,16 +443,16 @@ While not normative, a sample XRPL DID Document MAY look like:
 
 ```
 {
-  	"@context"   : "https://w3id.org/did/v1",
-  	"id"         : "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
- 	"publicKey"  : [
-		 		{
-   	        		"id" :  "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn #keys-1",
-    	       		"type" :  ["CryptographicKey", "EcdsaKoblitzPublicKey"],
-    	       		"curve" :  "secp256k1",
-   	           		"expires" :  15674657,
-    	       		"publicKeyHex": "04f42987b7faee8b95e2c3a3345224f00e00dfc67ba882…."
-  				} ]
+      "@context"   : "https://w3id.org/did/v1",
+      "id"         : "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+     "publicKey"  : [
+                 {
+                       "id" :  "did:xrpl:1:rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn #keys-1",
+                       "type" :  ["CryptographicKey", "EcdsaKoblitzPublicKey"],
+                       "curve" :  "secp256k1",
+                          "expires" :  15674657,
+                       "publicKeyHex": "04f42987b7faee8b95e2c3a3345224f00e00dfc67ba882…."
+                  } ]
 }
 ```
 

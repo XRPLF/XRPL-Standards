@@ -45,11 +45,11 @@ The rough idea of this design is that users can include "sub-transactions" insid
 
 ### 2.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                        |
-| ----------------- | --------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `Flags`           | ✔️        | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. These flags represent the batch mode of the transaction.                  |
-| `RawTransactions` | ✔️        | `array`   | `STArray`     | The list of inner transactions that will be applied. (Minimum 2, Maximum 8)                                                        |
-| `BatchSigners`    |           | `array`   | `STArray`     | An array of objects that represent signatures for a multi-account Batch transaction, signifying authorization of this transaction. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Flags` | ✔️ | `number` | `UInt32` | A bit-map of boolean flags enabled for this transaction. These flags represent the batch mode of the transaction. |
+| `RawTransactions` | ✔️ | `array` | `STArray` | The list of inner transactions that will be applied. (Minimum 2, Maximum 8) |
+| `BatchSigners` | | `array` | `STArray` | An array of objects that represent signatures for a multi-account Batch transaction, signifying authorization of this transaction. |
 
 #### 2.1.1. `Flags`
 
@@ -102,12 +102,12 @@ This field must be provided if more than one account has inner transactions incl
 
 Each object in this array contains the following fields:
 
-| FieldName       | Required? | JSON Type | Internal Type |
-| :-------------- | :-------- | :-------- | :------------ |
-| `Account`       | ✔️        | `string`  | `STAccount`   |
-| `SigningPubKey` |           | `string`  | `STBlob`      |
-| `TxnSignature`  |           | `string`  | `STBlob`      |
-| `Signers`       |           | `array`   | `STArray`     |
+| FieldName | Required? | JSON Type | Internal Type |
+| :-------- | :-------- | :-------- | :------------ |
+| `Account` | ✔️ | `string` | `STAccount` |
+| `SigningPubKey` | | `string` | `STBlob` |
+| `TxnSignature` | | `string` | `STBlob` |
+| `Signers` | | `array` | `STArray` |
 
 Either the `SigningPubKey` and `TxnSignature` fields must be included, or the `Signers` field.
 
@@ -505,8 +505,8 @@ Note that the inner transactions are committed as normal transactions.
 
 This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
 
-| Flag Name         | Value        |
-| ----------------- | ------------ |
+| Flag Name | Value |
+| --------- | ----- |
 | `tfInnerBatchTxn` | `0x40000000` |
 
 This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.

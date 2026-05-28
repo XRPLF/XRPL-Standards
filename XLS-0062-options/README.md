@@ -75,22 +75,22 @@ The `OptionPair` ledger object represents an option listing for a specific asset
 
 ### Fields
 
-| Field             | JSON Name           | Type      | Required | Description                                                              |
-| ----------------- | ------------------- | --------- | -------- | ------------------------------------------------------------------------ |
-| LedgerEntryType   | `OptionPair`        | UInt16    | Required | The type of ledger object (value `0x0083`).                              |
-| Account           | `Account`           | AccountID | Required | The ID of the pseudo account for this option listing.                    |
-| OwnerNode         | `OwnerNode`         | UInt64    | Required | The owner directory node index.                                          |
-| Asset             | `Asset`             | Issue     | Required | The underlying asset of the option (an `Issue` structure).               |
-| Asset2            | `Asset2`            | Issue     | Required | The strike price asset of the option (an `Issue` structure).             |
-| PreviousTxnID     | `PreviousTxnID`     | Hash256   | Required | The ID of the transaction that modified this object.                     |
-| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32    | Required | The ledger sequence number of the transaction that modified this object. |
+| Field | JSON Name | Type | Required | Description |
+| ----- | --------- | ---- | -------- | ----------- |
+| LedgerEntryType | `OptionPair` | UInt16 | Required | The type of ledger object (value `0x0083`). |
+| Account | `Account` | AccountID | Required | The ID of the pseudo account for this option listing. |
+| OwnerNode | `OwnerNode` | UInt64 | Required | The owner directory node index. |
+| Asset | `Asset` | Issue | Required | The underlying asset of the option (an `Issue` structure). |
+| Asset2 | `Asset2` | Issue | Required | The strike price asset of the option (an `Issue` structure). |
+| PreviousTxnID | `PreviousTxnID` | Hash256 | Required | The ID of the transaction that modified this object. |
+| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32 | Required | The ledger sequence number of the transaction that modified this object. |
 
 ### Related AccountRoot Extension
 
 The `AccountRoot` object for an option listing includes:
 
-| Field        | JSON Name      | Type    | Required | Description                                |
-| ------------ | -------------- | ------- | -------- | ------------------------------------------ |
+| Field | JSON Name | Type | Required | Description |
+| ----- | --------- | ---- | -------- | ----------- |
 | OptionPairID | `OptionPairID` | Hash256 | Required | The ID of the associated OptionPair object |
 
 ### Example `OptionPair` Object
@@ -119,16 +119,16 @@ The `Option` ledger object can also represent a specific option contract on the 
 
 ### Fields (for Option Contracts)
 
-| Field             | JSON Name           | Type    | Required | Description                                                                    |
-| ----------------- | ------------------- | ------- | -------- | ------------------------------------------------------------------------------ |
-| LedgerEntryType   | `Option`            | UInt16  | Required | The type of ledger object (value `0x0083`).                                    |
-| OptionID          | `OptionID`          | Hash256 | Required | The ID of the parent Option listing (AccountID of the listing pseudo account). |
-| OwnerNode         | `OwnerNode`         | UInt64  | Required | The owner directory node index.                                                |
-| StrikePrice       | `StrikePrice`       | Amount  | Required | The strike price of the option (as an `Amount`).                               |
-| Expiration        | `Expiration`        | UInt32  | Required | The expiration time of the option (as a UNIX timestamp).                       |
-| OptionType        | `OptionType`        | UInt8   | Required | The type of option: 0 for Call, 1 for Put.                                     |
-| PreviousTxnID     | `PreviousTxnID`     | Hash256 | Required | The ID of the transaction that modified this object.                           |
-| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32  | Required | The ledger sequence number of the transaction that modified this object.       |
+| Field | JSON Name | Type | Required | Description |
+| ----- | --------- | ---- | -------- | ----------- |
+| LedgerEntryType | `Option` | UInt16 | Required | The type of ledger object (value `0x0083`). |
+| OptionID | `OptionID` | Hash256 | Required | The ID of the parent Option listing (AccountID of the listing pseudo account). |
+| OwnerNode | `OwnerNode` | UInt64 | Required | The owner directory node index. |
+| StrikePrice | `StrikePrice` | Amount | Required | The strike price of the option (as an `Amount`). |
+| Expiration | `Expiration` | UInt32 | Required | The expiration time of the option (as a UNIX timestamp). |
+| OptionType | `OptionType` | UInt8 | Required | The type of option: 0 for Call, 1 for Put. |
+| PreviousTxnID | `PreviousTxnID` | Hash256 | Required | The ID of the transaction that modified this object. |
+| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32 | Required | The ledger sequence number of the transaction that modified this object. |
 
 ### Example `Option` Contract Object
 
@@ -155,21 +155,21 @@ The `OptionOffer` ledger object represents an offer to buy or sell an option con
 
 ### Fields
 
-| Field             | JSON Name           | Type      | Required | Description                                                              |
-| ----------------- | ------------------- | --------- | -------- | ------------------------------------------------------------------------ |
-| LedgerEntryType   | `OptionOffer`       | UInt16    | Required | The type of ledger object (value `0x0084`).                              |
-| Owner             | `Owner`             | AccountID | Required | The account that created the offer.                                      |
-| OwnerNode         | `OwnerNode`         | UInt64    | Required | The owner directory node index.                                          |
-| OptionID          | `OptionID`          | Hash256   | Required | The ID of the `Option` object this offer is for.                         |
-| Premium           | `Premium`           | Amount    | Required | The premium of the option contract (price per option).                   |
-| Quantity          | `Quantity`          | UInt32    | Required | The quantity of options (number of contracts).                           |
-| OpenInterest      | `OpenInterest`      | UInt32    | Required | The quantity available (unsealed amount).                                |
-| Amount            | `Amount`            | Amount    | Optional | The locked amount (for sellers, the collateral in the underlying asset). |
-| BookDirectory     | `BookDirectory`     | Hash256   | Required | The directory listing offers at the same price.                          |
-| BookNode          | `BookNode`          | UInt64    | Required | The order book directory node index.                                     |
-| SealedOptions     | `SealedOptions`     | Array     | Optional | An array of `SealedOption` objects representing matched offers.          |
-| PreviousTxnID     | `PreviousTxnID`     | Hash256   | Required | The ID of the transaction that modified this object.                     |
-| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32    | Required | The ledger sequence number of the transaction that modified this object. |
+| Field | JSON Name | Type | Required | Description |
+| ----- | --------- | ---- | -------- | ----------- |
+| LedgerEntryType | `OptionOffer` | UInt16 | Required | The type of ledger object (value `0x0084`). |
+| Owner | `Owner` | AccountID | Required | The account that created the offer. |
+| OwnerNode | `OwnerNode` | UInt64 | Required | The owner directory node index. |
+| OptionID | `OptionID` | Hash256 | Required | The ID of the `Option` object this offer is for. |
+| Premium | `Premium` | Amount | Required | The premium of the option contract (price per option). |
+| Quantity | `Quantity` | UInt32 | Required | The quantity of options (number of contracts). |
+| OpenInterest | `OpenInterest` | UInt32 | Required | The quantity available (unsealed amount). |
+| Amount | `Amount` | Amount | Optional | The locked amount (for sellers, the collateral in the underlying asset). |
+| BookDirectory | `BookDirectory` | Hash256 | Required | The directory listing offers at the same price. |
+| BookNode | `BookNode` | UInt64 | Required | The order book directory node index. |
+| SealedOptions | `SealedOptions` | Array | Optional | An array of `SealedOption` objects representing matched offers. |
+| PreviousTxnID | `PreviousTxnID` | Hash256 | Required | The ID of the transaction that modified this object. |
+| PreviousTxnLgrSeq | `PreviousTxnLgrSeq` | UInt32 | Required | The ledger sequence number of the transaction that modified this object. |
 
 #### `SealedOption` Object in `SealedOptions` Array
 
@@ -177,11 +177,11 @@ Each `SealedOption` object represents a matched (sealed) option offer with a cou
 
 ##### Fields
 
-| Field         | JSON Name       | Type      | Required | Description                                 |
-| ------------- | --------------- | --------- | -------- | ------------------------------------------- |
-| Owner         | `Owner`         | AccountID | Required | The account ID of the counterparty.         |
-| OptionOfferID | `OptionOfferID` | Hash256   | Required | The ID of the counterparty's `OptionOffer`. |
-| Quantity      | `Quantity`      | UInt32    | Required | The quantity sealed with the counterparty.  |
+| Field | JSON Name | Type | Required | Description |
+| ----- | --------- | ---- | -------- | ----------- |
+| Owner | `Owner` | AccountID | Required | The account ID of the counterparty. |
+| OptionOfferID | `OptionOfferID` | Hash256 | Required | The ID of the counterparty's `OptionOffer`. |
+| Quantity | `Quantity` | UInt32 | Required | The quantity sealed with the counterparty. |
 
 ### Example `OptionOffer` Object
 
@@ -223,12 +223,12 @@ The `OptionPairCreate` transaction is used to create a new option listing for a 
 
 ### Fields
 
-| Field             | Type      | Required | Description                                                  |
-| ----------------- | --------- | -------- | ------------------------------------------------------------ |
-| `TransactionType` | UInt16    | Required | The type of transaction (`OptionPairCreate`, value `64`).    |
-| `Account`         | AccountID | Required | The account creating the option listing.                     |
-| `Asset`           | Issue     | Required | The underlying asset of the option (an `Issue` structure).   |
-| `Asset2`          | Issue     | Required | The strike price asset of the option (an `Issue` structure). |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `TransactionType` | UInt16 | Required | The type of transaction (`OptionPairCreate`, value `64`). |
+| `Account` | AccountID | Required | The account creating the option listing. |
+| `Asset` | Issue | Required | The underlying asset of the option (an `Issue` structure). |
+| `Asset2` | Issue | Required | The strike price asset of the option (an `Issue` structure). |
 
 ### Failure Conditions
 
@@ -272,23 +272,23 @@ The `OptionCreate` transaction is used to create a new option offer on the XRPL 
 
 ### Fields
 
-| Field             | Type      | Required | Description                                                              |
-| ----------------- | --------- | -------- | ------------------------------------------------------------------------ |
-| `TransactionType` | UInt16    | Required | The type of transaction (`OptionCreate`, value `64`).                    |
-| `Account`         | AccountID | Required | The account creating the option offer.                                   |
-| `OptionID`        | Hash256   | Required | The ID of the existing Option (AccountID of the option pseudo account).  |
-| `Premium`         | Amount    | Required | The premium per option contract.                                         |
-| `Quantity`        | UInt32    | Required | The quantity of options (number of contracts). Must be divisible by 100. |
-| `Flags`           | UInt32    | Optional | Flags to specify action (see below).                                     |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `TransactionType` | UInt16 | Required | The type of transaction (`OptionCreate`, value `64`). |
+| `Account` | AccountID | Required | The account creating the option offer. |
+| `OptionID` | Hash256 | Required | The ID of the existing Option (AccountID of the option pseudo account). |
+| `Premium` | Amount | Required | The premium per option contract. |
+| `Quantity` | UInt32 | Required | The quantity of options (number of contracts). Must be divisible by 100. |
+| `Flags` | UInt32 | Optional | Flags to specify action (see below). |
 
 ### `OptionCreate` Flags
 
 The `OptionCreate` transaction uses flags to specify the type of option offer.
 
-| Flag Name  | Hex Value    | Description                                   |
-| ---------- | ------------ | --------------------------------------------- |
+| Flag Name | Hex Value | Description |
+| --------- | --------- | ----------- |
 | `tfMarket` | `0x00020000` | Set for Market order (unset for Limit order). |
-| `tfSell`   | `0x00080000` | Set for Sell option (unset for Buy).          |
+| `tfSell` | `0x00080000` | Set for Sell option (unset for Buy). |
 
 The mask for valid flags is:
 
@@ -345,21 +345,21 @@ The `OptionSettle` transaction is used to settle an option contract on the XRPL.
 
 ### Fields
 
-| Field             | Type      | Required | Description                                                       |
-| ----------------- | --------- | -------- | ----------------------------------------------------------------- |
-| `TransactionType` | UInt16    | Required | The type of transaction (`OptionSettle`, value `65`).             |
-| `Account`         | AccountID | Required | The account settling the option.                                  |
-| `OptionID`        | Hash256   | Required | The ID of the `Option` (AccountID of the option pseudo account).  |
-| `OptionOfferID`   | Hash256   | Required | The ID of the `OptionOffer` ledger object representing the offer. |
-| `Flags`           | UInt32    | Required | Flags indicating the settlement action (exactly one must be set). |
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `TransactionType` | UInt16 | Required | The type of transaction (`OptionSettle`, value `65`). |
+| `Account` | AccountID | Required | The account settling the option. |
+| `OptionID` | Hash256 | Required | The ID of the `Option` (AccountID of the option pseudo account). |
+| `OptionOfferID` | Hash256 | Required | The ID of the `OptionOffer` ledger object representing the offer. |
+| `Flags` | UInt32 | Required | Flags indicating the settlement action (exactly one must be set). |
 
 ### `OptionSettle` Flags
 
-| Flag Name    | Hex Value    | Description                       |
-| ------------ | ------------ | --------------------------------- |
-| `tfExpire`   | `0x00010000` | Set to expire the option.         |
-| `tfClose`    | `0x00020000` | Set to close the option position. |
-| `tfExercise` | `0x00040000` | Set to exercise the option.       |
+| Flag Name | Hex Value | Description |
+| --------- | --------- | ----------- |
+| `tfExpire` | `0x00010000` | Set to expire the option. |
+| `tfClose` | `0x00020000` | Set to close the option position. |
+| `tfExercise` | `0x00040000` | Set to exercise the option. |
 
 The mask for valid flags is:
 

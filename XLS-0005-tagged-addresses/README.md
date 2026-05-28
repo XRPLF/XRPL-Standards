@@ -93,10 +93,10 @@ The tag shall always be encoded as a little endian two's complement 64 bit integ
 
 The standard proposes using different prefixes, making addresses encoded for use on the mainnet have a different initial character than addresses encoded for use on the testnet, making it possible for users and tools to differentiate addresses.
 
-| Network   | Prefix      | Initial Character |
-| --------- | ----------- | ----------------- |
-| _mainnet_ | `0x05 0x44` | `X`               |
-| _testnet_ | `0x04 0x93` | `T`               |
+| Network | Prefix | Initial Character |
+| ------- | ------ | ----------------- |
+| _mainnet_ | `0x05 0x44` | `X` |
+| _testnet_ | `0x04 0x93` | `T` |
 
 It is important to note: an address encoded for mainnet use could still be used on the testnet and vice versa; tools that understand the new format are encouraged to implement protections.
 
@@ -104,10 +104,10 @@ It is important to note: an address encoded for mainnet use could still be used 
 
 Adding a _flags_ field allow us to make this format slightly more flexible than it would otherwise be. At this time, only 3 flags are specified, one of which is reserved and may not be used in practice.
 
-| Name     | Value  | Description                                                                                                                                                       |
-| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NO_TAG` | `0x00` | The address is untagged and treated as if no tag had been specified. The remaining 8 bytes **MUST** be zero.                                                      |
-| `TAG_32` | `0x01` | The address contains a 32-bit tag. The tag is encoded in little-endian form in the next 4 bytes. The remaining 4 bytes **MUST** be zero.                          |
+| Name | Value | Description |
+| ---- | ----- | ----------- |
+| `NO_TAG` | `0x00` | The address is untagged and treated as if no tag had been specified. The remaining 8 bytes **MUST** be zero. |
+| `TAG_32` | `0x01` | The address contains a 32-bit tag. The tag is encoded in little-endian form in the next 4 bytes. The remaining 4 bytes **MUST** be zero. |
 | `TAG_64` | `0x02` | The address contains a 64-bit tag. The tag is encoded in little-endian form in the next 8 bytes. This flag is reserved in case 64-bit tags ever become supported. |
 
 #### Caution
@@ -122,31 +122,31 @@ Below we present how the classic address `rGWrZyQqhTp9Xu7G5Pkayo7bXjH4k4QYpf` wo
 
 #### Encoding for Main Net
 
-| Tag        | Address                                             | Raw Bytes                                                      |
-| ---------- | --------------------------------------------------- | -------------------------------------------------------------- |
-| <none>     | **XVLhHMPHU98es4dbozjVtdWzVrDjtV5fdx1mHp98tDMoQXb** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A000000000000000000` |
-| 0          | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8AqEL4xcZj5whKbmc** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010000000000000000` |
-| 1          | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010100000000000000` |
-| 2          | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8zpDURx7DzBCkrQE7** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010200000000000000` |
-| 32         | **XVLhHMPHU98es4dbozjVtdWzVrDjtVoYiC9UvKfjKar4LJe** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A012000000000000000` |
-| 276        | **XVLhHMPHU98es4dbozjVtdWzVrDjtVoKj3MnFGMXEFMnvJV** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A011401000000000000` |
-| 65591      | **XVLhHMPHU98es4dbozjVtdWzVrDjtVozpjdhPQVdt3ghaWw** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A013700010000000000` |
-| 16781933   | **XVLhHMPHU98es4dbozjVtdWzVrDjtVqrDUk2vDpkTjPsY73** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A016D12000100000000` |
+| Tag | Address | Raw Bytes |
+| --- | ------- | --------- |
+| <none> | **XVLhHMPHU98es4dbozjVtdWzVrDjtV5fdx1mHp98tDMoQXb** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A000000000000000000` |
+| 0 | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8AqEL4xcZj5whKbmc** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010000000000000000` |
+| 1 | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010100000000000000` |
+| 2 | **XVLhHMPHU98es4dbozjVtdWzVrDjtV8zpDURx7DzBCkrQE7** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A010200000000000000` |
+| 32 | **XVLhHMPHU98es4dbozjVtdWzVrDjtVoYiC9UvKfjKar4LJe** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A012000000000000000` |
+| 276 | **XVLhHMPHU98es4dbozjVtdWzVrDjtVoKj3MnFGMXEFMnvJV** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A011401000000000000` |
+| 65591 | **XVLhHMPHU98es4dbozjVtdWzVrDjtVozpjdhPQVdt3ghaWw** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A013700010000000000` |
+| 16781933 | **XVLhHMPHU98es4dbozjVtdWzVrDjtVqrDUk2vDpkTjPsY73** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A016D12000100000000` |
 | 4294967294 | **XVLhHMPHU98es4dbozjVtdWzVrDjtV1kAsixQTdMjbWi39u** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A01FEFFFFFF00000000` |
 | 4294967295 | **XVLhHMPHU98es4dbozjVtdWzVrDjtV18pX8yuPT7y4xaEHi** | `44AA066C988C712815CC37AF71472B7CBBBD4E2A0A01FFFFFFFF00000000` |
 
 #### Encoding for Testnet
 
-| Tag        | Address                                             | Raw Bytes                                                      |
-| ---------- | --------------------------------------------------- | -------------------------------------------------------------- |
-| _none_     | **TVE26TYGhfLC7tQDno7G8dGtxSkYQn49b3qD26PK7FcGSKE** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A000000000000000000` |
-| 0          | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnSy8RHqGHoGJ59spi2** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010000000000000000` |
-| 1          | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnSz1uDimDdPYXzSpyw** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010100000000000000` |
-| 2          | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnTryP9tG9TW8GeMBmd** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010200000000000000` |
-| 32         | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnT2oqaCDzMEuCDAj1j** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A012000000000000000` |
-| 276        | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnTMgJJYfAbsiPsc6Zg** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A011401000000000000` |
-| 65591      | **TVE26TYGhfLC7tQDno7G8dGtxSkYQn7ryu2W6njw7mT1jmS** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A013700010000000000` |
-| 16781933   | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnVsw45sDtGHhLi27Qa** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A016D12000100000000` |
+| Tag | Address | Raw Bytes |
+| --- | ------- | --------- |
+| _none_ | **TVE26TYGhfLC7tQDno7G8dGtxSkYQn49b3qD26PK7FcGSKE** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A000000000000000000` |
+| 0 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnSy8RHqGHoGJ59spi2** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010000000000000000` |
+| 1 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnSz1uDimDdPYXzSpyw** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010100000000000000` |
+| 2 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnTryP9tG9TW8GeMBmd** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A010200000000000000` |
+| 32 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnT2oqaCDzMEuCDAj1j** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A012000000000000000` |
+| 276 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnTMgJJYfAbsiPsc6Zg** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A011401000000000000` |
+| 65591 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQn7ryu2W6njw7mT1jmS** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A013700010000000000` |
+| 16781933 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnVsw45sDtGHhLi27Qa** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A016D12000100000000` |
 | 4294967294 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnX8tDFQ53itLNqs6vU** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A01FEFFFFFF00000000` |
 | 4294967295 | **TVE26TYGhfLC7tQDno7G8dGtxSkYQnXoy6kSDh6rZzApc69** | `93AA066C988C712815CC37AF71472B7CBBBD4E2A0A01FFFFFFFF00000000` |
 

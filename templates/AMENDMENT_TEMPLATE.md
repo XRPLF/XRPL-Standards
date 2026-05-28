@@ -53,15 +53,15 @@ _[Describe the algorithm for calculating the unique object identifier. Include t
 
 ### 2.2. Fields
 
-| Field Name        | Constant   | Required               | Internal Type | Default Value      | Description                                                           |
-| ----------------- | ---------- | ---------------------- | ------------- | ------------------ | --------------------------------------------------------------------- |
-| LedgerEntryType   | Yes        | Yes                    | UINT16        | `[EntryTypeValue]` | Identifies this as a `[LedgerEntryName]` object.                      |
-| Account           | No         | Yes                    | ACCOUNT       | N/A                | The account that owns this object.                                    |
-| `[CustomField1]`  | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
-| `[CustomField2]`  | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
-| OwnerNode         | No         | Yes                    | UINT64        | N/A                | Hint for which page this object appears on in the owner directory.    |
-| PreviousTxnID     | No         | Yes                    | HASH256       | N/A                | Hash of the previous transaction that modified this object            |
-| PreviousTxnLgrSeq | No         | Yes                    | UINT32        | N/A                | Ledger sequence of the previous transaction that modified this object |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| ---------- | -------- | -------- | ------------- | ------------- | ----------- |
+| LedgerEntryType | Yes | Yes | UINT16 | `[EntryTypeValue]` | Identifies this as a `[LedgerEntryName]` object. |
+| Account | No | Yes | ACCOUNT | N/A | The account that owns this object. |
+| `[CustomField1]` | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]` | `[Value/N/A]` | `[Description of field]` |
+| `[CustomField2]` | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]` | `[Value/N/A]` | `[Description of field]` |
+| OwnerNode | No | Yes | UINT64 | N/A | Hint for which page this object appears on in the owner directory. |
+| PreviousTxnID | No | Yes | HASH256 | N/A | Hash of the previous transaction that modified this object |
+| PreviousTxnLgrSeq | No | Yes | UINT32 | N/A | Ledger sequence of the previous transaction that modified this object |
 
 _[Add more rows as needed for your specific fields. Remove example custom fields and replace with your actual fields.]_
 
@@ -75,8 +75,8 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 
 \_[Describe any ledger entry-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
 
-| Flag Name        | Flag Value   | Description      |
-| ---------------- | ------------ | ---------------- |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
 | `[lsfFlagName1]` | `0x[Value1]` | `[Description1]` |
 
 ### 2.4. Ownership _(Optional if ledger entry already exists on XRPL)_
@@ -180,7 +180,7 @@ _[If your specification introduces new transaction common fields, you can have a
 > - **Transaction Fee** (3.3)
 >
 > For new transaction types, all subsections are required.
-
+>
 > **Naming Convention:** Transaction names should follow the pattern `<LedgerEntryName><Verb>` (e.g., `ExampleSet`, `ExampleDelete`). Most specifications will need at least:
 >
 > - `[Object]Set` or `[Object]Create`: Creates or updates the object
@@ -188,11 +188,11 @@ _[If your specification introduces new transaction common fields, you can have a
 
 ### 3.1. Fields
 
-| Field Name       | Required?              | JSON Type                      | Internal Type | Default Value       | Description                                          |
-| ---------------- | ---------------------- | ------------------------------ | ------------- | ------------------- | ---------------------------------------------------- |
-| TransactionType  | Yes                    | string                         | UINT16        | `[TransactionName]` | Identifies this as a `[TransactionName]` transaction |
-| `[CustomField1]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[TYPE]`      | `[Value/N/A]`       | `[Description of field]`                             |
-| `[CustomField2]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[TYPE]`      | `[Value/N/A]`       | `[Description of field]`                             |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | string | UINT16 | `[TransactionName]` | Identifies this as a `[TransactionName]` transaction |
+| `[CustomField1]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[TYPE]` | `[Value/N/A]` | `[Description of field]` |
+| `[CustomField2]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[TYPE]` | `[Value/N/A]` | `[Description of field]` |
 
 _[Add more rows as needed for your specific fields. Remove example custom fields and replace with your actual fields. Common fields like Account, Fee, Sequence, Flags, SigningPubKey, TxnSignature are assumed.]_
 
@@ -206,8 +206,8 @@ _[Detailed explanation of field behavior, validation rules, etc.]_
 
 \_[Describe any transaction-specific flags. The values must be powers of 2. If there are none, you can omit this section.]
 
-| Flag Name       | Flag Value   | Description      |
-| --------------- | ------------ | ---------------- |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
 | `[tfFlagName1]` | `0x[Value1]` | `[Description1]` |
 
 ### 3.3. Transaction Fee _(Optional if transaction already exists on XRPL)_
@@ -256,8 +256,8 @@ _[Describe the ledger state changes when the transaction executes successfully. 
 
 _[Only include this section if the transaction adds or modifies metadata fields. Otherwise, delete this subsection.]_
 
-| Field Name     | Validated  | Always Present?        | Type                           | Description     |
-| -------------- | ---------- | ---------------------- | ------------------------------ | --------------- |
+| Field Name | Validated | Always Present? | Type | Description |
+| ---------- | --------- | --------------- | ---- | ----------- |
 | `[field_name]` | `[Yes/No]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description]` |
 
 ### 3.7. Example JSON
@@ -295,17 +295,17 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.1. Request Fields
 
-| Field Name     | Required?              | JSON Type                      | Description                   |
-| -------------- | ---------------------- | ------------------------------ | ----------------------------- |
-| command        | Yes                    | string                         | Must be `"[api_method_name]"` |
-| `[field_name]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]`      |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| command | Yes | string | Must be `"[api_method_name]"` |
+| `[field_name]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]` |
 
 ### 5.2. Response Fields
 
-| Field Name        | Always Present?        | JSON Type                      | Description                          |
-| ----------------- | ---------------------- | ------------------------------ | ------------------------------------ |
-| status            | Yes                    | string                         | `"success"` if the request succeeded |
-| `[ResponseField]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]`             |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| status | Yes | string | `"success"` if the request succeeded |
+| `[ResponseField]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]` |
 
 ### 5.3. Failure Conditions
 

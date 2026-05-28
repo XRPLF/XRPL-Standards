@@ -44,10 +44,10 @@ All fields defined below are optional but recommended.
 
 ### 3.1. Base Fields
 
-| Field Name | Key | Description                                        | Example                      | Type   | Required? |
-| ---------- | --- | -------------------------------------------------- | ---------------------------- | ------ | --------- |
-| `name`     | `n` | Human-readable name of the Vault or fund           | LATAM Private Credit Fund II | string | ✔️        |
-| `website`  | `w` | Website associated with the Vault operator or fund | examplefund.com              | string | ✔️        |
+| Field Name | Key | Description | Example | Type | Required? |
+| ---------- | --- | ----------- | ------- | ---- | --------- |
+| `name` | `n` | Human-readable name of the Vault or fund | LATAM Private Credit Fund II | string | ✔️ |
+| `website` | `w` | Website associated with the Vault operator or fund | examplefund.com | string | ✔️ |
 
 ### 3.2. Usage Guidelines
 

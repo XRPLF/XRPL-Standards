@@ -333,10 +333,10 @@ Additionally, once the amendment passes, the starting value of the `Sequence` nu
 
 **Parameters**
 
-| Field            | Style    | Description                                                      |
-| ---------------- | -------- | ---------------------------------------------------------------- |
-| `Account`        | Required | Account that is being deleted                                    |
-| `Destination`    | Required | Account that receives remaining XRP from deleted Account         |
+| Field | Style | Description |
+| ----- | ----- | ----------- |
+| `Account` | Required | Account that is being deleted |
+| `Destination` | Required | Account that receives remaining XRP from deleted Account |
 | `DestinationTag` | Optional | Destination tag that receives remaining XRP from deleted Account |
 
 The following example is an `AccountDelete` transaction that deletes account "a" and sends the remaining XRP to another account, [`rrrrrrrrrrrrrrrrrrrrrhoLvTp`](https://xrpl.org/accounts.html#special-addresses).
@@ -461,8 +461,8 @@ The "buffer" works by providing transactions that no one cares if they fail. If 
 
 The Ripple Data team examined a recent ledger and found a total of three accounts on the Main Net where the `AccountRoot` `Sequence` field got ahead of the `LedgerSequence`. Here are the transactions where the differences were largest for those three accounts. Note that the table is wide and you need to scroll left and right to see all the contents.
 
-| Account                            |                                                 Transaction Hash | Tx Sequence | Ledger Index |   Ahead By |
-| :--------------------------------- | ---------------------------------------------------------------: | ----------: | -----------: | ---------: |
-| rBxy23n7ZFbUpS699rFVj1V9ZVhAq6EGwC | D739D41D5C899E1FC9EC59B92B29F2B6FBD4C4259EA3395CBBA31511121EFE4A |  52,235,732 |   47,915,816 |  4,319,916 |
-| rEr3hxu5aim5tDWwH7H8BK47K91tR8c7FM | F077665E0BE74A22F8E098561B83DDAD7AD9B83E95257CCEFF69741F14DFBCA1 |  80,387,155 |   43,829,273 | 36,557,882 |
-| rH3uSRUJYoJhK4kL9x1mzUhDimKE2n3oT6 | 2607AEE01EFE10CAF698E1576FD3430A6FD35B86BF78EA49D2BFB03E8D918D75 |  47,797,501 |   43,830,353 |  3,967,148 |
+| Account | Transaction Hash | Tx Sequence | Ledger Index | Ahead By |
+| :------ | ---------------: | ----------: | -----------: | -------: |
+| rBxy23n7ZFbUpS699rFVj1V9ZVhAq6EGwC | D739D41D5C899E1FC9EC59B92B29F2B6FBD4C4259EA3395CBBA31511121EFE4A | 52,235,732 | 47,915,816 | 4,319,916 |
+| rEr3hxu5aim5tDWwH7H8BK47K91tR8c7FM | F077665E0BE74A22F8E098561B83DDAD7AD9B83E95257CCEFF69741F14DFBCA1 | 80,387,155 | 43,829,273 | 36,557,882 |
+| rH3uSRUJYoJhK4kL9x1mzUhDimKE2n3oT6 | 2607AEE01EFE10CAF698E1576FD3430A6FD35B86BF78EA49D2BFB03E8D918D75 | 47,797,501 | 43,830,353 | 3,967,148 |

@@ -103,16 +103,16 @@ This section describes the changes to the common fields of ledger entries, to in
 
 As a reference, here are the fields that all ledger objects currently have:
 
-| Field Name        | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                             |
-| ----------------- | --------- | --------- | ------------- | --------- | ------------- | --------------------------------------- |
-| `LedgerEntryType` | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The type of ledger entry.               |
-| `Flags`           | ✔️        | ✔️        | N/A           | `number`  | `UInt16`      | Set of bit-flags for this ledger entry. |
+| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | --------- | ------------- | ----------- |
+| `LedgerEntryType` | ✔️ | ✔️ | N/A | `string` | `UInt16` | The type of ledger entry. |
+| `Flags` | ✔️ | ✔️ | N/A | `number` | `UInt16` | Set of bit-flags for this ledger entry. |
 
 This spec proposes one additional field:
 
-| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                                                        |
-| ---------- | --------- | --------- | ------------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sponsor`  |           |           | N/A           | `string`  | `AccountID`   | The sponsor paying the owner reserve for a given ledger object. When present, it indicates that the reserve burden for that object has been shifted from the owner to the sponsor. |
+| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | --------- | ------------- | ----------- |
+| `Sponsor` | | | N/A | `string` | `AccountID` | The sponsor paying the owner reserve for a given ledger object. When present, it indicates that the reserve burden for that object has been shifted from the owner to the sponsor. |
 
 ### 4.2. Ownership
 
@@ -195,28 +195,28 @@ This ensures that there can be at most one `Sponsorship` object per sponsor-spon
 
 ### 5.2. Fields
 
-| Field Name          | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                            |
-| ------------------- | --------- | --------- | ------------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `LedgerEntryType`   | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `"Sponsorship"` (JSON) or a unique numeric value (internal, assigned during implementation) indicates this is a `Sponsorship` ledger object. |
-| `Flags`             |           |           | `0`           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object.                                                                                                    |
-| `Owner`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                                  |
-| `Sponsee`           | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                                         |
-| `FeeAmount`         |           |           |               | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                           |
-| `MaxFee`            |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                         |
-| `ReserveCount`      |           |           | `0`           | `string`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                                              |
-| `OwnerNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages.                  |
-| `SponseeNode`       | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages.                  |
-| `PreviousTxnID`     |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                        |
-| `PreviousTxnLgrSeq` |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                |
+| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | --------- | ------------- | ----------- |
+| `LedgerEntryType` | ✔️ | ✔️ | N/A | `string` | `UInt16` | The value `"Sponsorship"` (JSON) or a unique numeric value (internal, assigned during implementation) indicates this is a `Sponsorship` ledger object. |
+| `Flags` | | | `0` | `number` | `UInt32` | A bit-map of boolean flags enabled for this object. |
+| `Owner` | ✔️ | ✔️ | N/A | `string` | `AccountID` | The sponsor associated with this relationship. This account also pays for the reserve of this object. |
+| `Sponsee` | ✔️ | ✔️ | N/A | `string` | `AccountID` | The sponsee associated with this relationship. |
+| `FeeAmount` | | | | `string` | `Amount` | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees. |
+| `MaxFee` | | | N/A | `string` | `Amount` | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool. |
+| `ReserveCount` | | | `0` | `string` | `UInt32` | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves. |
+| `OwnerNode` | ✔️ | ✔️ | N/A | `string` | `UInt64` | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages. |
+| `SponseeNode` | ✔️ | ✔️ | N/A | `string` | `UInt64` | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages. |
+| `PreviousTxnID` | | ✔️ | N/A | `string` | `Hash256` | The identifying hash of the transaction that most recently modified this entry. |
+| `PreviousTxnLgrSeq` | | ✔️ | N/A | `number` | `UInt32` | The ledger index that contains the transaction that most recently modified this object. |
 
 ### 5.3. Flags
 
 There are two flags on this object:
 
-| Flag Name                             | Flag Value   | Modifiable? | Description                                                                                                                                                                                                    |
-| ------------------------------------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lsfSponsorshipRequireSignForFee`     | `0x00010000` | Yes         | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient).     |
-| `lsfSponsorshipRequireSignForReserve` | `0x00020000` | Yes         | If set, indicates that every use of this sponsor for sponsoring reserves requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient). |
+| Flag Name | Flag Value | Modifiable? | Description |
+| --------- | ---------- | ----------- | ----------- |
+| `lsfSponsorshipRequireSignForFee` | `0x00010000` | Yes | If set, indicates that every use of this sponsor for sponsoring fees requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient). |
+| `lsfSponsorshipRequireSignForReserve` | `0x00020000` | Yes | If set, indicates that every use of this sponsor for sponsoring reserves requires a signature from the sponsor. If unset, no signature is necessary (the existence of the `Sponsorship` object is sufficient). |
 
 ### 5.4. Ownership
 
@@ -296,12 +296,12 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 This spec proposes these additional fields:
 
-| Field Name               | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                   |
-| ------------------------ | --------- | --------- | ------------- | --------- | ------------- | ----------------------------------------------------------------------------- |
-| `Sponsor`                |           |           | N/A           | `string`  | `AccountID`   | The sponsor that is paying the account reserve for this account.              |
-| `SponsoredOwnerCount`    |           |           | `0`           | `number`  | `UInt32`      | The number of objects the account owns that are being sponsored by a sponsor. |
-| `SponsoringOwnerCount`   |           |           | `0`           | `number`  | `UInt32`      | The number of objects the account is sponsoring the reserve for.              |
-| `SponsoringAccountCount` |           |           | `0`           | `number`  | `UInt32`      | The number of accounts that the account is sponsoring the reserve for.        |
+| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | --------- | ------------- | ----------- |
+| `Sponsor` | | | N/A | `string` | `AccountID` | The sponsor that is paying the account reserve for this account. |
+| `SponsoredOwnerCount` | | | `0` | `number` | `UInt32` | The number of objects the account owns that are being sponsored by a sponsor. |
+| `SponsoringOwnerCount` | | | `0` | `number` | `UInt32` | The number of objects the account is sponsoring the reserve for. |
+| `SponsoringAccountCount` | | | `0` | `number` | `UInt32` | The number of accounts that the account is sponsoring the reserve for. |
 
 #### 6.1.1. `Sponsor`
 
@@ -370,10 +370,10 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 This spec proposes these additional fields:
 
-| Field Name    | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                              |
-| ------------- | --------- | --------- | ------------- | --------- | ------------- | ---------------------------------------------------------------------------------------- |
-| `HighSponsor` |           |           | N/A           | `string`  | `AccountID`   | The sponsor that is paying the reserve on behalf of the "high" account on the trustline. |
-| `LowSponsor`  |           |           | N/A           | `string`  | `AccountID`   | The sponsor that is paying the reserve on behalf of the "low" account on the trustline.  |
+| Field Name | Constant? | Required? | Default Value | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | --------- | ------------- | ----------- |
+| `HighSponsor` | | | N/A | `string` | `AccountID` | The sponsor that is paying the reserve on behalf of the "high" account on the trustline. |
+| `LowSponsor` | | | N/A | `string` | `AccountID` | The sponsor that is paying the reserve on behalf of the "low" account on the trustline. |
 
 These additional fields are necessary for a trustline since the reserve for this object may be held by two accounts (in the case of a bidirectional trustline).
 
@@ -425,11 +425,11 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/co
 
 We propose these modifications:
 
-| Field Name         | Required? | JSON Type | Internal Type | Description                                                                                                                                                           |
-| ------------------ | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sponsor`          |           | `string`  | `AccountID`   | The sponsoring account.                                                                                                                                               |
-| `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                              |
-| `SponsorSignature` |           | `object`  | `STObject`    | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Sponsor` | | `string` | `AccountID` | The sponsoring account. |
+| `SponsorFlags` | | `number` | `UInt32` | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve). |
+| `SponsorSignature` | | `object` | `STObject` | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
 
 ##### 8.1.1. `SponsorFlags`
 
@@ -437,18 +437,18 @@ The `SponsorFlags` field allows the user to specify which sponsorship type(s) th
 
 There are two flag values that are supported:
 
-| Flag Name           | Flag Value   | Description                                                        |
-| ------------------- | ------------ | ------------------------------------------------------------------ |
-| `spfSponsorFee`     | `0x00000001` | Sponsoring (paying for) the fee of the transaction.                |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
+| `spfSponsorFee` | `0x00000001` | Sponsoring (paying for) the fee of the transaction. |
 | `spfSponsorReserve` | `0x00000002` | Sponsoring the reserve for any objects created in the transaction. |
 
 #### 8.1.2 `SponsorSignature`
 
-| Field Name      | Required? | JSON Type | Internal Type | Description                                                                                                                                           |
-| --------------- | --------- | --------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SigningPubKey` |           | `string`  | `STBlob`      | The `SigningPubKey` for `Sponsor`, if single-signing.                                                                                                 |
-| `TxnSignature`  |           | `string`  | `STBlob`      | A signature of the transaction from the sponsor, to indicate their approval of this transaction, if single-signing.                                   |
-| `Signers`       |           | `array`   | `STArray`     | An array of signatures of the transaction from the sponsor's signers to indicate their approval of this transaction, if the sponsor is multi-signing. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `SigningPubKey` | | `string` | `STBlob` | The `SigningPubKey` for `Sponsor`, if single-signing. |
+| `TxnSignature` | | `string` | `STBlob` | A signature of the transaction from the sponsor, to indicate their approval of this transaction, if single-signing. |
+| `Signers` | | `array` | `STArray` | An array of signatures of the transaction from the sponsor's signers to indicate their approval of this transaction, if the sponsor is multi-signing. |
 
 ##### 8.1.2.1. `SigningPubKey`, `TxnSignature` and `Signers`
 
@@ -552,26 +552,26 @@ _Note: This transaction may still be sponsored, via the standard `Sponsor` field
 
 ### 9.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                              |
-| --------------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                                 |
-| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the counterparty sponsor or the sponsee.                                                                                                         |
-| `Flags`               |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                              |
-| `CounterpartySponsor` |           | `string`  | `AccountID`   | The counterparty sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.              |
-| `Sponsee`             |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `CounterpartySponsor`.                                                                      |
-| `FeeAmount`           |           | `string`  | `Amount`      | The (remaining) amount of XRP that the counterparty sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
-| `MaxFee`              |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                                           |
-| `ReserveCount`        |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the counterparty sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.ReserveCount` field (if it exists).  |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`SponsorshipSet`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. This may be either the counterparty sponsor or the sponsee. |
+| `Flags` | | `number` | `UInt32` | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags). |
+| `CounterpartySponsor` | | `string` | `AccountID` | The counterparty sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`. |
+| `Sponsee` | | `string` | `AccountID` | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `CounterpartySponsor`. |
+| `FeeAmount` | | `string` | `Amount` | The (remaining) amount of XRP that the counterparty sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists). |
+| `MaxFee` | | `string` | `Amount` | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool. |
+| `ReserveCount` | | `number` | `UInt32` | The (remaining) amount of reserves that the counterparty sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.ReserveCount` field (if it exists). |
 
 ### 9.2. Flags
 
-| Flag Name                                 | Flag Value   | Description                                                                                                                                 |
-| ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tfSponsorshipSetRequireSignForFee`       | `0x00010000` | Adds the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.    |
-| `tfSponsorshipClearRequireSignForFee`     | `0x00020000` | Removes the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
-| `tfSponsorshipSetRequireSignForReserve`   | `0x00040000` | Adds the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.         |
-| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.      |
-| `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                                                  |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
+| `tfSponsorshipSetRequireSignForFee` | `0x00010000` | Adds the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
+| `tfSponsorshipClearRequireSignForFee` | `0x00020000` | Removes the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
+| `tfSponsorshipSetRequireSignForReserve` | `0x00040000` | Adds the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
+| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
+| `tfDeleteObject` | `0x00100000` | Removes the ledger object. |
 
 ### 9.3. Transaction Fee
 
@@ -661,15 +661,15 @@ There are three valid transfer scenarios:
 
 ### 10.1. Fields
 
-| Field Name         | Required? | JSON Type | Internal Type | Description                                                                                                                                                           |
-| ------------------ | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipTransfer`).                                                                                                                         |
-| `Account`          | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the current sponsor or the current sponsee.                                                                   |
-| `Flags`            |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. These flags represent the transfer scenario.                                                                 |
-| `ObjectID`         |           | `string`  | `Hash256`     | The ID of the object to transfer sponsorship.                                                                                                                         |
-| `Sponsor`          |           | `string`  | `AccountID`   | The new sponsor of the object.                                                                                                                                        |
-| `SponsorFlags`     |           | `number`  | `UInt32`      | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve).                                                                              |
-| `SponsorSignature` |           | `object`  | `STObject`    | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`SponsorshipTransfer`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. This may be either the current sponsor or the current sponsee. |
+| `Flags` | | `number` | `UInt32` | A bit-map of boolean flags enabled for this transaction. These flags represent the transfer scenario. |
+| `ObjectID` | | `string` | `Hash256` | The ID of the object to transfer sponsorship. |
+| `Sponsor` | | `string` | `AccountID` | The new sponsor of the object. |
+| `SponsorFlags` | | `number` | `UInt32` | Flags on the sponsorship, indicating what type of sponsorship this is (fee vs. reserve). |
+| `SponsorSignature` | | `object` | `STObject` | This field contains all the signing information for the sponsorship happening in the transaction. It is included if the transaction is fee- and/or reserve-sponsored. |
 
 #### 10.1.1. `ObjectID`
 
@@ -687,10 +687,10 @@ If there is no `Sponsor` field, or if the `spfSponsorReserve` flag is not includ
 
 ### 10.2. Transaction Flags
 
-| Flag Name               | Value        | Description                                                                                                           |
-| ----------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `tfSponsorshipEnd`      | `0x00000001` | The sponsor or sponsee is ending the sponsorship, transferring the responsibility of the reserve back to the sponsee. |
-| `tfSponsorshipCreate`   | `0x00000002` | The sponsee is creating a new sponsored object, transferring the responsibility of the reserve to a sponsor.          |
+| Flag Name | Value | Description |
+| --------- | ----- | ----------- |
+| `tfSponsorshipEnd` | `0x00000001` | The sponsor or sponsee is ending the sponsorship, transferring the responsibility of the reserve back to the sponsee. |
+| `tfSponsorshipCreate` | `0x00000002` | The sponsee is creating a new sponsored object, transferring the responsibility of the reserve to a sponsor. |
 | `tfSponsorshipReassign` | `0x00000004` | The sponsee is reassigning a sponsorship, transferring the responsibility of the reserve from one sponsor to another. |
 
 **Exactly one of these flags must be enabled.**
@@ -806,16 +806,16 @@ This amendment proposes no changes to the fields, only to the flags and behavior
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/payment#payment-flags) are the flags that `Payment` currently has:
 
-| Flag Name          | Flag Value   | Description                                                                                                                                                                                        |
-| ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tfNoRippleDirect` | `0x00010000` | Do not use the default path; only use paths included in the `Paths` field. This is intended to force the transaction to take arbitrage opportunities. Most clients do not need this.               |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
+| `tfNoRippleDirect` | `0x00010000` | Do not use the default path; only use paths included in the `Paths` field. This is intended to force the transaction to take arbitrage opportunities. Most clients do not need this. |
 | `tfPartialPayment` | `0x00020000` | If the specified `Amount` cannot be sent without spending more than `SendMax`, reduce the received amount instead of failing outright. See [Partial Payments](#partial-payments) for more details. |
-| `tfLimitQuality`   | `0x00040000` | Only take paths where all the conversions have an input:output ratio that is equal or better than the ratio of `Amount`:`SendMax`. See [Limit Quality](#limit-quality) for details.                |
+| `tfLimitQuality` | `0x00040000` | Only take paths where all the conversions have an input:output ratio that is equal or better than the ratio of `Amount`:`SendMax`. See [Limit Quality](#limit-quality) for details. |
 
 This spec proposes the following additions:
 
-| Flag Name                 | Flag Value   | Description                                                                                                                                         |
-| ------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
 | `tfSponsorCreatedAccount` | `0x00080000` | This flag is only valid if the `Payment` is used to create an account. If it is enabled, the created account will be sponsored by the `tx.Account`. |
 
 ### 11.3. Failure Conditions
@@ -1007,30 +1007,30 @@ _[NOTE: This API will not be implemented in rippled, but will instead be impleme
 
 ### 16.1. Request Fields
 
-| Field Name               | Required? | JSON Type            | Description                                                                                                             |
-| ------------------------ | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `account`                | ✔️        | `string`             | The sponsor in question.                                                                                                |
-| `deletion_blockers_only` |           | `boolean`            | If `true`, the response only includes objects that would block this account from being deleted. The default is `false`. |
-| `ledger_hash`            |           | `string`             | A hash representing the ledger version to use.                                                                          |
-| `ledger_index`           |           | `number` or `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.                           |
-| `limit`                  |           | `number`             | The maximum number of objects to include in the results.                                                                |
-| `marker`                 |           | `any`                | Value from a previous paginated response. Resume retrieving data where that response left off.                          |
-| `type`                   |           | `string`             | Filter results by a ledger entry type. Some examples are `offer` and `escrow`.                                          |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `account` | ✔️ | `string` | The sponsor in question. |
+| `deletion_blockers_only` | | `boolean` | If `true`, the response only includes objects that would block this account from being deleted. The default is `false`. |
+| `ledger_hash` | | `string` | A hash representing the ledger version to use. |
+| `ledger_index` | | `number` or `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically. |
+| `limit` | | `number` | The maximum number of objects to include in the results. |
+| `marker` | | `any` | Value from a previous paginated response. Resume retrieving data where that response left off. |
+| `type` | | `string` | Filter results by a ledger entry type. Some examples are `offer` and `escrow`. |
 
 ### 16.2. Response Fields
 
 The response fields are nearly identical to `account_objects`.
 
-| Field Name             | Always Present? | JSON Type | Description                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `account`              | ✔️              | `string`  | The account this request corresponds to.                                                                                                                                                                                                                                                                                                                                              |
-| `sponsored_objects`    | ✔️              | `array`   | Array of ledger entries in this account's owner directory. This includes entries that are owned by this account and entries that are linked to this account but owned by someone else, such as escrows where this account is the destination. Each member is a ledger entry in its raw ledger format. This may contain fewer entries than the maximum specified in the `limit` field. |
-| `ledger_hash`          |                 | `string`  | The identifying hash of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                           |
-| `ledger_index`         |                 | `number`  | The ledger index of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                               |
-| `ledger_current_index` |                 | `number`  | The ledger index of the open ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                          |
-| `limit`                |                 | `number`  | The limit that was used in this request, if any.                                                                                                                                                                                                                                                                                                                                      |
-| `marker`               |                 | `any`     | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. Omitted when there are no additional pages after this one.                                                                                                                                                                                                  |
-| `validated`            |                 | `boolean` | If `true`, the information in this response comes from a validated ledger version. Otherwise, the information is subject to change.                                                                                                                                                                                                                                                   |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| `account` | ✔️ | `string` | The account this request corresponds to. |
+| `sponsored_objects` | ✔️ | `array` | Array of ledger entries in this account's owner directory. This includes entries that are owned by this account and entries that are linked to this account but owned by someone else, such as escrows where this account is the destination. Each member is a ledger entry in its raw ledger format. This may contain fewer entries than the maximum specified in the `limit` field. |
+| `ledger_hash` | | `string` | The identifying hash of the ledger that was used to generate this response. |
+| `ledger_index` | | `number` | The ledger index of the ledger that was used to generate this response. |
+| `ledger_current_index` | | `number` | The ledger index of the open ledger that was used to generate this response. |
+| `limit` | | `number` | The limit that was used in this request, if any. |
+| `marker` | | `any` | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. Omitted when there are no additional pages after this one. |
+| `validated` | | `boolean` | If `true`, the information in this response comes from a validated ledger version. Otherwise, the information is subject to change. |
 
 ### 16.3. Failure Conditions
 
@@ -1332,12 +1332,12 @@ An alternative design considered was a wrapper transaction (tentatively named `R
 
 It would look something like this:
 
-| Field Name        | Required | JSON Type | Internal Type | Description                                                              |
-| ----------------- | -------- | --------- | ------------- | ------------------------------------------------------------------------ |
-| `TransactionType` | Yes      | `string`  | `UInt16`      | The transaction type (`Relay`).                                          |
-| `Account`         | Yes      | `string`  | `AccountID`   | The sponsor of the transaction.                                          |
-| `Transaction`     | Yes      | `object`  | `STTx`        | The sponsee's transaction.                                               |
-| `Fee`             | Yes      | `string`  | `STAmount`    | The fee for the transaction. This should match the fee in `Transaction`. |
+| Field Name | Required | JSON Type | Internal Type | Description |
+| ---------- | -------- | --------- | ------------- | ----------- |
+| `TransactionType` | Yes | `string` | `UInt16` | The transaction type (`Relay`). |
+| `Account` | Yes | `string` | `AccountID` | The sponsor of the transaction. |
+| `Transaction` | Yes | `object` | `STTx` | The sponsee's transaction. |
+| `Fee` | Yes | `string` | `STAmount` | The fee for the transaction. This should match the fee in `Transaction`. |
 
 This was inspired by Stellar's sandwich transaction design, but the current inner object design felt cleaner. From an implementation perspective, it's easier to have the fee payer as a part of the existing transaction rather than as a part of a wrapper transaction, since that info needs to somehow get passed down the stack. Also, while the wrapper transaction paradigm will be used in XLS-56, they should be used sparingly in designs—only when necessary—as their flow is rather complicated in the `rippled` code.
 

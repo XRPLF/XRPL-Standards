@@ -50,8 +50,9 @@ In the simple case the CTI fits neatly and unambiguously in a positive signed 64
 ### CTI Format — Simple Case
 
 _Must be handled by all implementations._
+
 | Byte/s | Field |
-|--------|--------------------------------------------------------------------------|
+| ------ | ----- |
 | 0 | `<first four bits of ledger hash> <first four bits of transaction hash>` |
 | 1-3 | `<16 bit TransactionIndex>` |
 | 3-7 | `<32 bit LedgerSequence>` |
@@ -59,8 +60,9 @@ _Must be handled by all implementations._
 ### CTI Format — Advanced Case
 
 _Required for implementations that need to handle non-mainnet transactions or for "fully future-proofed implementations", otherwise optional._
+
 | Byte/s | Field |
-|--------|-----------------------------------------------------------------------------------------------------------|
+| ------ | ----- |
 | 0 | `<reserved 00> <T double-wide txn bit> <L double-wide lgr bit> <four bits of network id>` |
 | 1 | `<first four bits of ledger hash> <first four bits of transaction hash>` |
 
@@ -74,38 +76,42 @@ _Required for implementations that need to handle non-mainnet transactions or fo
 Taken together the two double-wide bits inform the parsing application how to proceed:
 
 Case 1: Normal Field Sizes `TL = 00`
+
 | Byte/s | Field |
-|--------|-----------------------------------------------------------------------------------------------------------|
+| ------ | ----- |
 | 2-4 | `<16 bit TransactionIndex>` |
 | 4-8 | `<32 bit LedgerSequence>` |
 
 Case 2: Double wide LedgerSequence `TL = 01`
+
 | Byte/s | Field |
-|--------|-----------------------------------------------------------------------------------------------------------|
+| ------ | ----- |
 | 2-4 | `<16 bit TransactionIndex>` |
 | 4-12 | `<64 bit LedgerSequence>` |
 
 Case 3: Double-wide TransactionIndex `TL = 10`
+
 | Byte/s | Field |
-|--------|-----------------------------------------------------------------------------------------------------------|
+| ------ | ----- |
 | 2-6 | `<32 bit TransactionIndex>` |
 | 6-10 | `<32 bit LedgerSequence>` |
 
 Case 4: Double-wide TransactionIndex and LedgerSequence `TL = 11`
+
 | Byte/s | Field |
-|--------|-----------------------------------------------------------------------------------------------------------|
+| ------ | ----- |
 | 2-6 | `<32 bit TransactionIndex>` |
 | 6-14 | `<64 bit LedgerSequence>` |
 
 ### Network IDs
 
-| Number | Network                        |
-| ------ | ------------------------------ |
-| 0      | XRPL mainnet                   |
-| 1      | XRPL testnet                   |
-| 2      | XRPL devnet                    |
-| 3      | XRPL-Labs Public Hooks Testnet |
-| 4..15  | Reserved for future use        |
+| Number | Network |
+| ------ | ------- |
+| 0 | XRPL mainnet |
+| 1 | XRPL testnet |
+| 2 | XRPL devnet |
+| 3 | XRPL-Labs Public Hooks Testnet |
+| 4..15 | Reserved for future use |
 
 ### Canonical Presentation
 

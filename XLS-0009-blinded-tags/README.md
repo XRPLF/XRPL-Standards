@@ -39,29 +39,29 @@ Two corresponding [AccountSet flags](https://xrpl.org/accountset.html#accountset
 - `asfRequiresBlindedTags`
 - `asfSupportsBlindedTags`
 
-#### Interaction between `lsfRequireDest` and blinded tags:
+#### Interaction between `lsfRequireDest` and blinded tags
 
 If the existing `lsfRequireDest` account flag is set on an account, then all transactions for which a `DestinationTag` can be specified must include a destination tag. For accounts which support blinded tags, the `BlindedDestinationTag` may be specified instead. More specifically:
 
-|  `lsfRequireDest`  | `lsfSupportsBlindedTags` | `lsfRequiresBlindedTags` | Description                                                                        |
-| :----------------: | :----------------------: | :----------------------: | :--------------------------------------------------------------------------------- |
-|        :x:         |           :x:            |           :x:            | The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
-|        :x:         |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used. |
-|        :x:         |    :heavy_check_mark:    |           :x:            | The `DestinationTag` or `BlindedDestinationTag` may be used.                       |
-|        :x:         |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
-| :heavy_check_mark: |           :x:            |           :x:            | The `DestinationTag` is required. The `BlindedDestinationTag` may not be used.     |
-| :heavy_check_mark: |           :x:            |    :heavy_check_mark:    | The `BlindedDestinationTag` is required. The `DestinationTag` may not be used.     |
-| :heavy_check_mark: |    :heavy_check_mark:    |           :x:            | Either the `DestinationTag` or `BlindedDestinationTag` is required.                |
-| :heavy_check_mark: |    :heavy_check_mark:    |    :heavy_check_mark:    | Invalid configuration.                                                             |
+| `lsfRequireDest` | `lsfSupportsBlindedTags` | `lsfRequiresBlindedTags` | Description |
+| :--------------: | :----------------------: | :----------------------: | :---------- |
+| :x: | :x: | :x: | The `DestinationTag` may be used. The `BlindedDestinationTag` may **not** be used. |
+| :x: | :x: | :heavy_check_mark: | The `BlindedDestinationTag` may be used. The `DestinationTag` may **not** be used. |
+| :x: | :heavy_check_mark: | :x: | The `DestinationTag` or `BlindedDestinationTag` may be used. |
+| :x: | :heavy_check_mark: | :heavy_check_mark: | Invalid configuration. |
+| :heavy_check_mark: | :x: | :x: | The `DestinationTag` is required. The `BlindedDestinationTag` may not be used. |
+| :heavy_check_mark: | :x: | :heavy_check_mark: | The `BlindedDestinationTag` is required. The `DestinationTag` may not be used. |
+| :heavy_check_mark: | :heavy_check_mark: | :x: | Either the `DestinationTag` or `BlindedDestinationTag` is required. |
+| :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | Invalid configuration. |
 
-#### New optional Transaction fields:
+#### New optional Transaction fields
 
-|           Tag           |     Type     | Description                                                                                                                       |
-| :---------------------: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------- |
-|   `BlindedSourceTag`    | 64-bit UInt  | Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided.                               |
-| `BlindedDestinationTag` | 64-bit UInt  | Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided.                     |
-|     `KeyIdentifier`     | 32-bit UInt  | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
-|      `RandomValue`      | 256-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+| Tag | Type | Description |
+| :-: | :--: | :---------- |
+| `BlindedSourceTag` | 64-bit UInt | Blinded analog of `SourceTag`. If this tag is provided, the `SourceTag` field MUST NOT be provided. |
+| `BlindedDestinationTag` | 64-bit UInt | Blinded analog of `DestinationTag`. If this tag is provided, the `DestinationTag` field MUST NOT be provided. |
+| `KeyIdentifier` | 32-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
+| `RandomValue` | 256-bit UInt | MUST BE provided if and only if the transaction also provides a `BlindedSourceTag` field, `BlindedDestinationTag` field, or both. |
 
 **Note:** The new fields are supported on transaction which support the `DestinationTag` and `SourceTag` fields. Not all transaction types support them.
 
@@ -103,7 +103,7 @@ In addition to the common information, the sender requires:
 
   (The recipient publishes this in their account's `MessageKey` field.)
 
-###### Steps:
+###### Steps
 
 1. Generate a random number _r_, between 0 and 2<sup>128</sup>-1, and calculate _R = rG_.
 2. Calculate _P = rK<sub>pub</sub>_.
@@ -116,7 +116,7 @@ In addition to the common information, the recipient requires:
 
 - The value _R_ that the sender calculated.
 
-###### Steps:
+###### Steps
 
 1. Calculate _P = K<sub>sec</sub>R_.
 2. Calculate the shared encryption key _X = KDF(P<sub>x</sub> || N),...)_ where _P<sub>x</sub>_ represents the x-coordinate of the point _P_ which **should not** be the point at infinity, and `...` denotes any additional parameters the function may require.
@@ -153,7 +153,7 @@ If the sender determines that the recipient of a transaction supports blinded ta
 5. Set the `KeyIdentifier` field in the transaction to _Z_.
 6. Set the `RandomValue` field in the transaction to _R_.
 
-## What the recipient of a transaction does:
+## What the recipient of a transaction does
 
 When the recipient receives a transaction, they examine if the transaction for the presence of the `BlindedDestinationTag` and `BlindedSourceTag` fields; if they are present, the recipient needs to preprocess the transaction to unblind the tags. **The recipient** unblinds the tags as follows:
 
@@ -174,7 +174,7 @@ Once the preprocessing stage is complete, the recipient now processes the incomi
 
 ## Miscellaneous Details
 
-### Privacy Comment:
+### Privacy Comment
 
 A different blinding factor is used for source and destination tags. This is necessary because of the nature of the exclusive OR operator. Consider:
 

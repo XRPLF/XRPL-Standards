@@ -22,15 +22,15 @@ This field is an optional field and be available for any transaction.
 
 | Field Name | Required? | JSON Type | Internal Type |
 | ---------- | :-------: | :-------: | :-----------: |
-| `Charge`   |           | `object`  |   `Object`    |
+| `Charge` | | `object` | `Object` |
 
 ## `Charge` Field
 
-| Field Name       | Required? |      JSON Type       | Internal Type |
-| ---------------- | :-------: | :------------------: | :-----------: |
-| `Amount`         |    ✅     | `object` or `string` |   `Amount`    |
-| `Destination`    |    ✅     |       `string`       |   `Account`   |
-| `DestinationTag` |           |       `number`       |   `UInt16`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | ✅ | `object` or `string` | `Amount` |
+| `Destination` | ✅ | `string` | `Account` |
+| `DestinationTag` | | `number` | `UInt16` |
 
 #### `Amount` Field
 

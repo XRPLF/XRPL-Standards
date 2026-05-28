@@ -2,8 +2,8 @@
     xls: 41
     title: XRPL Proof of Payment Standard (XPOP)
     author: Richard Holland (@RichardAH)
-	description: An offline non-interactive cryptographic proof that a transaction was successfully submitted to the XRP Ledger and what its impact (metadata) was
-	proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/107
+    description: An offline non-interactive cryptographic proof that a transaction was successfully submitted to the XRP Ledger and what its impact (metadata) was
+    proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/107
     created: 2023-05-04
     status: Final
     category: Ecosystem
@@ -40,31 +40,31 @@ XPOPs are a JSON object with the following schema:
 
 ```
 {
-	"ledger": {
-		"acroot": merkle root of account state map | hex string,
-		"txroot": merkle root of transaction map | hex string ,
-		"close": close time | int,
-		"coins": total drops | int or string,
-		"cres": close time resolution | int,
-		"flags": ledger flags | int,
-		"pclose": parent close time | int,
-		"phash": parent hash | hex string,
-	},
-	"transaction": {
-		"blob": serialized transaction | hex string,
-		"meta": serialized metadata | hex string,
-		"proof": <see below>
-	},
-	"validation": {
-		"data": {
-			validator pub key or master key | base58 string : serialized validation message | hex string
-			... for each validation message
-		},
-		"unl": {
-			"blob": base64 encoded VL blob as appearing on vl site | base64 string,
-			... remaining fields from vl site
-		}
-	}
+    "ledger": {
+        "acroot": merkle root of account state map | hex string,
+        "txroot": merkle root of transaction map | hex string ,
+        "close": close time | int,
+        "coins": total drops | int or string,
+        "cres": close time resolution | int,
+        "flags": ledger flags | int,
+        "pclose": parent close time | int,
+        "phash": parent hash | hex string,
+    },
+    "transaction": {
+        "blob": serialized transaction | hex string,
+        "meta": serialized metadata | hex string,
+        "proof": <see below>
+    },
+    "validation": {
+        "data": {
+            validator pub key or master key | base58 string : serialized validation message | hex string
+            ... for each validation message
+        },
+        "unl": {
+            "blob": base64 encoded VL blob as appearing on vl site | base64 string,
+            ... remaining fields from vl site
+        }
+    }
 }
 ```
 
@@ -77,22 +77,22 @@ The `proof` key inside `transaction` section has one of two possible forms:
 ```
 # list form
 "proof": [
-	hex string for branch '0',
-	...
+    hex string for branch '0',
+    ...
         hex string for branch 'A',
-	# branch 'B' is a list
-	[
-			hex string for branch 'B0',
-			... ,
-			hex string for branch 'BE',
-			# branch 'BF' is a list
-			[
-				hex string for branch 'BF0',
-				...
-			]
-	],
-	hex string for branch 'C',
-	...
+    # branch 'B' is a list
+    [
+            hex string for branch 'B0',
+            ... ,
+            hex string for branch 'BE',
+            # branch 'BF' is a list
+            [
+                hex string for branch 'BF0',
+                ...
+            ]
+    ],
+    hex string for branch 'C',
+    ...
 ]
 
 ```
@@ -109,17 +109,17 @@ The `proof` key inside `transaction` section has one of two possible forms:
    "proof": {
      "hash" : hex string,
      "key" : hex string,
-   	"children" : {
-   		"0":
-   		{
-   			"children": {},
-   			"hash": hex string,
-   			"key": hex string
-   		},
-   		...
-   		"F":
-   		{ ...}
-   	}
+       "children" : {
+           "0":
+           {
+               "children": {},
+               "hash": hex string,
+               "key": hex string
+           },
+           ...
+           "F":
+           { ...}
+       }
    }
    ```
 

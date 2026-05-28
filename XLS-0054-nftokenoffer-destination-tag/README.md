@@ -34,24 +34,24 @@ One new field is added to the object: `DestinationTag`.
 
 As a reference, the `NFTokenOffer` object has the current fields (in addition to the [common fields](https://xrpl.org/transaction-common-fields.html)):
 
-| Name              | JSON Type       | Internal Type | Required |
-| ----------------- | --------------- | ------------- | -------- |
-| Amount            | Currency Amount | AMOUNT        | Yes      |
-| Destination       | string          | AccountID     | No       |
-| Expiration        | number          | UInt32        | No       |
-| LedgerEntryType   | string          | UInt16        | Yes      |
-| NFTokenID         | string          | Hash256       | Yes      |
-| NFTokenOfferNode  | string          | UInt64        | No       |
-| Owner             | string          | AccountID     | Yes      |
-| OwnerNode         | string          | UInt64        | No       |
-| PreviousTxnID     | string          | Hash256       | Yes      |
-| PreviousTxnLgrSeq | number          | UInt32        | Yes      |
+| Name | JSON Type | Internal Type | Required |
+| ---- | --------- | ------------- | -------- |
+| Amount | Currency Amount | AMOUNT | Yes |
+| Destination | string | AccountID | No |
+| Expiration | number | UInt32 | No |
+| LedgerEntryType | string | UInt16 | Yes |
+| NFTokenID | string | Hash256 | Yes |
+| NFTokenOfferNode | string | UInt64 | No |
+| Owner | string | AccountID | Yes |
+| OwnerNode | string | UInt64 | No |
+| PreviousTxnID | string | Hash256 | Yes |
+| PreviousTxnLgrSeq | number | UInt32 | Yes |
 
 `DestinationTag` would be added to that object with the following specifications:
 
-| Name           | JSON Type | Internal Type | Required |
-| -------------- | --------- | ------------- | -------- |
-| DestinationTag | Number    | UInt32        | No       |
+| Name | JSON Type | Internal Type | Required |
+| ---- | --------- | ------------- | -------- |
+| DestinationTag | Number | UInt32 | No |
 
 # 3. `NFTokenCreateOffer` transaction
 
@@ -61,19 +61,19 @@ This transaction already exists and one field would be added to it: `Destination
 
 The current fields of that transaction are:
 
-| Field       | JSON Type       | Internal Type | Required           |
-| ----------- | --------------- | ------------- | ------------------ |
-| Owner       | String          | AccountID     | Yes if `buy` offer |
-| NFTokenID   | String          | Hash256       | Yes                |
-| Amount      | Currency Amount | Amount        | Yes                |
-| Expiration  | Number          | UInt32        | No                 |
-| Destination | String          | AccountID     | No                 |
+| Field | JSON Type | Internal Type | Required |
+| ----- | --------- | ------------- | -------- |
+| Owner | String | AccountID | Yes if `buy` offer |
+| NFTokenID | String | Hash256 | Yes |
+| Amount | Currency Amount | Amount | Yes |
+| Expiration | Number | UInt32 | No |
+| Destination | String | AccountID | No |
 
 `DestinationTag` would be added to that transaction with the following specifications:
 
-| Name           | JSON Type | Internal Type | Required |
-| -------------- | --------- | ------------- | -------- |
-| DestinationTag | Number    | UInt32        | No       |
+| Name | JSON Type | Internal Type | Required |
+| ---- | --------- | ------------- | -------- |
+| DestinationTag | Number | UInt32 | No |
 
 ## 3.2. Usage
 

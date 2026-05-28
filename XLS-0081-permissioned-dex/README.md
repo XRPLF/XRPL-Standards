@@ -96,33 +96,33 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 </summary>
 
-| Field Name          | Required? | JSON Type | Internal Type | Description                                                                                                                                   |
-| ------------------- | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Account`           | ✔️        | `string`  | `AccountID`   | The address of the account that owns this offer.                                                                                              |
-| `BookDirectory`     | ✔️        | `string`  | `Hash256`     | The ID of the offer directory that links to this offer.                                                                                       |
-| `BookNode`          | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the offer directory links to this entry, in case the directory consists of multiple pages.                    |
-| `Expiration`        |           | `number`  | `UInt32`      | Indicates the time after which this offer is considered unfunded.                                                                             |
-| `LedgerEntryType`   | ✔️        | `string`  | `UInt16`      | The value `0x006F`, mapped to the string `Offer`, indicates that this is an offer entry.                                                      |
-| `OwnerNode`         | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the owner directory links to this entry, in case the directory consists of multiple pages.                    |
-| `PreviousTxnID`     | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                               |
-| `PreviousTxnLgrSeq` | ✔️        | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                       |
-| `Sequence`          | ✔️        | `number`  | `UInt32`      | The `Sequence` value of the `OfferCreate` transaction that created this offer. Used in combination with the `Account` to identify this offer. |
-| `TakerPays`         | ✔️        | `object`  | `Amount`      | The remaining amount and type of currency requested by the offer creator.                                                                     |
-| `TakerGets`         | ✔️        | `object`  | `Amount`      | The remaining amount and type of currency being provided by the offer creator.                                                                |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Account` | ✔️ | `string` | `AccountID` | The address of the account that owns this offer. |
+| `BookDirectory` | ✔️ | `string` | `Hash256` | The ID of the offer directory that links to this offer. |
+| `BookNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the offer directory links to this entry, in case the directory consists of multiple pages. |
+| `Expiration` | | `number` | `UInt32` | Indicates the time after which this offer is considered unfunded. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The value `0x006F`, mapped to the string `Offer`, indicates that this is an offer entry. |
+| `OwnerNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the owner directory links to this entry, in case the directory consists of multiple pages. |
+| `PreviousTxnID` | ✔️ | `string` | `Hash256` | The identifying hash of the transaction that most recently modified this entry. |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UInt32` | The ledger index that contains the transaction that most recently modified this object. |
+| `Sequence` | ✔️ | `number` | `UInt32` | The `Sequence` value of the `OfferCreate` transaction that created this offer. Used in combination with the `Account` to identify this offer. |
+| `TakerPays` | ✔️ | `object` | `Amount` | The remaining amount and type of currency requested by the offer creator. |
+| `TakerGets` | ✔️ | `object` | `Amount` | The remaining amount and type of currency being provided by the offer creator. |
 
 </details>
 
 This spec proposes adding the following fields:
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                     |
-| ----------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `DomainID`        |           | `string`  | `Hash256`     | The domain that the offer must be a part of.                                                                                    |
-| `AdditionalBooks` |           | `array`   | `STArray`     | An additional list of order book directories that this offer belongs to. Currently this field only applicable to hybrid offers. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `DomainID` | | `string` | `Hash256` | The domain that the offer must be a part of. |
+| `AdditionalBooks` | | `array` | `STArray` | An additional list of order book directories that this offer belongs to. Currently this field only applicable to hybrid offers. |
 
 One new flag `lsfHybrid` is introduced:
 
-> |  Flag Name  |  Flag Value  | Description                                                                              |
-> | :---------: | :----------: | :--------------------------------------------------------------------------------------- |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
 > | `lsfHybrid` | `0x00040000` | Indicates the offer is hybrid. (meaning it is part of both a domain and open order book) |
 
 #### 2.1.1. `DomainID`
@@ -137,10 +137,10 @@ This is an array of inner objects referencing a specific page of an offer direct
 
 > Note: For a hybrid offer, its domain directory is stored in the outer `BookDirectory` and `BookNode`, and its open directory is stored in `AdditionalBooks`.
 
-| Field Name      | Required? | JSON Type | Internal Type | Description                                                                                                                |
-| --------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `BookDirectory` | ✔️        | `string`  | `Hash256`     | The ID of the offer directory that links to this offer.                                                                    |
-| `BookNode`      | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the offer directory links to this entry, in case the directory consists of multiple pages. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `BookDirectory` | ✔️ | `string` | `Hash256` | The ID of the offer directory that links to this offer. |
+| `BookNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the offer directory links to this entry, in case the directory consists of multiple pages. |
 
 ### 2.2. Offer Invalidity
 
@@ -170,26 +170,26 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 </summary>
 
-| Field Name          | Required? | JSON Type | Internal Type | Description                                                                                                                                        |
-| ------------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Flags`             | ✔️        | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object. Currently, the protocol defines no flags for `DirectoryNode` objects. The value is always `0`. |
-| `Indexes`           | ✔️        | `array`   | `Vector256`   | The contents of this directory: an array of IDs of other objects.                                                                                  |
-| `IndexNext`         |           | `number`  | `UInt64`      | If this directory consists of multiple pages, this ID links to the next object in the chain, wrapping around at the end.                           |
-| `IndexPrevious`     |           | `number`  | `UInt64`      | If this directory consists of multiple pages, this ID links to the previous object in the chain, wrapping around at the beginning.                 |
-| `LedgerEntryType`   | ✔️        | `string`  | `UInt16`      | The value `0x0064`, mapped to the string `DirectoryNode`, indicates that this object is part of a directory.                                       |
-| `RootIndex`         | ✔️        | `string`  | `Hash256`     | The ID of root object for this directory.                                                                                                          |
-| `TakerGetsCurrency` | ✔️        | `string`  | `Hash160`     | The currency code of the `TakerGets` amount from the offers in this directory.                                                                     |
-| `TakerGetsIssuer`   | ✔️        | `string`  | `Hash160`     | The issuer of the `TakerGets` amount from the offers in this directory.                                                                            |
-| `TakerPaysCurrency` | ✔️        | `string`  | `Hash160`     | The currency code of the `TakerPays` amount from the offers in this directory.                                                                     |
-| `TakerPaysIssuer`   | ✔️        | `string`  | `Hash160`     | The issuer of the `TakerPays` amount from the offers in this directory.                                                                            |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Flags` | ✔️ | `number` | `UInt32` | A bit-map of boolean flags enabled for this object. Currently, the protocol defines no flags for `DirectoryNode` objects. The value is always `0`. |
+| `Indexes` | ✔️ | `array` | `Vector256` | The contents of this directory: an array of IDs of other objects. |
+| `IndexNext` | | `number` | `UInt64` | If this directory consists of multiple pages, this ID links to the next object in the chain, wrapping around at the end. |
+| `IndexPrevious` | | `number` | `UInt64` | If this directory consists of multiple pages, this ID links to the previous object in the chain, wrapping around at the beginning. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The value `0x0064`, mapped to the string `DirectoryNode`, indicates that this object is part of a directory. |
+| `RootIndex` | ✔️ | `string` | `Hash256` | The ID of root object for this directory. |
+| `TakerGetsCurrency` | ✔️ | `string` | `Hash160` | The currency code of the `TakerGets` amount from the offers in this directory. |
+| `TakerGetsIssuer` | ✔️ | `string` | `Hash160` | The issuer of the `TakerGets` amount from the offers in this directory. |
+| `TakerPaysCurrency` | ✔️ | `string` | `Hash160` | The currency code of the `TakerPays` amount from the offers in this directory. |
+| `TakerPaysIssuer` | ✔️ | `string` | `Hash160` | The issuer of the `TakerPays` amount from the offers in this directory. |
 
 </details>
 
 This spec proposes these additions:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                       |
-| ---------- | --------- | --------- | ------------- | ------------------------------------------------- |
-| `DomainID` |           | `string`  | `Hash256`     | The domain that the offer directory is a part of. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `DomainID` | | `string` | `Hash256` | The domain that the offer directory is a part of. |
 
 #### 3.1.1. `DomainID`
 
@@ -235,27 +235,27 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 </summary>
 
-| Field Name      | Required? | JSON Type | Internal Type | Description                                                                        |
-| --------------- | --------- | --------- | ------------- | ---------------------------------------------------------------------------------- |
-| `Expiration`    |           | `number`  | `UInt32`      | Time after which the offer is no longer active, in seconds since the Ripple Epoch. |
-| `OfferSequence` |           | `number`  | `UInt32`      | An offer to delete first, specified in the same way as `OfferCancel`.              |
-| `TakerGets`     | ✔️        | `string`  | `Amount`      | The amount and type of currency being sold.                                        |
-| `TakerPays`     | ✔️        | `string`  | `Amount`      | The amount and type of currency being bought.                                      |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Expiration` | | `number` | `UInt32` | Time after which the offer is no longer active, in seconds since the Ripple Epoch. |
+| `OfferSequence` | | `number` | `UInt32` | An offer to delete first, specified in the same way as `OfferCancel`. |
+| `TakerGets` | ✔️ | `string` | `Amount` | The amount and type of currency being sold. |
+| `TakerPays` | ✔️ | `string` | `Amount` | The amount and type of currency being bought. |
 
 </details>
 
 We propose a new field:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                  |
-| ---------- | --------- | --------- | ------------- | -------------------------------------------- |
-| `DomainID` |           | `string`  | `Hash256`     | The domain that the offer must be a part of. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `DomainID` | | `string` | `Hash256` | The domain that the offer must be a part of. |
 
 #### 4.1.1. `Flags`
 
 This spec proposes an additional flag, `tfHybrid` , to indicate whether the offer should consider only the `DomainID`'s Permissioned DEX or also include the open DEX.
 
-> | Flag Name  |  Flag Value  | Description                                                                                   |
-> | :--------: | :----------: | :-------------------------------------------------------------------------------------------- |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
 > | `tfHybrid` | `0x00100000` | Indicates the offer is hybrid. This flag cannot be set if the offer doesn't have a `DomainID` |
 
 ### 4.2. Failure Conditions
@@ -289,23 +289,23 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 </summary>
 
-| Field Name       | Required? | JSON Type            | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ---------------- | --------- | -------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Amount`         | ✔️        | `string`             | `Amount`      | The maximum amount of currency to deliver. For non-XRP amounts, the nested field names MUST be lower-case. If the `tfPartialPayment` flag is set, deliver _up to_ this amount instead.                                                                                                                                                                                                                                               |
-| `DeliverMin`     |           | `string`             | `Amount`      | The minimum amount of destination currency this transaction should deliver. Only valid if this is a partial payment. For non-XRP amounts, the nested field names are lower-case.                                                                                                                                                                                                                                                     |
-| `Destination`    | ✔️        | `string`             | `AccountID`   | The unique address of the account receiving the payment.                                                                                                                                                                                                                                                                                                                                                                             |
-| `DestinationTag` |           | `number`             | `UInt32`      | An arbitrary tag that identifies the reason for the payment to the destination, or a hosted recipient to pay.                                                                                                                                                                                                                                                                                                                        |
-| `InvoiceID`      |           | `string`             | `Hash256`     | An arbitrary 256-bit hash representing a specific reason or identifier for this payment.                                                                                                                                                                                                                                                                                                                                             |
-| `Paths`          |           | `array`              | `PathSet`     | Array of payment paths to be used for this transaction. Must be omitted for XRP-to-XRP transactions.                                                                                                                                                                                                                                                                                                                                 |
-| `SendMax`        |           | `string` or `object` | `Amount`      | Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Amount` | ✔️ | `string` | `Amount` | The maximum amount of currency to deliver. For non-XRP amounts, the nested field names MUST be lower-case. If the `tfPartialPayment` flag is set, deliver _up to_ this amount instead. |
+| `DeliverMin` | | `string` | `Amount` | The minimum amount of destination currency this transaction should deliver. Only valid if this is a partial payment. For non-XRP amounts, the nested field names are lower-case. |
+| `Destination` | ✔️ | `string` | `AccountID` | The unique address of the account receiving the payment. |
+| `DestinationTag` | | `number` | `UInt32` | An arbitrary tag that identifies the reason for the payment to the destination, or a hosted recipient to pay. |
+| `InvoiceID` | | `string` | `Hash256` | An arbitrary 256-bit hash representing a specific reason or identifier for this payment. |
+| `Paths` | | `array` | `PathSet` | Array of payment paths to be used for this transaction. Must be omitted for XRP-to-XRP transactions. |
+| `SendMax` | | `string` or `object` | `Amount` | Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments. |
 
 </details>
 
 We propose these additions:
 
-| Field Name | Required? | JSON Type | Internal Type | Description                                                                                        |
-| ---------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------- |
-| `DomainID` |           | `string`  | `Hash256`     | The domain the sender intends to use. Both the sender and destination must be part of this domain. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `DomainID` | | `string` | `Hash256` | The domain the sender intends to use. Both the sender and destination must be part of this domain. |
 
 #### 5.1.1. `DomainID`
 
@@ -340,31 +340,31 @@ The [`book_offers` RPC method](https://xrpl.org/book_offers.html) already exists
 
 As a reference, here are the fields that `book_offers` currently accepts:
 
-| Field Name     | Required? | JSON Type            | Description                                                                                                                                                                                                 |
-| -------------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `taker_gets`   | ✔️        | `object`             | The asset the account taking the Offer would receive, as a currency without an amount.                                                                                                                      |
-| `taker_pays`   | ✔️        | `object`             | The asset the account taking the Offer would pay, as a currency without an amount.                                                                                                                          |
-| `ledger_hash`  |           | `string`             | A 20-byte hex string for the ledger version to use.                                                                                                                                                         |
-| `ledger_index` |           | `number` or `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.                                                                                                               |
-| `limit`        |           | `number`             | The maximum number of Offers to return. The response may include fewer results.                                                                                                                             |
-| `taker`        |           | `string`             | The address of an account to use as a perspective. The response includes this account's offers even if they are unfunded. (You can use this to see what offers are above or below yours in the order book.) |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `taker_gets` | ✔️ | `object` | The asset the account taking the Offer would receive, as a currency without an amount. |
+| `taker_pays` | ✔️ | `object` | The asset the account taking the Offer would pay, as a currency without an amount. |
+| `ledger_hash` | | `string` | A 20-byte hex string for the ledger version to use. |
+| `ledger_index` | | `number` or `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically. |
+| `limit` | | `number` | The maximum number of Offers to return. The response may include fewer results. |
+| `taker` | | `string` | The address of an account to use as a perspective. The response includes this account's offers even if they are unfunded. (You can use this to see what offers are above or below yours in the order book.) |
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                                                                                                                                                                                       |
-| ---------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is provided, the response will include only valid domain offers associated with that specific domain. If omitted, the response will include only hybrid and open offers for the trading pair, excluding all domain-specific offers. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object. If this field is provided, the response will include only valid domain offers associated with that specific domain. If omitted, the response will include only hybrid and open offers for the trading pair, excluding all domain-specific offers. |
 
 ### 6.2. Response Fields
 
 This proposal does not suggest any changes to the response fields. As a reference, here are the fields that `book_offers` currently returns:
 
-| Field Name             | Always Present? | JSON Type            | Description                                                                                              |
-| ---------------------- | --------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
-| `ledger_current_index` |                 | `number` or `string` | The ledger index of the current in-progress ledger version, which was used to retrieve this information. |
-| `ledger_index`         |                 | `number` or `string` | The ledger index of the ledger version that was used when retrieving this data, as requested.            |
-| `ledger_hash`          |                 | `string`             | The identifying hash of the ledger version that was used when retrieving this data, as requested.        |
-| `offers`               | ✔️              | `array`              | Array of offer objects, each of which has the fields of an Offer object.                                 |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| `ledger_current_index` | | `number` or `string` | The ledger index of the current in-progress ledger version, which was used to retrieve this information. |
+| `ledger_index` | | `number` or `string` | The ledger index of the ledger version that was used when retrieving this data, as requested. |
+| `ledger_hash` | | `string` | The identifying hash of the ledger version that was used when retrieving this data, as requested. |
+| `offers` | ✔️ | `array` | Array of offer objects, each of which has the fields of an Offer object. |
 
 ## 7. RPC: `path_find`
 
@@ -376,38 +376,38 @@ Only the `create` subcommand will be affected.
 
 As a reference, here are the fields that the `path_find` `create` subcommand currently accepts:
 
-| Field Name            | Required? | JSON Type            | Description                                                                                                                                                                                                                   |
-| --------------------- | --------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subcommand`          | ✔️        | `string`             | Use `"create"` to send the create sub-command                                                                                                                                                                                 |
-| `source_account`      | ✔️        | `string`             | The address of the account to find a path from. (In other words, the account that would be sending a payment.)                                                                                                                |
-| `destination_account` | ✔️        | `string`             | The address of the account to find a path to. (In other words, the account that would receive a payment.)                                                                                                                     |
-| `destination_amount`  | ✔️        | `string` or `object` | The currency amount that the destination account would receive in a transaction.                                                                                                                                              |
-| `send_max`            |           | `string` or `object` | The currency amount that would be spent in the transaction.                                                                                                                                                                   |
-| `paths`               |           | `array`              | Array of arrays of objects, representing payment paths to check. You can use this to keep updated on changes to particular paths you already know about, or to check the overall cost to make a payment along a certain path. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `subcommand` | ✔️ | `string` | Use `"create"` to send the create sub-command |
+| `source_account` | ✔️ | `string` | The address of the account to find a path from. (In other words, the account that would be sending a payment.) |
+| `destination_account` | ✔️ | `string` | The address of the account to find a path to. (In other words, the account that would receive a payment.) |
+| `destination_amount` | ✔️ | `string` or `object` | The currency amount that the destination account would receive in a transaction. |
+| `send_max` | | `string` or `object` | The currency amount that would be spent in the transaction. |
+| `paths` | | `array` | Array of arrays of objects, representing payment paths to check. You can use this to keep updated on changes to particular paths you already know about, or to check the overall cost to make a payment along a certain path. |
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                        |
-| ---------- | --------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
 
 ### 7.2. Response Fields
 
 As a reference, here are the fields that `path_find` currently returns:
 
-| Field Name            | Always Present? | JSON Type            | Description                                                                                                                                                                                                                                                                                                                                              |
-| --------------------- | --------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alternatives`        | ✔️              | `array`              | An array of objects with suggested paths to take, as described below. If empty, then no paths were found connecting the source and destination accounts.                                                                                                                                                                                                 |
-| `destination_account` | ✔️              | `string`             | The address of the account that would receive a transaction.                                                                                                                                                                                                                                                                                             |
-| `destination_amount`  | ✔️              | `string` or `object` | The currency amount that the destination would receive in a transaction.                                                                                                                                                                                                                                                                                 |
-| `source_account`      | ✔️              | `string`             | The address that would send a transaction.                                                                                                                                                                                                                                                                                                               |
-| `full_reply`          | ✔️              | `boolean`            | If `false`, this is the result of an incomplete search. A later reply may have a better path. If `true`, then this is the best path found. (It is still theoretically possible that a better path could exist, but `rippled` won't find it.) Until you close the pathfinding request, `rippled` continues to send updates each time a new ledger closes. |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| `alternatives` | ✔️ | `array` | An array of objects with suggested paths to take, as described below. If empty, then no paths were found connecting the source and destination accounts. |
+| `destination_account` | ✔️ | `string` | The address of the account that would receive a transaction. |
+| `destination_amount` | ✔️ | `string` or `object` | The currency amount that the destination would receive in a transaction. |
+| `source_account` | ✔️ | `string` | The address that would send a transaction. |
+| `full_reply` | ✔️ | `boolean` | If `false`, this is the result of an incomplete search. A later reply may have a better path. If `true`, then this is the best path found. (It is still theoretically possible that a better path could exist, but `rippled` won't find it.) Until you close the pathfinding request, `rippled` continues to send updates each time a new ledger closes. |
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                      |
-| ---------- | --------- | --------- | ------------------------------------------------------------------------------------------------ |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object, if the orderbook shown is for a specific domain. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object, if the orderbook shown is for a specific domain. |
 
 ## 8. RPC: `ripple_path_find`
 
@@ -417,31 +417,31 @@ The [`ripple_path_find` RPC method](https://xrpl.org/ripple_path_find.html) alre
 
 As a reference, here are the fields that `ripple_path_find` currently accepts:
 
-| Field Name            | Required? | JSON Type            | Description                                                                                                                                                                                                                 |
-| --------------------- | --------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source_account`      | ✔️        | `string`             | The address of the account that would send funds in a transaction                                                                                                                                                           |
-| `destination_account` | ✔️        | `string`             | The address of the account that would receive funds in a transaction                                                                                                                                                        |
-| `destination_amount`  | ✔️        | `string` or `object` | The currency amount that the destination account would receive in a transaction.                                                                                                                                            |
-| `send_max`            |           | `string` or `object` | The currency amount that would be spent in the transaction. Cannot be used with `source_currencies`.                                                                                                                        |
-| `source_currencies`   |           | `array`              | An array of currencies that the source account might want to spend. Each entry in the array should be a JSON object with a mandatory `currency` field and optional `issuer` field, like how currency amounts are specified. |
-| `ledger_hash`         |           | `string`             | A 20-byte hex string for the ledger version to use.                                                                                                                                                                         |
-| `ledger_index`        |           | `string` or `number` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.                                                                                                                               |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `source_account` | ✔️ | `string` | The address of the account that would send funds in a transaction |
+| `destination_account` | ✔️ | `string` | The address of the account that would receive funds in a transaction |
+| `destination_amount` | ✔️ | `string` or `object` | The currency amount that the destination account would receive in a transaction. |
+| `send_max` | | `string` or `object` | The currency amount that would be spent in the transaction. Cannot be used with `source_currencies`. |
+| `source_currencies` | | `array` | An array of currencies that the source account might want to spend. Each entry in the array should be a JSON object with a mandatory `currency` field and optional `issuer` field, like how currency amounts are specified. |
+| `ledger_hash` | | `string` | A 20-byte hex string for the ledger version to use. |
+| `ledger_index` | | `string` or `number` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically. |
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                        |
-| ---------- | --------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object. If this field is included, then only valid paths for this domain will be returned. |
 
 ### 8.2. Response Fields
 
 This proposal does not suggest any changes to the response fields. As a reference, here are the fields that `ripple_path_find` currently returns:
 
-| Field Name               | Always Present? | JSON Type | Description                                                                                                                                            |
-| ------------------------ | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `alternatives`           | ✔️              | `array`   | An array of objects with possible paths to take, as described below. If empty, then there are no paths connecting the source and destination accounts. |
-| `destination_account`    | ✔️              | `string`  | The address of the account that would receive a payment transaction.                                                                                   |
-| `destination_currencies` | ✔️              | `array`   | Array of strings representing the currencies that the destination accepts.                                                                             |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| `alternatives` | ✔️ | `array` | An array of objects with possible paths to take, as described below. If empty, then there are no paths connecting the source and destination accounts. |
+| `destination_account` | ✔️ | `string` | The address of the account that would receive a payment transaction. |
+| `destination_currencies` | ✔️ | `array` | Array of strings representing the currencies that the destination accepts. |
 
 ## 9. RPC: `books` Subscription
 
@@ -451,35 +451,35 @@ The [`books` subscription option](https://xrpl.org/docs/references/http-websocke
 
 As a reference, here are the fields that `books` currently accepts:
 
-| Field Name   | Required? | JSON Type | Description                                                                                                                   |
-| ------------ | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `taker_gets` | ✔️        | `object`  | Specification of which currency the account taking the Offer would receive.                                                   |
-| `taker_pays` | ✔️        | `object`  | Specification of which currency the account taking the Offer would pay.                                                       |
-| `taker`      | ✔️        | `string`  | Unique account address to use as a perspective for viewing offers. (This affects the funding status and fees of Offers.)      |
-| `snapshot`   |           | `boolean` | If `true`, return the current state of the order book once when you subscribe before sending updates. The default is `false`. |
-| `both`       |           | `boolean` | If `true`, return both sides of the order book. The default is `false`.                                                       |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `taker_gets` | ✔️ | `object` | Specification of which currency the account taking the Offer would receive. |
+| `taker_pays` | ✔️ | `object` | Specification of which currency the account taking the Offer would pay. |
+| `taker` | ✔️ | `string` | Unique account address to use as a perspective for viewing offers. (This affects the funding status and fees of Offers.) |
+| `snapshot` | | `boolean` | If `true`, return the current state of the order book once when you subscribe before sending updates. The default is `false`. |
+| `both` | | `boolean` | If `true`, return both sides of the order book. The default is `false`. |
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                                                                                       |
-| ---------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object. If this field is included, then the offers will be filtered to only show the valid domain offers for that domain. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object. If this field is included, then the offers will be filtered to only show the valid domain offers for that domain. |
 
 ### 9.2. Response Fields
 
 This proposal does not suggest any changes to the response fields. As a reference, here are the fields that the [`books` subscription currently returns](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/subscription-methods/subscribe#order-book-streams) (as an array):
 
-| Field Name              | Required? | JSON Type | Description                                                                                                                                                 |
-| ----------------------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`                  | ✔️        | `string`  | `transaction` indicates this is the notification of a transaction stream, which could come from several possible streams.                                   |
-| `engine_result`         | ✔️        | `string`  | String transaction result code.                                                                                                                             |
-| `engine_result_code`    | ✔️        | `number`  | Numeric transaction response code, if applicable.                                                                                                           |
-| `engine_result_message` | ✔️        | `string`  | Human-readable explanation for the transaction response.                                                                                                    |
-| `ledger_hash`           | ✔️        | `string`  | The identifying hash of the ledger version that includes this transaction.                                                                                  |
-| `ledger_index`          | ✔️        | `number`  | The ledger index of the ledger version that includes this transaction.                                                                                      |
-| `meta`                  | ✔️        | `object`  | The transaction metadata, which shows the exact outcome of the transaction in detail.                                                                       |
-| `transaction`           | ✔️        | `object`  | The definition of the transaction in JSON format.                                                                                                           |
-| `validated`             | ✔️        | `boolean` | If `true`, this transaction is included in a validated ledger and its outcome is final. Responses from the `transaction` stream should always be validated. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `type` | ✔️ | `string` | `transaction` indicates this is the notification of a transaction stream, which could come from several possible streams. |
+| `engine_result` | ✔️ | `string` | String transaction result code. |
+| `engine_result_code` | ✔️ | `number` | Numeric transaction response code, if applicable. |
+| `engine_result_message` | ✔️ | `string` | Human-readable explanation for the transaction response. |
+| `ledger_hash` | ✔️ | `string` | The identifying hash of the ledger version that includes this transaction. |
+| `ledger_index` | ✔️ | `number` | The ledger index of the ledger version that includes this transaction. |
+| `meta` | ✔️ | `object` | The transaction metadata, which shows the exact outcome of the transaction in detail. |
+| `transaction` | ✔️ | `object` | The definition of the transaction in JSON format. |
+| `validated` | ✔️ | `boolean` | If `true`, this transaction is included in a validated ledger and its outcome is final. Responses from the `transaction` stream should always be validated. |
 
 ## 10. RPC: `book_changes`
 
@@ -491,10 +491,10 @@ These changes also apply to the [`book_changes` subscription stream](https://xrp
 
 This proposal does not suggest any changes to the request fields. As a reference, here are the fields that `book_changes` currently accepts:
 
-| Field Name     | Required? | JSON Type | Description                                                                                                               |
-| -------------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `ledger_hash`  |           | `string`  | A 32-byte hex string for the ledger version to use.                                                                       |
-| `ledger_index` |           | `string`  | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically. The default is `validated`. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `ledger_hash` | | `string` | A 32-byte hex string for the ledger version to use. |
+| `ledger_index` | | `string` | The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically. The default is `validated`. |
 
 ### 10.2. Response Fields
 
@@ -502,9 +502,9 @@ As a reference, here are the fields that the [`book_changes` subscription curren
 
 This proposal puts forward the following addition:
 
-| Field Name | Required? | JSON Type | Description                                                                                         |
-| ---------- | --------- | --------- | --------------------------------------------------------------------------------------------------- |
-| `domain`   |           | `string`  | The object ID of a `PermissionedDomain` object, if the orderbook changes are for a specific domain. |
+| Field Name | Required? | JSON Type | Description |
+| ---------- | --------- | --------- | ----------- |
+| `domain` | | `string` | The object ID of a `PermissionedDomain` object, if the orderbook changes are for a specific domain. |
 
 ## 11. Examples
 

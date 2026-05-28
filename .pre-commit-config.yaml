@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+      - id: normalize-markdown-tables
+        name: normalize Markdown tables
+        entry: python3 scripts/normalize_markdown_tables.py
+        language: system
+        files: \.md$
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
@@ -14,3 +22,15 @@ repos:
     rev: c2bc67fe8f8f549cc489e00ba8b45aa18ee713b1 # frozen: v3.8.1
     hooks:
       - id: prettier
+        exclude: \.md$
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43 # frozen: v0.47.0
+    hooks:
+      - id: markdownlint
+        args:
+          - --fix
+          - --config
+          - .markdownlint.yaml
+          - --ignore-path
+          - .markdownlintignore

@@ -78,12 +78,12 @@ The `type` component defines the particular type of data held within the URI.
 
 ```
       type = ﹡( "account"
-		/ "ledger"
-		/ "tx"
-		/ "payload"
-		/ "offline"
-		/ "token"
-		/ "nftoken" )
+        / "ledger"
+        / "tx"
+        / "payload"
+        / "offline"
+        / "token"
+        / "nftoken" )
 ```
 
 It should be noted that we are intentionally not defining an `action` here. While the URI type implies an action to be taken by the receiving application, this standard is not explicitly defining an action or function. An `action` component could be added to this standard in the future.
@@ -98,12 +98,12 @@ Those acceptable parameters will be dependent on the <type> of the URI.
 
 ```
     query =  "?" ﹡( account_data
-			    / ledger_data
-			    / tx_data
-			    / payload_data
-			    / offline_data
-			    / token_data
-			    / nftoken_data )
+                / ledger_data
+                / tx_data
+                / payload_data
+                / offline_data
+                / token_data
+                / nftoken_data )
 
 ```
 
@@ -290,11 +290,11 @@ As we continue to build on the XRP Ledger, it is imperative to work together as 
 
 The following summarizes the main points within this proposal.
 
-1.  Interoperability should be a key focus when sharing data between different applications and ecosystems.
+1. Interoperability should be a key focus when sharing data between different applications and ecosystems.
 
-2.  (7) type categories are presented to help describe the data contained within the requested QR code or link.
+2. (7) type categories are presented to help describe the data contained within the requested QR code or link.
 
-3.  Considerations are made for security, resolve mechanism, size limits, and backward compatibility.
+3. Considerations are made for security, resolve mechanism, size limits, and backward compatibility.
 
 ### Call to Action
 
@@ -348,30 +348,30 @@ Please consider leaving your thoughts, criticism, and addendums in the comment s
     hash = HEX
 
     transaction = (
-		AccountDelete
-		/ AccountSet
-		/ CheckCancel
-		/ CheckCash
-		/ CheckCreate
-		/ DepositPreauth
-		/ EscrowCancel
-		/ EscrowCreate
-		/ EscrowFinish
-		/ NFTokenAcceptOffer
-		/ NFTokenBurn
-		/ NFTokenCancelOffer
-		/ NFTokenCreateOffer
-		/ NFTokenMint
-		/ OfferCancel
-		/ OfferCreate
-		/ Payment
-		/ PaymentChannelClaim
-		/ PaymentChannelCreate
-		/ PaymentChannelFund
-		/ SetRegularKey
-		/ SignerListSet
-		/ TicketCreate
-		/ TrustSet ) ; Refer to <https://js.xrpl.org/modules.html#Transaction>
+        AccountDelete
+        / AccountSet
+        / CheckCancel
+        / CheckCash
+        / CheckCreate
+        / DepositPreauth
+        / EscrowCancel
+        / EscrowCreate
+        / EscrowFinish
+        / NFTokenAcceptOffer
+        / NFTokenBurn
+        / NFTokenCancelOffer
+        / NFTokenCreateOffer
+        / NFTokenMint
+        / OfferCancel
+        / OfferCreate
+        / Payment
+        / PaymentChannelClaim
+        / PaymentChannelCreate
+        / PaymentChannelFund
+        / SetRegularKey
+        / SignerListSet
+        / TicketCreate
+        / TrustSet ) ; Refer to <https://js.xrpl.org/modules.html#Transaction>
 
     binary = HEX
 
@@ -382,21 +382,21 @@ Please consider leaving your thoughts, criticism, and addendums in the comment s
 
 ```
     xrpl ["." version ] ":"
-		﹡( "account"
-		    / "ledger"
-		    / "tx"
-		    / "payload"
-		    / "offline"
-		    / "token"
-		    / "nftoken" )
-		"?" (   ( address = ALPHANUM [ tag = DIGIT ] )
-			/ xaddress = ALPHANUM
-			/ hash = UPHEX
-			/ seq = DIGIT
-			/ tx = UPHEX
-			/ id = ( UPALPHA / DIGIT )
-			/ code = ( UPALPHA / UPHEX )
-			/ blob = UPHEX  )
+        ﹡( "account"
+            / "ledger"
+            / "tx"
+            / "payload"
+            / "offline"
+            / "token"
+            / "nftoken" )
+        "?" (   ( address = ALPHANUM [ tag = DIGIT ] )
+            / xaddress = ALPHANUM
+            / hash = UPHEX
+            / seq = DIGIT
+            / tx = UPHEX
+            / id = ( UPALPHA / DIGIT )
+            / code = ( UPALPHA / UPHEX )
+            / blob = UPHEX  )
 ```
 
 ### Appendix B. Examples

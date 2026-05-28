@@ -35,33 +35,33 @@ The `server_definitions` RPC [already exists](https://xrpl.org/docs/references/h
 
 There are no changes to the request fields. The current request fields are shown below:
 
-| Field Name | Required? | JSON Type | Description                                                                                                               |
-| :--------- | :-------- | :-------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `command`  | Yes       | `string`  | Must be "`server_definitions`" to access this RPC                                                                         |
-| `hash`     | No        | `string`  | A hash of the `server_definitions` data. If this matches the hash the rippled server has, only the hash will be returned. |
+| Field Name | Required? | JSON Type | Description |
+| :--------- | :-------- | :-------- | :---------- |
+| `command` | Yes | `string` | Must be "`server_definitions`" to access this RPC |
+| `hash` | No | `string` | A hash of the `server_definitions` data. If this matches the hash the rippled server has, only the hash will be returned. |
 
 ### 3.2. Response Fields
 
 Current response fields:
 
-| Field Name            | Always Present?                                           | JSON Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| :-------------------- | :-------------------------------------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `TYPES`               | No, not included if `hash` matches the server's data hash | `object`  | Map of data types to their ["type code"](https://xrpl.org/docs/references/protocol/binary-format#type-codes) for constructing field IDs and sorting fields in canonical order. Codes below 1 should not appear in actual data; codes above 10000 represent special "high-level" object types such as "Transaction" that cannot be serialized inside other objects. See the Type List for details of how to serialize each type. |
-| `LEDGER_ENTRY_TYPES`  | No, not included if `hash` matches the server's data hash | `object`  | Map of ledger objects to their data type. These appear in ledger state data, and in the "affected nodes" section of processed transactions' metadata.                                                                                                                                                                                                                                                                           |
-| `FIELDS`              | No, not included if `hash` matches the server's data hash | `array`   | A sorted array of tuples representing all fields that may appear in transactions, ledger objects, or other data. The first member of each tuple is the string name of the field and the second member is an object with that field's properties. (See the "Field properties" table below for definitions of those fields.)                                                                                                      |
-| `TRANSACTION_RESULTS` | No, not included if `hash` matches the server's data hash | `object`  | Map of transaction result codes to their numeric values. Result types not included in ledgers have negative values; tesSUCCESS has numeric value 0; tec-class codes represent failures that are included in ledgers.                                                                                                                                                                                                            |
-| `TRANSACTION_TYPES`   | No, not included if `hash` matches the server's data hash | `object`  | Map of all transaction types to their numeric values.                                                                                                                                                                                                                                                                                                                                                                           |
-| `hash`                | Yes                                                       | `string`  | The hash of the `server_definitions` data that the rippled server has.                                                                                                                                                                                                                                                                                                                                                          |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `TYPES` | No, not included if `hash` matches the server's data hash | `object` | Map of data types to their ["type code"](https://xrpl.org/docs/references/protocol/binary-format#type-codes) for constructing field IDs and sorting fields in canonical order. Codes below 1 should not appear in actual data; codes above 10000 represent special "high-level" object types such as "Transaction" that cannot be serialized inside other objects. See the Type List for details of how to serialize each type. |
+| `LEDGER_ENTRY_TYPES` | No, not included if `hash` matches the server's data hash | `object` | Map of ledger objects to their data type. These appear in ledger state data, and in the "affected nodes" section of processed transactions' metadata. |
+| `FIELDS` | No, not included if `hash` matches the server's data hash | `array` | A sorted array of tuples representing all fields that may appear in transactions, ledger objects, or other data. The first member of each tuple is the string name of the field and the second member is an object with that field's properties. (See the "Field properties" table below for definitions of those fields.) |
+| `TRANSACTION_RESULTS` | No, not included if `hash` matches the server's data hash | `object` | Map of transaction result codes to their numeric values. Result types not included in ledgers have negative values; tesSUCCESS has numeric value 0; tec-class codes represent failures that are included in ledgers. |
+| `TRANSACTION_TYPES` | No, not included if `hash` matches the server's data hash | `object` | Map of all transaction types to their numeric values. |
+| `hash` | Yes | `string` | The hash of the `server_definitions` data that the rippled server has. |
 
 Proposed additions:
 
-| Field Name             | Always Present?                                           | JSON Type | Description                                                                                                                                         |
-| :--------------------- | :-------------------------------------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LEDGER_ENTRY_FORMATS` | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all ledger entry types (`AccountRoot`, `RippleState`, `Offer`, etc.) - namely, the fields and their optionality. |
-| `TRANSACTION_FORMATS`  | No, not included if `hash` matches the server's data hash | `object`  | Detailed format specifications for all transaction types (`Payment`, `OfferCreate`, `TrustSet`, etc.) - namely, the fields and their optionality.   |
-| `LEDGER_ENTRY_FLAGS`   | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all ledger entry flags with their hexadecimal values.                                                                           |
-| `TRANSACTION_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all transaction flags with their hexadecimal values.                                                                            |
-| `ACCOUNT_SET_FLAGS`    | No, not included if `hash` matches the server's data hash | `object`  | Complete mapping of all `AccountSet` flags (`asf` flags) with their hexadecimal values.                                                             |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `LEDGER_ENTRY_FORMATS` | No, not included if `hash` matches the server's data hash | `object` | Detailed format specifications for all ledger entry types (`AccountRoot`, `RippleState`, `Offer`, etc.) - namely, the fields and their optionality. |
+| `TRANSACTION_FORMATS` | No, not included if `hash` matches the server's data hash | `object` | Detailed format specifications for all transaction types (`Payment`, `OfferCreate`, `TrustSet`, etc.) - namely, the fields and their optionality. |
+| `LEDGER_ENTRY_FLAGS` | No, not included if `hash` matches the server's data hash | `object` | Complete mapping of all ledger entry flags with their hexadecimal values. |
+| `TRANSACTION_FLAGS` | No, not included if `hash` matches the server's data hash | `object` | Complete mapping of all transaction flags with their hexadecimal values. |
+| `ACCOUNT_SET_FLAGS` | No, not included if `hash` matches the server's data hash | `object` | Complete mapping of all `AccountSet` flags (`asf` flags) with their hexadecimal values. |
 
 #### 3.2.1. Fields
 
@@ -69,10 +69,10 @@ Proposed additions:
 
 The format of this field is an `object`. The keys of the `object` are the ledger entry type name (e.g. `Offer`), or `common` (for the common fields across all ledger entries). The values of the `object` are an array of elements described as follows:
 
-| Field Name    | Always Present? | JSON Type | Description                                                                                                                                                        |
-| :------------ | :-------------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | Yes             | `string`  | The name of the field.                                                                                                                                             |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `name` | Yes | `string` | The name of the field. |
+| `optionality` | Yes | `number` | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example output for this field:
 
@@ -130,21 +130,21 @@ Here is an example output for this field:
 
 The `optionality` values are mapped to the following text <-> number combination. For the purpose of improved readability, this mapping is borrowed from the [`SOEStyle` enum definition](https://github.com/XRPLF/rippled/blob/e11f6190b74599737f9f554da3b141f269e43803/include/xrpl/protocol/SOTemplate.h#L13) in the rippled codebase.
 
-| Number | Optionality   |
-| :----- | :------------ |
-| `-1`   | `soeINVALID`  |
-| `0`    | `soeREQUIRED` |
-| `1`    | `soeOPTIONAL` |
-| `2`    | `soeDEFAULT`  |
+| Number | Optionality |
+| :----- | :---------- |
+| `-1` | `soeINVALID` |
+| `0` | `soeREQUIRED` |
+| `1` | `soeOPTIONAL` |
+| `2` | `soeDEFAULT` |
 
 ##### 3.2.1.2. TRANSACTION_FORMATS
 
 The format of this field is an `object`. The keys of the `object` are the transaction type name (e.g. `OfferCreate`, or `common` (for the common fields across all transactions). The values of the `object` are an array of elements described as follows:
 
-| Field Name    | Always Present? | JSON Type | Description                                                                                                                                                        |
-| :------------ | :-------------- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | Yes             | `string`  | The name of the field.                                                                                                                                             |
-| `optionality` | Yes             | `number`  | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `name` | Yes | `string` | The name of the field. |
+| `optionality` | Yes | `number` | The `soeREQUIRED` value of the field - one of the following values: [-1, 2] (both inclusive). [More details found here](#3.2.1.1.1-`optionality`-number-text-map). |
 
 Here is an example response for this section:
 

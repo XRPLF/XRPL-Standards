@@ -110,14 +110,14 @@ This object is essentially just an implementation detail to decrease storage cos
 
 ### 3.1. Fields
 
-| Field Name           | Required? | JSON Type | Internal Type  | Description                                                                                                                 |
-| :------------------- | :-------- | :-------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`    | ✔️        | `string`  | `UInt16`       | The ledger entry's type (`ContractSource`).                                                                                 |
-| `ContractHash`       | ✔️        | `string`  | `Hash256`      | The hash of the contract's code.                                                                                            |
-| `ContractCode`       | ✔️        | `string`  | `blob`         | The WebAssembly (WASM) bytecode for the contract.                                                                           |
-| `InstanceParameters` |           | `array`   | `STParameters` | The parameters that are provided by a deployment of this contract.                                                          |
-| `Functions`          | ✔️        | `array`   | `STArray`      | The functions that are included in this contract.                                                                           |
-| `ReferenceCount`     | ✔️        | `number`  | `UInt32`       | The number of `Contract` objects that are based on this `ContractSource`. This object is deleted when that value goes to 0. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The ledger entry's type (`ContractSource`). |
+| `ContractHash` | ✔️ | `string` | `Hash256` | The hash of the contract's code. |
+| `ContractCode` | ✔️ | `string` | `blob` | The WebAssembly (WASM) bytecode for the contract. |
+| `InstanceParameters` | | `array` | `STParameters` | The parameters that are provided by a deployment of this contract. |
+| `Functions` | ✔️ | `array` | `STArray` | The functions that are included in this contract. |
+| `ReferenceCount` | ✔️ | `number` | `UInt32` | The number of `Contract` objects that are based on this `ContractSource`. This object is deleted when that value goes to 0. |
 
 #### 3.1.1. Object ID
 
@@ -176,16 +176,16 @@ The `ContractSource` object does not have an owner.
 
 ### 4.1. Fields
 
-| Field Name                | Required? | JSON Type | Internal Type       | Description                                                                                                                    |
-| :------------------------ | :-------- | :-------- | :------------------ | :----------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`         | ✔️        | `string`  | `UInt16`            | The ledger entry's type (`Contract`).                                                                                          |
-| `ContractAccount`         | ✔️        | `string`  | `AccountID`         | The pseudo-account that hosts this contract.                                                                                   |
-| `Owner`                   | ✔️        | `string`  | `AccountID`         | The owner of the contract, which defaults to the account that deployed the contract.                                           |
-| `Flags`                   | ✔️        | `number`  | `UInt32`            | Flags that may be on this ledger entry.                                                                                        |
-| `Sequence`                | ✔️        | `string`  | `UInt16`            | The ledger entry's type (`ContractSource`).                                                                                    |
-| `ContractHash`            | ✔️        | `string`  | `Hash256`           | The hash of the contract's code.                                                                                               |
-| `InstanceParameterValues` |           | `array`   | `STParameterValues` | The parameters that are provided by this deployment of the contract.                                                           |
-| `URI`                     |           | `string`  | `Blob`              | A URI that points to the source code of this contract, to make it easier for tooling to find the source code for the contract. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The ledger entry's type (`Contract`). |
+| `ContractAccount` | ✔️ | `string` | `AccountID` | The pseudo-account that hosts this contract. |
+| `Owner` | ✔️ | `string` | `AccountID` | The owner of the contract, which defaults to the account that deployed the contract. |
+| `Flags` | ✔️ | `number` | `UInt32` | Flags that may be on this ledger entry. |
+| `Sequence` | ✔️ | `string` | `UInt16` | The ledger entry's type (`ContractSource`). |
+| `ContractHash` | ✔️ | `string` | `Hash256` | The hash of the contract's code. |
+| `InstanceParameterValues` | | `array` | `STParameterValues` | The parameters that are provided by this deployment of the contract. |
+| `URI` | | `string` | `Blob` | A URI that points to the source code of this contract, to make it easier for tooling to find the source code for the contract. |
 
 _TODO: should the `URI` field live on `ContractSource` or `Contract`?_
 
@@ -227,12 +227,12 @@ Data is serialized using the `STData` serialization format.
 
 ### 5.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                           |
-| :---------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType` | ✔️        | `string`  | `UInt16`      | The ledger entry's type (`ContractData`).                                                                             |
-| `Owner`           | ✔️        | `string`  | `AccountID`   | The account that hosts this data.                                                                                     |
-| `ContractAccount` |           | `string`  | `AccountID`   | The contract that controls this data. This field is only needed for user-owned data (where the `Owner` is different). |
-| `Data`            | ✔️        | `string`  | `STData`      | The contract-defined contract data.                                                                                   |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The ledger entry's type (`ContractData`). |
+| `Owner` | ✔️ | `string` | `AccountID` | The account that hosts this data. |
+| `ContractAccount` | | `string` | `AccountID` | The contract that controls this data. This field is only needed for user-owned data (where the `Owner` is different). |
+| `Data` | ✔️ | `string` | `STData` | The contract-defined contract data. |
 
 #### 5.1.1. Object ID
 
@@ -271,17 +271,17 @@ This transaction will also trigger a special `init` function in the contract, if
 
 ### 6.1. Fields
 
-| Field Name                | Required? | JSON Type | Internal Type       | Description                                                                                   |
-| :------------------------ | :-------- | :-------- | :------------------ | :-------------------------------------------------------------------------------------------- |
-| `TransactionType`         | ✔️        | `string`  | `UInt16`            | The transaction type (`ContractCreate`).                                                      |
-| `Account`                 | ✔️        | `string`  | `AccountID`         | The account sending the transaction.                                                          |
-| `ContractOwner`           |           | `string`  | `AccountID`         | The account that owns (controls) the contract. If not set, this is the same as the `Account`. |
-| `Flags`                   |           | `number`  | `UInt32`            | Accepted bit-flags on this transaction.                                                       |
-| `ContractCode`            |           | `string`  | `Blob`              | The WASM bytecode for the contract.                                                           |
-| `ContractHash`            |           | `string`  | `Hash256`           | The hash of the WASM bytecode for the contract.                                               |
-| `Functions`               |           | `array`   | `STArray`           | The functions that are included in this contract.                                             |
-| `InstanceParameters`      |           | `array`   | `STParameters`      | The parameters that are provided by a deployment of this contract.                            |
-| `InstanceParameterValues` |           | `array`   | `STParameterValues` | The values of the instance parameters that apply to this instance of the contract.            |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractCreate`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `ContractOwner` | | `string` | `AccountID` | The account that owns (controls) the contract. If not set, this is the same as the `Account`. |
+| `Flags` | | `number` | `UInt32` | Accepted bit-flags on this transaction. |
+| `ContractCode` | | `string` | `Blob` | The WASM bytecode for the contract. |
+| `ContractHash` | | `string` | `Hash256` | The hash of the WASM bytecode for the contract. |
+| `Functions` | | `array` | `STArray` | The functions that are included in this contract. |
+| `InstanceParameters` | | `array` | `STParameters` | The parameters that are provided by a deployment of this contract. |
+| `InstanceParameterValues` | | `array` | `STParameterValues` | The values of the instance parameters that apply to this instance of the contract. |
 
 #### 6.1.1. `Flags`
 
@@ -342,13 +342,13 @@ This transaction triggers a specific function in a given contract, with the prov
 
 ### 7.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type       | Description                                                                                              |
-| :---------------- | :-------- | :-------- | :------------------ | :------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`            | The transaction type (`ContractCall`).                                                                   |
-| `Account`         | ✔️        | `string`  | `AccountID`         | The account sending the transaction.                                                                     |
-| `ContractAccount` | ✔️        | `string`  | `AccountID`         | The contract to call.                                                                                    |
-| `FunctionName`    | ✔️        | `string`  | `Blob`              | The function on the contract to call.                                                                    |
-| `Parameters`      |           | `array`   | `STParameterValues` | The parameters to provide to the contract’s function. Must match the order and type of the on-chain ABI. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractCall`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `ContractAccount` | ✔️ | `string` | `AccountID` | The contract to call. |
+| `FunctionName` | ✔️ | `string` | `Blob` | The function on the contract to call. |
+| `Parameters` | | `array` | `STParameterValues` | The parameters to provide to the contract’s function. Must match the order and type of the on-chain ABI. |
 
 ### 7.2. Fee
 
@@ -399,18 +399,18 @@ This transaction modifies a contract's code or instance parameters, if allowed.
 
 ### 8.1. Fields
 
-| Field Name                | Required? | JSON Type | Internal Type       | Description                                                                                                                                        |
-| :------------------------ | :-------- | :-------- | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`         | ✔️        | `string`  | `UInt16`            | The transaction type (`ContractModify`).                                                                                                           |
-| `Account`                 | ✔️        | `string`  | `AccountID`         | The account sending the transaction.                                                                                                               |
-| `ContractAccount`         |           | `string`  | `AccountID`         | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
-| `ContractOwner`           | ✔️        | `string`  | `AccountID`         | The new owner of the contract (so that contract ownership is transferrable).                                                                       |
-| `Flags`                   |           | `number`  | `UInt32`            | Accepted bit-flags on this transaction.                                                                                                            |
-| `ContractCode`            |           | `string`  | `Blob`              | The new WASM bytecode for the contract.                                                                                                            |
-| `ContractHash`            |           | `string`  | `Hash256`           | The hash of the new WASM bytecode for the contract.                                                                                                |
-| `Functions`               | ✔️        | `array`   | `STArray`           | The functions that are included in this contract.                                                                                                  |
-| `InstanceParameters`      |           | `array`   | `STParameters`      | The parameters that are provided by a deployment of this contract.                                                                                 |
-| `InstanceParameterValues` |           | `array`   | `STParameterValues` | The values of the instance parameters that apply to this instance of the contract.                                                                 |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractModify`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `ContractAccount` | | `string` | `AccountID` | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
+| `ContractOwner` | ✔️ | `string` | `AccountID` | The new owner of the contract (so that contract ownership is transferrable). |
+| `Flags` | | `number` | `UInt32` | Accepted bit-flags on this transaction. |
+| `ContractCode` | | `string` | `Blob` | The new WASM bytecode for the contract. |
+| `ContractHash` | | `string` | `Hash256` | The hash of the new WASM bytecode for the contract. |
+| `Functions` | ✔️ | `array` | `STArray` | The functions that are included in this contract. |
+| `InstanceParameters` | | `array` | `STParameters` | The parameters that are provided by a deployment of this contract. |
+| `InstanceParameterValues` | | `array` | `STParameterValues` | The values of the instance parameters that apply to this instance of the contract. |
 
 #### 8.1.1. `Flags`
 
@@ -447,11 +447,11 @@ This transaction deletes a contract. Only the pseudo-account itself or the owner
 
 ### 9.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                        |
-| :---------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`ContractDelete`).                                                                                                           |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction.                                                                                                               |
-| `ContractAccount` |           | `string`  | `AccountID`   | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractDelete`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `ContractAccount` | | `string` | `AccountID` | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
 
 ### 9.2. Failure Conditions
 
@@ -475,11 +475,11 @@ This transaction will also trigger a special `user_delete` function in the contr
 
 ### 10.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                        |
-| :---------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`ContractUserDelete`).                                                                                                       |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction (the user).                                                                                                    |
-| `ContractAccount` |           | `string`  | `AccountID`   | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractUserDelete`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction (the user). |
+| `ContractAccount` | | `string` | `AccountID` | The pseudo-account hosting the contract that is to be changed. This field is not needed if the pseudo-account is emitting this transaction itself. |
 
 ### 10.2. Failure Conditions
 
@@ -501,12 +501,12 @@ This transaction will trigger a special `clawback` function in the contract, if 
 
 ### 11.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                    |
-| :---------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`ContractClawback`).                     |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction (the issuer of the token). |
-| `ContractAccount` |           | `string`  | `AccountID`   | The pseudo-account hosting the contract that is to be changed. |
-| `Amount`          | ✔️        | `object`  | `Amount`      | The amount to claw back from the contract.                     |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`ContractClawback`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction (the issuer of the token). |
+| `ContractAccount` | | `string` | `AccountID` | The pseudo-account hosting the contract that is to be changed. |
+| `Amount` | ✔️ | `object` | `Amount` | The amount to claw back from the contract. |
 
 ### 11.2. Failure Conditions
 
@@ -528,8 +528,8 @@ This standard doesn't add any new field to the [transaction common fields](https
 
 ### 12.1. `Flags`
 
-| Flag Name                | Value        |
-| :----------------------- | :----------- |
+| Flag Name | Value |
+| :-------- | :---- |
 | `tfContractSubmittedTxn` | `0x20000000` |
 
 This flag should only be used if a transaction is submitted from a smart contract. This signifies that the transaction shouldn't be signed. Any transaction that is submitted normally that includes this flag should be rejected.
@@ -546,33 +546,33 @@ This RPC fetches info about a deployed contract.
 
 ### 13.1. Request Fields
 
-| Field Name         | Required? | JSON Type | Description                                             |
-| :----------------- | :-------- | :-------- | :------------------------------------------------------ |
-| `contract_account` | ✔️        | `string`  | The pseudo-account hosting the contract.                |
-| `function`         |           | `string`  | The function to specifically get information for.       |
-| `user_account`     |           | `string`  | An account to specifically get the contract’s data for. |
+| Field Name | Required? | JSON Type | Description |
+| :--------- | :-------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `function` | | `string` | The function to specifically get information for. |
+| `user_account` | | `string` | An account to specifically get the contract’s data for. |
 
 ### 13.2. Response Fields
 
-| Field Name         | Always Present?                              | JSON Type | Description                                                                  |
-| :----------------- | :------------------------------------------- | :-------- | :--------------------------------------------------------------------------- |
-| `contract_account` | ✔️                                           | `string`  | The pseudo-account hosting the contract.                                     |
-| `code`             | ✔️                                           | `string`  | The WASM bytecode for the contract.                                          |
-| `account_info`     | ✔️                                           | `object`  | The `account_info` output of the `contract_account`.                         |
-| `functions`        | ✔️                                           | `array`   | The functions in the smart contract and their parameters.                    |
-| `source_code_uri`  |                                              | `string`  | The URI pointing to the source code of the contract (if it exists on-chain). |
-| `contract_data`    |                                              | `object`  | The contract’s stored data.                                                  |
-| `user_data`        | If `user_account` is included in the request | `object`  | The contract’s stored data pertaining to that user.                          |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `code` | ✔️ | `string` | The WASM bytecode for the contract. |
+| `account_info` | ✔️ | `object` | The `account_info` output of the `contract_account`. |
+| `functions` | ✔️ | `array` | The functions in the smart contract and their parameters. |
+| `source_code_uri` | | `string` | The URI pointing to the source code of the contract (if it exists on-chain). |
+| `contract_data` | | `object` | The contract’s stored data. |
+| `user_data` | If `user_account` is included in the request | `object` | The contract’s stored data pertaining to that user. |
 
 #### 13.2.1. `functions`
 
 Each object in the array will contain the following fields:
 
-| Field Name   | Always Present? | JSON Type | Description                                                                                                                                        |
-| :----------- | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | ✔️              | `string`  | The name of the function.                                                                                                                          |
-| `parameters` | ✔️              | `array`   | A list of the parameters accepted for the function, in the format described above. This will be an empty list if the function takes no parameters. |
-| `fees`       | ✔️              | `string`  | The amount, in XRP, that you would likely have to pay to execute this function. _TODO: not sure how doable this is, but it'd be nice if possible_  |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `name` | ✔️ | `string` | The name of the function. |
+| `parameters` | ✔️ | `array` | A list of the parameters accepted for the function, in the format described above. This will be an empty list if the function takes no parameters. |
+| `fees` | ✔️ | `string` | The amount, in XRP, that you would likely have to pay to execute this function. _TODO: not sure how doable this is, but it'd be nice if possible_ |
 
 ## 14. RPC Subscription: `eventEmitted`
 
@@ -580,30 +580,30 @@ Subscribe to events emitted from a contract.
 
 ### 14.1. Request Fields
 
-| Field Name         | Required? | JSON Type | Description                                                                                                                  |
-| :----------------- | :-------- | :-------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| `contract_account` | ✔️        | `string`  | The pseudo-account hosting the contract.                                                                                     |
-| `events`           |           | `array`   | The event types to subscribe to, as an `array` of `string`s. If omitted, all events from the contract will be subscribed to. |
+| Field Name | Required? | JSON Type | Description |
+| :--------- | :-------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `events` | | `array` | The event types to subscribe to, as an `array` of `string`s. If omitted, all events from the contract will be subscribed to. |
 
 TODO: maybe you should also be able to subscribe to all instances of a `ContractSource`?
 
 ### 14.2. Response Fields
 
-| Field Name         | Always Present? | JSON Type | Description                                                         |
-| :----------------- | :-------------- | :-------- | :------------------------------------------------------------------ |
-| `contract_account` | ✔️              | `string`  | The pseudo-account hosting the contract.                            |
-| `events`           | ✔️              | `array`   | The events that were emitted from the contract, as explained below. |
-| `hash`             | ✔️              | `string`  | The hash of the transaction that triggered the event.               |
-| `ledger_index`     | ✔️              | `number`  | The ledger index in which the event was triggered.                  |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `events` | ✔️ | `array` | The events that were emitted from the contract, as explained below. |
+| `hash` | ✔️ | `string` | The hash of the transaction that triggered the event. |
+| `ledger_index` | ✔️ | `number` | The ledger index in which the event was triggered. |
 
 #### 14.2.1. `events`
 
 Each object in the `events` array will contain the following fields:
 
-| Field Name | Always Present? | JSON Type | Description                              |
-| :--------- | :-------------- | :-------- | :--------------------------------------- |
-| `name`     | ✔️              | `string`  | The name of the event.                   |
-| `data`     | ✔️              | `object`  | The data emitted as a part of the event. |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `name` | ✔️ | `string` | The name of the event. |
+| `data` | ✔️ | `object` | The data emitted as a part of the event. |
 
 The rest of the fields in this object will be dev-defined fields from the emitted event.
 
@@ -613,43 +613,43 @@ Fetch a list of historical events emitted from a given contract account.
 
 ### 15.1. Request Fields
 
-| Field Name         | Required? | JSON Type     | Description                                                                                                                                                                                                                                                                                                                        |
-| :----------------- | :-------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `contract_account` | ✔️        | `string`      | The pseudo-account hosting the contract.                                                                                                                                                                                                                                                                                           |
-| `events`           |           | `array`       | The event types to retrieve, as an `array` of `string`s. If omitted, all events from the contract will be retrieved.                                                                                                                                                                                                               |
-| `ledger_index_min` |           | `number`      | Use to specify the earliest ledger to include events from. A value of `-1` instructs the server to use the earliest validated ledger version available.                                                                                                                                                                            |
-| `ledger_index_max` |           | `number`      | Use to specify the most recent ledger to include events from. A value of `-1` instructs the server to use the most recent validated ledger version available.                                                                                                                                                                      |
-| `ledger_index`     |           | `LedgerIndex` | Use to look for events from a single ledger only.                                                                                                                                                                                                                                                                                  |
-| `ledger_hash`      |           | `string`      | Use to look for events from a single ledger only.                                                                                                                                                                                                                                                                                  |
-| `binary`           |           | `boolean`     | Defaults to `false`. If set to `true`, returns events as hex strings instead of JSON.                                                                                                                                                                                                                                              |
-| `limit`            |           | `number`      | Default varies. Limit the number of events to retrieve. The server is not required to honor this value.                                                                                                                                                                                                                            |
-| `marker`           |           | `any`         | Value from a previous paginated response. Resume retrieving data where that response left off. This value is stable even if there is a change in the server's range of available ledgers. See [here](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/markers-and-pagination) for details on how markers work. |
-| `transactions`     |           | `boolean`     | Defaults to `false`. If set to `true`, returns the whole transaction in addition to the event. If set to falls, returns only the transaction hash.                                                                                                                                                                                 |
+| Field Name | Required? | JSON Type | Description |
+| :--------- | :-------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `events` | | `array` | The event types to retrieve, as an `array` of `string`s. If omitted, all events from the contract will be retrieved. |
+| `ledger_index_min` | | `number` | Use to specify the earliest ledger to include events from. A value of `-1` instructs the server to use the earliest validated ledger version available. |
+| `ledger_index_max` | | `number` | Use to specify the most recent ledger to include events from. A value of `-1` instructs the server to use the most recent validated ledger version available. |
+| `ledger_index` | | `LedgerIndex` | Use to look for events from a single ledger only. |
+| `ledger_hash` | | `string` | Use to look for events from a single ledger only. |
+| `binary` | | `boolean` | Defaults to `false`. If set to `true`, returns events as hex strings instead of JSON. |
+| `limit` | | `number` | Default varies. Limit the number of events to retrieve. The server is not required to honor this value. |
+| `marker` | | `any` | Value from a previous paginated response. Resume retrieving data where that response left off. This value is stable even if there is a change in the server's range of available ledgers. See [here](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/markers-and-pagination) for details on how markers work. |
+| `transactions` | | `boolean` | Defaults to `false`. If set to `true`, returns the whole transaction in addition to the event. If set to falls, returns only the transaction hash. |
 
 ### 15.2. Response Fields
 
-| Field Name         | Always Present? | JSON Type | Description                                                                                                               |
-| :----------------- | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `contract_account` | ✔️              | `string`  | The pseudo-account hosting the contract.                                                                                  |
-| `events`           | ✔️              | `array`   | The events that were emitted from the contract.                                                                           |
-| `ledger_index_min` |                 | `number`  | The ledger index of the earliest ledger actually searched for events.                                                     |
-| `ledger_index_max` |                 | `number`  | The ledger index of the most recent ledger actually searched for events.                                                  |
-| `limit`            |                 | `number`  | The limit value used in the request. (This may differ from the actual limit value enforced by the server.)                |
-| `marker`           |                 | `any`     | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `contract_account` | ✔️ | `string` | The pseudo-account hosting the contract. |
+| `events` | ✔️ | `array` | The events that were emitted from the contract. |
+| `ledger_index_min` | | `number` | The ledger index of the earliest ledger actually searched for events. |
+| `ledger_index_max` | | `number` | The ledger index of the most recent ledger actually searched for events. |
+| `limit` | | `number` | The limit value used in the request. (This may differ from the actual limit value enforced by the server.) |
+| `marker` | | `any` | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. |
 
 #### 15.2.1. `events`
 
 Each object in the `events` array will contain the following fields:
 
-| Field Name  | Always Present? | JSON Type | Description                                                                                                                                                    |
-| :---------- | :-------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`      | ✔️              | `string`  | The name of the event.                                                                                                                                         |
-| `data`      |                 | `object`  | The data emitted as a part of the event, in JSON. Included if `binary` is set to `false`.                                                                      |
-| `data_blob` |                 | `string`  | The data emitted as a part of the event, in binary. Included if `binary` is set to `true`.                                                                     |
-| `tx_json`   |                 | `object`  | The transaction that triggered the event, in JSON. Included if `transactions` is set to `true` and `binary` is set to `false`.                                 |
-| `tx_blob`   |                 | `string`  | The transaction that triggered the event, in binary. Included if `transactions` is set to `true` and `binary` is set to `true`.                                |
-| `tx_hash`   |                 | `string`  | The transaction that triggered the event, in binary. Included if `transactions` is set to `false`.                                                             |
-| `validated` |                 | `boolean` | Whether or not the transaction that contains this event is included in a validated ledger. Any transaction not yet in a validated ledger is subject to change. |
+| Field Name | Always Present? | JSON Type | Description |
+| :--------- | :-------------- | :-------- | :---------- |
+| `name` | ✔️ | `string` | The name of the event. |
+| `data` | | `object` | The data emitted as a part of the event, in JSON. Included if `binary` is set to `false`. |
+| `data_blob` | | `string` | The data emitted as a part of the event, in binary. Included if `binary` is set to `true`. |
+| `tx_json` | | `object` | The transaction that triggered the event, in JSON. Included if `transactions` is set to `true` and `binary` is set to `false`. |
+| `tx_blob` | | `string` | The transaction that triggered the event, in binary. Included if `transactions` is set to `true` and `binary` is set to `true`. |
+| `tx_hash` | | `string` | The transaction that triggered the event, in binary. Included if `transactions` is set to `false`. |
+| `validated` | | `boolean` | Whether or not the transaction that contains this event is included in a validated ledger. Any transaction not yet in a validated ledger is subject to change. |
 
 ### 15.3. Implementation Details
 

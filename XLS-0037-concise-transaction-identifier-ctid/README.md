@@ -34,12 +34,12 @@ C [ XXXXXXX ] [ YYYY ] [ ZZZZ ]
 
 ### Fields
 
-| Character Offset | Field   | Size (bits) | Description                    |
-| ---------------- | ------- | ----------- | ------------------------------ |
-| 0                | C       | 4           | Lead-in                        |
-| 1-7              | XXXXXXX | 28          | Ledger Index / Sequence Number |
-| 8-11             | YYYY    | 16          | Transaction Index              |
-| 12-15            | ZZZZ    | 16          | Network ID                     |
+| Character Offset | Field | Size (bits) | Description |
+| ---------------- | ----- | ----------- | ----------- |
+| 0 | C | 4 | Lead-in |
+| 1-7 | XXXXXXX | 28 | Ledger Index / Sequence Number |
+| 8-11 | YYYY | 16 | Transaction Index |
+| 12-15 | ZZZZ | 16 | Network ID |
 
 # 1. Background
 
@@ -98,11 +98,11 @@ CTIDs allow users to quickly and easily identify their transactions on a particu
 
 To future-proof CTID identifiers, the parameters and their sizes and lifespans are considered:
 
-| Field             | Size (bits) | Limit (decimal) | Lifespan                                                     | Explanation                                                                                                                                                                                                  |
-| ----------------- | ----------- | --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Ledger Index      | 28          | 268,435,455     | 34 years from genesis                                        | This field would otherwise be 32 bits but for the C lead-in nibble. We feel the easily identified C is more useful than an extremely long lifespan.                                                          |
-| Transaction Index | 16          | 65,535          | ∞ / until there are more than 65,535 transactions per ledger | It is very unlikely there will be more than 65535 transactions per ledger in any XRPL Protocol Chain for a long time. If there are then those above this limit still exist but cannot be identified as CTID. |
-| Network ID        | 16          | 65,535          | ∞ / until there are more than 65535 ports allowed in TCP     | In XRPL Protocol Chains the Network ID should match the chosen peer port. Thus the natural limitation on Network ID is that of the TCP port (65536).                                                         |
+| Field | Size (bits) | Limit (decimal) | Lifespan | Explanation |
+| ----- | ----------- | --------------- | -------- | ----------- |
+| Ledger Index | 28 | 268,435,455 | 34 years from genesis | This field would otherwise be 32 bits but for the C lead-in nibble. We feel the easily identified C is more useful than an extremely long lifespan. |
+| Transaction Index | 16 | 65,535 | ∞ / until there are more than 65,535 transactions per ledger | It is very unlikely there will be more than 65535 transactions per ledger in any XRPL Protocol Chain for a long time. If there are then those above this limit still exist but cannot be identified as CTID. |
+| Network ID | 16 | 65,535 | ∞ / until there are more than 65535 ports allowed in TCP | In XRPL Protocol Chains the Network ID should match the chosen peer port. Thus the natural limitation on Network ID is that of the TCP port (65536). |
 
 ### 2.2 Extensible
 

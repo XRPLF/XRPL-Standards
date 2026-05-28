@@ -41,17 +41,17 @@ This object represents a permissioned domain.
 
 ### 2.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                               |
-| --------------------- | --------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerIndex`         | ✔️        | `string`  | `Hash256`     | The unique ID of the ledger object.                                                                                                                       |
-| `Flags`               | ✔️        | `number`  | `UInt32`      | Flag values associated with this object.                                                                                                                  |
-| `LedgerEntryType`     | ✔️        | `string`  | `UInt16`      | The ledger object's type (`PermissionedDomain`).                                                                                                          |
-| `Owner`               | ✔️        | `string`  | `AccountID`   | The account that controls the settings of the domain.                                                                                                     |
-| `OwnerNode`           | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages.                      |
-| `Sequence`            | ✔️        | `number`  | `UInt32`      | The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain. |
-| `AcceptedCredentials` | ✔️        | `array`   | `STArray`     | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.                    |
-| `PreviousTxnID`       | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                           |
-| `PreviousTxnLgrSeq`   | ✔️        | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                   |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `LedgerIndex` | ✔️ | `string` | `Hash256` | The unique ID of the ledger object. |
+| `Flags` | ✔️ | `number` | `UInt32` | Flag values associated with this object. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The ledger object's type (`PermissionedDomain`). |
+| `Owner` | ✔️ | `string` | `AccountID` | The account that controls the settings of the domain. |
+| `OwnerNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. |
+| `Sequence` | ✔️ | `number` | `UInt32` | The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain. |
+| `AcceptedCredentials` | ✔️ | `array` | `STArray` | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. |
+| `PreviousTxnID` | ✔️ | `string` | `Hash256` | The identifying hash of the transaction that most recently modified this entry. |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UInt32` | The ledger index that contains the transaction that most recently modified this object. |
 
 #### 2.1.1. `LedgerIndex`
 
@@ -65,10 +65,10 @@ This is an array of inner objects referencing a type of credential. The maximum 
 
 The array will be sorted by `Issuer`, so that searching it for a match is more performant.
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                               |
-| ---------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `Issuer`         | ✔️        | `string`  | `AccountID`   | The issuer of the credential.                                                                                             |
-| `CredentialType` | ✔️        | `string`  | `Blob`        | A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70). |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `Issuer` | ✔️ | `string` | `AccountID` | The issuer of the credential. |
+| `CredentialType` | ✔️ | `string` | `Blob` | A (hex-encoded) value to identify the type of credential from the issuer. The maximum length is 64 bytes (as per XLS-70). |
 
 ### 2.2. Account Deletion
 
@@ -80,12 +80,12 @@ This transaction creates or modifies a `PermissionedDomain` object.
 
 ### 3.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                     |
-| --------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`PermissionedDomainSet`).                                                                                                                                 |
-| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction.                                                                                                                                            |
-| `DomainID`            |           | `string`  | `Hash256`     | The domain to modify. Must be included if modifying an existing domain.                                                                                                         |
-| `AcceptedCredentials` | ✔️        | `array`   | `STArray`     | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`PermissionedDomainSet`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `DomainID` | | `string` | `Hash256` | The domain to modify. Must be included if modifying an existing domain. |
+| `AcceptedCredentials` | ✔️ | `array` | `STArray` | The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field. |
 
 ### 3.2. Failure Conditions
 
@@ -108,11 +108,11 @@ This transaction deletes a `PermissionedDomain` object.
 
 ### 4.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                        |
-| ----------------- | --------- | --------- | ------------- | -------------------------------------------------- |
-| `TransactionType` | ✔️        | `string`  | `UInt16`      | The transaction type (`PermissionedDomainDelete`). |
-| `Account`         | ✔️        | `string`  | `AccountID`   | The account sending the transaction.               |
-| `DomainID`        | ✔️        | `string`  | `Hash256`     | The domain to delete.                              |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| ---------- | --------- | --------- | ------------- | ----------- |
+| `TransactionType` | ✔️ | `string` | `UInt16` | The transaction type (`PermissionedDomainDelete`). |
+| `Account` | ✔️ | `string` | `AccountID` | The account sending the transaction. |
+| `DomainID` | ✔️ | `string` | `Hash256` | The domain to delete. |
 
 ### 4.2. Failure Conditions
 
@@ -187,7 +187,7 @@ No, unless they are also the issuer of said credential.
 
 No.
 
-### A.8: Why not have a ledger object for each domain rule, instead of having it all in one object? Then you wouldn't have any limitations on how many rules a domain could have.
+### A.8: Why not have a ledger object for each domain rule (instead of having it all in one object), to avoid having any limitations on how many rules a domain could have?
 
 This won't work.
 

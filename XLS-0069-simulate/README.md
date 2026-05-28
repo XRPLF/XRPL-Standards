@@ -31,11 +31,11 @@ The `simulate` method applies a transaction (and returns the result and metadata
 
 ### 2.1. Request Fields
 
-| Field Name | JSON Type | Description                                                                                                                                                                                                                                |
-| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tx_blob`  | `string`  | The transaction to simulate, in [binary format](https://xrpl.org/docs/references/protocol/binary-format/).                                                                                                                                 |
-| `tx_json`  | `object`  | The transaction to simulate, in JSON format.                                                                                                                                                                                               |
-| `binary`   | `boolean` | If `true`, return transaction data and metadata as binary [serialized](https://xrpl.org/docs/references/protocol/binary-format/) to hexadecimal strings. If `false`, return transaction data and metadata as JSON. The default is `false`. |
+| Field Name | JSON Type | Description |
+| ---------- | --------- | ----------- |
+| `tx_blob` | `string` | The transaction to simulate, in [binary format](https://xrpl.org/docs/references/protocol/binary-format/). |
+| `tx_json` | `object` | The transaction to simulate, in JSON format. |
+| `binary` | `boolean` | If `true`, return transaction data and metadata as binary [serialized](https://xrpl.org/docs/references/protocol/binary-format/) to hexadecimal strings. If `false`, return transaction data and metadata as JSON. The default is `false`. |
 
 A valid request must have exactly one of `tx_blob` or `tx_json` included. The transaction **must** be unsigned. Public keys (`SigningPubKey`), if included, will be verified.
 
@@ -45,13 +45,13 @@ If the `Fee` field is omitted (not set) in the transaction, then the server will
 
 The shape of the return object is very similar to the [response of the `tx` method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/transaction-methods/tx#response-format).
 
-| Field Name     | Always Present?         | JSON Type | Description                                                                                                                                                                                                                          |
-| -------------- | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tx_json`      | If `binary` was `false` | `object`  | The transaction that was simulated, including auto-filled values. Included if `binary` was `false`.                                                                                                                                  |
-| `tx_blob`      | If `binary` was `true`  | `string`  | The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`.                                                                                                                        |
-| `ledger_index` | ✔️                      | `number`  | The ledger index of the ledger that includes this transaction.                                                                                                                                                                       |
-| `meta`         | If `binary` was `false` | `object`  | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `false`. |
-| `meta_blob`    | If `binary` was `true`  | `string`  | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `true`.  |
+| Field Name | Always Present? | JSON Type | Description |
+| ---------- | --------------- | --------- | ----------- |
+| `tx_json` | If `binary` was `false` | `object` | The transaction that was simulated, including auto-filled values. Included if `binary` was `false`. |
+| `tx_blob` | If `binary` was `true` | `string` | The serialized transaction that was simulated, including auto-filled values. Included if `binary` was `true`. |
+| `ledger_index` | ✔️ | `number` | The ledger index of the ledger that includes this transaction. |
+| `meta` | If `binary` was `false` | `object` | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `false`. |
+| `meta_blob` | If `binary` was `true` | `string` | Transaction metadata, which describes the results of the transaction. Not included if the transaction fails with a code that means it wouldn’t be included in the ledger (such as a non-TEC code). Included if `binary` was `true`. |
 
 ### 2.3. Error Cases
 

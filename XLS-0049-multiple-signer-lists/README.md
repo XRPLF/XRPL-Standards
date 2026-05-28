@@ -105,9 +105,9 @@ The [`SignerListSet` transaction](https://xrpl.org/signerlistset.html) already e
 
 For the existing fields and validation rules, see the canonical [`SignerListSet` transaction documentation](https://xrpl.org/docs/references/protocol/transactions/types/signerlistset#signerlistset-fields). This amendment adds a single new optional field:
 
-| Field Name               | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                 |
-| ------------------------ | --------- | --------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionTypeBitmask` | No        | `array`   | `HASH256`     | `N/A`         | Bitmask of transaction types this change applies to; JSON is a list of transaction type names. `0` updates the global signer list; other values map to scoped lists as defined in this XLS. |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| `TransactionTypeBitmask` | No | `array` | `HASH256` | `N/A` | Bitmask of transaction types this change applies to; JSON is a list of transaction type names. `0` updates the global signer list; other values map to scoped lists as defined in this XLS. |
 
 #### 5.1.1. `TransactionTypeBitmask`
 

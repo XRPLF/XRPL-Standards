@@ -41,18 +41,18 @@ An individual address can deep-freeze its trust line to an issuer or financial i
 
 Two new flags `lsfLowDeepFreeze` and `lsfHighDeepFreeze` are introduced in the `RippleState` (trustline) object.
 
-> |      Flag Name      |  Flag Value  | Description                                                                                                       |
-> | :-----------------: | :----------: | :---------------------------------------------------------------------------------------------------------------- |
-> | `lsfLowDeepFreeze`  | `0x02000000` | The low account has deep-frozen the trust line, preventing the high account from sending and receiving the asset. |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
+> | `lsfLowDeepFreeze` | `0x02000000` | The low account has deep-frozen the trust line, preventing the high account from sending and receiving the asset. |
 > | `lsfHighDeepFreeze` | `0x04000000` | The high account has deep-frozen the trust line, preventing the low account from sending and receiving the asset. |
 
 #### 2.1.2. `TrustSet` Transaction
 
 Two new flags `tfSetDeepFreeze` and `tfClearDeepFreeze` are introduced in the `TrustSet` transaction.
 
-> |      Flag Name      |  Flag Value  | Description                              |
-> | :-----------------: | :----------: | :--------------------------------------- |
-> |  `tfSetDeepFreeze`  | `0x00400000` | Deep freeze the trust line.              |
+> | Flag Name | Flag Value | Description |
+> | :-------: | :--------: | :---------- |
+> | `tfSetDeepFreeze` | `0x00400000` | Deep freeze the trust line. |
 > | `tfClearDeepFreeze` | `0x00800000` | Clear the deep-freeze on the trust line. |
 
 The `TrustSet` transaction trying to set `tfSetDeepFreeze` will succeed if and only if one of the following is true:

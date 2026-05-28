@@ -25,9 +25,9 @@ This will increase revenue opportunities for creators and marketplaces and creat
 
 Add the following field:
 
-| Field Name | Required? |      JSON Type       | Internal Type |
-| ---------- | :-------: | :------------------: | :-----------: |
-| `Amount`   |           | `object` or `string` |   `AMOUNT`    |
+| Field Name | Required? | JSON Type | Internal Type |
+| ---------- | :-------: | :-------: | :-----------: |
+| `Amount` | | `object` or `string` | `AMOUNT` |
 
 ### `Amount` Field
 

@@ -61,13 +61,13 @@ A **condition-based** escrow essentially only releases its funds if a password i
 
 Currently, these are the combinations of allowed escrow options:
 
-| Summary                           | `FinishAfter` | `Condition` | `CancelAfter` |
-| :-------------------------------- | :------------ | :---------- | :------------ |
-| Time-based                        | ✔️            |             |               |
-| Time-based with expiration        | ✔️            |             | ✔️            |
-| Timed conditional                 | ✔️            | ✔️          |               |
-| Timed conditional with expiration | ✔️            | ✔️          | ✔️            |
-| Conditional with expiration       |               | ✔️          | ✔️            |
+| Summary | `FinishAfter` | `Condition` | `CancelAfter` |
+| :------ | :------------ | :---------- | :------------ |
+| Time-based | ✔️ | | |
+| Time-based with expiration | ✔️ | | ✔️ |
+| Timed conditional | ✔️ | ✔️ | |
+| Timed conditional with expiration | ✔️ | ✔️ | ✔️ |
+| Conditional with expiration | | ✔️ | ✔️ |
 
 ### 3.2. Background: Crypto-Conditions
 
@@ -119,30 +119,30 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 </summary>
 
-| Field Name          | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                            |
-| :------------------ | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Account`           | ✔️        | `string`  | `AccountID`   | The address of the owner (sender) of this escrow. This is the account that provided the funds, and gets it back if the escrow is canceled.                                                                                             |
-| `Amount`            | ✔️        | `string`  | `Amount`      | The amount of funds currently held in the escrow.                                                                                                                                                                                      |
-| `CancelAfter`       |           | `number`  | `UInt32`      | The escrow can be canceled if and only if this field is present \_and_the time it specifies has passed.                                                                                                                                |
-| `Condition`         |           | `string`  | `Blob`        | A [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1), as hexadecimal. If present, the `EscrowFinish` transaction must contain a fulfillment that satisfies this condition. |
-| `Destination`       | ✔️        | `string`  | `AccountID`   | The destination address where the funds are paid if the escrow is successful.                                                                                                                                                          |
-| `DestinationNode`   |           | `string`  | `UInt64`      | A hint indicating which page of the destination's owner directory links to this object, in case the directory consists of multiple pages.                                                                                              |
-| `DestinationTag`    |           | `number`  | `UInt32`      | An arbitrary tag to further specify the destination for this escrow, such as a hosted recipient at the destination address.                                                                                                            |
-| `FinishAfter`       |           | `number`  | `UInt32`      | The time after which this escrow can be finished. Any `EscrowFinish` transaction before this time fails.                                                                                                                               |
-| `LedgerEntryType`   | ✔️        | `string`  | `UInt16`      | The value `0x0075`, mapped to the string `Escrow`, indicates that this is an `Escrow` entry.                                                                                                                                           |
-| `OwnerNode`         | ✔️        | `string`  | `UInt64`      | A hint indicating which page of the sender's owner directory links to this entry, in case the directory consists of multiple pages.                                                                                                    |
-| `PreviousTxnID`     | ✔️        | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                                                                                                        |
-| `PreviousTxnLgrSeq` | ✔️        | `number`  | `UInt32`      | The index of the ledger that contains the transaction that most recently modified this entry.                                                                                                                                          |
-| `SourceTag`         |           | `number`  | `UInt32`      | An arbitrary tag to further specify the source for this escrow, such as a hosted recipient at the owner's address.                                                                                                                     |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `Account` | ✔️ | `string` | `AccountID` | The address of the owner (sender) of this escrow. This is the account that provided the funds, and gets it back if the escrow is canceled. |
+| `Amount` | ✔️ | `string` | `Amount` | The amount of funds currently held in the escrow. |
+| `CancelAfter` | | `number` | `UInt32` | The escrow can be canceled if and only if this field is present \_and_the time it specifies has passed. |
+| `Condition` | | `string` | `Blob` | A [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1), as hexadecimal. If present, the `EscrowFinish` transaction must contain a fulfillment that satisfies this condition. |
+| `Destination` | ✔️ | `string` | `AccountID` | The destination address where the funds are paid if the escrow is successful. |
+| `DestinationNode` | | `string` | `UInt64` | A hint indicating which page of the destination's owner directory links to this object, in case the directory consists of multiple pages. |
+| `DestinationTag` | | `number` | `UInt32` | An arbitrary tag to further specify the destination for this escrow, such as a hosted recipient at the destination address. |
+| `FinishAfter` | | `number` | `UInt32` | The time after which this escrow can be finished. Any `EscrowFinish` transaction before this time fails. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The value `0x0075`, mapped to the string `Escrow`, indicates that this is an `Escrow` entry. |
+| `OwnerNode` | ✔️ | `string` | `UInt64` | A hint indicating which page of the sender's owner directory links to this entry, in case the directory consists of multiple pages. |
+| `PreviousTxnID` | ✔️ | `string` | `Hash256` | The identifying hash of the transaction that most recently modified this entry. |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UInt32` | The index of the ledger that contains the transaction that most recently modified this entry. |
+| `SourceTag` | | `number` | `UInt32` | An arbitrary tag to further specify the source for this escrow, such as a hosted recipient at the owner's address. |
 
 </details>
 
 We propose two additional fields:
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                              |
-| :--------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------- |
-| `FinishFunction` |           | `string`  | `Blob`        | Compiled WebAssembly (WASM) code that must execute correctly for the escrow to finish (size limits TBD). |
-| `Data`           |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `FinishFunction` (size limits TBD).     |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `FinishFunction` | | `string` | `Blob` | Compiled WebAssembly (WASM) code that must execute correctly for the escrow to finish (size limits TBD). |
+| `Data` | | `string` | `Blob` | User-defined extra data that can be accessed and modified by the `FinishFunction` (size limits TBD). |
 
 #### 5.1.1. `FinishFunction`
 
@@ -167,23 +167,23 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 </summary>
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                           |
-| :--------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Amount`         | ✔️        | `Amount`  | `Amount`      | Amount to deduct from the sender's balance and escrow.                                                                                                                                                                                                                                                                                                                |
-| `Destination`    | ✔️        | `string`  | `AccountID`   | Address to receive escrowed funds.                                                                                                                                                                                                                                                                                                                                    |
-| `Condition`      |           | `string`  | `Blob`        | Hex value representing a [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1). The funds can only be delivered to the recipient if this condition is fulfilled. If the condition is not fulfilled before the expiration time specified in the `CancelAfter` field, the funds can only revert to the sender. |
-| `CancelAfter`    |           | `number`  | `UInt32`      | The time when this escrow expires. This value is immutable; the funds can only be returned to the sender after this time.                                                                                                                                                                                                                                             |
-| `FinishAfter`    |           | `number`  | `UInt32`      | The time when the escrowed funds can be released to the recipient. This value is immutable, and the funds can't be accessed until this time.                                                                                                                                                                                                                          |
-| `DestinationTag` |           | `number`  | `UInt32`      | Arbitrary tag to further specify the destination for this escrowed payment, such as a hosted recipient at the destination address.                                                                                                                                                                                                                                    |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `Amount` | ✔️ | `Amount` | `Amount` | Amount to deduct from the sender's balance and escrow. |
+| `Destination` | ✔️ | `string` | `AccountID` | Address to receive escrowed funds. |
+| `Condition` | | `string` | `Blob` | Hex value representing a [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1). The funds can only be delivered to the recipient if this condition is fulfilled. If the condition is not fulfilled before the expiration time specified in the `CancelAfter` field, the funds can only revert to the sender. |
+| `CancelAfter` | | `number` | `UInt32` | The time when this escrow expires. This value is immutable; the funds can only be returned to the sender after this time. |
+| `FinishAfter` | | `number` | `UInt32` | The time when the escrowed funds can be released to the recipient. This value is immutable, and the funds can't be accessed until this time. |
+| `DestinationTag` | | `number` | `UInt32` | Arbitrary tag to further specify the destination for this escrowed payment, such as a hosted recipient at the destination address. |
 
 </details>
 
 We propose two additional fields:
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                        |
-| :--------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------------------------------- |
-| `FinishFunction` |           | `string`  | `Blob`        | Compiled WASM code that serves as an additional condition that must pass for an escrow to be finished (completed). |
-| `Data`           |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `FinishFunction`.                                 |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `FinishFunction` | | `string` | `Blob` | Compiled WASM code that serves as an additional condition that must pass for an escrow to be finished (completed). |
+| `Data` | | `string` | `Blob` | User-defined extra data that can be accessed and modified by the `FinishFunction`. |
 
 Some rules about what conditions must be satisfied for a valid `EscrowCreate` transaction:
 
@@ -195,17 +195,17 @@ _This table format is taken from [here](https://xrpl.org/docs/references/protoco
 
 **Bold** = new options
 
-| Summary                                             | `FinishAfter` | `Condition` | `CancelAfter` | `FinishFunction` |
-| :-------------------------------------------------- | :------------ | :---------- | :------------ | :--------------- |
-| Time-based                                          | ✔️            |             |               |                  |
-| Time-based with expiration                          | ✔️            |             | ✔️            |                  |
-| Timed conditional                                   | ✔️            | ✔️          |               |                  |
-| Timed conditional with expiration                   | ✔️            | ✔️          | ✔️            |                  |
-| Conditional with expiration                         |               | ✔️          | ✔️            |                  |
-| **Function-based with expiration**                  |               |             | ✔️            | ✔️               |
-| **Timed Function with expiration**                  | ✔️            |             | ✔️            | ✔️               |
-| **Conditional Function with expiration**            |               | ✔️          | ✔️            | ✔️               |
-| **Time-based Conditional Function with expiration** | ✔️            | ✔️          | ✔️            | ✔️               |
+| Summary | `FinishAfter` | `Condition` | `CancelAfter` | `FinishFunction` |
+| :------ | :------------ | :---------- | :------------ | :--------------- |
+| Time-based | ✔️ | | | |
+| Time-based with expiration | ✔️ | | ✔️ | |
+| Timed conditional | ✔️ | ✔️ | | |
+| Timed conditional with expiration | ✔️ | ✔️ | ✔️ | |
+| Conditional with expiration | | ✔️ | ✔️ | |
+| **Function-based with expiration** | | | ✔️ | ✔️ |
+| **Timed Function with expiration** | ✔️ | | ✔️ | ✔️ |
+| **Conditional Function with expiration** | | ✔️ | ✔️ | ✔️ |
+| **Time-based Conditional Function with expiration** | ✔️ | ✔️ | ✔️ | ✔️ |
 
 ### 6.2. Transaction Fee
 
@@ -238,21 +238,21 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 </summary>
 
-| Field           | Required? | JSON Type | Internal Type | Description                                                                                                                                                         |
-| :-------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Owner`         | ✔️        | `string`  | `AccountID`   | The source account that funded the escrow.                                                                                                                          |
-| `OfferSequence` | ✔️        | `number`  | `UInt32`      | Transaction sequence of `EscrowCreate` transaction that created the escrow to finish.                                                                               |
-| `Condition`     |           | `string`  | `Blob`        | The (previously-supplied) [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1) of the escrow.             |
-| `CredentialIDs` |           | `array`   | `Vector256`   | Set of Credentials to authorize a deposit made by this transaction. Each member of the array must be the ledger entry ID of a Credential entry in the ledger.       |
-| `Fulfillment`   |           | `string`  | `Blob`        | The [PREIMAGE-SHA-256 crypto-condition fulfillment](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1.4) matching the escrow's `Condition`. |
+| Field | Required? | JSON Type | Internal Type | Description |
+| :---- | :-------- | :-------- | :------------ | :---------- |
+| `Owner` | ✔️ | `string` | `AccountID` | The source account that funded the escrow. |
+| `OfferSequence` | ✔️ | `number` | `UInt32` | Transaction sequence of `EscrowCreate` transaction that created the escrow to finish. |
+| `Condition` | | `string` | `Blob` | The (previously-supplied) [PREIMAGE-SHA-256 crypto-condition](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1) of the escrow. |
+| `CredentialIDs` | | `array` | `Vector256` | Set of Credentials to authorize a deposit made by this transaction. Each member of the array must be the ledger entry ID of a Credential entry in the ledger. |
+| `Fulfillment` | | `string` | `Blob` | The [PREIMAGE-SHA-256 crypto-condition fulfillment](https://tools.ietf.org/html/draft-thomas-crypto-conditions-02#section-8.1.4) matching the escrow's `Condition`. |
 
 </details>
 
 We propose one additional field:
 
-| Field Name             | Required? | JSON Type | Internal Type | Description                                                                                                                                       |
-| :--------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ComputationAllowance` |           | `number`  | `UInt32`      | The amount of gas the user is willing to pay for the execution of the Smart Escrow. Required if the `Escrow` object has a `FinishFunction` field. |
+| Field Name | Required? | JSON Type | Internal Type | Description |
+| :--------- | :-------- | :-------- | :------------ | :---------- |
+| `ComputationAllowance` | | `number` | `UInt32` | The amount of gas the user is willing to pay for the execution of the Smart Escrow. Required if the `Escrow` object has a `FinishFunction` field. |
 
 ### 7.2. Transaction Fee
 
@@ -277,10 +277,10 @@ There are no additional state changes.
 
 There are two additional metadata fields:
 
-| Field Name       | Validated? | Always Present? | Type     | Description                                                                               |
-| :--------------- | :--------- | :-------------- | :------- | :---------------------------------------------------------------------------------------- |
-| `GasUsed`        | Yes        | Conditional     | `UInt32` | The amount of gas actually used by the computation of the `FinishFunction` in the escrow. |
-| `WasmReturnCode` | Yes        | Conditional     | `Int32`  | The integer code returned by the `FinishFunction`.                                        |
+| Field Name | Validated? | Always Present? | Type | Description |
+| :--------- | :--------- | :-------------- | :--- | :---------- |
+| `GasUsed` | Yes | Conditional | `UInt32` | The amount of gas actually used by the computation of the `FinishFunction` in the escrow. |
+| `WasmReturnCode` | Yes | Conditional | `Int32` | The integer code returned by the `FinishFunction`. |
 
 ## 8. Ledger Object: `FeeSettings`
 
@@ -297,25 +297,25 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 </summary>
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                                                     |
-| :---------------------- | :-------- | :-------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BaseFeeDrops`          | ✔️        | `string`  | `Amount`      | The transaction cost of the "reference transaction" in drops of XRP.                                                                            |
-| `Flags`                 | ✔️        | `number`  | `UInt32`      | A bitmap of boolean flags enabled for this object. Currently, the protocol defines no flags for `FeeSettings` objects. The value is always `0`. |
-| `LedgerEntryType`       | ✔️        | `string`  | `UInt16`      | The value `0x0073`, mapped to the string `FeeSettings`, indicates that this object contains the ledger's fee settings.                          |
-| `ReserveBaseDrops`      | ✔️        | `string`  | `Amount`      | The base reserve for an account in the XRP Ledger, as drops of XRP.                                                                             |
-| `ReserveIncrementDrops` | ✔️        | `string`  | `Amount`      | The incremental owner reserve for owning objects, as drops of XRP.                                                                              |
-| `PreviousTxnID`         | ✔️        | `string`  | `UInt256`     | The identifying hash of the transaction that most recently modified this entry.                                                                 |
-| `PreviousTxnLgrSeq`     | ✔️        | `number`  | `UInt32`      | The index of the ledger that contains the transaction that most recently modified this entry.                                                   |
+| Field | Required? | JSON Type | Internal Type | Description |
+| :---- | :-------- | :-------- | :------------ | :---------- |
+| `BaseFeeDrops` | ✔️ | `string` | `Amount` | The transaction cost of the "reference transaction" in drops of XRP. |
+| `Flags` | ✔️ | `number` | `UInt32` | A bitmap of boolean flags enabled for this object. Currently, the protocol defines no flags for `FeeSettings` objects. The value is always `0`. |
+| `LedgerEntryType` | ✔️ | `string` | `UInt16` | The value `0x0073`, mapped to the string `FeeSettings`, indicates that this object contains the ledger's fee settings. |
+| `ReserveBaseDrops` | ✔️ | `string` | `Amount` | The base reserve for an account in the XRP Ledger, as drops of XRP. |
+| `ReserveIncrementDrops` | ✔️ | `string` | `Amount` | The incremental owner reserve for owning objects, as drops of XRP. |
+| `PreviousTxnID` | ✔️ | `string` | `UInt256` | The identifying hash of the transaction that most recently modified this entry. |
+| `PreviousTxnLgrSeq` | ✔️ | `number` | `UInt32` | The index of the ledger that contains the transaction that most recently modified this entry. |
 
 </details>
 
 We propose three additional fields:
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                     |
-| :---------------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------- |
-| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                         |
-| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100,000 (100kb).                     |
-| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1,000 (1 thousandth of a drop). |
+| Field | Required? | JSON Type | Internal Type | Description |
+| :---- | :-------- | :-------- | :------------ | :---------- |
+| `ExtensionComputeLimit` | No | `number` | `UInt32` | The maximum amount of gas that one extension can execute. The initial value is 100,000. |
+| `ExtensionSizeLimit` | No | `number` | `UInt32` | The maximum size, in bytes, that an extension can be. The initial value is 100,000 (100kb). |
+| `GasPrice` | No | `number` | `UInt32` | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1,000 (1 thousandth of a drop). |
 
 ## 9. Transaction: `SetFee`
 
@@ -332,22 +332,22 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ps
 
 </summary>
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                                                                 |
-| :---------------------- | :-------- | :-------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BaseFeeDrops`          | ✔️        | `string`  | `Amount`      | The charge, in drops of XRP, for the reference transaction. (This is the transaction cost before scaling for load.)                                         |
-| `ReserveBaseDrops`      | ✔️        | `string`  | `Amount`      | The base reserve, in drops.                                                                                                                                 |
-| `ReserveIncrementDrops` | ✔️        | `string`  | `Amount`      | The incremental reserve, in drops.                                                                                                                          |
-| `LedgerSequence`        | ✔️        | `number`  | `UInt32`      | The index of the ledger version where this pseudo-transaction appears. This distinguishes the pseudo-transaction from other occurrences of the same change. |
+| Field | Required? | JSON Type | Internal Type | Description |
+| :---- | :-------- | :-------- | :------------ | :---------- |
+| `BaseFeeDrops` | ✔️ | `string` | `Amount` | The charge, in drops of XRP, for the reference transaction. (This is the transaction cost before scaling for load.) |
+| `ReserveBaseDrops` | ✔️ | `string` | `Amount` | The base reserve, in drops. |
+| `ReserveIncrementDrops` | ✔️ | `string` | `Amount` | The incremental reserve, in drops. |
+| `LedgerSequence` | ✔️ | `number` | `UInt32` | The index of the ledger version where this pseudo-transaction appears. This distinguishes the pseudo-transaction from other occurrences of the same change. |
 
 </details>
 
 We propose three additional fields:
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                    |
-| :---------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------- |
-| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                        |
-| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb).                     |
-| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
+| Field | Required? | JSON Type | Internal Type | Description |
+| :---- | :-------- | :-------- | :------------ | :---------- |
+| `ExtensionComputeLimit` | No | `number` | `UInt32` | The maximum amount of gas that one extension can execute. The initial value is 100,000. |
+| `ExtensionSizeLimit` | No | `number` | `UInt32` | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb). |
+| `GasPrice` | No | `number` | `UInt32` | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
 
 ## 10. How the `FinishFunction` Field Works
 

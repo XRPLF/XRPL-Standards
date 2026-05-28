@@ -69,13 +69,13 @@ First, calculate the checksum of all blocks as `(∑(𝑥[i] * π[i]>)) mod 256`
 
 The proposal also defines an 8-bit field, that can be used to specify details or ancillary information about the key. This proposal defines this as a bitfield named `F`. The following flags are defined:
 
-| Value  | Meaning                                                                                                                                     |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Value | Meaning |
+| ----- | ------- |
 | `0x01` | The data block represents a raw 128-bit _seed_, from which private keys can be derived using the derivation algorithm defined in `rippled`. |
-| `0x02` | The private key calculated or derived from this block of data is used with the **secp256k1** algorithm.                                     |
-| `0x04` | The private key calculated or derived from this block of data is used with the **Ed25519** algorithm.                                       |
-| `0x08` | The data block represents an **Ed25519** validator master key. This flag cannot be combined with any other flags.                           |
-| `0x10` | The data block represents the fulfillment of a `PREIMAGE-SHA256` cryptocondition. This flag cannot be combined with any other flags.        |
+| `0x02` | The private key calculated or derived from this block of data is used with the **secp256k1** algorithm. |
+| `0x04` | The private key calculated or derived from this block of data is used with the **Ed25519** algorithm. |
+| `0x08` | The data block represents an **Ed25519** validator master key. This flag cannot be combined with any other flags. |
+| `0x10` | The data block represents the fulfillment of a `PREIMAGE-SHA256` cryptocondition. This flag cannot be combined with any other flags. |
 
 ##### Using Flags
 

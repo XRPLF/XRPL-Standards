@@ -45,9 +45,9 @@ This amendment extends the functionality of escrows to support both IOUs and MPT
 
 The `EscrowCreate` transaction is modified as follows:
 
-| Field    | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| -------- | --------- | ---------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Amount` | Yes       | Object or String | Amount        | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
+| Field | Required? | JSON Type | Internal Type | Description |
+| ----- | --------- | --------- | ------------- | ----------- |
+| `Amount` | Yes | Object or String | Amount | The amount to deduct from the sender's balance and and set aside in escrow. Once escrowed, this amount can either go to the Destination address (after any `Finish` times/conditions) or returned to the sender (after any cancellation times/conditions). Can represent [XRP, in drops](https://xrpl.org/docs/references/protocol/data-types/basic-data-types#specifying-currency-amounts), an [IOU](https://xrpl.org/docs/concepts/tokens/fungible-tokens#fungible-tokens) token, or an [MPT](https://xrpl.org/docs/concepts/tokens/fungible-tokens/multi-purpose-tokens). Must always be a positive value. |
 
 **Failure Conditions:**
 
@@ -64,7 +64,7 @@ The `EscrowCreate` transaction is modified as follows:
   - If the issuer requires authorization and the source is not authorized, the transaction fails with `tecNO_AUTH`.
 
 - **Source Account's Token Holding Issues:**
-  - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecUNFUNDED `.
+  - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecUNFUNDED`.
   - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
 - **Source Account is Frozen or Token is Locked:**
@@ -165,17 +165,17 @@ The `EscrowCreate` transaction is modified as follows:
 
 ## 1.3. Key Differences Between IOU and MPT Escrows
 
-| Aspect                        | IOU Tokens                                                                                                          | Multi-Purpose Tokens (MPTs)                                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Trustlines**                | Required between accounts and issuer                                                                                | Not used                                                                                                            |
-| **Issuer Flag for Escrow**    | `lsfAllowTrustLineLocking` (account flag)                                                                           | `tfMPTCanEscrow` (token flag)                                                                                       |
-| **Transfer Flags**            | N/A                                                                                                                 | `tfMPTCanTransfer` must be enabled for escrow                                                                       |
-| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                  | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens                                |
+| Aspect | IOU Tokens | Multi-Purpose Tokens (MPTs) |
+| ------ | ---------- | --------------------------- |
+| **Trustlines** | Required between accounts and issuer | Not used |
+| **Issuer Flag for Escrow** | `lsfAllowTrustLineLocking` (account flag) | `tfMPTCanEscrow` (token flag) |
+| **Transfer Flags** | N/A | `tfMPTCanTransfer` must be enabled for escrow |
+| **Require Auth** | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens | Applicable (`tfMPTRequireAuth`); accounts must be authorized prior to holding tokens |
 | **Destination Authorization** | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required | Not required at creation; required at settlement; cannot be granted during `EscrowFinish` if authorization required |
-| **Freeze/Lock Conditions**    | **Deep Freeze** prevents `EscrowFinish`, but allows `EscrowCancel`; Global/Individual Freeze allows both operations | **Lock Conditions (Deep Freeze Equivalent)** prevent `EscrowFinish`, but allow `EscrowCancel`                       |
-| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during settlement                                                     | `TransferFee` stored at creation and applied during settlement                                                      |
-| **Outstanding Amount**        | Remains unchanged during escrow                                                                                     | Remains unchanged during escrow                                                                                     |
-| **Account Deletion**          | Escrows prevent account deletion                                                                                    | Escrows prevent account deletion                                                                                    |
+| **Freeze/Lock Conditions** | **Deep Freeze** prevents `EscrowFinish`, but allows `EscrowCancel`; Global/Individual Freeze allows both operations | **Lock Conditions (Deep Freeze Equivalent)** prevent `EscrowFinish`, but allow `EscrowCancel` |
+| **Transfer Rates/Fees** | `TransferRate` stored at creation and applied during settlement | `TransferFee` stored at creation and applied during settlement |
+| **Outstanding Amount** | Remains unchanged during escrow | Remains unchanged during escrow |
+| **Account Deletion** | Escrows prevent account deletion | Escrows prevent account deletion |
 
 ## 1.4. Transfer Rates and Fees
 
@@ -196,34 +196,34 @@ The `EscrowCreate` transaction is modified as follows:
 
 The `Escrow` ledger object is updated as follows:
 
-| Field Name     | JSON Type        | Internal Type | Description                                                                                                                                                    |
-| -------------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Amount`       | Object or String | Amount        | The amount to be delivered by the held payment. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                   |
-| `TransferRate` | Number           | UInt32        | The transfer rate or fee at which the funds are escrowed, stored at creation and used during settlement. Applicable to both IOUs and MPTs.                     |
-| `IssuerNode`   | Number           | UInt64        | _(Optional)_ The ledger index of the issuer's directory node associated with the `Escrow`. Used when the issuer is neither the source nor destination account. |
+| Field Name | JSON Type | Internal Type | Description |
+| ---------- | --------- | ------------- | ----------- |
+| `Amount` | Object or String | Amount | The amount to be delivered by the held payment. Can represent XRP, an IOU token, or an MPT. Must always be a positive value. |
+| `TransferRate` | Number | UInt32 | The transfer rate or fee at which the funds are escrowed, stored at creation and used during settlement. Applicable to both IOUs and MPTs. |
+| `IssuerNode` | Number | UInt64 | _(Optional)_ The ledger index of the issuer's directory node associated with the `Escrow`. Used when the issuer is neither the source nor destination account. |
 
 ### 1.5.2 `MPToken` Ledger Object
 
 The `MPToken` ledger object is updated as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows for this issuance. |
+| Field Name | JSON Type | Internal Type | Description |
+| ---------- | --------- | ------------- | ----------- |
+| `sfLockedAmount` | String | UInt64 | _(Optional)_ The total of all outstanding escrows for this issuance. |
 
 ### 1.5.3 `MPTokenIssuance` Ledger Object
 
 The `MPTokenIssuance` ledger object is updated as follows:
 
-| Field Name       | JSON Type | Internal Type | Description                                                          |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------- |
-| `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows for this issuance. |
+| Field Name | JSON Type | Internal Type | Description |
+| ---------- | --------- | ------------- | ----------- |
+| `sfLockedAmount` | String | UInt64 | _(Optional)_ The total of all outstanding escrows for this issuance. |
 
 ### 1.5.4 `AccountRoot` Ledger Object
 
 This proposal introduces 1 additional flag for the `Flags` field of `AccountRoot`:
 
-|         Flag Name          |  Flag Value  |
-| :------------------------: | :----------: |
+| Flag Name | Flag Value |
+| :-------: | :--------: |
 | `lsfAllowTrustLineLocking` | `0x40000000` |
 
 ## 1.6. AccountSet Transaction Updates
@@ -234,9 +234,9 @@ To enable IOU tokens to be held in escrow, issuers must set the `lsfAllowTrustLi
 
 The following AccountSet flag is added to enable trust line locking for escrows:
 
-| Flag Name                  | Decimal Value | Description                                                                                                                                                                                                                                                |
-| :------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `asfAllowTrustLineLocking` | 17            | Allow trust line tokens (IOUs) issued by this account to be held in escrow. _(Requires the TokenEscrow amendment.)_ Can only be enabled by the issuer account. Once enabled, holders of this account's issued tokens can create escrows with those tokens. |
+| Flag Name | Decimal Value | Description |
+| :-------- | :------------ | :---------- |
+| `asfAllowTrustLineLocking` | 17 | Allow trust line tokens (IOUs) issued by this account to be held in escrow. _(Requires the TokenEscrow amendment.)_ Can only be enabled by the issuer account. Once enabled, holders of this account's issued tokens can create escrows with those tokens. |
 
 ### 1.6.2. Usage Example
 

@@ -43,24 +43,24 @@ The Subscription object ID is computed as the SHA-512Half of:
 
 ##### 2.1.1.2. Fields
 
-| Field Name        | Constant | Required    | Internal Type | Default Value | Description                                                                     |
-| ----------------- | -------- | ----------- | ------------- | ------------- | ------------------------------------------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes         | UINT16        | 0x0055        | Identifies this as a Subscription object                                        |
-| Flags             | No       | Yes         | UINT32        | 0             | Reserved for future use                                                         |
-| PreviousTxnID     | No       | Yes         | HASH256       | N/A           | Hash of the transaction that most recently modified this object                 |
-| PreviousTxnLgrSeq | No       | Yes         | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object |
-| Account           | Yes      | Yes         | ACCOUNTID     | N/A           | The account that owns the subscription                                          |
-| Destination       | Yes      | Yes         | ACCOUNTID     | N/A           | The account authorized to receive subscription payments                         |
-| Data              | Yes      | Conditional | BLOB          | N/A           | Data field for payment categorization                                           |
-| SendMax           | No       | Yes         | AMOUNT        | N/A           | Maximum amount that can be withdrawn per period (XRP, IOU, or MPT)              |
-| Balance           | No       | Yes         | AMOUNT        | N/A           | Remaining balance available for the current period                              |
-| Frequency         | Yes      | Yes         | UINT32        | N/A           | Time period in seconds between consecutive payments (minimum 3600)              |
-| NextClaimTime     | No       | Yes         | UINT32        | N/A           | Ripple epoch time when the next payment can be claimed                          |
-| StartTime         | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription started (set at creation)               |
-| Expiration        | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription expires                                 |
-| Sequence          | Yes      | Yes         | UINT32        | N/A           | Transaction sequence number used to create this subscription                    |
-| OwnerNode         | No       | Yes         | UINT64        | N/A           | Page of the source account's owner directory                                    |
-| DestinationNode   | No       | Yes         | UINT64        | N/A           | Page of the destination account's owner directory                               |
+| Field Name | Constant | Required | Internal Type | Default Value | Description |
+| ---------- | -------- | -------- | ------------- | ------------- | ----------- |
+| LedgerEntryType | Yes | Yes | UINT16 | 0x0055 | Identifies this as a Subscription object |
+| Flags | No | Yes | UINT32 | 0 | Reserved for future use |
+| PreviousTxnID | No | Yes | HASH256 | N/A | Hash of the transaction that most recently modified this object |
+| PreviousTxnLgrSeq | No | Yes | UINT32 | N/A | Ledger index containing the transaction that most recently modified this object |
+| Account | Yes | Yes | ACCOUNTID | N/A | The account that owns the subscription |
+| Destination | Yes | Yes | ACCOUNTID | N/A | The account authorized to receive subscription payments |
+| Data | Yes | Conditional | BLOB | N/A | Data field for payment categorization |
+| SendMax | No | Yes | AMOUNT | N/A | Maximum amount that can be withdrawn per period (XRP, IOU, or MPT) |
+| Balance | No | Yes | AMOUNT | N/A | Remaining balance available for the current period |
+| Frequency | Yes | Yes | UINT32 | N/A | Time period in seconds between consecutive payments (minimum 3600) |
+| NextClaimTime | No | Yes | UINT32 | N/A | Ripple epoch time when the next payment can be claimed |
+| StartTime | Yes | Conditional | UINT32 | N/A | Ripple epoch time when the subscription started (set at creation) |
+| Expiration | Yes | Conditional | UINT32 | N/A | Ripple epoch time when the subscription expires |
+| Sequence | Yes | Yes | UINT32 | N/A | Transaction sequence number used to create this subscription |
+| OwnerNode | No | Yes | UINT64 | N/A | Page of the source account's owner directory |
+| DestinationNode | No | Yes | UINT64 | N/A | Page of the destination account's owner directory |
 
 ##### 2.1.1.3. Ownership
 
@@ -138,16 +138,16 @@ Creates a new subscription or updates an existing one.
 
 ##### 2.2.1.1. Fields
 
-| Field Name      | Required?   | JSON Type     | Internal Type | Default Value | Description                                                                       |
-| --------------- | ----------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------- |
-| TransactionType | Yes         | String        | UINT16        | N/A           | Value: "SubscriptionSet"                                                          |
-| Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                |
-| Data            | No          | String        | BLOB          | N/A           | Data field for categorization                                                     |
-| Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                      |
-| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates) |
-| StartTime       | No          | Number        | UINT32        | Current Time  | When subscription starts (creation only)                                          |
-| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                         |
-| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID for updates (mutually exclusive with creation fields)                          |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionSet" |
+| Destination | Conditional | String | ACCOUNTID | N/A | Destination account (required for creation, forbidden for updates) |
+| Data | No | String | BLOB | N/A | Data field for categorization |
+| Amount | Yes | Object/String | AMOUNT | N/A | Maximum amount per period (XRP, IOU, or MPT) |
+| Frequency | Conditional | Number | UINT32 | N/A | Period in seconds between payments (required for creation, forbidden for updates) |
+| StartTime | No | Number | UINT32 | Current Time | When subscription starts (creation only) |
+| Expiration | No | Number | UINT32 | N/A | When subscription expires |
+| SubscriptionID | Conditional | String | HASH256 | N/A | ID for updates (mutually exclusive with creation fields) |
 
 ##### 2.2.1.2. Failure Conditions
 
@@ -258,10 +258,10 @@ Cancels an existing subscription.
 
 ##### 2.2.2.1. Fields
 
-| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                  |
-| --------------- | --------- | --------- | ------------- | ------------- | ---------------------------- |
-| TransactionType | Yes       | String    | UINT16        | N/A           | Value: "SubscriptionCancel"  |
-| SubscriptionID  | Yes       | String    | HASH256       | N/A           | ID of subscription to cancel |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionCancel" |
+| SubscriptionID | Yes | String | HASH256 | N/A | ID of subscription to cancel |
 
 ##### 2.2.2.2. Failure Conditions
 
@@ -294,11 +294,11 @@ Claims a payment from an active subscription.
 
 ##### 2.2.3.1. Fields
 
-| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                           |
-| --------------- | --------- | ------------- | ------------- | ------------- | ------------------------------------- |
-| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"            |
-| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim           |
-| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ available balance) |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| TransactionType | Yes | String | UINT16 | N/A | Value: "SubscriptionClaim" |
+| SubscriptionID | Yes | String | HASH256 | N/A | ID of subscription to claim |
+| Amount | Yes | Object/String | AMOUNT | N/A | Amount to claim (≤ available balance) |
 
 ##### 2.2.3.2. Failure Conditions
 
@@ -390,16 +390,16 @@ Claims a payment from an active subscription.
 
 ## 3. Key Differences Between Token Types in Subscriptions
 
-| Aspect                        | XRP            | IOU Tokens                    | Multi-Purpose Tokens (MPTs)  |
-| ----------------------------- | -------------- | ----------------------------- | ---------------------------- |
-| **Holdings**                  | Native balance | Trustline required            | MPToken object required      |
-| **Authorization**             | N/A            | lsfRequireAuth flag           | tfMPTRequireAuth flag        |
-| **Transfer Capability**       | Always allowed | Subject to freeze             | Requires tfMPTCanTransfer    |
-| **Freeze/Lock**               | N/A            | Global/Individual/Deep freeze | Lock conditions              |
-| **Transfer Costs**            | None           | TransferRate (current)        | TransferFee (current)        |
-| **Auto-creation**             | N/A            | Trustline during claim        | MPToken during claim         |
-| **Reserve for Auto-creation** | N/A            | Required from destination     | Required from destination    |
-| **Issuer Special Cases**      | N/A            | Can be source or destination  | Doesn't hold MPToken objects |
+| Aspect | XRP | IOU Tokens | Multi-Purpose Tokens (MPTs) |
+| ------ | --- | ---------- | --------------------------- |
+| **Holdings** | Native balance | Trustline required | MPToken object required |
+| **Authorization** | N/A | lsfRequireAuth flag | tfMPTRequireAuth flag |
+| **Transfer Capability** | Always allowed | Subject to freeze | Requires tfMPTCanTransfer |
+| **Freeze/Lock** | N/A | Global/Individual/Deep freeze | Lock conditions |
+| **Transfer Costs** | None | TransferRate (current) | TransferFee (current) |
+| **Auto-creation** | N/A | Trustline during claim | MPToken during claim |
+| **Reserve for Auto-creation** | N/A | Required from destination | Required from destination |
+| **Issuer Special Cases** | N/A | Can be source or destination | Doesn't hold MPToken objects |
 
 ## 4. Arrears and Balance Management
 

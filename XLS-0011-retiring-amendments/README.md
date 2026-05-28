@@ -87,22 +87,22 @@ Ripple proposes January 1, 2018 as the cutoff date for the first batch of uncond
 
 The complete list of amendments to be unconditionalized in v1.6.0 is as follows:
 
-| Amendment Name    | Date Enabled |
-| :---------------- | :----------- |
-| MultiSign         | 2016-06-27   |
-| TrustSetAuth      | 2016-07-19   |
-| Flow              | 2016-10-21   |
-| CryptoConditions  | 2017-01-03   |
-| TickSize          | 2017-02-21   |
-| PayChan           | 2017-03-31   |
-| fix1368           | 2017-03-31   |
-| Escrow            | 2017-03-31   |
-| fix1373           | 2017-07-07   |
-| EnforceInvariants | 2017-07-07   |
-| SortedDirectories | 2017-11-14   |
-| fix1528           | 2017-11-14   |
-| fix1523           | 2017-11-14   |
-| fix1512           | 2017-11-14   |
-| fix1201           | 2017-11-14   |
+| Amendment Name | Date Enabled |
+| :------------- | :----------- |
+| MultiSign | 2016-06-27 |
+| TrustSetAuth | 2016-07-19 |
+| Flow | 2016-10-21 |
+| CryptoConditions | 2017-01-03 |
+| TickSize | 2017-02-21 |
+| PayChan | 2017-03-31 |
+| fix1368 | 2017-03-31 |
+| Escrow | 2017-03-31 |
+| fix1373 | 2017-07-07 |
+| EnforceInvariants | 2017-07-07 |
+| SortedDirectories | 2017-11-14 |
+| fix1528 | 2017-11-14 |
+| fix1523 | 2017-11-14 |
+| fix1512 | 2017-11-14 |
+| fix1201 | 2017-11-14 |
 
 > **Note:** As mentioned above, the **FeeEscalation** amendment (enabled 2016-05-19), which did not directly affect transaction processing and ledger replay, has been unconditionalized since v1.2.0.

@@ -161,7 +161,7 @@ This will be codified in a template later.
 
 ##### 4.4.3.1. Serialized Types
 
-`Serialized Types` documents one or more new "serialized types" (or STypes) introduced or modified by the specification. Most specifications will not need such sections, as the[ existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally enough. Each SType must be in its own numbered section, with the following subsections:
+`Serialized Types` documents one or more new "serialized types" (or STypes) introduced or modified by the specification. Most specifications will not need such sections, as the [existing types](https://xrpl.org/docs/references/protocol/binary-format#type-list) are generally enough. Each SType must be in its own numbered section, with the following subsections:
 
 ###### 4.4.3.1.1. `SType` value
 

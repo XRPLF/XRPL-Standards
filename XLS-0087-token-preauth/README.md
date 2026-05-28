@@ -60,18 +60,18 @@ If a `Currency` or `MPTokenIssuanceID` is included, that will also be included i
 
 The fields of this object mirror the fields of `DepositPreauth`, including changes made in XLS-70.
 
-| Field Name          | Constant | Required?   | Internal Type | Default Value  | Description                                                                                                                                                                                                                                                                                  |
-| ------------------- | -------- | ----------- | ------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes         | UINT16        | `TokenPreauth` | Identifies this as a `TokenPreauth` object.                                                                                                                                                                                                                                                  |
-| `Account`           | No       | Yes         | ACCOUNT       | N/A            | The account that granted the preauthorization (the issuer).                                                                                                                                                                                                                                  |
-| `Currency`          | No       | Conditional | CURRENCY      | N/A            | The currency code of an IOU, to apply this pre-authorization to only one token.                                                                                                                                                                                                              |
-| `MPTokenIssuanceID` | No       | Conditional | UINT192       | N/A            | The ID of an MPToken issuance, to apply this pre-authorization to only one token.                                                                                                                                                                                                            |
-| `Holder`            | No       | Conditional | ACCOUNT       | N/A            | The account that received the preauthorization (the other end of the trustline, or the MPToken holder).                                                                                                                                                                                      |
-| `Credentials`       | No       | Conditional | STARRAY       | N/A            | The credential(s) that received the preauthorization. (Any account with these credentials can send pre-authorized payments).                                                                                                                                                                 |
-| `DomainID`          | No       | Conditional | HASH256       | N/A            | The domain that received the preauthorization. (Any account that is a member of this domain can send pre-authorized payments).                                                                                                                                                               |
-| `OwnerNode`         | No       | Yes         | UINT64        | N/A            | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`. |
-| `PreviousTxnID`     | No       | Yes         | HASH256       | N/A            | The identifying hash of the transaction that most recently modified this object.                                                                                                                                                                                                             |
-| `PreviousTxnLgrSeq` | No       | Yes         | UINT32        | N/A            | The index of the ledger that contains the transaction that most recently modified this object.                                                                                                                                                                                               |
+| Field Name | Constant | Required? | Internal Type | Default Value | Description |
+| ---------- | -------- | --------- | ------------- | ------------- | ----------- |
+| `LedgerEntryType` | Yes | Yes | UINT16 | `TokenPreauth` | Identifies this as a `TokenPreauth` object. |
+| `Account` | No | Yes | ACCOUNT | N/A | The account that granted the preauthorization (the issuer). |
+| `Currency` | No | Conditional | CURRENCY | N/A | The currency code of an IOU, to apply this pre-authorization to only one token. |
+| `MPTokenIssuanceID` | No | Conditional | UINT192 | N/A | The ID of an MPToken issuance, to apply this pre-authorization to only one token. |
+| `Holder` | No | Conditional | ACCOUNT | N/A | The account that received the preauthorization (the other end of the trustline, or the MPToken holder). |
+| `Credentials` | No | Conditional | STARRAY | N/A | The credential(s) that received the preauthorization. (Any account with these credentials can send pre-authorized payments). |
+| `DomainID` | No | Conditional | HASH256 | N/A | The domain that received the preauthorization. (Any account that is a member of this domain can send pre-authorized payments). |
+| `OwnerNode` | No | Yes | UINT64 | N/A | A hint indicating which page of the sender's owner directory links to this object, in case the directory consists of multiple pages. Note: The object does not contain a direct link to the owner directory containing it, since that value can be derived from the `Account.PreviousTxnID`. |
+| `PreviousTxnID` | No | Yes | HASH256 | N/A | The identifying hash of the transaction that most recently modified this object. |
+| `PreviousTxnLgrSeq` | No | Yes | UINT32 | N/A | The index of the ledger that contains the transaction that most recently modified this object. |
 
 **Exactly one of** the `Holder`, `Credentials`, and `DomainID` fields must be included. **At most one of** `Currency` and `MPTokenIssuanceID` may be included.
 
@@ -135,14 +135,14 @@ This transaction mirrors the `DepositPreauth` transaction post-XLS-70 in fields.
 
 ### 4.1. Fields
 
-| Field Name          | Required?   | JSON Type | Internal Type | Default Value  | Description                                                                       |
-| ------------------- | ----------- | --------- | ------------- | -------------- | --------------------------------------------------------------------------------- |
-| `TransactionType`   | Yes         | string    | UINT16        | `TokenPreauth` | Identifies this as a `TokenPreauth` transaction.                                  |
-| `Currency`          | Conditional | string    | CURRENCY      | N/A            | The currency code of an IOU, to apply this pre-authorization to only one token.   |
-| `MPTokenIssuanceID` | Conditional | string    | UINT192       | N/A            | The ID of an MPToken issuance, to apply this pre-authorization to only one token. |
-| `Holder`            | Conditional | string    | ACCOUNT       | N/A            | The XRP Ledger address of the sender to preauthorize (or un-preauthorize).        |
-| `Credentials`       | Conditional | array     | STARRAY       | N/A            | The credential(s) to preauthorize (or un-preauthorize).                           |
-| `DomainID`          | Conditional | string    | HASH256       | N/A            | The domain to preauthorize (or un-preauthorize).                                  |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| `TransactionType` | Yes | string | UINT16 | `TokenPreauth` | Identifies this as a `TokenPreauth` transaction. |
+| `Currency` | Conditional | string | CURRENCY | N/A | The currency code of an IOU, to apply this pre-authorization to only one token. |
+| `MPTokenIssuanceID` | Conditional | string | UINT192 | N/A | The ID of an MPToken issuance, to apply this pre-authorization to only one token. |
+| `Holder` | Conditional | string | ACCOUNT | N/A | The XRP Ledger address of the sender to preauthorize (or un-preauthorize). |
+| `Credentials` | Conditional | array | STARRAY | N/A | The credential(s) to preauthorize (or un-preauthorize). |
+| `DomainID` | Conditional | string | HASH256 | N/A | The domain to preauthorize (or un-preauthorize). |
 
 **Exactly one of** the `Holder`, `Credentials`, and `DomainID` fields must be included.
 
@@ -150,8 +150,8 @@ This transaction mirrors the `DepositPreauth` transaction post-XLS-70 in fields.
 
 ### 4.2. Flags
 
-| Flag Name       | Flag Value   | Description                                                                                                                                                                                        |
-| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flag Name | Flag Value | Description |
+| --------- | ---------- | ----------- |
 | `tfUnauthorize` | `0x00000001` | If set, it indicates that the issuer no longer wants to pre-authorize that holder/credential set/domain. The `TokenPreauth` object will be deleted as a result (if the transaction is successful). |
 
 ### 4.3. Transaction Fee
@@ -228,10 +228,10 @@ For reference, see the [existing TrustSet fields](https://xrpl.org/docs/referenc
 
 The following fields are added to the existing `TrustSet` transaction:
 
-| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                                 |
-| --------------- | --------- | --------- | ------------- | ------------- | ------------------------------------------- |
-| `CredentialIDs` | No        | array     | VECTOR256     | N/A           | Credential(s) to attach to the transaction. |
-| `DomainID`      | No        | string    | HASH256       | N/A           | A domain to attach to the transaction.      |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| `CredentialIDs` | No | array | VECTOR256 | N/A | Credential(s) to attach to the transaction. |
+| `DomainID` | No | string | HASH256 | N/A | A domain to attach to the transaction. |
 
 **At most one of** the `CredentialIDs` and `DomainID` fields may be included.
 
@@ -294,10 +294,10 @@ For reference, see the [existing MPTokenAuthorize fields](https://xrpl.org/docs/
 
 The following fields are added to the existing `MPTokenAuthorize` transaction:
 
-| Field Name      | Required? | JSON Type | Internal Type | Default Value | Description                                 |
-| --------------- | --------- | --------- | ------------- | ------------- | ------------------------------------------- |
-| `CredentialIDs` | No        | array     | VECTOR256     | N/A           | Credential(s) to attach to the transaction. |
-| `DomainID`      | No        | string    | HASH256       | N/A           | A domain to attach to the transaction.      |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description |
+| ---------- | --------- | --------- | ------------- | ------------- | ----------- |
+| `CredentialIDs` | No | array | VECTOR256 | N/A | Credential(s) to attach to the transaction. |
+| `DomainID` | No | string | HASH256 | N/A | A domain to attach to the transaction. |
 
 **At most one of** the `CredentialIDs` and `DomainID` fields may be included.
 
