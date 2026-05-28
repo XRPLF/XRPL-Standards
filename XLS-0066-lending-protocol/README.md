@@ -1764,16 +1764,15 @@ $$
 #### 5.2 Principal Reduction
 
 $$
-principalPortion = overpaymentAmount - overpaymentInterest_{net} - overpaymentFee \quad \text{(23)}
+principalPortion = overpaymentAmount - overpaymentInterest_{net} - managementFee_{overpayment} - overpaymentFee \quad \text{(23)}
 $$
 
 **Where:**
 
 - `overpaymentAmount` = The excess funds after all periodic payments are settled (formula 19)
-- $overpaymentInterest_{net}$ = Gross overpayment interest minus management fee (formula 21)
+- $overpaymentInterest_{net}$ = Net overpayment interest owed to the Vault (formula 21)
+- $managementFee_{overpayment}$ = Management fee on the overpayment interest (formula 14)
 - `overpaymentFee` = Percentage-based fee on the overpayment amount (formula 22)
-
-**Note:** The management fee has already been deducted from $overpaymentInterest_{net}$, so it does not appear as a separate term in this formula.
 
 #### 5.3 Re-amortization Value Change
 
