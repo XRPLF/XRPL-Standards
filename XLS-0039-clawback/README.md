@@ -176,3 +176,5 @@ If clawing back from an AMM instance pool is required, such change will need a s
 The XLS-34 gives an account the ability to "lock" issued tokens into an escrow or paychannel, in the form of `LockedBalance`. As of the current `Clawback` spec, it only allows an issuer to claw back the funds that are _spendable_. This would mean that the funds deposited into an Escrow or Paychannel cannot be clawed back.
 
 If clawing back tokens from an Escrow or Paychannel is required, such change will need a separate specification.
+
+> **Note:** After an MPT holder's balance has been fully clawed back (or otherwise reduced to zero), the holder's `MPToken` object may still exist on ledger as a zero-balance orphan. When the `featureSingleAssetVault` amendment is active, deletion of such zero-balance `MPToken` objects is blocked if `lsfMPTLocked` is set on the token. The issuer must clear the lock before the holder can remove the orphaned `MPToken`.

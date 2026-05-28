@@ -591,6 +591,8 @@ No open offer will be placed in a permissioned orderbook.
 
 No open offer will be filled by a permissioned offer.
 
+A hybrid offer must have exactly one entry in its `AdditionalBooks` array (pointing to the open-book directory). A hybrid offer with zero or more than one `AdditionalBooks` entry is invalid.
+
 ## 13. Security
 
 The trust assumptions are the same as with [permissioned domains](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0080-permissioned-domains#7-security).

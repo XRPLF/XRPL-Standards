@@ -309,6 +309,8 @@ A second constraint is a door can own at most one bridge per currency type. For 
 
 For an IOU-IOU bridge, the issuer of the IOU cannot have the `lsfAllowTrustLineClawback` set. Wrapped funds must always be backed by locked funds and clawback would break that invariant. If the flag is set the transaction will fail with `tecNO_PERMISSION`.
 
+**Note on transfer rates:** IOU bridges are incompatible with non-zero transfer rates on the locking chain issuer. When a transfer rate is set, the door account receives `amount` on `XChainCommit`, but releasing `amount` to the destination requires the door account to pay `amount × transferRate`. Since the door account only received `amount`, the deficit is permanent and the bridge cannot release the full amount. No validation currently prevents creating a bridge with an IOU that has a non-zero transfer rate.
+
 ##### 2.2.1.1. Fields
 
 The `XChainCreateBridge` transaction contains the following fields:
@@ -522,6 +524,8 @@ The `XChainClaim` transaction allows the user to claim funds on the destination 
 
 This is normally not needed, but may be used to handle transaction failures or if the destination account was not specified in the `XChainCommit` transaction. It may only be used after a quorum of signatures have been sent from the witness servers.
 
+**Note:** When a `XChainClaim` transaction is used, the `Destination` specified in this transaction entirely overrides any destination that witnesses may have attested to. The witness-attested destinations are ignored in this path.
+
 If the transaction succeeds in moving funds, the referenced `XChainOwnedClaimID` ledger object will be destroyed. This prevents transaction replay. If the transaction fails, the `XChainOwnedClaimID` will not be destroyed and the transaction may be re-run with different parameters.
 
 ##### 2.3.4.1. Fields
@@ -573,6 +577,8 @@ This transaction can only be used for XRP-XRP bridges.
 **IMPORTANT:** This transaction should only be enabled if the witness attestations will be reliably delivered to the destination chain. If the signatures are not delivered, then account creation will be blocked until the one waiting on attestations receives its attestations. This could be used maliciously. To disable this transaction on XRP-XRP bridges, the bridge's `MinAccountCreateAmount` should not be present.
 
 _Note:_ If this account already exists, the XRP is transferred to the existing account. However, note that unlike the `XChainCommit` transaction, there is no error handling mechanism. If the claim transaction fails, there is no mechanism for refunds (except manually, via the witness signing keys on the door accounts' signer list). The funds are essentially permanently lost. This transaction should therefore only be used for account creation.
+
+**Note:** Even when account creation fails, witness rewards are still distributed to the witness servers. The committed amount (minus rewards) remains stranded in the door account with no automated recovery mechanism.
 
 ##### 2.4.1.1. Fields
 
@@ -664,6 +670,8 @@ The signature attesting to the event on the other chain.
 ###### 2.4.2.1.8. `SignatureReward`
 
 The signature reward paid in the `XChainAccountCreateCommit` transaction.
+
+**Note:** The `rewardAmount` embedded in this attestation is not validated on-chain against the bridge's current `SignatureReward`. The attested reward is enforced only by witness honesty and quorum agreement; if the bridge's `SignatureReward` is changed via `XChainModifyBridge` while attestations are in flight, a discrepancy between the committed reward and the attested reward may occur.
 
 ###### 2.4.2.1.9. `WasLockingChainSend`
 

@@ -157,7 +157,7 @@ Once the transaction succeeds (or fails with a `tec`) the `AccountRoot`'s `Seque
 
 We can leverage this behavior to make resurrected accounts never accept old transactions. Here's how:
 
-1. Only allow an account to be deleted if its `AccountRoot`'s `Sequence` number is at least 256 less than the current `LedgerSequence` number of the ledger the transaction is applied to. This should be an easy requirement for most accounts to meet. There are two ways to fail to meet the requirement.
+1. Only allow an account to be deleted if its `AccountRoot`'s `Sequence` number is at least 255 less than the current `LedgerSequence` number of the ledger the transaction is applied to. This should be an easy requirement for most accounts to meet. There are two ways to fail to meet the requirement.
    1. In order to fail that requirement an account would need to, on average, put one or more transactions into every validated ledger. Such accounts do, indeed, exist. But they are rare. See Appendix D.
 
    1. Another way to fail that requirement is for the account in question to have been created within the last 20 minutes or so.
@@ -168,7 +168,7 @@ We can leverage this behavior to make resurrected accounts never accept old tran
 
 Now, when a new account is created, any valid transactions from a previously existing account with the same account ID cannot be replayed on the resurrected account. The sequence numbers of any old transactions are in the past. Every one of those old transactions will fail with a `tefPAST_SEQ` error code.
 
-Requiring the `AccountRoot`'s `Sequence` be at least 256 less than the current `LedgerSequence` is the result of an abundance of caution. It would probably be adequate for the `AccountRoot`'s `Sequence` to be one less than the current `LedgerSequence`. One less should be sufficient to prevent problems if an account is deleted and resurrected in the same ledger. But a difference of 256 gives us some breathing room (to account for things like the TxQ and transaction retries). The particular choice of 256 versus other numbers matches the occurrence rate of flag ledgers. This means there are slightly fewer arbitrary numbers for XRP Ledger users to remember.
+Requiring the `AccountRoot`'s `Sequence` be at least 255 less than the current `LedgerSequence` is the result of an abundance of caution. It would probably be adequate for the `AccountRoot`'s `Sequence` to be one less than the current `LedgerSequence`. One less should be sufficient to prevent problems if an account is deleted and resurrected in the same ledger. But a difference of 255 gives us some breathing room (to account for things like the TxQ and transaction retries).
 
 ### Consequences of Using the `LedgerSequence` as the First `Sequence`
 
@@ -225,7 +225,7 @@ What are the downsides? Simply that we're adding a new transaction type.
 - An account is deleted with an `AccountDelete` transaction.
 - The `AccountDelete` carries a `Destination`. XRP left over after the account is deleted goes to the `Destination`.
 - An account can be deleted if it meets three requirements:
-  - The `AccountRoot`'s `Sequence` number must be at least 256 less than the current value of the `LedgerSequence`.
+  - The `AccountRoot`'s `Sequence` number must be at least 255 less than the current value of the `LedgerSequence`.
   - The account has none of the following ledger types in its directory:
     - [`Check`](https://xrpl.org/check.html),
     - [`Escrow`](https://xrpl.org/escrow-object.html),
@@ -241,8 +241,13 @@ What are the downsides? Simply that we're adding a new transaction type.
   - [`DepositPreauth`](https://xrpl.org/depositpreauth-object.html),
   - [`DirectoryNode`](https://xrpl.org/directorynode.html),
   - [`Offer`](https://xrpl.org/offer.html),
-  - [`SignerList`](https://xrpl.org/signerlist.html), and
-  - `Ticket` (not yet in the XRP Ledger Documentation Portal).
+  - [`SignerList`](https://xrpl.org/signerlist.html),
+  - `Ticket`,
+  - `DID`,
+  - `Oracle`,
+  - `Credential`,
+  - `Delegate`, and
+  - `NFTokenOffer`.
 - It is possible to "resurrect" a deleted account by sending sufficient XRP to the deleted account ID. But the resurrected account shares only its _identity_ with the deleted account. All other characteristics are lost. So the resurrected account is neither a zombie nor a clone; it has a duplicate of the deleted account's social security number.
 - An `AccountDelete` transaction has a minimum fee equal to the [owner reserve](https://xrpl.org/reserves.html#owner-reserves). This minimum fee is the same regardless of whether the transaction is multisigned or not.
 
@@ -358,7 +363,7 @@ Reasons why an `AccountDelete` transaction might fail:
 
 - The `AccountDelete` transaction does not specify a large enough `Fee`.
 - `Account` does not have sufficient XRP to pay the fee.
-- `Account`'s `AccountRoot`'s `Sequence` number is not at least 256 less than the current `LedgerSequence` value.
+- `Account`'s `AccountRoot`'s `Sequence` number is not at least 255 less than the current `LedgerSequence` value.
 - `Account` and `Destination` are the same.
 - `Destination` is not present in the ledger.
 - `Destination` requires deposit preauthorization which is not granted.

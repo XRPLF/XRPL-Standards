@@ -155,7 +155,7 @@ We define a new transaction **OracleSet** for creating or updating a `PriceOracl
 - `BaseAsset` is the asset to be priced.
 - `QuoteAsset` is the denomination in which the prices are expressed.
 - `AssetPrice` is the scaled asset price, which is the price value after applying the scaling factor.
-- `Scale` is the price's scaling factor, with a valid range of values {1-20}. The `Scale` field should be omitted when the `Scale` value is 0. An omitted `Scale` field implies a value of 0.
+- `Scale` is the price's scaling factor, with a valid range of values {0-20}. The `Scale` field should be omitted when the `Scale` value is 0; an omitted `Scale` field implies a value of 0.
 
 The transaction fails if:
 
@@ -167,9 +167,9 @@ The transaction fails if:
 - The `Account` account doesn't exist or the `Account` is not equal to the `Owner` field when updating the Oracle instance.
 - The transaction is not signed by the `Account` account or the account's multi signers.
 - The `URI` field length exceeds 256 bytes.
-- The `Provider` field length exceeds 256 bytes.
+- The `Provider` field length exceeds 256 bytes or contains characters outside the printable ASCII range (0x20-0x7E).
 - The `Provider` field doesn't match the current `Provider` field on update.
-- The `AssetClass` field length exceeds 16 bytes.
+- The `AssetClass` field length exceeds 16 bytes or contains characters outside the printable ASCII range (0x20-0x7E).
 - The `AssetClass` field doesn't match the current `AssetClass` field on update.
 - The `LastUpdateTime` field is less than the previous `LastUpdateTime` or is not in the range of the last close time minus/plus 300 seconds.
 
