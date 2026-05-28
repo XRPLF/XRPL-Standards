@@ -55,12 +55,12 @@ Every XLS lives at `XLS-NNNN-slug/README.md` and **must** start with an RFC-822-
 
 ### Categories
 
-| Category | Description |
-|----------|-------------|
+| Category    | Description                                                             |
+| ----------- | ----------------------------------------------------------------------- |
 | `Amendment` | Requires an XRP Ledger amendment (on-chain protocol change via rippled) |
-| `System` | Affects XRPL protocol behavior (RPCs, P2P) but no amendment needed |
-| `Ecosystem` | Off-chain/community standards (metadata, registries, etc.) |
-| `Meta` | Standards about the XLS process itself |
+| `System`    | Affects XRPL protocol behavior (RPCs, P2P) but no amendment needed      |
+| `Ecosystem` | Off-chain/community standards (metadata, registries, etc.)              |
+| `Meta`      | Standards about the XLS process itself                                  |
 
 ### Statuses
 
@@ -81,15 +81,15 @@ Also: `Deprecated` (Final XLS no longer recommended), `Stagnant` (Draft inactive
 
 ## CI Workflows
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `validate-xls.yml` | PRs, push to master | Runs `python scripts/xls_parser.py` — validates preamble of **all** XLS docs |
-| `validate-xls.yml` (beta job) | PRs | Runs `python scripts/validate_xls_template.py <changed files>` — checks section structure |
-| `assign-xls-number.yml` | PRs | Detects `XLS-draft-*` directories and assigns the next available XLS number after write-access approval |
-| `pre-commit.yml` | PRs, push to master | Runs pre-commit hooks (trailing whitespace, end-of-file, prettier) |
-| `deploy.yml` | Push to master | Builds and deploys the GitHub Pages site |
-| `discussions.yml` | Daily schedule | Closes/warns on stale GitHub Discussions (inactive ≥1 year) |
-| `close-xls-discussions.yml` | Push to master | Closes the GitHub Discussion linked in `proposal-from` when an XLS is merged |
+| Workflow                      | Trigger             | What it does                                                                                            |
+| ----------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `validate-xls.yml`            | PRs, push to master | Runs `python scripts/xls_parser.py` — validates preamble of **all** XLS docs                            |
+| `validate-xls.yml` (beta job) | PRs                 | Runs `python scripts/validate_xls_template.py <changed files>` — checks section structure               |
+| `assign-xls-number.yml`       | PRs                 | Detects `XLS-draft-*` directories and assigns the next available XLS number after write-access approval |
+| `pre-commit.yml`              | PRs, push to master | Runs pre-commit hooks (trailing whitespace, end-of-file, prettier)                                      |
+| `deploy.yml`                  | Push to master      | Builds and deploys the GitHub Pages site                                                                |
+| `discussions.yml`             | Daily schedule      | Closes/warns on stale GitHub Discussions (inactive ≥1 year)                                             |
+| `close-xls-discussions.yml`   | Push to master      | Closes the GitHub Discussion linked in `proposal-from` when an XLS is merged                            |
 
 ### Running Validation Locally
 
