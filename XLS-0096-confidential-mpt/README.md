@@ -377,8 +377,8 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 1. The destination account has Deposit Authorization enabled (`lsfDepositAuth`), and the sender is not preauthorized. (`tecNO_PERMISSION`)
 2. The destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
-3. A credential ID specified in `CredentialIDs` does not exist on the ledger. (`tecNO_ENTRY`)
-4. A credential specified in `CredentialIDs` has expired. (`tecEXPIRED`)
+3. A credential ID specified in `CredentialIDs` does not exist on the ledger. (`tecBAD_CREDENTIALS`)
+4. A credential specified in `CredentialIDs` has expired. (`tecNO_PERMISSION`)
 
 ### 8.4. State Changes
 
