@@ -379,8 +379,8 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 2. The destination account requires credentials (via `DepositPreauth` with `AuthorizeCredentials`), but the transaction does not include valid matching credentials in the `CredentialIDs` field. (`tecNO_PERMISSION`)
 3. A credential ID specified in `CredentialIDs` does not exist, does not belong to the sender, or is not accepted: (`tecBAD_CREDENTIALS`)
 4. A credential in CredentialIDs is expired:
-   - If deposit-preauth otherwise passes and doApply runs, cleanupExpiredCredentials deletes it and returns tecEXPIRED.
-   - If deposit-preauth fails first because the credential issuer/type is not authorized, preclaim returns tecNO_PERMISSION, and cleanup does not run.
+   - If deposit-preauth otherwise passes and doApply runs, cleanupExpiredCredentials deletes it and returns `tecEXPIRED`.
+   - If deposit-preauth fails first because the credential issuer/type is not authorized, preclaim returns `tecNO_PERMISSION`, and cleanup does not run.
 
 ### 8.4. State Changes
 
