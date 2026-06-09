@@ -89,7 +89,7 @@ Therefore, in this design, the caller is responsible for allocating memory in ad
 
 ### 4.1. Memory Limits
 
-There is a:
+There are:
 
 - 1 MiB limit, per host function call, on total data transfer across the WASM boundary (between `rippled` and WASM code)
 - 1 KiB limit on the amount of data that can be read from or written to the ledger in a single host function call
