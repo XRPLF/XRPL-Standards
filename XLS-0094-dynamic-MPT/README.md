@@ -407,3 +407,16 @@ The following sequence of transactions illustrates a successful case:
 ```
 
 - Since `lsmfMPTCanMutateTransferFee` is set, the `TransferFee` field can be removed by setting it to zero.
+- The `lsfMPTCanTransfer` flag remains enabled. There is no `MutableFlags` value that disables it.
+
+## Rationale
+
+Dynamic MPT allows issuers to declare selected fields and MPT issuance flags as mutable at creation time, while keeping all other issuance properties immutable. Field mutability supports operational updates such as metadata changes and transfer fee adjustments without requiring a new issuance.
+
+MPT issuance flag mutability is intentionally one-way. If the corresponding `lsmfMPTCanMutate*` flag was set during creation, the issuer may later enable the MPT issuance flag through `MPTokenIssuanceSet`; once enabled, that flag cannot be disabled by `MPTokenIssuanceSet`. This preserves the issuer's ability to opt into additional issuance behavior while avoiding later removal of behavior that holders, integrations, or compliance workflows may have relied on.
+
+## Security
+
+Only the issuer of the `MPTokenIssuance` can use `MPTokenIssuanceSet` to modify mutable fields or enable mutable MPT issuance flags. A field or MPT issuance flag can only be changed if it was explicitly declared mutable during `MPTokenIssuanceCreate`.
+
+Mutable MPT issuance flags are one-way and cannot be disabled through `MPTokenIssuanceSet` after they are enabled. This prevents an issuer from weakening issuance behavior after participants may have relied on the enabled flag.
