@@ -62,17 +62,17 @@ Bits in `MutableFlags` indicate specific fields may be modified after issuance, 
 
 `MutableFlags` are prefixed with `tmf` to clearly distinguish them from standard `tf` prefix used for `Flags`.
 
-| Flag Name                    |   Hex Value   | Decimal Value | Description                                                                                  |
-| ---------------------------- | :-----------: | :-----------: | -------------------------------------------------------------------------------------------- |
-| [Reserved]                   | `0x00000001`  |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
+| Flag Name                    |  Hex Value   | Decimal Value | Description                                                                                  |
+| ---------------------------- | :----------: | :-----------: | -------------------------------------------------------------------------------------------- |
+| [Reserved]                   | `0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
 | `tmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
 | `tmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
-| `tmfMPTCanMutateCanEscrow`   | `0x00000008`  |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
-| `tmfMPTCanMutateCanTrade`    | `0x00000010`  |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
+| `tmfMPTCanMutateCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
+| `tmfMPTCanMutateCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
 | `tmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
 | `tmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
-| `tmfMPTCanMutateMetadata`    | `0x00010000`  |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
-| `tmfMPTCanMutateTransferFee` | `0x00020000`  |    131072     | Allows field `TransferFee` to be modified                                                    |
+| `tmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
+| `tmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                    |
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
@@ -104,12 +104,12 @@ On-ledger `MutableFlags` are prefixed with `lmf` to clearly distinguish them fro
 | [Reserved]                    | ️`0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
 | `lsmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
 | `lsmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
-| `lsmfMPTCanMutateCanEscrow`   | `0x00000008`  |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
-| `lsmfMPTCanMutateCanTrade`    | `0x00000010`  |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
+| `lsmfMPTCanMutateCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
+| `lsmfMPTCanMutateCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
 | `lsmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
 | `lsmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
-| `lsmfMPTCanMutateMetadata`    | `0x00010000`  |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
-| `lsmfMPTCanMutateTransferFee` | `0x00020000`  |    131072     | Allows field `TransferFee` to be modified                                                    |
+| `lsmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
+| `lsmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                    |
 
 **Note**: Flag value `0x0001` is used by `lsfMPTLocked`. It is not a valid value for `MutableFlags`.
 
@@ -151,12 +151,12 @@ Enable MPT issuance flags that were marked as mutable. These flags are one-way: 
 
 The `MutableFlags` use `tmf` as prefix.
 
-| Flag Name              |   Hex Value   | Decimal Value | Description                                                                                                             |
-| ---------------------- | :-----------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------- |
+| Flag Name              |  Hex Value   | Decimal Value | Description                                                                                                             |
+| ---------------------- | :----------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------- |
 | `tmfMPTSetCanLock`     | ️`0x00000001` |       1       | Sets the `lsfMPTCanLock` flag. Enables the token to be locked both individually and globally.                           |
 | `tmfMPTSetRequireAuth` | ️`0x00000002` |       2       | Sets the `lsfMPTRequireAuth` flag. Requires individual holders to be authorized.                                        |
-| `tmfMPTSetCanEscrow`   | `0x00000004`  |       4       | Sets the `lsfMPTCanEscrow` flag. Allows holders to place balances into escrow.                                          |
-| `tmfMPTSetCanTrade`    | `0x00000008`  |       8       | Sets the `lsfMPTCanTrade` flag. Allows holders to trade balances on the XRPL DEX.                                       |
+| `tmfMPTSetCanEscrow`   | `0x00000004` |       4       | Sets the `lsfMPTCanEscrow` flag. Allows holders to place balances into escrow.                                          |
+| `tmfMPTSetCanTrade`    | `0x00000008` |       8       | Sets the `lsfMPTCanTrade` flag. Allows holders to trade balances on the XRPL DEX.                                       |
 | `tmfMPTSetCanTransfer` | ️`0x00000010` |      16       | Sets the `lsfMPTCanTransfer` flag. Allows tokens to be transferred to non-issuer accounts.                              |
 | `tmfMPTSetCanClawback` | ️`0x00000020` |      32       | Sets the `lsfMPTCanClawback` flag. Enables the issuer to claw back tokens via `Clawback` or `AMMClawback` transactions. |
 
