@@ -87,6 +87,13 @@ This is a bit of a problem for host functions, since data has to go back and for
 
 Therefore, in this design, the caller is responsible for allocating memory in advance, and must reuse or deallocate memory manually. See Appendix B for alternative designs that were considered and rejected.
 
+### 4.1. Memory Limits
+
+There are:
+
+- 1 MiB limit, per host function call, on total data transfer across the WASM boundary (between `rippled` and WASM code)
+- 1 KiB limit on the amount of data that can be read from or written to the ledger in a single host function call
+
 ## 5. Extension Host Functions
 
 This section introduces WASM host functions for extensions on the XRP Ledger, enabling WASM bytecode (in an extension or smart contract) to securely interact with ledger data and the ledger’s native features. These functions provide controlled access to ledger state, transaction execution, and XRPL primitives while maintaining efficiency and security.
