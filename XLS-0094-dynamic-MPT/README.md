@@ -65,12 +65,12 @@ Bits in `MutableFlags` indicate specific fields may be modified after issuance, 
 | Flag Name                    |  Hex Value   | Decimal Value | Description                                                                                  |
 | ---------------------------- | :----------: | :-----------: | -------------------------------------------------------------------------------------------- |
 | [Reserved]                   | `0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
-| `tmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
-| `tmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
-| `tmfMPTCanMutateCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
-| `tmfMPTCanMutateCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
-| `tmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
-| `tmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
+| `tmfMPTCanEnableCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
+| `tmfMPTCanEnableRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
+| `tmfMPTCanEnableCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
+| `tmfMPTCanEnableCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
+| `tmfMPTCanEnableCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
+| `tmfMPTCanEnableCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
 | `tmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
 | `tmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                    |
 
@@ -102,12 +102,12 @@ On-ledger `MutableFlags` are prefixed with `lmf` to clearly distinguish them fro
 | Flag Name                     |  Hex Value   | Decimal Value | Description                                                                                  |
 | ----------------------------- | :----------: | :-----------: | -------------------------------------------------------------------------------------------- |
 | [Reserved]                    | ️`0x00000001` |       1       | [Reserved; To align with `Flags` values, the `MutableFlags` value starts from `0x00000002`.] |
-| `lsmfMPTCanMutateCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
-| `lsmfMPTCanMutateRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
-| `lsmfMPTCanMutateCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
-| `lsmfMPTCanMutateCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
-| `lsmfMPTCanMutateCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
-| `lsmfMPTCanMutateCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
+| `lsmfMPTCanEnableCanLock`     | ️`0x00000002` |       2       | Allows flag `lsfMPTCanLock` to be enabled after issuance                                     |
+| `lsmfMPTCanEnableRequireAuth` | ️`0x00000004` |       4       | Allows flag `lsfMPTRequireAuth` to be enabled after issuance                                 |
+| `lsmfMPTCanEnableCanEscrow`   | `0x00000008` |       8       | Allows flag `lsfMPTCanEscrow` to be enabled after issuance                                   |
+| `lsmfMPTCanEnableCanTrade`    | `0x00000010` |      16       | Allows flag `lsfMPTCanTrade` to be enabled after issuance                                    |
+| `lsmfMPTCanEnableCanTransfer` | ️`0x00000020` |      32       | Allows flag `lsfMPTCanTransfer` to be enabled after issuance                                 |
+| `lsmfMPTCanEnableCanClawback` | ️`0x00000040` |      64       | Allows flag `lsfMPTCanClawback` to be enabled after issuance                                 |
 | `lsmfMPTCanMutateMetadata`    | `0x00010000` |     65536     | Allows field `MPTokenMetadata` to be modified                                                |
 | `lsmfMPTCanMutateTransferFee` | `0x00020000` |    131072     | Allows field `TransferFee` to be modified                                                    |
 
@@ -190,7 +190,7 @@ The ability to modify `TransferFee` depends on two flags:
 - `lsfMPTCanTransfer` : must already be set to allow any non-zero `TransferFee`.
 - `lsmfMPTCanMutateTransferFee`: must be set at creation (`MPTokenIssuanceCreate`) to allow any modification of the `TransferFee` field.
 
-If `lsmfMPTCanMutateCanTransfer` is set, `lsfMPTCanTransfer` can be enabled through `tmfMPTSetCanTransfer`. Once enabled, it cannot be disabled by `MPTokenIssuanceSet`.
+If `lsmfMPTCanEnableCanTransfer` is set, `lsfMPTCanTransfer` can be enabled through `tmfMPTSetCanTransfer`. Once enabled, it cannot be disabled by `MPTokenIssuanceSet`.
 
 #### Because these flags overlap in function, the rules break down as follows:
 
@@ -271,14 +271,14 @@ If `lsmfMPTCanMutateCanTransfer` is set, `lsfMPTCanTransfer` can be enabled thro
   "AssetScale": "2",
   "MaximumAmount": "100000000",
   "Flags": 32,  // tfMPTCanTransfer
-  "MutableFlags": 131082,  // tmfMPTCanMutateTransferFee + tmfMPTCanMutateCanLock + tmfMPTCanMutateCanEscrow
+  "MutableFlags": 131082,  // tmfMPTCanMutateTransferFee + tmfMPTCanEnableCanLock + tmfMPTCanEnableCanEscrow
   "MPTokenMetadata": "464F4F",
   "TransferFee": 100
 }
 ```
 
 - `tmfMPTCanMutateTransferFee` is set, indicating the `TransferFee` field can be modified.
-- `tmfMPTCanMutateCanLock` and `tmfMPTCanMutateCanEscrow` are set, indicating `lsfMPTCanLock` and `lsfMPTCanEscrow` can be enabled after issuance.
+- `tmfMPTCanEnableCanLock` and `tmfMPTCanEnableCanEscrow` are set, indicating `lsfMPTCanLock` and `lsfMPTCanEscrow` can be enabled after issuance.
 
 #### 5.2.2. `MPTokenIssuanceSet` Transaction
 
@@ -333,12 +333,12 @@ If `lsmfMPTCanMutateCanTransfer` is set, `lsfMPTCanTransfer` can be enabled thro
   "AssetScale": "2",
   "MaximumAmount": "100000000",
   "Flags": 2,  // tfMPTCanLock
-  "MutableFlags": 131104,  // tmfMPTCanMutateTransferFee + tmfMPTCanMutateCanTransfer
+  "MutableFlags": 131104,  // tmfMPTCanMutateTransferFee + tmfMPTCanEnableCanTransfer
 }
 ```
 
 - `tmfMPTCanMutateTransferFee` is set, allowing the `TransferFee` field to be modified.
-- `tmfMPTCanMutateCanTransfer` is set, allowing the `lsfMPTCanTransfer` flag to be enabled after issuance.
+- `tmfMPTCanEnableCanTransfer` is set, allowing the `lsfMPTCanTransfer` flag to be enabled after issuance.
 - `tfMPTCanLock` is set.
 - `TransferFee` is not present (and **MUST NOT** be present) because `tfMPTCanTransfer` is not set.
 
@@ -382,7 +382,7 @@ The following sequence of transactions illustrates a successful case:
 }
 ```
 
-- Since `lsmfMPTCanMutateCanTransfer` is set during creation, this transaction successfully sets the `lsfMPTCanTransfer` flag.
+- Since `lsmfMPTCanEnableCanTransfer` is set during creation, this transaction successfully sets the `lsfMPTCanTransfer` flag.
 
 **Step2**:
 
