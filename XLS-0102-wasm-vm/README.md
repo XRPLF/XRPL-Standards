@@ -234,7 +234,7 @@ The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `
 
 #### 5.8.1. XFloat Type
 
-`XFloat` is an opaque 12-byte (96-bit) floating point number, consisting of a 4-byte signed exponent followed by an 8-byte signed mantissa. rippled's `Number` class is the core decimal floating-point type used throughout the ledger; all `XFloat` arithmetic is delegated to it via host functions.
+`XFloat` is an opaque 12-byte (96-bit) floating point number, consisting of an 8-byte signed mantissa followed by a 4-byte signed exponent. rippled's `Number` class is the core decimal floating-point type used throughout the ledger; all `XFloat` arithmetic is delegated to it via host functions.
 
 **Important — treat as opaque:** Smart contracts SHOULD NOT inspect, decode, or construct `XFloat` bytes directly. All operations SHOULD go through the host functions defined in §5.8. A contract that reads or writes the individual bytes of an `XFloat` buffer is relying on an implementation detail that may change, and will produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to host functions, and discarded — nothing else.
 
