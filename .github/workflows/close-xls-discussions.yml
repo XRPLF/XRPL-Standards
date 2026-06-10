@@ -47,7 +47,7 @@ jobs:
             XLS-*/README.md
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Generate token from GitHub App
         id: generate_token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -70,6 +70,6 @@ jobs:
           CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
           SCAN_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.scan_all || 'false' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
-          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
         run: |
           python .github/scripts/close-xls-discussions.py
