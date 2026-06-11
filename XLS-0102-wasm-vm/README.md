@@ -243,9 +243,9 @@ The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `
 
 `XFloat` is an opaque 12-byte (96-bit) floating point number, consisting of an 8-byte signed mantissa followed by a 4-byte signed exponent. rippled's `Number` class is the core decimal floating-point type used throughout the ledger; all `XFloat` arithmetic is delegated to it via host functions.
 
-Important — treat as opaque: Smart contracts SHOULD NOT inspect, decode, or construct `XFloat` bytes directly. All operations SHOULD go through the host functions defined in §5.8. Bypassing host functions is gas-inefficient — each host call is priced to amortize the cost of the operation, and hand-rolling arithmetic in WASM bytecode incurs more gas for less precision. A contract that reads or writes the individual bytes of an `XFloat` buffer is also relying on an implementation detail that may change, and will produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to host functions, and discarded — nothing else.
+Important — treat as opaque: Smart contracts SHOULD NOT inspect, decode, or construct `XFloat` bytes directly. All operations SHOULD go through the host functions defined in [§5.8](#58-floats). Bypassing host functions is gas-inefficient — each host call is priced to amortize the cost of the operation, and hand-rolling arithmetic in WASM bytecode incurs more gas for less precision. A contract that reads or writes the individual bytes of an `XFloat` buffer is also relying on an implementation detail that may change, and will produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to host functions, and discarded — nothing else.
 
-**Warning — do not persist XFloat bytes:** Contracts MUST NOT write `XFloat` buffers into contract storage (e.g., the `data` field of a smart escrow or smart feature). The 12-byte encoding is an in-memory convention tied to a specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in §5.11 explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running against the updated host functions.
+**Warning — do not persist XFloat bytes:** Contracts MUST NOT write `XFloat` buffers into contract storage (e.g., the `data` field of a smart escrow or smart feature). The 12-byte encoding is an in-memory convention tied to a specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in [§5.11](#511-host-function-versioning-rules) explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running against the updated host functions.
 
 If a contract needs to persist a floating point value across invocations, it should store the **mantissa and exponent as separate integers** in a contract-defined format, then reconstruct the `XFloat` at runtime using`float_from_mant_exp`. For example:
 
@@ -263,7 +263,7 @@ This approach uses only stable primitive types (`i32`, `i64`) and is completely 
 
 #### 5.8.2. XFloat Serialization Format
 
-This section documents the `XFloat` encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in §5.8 exclusively.
+This section documents the `XFloat` encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
 
 `XFloat` uses a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why `float_from_stnumber` is a conversion function rather than a no-op):
 
@@ -637,7 +637,7 @@ for in-contract computation, without touching how those values are stored or tra
 
 ### C.9: Why is host function immutability required?
 
-The versioning rules in §5.11 reflect a fundamental constraint of the WASM smart contract platform: deployed
+The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed
 contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue
 to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a
 preference.
