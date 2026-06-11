@@ -221,23 +221,21 @@ All float buffers (`XFloat`) are exactly **12 bytes**: An 8-byte big-endian sign
 
 The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `1` = toward zero, `2` = downward (floor), `3` = upward (ceiling).
 
-| Function Signature                                                                                                                                                                                                         | Description                                                                       | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :------- |
-| `float_from_int(`<br/>&emsp;`in_int: i64,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                                                    | Create a float in rippled format from a 64-bit integer.                           | 100      |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.                  | 130      |
-| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.                 | 100      |
-| `float_from_stamount(`<br/>&emsp;`stamount_buf: i32,`<br/>&emsp;`stamount_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from the bytes of a serialized STAmount.                             | 150      |
-| `float_from_stnumber(`<br/>&emsp;`stnumber_buf: i32,`<br/>&emsp;`stnumber_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from a serialized STNumber value, validating and normalizing it.     | 150      |
-| `float_to_int(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                             | Convert a float to a signed 64-bit integer, applying the specified rounding mode. | 130      |
-| `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                       | 130      |
-| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                           | Compare two floats in rippled format.                                             | 80       |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in rippled format.                                                 | 160      |
-| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`     | Subtract two floats in rippled format.                                            | 160      |
-| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`     | Multiply two floats in rippled format.                                            | 300      |
-| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`       | Divide two floats in rippled format.                                              | 300      |
-| `float_negate(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                              | Negate a float.                                                                   | 150      |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                               | 5500     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                                | 5500     |
+| Function Signature                                                                                                                                                                                                         | Description                                                                   | Gas Cost |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :------- |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.              | 130      |
+| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.             | 100      |
+| `float_from_stamount(`<br/>&emsp;`stamount_buf: i32,`<br/>&emsp;`stamount_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from the bytes of a serialized STAmount.                         | 150      |
+| `float_from_stnumber(`<br/>&emsp;`stnumber_buf: i32,`<br/>&emsp;`stnumber_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from a serialized STNumber value, validating and normalizing it. | 150      |
+| `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                   | 130      |
+| `float_compare(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                           | Compare two floats in rippled format.                                         | 80       |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in rippled format.                                             | 160      |
+| `float_subtract(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`     | Subtract two floats in rippled format.                                        | 160      |
+| `float_multiply(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`     | Multiply two floats in rippled format.                                        | 300      |
+| `float_divide(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`       | Divide two floats in rippled format.                                          | 300      |
+| `float_negate(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                              | Negate a float.                                                               | 150      |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                           | 5500     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                            | 5500     |
 
 #### 5.8.1. XFloat Type
 
@@ -313,7 +311,7 @@ Note that the XRPL WASM VM does not enable the WASM floating-point instruction s
 #![no_main]
 
 use xrpl_wasm_stdlib::host::{
-  float_from_stamount, float_from_int, float_add, float_to_int,
+  float_from_stamount, float_from_mant_exp, float_add, float_to_mant_exp,
   Result, Error,
 };
 use xrpl_wasm_stdlib::host::Result::{Ok, Err};
@@ -330,9 +328,9 @@ pub extern "C" fn finish() -> i32 {
     return 0; // error
   }
 
-  // Convert an integer to XFloat
+  // Convert an integer to XFloat (exponent 0 → value is exactly the mantissa)
   let mut float_b = [0u8; 12];
-  if float_from_int(100, float_b.as_mut_ptr(), 12, 0) < 0 {
+  if float_from_mant_exp(100, 0, float_b.as_mut_ptr(), 12, 0) < 0 {
     return 0;
   }
 
@@ -347,12 +345,13 @@ pub extern "C" fn finish() -> i32 {
     return 0;
   }
 
-  // Convert result back to integer
-  let mut int_result = [0u8; 8];
-  if float_to_int(
+  // Extract mantissa and exponent; if exponent is 0, mantissa is the integer value
+  let mut mantissa_result = [0u8; 8];
+  let mut exponent_result = [0u8; 4];
+  if float_to_mant_exp(
     result.as_ptr(), 12,
-    int_result.as_mut_ptr(), 8,
-    0, // TO_NEAREST
+    mantissa_result.as_mut_ptr(), 8,
+    exponent_result.as_mut_ptr(), 4,
   ) < 0 {
     return 0;
   }
