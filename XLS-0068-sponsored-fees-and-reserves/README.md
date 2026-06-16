@@ -446,7 +446,7 @@ There are two flag values that are supported:
 | `spfSponsorFee`     | `0x00000001` | Sponsoring (paying for) the fee of the transaction.                |
 | `spfSponsorReserve` | `0x00000002` | Sponsoring the reserve for any objects created in the transaction. |
 
-#### 8.1.2 `SponsorSignature`
+#### 8.1.2. `SponsorSignature`
 
 | Field Name      | Required? | JSON Type | Internal Type | Description                                                                                                                                           |
 | --------------- | --------- | --------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -491,7 +491,7 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 If a `Sponsorship` object exists:
 
 1. The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included (`tecNO_PERMISSION`).
-2. There is not enough XRP in the `FeeAmount` to pay for the transaction (`tecUNFUNDED`). The transaction errors; it does **not** fall back to the sponsor's main `AccountRoot.Balance` (see [section 18.2](#182-exhaustion-and-insolvency)).
+2. There is not enough XRP in the `FeeAmount` to pay for the transaction (`tecUNFUNDED`). The transaction errors; it does **not** fall back to the sponsor's main `AccountRoot.Balance`.
 3. Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement) (`tecINSUFFICIENT_RESERVE`).
 4. The fee in `tx.Fee` is greater than `Sponsorship.MaxFee` (`tecNO_PERMISSION`).
 
@@ -593,7 +593,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 ### 9.4. Failure Conditions
 
 1. `tx.Account` is not equal to either `tx.CounterpartySponsor` or `tx.Sponsee` (`temMALFORMED`)
-2. 1. Both `CounterpartySponsor` and `Sponsee` are specified (`temMALFORMED`)
+2. Both `CounterpartySponsor` and `Sponsee` are specified (`temMALFORMED`)
 3. Neither `CounterpartySponsor` nor `Sponsee` is specified (`temMALFORMED`)
 4. Both `tfSponsorshipSetRequireSignForFee` and `tfSponsorshipClearRequireSignForFee` are enabled (`temINVALID_FLAG`)
 5. Both `tfSponsorshipSetRequireSignForReserve` and `tfSponsorshipClearRequireSignForReserve` are enabled (`temINVALID_FLAG`)
@@ -924,7 +924,7 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount
 
 The outer `Batch` transaction itself does not create any ledger objects, so reserve sponsorship on the outer transaction is meaningless and is disallowed: the outer `Batch` transaction **must not** include `SponsorFlags.spfSponsorReserve`. Fee sponsorship of the outer transaction (`spfSponsorFee`) follows the standard rules in [section 8](#8-transactions-common-fields).
 
-### 13.3. Inner Transactions
+### 13.2. Inner Transactions
 
 Inner transactions inside a `Batch` may individually use `Sponsor` and `SponsorFlags` to declare a sponsor for that inner transaction. However, sponsor signatures for inner transactions are not provided on the inner transactions themselves — they live in the outer `Batch` transaction's `BatchSigners` array.
 
@@ -936,7 +936,7 @@ Specifically:
 - Fee and reserve resolution for an inner transaction otherwise follows the standard rules in [sections 8.3.2](#832-fee-sponsorship-failures), [8.3.3](#833-reserve-sponsorship-failures), and [17](#18-feature-interactions).
 - Inner transactions **must not** have `SponsorFlags.spfSponsorFee` enabled, as the outer `Batch` transaction pays the fee for all inner transactions.
 
-### 13.4. Failure Conditions
+### 13.3. Failure Conditions
 
 In addition to the general failures in [section 8.3](#83-failure-conditions):
 
@@ -1184,7 +1184,7 @@ The base protocol grants several reserve carve-outs to ordinary accounts — for
 - **Carve-outs do not transfer to the sponsor.** Carve-outs are properties of the sponsee's own reserve obligation. When a sponsor exists, the sponsor pays the full object reserve — the sponsee's "first two free" allowance does not reduce what the sponsor owes. The sponsor's `SponsoringOwnerCount` is incremented in all cases.
 - **Reserve check timing is inconsistent.** Most XRPL transactions check the reserve **before** the fee is deducted; sponsored reserve checks happen **after** the fee is taken. This produces a small (~12 drop) rounding difference, depending on the transaction type. This is acknowledged as a known issue and is deferred to a future amendment.
 
-The per-transaction sections (§11+) document the specific reserve behavior for each transaction type. Inconsistencies across transaction types are tracked under the open-questions list in [section 26](#26-n1-remaining-todosopen-questions).
+The per-transaction sections (§11+) document the specific reserve behavior for each transaction type.
 
 ### 18.3. Pseudo-Accounts
 
@@ -1241,7 +1241,7 @@ In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to
 
 ### 21.1. Fee Sponsorship
 
-#### 19.1.1. The Unsigned Transaction
+#### 21.1.1. The Unsigned Transaction
 
 <details open>
 
@@ -1260,7 +1260,7 @@ In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to
 
 </details>
 
-#### 19.1.2. The Signed Transaction
+#### 21.1.2. The Signed Transaction
 
 <details open>
 
@@ -1289,7 +1289,7 @@ In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to
 
 The only way an account can be created is via a `Payment` transaction. So the sponsor relationship must be initiated on the `Payment` transaction.
 
-#### 19.2.1. The Unsigned Transaction
+#### 21.2.1. The Unsigned Transaction
 
 <details open>
 
@@ -1308,7 +1308,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
 
 </details>
 
-#### 19.2.2. The Signed Transaction
+#### 21.2.2. The Signed Transaction
 
 <details open>
 
@@ -1335,7 +1335,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
 
 ### 21.3. Object Sponsorship
 
-#### 19.3.1. The Unsigned Transaction
+#### 21.3.1. The Unsigned Transaction
 
 <details open>
 
@@ -1353,7 +1353,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
 
 </details>
 
-#### 19.3.2. The Signed Transaction
+#### 21.3.2. The Signed Transaction
 
 <details open>
 
@@ -1400,7 +1400,7 @@ The design supports two modes of sponsorship: pre-funded (via the `Sponsorship` 
 
 ### 22.3. Other Designs Considered
 
-#### 20.3.1. Per-Transaction Sponsorship vs. Account-Level Sponsorship
+#### 22.3.1. Per-Transaction Sponsorship vs. Account-Level Sponsorship
 
 An earlier design involved updating `AccountSet` to allow users to add a `Sponsor` to their account (with a signature from the sponsor as well). The sponsor would then sponsor every object from that account while the field was active, and either the sponsor or the account could remove the sponsorship at any time.
 
@@ -1410,7 +1410,7 @@ The current design also supports having different sponsors for different objects
 
 <!--Stellar uses this philosophy ("the relationship should be ephemeral to prevent abuse") for their sponsored reserves design, which I like.-->
 
-#### 20.3.2. Inner Object vs. Wrapper Transaction
+#### 22.3.2. Inner Object vs. Wrapper Transaction
 
 An alternative design considered was a wrapper transaction (tentatively named `Relay`), similar to `Batch` in [XLS-56](../XLS-0056-batch/README.md), that the sponsor would sign. It would contain a sub-transaction from the sponsee.
 
@@ -1427,7 +1427,7 @@ This was inspired by Stellar's sandwich transaction design, but the current inne
 
 In addition, the signing process becomes complicated (as discovered in the process of developing XLS-56). You have to somehow prevent the sponsor from submitting the as-is signed transaction to the network, without including it in the wrapper transaction.
 
-#### 20.3.3. Create-Accept-Cancel Flow
+#### 22.3.3. Create-Accept-Cancel Flow
 
 Another design considered was to have a new set of transactions (e.g. `SponsorCreate`/`SponsorAccept`/`SponsorCancel`/`SponsorFinish`) where a sponsor could take on the reserve for an existing object.
 
