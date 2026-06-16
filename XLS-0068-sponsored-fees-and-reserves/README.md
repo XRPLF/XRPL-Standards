@@ -474,15 +474,15 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 
 #### 8.3.1. General Failures
 
-1. `SponsorSignature.TxnSignature` is invalid.
-1. `SponsorSignature.Signers` is invalid (the signer list isn't on the account, quorum isn't reached, the public key(s) are invalid, or signature(s) are invalid).
-1. `SponsorSignature.SigningPubKey` is invalid (the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid).
-1. The `Sponsor` doesn't exist on the ledger.
-1. An invalid sponsorship flag is used.
-1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included (or other incorrect combinations of signing fields).
-1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)).
-1. Only one or two of `Sponsor`, `SponsorFlags`, and `SponsorSignature` is included (they must either all be included, if the transaction is sponsored, or none, if it is not).
-1. `SponsorFlags` includes invalid flags (currently, the only two valid flags are `spfSponsorFee` and `spfSponsorReserve`).
+1. `SponsorSignature.TxnSignature` is invalid (`temBAD_SIGNATURE`).
+1. `SponsorSignature.Signers` is invalid — the signer list isn't on the account, quorum isn't reached, the public key(s) are invalid, or signature(s) are invalid (`tefBAD_AUTH` / `tefBAD_QUORUM` / `tefBAD_SIGNATURE` as appropriate).
+1. `SponsorSignature.SigningPubKey` is invalid — the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid (`tefBAD_AUTH` or `temBAD_SIGNATURE`).
+1. The `Sponsor` doesn't exist on the ledger (`terNO_ACCOUNT`).
+1. An invalid sponsorship flag is used (`temINVALID_FLAG`).
+1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included, or other incorrect combinations of signing fields (`temMALFORMED`).
+1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) (`temMALFORMED`).
+1. Only one or two of `Sponsor`, `SponsorFlags`, and `SponsorSignature` is included — they must either all be included, if the transaction is sponsored, or none, if it is not (`temMALFORMED`).
+1. `SponsorFlags` includes invalid flags — currently, the only two valid flags are `spfSponsorFee` and `spfSponsorReserve` (`temINVALID_FLAG`).
 
 #### 8.3.2. Fee Sponsorship Failures
 
@@ -490,32 +490,36 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 
 If a `Sponsorship` object exists:
 
-1. The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included.
-2. There is not enough XRP in the `FeeAmount` to pay for the transaction.
-3. Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement).
-4. The fee in `tx.Fee` is greater than `Sponsorship.MaxFee`
+1. The `lsfRequireSignatureForFee` flag is enabled and there is no sponsor signature included (`tecNO_PERMISSION`).
+2. There is not enough XRP in the `FeeAmount` to pay for the transaction (`tecUNFUNDED`). The transaction errors; it does **not** fall back to the sponsor's main `AccountRoot.Balance` (see [section 18.2](#182-exhaustion-and-insolvency)).
+3. Paying fees via sponsorship will _not_ be able to [go below the reserve requirement](https://xrpl.org/docs/concepts/accounts/reserves#going-below-the-reserve-requirement) (`tecINSUFFICIENT_RESERVE`).
+4. The fee in `tx.Fee` is greater than `Sponsorship.MaxFee` (`tecNO_PERMISSION`).
 
 If a `Sponsorship` object does not exist:
 
-1. There is no sponsor signature included.
+1. There is no sponsor signature included (`tecNO_PERMISSION`).
+
+In all cases:
+
+1. If the resolved fee payer does not have sufficient XRP, the transaction errors (`tecUNFUNDED`).
 
 _Note: if a transaction doesn't charge a fee (such as an account's first `SetRegularKey` transaction), the transaction will still succeed._
 
 #### 8.3.3. Reserve Sponsorship Failures
 
 1. The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`).
-2. The transaction does not support reserve sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored))
-3. The transaction creates a ledger object whose owner is an account other than `tx.Account` (e.g. `AMMClawback` creating a trust line on behalf of the holder).
-4. The transaction includes an `sfDelegate` field and `spfReserve` is enabled. Reserve sponsorship combined with permissioned delegation is disallowed.
+2. The transaction does not support reserve sponsorship — see [section 8.3.4](#834-transactions-that-cannot-be-sponsored) (`temMALFORMED`).
+3. The transaction creates a ledger object whose owner is an account other than `tx.Account` (e.g. `AMMClawback` creating a trust line on behalf of the holder) (`tecNO_SPONSOR_PERMISSION`).
+4. The transaction includes an `sfDelegate` field and `spfSponsorReserve` is enabled — reserve sponsorship combined with permissioned delegation is disallowed (`tecNO_PERMISSION`; see [section 18.1](#181-permissioned-delegation)).
 
 If a `Sponsorship` object exists:
 
-1. The `lsfRequireSignatureForReserve` flag is enabled and there is no sponsor signature included.
-2. There is not enough remaining count in the `ReserveCount` to pay for the transaction.
+1. The `lsfRequireSignatureForReserve` flag is enabled and there is no sponsor signature included (`tecNO_PERMISSION`).
+2. There is not enough remaining count in the `ReserveCount` to pay for the transaction (`tecINSUFFICIENT_RESERVE`).
 
 If a `Sponsorship` object does not exist:
 
-1. There is no sponsor signature included.
+1. There is no sponsor signature included (`tecNO_PERMISSION`).
 
 Note: if a transaction doesn't charge a reserve (such as `AccountSet`), the transaction will still succeed.
 
@@ -780,11 +784,11 @@ Additional failure conditions specific to `SponsorshipTransfer`:
    4. The new sponsor account does not exist (`terNO_ACCOUNT`)
    5. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 10. If transferring the sponsorship to a new sponsor:
-11. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
-12. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
-13. The `SponsorFlags` field does not include the `spfSponsorReserve` flag (`temINVALID_FLAG`)
-14. The new sponsor account does not exist (`terNO_ACCOUNT`)
-15. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
+    1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
+    2. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
+    3. The `SponsorFlags` field does not include the `spfSponsorReserve` flag (`temINVALID_FLAG`)
+    4. The new sponsor account does not exist (`terNO_ACCOUNT`)
+    5. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
 
 ### 10.6. State Changes
 
