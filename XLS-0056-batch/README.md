@@ -7,7 +7,7 @@
   status: Final
   category: Amendment
   created: 2023-12-13
-  updated: 2026-02-10
+  updated: 2026-06-15
 </pre>
 
 # Atomic/Batch Transactions
@@ -31,7 +31,7 @@ Some use-cases that may be enabled by batch transactions include (but are certai
 
 ## 1. Overview
 
-This spec adds one new transaction: `Batch`. It also adds an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureBatch`.
+This spec adds one new transaction: `Batch`. It also adds an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment.
 
 The rough idea of this design is that users can include "sub-transactions" inside `Batch`, and these transactions are processed atomically. The design also supports transactions from different accounts in the same `Batch` wrapper transaction.
 
@@ -100,6 +100,8 @@ This field operates similarly to [multi-signing](https://xrpl.org/docs/concepts/
 
 This field must be provided if more than one account has inner transactions included in the `Batch`. In that case, this field must contain signatures from all accounts whose inner transactions are included, excluding the account signing the outer transaction (if applicable).
 
+The entries in `BatchSigners` **must be sorted in strictly ascending order by `Account`**. Duplicate entries are not permitted.
+
 Each object in this array contains the following fields:
 
 | FieldName       | Required? | JSON Type | Internal Type |
@@ -113,15 +115,33 @@ Either the `SigningPubKey` and `TxnSignature` fields must be included, or the `S
 
 ##### 2.1.3.1. `Account`
 
-This is an account that has at least one inner transaction.
+This is an account that has at least one inner transaction, or would ordinarily have to sign at least one of the inner transactions (e.g. a co-signed or delegated transaction).
 
-##### 2.1.3.2. `SigningPubKey` and `TxnSignature`
+##### 2.1.3.2. Signing Payload
 
-These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `Flags` field and the hashes of the transactions in `RawTransactions`.
+The data signed by a `BatchSigner` (whether single-sign or multi-sign) is the serialization of:
 
-##### 2.1.3.3. `Signers`
+1. `HashPrefix::Batch` (the 4-byte `BCH\0` hash prefix)
+2. The outer transaction's `Account` (the 160-bit AccountID)
+3. The outer transaction's sequence value (`Sequence`, or `TicketSequence` if `Sequence` is 0), as a `UInt32`
+4. The outer transaction's `Flags`, as a `UInt32`
+5. The number of inner transactions in `RawTransactions`, as a `UInt32`
+6. The transaction ID (hash) of each inner transaction in `RawTransactions`, in order
 
-This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `Flags` field and the hashes of the transactions in `RawTransactions`.
+Followed by the signer-specific suffix:
+
+- **Single-sign** (`SigningPubKey` + `TxnSignature`): the `BatchSigner`'s `Account` is appended to the payload above before signing.
+- **Multi-sign** (`Signers`): the `BatchSigner`'s `Account` is appended, and then for each individual signer within the `Signers` array, that signer's `Account` is appended (via the standard `finishMultiSigningData` suffix) before signing.
+
+Binding the outer `Account` and outer sequence into the signed payload prevents a signed `BatchSigners` entry from being replayed against a different outer transaction.
+
+##### 2.1.3.3. `SigningPubKey` and `TxnSignature`
+
+These fields are included if the account is signing with a single signature (as opposed to multi-sign).
+
+##### 2.1.3.4. `Signers`
+
+This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign.
 
 ### 2.2. Transaction Fee
 
@@ -154,18 +174,21 @@ The standard transaction failure conditions still apply here.
    12. One of the inner transactions fails its preflight checks (i.e. is invalid, irrespective of ledger state) (`temINVALID_INNER_BATCH`).
    13. Either both or neither of `TicketSequence` and `Sequence` are set (`temSEQ_AND_TICKET`).
 1. `BatchSigners`
-   1. The length of `BatchSigners` is greater than the number of transactions in `RawTransactions` (`temARRAY_TOO_LARGE`).
+   1. The length of `BatchSigners` is greater than 8 (`temARRAY_TOO_LARGE`).
    2. The `BatchSigners` field contains a signature from the account signing the outer transaction (`temBAD_SIGNER`).
-   3. The `BatchSigners` field contains a duplicate signature (`temREDUNDANT`).
-   4. The `BatchSigners` field contains a signature from an account that does not have any inner transactions (`temBAD_SIGNER`).
-   5. The `BatchSigners` field is missing a signature from an account that has inner transactions (`temBAD_SIGNER`).
-   6. The `BatchSigners` field contains an invalid signature (`temBAD_SIGNATURE`).
+   3. The `BatchSigners` field contains a duplicate signer (`temBAD_SIGNER`).
+   4. The `BatchSigners` field is not sorted in strictly ascending order by `Account` (`temBAD_SIGNER`).
+   5. The `BatchSigners` field contains a signature from an account that does not have any inner transactions (`temBAD_SIGNER`).
+   6. The `BatchSigners` field is missing a signature from an account that has inner transactions (`temBAD_SIGNER`).
+   7. The `BatchSigners` field is required but is not present (`tefBAD_AUTH`).
+   8. The `BatchSigners` field contains an invalid signature (`temBAD_SIGNATURE`).
 1. Preclaim/doApply errors
    1. The public key for a signer is not a valid public key (`tefBAD_AUTH`). (This should be caught by preflight checks, but it is an additional backup check just in case).
-   2. The batch signer is single-signing:
+   2. A `BatchSigners` entry references a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tefBAD_AUTH`). Pseudo-accounts cannot sign batch entries.
+   3. The batch signer is single-signing:
       1. The public key for a signer is not valid for the account ('`tefBAD_AUTH`).
       2. The account is signing with the account's master key, but the master key is disabled (`tefMASTER_DISABLED`).
-   3. The batch signer is multi-signing:
+   4. The batch signer is multi-signing:
       1. The account does not have a signer list (`tefNOT_MULTI_SIGNING`).
       2. The signing account is not a signer on the signer list (`tefBAD_SIGNATURE`).
       3. The `SigningPubkey` field in a `SignerEntry` field is empty or not a valid public key (`tefBAD_SIGNATURE`).
@@ -503,13 +526,35 @@ Note that the inner transactions are committed as normal transactions.
 
 ## 3. Transaction Common Fields
 
-This standard doesn't add any new field to the [transaction common fields](https://xrpl.org/docs/references/protocol/transactions/common-fields/), but it does add another global transaction flag:
+### 3.1. Flags
+
+This standard adds another global transaction flag:
 
 | Flag Name         | Value        |
 | ----------------- | ------------ |
 | `tfInnerBatchTxn` | `0x40000000` |
 
 This flag should only be used if a transaction is an inner transaction in a `Batch` transaction. This signifies that the transaction shouldn't be signed. Any normal transaction that includes this flag should be rejected.
+
+### 3.2. Transaction Fee
+
+Any transaction with `tfInnerBatchTxn` should have a `Fee` of `0` (the fee will be paid as a part of the outer `Batch` transaction).
+
+### 3.3. Failure Conditions
+
+#### 3.3.1. Data Verification
+
+- A transaction with `tfInnerBatchTxn`:
+  - Is not in a `Batch` transaction (`temINVALID_INNER_BATCH`).
+  - Has a non-zero or non-XRP `Fee` (`temBAD_FEE`).
+  - Has a `TxnSignature` field included (`temBAD_SIGNATURE`).
+  - Has a non-empty `SigningPubKey` (`temBAD_REGKEY`).
+  - Has a `Signers` field included (`temBAD_SIGNER`).
+  - Both or neither of `TicketSequence` and `Sequence` are set (`temSEQ_AND_TICKET`).
+
+A standalone (non-batch) transaction that sets `tfInnerBatchTxn` is rejected. This prevents an attacker from submitting an unsigned inner transaction directly. A transaction applied via the batch path that does not set `tfInnerBatchTxn` is also rejected (this should not occur in practice; it indicates a programming error).
+
+In addition, inner transactions are required to pass standard local checks (the same `passesLocalChecks` validation a normal transaction would pass) as part of the outer `Batch` preflight; failures surface as `temINVALID_INNER_BATCH`.
 
 ## 4. Rationale
 
