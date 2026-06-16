@@ -1172,7 +1172,7 @@ Sponsorship is a cross-cutting feature that touches almost every transaction typ
 
 ### 18.1. Permissioned Delegation
 
-Sponsorship and [permissioned delegation](../XLS-74-permission-delegation/README.md) (XLS-74) can both appear on the same transaction. The resolution rules are:
+Sponsorship and [permissioned delegation](../XLS-0075-permission-delegation/README.md) (XLS-75) can both appear on the same transaction. The resolution rules are:
 
 - **Pre-funded sponsorship follows the transaction signer.** When a Delegate submits a transaction on behalf of `tx.Account`, the resolved sponsor is the one recorded against the delegate, regardless of who submitted the transaction. The `tx.Account`'s own sponsors are not consulted. The sponsor relationship with the Delegate is the one that is used.
 - **Reserve sponsorship + Delegation is blocked** (for now). If `tx.Sponsor` and `tx.Delegate` are both included, the transaction fails (see [section 8.3.3](#833-reserve-sponsorship-failures)). The combinatorial test surface across every transaction type is too large to cover confidently in V1; this case is a candidate for a future amendment.
