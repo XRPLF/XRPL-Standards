@@ -969,7 +969,7 @@ This permission may not be used to submit any transactions (including `Sponsorsh
 
 ### 15.1. Description
 
-The `SponsorFee` permission allows an account to delegate its ability to sponsor other accounts' transaction fees.
+The `SponsorReserve` permission allows an account to delegate its ability to sponsor other accounts' owner reserves.
 
 ### 15.2. Transaction Types Affected
 
