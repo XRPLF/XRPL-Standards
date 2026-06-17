@@ -933,7 +933,7 @@ Specifically:
 - An inner transaction **may** include `Sponsor` and `SponsorFlags` to identify its sponsor and sponsorship type.
 - An inner transaction **must not** include a `SponsorSignature` field. Any signature authorizing sponsorship of an inner transaction is provided via the outer `Batch` transaction's `BatchSigners` list.
 - The sponsor account named on an inner transaction **must** appear in the outer transaction's `BatchSigners` array (unless the sponsorship is satisfied by a pre-funded `Sponsorship` object that does not require a signature). The signer entry in `BatchSigners` authorizes the sponsorship of every inner transaction that names that account as `Sponsor`.
-- Fee and reserve resolution for an inner transaction otherwise follows the standard rules in [sections 8.3.2](#832-fee-sponsorship-failures), [8.3.3](#833-reserve-sponsorship-failures), and [17](#18-feature-interactions).
+- Fee and reserve resolution for an inner transaction otherwise follows the standard rules in [sections 8.3.2](#832-fee-sponsorship-failures), [8.3.3](#833-reserve-sponsorship-failures), and [section 18](#18-feature-interactions).
 - Inner transactions **must not** have `SponsorFlags.spfSponsorFee` enabled, as the outer `Batch` transaction pays the fee for all inner transactions.
 
 ### 13.3. Failure Conditions
