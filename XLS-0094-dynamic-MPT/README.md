@@ -160,7 +160,8 @@ The `MutableFlags` use `tmf` as prefix.
 | `tmfMPTSetCanTransfer` | ️`0x00000010` |      16       | Sets the `lsfMPTCanTransfer` flag. Allows tokens to be transferred to non-issuer accounts.                              |
 | `tmfMPTSetCanClawback` | ️`0x00000020` |      32       | Sets the `lsfMPTCanClawback` flag. Enables the issuer to claw back tokens via `Clawback` or `AMMClawback` transactions. |
 
-**Note**: 
+**Note**:
+
 - An MPT issuance flag in the `MPTokenIssuance` object's `Flags` field can only be enabled by `MPTokenIssuanceSet` if the corresponding `lsmfMPTCanEnable*` permission flag is already set in the `MPTokenIssuance` object's `MutableFlags` field.
 - If an MPT issuance flag is already enabled and its corresponding `lsmfMPTCanEnable*` permission flag is set, re-enabling the flag is valid and has no additional effect.
 - A single `MPTokenIssuanceSet` transaction may enable multiple MPT issuance flags, as long as each requested flag has its corresponding `lsmfMPTCanEnable*` permission flag set in the `MPTokenIssuance` object's `MutableFlags`.
