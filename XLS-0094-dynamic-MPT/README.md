@@ -40,7 +40,7 @@ This feature will require an amendment, `DynamicMPT`.
 If issuers want the ability to modify certain fields or flags after issuance, they must explicitly declare those fields or flags as mutable when creating the `MPTokenIssuance`.
 Only a limited set of fields and flags may be declared mutable; all other fields remain permanently immutable.
 
-### 2.1. Declaring Mutability
+### 2.1. Declaring Field Mutability and Flag Enablement
 
 Issuers can specify mutability during `MPTokenIssuanceCreate` via the optional `MutableFlags` field.
 
@@ -160,7 +160,10 @@ The `MutableFlags` use `tmf` as prefix.
 | `tmfMPTSetCanTransfer` | ️`0x00000010` |      16       | Sets the `lsfMPTCanTransfer` flag. Allows tokens to be transferred to non-issuer accounts.                              |
 | `tmfMPTSetCanClawback` | ️`0x00000020` |      32       | Sets the `lsfMPTCanClawback` flag. Enables the issuer to claw back tokens via `Clawback` or `AMMClawback` transactions. |
 
-**Note**: Re-setting an already enabled MPT issuance flag is valid and has no additional effect.
+**Note**: 
+- An MPT issuance flag in the `MPTokenIssuance` object's `Flags` field can only be enabled by `MPTokenIssuanceSet` if the corresponding `lsmfMPTCanEnable*` permission flag is already set in the `MPTokenIssuance` object's `MutableFlags` field.
+- If an MPT issuance flag is already enabled and its corresponding `lsmfMPTCanEnable*` permission flag is set, re-enabling the flag is valid and has no additional effect.
+- A single `MPTokenIssuanceSet` transaction may enable multiple MPT issuance flags, as long as each requested flag has its corresponding `lsmfMPTCanEnable*` permission flag set in the `MPTokenIssuance` object's `MutableFlags`.
 
 ---
 
@@ -413,7 +416,7 @@ The following sequence of transactions illustrates a successful case:
 
 Dynamic MPT allows issuers to declare selected fields and MPT issuance flags as mutable at creation time, while keeping all other issuance properties immutable. Field mutability supports operational updates such as metadata changes and transfer fee adjustments without requiring a new issuance.
 
-MPT issuance flag mutability is intentionally one-way. If the corresponding `lsmfMPTCanMutate*` flag was set during creation, the issuer may later enable the MPT issuance flag through `MPTokenIssuanceSet`; once enabled, that flag cannot be disabled by `MPTokenIssuanceSet`. This preserves the issuer's ability to opt into additional issuance behavior while avoiding later removal of behavior that holders, integrations, or compliance workflows may have relied on.
+MPT issuance flag mutability is intentionally one-way. If the corresponding `lsmfMPTCanEnable*` flag was set during creation, the issuer may later enable the MPT issuance flag through `MPTokenIssuanceSet`; once enabled, that flag cannot be disabled by `MPTokenIssuanceSet`. This preserves the issuer's ability to opt into additional issuance behavior while avoiding later removal of behavior that holders, integrations, or compliance workflows may have relied on.
 
 ## Security
 
