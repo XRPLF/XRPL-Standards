@@ -581,35 +581,17 @@ Yes, though that needs to be tested. This should make it easier for users to est
 
 ### C.5: Why not use native WASM floating point?
 
-WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. One might ask whether those could be used
-directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of
-non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical). In practice this would be
-insufficient for two independent reasons.
+WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. One might ask whether those could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical). In practice this would be insufficient for two independent reasons.
 
-First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both
-formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example,
-the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal
-arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect
-by construction.
+First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example, the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect by construction.
 
-Second, and more fundamentally, XRPL's `Number` arithmetic is itself **complex, carefully specified, and subject to
-change via ledger amendment.** The rippled implementation encodes years of decisions about rounding, normalization,
-overflow handling, and edge cases for decimal calculations. There is no Rust equivalent in this library, and there
-should not be: porting that logic correctly would be a significant maintenance burden, and any divergence — even a
-single rounding edge case — would produce a contract that computes results differently from rippled. Worse, if the
-`Number` arithmetic is ever changed by a ledger amendment, contracts that embedded their own copy of the logic would
-silently continue using the old behavior while the rest of the ledger moved to the new one.
+Second, and more fundamentally, XRPL's `Number` arithmetic is itself **complex, carefully specified, and subject to change via ledger amendment.** The rippled implementation encodes years of decisions about rounding, normalization, overflow handling, and edge cases for decimal calculations. There is no Rust equivalent in this library, and there should not be: porting that logic correctly would be a significant maintenance burden, and any divergence — even a single rounding edge case — would produce a contract that computes results differently from rippled. Worse, if the `Number` arithmetic is ever changed by a ledger amendment, contracts that embedded their own copy of the logic would silently continue using the old behavior while the rest of the ledger moved to the new one.
 
-The host function design ensures that **all contracts always use exactly the arithmetic rippled uses at execution time.**
-No porting, no maintenance, no drift.
+The host function design ensures that **all contracts always use exactly the arithmetic rippled uses at execution time.** No porting, no maintenance, no drift.
 
 ### C.6: Why not provide a Rust implementation of Number arithmetic in `xrpl-wasm-stdlib`?
 
-For similar reasons, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an
-implementation would face the same amendment-drift problem: it would be frozen at the version of the logic that existed
-when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled,
-rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the
-arithmetic logic in exactly one place.
+For similar reasons, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place.
 
 ### C.7: Why the 12-byte encoding for XFloat?
 
@@ -623,28 +605,16 @@ Using an unpacked 12-byte layout (4-byte exponent + 8-byte mantissa) rather than
 
 The 4 extra bytes per value are negligible given the `no_std` stack-only model.
 
-**Compared to STNumber (14 bytes):** XFloat is 2 bytes shorter because it omits the type prefix — the host
-functions already know they're working with a float, so the prefix is unnecessary.
+**Compared to STNumber (14 bytes):** XFloat is 2 bytes shorter because it omits the type prefix — the host functions already know they're working with a float, so the prefix is unnecessary.
 
 ### C.8: Why are ledger serialization formats unchanged by XFloat?
 
-The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization
-formats — including the 8-byte `STAmount` IOU encoding — are unchanged by this specification.
-`float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat`
-for in-contract computation, without touching how those values are stored or transmitted on the wire.
+The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `STAmount` IOU encoding — are unchanged by this specification.`float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
 
 ### C.9: Why is host function immutability required?
 
-The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed
-contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue
-to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a
-preference.
+The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a preference.
 
-**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let
-old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)
-but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in
-contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
+**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
 
-**Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable
-forever) rather than on contract authors or users. This is a conservative choice appropriate for financial
-infrastructure.
+**Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable forever) rather than on contract authors or users. This is a conservative choice appropriate for financial infrastructure.
