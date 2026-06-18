@@ -142,12 +142,12 @@ A Locator allows a WASM developer to reference any field in any object (even inn
 
 The current transaction is the `EscrowFinish` that is executing the WASM logic
 
-| Function Signature                                                                                                                            | Description                                                                           | Gas Cost |
-| :-------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ | :------- |
-| `tx_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                     | Get a top-level field from the transaction that triggered the extension.              | 70       |
-| `tx_inner(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an inner field from the transaction that triggered the extension.                 | 110      |
-| `tx_arr_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                                 | Get the length of an array field from the transaction that triggered the extension.   | 40       |
-| `tx_inner_arr_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                       | Get the length of an inner array field on the ledger object that the extension is on. | 70       |
+| Function Signature                                                                                                                            | Description                                                                               | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------- | :------- |
+| `tx_field(`<br/>&emsp;`field: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                     | Get a top-level field from the transaction that triggered the extension.                  | 70       |
+| `tx_inner(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an inner field from the transaction that triggered the extension.                     | 110      |
+| `tx_arr_len(`<br/>&emsp;`field: i32`<br />`)`                                                                                                 | Get the length of an array field from the transaction that triggered the extension.       | 40       |
+| `tx_inner_arr_len(`<br/>&emsp;`locator_ptr: i32,`<br/>&emsp;`locator_len: i32`<br />`)`                                                       | Get the length of an inner array field from the transaction that triggered the extension. | 70       |
 
 ### 5.4. Any Ledger Object Data
 
