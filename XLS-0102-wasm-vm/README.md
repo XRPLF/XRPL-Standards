@@ -199,10 +199,10 @@ Fetch information about NFTs.
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- | :------- |
 | `nft_uri(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
 | `nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT issuer from the NFT ID.       | 70       |
-| `nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                       | Extract the NFT taxon from the NFT ID.        | 70       |
-| `nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                     | Extract the NFT flags from the NFT ID.        | 70       |
-| `nft_xfer_fee(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                  | Extract the NFT transfer fee from the NFT ID. | 70       |
-| `nft_serial(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT serial from the NFT ID.       | 70       |
+| `nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                       | Extract the NFT taxon from the NFT ID.        | 60       |
+| `nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                     | Extract the NFT flags from the NFT ID.        | 60       |
+| `nft_xfer_fee(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                  | Extract the NFT transfer fee from the NFT ID. | 60       |
+| `nft_serial(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT serial from the NFT ID.       | 60       |
 
 ### 5.7. Utils
 
@@ -306,7 +306,7 @@ if (hfs->isAmendmentEnabled(featureLendingProtocol))
 
 _(in `WasmVM.cpp`)_
 
-This ensures that smart escrows cannot use the `loan_index` host function at all before the `LendingProtocol` amendment is activated, as the amendment proce`ss ensures that all nodes and validators have the code before it is run.
+This ensures that smart escrows cannot use the `loan_index` host function at all before the `LendingProtocol` amendment is activated, as the amendment process ensures that all nodes and validators have the code before it is run.
 
 # Appendix
 
