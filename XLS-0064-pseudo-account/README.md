@@ -7,7 +7,7 @@ status: Draft
 category: Amendment
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
-updated: 2025-08-29
+updated: 2026-06-22
 </pre>
 
 ### Abstract
@@ -88,6 +88,43 @@ The cost of creating a pseudo-account depends on whether it is owned and control
 ###### **Deletion**
 
 A pseudo-account must be deleted together with the associated object.
+
+###### **Freeze Handling**
+
+Freeze semantics for pseudo-accounts differ from those of regular accounts, therefore protocols using a pseudo-account must enforce the following rules for any transaction that moves assets into or out of the pseudo-account.
+
+**Deposits (external account → pseudo-account)**
+
+A deposit must be rejected if any of the following conditions hold:
+
+| Condition                                               | Error                     |
+| :------------------------------------------------------ | :------------------------ |
+| The asset is globally frozen                            | `tecFROZEN` / `tecLOCKED` |
+| The depositor is individually frozen for the asset      | `tecFROZEN` / `tecLOCKED` |
+| The pseudo-account is individually frozen for the asset | `tecFROZEN` / `tecLOCKED` |
+
+A regular freeze on the pseudo-account blocks deposits. Unlike regular accounts — where a frozen counterparty can still redeem to the issuer — a pseudo-account cannot initiate a redemption on its own. Allowing deposits into a frozen pseudo-account would trap the depositor's funds.
+
+**Withdrawals (pseudo-account → destination)**
+
+A withdrawal must be rejected if any of the following conditions hold, evaluated in order:
+
+| Priority | Condition                                                                                       | Effect                                                                                                                             |
+| :------- | :---------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | The destination is the asset issuer                                                             | **Always allowed** — return `tesSUCCESS` immediately, bypassing all remaining checks. The issuer can always receive its own token. |
+| 2        | The pseudo-account (source) is globally or individually frozen for the asset                    | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| 3        | The submitter is individually frozen for the asset **and** the submitter is not the destination | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| 4        | The destination is deep-frozen for the asset                                                    | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+
+Rule 3 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
+
+Rule 4 uses deep-freeze for the destination rather than a regular freeze, because a regular freeze on the destination does not prevent the destination from receiving; only deep-freeze does.
+
+**MPT-specific rules**
+
+For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 3: for IOUs a regular individual freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
+
+Rule 1 (issuer destination) applies to MPTs in the same way as IOUs — a withdrawal to the asset issuer bypasses all lock checks.
 
 ###### **Invariants**
 
