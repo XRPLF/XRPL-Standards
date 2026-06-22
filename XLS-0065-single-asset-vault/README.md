@@ -337,14 +337,14 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `MPTokenMetadata`  |    No    |      `string`      |    `BLOB`     |                         | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
 | `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `"FirstComeFirstServe"` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `DomainID`         |    No    |      `string`      |   `HASH256`   |                         | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
-| `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. Ignored (fixed at `0`) when `Asset` is `XRP` or `MPT`; not stored on the `Vault` object in those cases. |
 
 #### 3.2.2 Flags
 
 | Flag Name                     |  Flag Value  | Description                                                                              |
 | ----------------------------- | :----------: | :--------------------------------------------------------------------------------------- |
-| `tfVaultPrivate`              | `0x00010000` | Indicates that the vault is private. It can only be set during Vault creation.           |
-| `tfVaultShareNonTransferable` | `0x00020000` | Indicates the vault share is non-transferable. It can only be set during Vault creation. |
+| `tfVaultPrivate`              | `0x00010000` | Indicates that the vault is private. It can only be set during Vault creation. Persisted as `lsfVaultPrivate` on the `Vault` object. |
+| `tfVaultShareNonTransferable` | `0x00020000` | Indicates the vault share is non-transferable. It can only be set during Vault creation. Controls `MPTokenIssuance` flags at creation time but is **not** persisted on the `Vault` object. |
 
 ##### 3.2.3 WithdrawalPolicy
 
@@ -376,7 +376,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 1. If the `Asset` is an `IOU`:
    1. The issuer account does not exist on the ledger. (`terNO_ACCOUNT`)
    2. The issuer account does not have `lsfDefaultRipple` set. (`terNO_RIPPLE`)
-   3. The `lsfGlobalFreeze` flag is set on the issuing account, or the `lsfHighFreeze`/`lsfLowFreeze` flag is set on the `RippleState` between the issuer and the vault owner (the asset is frozen). (`tecFROZEN`)
+   3. The `lsfGlobalFreeze` flag is set on the issuing account, or the vault owner's trust line to the issuer is individually frozen (`lsfHighFreeze`/`lsfLowFreeze` on an existing `RippleState`). Note: no `RippleState` exists between the _pseudo-account_ and the issuer yet at this point — this check applies to the vault owner's own trust line. (`tecFROZEN`)
 
 2. If the `Asset` is an `MPT`:
    1. The `MPTokenIssuance` object does not exist. (`tecOBJECT_NOT_FOUND`)
@@ -404,6 +404,14 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
    1. Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot`.
 6. If `Vault.Asset` is an `MPT`:
    1. Create an `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+
+##### 3.2.6.1 After `fixCleanup3_2_0`
+
+When the `fixCleanup3_2_0` amendment is enabled, the share `MPTokenIssuance` (created in step 2 above) additionally has its `sfReferenceHolding` field set to the key of the _pseudo-account_'s asset holding object:
+
+- If `Vault.Asset` is an `IOU`: `sfReferenceHolding` points to the `RippleState` object between the _pseudo-account_ and the issuer.
+- If `Vault.Asset` is an `MPT`: `sfReferenceHolding` points to the `MPToken` object of the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+- If `Vault.Asset` is `XRP`: `sfReferenceHolding` is not set (XRP has no holding object).
 
 #### 3.2.7 Invariants
 
