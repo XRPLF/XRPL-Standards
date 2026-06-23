@@ -271,7 +271,7 @@ This section documents the `XFloat` encoding for **rippled implementers and tool
 **Serialization Layout (96 bits / 12 bytes):**
 
 ```
-[Signed Exponent: 4 bytes (i32, big-endian)][Signed Mantissa: 8 bytes (i64, big-endian)]
+[Signed Mantissa: 8 bytes (i64, big-endian)][Signed Exponent: 4 bytes (i32, big-endian)]
 ```
 
 **Field Descriptions:**
