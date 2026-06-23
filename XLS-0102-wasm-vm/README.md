@@ -355,6 +355,9 @@ pub extern "C" fn finish() -> i32 {
     return 0;
   }
 
+let mantissa:i64 = i64::from_be_bytes(mantissa_result);
+let exponent:i32 = i32::from_be_bytes(exponent_result);
+
   1 // Success
 }
 ```
