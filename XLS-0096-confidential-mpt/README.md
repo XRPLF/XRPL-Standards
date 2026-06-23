@@ -199,9 +199,9 @@ This restriction is required because XLS-33 transfer fees are percentage-based, 
 The following cases are invalid:
 
 - `MPTokenIssuanceCreate` with both a non-zero `TransferFee` and `tfMPTCanHoldConfidentialBalance`. (`temBAD_TRANSFER_FEE`)
-- `MPTokenIssuanceSet` that sets `tmfMPTCanHoldConfidentialBalance` while the issuance already has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
+- `MPTokenIssuanceSet` that sets `tmfMPTSetCanHoldConfidentialBalance` while the issuance already has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
 - `MPTokenIssuanceSet` that sets a non-zero `TransferFee` while the issuance already has `lsfMPTCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
-- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` and `tmfMPTCanHoldConfidentialBalance` in the same transaction. (`temBAD_TRANSFER_FEE`)
+- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` and `tmfMPTSetCanHoldConfidentialBalance` in the same transaction. (`temBAD_TRANSFER_FEE`)
 
 `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `TransferFee`.
 
@@ -681,9 +681,9 @@ The existing `MPTokenIssuanceSet` transaction is extended to manage the confiden
 
 ### 12.1. Usage & Mutability
 
-This transaction is the only method to register keys or enable the confidential amount status (via the `MutableFlags` field with the `tmfMPTCanHoldConfidentialBalance` bit flag) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
+This transaction is the only method to register keys or enable the confidential amount status (via the `MutableFlags` field with the `tmfMPTSetCanHoldConfidentialBalance` bit flag) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
-**Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanHoldConfidentialBalance` flag using `tmfMPTCanHoldConfidentialBalance`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
+**Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanHoldConfidentialBalance` flag using `tmfMPTSetCanHoldConfidentialBalance`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
 
 ### 12.2. Fields
 
@@ -706,12 +706,12 @@ The following bit flag is added to the `MutableFlags` field to enable the confid
 
 | Flag Name                          | Hex Value    | Decimal Value | Description                                                                                                                                          |
 | :--------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmfMPTCanHoldConfidentialBalance` | `0x00001000` | 4096          | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
+| `tmfMPTSetCanHoldConfidentialBalance` | `0x00001000` | 4096          | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
 
 - These flags can only be used if the `lsmfMPTCannotEnableCanHoldConfidentialBalance` flag was **not** set during `MPTokenIssuanceCreate`.
-- Setting `tmfMPTCanHoldConfidentialBalance` enables confidential transfers for the token.
+- Setting `tmfMPTSetCanHoldConfidentialBalance` enables confidential transfers for the token.
 - Enabling confidential transfers is one-way: there is no flag to clear `lsfMPTCanHoldConfidentialBalance` once it has been set.
 
 ### 12.3. Failure Conditions
@@ -728,7 +728,7 @@ The following bit flag is added to the `MutableFlags` field to enable the confid
 1. The transaction attempts to use `tmfMPTCanHoldConfidentialBalance`, but the `lsmfMPTCannotEnableCanHoldConfidentialBalance` flag is set (feature is immutable). (`tecNO_PERMISSION`)
 2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
 3. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
-   - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tmfMPTCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
+   - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tmfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
 4. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
 ### 12.4. State Changes
@@ -747,13 +747,13 @@ If successful:
   "Account": "rIssuerAccount...",
   "TransactionType": "MPTokenIssuanceSet",
   "MPTokenIssuanceID": "610F33...",
-  "MutableFlags": 4096, // tmfMPTCanHoldConfidentialBalance
+  "MutableFlags": 4096, // tmfMPTSetCanHoldConfidentialBalance
   "IssuerEncryptionKey": "028d...",
   "AuditorEncryptionKey": "037c..."
 }
 ```
 
-This transaction enables the confidential amount feature by setting the `tmfMPTCanHoldConfidentialBalance` bit flag in the `MutableFlags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
+This transaction enables the confidential amount feature by setting the `tmfMPTSetCanHoldConfidentialBalance` bit flag in the `MutableFlags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
 
 ## 13. Operational Considerations
 
