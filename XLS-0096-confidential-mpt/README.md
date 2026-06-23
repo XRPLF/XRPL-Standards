@@ -143,9 +143,9 @@ To support confidential MPTs, the existing `MPTokenIssuance` ledger object is ex
 
 Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanHoldConfidentialBalance`** is stored in the standard `sfFlags` field, while **`lsmfMPTCannotEnableCanHoldConfidentialBalance`** is stored in the `sfMutableFlags` field.
 
-| Flag Name                                  | Field            | Hex Value    | Description                                                                                         |
-| :----------------------------------------- | :--------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
-| `lsfMPTCanHoldConfidentialBalance`         | `sfFlags`        | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
+| Flag Name                                       | Field            | Hex Value    | Description                                                                                         |
+| :---------------------------------------------- | :--------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
+| `lsfMPTCanHoldConfidentialBalance`              | `sfFlags`        | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
 | `lsmfMPTCannotEnableCanHoldConfidentialBalance` | `sfMutableFlags` | `0x00040000` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
 
 **Note**: `sfMutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
@@ -704,8 +704,8 @@ The following existing field is extended with a new bit flag to support enabling
 
 The following bit flag is added to the `MutableFlags` field to enable the confidential amount feature:
 
-| Flag Name                        | Hex Value    | Decimal Value | Description                                                                                                                                     |
-| :------------------------------- | :----------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flag Name                          | Hex Value    | Decimal Value | Description                                                                                                                                          |
+| :--------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tmfMPTCanHoldConfidentialBalance` | `0x00001000` | 4096          | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
