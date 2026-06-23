@@ -97,11 +97,11 @@ Freeze semantics for pseudo-accounts differ from those of regular accounts, ther
 
 A deposit must be rejected if any of the following conditions hold:
 
-| Condition                                               | Error                     |
-| :------------------------------------------------------ | :------------------------ |
-| The asset is globally frozen                            | `tecFROZEN` / `tecLOCKED` |
-| The depositor is individually frozen for the asset      | `tecFROZEN` / `tecLOCKED` |
-| The pseudo-account is individually frozen for the asset | `tecFROZEN` / `tecLOCKED` |
+| Condition                                            | Code                      |
+| :--------------------------------------------------- | :------------------------ |
+| The asset is globally frozen                         | `tecFROZEN` / `tecLOCKED` |
+| The depositor is regularly frozen for the asset      | `tecFROZEN` / `tecLOCKED` |
+| The pseudo-account is regularly frozen for the asset | `tecFROZEN` / `tecLOCKED` |
 
 A regular freeze on the pseudo-account blocks deposits. Unlike regular accounts — where a frozen counterparty can still redeem to the issuer — a pseudo-account cannot initiate a redemption on its own. Allowing deposits into a frozen pseudo-account would trap the depositor's funds.
 
@@ -109,12 +109,13 @@ A regular freeze on the pseudo-account blocks deposits. Unlike regular accounts 
 
 A withdrawal must be rejected if any of the following conditions hold, evaluated in order:
 
-| Priority | Condition                                                                                       | Effect                                                                                                                             |
-| :------- | :---------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | The destination is the asset issuer                                                             | **Always allowed** — return `tesSUCCESS` immediately, bypassing all remaining checks. The issuer can always receive its own token. |
-| 2        | The pseudo-account (source) is globally or individually frozen for the asset                    | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
-| 3        | The submitter is individually frozen for the asset **and** the submitter is not the destination | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
-| 4        | The destination is deep-frozen for the asset                                                    | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| Condition                                                                                    | Code                                                                                                                               |
+| :------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| The destination is the asset issuer                                                          | **Always allowed** — return `tesSUCCESS` immediately, bypassing all remaining checks. The issuer can always receive its own token. |
+| The asset is globally frozen                                                                 | `tecFROZEN` / `tecLOCKED`                                                                                                          |
+| The pseudo-account (source) is regularly frozen for the asset                                | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| The submitter is regularly frozen for the asset **and** the submitter is not the destination | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| The destination is deep-frozen for the asset                                                 | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
 
 Rule 3 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
 
