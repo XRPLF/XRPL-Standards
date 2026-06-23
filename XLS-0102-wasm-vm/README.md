@@ -217,7 +217,7 @@ Miscellaneous utility functions.
 
 Helper functions for performing floating point arithmetic via rippled. These are used for any calculation requiring XRPL's decimal floating point format — including IOU amounts, lending protocol math, fee calculations, or arbitrary numeric operations within a smart contract.
 
-All float buffers (`XFloat`) are exactly **12 bytes**: An 8-byte big-endian signed mantissa (`i64`) followed by a 4-byte big-endian signed exponent (`i32`). Contracts must treat these buffers as opaque and must not decode or construct them directly — all operations must go through these host functions.
+All float buffers (`XFloat`) are exactly **12 bytes**. Contracts must treat these buffers as opaque and must not decode or construct them directly. Instead, all operations on XFloat types SHOULD go through these host functions.
 
 The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `1` = toward zero, `2` = downward (floor), `3` = upward (ceiling).
 
