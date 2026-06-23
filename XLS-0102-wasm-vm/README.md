@@ -264,7 +264,7 @@ This section documents the `XFloat` encoding for **rippled implementers and tool
 
 `XFloat` uses a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why `float_from_stnumber` is a conversion function rather than a no-op):
 
-- **Layout:** 12 bytes total — 4-byte big-endian signed exponent followed by 8-byte big-endian signed mantissa
+- **Layout:** 12 bytes total — 8-byte big-endian signed mantissa followed by a 4-byte big-endian signed exponent.
 - **No type prefix:** The buffer contains only the 12 payload bytes
 - **Consensus-compatible:** Produced and consumed exclusively by rippled's host function implementations
 
