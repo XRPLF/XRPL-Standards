@@ -704,8 +704,8 @@ The following existing field is extended with a new bit flag to support enabling
 
 The following bit flag is added to the `MutableFlags` field to enable the confidential amount feature:
 
-| Flag Name                          | Hex Value    | Decimal Value | Description                                                                                                                                          |
-| :--------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flag Name                             | Hex Value    | Decimal Value | Description                                                                                                                                          |
+| :------------------------------------ | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tmfMPTSetCanHoldConfidentialBalance` | `0x00001000` | 4096          | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
