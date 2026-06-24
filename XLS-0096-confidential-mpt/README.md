@@ -706,7 +706,7 @@ The following bit flag is added to the `MutableFlags` field to enable the confid
 
 | Flag Name                             | Hex Value    | Decimal Value | Description                                                                                                                                          |
 | :------------------------------------ | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmfMPTSetCanHoldConfidentialBalance` | `0x00001000` | 4096          | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
+| `tmfMPTSetCanHoldConfidentialBalance` | `0x00000040` | 64            | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotEnableCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
 
@@ -747,7 +747,7 @@ If successful:
   "Account": "rIssuerAccount...",
   "TransactionType": "MPTokenIssuanceSet",
   "MPTokenIssuanceID": "610F33...",
-  "MutableFlags": 4096, // tmfMPTSetCanHoldConfidentialBalance
+  "MutableFlags": 64, // tmfMPTSetCanHoldConfidentialBalance
   "IssuerEncryptionKey": "028d...",
   "AuditorEncryptionKey": "037c..."
 }
