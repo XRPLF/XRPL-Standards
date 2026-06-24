@@ -371,22 +371,22 @@ let exponent:i32 = i32::from_be_bytes(exponent_result);
 ```
 Offset  Size  Type   Description
 ------  ----  -----  -----------
-0       4     i32    Signed exponent, big-endian
-4       8     i64    Signed mantissa, big-endian
+0       8     i64    Signed mantissa, big-endian
+8       4    i32    Signed exponent, big-endian
 ```
 
 **Zero value (12 bytes):**
 
 ```
-00 00 00 00   <- exponent: 0
 00 00 00 00 00 00 00 00   <- mantissa: 0
+00 00 00 00   <- exponent: 0
 ```
 
 **Example: positive value with exponent -15, mantissa 10^15:**
 
 ```
-FF FF FF F1   <- exponent: -15 (i32 big-endian: 0xFFFFFFF1)
 00 03 8D 7E A4 C6 80 00   <- mantissa: 1,000,000,000,000,000 (10^15)
+FF FF FF F1   <- exponent: -15 (i32 big-endian: 0xFFFFFFF1)
 ```
 
 ### 5.9. Trace
