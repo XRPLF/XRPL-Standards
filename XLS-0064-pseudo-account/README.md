@@ -97,29 +97,31 @@ Freeze semantics for pseudo-accounts differ from those of regular accounts, ther
 
 A deposit must be rejected if any of the following conditions hold:
 
-| Condition                                            | Code                      |
-| :--------------------------------------------------- | :------------------------ |
-| The asset is globally frozen                         | `tecFROZEN` / `tecLOCKED` |
-| The depositor is regularly frozen for the asset      | `tecFROZEN` / `tecLOCKED` |
-| The pseudo-account is regularly frozen for the asset | `tecFROZEN` / `tecLOCKED` |
+| Condition                                                                           | Code                      |
+| :---------------------------------------------------------------------------------- | :------------------------ |
+| The asset is globally frozen                                                        | `tecFROZEN` / `tecLOCKED` |
+| If the asset is a Vault Share, the underlying asset of the share if frozen / locked | `tecLOCKED`               |
+| The depositor is regularly frozen for the asset                                     | `tecFROZEN` / `tecLOCKED` |
+| The pseudo-account is regularly frozen for the asset                                | `tecFROZEN` / `tecLOCKED` |
 
-A regular freeze on the pseudo-account blocks deposits. Unlike regular accounts — where a frozen counterparty can still redeem to the issuer — a pseudo-account cannot initiate a redemption on its own. Allowing deposits into a frozen pseudo-account would trap the depositor's funds.
+A freeze on the pseudo-account blocks deposits. Unlike regular accounts — where a frozen counterparty can still redeem to the issuer — a pseudo-account cannot initiate a redemption on its own. Allowing deposits into a frozen pseudo-account would trap the depositor's funds.
 
 **Withdrawals (pseudo-account → destination)**
 
 A withdrawal must be rejected if any of the following conditions hold, evaluated in order:
 
-| Condition                                                                                    | Code                                                                                                                               |
-| :------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| The destination is the asset issuer                                                          | **Always allowed** — return `tesSUCCESS` immediately, bypassing all remaining checks. The issuer can always receive its own token. |
-| The asset is globally frozen                                                                 | `tecFROZEN` / `tecLOCKED`                                                                                                          |
-| The pseudo-account (source) is regularly frozen for the asset                                | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
-| The submitter is regularly frozen for the asset **and** the submitter is not the destination | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
-| The destination is deep-frozen for the asset                                                 | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| Condition                                                                           | Code                                                                                                                               |
+| :---------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| The destination is the asset issuer                                                 | **Always allowed** — return `tesSUCCESS` immediately, bypassing all remaining checks. The issuer can always receive its own token. |
+| The asset is globally frozen                                                        | `tecFROZEN` / `tecLOCKED`                                                                                                          |
+| If the asset is a Vault Share, the underlying asset of the share if frozen / locked | `tecLOCKED`                                                                                                                        |
+| The pseudo-account (source) is regularly frozen for the asset                       | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| The submitter is frozen for the asset **and** the submitter is not the destination  | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
+| The destination is deep frozen for the asset                                        | Reject: `tecFROZEN` / `tecLOCKED`                                                                                                  |
 
-Rule 3 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
+Rule 5 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
 
-Rule 4 uses deep-freeze for the destination rather than a regular freeze, because a regular freeze on the destination does not prevent the destination from receiving; only deep-freeze does.
+Rule 6 uses deep freeze for the destination rather than a regular freeze, because a regular freeze on the destination does not prevent the destination from receiving; only deep freeze does.
 
 **MPT-specific rules**
 
