@@ -6,7 +6,7 @@
   status: Draft
   category: Amendment
   created: 2025-08-08
-  updated: 2026-06-18
+  updated: 2026-06-22
 </pre>
 
 # WASM VM Configuration
@@ -32,7 +32,7 @@ This feature does not (directly) involve any new transactions, ledger objects, o
 
 Using [Smart Escrows](../XLS-0100-smart-escrows/README.md) as an example:
 
-1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `FinishFunction` code to determine if the escrow is finishable).
+1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `Bytecode` to determine if the escrow is finishable).
 2. Enter the WASM engine, where the WASM environment is set up to run the code.
 3. Run the WASM code, using host functions to fetch on-ledger information.
 4. Return the output (whether or not the escrow can be finished) to the transaction processing engine, and continue onwards with the rest of the transaction code.
