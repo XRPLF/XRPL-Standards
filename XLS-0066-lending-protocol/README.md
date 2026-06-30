@@ -36,6 +36,7 @@ The specification introduces the following transactions:
 - **`LoanBrokerCoverWithdraw`**: A transaction to withdraw First-Loss Capital.
 - **`LoanBrokerCoverClawback`**: A transaction to clawback the First-Loss Capital. This transaction can only be submitted by the Issuer of the asset.
 - **`LoanSet`**: A transaction to create a new `Loan` object.
+- **`LoanAccept`**: A transaction to accept a pending `Loan` object. (`LendingProtocolV1_1`)
 - **`LoanDelete`**: A transaction to delete an existing `Loan` object.
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
 - **`LoanPay`**: A transaction to make a `Loan` payment.
@@ -478,7 +479,7 @@ The `Loan` objects are stored in the ledger and tracked in [Owner Directories](h
 
 When a Loan is created using the two-step flow (without `CounterpartySignature`), it starts in a **pending** state indicated by the `lsfLoanPending` flag. A pending Loan is registered only in the `LoanBroker` _pseudo-account_'s `OwnerDirectory` (i.e., only `LoanBrokerNode` is populated). The `OwnerNode` field is not set.
 
-Once the Borrower accepts the Loan (via `LoanSet` with `tfLoanSetAccept`), the `lsfLoanPending` flag is cleared, the Loan is added to the `Borrower`'s `OwnerDirectory`, and the `OwnerNode` field is populated.
+Once the Borrower accepts the Loan (via `LoanAccept`), the `lsfLoanPending` flag is cleared, the Loan is added to the `Borrower`'s `OwnerDirectory`, and the `OwnerNode` field is populated.
 
 #### 3.2.5 Reserves
 
@@ -497,7 +498,7 @@ When a Loan is created in the two-step flow, the Loan Broker is charged the owne
 
 ##### 3.2.6.1 Pending Loan Deletion (`LendingProtocolV1_1`)
 
-A pending Loan (one with the `lsfLoanPending` flag set) can be deleted at any time by either the Loan Broker or the Borrower. See [3.9.3.3](#3933-protocol-level-failures-lendingprotocolv1_1) and [3.9.4.1](#3941-state-changes-lendingprotocolv1_1) for failure conditions and state changes.
+A pending Loan (one with the `lsfLoanPending` flag set) can be deleted at any time by either the Loan Broker or the Borrower. See [3.10.3.3](#31033-protocol-level-failures-lendingprotocolv1_1) and [3.10.4.1](#31041-state-changes-lendingprotocolv1_1) for failure conditions and state changes.
 
 #### 3.2.7 Invariants
 
@@ -981,7 +982,6 @@ The transaction creates a new `Loan` object.
 | ------------------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType`         |   Yes    | `string`  |   `UINT16`    |     `80`      |                       | The transaction type.                                                                                                                         |
 | `LoanBrokerID`            |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                       | The Loan Broker ID associated with the loan.                                                                                                  |
-| `LoanID`                  |    No    | `string`  |   `HASH256`   |     `N/A`     | `LendingProtocolV1_1` | The ID of the pending `Loan` object to accept. Required when `tfLoanSetAccept` is set.                                                        |
 | `Flags`                   |    No    | `number`  |   `UINT32`    |       0       |                       | Specifies the flags for the Loan.                                                                                                             |
 | `Data`                    |    No    | `string`  |    `BLOB`     |     None      |                       | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
 | `Borrower`                |    No    | `string`  |  `ACCOUNTID`  |     `N/A`     | `LendingProtocolV1_1` | The address of the Borrower. Used in the two-step loan creation flow. Only the `LoanBroker.Owner` may set this field.                         |
@@ -1024,10 +1024,9 @@ This field is not a signing field (it will not be included in transaction signat
 
 #### 3.8.2 `Flags`
 
-| Flag Name           |  Flag Value  | Amendment             | Description                                                                                    |
-| ------------------- | :----------: | :-------------------- | :--------------------------------------------------------------------------------------------- |
-| `tfLoanOverpayment` | `0x00010000` |                       | Indicates that the loan supports overpayments.                                                 |
-| `tfLoanSetAccept`   | `0x00020000` | `LendingProtocolV1_1` | Indicates that the transaction is accepting a pending Loan. Requires `LoanID` to be specified. |
+| Flag Name           |  Flag Value  | Amendment | Description                                    |
+| ------------------- | :----------: | :-------- | :--------------------------------------------- |
+| `tfLoanOverpayment` | `0x00010000` |           | Indicates that the loan supports overpayments. |
 
 #### 3.8.3 Signing
 
@@ -1067,11 +1066,11 @@ The two-step flow eliminates the need for custom multi-party signing. Instead, l
   1. The `LoanBroker.Owner` creates a `LoanSet` transaction, setting the loan terms and the `Borrower` field to the Borrower's account ID.
   2. The `LoanBroker.Owner` signs and submits the transaction.
   3. A `Loan` object is created in a **pending** state (`lsfLoanPending` flag is set). Funds are not transferred; instead, `Vault.AssetsAvailable` is decremented and `Vault.AssetsReserved` is incremented by `PrincipalRequested`.
-  4. The Loan must be accepted before the `StartDate`. If `Loan` is not accepted by the `StartDate`, the proposal expires.
+  4. The Loan must be accepted before the `StartDate`. If `Loan` is not accepted by the `StartDate`, the proposal expires. `LoanDelete` must be submitted to reclaim `Vault.AssetsReserved`.
 
 - **Step 2 — Acceptance** (Borrower):
-  1. The `Borrower` creates a `LoanSet` transaction with the `tfLoanSetAccept` flag set and the `LoanID` field pointing to the pending `Loan` object.
-  2. The `Borrower` signs and submits the transaction. No other fields are required.
+  1. The `Borrower` creates a `LoanAccept` transaction with the `LoanID` field pointing to the pending `Loan` object.
+  2. The `Borrower` signs and submits the transaction.
   3. Permission validation is performed again. If it fails, the pending `Loan` is **not** deleted — the Borrower may rectify the issue and retry until the `StartDate` expires.
   4. On success, the `lsfLoanPending` flag is cleared, funds are transferred to the Borrower, and the Loan becomes active.
 
@@ -1089,21 +1088,18 @@ The account specified in the `Account` field pays the transaction fee.
 4. `CounterpartySignature` contains an invalid signing key. (`temBAD_SIGNER`)
 5. Both `Borrower` and `Counterparty` fields are specified. (`temINVALID`)
 6. Both `Borrower` and `CounterpartySignature` fields are specified. (`temINVALID`)
-7. `tfLoanSetAccept` is set and `LoanID` is not specified or is zero. (`temINVALID`)
-8. `tfLoanSetAccept` is set and any field other than `LoanID` and `Flags` is specified. (`temINVALID`)
-9. `LoanID` is specified and `tfLoanSetAccept` is not set. (`temINVALID`)
-10. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
-11. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative. (`temINVALID`)
-12. `PrincipalRequested <= 0`. (`temINVALID`)
-13. `LoanOriginationFee` is negative or exceeds `PrincipalRequested`. (`temINVALID`)
-14. `InterestRate` exceeds maximum allowed value. (`temINVALID`)
-15. `OverpaymentFee` exceeds maximum allowed value. (`temINVALID`)
-16. `LateInterestRate` exceeds maximum allowed value. (`temINVALID`)
-17. `CloseInterestRate` exceeds maximum allowed value. (`temINVALID`)
-18. `OverpaymentInterestRate` exceeds maximum allowed value. (`temINVALID`)
-19. `PaymentTotal <= 0`. (`temINVALID`)
-20. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
-21. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
+7. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
+8. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative. (`temINVALID`)
+9. `PrincipalRequested <= 0`. (`temINVALID`)
+10. `LoanOriginationFee` is negative or exceeds `PrincipalRequested`. (`temINVALID`)
+11. `InterestRate` exceeds maximum allowed value. (`temINVALID`)
+12. `OverpaymentFee` exceeds maximum allowed value. (`temINVALID`)
+13. `LateInterestRate` exceeds maximum allowed value. (`temINVALID`)
+14. `CloseInterestRate` exceeds maximum allowed value. (`temINVALID`)
+15. `OverpaymentInterestRate` exceeds maximum allowed value. (`temINVALID`)
+16. `PaymentTotal <= 0`. (`temINVALID`)
+17. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
+18. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
 
 ##### 3.8.5.2 Protocol-Level Failures
 
@@ -1140,23 +1136,6 @@ The following additional failure conditions apply when the `Borrower` field is s
 2. The `LoanBroker.Owner` does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
 3. All Data Validation checks from [3.8.5.1](#3851-data-verification) apply.
 4. All Protocol-Level checks from [3.8.5.2](#3852-protocol-level-failures) apply, except check 21 (Borrower reserve — the Loan Broker covers the reserve at proposal time).
-
-##### 3.8.5.4 Protocol-Level Failures: Two-Step Acceptance (`LendingProtocolV1_1`)
-
-The following failure conditions apply when `tfLoanSetAccept` is set (loan acceptance in the two-step flow):
-
-1. The `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
-2. The `Loan` object does not have the `lsfLoanPending` flag set. (`tecNO_PERMISSION`)
-3. The `Account` submitting the transaction is not the `Loan.Borrower`. (`tecNO_PERMISSION`)
-4. The current ledger timestamp is greater than or equal to `Loan.StartDate` (the proposal has expired). The pending `Loan` is automatically deleted and reserved assets are returned. (`tecEXPIRED`)
-5. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
-6. The Vault _pseudo-account_ is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-7. The LoanBroker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-8. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-9. The `LoanBroker.Owner` is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-10. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
-11. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
-12. The `LoanBroker.Owner` is not authorized for the asset. (`tecNO_AUTH`)
 
 #### 3.8.6 State Changes
 
@@ -1209,38 +1188,6 @@ The following state changes apply when the `Borrower` field is set (loan proposa
 5. Directory linking:
    - Add `LoanID` to the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (sets `LoanBrokerNode`).
    - The `OwnerNode` is **not** set (the Loan is not added to the Borrower's directory).
-
-##### 3.8.6.2 State Changes: Two-Step Acceptance (`LendingProtocolV1_1`)
-
-The following state changes apply when `tfLoanSetAccept` is set (loan acceptance in the two-step flow):
-
-1. If the current ledger timestamp >= `Loan.StartDate`, auto-delete the pending `Loan` (see [3.9.4.1](#3941-state-changes-lendingprotocolv1_1)) and return `tecEXPIRED`.
-2. Clear the `lsfLoanPending` flag on the `Loan` object.
-3. Release the reserve from the Loan Broker: Decrement `AccountRoot(LoanBroker.Owner).OwnerCount` by `1`.
-4. Charge the reserve to the Borrower: Increment `AccountRoot(Borrower).OwnerCount` by `1`.
-5. Create asset holding for the Borrower if one does not exist:
-   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `Borrower`.
-   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `Borrower`.
-6. Create asset holding for the `LoanBroker.Owner` if one does not exist and `Loan.LoanOriginationFee > 0`:
-   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `LoanBroker.Owner`.
-   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `LoanBroker.Owner`.
-7. Transfer funds from Vault _pseudo-account_ (transfer fee waived):
-   - If `Vault.Asset` is `XRP`:
-     - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalOutstanding`.
-     - Increase the `Balance` field of `Borrower` `AccountRoot` by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
-     - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `Loan.LoanOriginationFee`.
-   - If `Vault.Asset` is an `IOU`:
-     - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `Loan.PrincipalOutstanding`.
-     - Increase the `RippleState` balance between the `Borrower` and the `Issuer` by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
-     - Increase the `RippleState` balance between the `LoanBroker.Owner` and the `Issuer` by `Loan.LoanOriginationFee`.
-   - If `Vault.Asset` is an `MPT`:
-     - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `Loan.PrincipalOutstanding`.
-     - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
-     - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `Loan.LoanOriginationFee`.
-8. Update `Vault` object:
-   - Decrease `Vault.AssetsReserved` by `Loan.PrincipalOutstanding`.
-9. Directory linking:
-   - Add `LoanID` to the `OwnerDirectory` of the `Borrower` (sets `OwnerNode`).
 
 #### 3.8.7 Invariants
 
@@ -1307,29 +1254,16 @@ The following state changes apply when `tfLoanSetAccept` is set (loan acceptance
 }
 ```
 
-##### 3.8.8.3 Two-Step Flow: Acceptance (`LendingProtocolV1_1`)
+### 3.9. Transaction: `LoanAccept`
 
-```json
-{
-  "TransactionType": "LoanSet",
-  "Account": "rEY12QsZrCoCPJuRiVz2XDWdmFDXhwH8Ws",
-  "LoanID": "A85F331533BFD21557C30F92DC3432BDEBEC85436A937C41FFCBB21EA9C07AED",
-  "Flags": 131072,
-  "Fee": "1",
-  "Sequence": 3964251
-}
-```
-
-### 3.9. Transaction: `LoanDelete`
-
-The transaction deletes an existing `Loan` object.
+The transaction accepts a pending `Loan` object created by the Loan Broker in the two-step flow. (`LendingProtocolV1_1`)
 
 #### 3.9.1 Fields
 
-| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                              |
-| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `81`      | The transaction type.                    |
-| `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be deleted. |
+| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                    |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------------- |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `84`      | The transaction type.                          |
+| `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the pending `Loan` object to accept. |
 
 #### 3.9.2 Transaction Fee
 
@@ -1343,15 +1277,97 @@ This transaction uses the standard transaction fee.
 
 ##### 3.9.3.2 Protocol-Level Failures
 
+1. The `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The `Loan` object does not have the `lsfLoanPending` flag set. (`tecNO_PERMISSION`)
+3. The `Account` submitting the transaction is not the `Loan.Borrower`. (`tecNO_PERMISSION`)
+4. The current ledger timestamp is greater than or equal to `Loan.StartDate` (the proposal has expired). (`tecEXPIRED`)
+   - The `Loan Broker` or the `Borrower` must submit `LoanDelete` transaction to restore the reserved assets.
+5. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
+6. The Vault _pseudo-account_ is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+7. The LoanBroker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+8. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+9. The `LoanBroker.Owner` is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+10. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
+11. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
+12. The `LoanBroker.Owner` is not authorized for the asset. (`tecNO_AUTH`)
+
+#### 3.9.4 State Changes
+
+1. Clear the `lsfLoanPending` flag on the `Loan` object.
+2. Release the reserve from the Loan Broker: Decrement `AccountRoot(LoanBroker.Owner).OwnerCount` by `1`.
+3. Charge the reserve to the Borrower: Increment `AccountRoot(Borrower).OwnerCount` by `1`.
+4. Create asset holding for the Borrower if one does not exist:
+   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `Borrower`.
+   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `Borrower`.
+5. Create asset holding for the `LoanBroker.Owner` if one does not exist and `Loan.LoanOriginationFee > 0`:
+   - If `Vault.Asset` is an `IOU`: Create a `RippleState` object between the `Issuer` and the `LoanBroker.Owner`.
+   - If `Vault.Asset` is an `MPT`: Create an `MPToken` object for the `LoanBroker.Owner`.
+6. Transfer funds from Vault _pseudo-account_ (transfer fee waived):
+   - If `Vault.Asset` is `XRP`:
+     - Decrease the `Balance` field of `Vault` _pseudo-account_ `AccountRoot` by `Loan.PrincipalOutstanding`.
+     - Increase the `Balance` field of `Borrower` `AccountRoot` by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
+     - Increase the `Balance` field of `LoanBroker.Owner` `AccountRoot` by `Loan.LoanOriginationFee`.
+   - If `Vault.Asset` is an `IOU`:
+     - Decrease the `RippleState` balance between the `Vault` _pseudo-account_ and the `Issuer` by `Loan.PrincipalOutstanding`.
+     - Increase the `RippleState` balance between the `Borrower` and the `Issuer` by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
+     - Increase the `RippleState` balance between the `LoanBroker.Owner` and the `Issuer` by `Loan.LoanOriginationFee`.
+   - If `Vault.Asset` is an `MPT`:
+     - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `Loan.PrincipalOutstanding`.
+     - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object by `Loan.PrincipalOutstanding - Loan.LoanOriginationFee`.
+     - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `Loan.LoanOriginationFee`.
+7. Update `Vault` object:
+   - Decrease `Vault.AssetsReserved` by `Loan.PrincipalOutstanding`.
+8. Directory linking:
+   - Add `LoanID` to the `OwnerDirectory` of the `Borrower` (sets `OwnerNode`).
+
+#### 3.9.5 Invariants
+
+**TBD**
+
+#### 3.9.6 Example JSON
+
+```json
+{
+  "TransactionType": "LoanAccept",
+  "Account": "rEY12QsZrCoCPJuRiVz2XDWdmFDXhwH8Ws",
+  "LoanID": "A85F331533BFD21557C30F92DC3432BDEBEC85436A937C41FFCBB21EA9C07AED",
+  "Fee": "1",
+  "Sequence": 3964251
+}
+```
+
+### 3.10. Transaction: `LoanDelete`
+
+The transaction deletes an existing `Loan` object.
+
+#### 3.10.1 Fields
+
+| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                              |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `81`      | The transaction type.                    |
+| `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be deleted. |
+
+#### 3.10.2 Transaction Fee
+
+This transaction uses the standard transaction fee.
+
+#### 3.10.3 Failure Conditions
+
+##### 3.10.3.1 Data Verification
+
+1. `LoanID` is zero. (`temINVALID`)
+
+##### 3.10.3.2 Protocol-Level Failures
+
 1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. `Loan.PaymentRemaining > 0` and `lsfLoanPending` is not set (loan is still active). (`tecHAS_OBLIGATIONS`)
 3. The submitter is not the `LoanBroker.Owner` or the `Loan.Borrower`. (`tecNO_PERMISSION`)
 
-##### 3.9.3.3 Protocol-Level Failures (`LendingProtocolV1_1`)
+##### 3.10.3.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-A pending Loan (`lsfLoanPending` is set) can be deleted at any time by either the `LoanBroker.Owner` or the `Loan.Borrower`, regardless of remaining payments. Check 2 from [3.9.3.2](#3932-protocol-level-failures) is skipped for pending Loans.
+A pending Loan (`lsfLoanPending` is set) can be deleted at any time by either the `LoanBroker.Owner` or the `Loan.Borrower`, regardless of remaining payments. Check 2 from [3.10.3.2](#31032-protocol-level-failures) is skipped for pending Loans.
 
-#### 3.9.4 State Changes
+#### 3.10.4 State Changes
 
 1. Remove `LoanID` from the `OwnerDirectory` of the `LoanBroker` _pseudo-account_ (using `LoanBrokerNode`).
 2. Remove `LoanID` from the `OwnerDirectory` of the `Borrower` (using `OwnerNode`).
@@ -1361,7 +1377,7 @@ A pending Loan (`lsfLoanPending` is set) can be deleted at any time by either th
    - Set `LoanBroker.DebtTotal = 0` (forgive any remaining rounding dust).
 6. Decrement `AccountRoot(Borrower).OwnerCount` by `1`.
 
-##### 3.9.4.1 State Changes (`LendingProtocolV1_1`)
+##### 3.10.4.1 State Changes (`LendingProtocolV1_1`)
 
 The following state changes apply when deleting a pending Loan (`lsfLoanPending` is set):
 
@@ -1376,11 +1392,11 @@ The following state changes apply when deleting a pending Loan (`lsfLoanPending`
    - Decrement `LoanBroker.OwnerCount` by `1`.
 5. Release the reserve from the Loan Broker: Decrement `AccountRoot(LoanBroker.Owner).OwnerCount` by `1`.
 
-#### 3.9.5 Invariants
+#### 3.10.5 Invariants
 
 - If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0 && Loan.TotalValueOutstanding = 0`
 
-#### 3.9.6 Example JSON
+#### 3.10.6 Example JSON
 
 ```json
 {
@@ -1392,9 +1408,9 @@ The following state changes apply when deleting a pending Loan (`lsfLoanPending`
 }
 ```
 
-### 3.10. Transaction: `LoanManage`
+### 3.11. Transaction: `LoanManage`
 
-#### 3.10.1 Fields
+#### 3.11.1 Fields
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                              |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------- |
@@ -1402,7 +1418,7 @@ The following state changes apply when deleting a pending Loan (`lsfLoanPending`
 | `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Loan object to be updated. |
 | `Flags`           |    No    | `number`  |   `UINT32`    |       0       | Specifies the flags for the Loan.        |
 
-#### 3.10.2 `Flags`
+#### 3.11.2 `Flags`
 
 `LoanManage` transaction `Flags` are mutually exclusive.
 
@@ -1412,18 +1428,18 @@ The following state changes apply when deleting a pending Loan (`lsfLoanPending`
 | `tfLoanImpair`   | `0x00020000` | Indicates that the Loan should be impaired.    |
 | `tfLoanUnimpair` | `0x00040000` | Indicates that the Loan should be un-impaired. |
 
-#### 3.10.3 Transaction Fee
+#### 3.11.3 Transaction Fee
 
 This transaction uses the standard transaction fee.
 
-#### 3.10.4 Failure Conditions
+#### 3.11.4 Failure Conditions
 
-##### 3.10.4.1 Data Verification
+##### 3.11.4.1 Data Verification
 
 1. `LoanID` is zero. (`temINVALID`)
 2. More than one of `tfLoanDefault`, `tfLoanImpair`, or `tfLoanUnimpair` flags are set (flags are mutually exclusive). (`temINVALID_FLAG`)
 
-##### 3.10.4.2 Protocol-Level Failures
+##### 3.11.4.2 Protocol-Level Failures
 
 1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. `Loan.Flags` has `lsfLoanPending` set (a pending loan cannot be managed). (`tecNO_PERMISSION`)
@@ -1435,7 +1451,7 @@ This transaction uses the standard transaction fee.
 8. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 9. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
-#### 3.10.5 State Changes
+#### 3.11.5 State Changes
 
 1. If the `tfLoanDefault` flag is specified:
    - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
@@ -1487,11 +1503,11 @@ This transaction uses the standard transaction fee.
      - Otherwise:
        - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
 
-#### 3.10.6 Invariants
+#### 3.11.6 Invariants
 
 **TBD**
 
-#### 3.10.7 Example JSON
+#### 3.11.7 Example JSON
 
 ```json
 {
@@ -1504,11 +1520,11 @@ This transaction uses the standard transaction fee.
 }
 ```
 
-### 3.11. Transaction: `LoanPay`
+### 3.12. Transaction: `LoanPay`
 
 The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For complete payment processing logic, formulas, and implementation pseudo-code, see [Appendix A-3](#a-3-loanpay-implementation-reference).
 
-#### 3.11.1 Fields
+#### 3.12.1 Fields
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                               |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------- |
@@ -1517,7 +1533,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 | `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
 | `Flags`           |    No    |       `number`       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
 
-#### 3.11.2 `Flags`
+#### 3.12.2 `Flags`
 
 | Flag Name           |  Flag Value  | Description                                                                  |
 | ------------------- | :----------: | :--------------------------------------------------------------------------- |
@@ -1527,19 +1543,19 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 
 For detailed processing logic for each flag, see: [Late Payment](#a-322-late-payment), [Full Payment](#a-324-early-full-repayment), and [Overpayment](#a-323-loan-overpayment).
 
-#### 3.11.3 Transaction Fee
+#### 3.12.3 Transaction Fee
 
 This transaction uses the standard transaction fee.
 
-#### 3.11.4 Failure Conditions
+#### 3.12.4 Failure Conditions
 
-##### 3.11.4.1 Data Verification
+##### 3.12.4.1 Data Verification
 
 1. `LoanID` is zero. (`temINVALID`)
 2. `Amount <= 0`. (`temBAD_AMOUNT`)
 3. More than one of `tfLoanLatePayment`, `tfLoanFullPayment`, or `tfLoanOverpayment` flags are set (flags are mutually exclusive). (`temINVALID_FLAG`)
 
-##### 3.11.4.2 Protocol-Level Failures
+##### 3.12.4.2 Protocol-Level Failures
 
 1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. `Loan.Flags` has `lsfLoanPending` set (a pending loan cannot be paid). (`tecNO_PERMISSION`)
@@ -1558,7 +1574,7 @@ This transaction uses the standard transaction fee.
 15. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
 16. The `tfLoanFullPayment` flag is specified and the `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`). (`tecINSUFFICIENT_PAYMENT`)
 
-#### 3.11.5 State Changes
+#### 3.12.5 State Changes
 
 Upon successful validation, the `LoanPay` transaction is processed according to the logic defined in [Appendix A-3](#a-3-loanpay-implementation-reference). This process yields four key results: `principalPaid`, `interestPaid`, `feePaid`, and `valueChange`. These values are then used to apply the following state changes.
 
@@ -1581,7 +1597,7 @@ First, the system determines the final destination of all funds.
 
 The `Loan` object is updated to reflect the payment.
 
-3. If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3105-state-changes) for details).
+3. If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#31115-state-changes) for details).
 4. **For a Full Repayment**:
    - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
    - `PaymentRemaining` is set to `0`.
@@ -1632,11 +1648,11 @@ These transfers are performed according to the asset type:
   - The `MPTAmount` in the `Vault` pseudo-account's `MPToken` object is increased.
   - The `MPTAmount` in the destination account for fees' `MPToken` object is increased.
 
-#### 3.11.6 Invariants
+#### 3.12.6 Invariants
 
 **TBD**
 
-#### 3.11.7 Example JSON
+#### 3.12.7 Example JSON
 
 ```json
 {
