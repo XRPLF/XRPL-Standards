@@ -7,7 +7,7 @@
    status: Draft
    category: Amendment
    created: 2024-08-30
-   updated: 2025-09-10
+   updated: 2026-07-10
 </pre>
 
 # XLS-78: Subscriptions
@@ -26,6 +26,8 @@ This proposal addresses this limitation by introducing a subscription feature th
 
 This amendment introduces new ledger objects and transactions to support recurring payments for XRP, IOUs, and MPTs, accounting for the specific behaviors and constraints associated with each token type.
 
+The feature is gated by an amendment named **`Subscription`**. Subscriptions denominated in MPTs additionally require the `MPTokensV1` amendment to be enabled.
+
 ## 2. Specification
 
 ### 2.1. Ledger Entries
@@ -36,31 +38,32 @@ This amendment introduces new ledger objects and transactions to support recurri
 
 The Subscription object ID is computed as the SHA-512Half of:
 
-- The Subscription space key (0x0055)
+- The Subscription space key (`0x0055`, the ASCII value of `'U'`)
 - The Account ID
 - The Destination ID
-- The Transaction Sequence
+- The Transaction Sequence (the `Sequence` — or Ticket sequence — of the `SubscriptionSet` transaction that created the object)
 
 ##### 2.1.1.2. Fields
 
-| Field Name        | Constant | Required    | Internal Type | Default Value | Description                                                                     |
-| ----------------- | -------- | ----------- | ------------- | ------------- | ------------------------------------------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes         | UINT16        | 0x0055        | Identifies this as a Subscription object                                        |
-| Flags             | No       | Yes         | UINT32        | 0             | Reserved for future use                                                         |
-| PreviousTxnID     | No       | Yes         | HASH256       | N/A           | Hash of the transaction that most recently modified this object                 |
-| PreviousTxnLgrSeq | No       | Yes         | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object |
-| Account           | Yes      | Yes         | ACCOUNTID     | N/A           | The account that owns the subscription                                          |
-| Destination       | Yes      | Yes         | ACCOUNTID     | N/A           | The account authorized to receive subscription payments                         |
-| Data              | Yes      | Conditional | BLOB          | N/A           | Data field for payment categorization                                           |
-| SendMax           | No       | Yes         | AMOUNT        | N/A           | Maximum amount that can be withdrawn per period (XRP, IOU, or MPT)              |
-| Balance           | No       | Yes         | AMOUNT        | N/A           | Remaining balance available for the current period                              |
-| Frequency         | Yes      | Yes         | UINT32        | N/A           | Time period in seconds between consecutive payments (minimum 3600)              |
-| NextClaimTime     | No       | Yes         | UINT32        | N/A           | Ripple epoch time when the next payment can be claimed                          |
-| StartTime         | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription started (set at creation)               |
-| Expiration        | Yes      | Conditional | UINT32        | N/A           | Ripple epoch time when the subscription expires                                 |
-| Sequence          | Yes      | Yes         | UINT32        | N/A           | Transaction sequence number used to create this subscription                    |
-| OwnerNode         | No       | Yes         | UINT64        | N/A           | Page of the source account's owner directory                                    |
-| DestinationNode   | No       | Yes         | UINT64        | N/A           | Page of the destination account's owner directory                               |
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                      |
+| ----------------- | -------- | -------- | ------------- | ------------- | -------------------------------------------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x008A        | Identifies this as a Subscription object                                         |
+| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                                          |
+| PreviousTxnID     | No       | Yes      | HASH256       | N/A           | Hash of the transaction that most recently modified this object                  |
+| PreviousTxnLgrSeq | No       | Yes      | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object  |
+| Account           | Yes      | Yes      | ACCOUNTID     | N/A           | The account that owns the subscription (the payer)                               |
+| Destination       | Yes      | Yes      | ACCOUNTID     | N/A           | The account authorized to claim subscription payments                            |
+| DestinationTag    | Yes      | No       | UINT32        | N/A           | Destination tag identifying the beneficiary or purpose at the destination        |
+| Amount            | No       | Yes      | AMOUNT        | N/A           | Maximum amount that can be claimed per period (XRP, IOU, or MPT)                 |
+| Balance           | No       | Yes      | AMOUNT        | N/A           | Remaining amount claimable in the current period                                 |
+| Frequency         | Yes      | Yes      | UINT32        | N/A           | Length of each period in seconds (must be greater than 0)                        |
+| NextClaimTime     | No       | Yes      | UINT32        | N/A           | Ripple epoch time at which the current period begins (claims allowed from here)  |
+| Expiration        | No       | No       | UINT32        | N/A           | Ripple epoch time when the subscription expires                                  |
+| Sequence          | Yes      | Yes      | UINT32        | N/A           | Transaction sequence (or ticket sequence) used to create this subscription       |
+| OwnerNode         | No       | Yes      | UINT64        | N/A           | Page of the source account's owner directory                                     |
+| DestinationNode   | No       | Yes      | UINT64        | N/A           | Page of the destination account's owner directory                                |
+
+Note that the subscription's start time is not stored on the object: the optional `StartTime` of the creating transaction only initializes `NextClaimTime`.
 
 ##### 2.1.1.3. Ownership
 
@@ -80,29 +83,30 @@ This reserve is returned when the subscription is deleted.
 
 The Subscription can be deleted through:
 
-- `SubscriptionCancel` transaction from either the owner or destination
-- `SubscriptionClaim` transaction when the expiration time is reached and the claim is successful
-- Account deletion is blocked while any subscriptions exist (either as owner or destination)
+- `SubscriptionCancel` transaction (see permission rules in 2.2.2)
+- Account deletion is blocked while any subscriptions exist (either as owner or destination): `tecHAS_OBLIGATIONS`
+
+Once a subscription's `Expiration` has passed it can no longer be claimed; it remains on the ledger (holding the owner's reserve) until it is cancelled, and any account may cancel it at that point.
 
 ##### 2.1.1.6. Freeze/Lock Compliance
 
 For IOUs:
 
 - **Global Freeze**: Prevents creation and claims
-- **Individual Freeze**: Prevents creation and claims for frozen account
+- **Individual Freeze**: Prevents creation and claims when either the owner or the destination is frozen
 - **Deep Freeze**: Prevents all operations
 
 For MPTs:
 
-- **Lock Conditions**: Prevent creation and claims for locked accounts
+- **Lock Conditions**: Prevent creation and claims when either the owner or the destination is locked
 
 ##### 2.1.1.7. Invariants
 
 Before and after any transaction:
 
-- `Balance` ≤ `SendMax`
-- `NextClaimTime` ≥ `StartTime` (if StartTime present)
-- `Expiration` > `NextClaimTime` (if Expiration present)
+- `Balance` ≥ 0
+- `Balance` ≤ `Amount` at the start of every period (`Balance` is reset to `Amount` on rollover; lowering `Amount` mid-period via update does not retroactively reduce the current period's `Balance`, but claims are always capped at the current `Amount`)
+- `Balance` and `Amount` are denominated in the same asset
 - `Frequency` > 0
 - `Account` ≠ `Destination`
 - If non-XRP: asset must exist and be valid
@@ -115,12 +119,11 @@ Before and after any transaction:
   "Flags": 0,
   "Account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
   "Destination": "rLdCa1mLK5R5Am25ArfXFmqgNwjZgnfy91",
-  "Data": "DEADBEEF",
-  "SendMax": "100000000",
+  "DestinationTag": 1,
+  "Amount": "100000000",
   "Balance": "50000000",
   "Frequency": 2592000,
   "NextClaimTime": 711232800,
-  "StartTime": 708640800,
   "Expiration": 721600800,
   "Sequence": 42,
   "OwnerNode": "0000000000000001",
@@ -130,7 +133,13 @@ Before and after any transaction:
 }
 ```
 
+##### 2.1.1.9. RPC Retrieval
+
+The object can be retrieved with the `ledger_entry` RPC method using the `subscription` parameter, either as the object ID directly or as an object of the form `{"account": ..., "destination": ..., "seq": ...}`.
+
 ### 2.2. Transactions
+
+All three transaction types are delegatable and support Tickets.
 
 #### 2.2.1. SubscriptionSet
 
@@ -142,26 +151,28 @@ Creates a new subscription or updates an existing one.
 | --------------- | ----------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------- |
 | TransactionType | Yes         | String        | UINT16        | N/A           | Value: "SubscriptionSet"                                                          |
 | Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                |
-| Data            | No          | String        | BLOB          | N/A           | Data field for categorization                                                     |
+| DestinationTag  | No          | Number        | UINT32        | N/A           | Destination tag (creation only; required if the destination has `lsfRequireDestTag` set) |
 | Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                      |
 | Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates) |
-| StartTime       | No          | Number        | UINT32        | Current Time  | When subscription starts (creation only)                                          |
+| StartTime       | No          | Number        | UINT32        | Current Time  | When the first period begins (creation only, forbidden for updates; not stored — initializes `NextClaimTime`) |
 | Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                         |
-| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID for updates (mutually exclusive with creation fields)                          |
+| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID of the subscription to update (present for updates only)                       |
 
 ##### 2.2.1.2. Failure Conditions
 
 **Creation Mode (no SubscriptionID):**
 
 1. **General Validation:**
+   - Destination, Amount, or Frequency missing (`temMALFORMED`)
    - Destination equals Account (`temDST_IS_SRC`)
    - Destination doesn't exist (`tecNO_DST`)
    - Destination requires tag but none provided (`tecDST_TAG_NEEDED`)
    - Amount ≤ 0 or invalid (`temBAD_AMOUNT`)
    - Frequency ≤ 0 (`temMALFORMED`)
    - StartTime < current time (`temMALFORMED`)
-   - Expiration < current time or StartTime (`temBAD_EXPIRATION`)
+   - Expiration < current time or < initial NextClaimTime (`temBAD_EXPIRATION`)
    - Insufficient reserve (`tecINSUFFICIENT_RESERVE`)
+   - Owner directory full (`tecDIR_FULL`)
 
 2. **XRP-specific:**
    - Amount not positive or exceeds max XRP (`temBAD_AMOUNT`)
@@ -178,6 +189,8 @@ Creates a new subscription or updates an existing one.
    - Precision loss in amount (`tecPRECISION_LOSS`)
 
 4. **MPT-specific:**
+   - `MPTokensV1` amendment not enabled (`temDISABLED`)
+   - Amount exceeds maximum MPT amount (`temBAD_AMOUNT`)
    - MPT issuance doesn't exist (`tecOBJECT_NOT_FOUND`)
    - Account doesn't hold MPT (`tecOBJECT_NOT_FOUND`)
    - MPT lacks tfMPTCanTransfer flag unless destination is issuer (`tecNO_AUTH`)
@@ -186,17 +199,21 @@ Creates a new subscription or updates an existing one.
    - Account locked (`tecLOCKED`)
    - Destination locked (`tecLOCKED`)
    - Insufficient spendable balance (`tecINSUFFICIENT_FUNDS`)
+   - Precision loss in amount (`tecPRECISION_LOSS`)
 
 **Update Mode (with SubscriptionID):**
 
 5. **Update Validation:**
+   - Amount missing (`temMALFORMED`)
+   - Destination, Frequency, or StartTime present (`temMALFORMED`)
    - XRP, IOU and MPT Validation (as above)
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not owner (`tecNO_PERMISSION`)
    - Invalid Amount (`temBAD_AMOUNT`)
-   - Expiration in past or before NextClaimTime (`temBAD_EXPIRATION`)
-   - Destination, Frequency, or StartTime present (`temMALFORMED`)
+   - Expiration in past (`temBAD_EXPIRATION`)
    - Asset type differs from original (`tecWRONG_ASSET`)
+
+None of the token-eligibility checks (trustline/MPToken existence, authorization, freeze/lock, spendable balance) apply when the subscription is denominated in XRP.
 
 ##### 2.2.1.3. State Changes
 
@@ -211,9 +228,8 @@ Creates a new subscription or updates an existing one.
 
 **Update:**
 
-1. Update Amount field
-2. If Balance > new Amount, set Balance = Amount
-3. Update Expiration if provided
+1. Replace the Amount field. The current period's Balance is not modified: an increase or decrease of Amount takes full effect from the next period rollover, but claims are immediately capped at the new Amount.
+2. Update Expiration if provided (an existing Expiration cannot be removed).
 
 ##### 2.2.1.4. Example JSON
 
@@ -224,7 +240,7 @@ Creation:
   "TransactionType": "SubscriptionSet",
   "Account": "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
   "Destination": "rLdCa1mLK5R5Am25ArfXFmqgNwjZgnfy91",
-  "Data": "DEADBEEF",
+  "DestinationTag": 1,
   "Amount": {
     "currency": "USD",
     "value": "100",
@@ -263,12 +279,18 @@ Cancels an existing subscription.
 | TransactionType | Yes       | String    | UINT16        | N/A           | Value: "SubscriptionCancel"  |
 | SubscriptionID  | Yes       | String    | HASH256       | N/A           | ID of subscription to cancel |
 
-##### 2.2.2.2. Failure Conditions
+##### 2.2.2.2. Permissions
+
+- The **owner** may cancel at any time.
+- The **destination** may cancel at any time (opting out of the subscription).
+- Once the subscription's `Expiration` has passed, **any account** may cancel it (cleanup).
+
+##### 2.2.2.3. Failure Conditions
 
 1. SubscriptionID doesn't exist (`tecNO_ENTRY`)
-2. Account not owner or destination (`tecNO_PERMISSION`)
+2. Account not owner or destination, and the subscription has not expired (`tecNO_PERMISSION`)
 
-##### 2.2.2.3. State Changes
+##### 2.2.2.4. State Changes
 
 1. Remove from source account's owner directory
 2. Remove from destination account's owner directory
@@ -276,7 +298,7 @@ Cancels an existing subscription.
 4. Return reserve to source account
 5. Delete Subscription object
 
-##### 2.2.2.4. Example JSON
+##### 2.2.2.5. Example JSON
 
 ```json
 {
@@ -290,39 +312,41 @@ Cancels an existing subscription.
 
 #### 2.2.3. SubscriptionClaim
 
-Claims a payment from an active subscription.
+Claims a payment from an active subscription. Only the subscription's destination may claim, and a subscription may be claimed multiple times within a single period until the period's balance is exhausted.
 
 ##### 2.2.3.1. Fields
 
-| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                           |
-| --------------- | --------- | ------------- | ------------- | ------------- | ------------------------------------- |
-| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"            |
-| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim           |
-| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ available balance) |
+| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                                        |
+| --------------- | --------- | ------------- | ------------- | ------------- | -------------------------------------------------- |
+| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"                         |
+| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim                        |
+| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ the period's available balance) |
 
 ##### 2.2.3.2. Failure Conditions
 
 1. **General Validation:**
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not destination (`tecNO_PERMISSION`)
-   - Account equals owner (`tecNO_PERMISSION`)
    - Wrong asset type (`tecWRONG_ASSET`)
-   - Amount > subscription SendMax (`temBAD_AMOUNT`)
-   - Amount > available Balance (`tecINSUFFICIENT_FUNDS`)
-   - Current time < NextClaimTime unless in arrears (`tecTOO_SOON`)
+   - Amount > subscription Amount (`temBAD_AMOUNT`)
+   - Amount > available Balance for the effective period (`tecINSUFFICIENT_FUNDS`)
+   - Current time < NextClaimTime (`tecTOO_SOON`)
+   - Subscription has expired (`tecEXPIRED`) — expired subscriptions cannot be claimed and must be cancelled
 
 2. **XRP-specific:**
    - Source has insufficient liquid XRP (`tecINSUFFICIENT_FUNDS`)
 
 3. **IOU-specific:**
+   - Issuer doesn't exist (`tecNO_ISSUER`)
    - Source lacks trustline (`tecNO_LINE`)
    - Source has insufficient balance (`tecINSUFFICIENT_FUNDS`)
    - Source not authorized (`tecNO_AUTH`)
    - Destination not authorized (`tecNO_AUTH`)
    - Source frozen (`tecFROZEN`)
-   - Destination frozen (deep freeze only) (`tecFROZEN`)
+   - Destination frozen (`tecFROZEN`)
    - Cannot create destination trustline - insufficient reserve (`tecNO_LINE_INSUF_RESERVE`)
    - Cannot create destination trustline - authorization required (`tecNO_AUTH`)
+   - Precision loss in amount (`tecPRECISION_LOSS`)
 
 4. **MPT-specific:**
    - Source doesn't hold MPT (`tecOBJECT_NOT_FOUND`)
@@ -334,14 +358,16 @@ Claims a payment from an active subscription.
    - Destination locked (`tecLOCKED`)
    - Cannot create destination MPToken - insufficient reserve (`tecINSUFFICIENT_RESERVE`)
    - Cannot create destination MPToken - authorization required (`tecNO_AUTH`)
+   - Precision loss in amount (`tecPRECISION_LOSS`)
 
 ##### 2.2.3.3. State Changes
 
-1. **Arrears Handling:**
-   - If currentTime ≥ NextClaimTime + Frequency AND Balance < SendMax:
-     - Forfeit remaining Balance
+1. **Rollover / Arrears Handling:**
+   - If currentTime ≥ NextClaimTime + Frequency (the tracked period has fully elapsed) AND Balance < Amount (the period was partially used):
+     - Forfeit the remaining Balance of the partially-used period
      - Advance NextClaimTime by exactly one Frequency
-     - Reset Balance to SendMax
+     - Reset Balance to Amount
+   - If the tracked period was never claimed against (Balance = Amount), nothing is forfeited: the untouched period remains claimable in full, and later periods accrue behind it (see Section 4).
 
 2. **Token Transfer:**
 
@@ -350,13 +376,13 @@ Claims a payment from an active subscription.
    - Add amount to destination account balance
 
    **For IOUs:**
-   - Auto-create trustline if needed and possible
+   - Auto-create trustline if needed and possible (zero limit; not created when the destination is the issuer)
    - Adjust source trustline balance (decrease)
    - Adjust destination trustline balance (increase)
-   - Apply current TransferRate if applicable
+   - Apply current TransferRate if applicable (paid by the source, as in a normal Payment)
 
    **For MPTs:**
-   - Auto-create MPToken if needed and possible
+   - Auto-create MPToken if needed and possible (increments the destination's owner count)
    - Adjust source MPToken balance (decrease)
    - Adjust destination MPToken balance (increase)
    - Apply current TransferFee if applicable
@@ -366,13 +392,9 @@ Claims a payment from an active subscription.
    - Deduct claimed amount from Balance
    - If Balance reaches zero:
      - Advance NextClaimTime by one Frequency
-     - Reset Balance to SendMax
+     - Reset Balance to Amount
 
-4. **Expiration Check:**
-   - If currentTime ≥ Expiration after successful claim:
-     - Delete subscription (follow deletion state changes)
-
-5. **Update Metadata:**
+4. **Update Metadata:**
    - Update PreviousTxnID and PreviousTxnLgrSeq
 
 ##### 2.2.3.4. Example JSON
@@ -401,44 +423,47 @@ Claims a payment from an active subscription.
 | **Reserve for Auto-creation** | N/A            | Required from destination     | Required from destination    |
 | **Issuer Special Cases**      | N/A            | Can be source or destination  | Doesn't hold MPToken objects |
 
-## 4. Arrears and Balance Management
+## 4. Periods, Balance, and Arrears
 
-The subscription system implements a specific arrears mechanism:
+The subscription tracks time as consecutive periods of `Frequency` seconds, anchored at `NextClaimTime`:
 
-1. **Period Tracking:** Each subscription tracks the current period via NextClaimTime
-2. **Balance per Period:** Each period has an available Balance (≤ SendMax)
-3. **Partial Claims:** Destinations can claim less than the full Balance
-4. **Forfeit on Arrears:** If a period ends with unused Balance and the next period is entered:
-   - The unused Balance is forfeited
-   - NextClaimTime advances by exactly one Frequency
-   - Balance resets to the full SendMax
-5. **No Bulk Claims:** Only one period can be processed per claim transaction
+1. **Period Tracking:** `NextClaimTime` marks the start of the current claimable period. Claims are permitted once the ledger close time reaches `NextClaimTime` (`tecTOO_SOON` before that).
+2. **Balance per Period:** Each period has an available `Balance` (reset to `Amount` at each rollover).
+3. **Multiple Partial Claims:** The destination may submit any number of claims within a period, each for any amount up to the remaining `Balance`. Usage-based billing can therefore draw down the period allowance incrementally.
+4. **Advance on Zero:** When a claim brings `Balance` to exactly zero, the subscription advances: `NextClaimTime` increases by one `Frequency` and `Balance` resets to `Amount`.
+5. **Forfeit of Partially-Used Periods:** If a claim arrives after the tracked period has fully elapsed (currentTime ≥ NextClaimTime + Frequency) and that period was **partially** used (`Balance` < `Amount`), the unused remainder is forfeited: `NextClaimTime` advances by exactly one `Frequency` and `Balance` resets to `Amount`. Partial allowances never carry over between periods.
+6. **Accrual of Untouched Periods:** If the tracked period was **never** claimed against (`Balance` = `Amount`), nothing is forfeited. Each elapsed-but-unclaimed period remains claimable in full: claiming the full `Amount` advances one period at a time, so a destination that skipped several periods can catch up with one full claim per period, each in its own transaction.
+7. **One Period per Transaction:** A single claim transaction can only draw against one period; catching up on arrears requires one transaction per period.
 
-This design prevents transaction spam while allowing flexible billing patterns.
+This design allows flexible billing patterns (partial, usage-based, or catch-up claims) while ensuring that a partially-settled period can never be re-drawn later.
 
 ## 5. Rationale
 
 Key design decisions and their justifications:
 
-### 5.1. Single Claim per Period
+### 5.1. Multiple Partial Claims per Period
 
-Limiting to one claim per period simplifies implementation and prevents spam. Services requiring multiple payments should use appropriate frequencies (e.g., weekly instead of monthly).
+Allowing several claims within one period supports usage-based and metered billing without forcing services to choose artificially short frequencies. The period only advances when its allowance is fully consumed (or on rollover), so the per-period cap is always honored.
 
 ### 5.2. Balance Tracking with Forfeit
 
-Tracking balance within periods allows partial claims while the forfeit mechanism prevents indefinite accumulation of claimable amounts.
+Tracking balance within periods allows partial claims, while forfeiting the remainder of partially-used periods prevents leftover allowances from accumulating indefinitely. Untouched periods, by contrast, accrue and remain claimable — a service that bills in arrears (or suffers an outage) does not lose entitlements it never began to draw, but must still submit one transaction per period to collect them.
 
 ### 5.3. No Transfer Rate Storage
 
 Using current transfer rates/fees at claim time (rather than storing at creation) simplifies the implementation and aligns with standard XRPL token transfer behavior.
 
-### 5.4. Dual Ownership Model
+### 5.4. Cancellation Authority
 
-Allowing both source and destination to cancel provides flexibility for both parties while the reserve requirement remains only with the source.
+The owner can always cancel (it is their money and their reserve); the destination can always cancel to opt out of a relationship it no longer wants; and anyone can cancel an expired subscription so that stale objects can be cleaned up and the owner's reserve released. The reserve requirement remains only with the source.
 
 ### 5.5. Auto-creation of Holdings
 
 Allowing trustlines and MPTokens to be created during claims (when authorized) improves user experience for new token recipients.
+
+### 5.6. No Minimum Frequency
+
+Any `Frequency` greater than zero is legal. Rather than enforcing an arbitrary protocol-level floor, spam is deterred economically: every claim costs a transaction fee, and every subscription locks an owner reserve. Wallets and services are expected to choose sensible frequencies for their billing model.
 
 ## 6. Backwards Compatibility
 
@@ -454,12 +479,13 @@ The amendment is fully backwards compatible. Existing transactions and ledger ob
 
 ### 7.1. Built-in Protections
 
-- **Amount Limits:** Claims cannot exceed authorized amounts
+- **Amount Limits:** Claims cannot exceed the per-period authorized amount
 - **Time Restrictions:** Claims limited by frequency periods
 - **Balance Tracking:** Prevents over-claiming within periods
 - **Asset Type Validation:** Ensures claims match subscription asset
 - **Authorization Compliance:** Respects all issuer requirements
 - **Reserve Requirements:** Economic cost prevents spam
+- **Expiration:** Expired subscriptions are unclaimable
 
 ### 7.2. Potential Risks and Mitigations
 
@@ -476,7 +502,7 @@ The amendment is fully backwards compatible. Existing transactions and ledger ob
 **Risk:** Timing attacks on period boundaries
 
 - _Mitigation:_ Strict time validation in claim logic
-- _Mitigation:_ Atomic period advancement
+- _Mitigation:_ Atomic period advancement (exactly one period per claim transaction)
 
 **Risk:** Griefing through subscription spam
 
@@ -494,15 +520,18 @@ The system respects all existing XRPL compliance mechanisms:
 
 ## 8. Reference Implementation
 
-A reference implementation is available at: [Link to rippled PR when available]
+A reference implementation is available at: https://github.com/XRPLF/rippled (amendment `Subscription`; PR to be linked when opened)
 
 ## 9. FAQ
 
-**Q: Why can't I claim multiple periods at once?**
-A: This prevents transaction spam and aligns with typical billing patterns. Services should set appropriate frequencies.
+**Q: Can I claim more than once per period?**
+A: Yes. Any number of partial claims may be made within a period; the period advances once its balance is fully consumed.
 
 **Q: What happens if I don't claim for several periods?**
-A: You can claim as many times as needed to advance to the current period.
+A: Periods you never touched remain claimable in full — submit one full claim per missed period to catch up. However, if you partially claimed a period and then let it lapse, the unused remainder of that period is forfeited at rollover.
+
+**Q: Why can't I claim multiple periods in one transaction?**
+A: Each claim transaction draws against a single period. This keeps period accounting atomic and simple; catching up on arrears takes one transaction per period.
 
 **Q: Can partial amounts be claimed?**
 A: Yes, useful for usage-based billing where the exact amount varies.
@@ -511,10 +540,16 @@ A: Yes, useful for usage-based billing where the exact amount varies.
 A: Current rates are applied at claim time, not stored at creation, ensuring consistency with normal XRPL transfers.
 
 **Q: Can subscriptions be paused?**
-A: Not directly, but services can claim zero amounts or users can cancel and recreate subscriptions.
+A: Not directly, but services can simply not claim (untouched periods accrue) or users can cancel and recreate subscriptions.
 
 **Q: What if the destination doesn't have a trustline/MPToken?**
 A: If authorization isn't required and the destination has sufficient reserve, these are auto-created during the first claim.
 
 **Q: Can I update the frequency or destination?**
-A: No, these are immutable. Cancel and create a new subscription if changes are needed.
+A: No, these are immutable. Cancel and create a new subscription if changes are needed. Only `Amount` and `Expiration` can be updated, by the owner.
+
+**Q: What happens when a subscription expires?**
+A: It can no longer be claimed. It stays on the ledger (holding the owner's reserve) until cancelled, and once expired anyone may cancel it.
+
+**Q: Is there a minimum frequency?**
+A: No — any value greater than zero seconds is accepted. Choose a frequency appropriate for your billing model.
