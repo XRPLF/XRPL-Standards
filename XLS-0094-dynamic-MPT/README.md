@@ -170,20 +170,18 @@ The `MutableFlags` use `tmf` as prefix.
 
 ### 4.2. Failure Conditions
 
-| Failure Condition                                                                                              | Error Code            |
-| -------------------------------------------------------------------------------------------------------------- | --------------------- |
-| `MutableFlags` contains invalid value (0 is invalid as well)                                                   | `temINVALID_FLAG`     |
-| `MPTokenHolder` is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present                | `temMALFORMED`        |
-| `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present | `temMALFORMED`        |
-| `TransferFee` exceeds the limit, which is 50000                                                                | `temBAD_TRANSFER_FEE` |
-| `MPTokenMetadata` length exceeds the limit, which is 1024                                                      | `temMALFORMED`        |
-| `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled             | `temDISABLED`         |
-| `MPTokenIssuanceID` does not exist                                                                             | `tecOBJECT_NOT_FOUND` |
-| `Account` is not the issuer of the target `MPTokenIssuance`                                                    | `tecNO_PERMISSION`    |
-| `MutableFlags` attempts to enable flags not declared as mutable                                                | `tecNO_PERMISSION`    |
-| `MPTokenMetadata` is present but was not marked as mutable                                                     | `tecNO_PERMISSION`    |
-| `TransferFee` is present but was not marked as mutable                                                         | `tecNO_PERMISSION`    |
-| Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not already set                                | `tecNO_PERMISSION`    |
+1. `MutableFlags` contains invalid value (0 is invalid as well) (`temINVALID_FLAG`)
+2. `MPTokenHolder` is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present (`temMALFORMED`)
+3. `Flags` (except `tfUniversal`) is provided when `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present (`temMALFORMED`)
+4. `TransferFee` exceeds the limit, which is 50000 (`temBAD_TRANSFER_FEE`)
+5. `MPTokenMetadata` length exceeds the limit, which is 1024 (`temMALFORMED`)
+6. `MutableFlags`, `MPTokenMetadata`, or `TransferFee` is present but `featureDynamicMPT` is disabled (`temDISABLED`)
+7. `MPTokenIssuanceID` does not exist (`tecOBJECT_NOT_FOUND`)
+8. `Account` is not the issuer of the target `MPTokenIssuance` (`tecNO_PERMISSION`)
+9. `MutableFlags` attempts to enable flags not declared as mutable (`tecNO_PERMISSION`)
+10. `MPTokenMetadata` is present but was not marked as mutable (`tecNO_PERMISSION`)
+11. `TransferFee` is present but was not marked as mutable (`tecNO_PERMISSION`)
+12. Including a non-zero `TransferFee` when `lsfMPTCanTransfer` was not already set (`tecNO_PERMISSION`)
 
 ### 4.3. `TransferFee` Modification Rules
 
