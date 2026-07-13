@@ -97,7 +97,7 @@ The `PaymentChannelFund` transaction is modified to support token amounts.
 **Failure Conditions:**
 
 - **Asset Mismatch:**
-  - If the funding `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `temBAD_AMOUNT`.
+  - If the funding `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
 
 - **Same conditions as `PaymentChannelCreate`** for validating the funding amount and token permissions (issuer opt-in, authorization, freeze/lock, transferability, spendable balance).
 
@@ -121,7 +121,7 @@ When claiming without closing the channel:
 **Failure Conditions:**
 
 - **Asset Mismatch:**
-  - If the claim's `Balance` or `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `temBAD_AMOUNT`.
+  - If the claim's `Balance` or `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
 
 - **Destination Not Authorized to Hold Token:**
   - If authorization is required and the destination is not authorized, the transaction fails with `tecNO_AUTH`.
@@ -201,17 +201,17 @@ When closing the channel (either explicitly with the close flag, or automaticall
 
 ## 1.3. Key Differences Between IOU and MPT Payment Channels
 
-| Aspect                        | IOU Tokens                                                                                                                | Multi-Purpose Tokens (MPTs)                                                                                               |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Trustlines**                | Required between accounts and issuer                                                                                     | Not used                                                                                                                  |
-| **Issuer Flag for Channels**  | `lsfAllowTrustLineLocking` (account flag)                                                                                 | `lsfMPTCanEscrow` (issuance flag)                                                                                         |
-| **Transfer Flags**            | N/A                                                                                                                       | `lsfMPTCanTransfer` must be enabled for payment channels                                                                  |
-| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                        | Applicable (`lsfMPTRequireAuth`); accounts must be authorized prior to holding tokens                                     |
-| **Destination Authorization** | Required at creation and at claim; cannot be granted during claim if authorization required                               | Required at creation and at claim; cannot be granted during claim if authorization required                               |
+| Aspect                        | IOU Tokens                                                                                                                             | Multi-Purpose Tokens (MPTs)                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Trustlines**                | Required between accounts and issuer                                                                                                   | Not used                                                                                                |
+| **Issuer Flag for Channels**  | `lsfAllowTrustLineLocking` (account flag)                                                                                              | `lsfMPTCanEscrow` (issuance flag)                                                                       |
+| **Transfer Flags**            | N/A                                                                                                                                    | `lsfMPTCanTransfer` must be enabled for payment channels                                                |
+| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                                     | Applicable (`lsfMPTRequireAuth`); accounts must be authorized prior to holding tokens                   |
+| **Destination Authorization** | Required at creation and at claim; cannot be granted during claim if authorization required                                            | Required at creation and at claim; cannot be granted during claim if authorization required             |
 | **Freeze/Lock Conditions**    | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure |
-| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                                               | `TransferFee` stored at creation and applied during claims                                                                |
-| **Outstanding Amount**        | Remains unchanged during channel operations                                                                               | Remains unchanged during channel operations                                                                               |
-| **Account Deletion**          | Payment channels prevent account deletion                                                                                 | Payment channels prevent account deletion                                                                                 |
+| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                                                            | `TransferFee` stored at creation and applied during claims                                              |
+| **Outstanding Amount**        | Remains unchanged during channel operations                                                                                            | Remains unchanged during channel operations                                                             |
+| **Account Deletion**          | Payment channels prevent account deletion                                                                                              | Payment channels prevent account deletion                                                               |
 
 ## 1.4. Transfer Rates and Fees
 
@@ -233,7 +233,7 @@ When closing the channel (either explicitly with the close flag, or automaticall
 The `PaymentChannel` ledger object is updated as follows:
 
 | Field Name     | JSON Type        | Internal Type | Description                                                                                                                                                                                  |
-| -------------- | ---------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------- | ---------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Amount`       | Object or String | Amount        | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                                              |
 | `Balance`      | Object or String | Amount        | The amount already paid out from the channel. Same asset type as `Amount`.                                                                                                                   |
 | `TransferRate` | Number           | UInt32        | _(Optional)_ The transfer rate or fee at creation, used as an upper bound on the rate applied during claims. Only present when the rate at creation differs from parity.                     |
@@ -243,8 +243,8 @@ The `PaymentChannel` ledger object is updated as follows:
 
 Token-denominated payment channels reuse the `sfLockedAmount` field introduced by [XLS-85](../XLS-0085-token-escrow/README.md) on both the `MPToken` and `MPTokenIssuance` ledger objects:
 
-| Field Name       | JSON Type | Internal Type | Description                                                                                |
-| ---------------- | --------- | ------------- | -------------------------------------------------------------------------------------------- |
+| Field Name       | JSON Type | Internal Type | Description                                                                               |
+| ---------------- | --------- | ------------- | ----------------------------------------------------------------------------------------- |
 | `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows and payment channels for this issuance. |
 
 ### 1.5.3 `AccountRoot` Ledger Object
