@@ -89,13 +89,20 @@ This transaction allows an account to delegate certain permissions to another ac
 
 #### 3.1.1. `Permissions`
 
-This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list. The list of permissions, if included and non-empty, will replace the existing list.
+This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list. The list of permissions, if included and non-empty, will replace the existing list. Providing an empty list will delete the `Delegate` object.
 
 ### 3.2. Failure Conditions
 
-- `Permissions` is too long (the limit is 10), or includes duplicates.
-- Any of the specified permissions are invalid.
-- `Authorize` is the same as `Account`.
+- `PermissionDelegationV1_1` amendment is not enabled. (`temDISABLED`)
+- `Permissions` is too long (the limit is 10) (`temARRAY_TOO_LARGE`)
+- `Permissions` includes duplicates. (`temMALFORMED`)
+- Any of the specified permissions is not a valid tx-level or granular permission. (`temMALFORMED`)
+- Any of the specified tx-level permissions corresponds is not delegable. (`temMALFORMED`)
+- Any of the specified granular permissions corresponds to a tx type whose amendment is not enabled. (`temMALFORMED`)
+- `Authorize` is the same as `Account`. (`temMALFORMED`)
+- `Authorize` account does not exist. (`tecNO_TARGET`)
+- `Authorize` account is a pseudo-account. (`tecNO_PERMISSION`)
+- `Permissions` is empty (trying to delete the `Delegate` object), but the `Delegate` object does not exist. (`tecNO_ENTRY`)
 
 ### 3.3. State Changes
 
@@ -132,9 +139,11 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 ### 4.2. Failure Conditions
 
-- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
-- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
-- `Delegate` is the same as `Account`.
+- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+- `Delegate` is the same as `Account`. (`temBAD_SIGNER`)
+- The `Delegate` holds a granular permission for this tx type, but the transaction sets a flag not permitted by the held granular permission(s) (`allowedFlags` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
+- The `Delegate` holds a granular permission for this tx type, but the transaction includes a field not permitted by the held granular permission(s) (`allowedFields` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
 
 ### 4.3. State Changes
 
@@ -289,6 +298,11 @@ Delegating permissions to other accounts requires a high degree of trust, especi
 To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
 On the other hand, this mechanism also offers a granular approach to authorization, allowing accounts to selectively grant specific permissions without compromising overall account control. This approach provides a balance between security and usability, empowering account holders to manage their assets and interactions more effectively.
+
+In addition, the system-generated transaction type are not delegable: `EnableAmendment`, `SetFee` and `UNLModify`.
+`Batch` transaction itself is not delegable, but its inner transactions can be delegated.
+
+Any newly introduced transactions must remain `non-delegable` until they have been fully integrated and tested with the delegation amendment. Currently, the following transactions are not delegable: `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanBrokerSet`, `LoanBrokerDelete`, `LoanBrokerCoverDeposit`, `LoanBrokerCoverWithdraw`, `LoanBrokerCoverClawback`, `LoanSet`, `LoanDelete`, `LoanManage`, `LoanPay`, and `SponsorshipTransfer`.
 
 # Appendix
 
