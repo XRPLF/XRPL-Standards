@@ -146,7 +146,7 @@ Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that 
 | Flag Name                                       | Field            | Hex Value    | Description                                                                                         |
 | :---------------------------------------------- | :--------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
 | `lsfMPTCanHoldConfidentialBalance`              | `sfFlags`        | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
-| `lsmfMPTCannotEnableCanHoldConfidentialBalance` | `sfMutableFlags` | `0x00040000` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
+| `lsmfMPTCannotEnableCanHoldConfidentialBalance` | `sfMutableFlags` | `0x00000080` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
 
 **Note**: `sfMutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
 
