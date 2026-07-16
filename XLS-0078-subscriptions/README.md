@@ -45,23 +45,23 @@ The Subscription object ID is computed as the SHA-512Half of:
 
 ##### 2.1.1.2. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                      |
-| ----------------- | -------- | -------- | ------------- | ------------- | -------------------------------------------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x008A        | Identifies this as a Subscription object                                         |
-| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                                          |
-| PreviousTxnID     | No       | Yes      | HASH256       | N/A           | Hash of the transaction that most recently modified this object                  |
-| PreviousTxnLgrSeq | No       | Yes      | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object  |
-| Account           | Yes      | Yes      | ACCOUNTID     | N/A           | The account that owns the subscription (the payer)                               |
-| Destination       | Yes      | Yes      | ACCOUNTID     | N/A           | The account authorized to claim subscription payments                            |
-| DestinationTag    | Yes      | No       | UINT32        | N/A           | Destination tag identifying the beneficiary or purpose at the destination        |
-| Amount            | No       | Yes      | AMOUNT        | N/A           | Maximum amount that can be claimed per period (XRP, IOU, or MPT)                 |
-| Balance           | No       | Yes      | AMOUNT        | N/A           | Remaining amount claimable in the current period                                 |
-| Frequency         | Yes      | Yes      | UINT32        | N/A           | Length of each period in seconds (must be greater than 0)                        |
-| NextClaimTime     | No       | Yes      | UINT32        | N/A           | Ripple epoch time at which the current period begins (claims allowed from here)  |
-| Expiration        | No       | No       | UINT32        | N/A           | Ripple epoch time when the subscription expires                                  |
-| Sequence          | Yes      | Yes      | UINT32        | N/A           | Transaction sequence (or ticket sequence) used to create this subscription       |
-| OwnerNode         | No       | Yes      | UINT64        | N/A           | Page of the source account's owner directory                                     |
-| DestinationNode   | No       | Yes      | UINT64        | N/A           | Page of the destination account's owner directory                                |
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                     |
+| ----------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x008A        | Identifies this as a Subscription object                                        |
+| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                                         |
+| PreviousTxnID     | No       | Yes      | HASH256       | N/A           | Hash of the transaction that most recently modified this object                 |
+| PreviousTxnLgrSeq | No       | Yes      | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object |
+| Account           | Yes      | Yes      | ACCOUNTID     | N/A           | The account that owns the subscription (the payer)                              |
+| Destination       | Yes      | Yes      | ACCOUNTID     | N/A           | The account authorized to claim subscription payments                           |
+| DestinationTag    | Yes      | No       | UINT32        | N/A           | Destination tag identifying the beneficiary or purpose at the destination       |
+| Amount            | No       | Yes      | AMOUNT        | N/A           | Maximum amount that can be claimed per period (XRP, IOU, or MPT)                |
+| Balance           | No       | Yes      | AMOUNT        | N/A           | Remaining amount claimable in the current period                                |
+| Frequency         | Yes      | Yes      | UINT32        | N/A           | Length of each period in seconds (must be greater than 0)                       |
+| NextClaimTime     | No       | Yes      | UINT32        | N/A           | Ripple epoch time at which the current period begins (claims allowed from here) |
+| Expiration        | No       | No       | UINT32        | N/A           | Ripple epoch time when the subscription expires                                 |
+| Sequence          | Yes      | Yes      | UINT32        | N/A           | Transaction sequence (or ticket sequence) used to create this subscription      |
+| OwnerNode         | No       | Yes      | UINT64        | N/A           | Page of the source account's owner directory                                    |
+| DestinationNode   | No       | Yes      | UINT64        | N/A           | Page of the destination account's owner directory                               |
 
 Note that the subscription's start time is not stored on the object: the optional `StartTime` of the creating transaction only initializes `NextClaimTime`.
 
@@ -147,16 +147,16 @@ Creates a new subscription or updates an existing one.
 
 ##### 2.2.1.1. Fields
 
-| Field Name      | Required?   | JSON Type     | Internal Type | Default Value | Description                                                                       |
-| --------------- | ----------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------- |
-| TransactionType | Yes         | String        | UINT16        | N/A           | Value: "SubscriptionSet"                                                          |
-| Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                |
-| DestinationTag  | No          | Number        | UINT32        | N/A           | Destination tag (creation only; required if the destination has `lsfRequireDestTag` set) |
-| Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                      |
-| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates) |
+| Field Name      | Required?   | JSON Type     | Internal Type | Default Value | Description                                                                                                   |
+| --------------- | ----------- | ------------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------- |
+| TransactionType | Yes         | String        | UINT16        | N/A           | Value: "SubscriptionSet"                                                                                      |
+| Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                                            |
+| DestinationTag  | No          | Number        | UINT32        | N/A           | Destination tag (creation only; required if the destination has `lsfRequireDestTag` set)                      |
+| Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                                                  |
+| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates)                             |
 | StartTime       | No          | Number        | UINT32        | Current Time  | When the first period begins (creation only, forbidden for updates; not stored — initializes `NextClaimTime`) |
-| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                         |
-| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID of the subscription to update (present for updates only)                       |
+| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                                                     |
+| SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID of the subscription to update (present for updates only)                                                   |
 
 ##### 2.2.1.2. Failure Conditions
 
@@ -503,6 +503,7 @@ The amendment is fully backwards compatible. Existing transactions and ledger ob
 
 - _Mitigation:_ Strict time validation in claim logic
 - _Mitigation:_ Atomic period advancement (exactly one period per claim transaction)
+- _Note:_ As with any tumbling window, a destination can claim the full amount at the very end of one period and again at the start of the next, receiving up to 2× the per-period amount in a short burst. The long-run rate remains bounded by `Amount` / `Frequency`, and the owner can cancel at any time.
 
 **Risk:** Griefing through subscription spam
 
@@ -520,7 +521,11 @@ The system respects all existing XRPL compliance mechanisms:
 
 ## 8. Reference Implementation
 
-A reference implementation is available at: https://github.com/XRPLF/rippled (amendment `Subscription`; PR to be linked when opened)
+A reference implementation is available on the `dangell7/subscriptions` branch of https://github.com/XRPLF/rippled (amendment `Subscription`; PR to be linked when opened).
+
+### 8.1. Test Coverage
+
+The reference test suite (61 test cases) covers, for XRP, IOUs, and MPTs: create/update/cancel/claim success and all failure paths; the period state machine (multiple partial claims, advance-on-zero, partial-period forfeiture, untouched-period arrears with exact claim counts); timing boundaries (claims exactly at `NextClaimTime`, at `Expiration`, before `StartTime`); expiration semantics (post-expiry claims rejected, third-party reaping with reserve release and directory cleanup); permission enforcement (owner/destination/third-party matrices for cancel and claim); update rules (same-asset enforcement, no balance clamping, RequireAuth); trustline and MPToken auto-creation with reserve edges; issuer redemption; transfer rates; freeze, deep freeze, and MPT lock; precision loss; destination tags; account deletion blocking; tickets, regular keys, multisigning, and delegation; `account_objects` and `ledger_entry` RPC retrieval including malformed-input handling; and adversarial cases (third-party cancel, expired-arrears drain, asset-switch updates, claim overdraw, period-boundary bursts).
 
 ## 9. FAQ
 
