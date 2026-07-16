@@ -110,16 +110,16 @@ Because the ID depends only on `(Owner, target account, sequence/ticket)` and no
 
 ### 4.2. Fields
 
-| Field Name          | Constant | Required | Internal Type | Default Value         | Description                                                                                                                                                                                                                       |
-| ------------------- | -------- | -------- | ------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | UINT16        | `TransactionProposal` | Identifies this as a `TransactionProposal` object.                                                                                                                                                                                |
-| `Flags`             | No       | Yes      | UINT32        | `0`                   | Flag values associated with this object. No flags are currently defined.                                                                                                                                                          |
-| `Owner`             | Yes      | Yes      | ACCOUNT       | N/A                   | The proposer — the account that created and owns this object and pays its reserve.                                                                                                                                                |
+| Field Name          | Constant | Required | Internal Type | Default Value         | Description                                                                                                                                                                                                                                          |
+| ------------------- | -------- | -------- | ------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`   | Yes      | Yes      | UINT16        | `TransactionProposal` | Identifies this as a `TransactionProposal` object.                                                                                                                                                                                                   |
+| `Flags`             | No       | Yes      | UINT32        | `0`                   | Flag values associated with this object. No flags are currently defined.                                                                                                                                                                             |
+| `Owner`             | Yes      | Yes      | ACCOUNT       | N/A                   | The proposer — the account that created and owns this object and pays its reserve.                                                                                                                                                                   |
 | `Transaction`       | No       | Yes      | STOBJECT      | N/A                   | The proposed transaction. Immutable except for its signature fields (`Signers`; `CounterpartySignature`/`SponsorSignature` for a type that requires one; and `BatchSigners` for a `Batch`), into which collected signatures accumulate (see §4.2.1). |
-| `Expiration`        | Yes      | Yes      | UINT32        | N/A                   | Ledger close-time (seconds since the Ripple Epoch) after which the proposal stops accepting signatures and becomes terminal.                                                                                                      |
-| `OwnerNode`         | No       | Yes      | UINT64        | N/A                   | Hint for which page this object appears on in the owner directory.                                                                                                                                                                |
-| `PreviousTxnID`     | No       | Yes      | HASH256       | N/A                   | Hash of the previous transaction that modified this object.                                                                                                                                                                       |
-| `PreviousTxnLgrSeq` | No       | Yes      | UINT32        | N/A                   | Ledger sequence of the previous transaction that modified this object.                                                                                                                                                            |
+| `Expiration`        | Yes      | Yes      | UINT32        | N/A                   | Ledger close-time (seconds since the Ripple Epoch) after which the proposal stops accepting signatures and becomes terminal.                                                                                                                         |
+| `OwnerNode`         | No       | Yes      | UINT64        | N/A                   | Hint for which page this object appears on in the owner directory.                                                                                                                                                                                   |
+| `PreviousTxnID`     | No       | Yes      | HASH256       | N/A                   | Hash of the previous transaction that modified this object.                                                                                                                                                                                          |
+| `PreviousTxnLgrSeq` | No       | Yes      | UINT32        | N/A                   | Ledger sequence of the previous transaction that modified this object.                                                                                                                                                                               |
 
 **Field Details:**
 
@@ -307,7 +307,7 @@ Appends one signer's multi-signature for the proposed transaction to the proposa
 | `Signer`                |           | object    | STOBJECT      | N/A                       | A contribution authorizing the proposed transaction's own `Account` (see §6.1.1).                                                     |
 | `BatchSigner`           |           | object    | STOBJECT      | N/A                       | A contribution authorizing a participant account of a proposed `Batch` (see §6.1.2).                                                  |
 | `CounterpartySignature` |           | object    | STOBJECT      | N/A                       | A contribution authorizing the `Counterparty` of a proposed transaction whose type requires one, e.g. `LoanSet` (see §6.1.3).         |
-| `SponsorSignature`      |           | object    | STOBJECT      | N/A                       | A contribution authorizing the `Sponsor` of a sponsored proposed transaction (see §6.1.3).                                           |
+| `SponsorSignature`      |           | object    | STOBJECT      | N/A                       | A contribution authorizing the `Sponsor` of a sponsored proposed transaction (see §6.1.3).                                            |
 
 **Exactly one** of `Signer`, `BatchSigner`, `CounterpartySignature`, or `SponsorSignature` must be present. Use `Signer` to authorize the proposed transaction's own `Account` — an ordinary transaction's target account, or a `Batch`'s outer account. Use `BatchSigner` to authorize a _participant_ account of a proposed `Batch`. Use `CounterpartySignature` or `SponsorSignature` to authorize, respectively, the `Counterparty` (e.g. a `LoanSet`'s lender) or the `Sponsor` of the proposed transaction — its **auxiliary co-signers** (§6.1.3).
 
@@ -337,10 +337,10 @@ The ledger merges `BatchSigner` into `Transaction.BatchSigners`, keyed by `Batch
 
 Some transactions require a **second party** to co-authorize them alongside the transaction's own `Account`. Each such party has a dedicated signature field on the proposed transaction, and `TransactionProposalSign` carries a matching field to collect that party's signature:
 
-| Contribution            | Authorizes                | Recorded into                     | Applies to                                                                                                     |
-| ----------------------- | ------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `CounterpartySignature` | the tx's `Counterparty`   | `Transaction.CounterpartySignature` | a type that defines a counterparty, e.g. [`LoanSet` (XLS-66)](../XLS-0066-lending-protocol/README.md)          |
-| `SponsorSignature`      | the tx's `Sponsor`        | `Transaction.SponsorSignature`    | any sponsored transaction carrying `Sponsor`/`SponsorFlags` ([XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)) |
+| Contribution            | Authorizes              | Recorded into                       | Applies to                                                                                                                |
+| ----------------------- | ----------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `CounterpartySignature` | the tx's `Counterparty` | `Transaction.CounterpartySignature` | a type that defines a counterparty, e.g. [`LoanSet` (XLS-66)](../XLS-0066-lending-protocol/README.md)                     |
+| `SponsorSignature`      | the tx's `Sponsor`      | `Transaction.SponsorSignature`      | any sponsored transaction carrying `Sponsor`/`SponsorFlags` ([XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)) |
 
 Both are structured identically and carry one of two forms:
 
@@ -578,6 +578,17 @@ This proposal is purely additive: it introduces one new ledger entry type and th
 - **Completion signalling:** Should the ledger set a convenience flag (or expose an RPC field) marking a proposal "complete" once collected weight reaches quorum, so wallets need not join against the `SignerList` themselves?
 - **Reducing the initial construction burden:** Can the initial proposed-transaction construction be simplified further, beyond the Ticket-based approach in §8.2?
 - **Revocation:** Should there be a first-class way to revoke a completed proposal's signatures on-ledger (beyond invalidating the `Sequence`/`Ticket`), given that cancellation alone does not prevent submission of already-collected signatures (§12.4)?
+- **Automatic cleanup of executed proposals:** When a proposal's transaction finally runs, the proposal object is left behind on the ledger, still tying up its reserve. Today someone has to remove it by hand — by cancelling it or waiting for it to expire (§8.4, §12.4). Can the ledger delete it for us?
+
+  The problem is how a proposal's ID is built. It uses three things: the proposer, the target account, and the sequence/ticket (§4.1). But the transaction that runs at the end is just a normal transaction — it carries the account and the sequence/ticket, but not the proposer. Missing that one piece, the ledger can't rebuild the ID, so it can't find the proposal to delete.
+
+  The fix is to build the ID from just the account and the sequence/ticket, and leave the proposer out. Then the ledger has everything it needs. The rule becomes simple: **when the account uses up that sequence/ticket, delete the matching proposal.** That covers both cases at once — the proposal's own transaction running, or the account using that sequence/ticket for something else. Either way the proposal is now dead, and it gets cleaned up for free. (A proposal whose sequence/ticket is never used still expires normally, §4.5.)
+
+  Leaving the proposer out has a few downsides:
+  - Only one proposal can exist per account + sequence/ticket, instead of one per proposer. That's fine in practice — only one of them could ever run anyway.
+  - Since anyone can create a proposal for any account, someone could grab that slot first and block the real proposer. But each attempt costs them a reserve, and it's easily sidestepped by using Tickets (§4.2.1, §8.2), which give you nearly unlimited slots to choose from.
+
+  Note this only clears away the leftover object. It does not stop signatures that were already copied off the ledger from being submitted, right up until the sequence/ticket is used.
 - **Recurring / standing orders:** Use Case 7 (recurring allowances and treasury stipends) suggests a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
 
 ## 12. Security Considerations
@@ -609,6 +620,68 @@ Each proposal consumes an elevated flat owner reserve (§4.4) held against the `
 ### 12.7. Fee accountability
 
 The proposed transaction's fee is paid by the target account when the completed transaction is submitted, consistent with the target account being the party that authorized the action via its signers. Each `TransactionProposalCreate`, `TransactionProposalSign`, and `TransactionProposalCancel` pays its own fee from its submitter.
+
+## 13. API
+
+To use a proposal, a signer or wallet has to fetch it and see how far along it is. This is done by extending the existing [`ledger_entry`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger_entry) method to retrieve a `TransactionProposal` by ID. (Listing the proposals an account owns is already covered by [`account_objects`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_objects) with a `TransactionProposal` type filter; no dedicated listing method is introduced.)
+
+The response returns, alongside the raw ledger fields, a few **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §11):
+
+| Field           | Type   | Description                                                                                                   |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `signed_weight` | number | Total weight of the signatures collected so far, scored against the target account's applicable `SignerList`. |
+| `quorum`        | number | The `SignerQuorum` the collected weight must reach (the target account's applicable quorum).                  |
+| `status`        | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                |
+
+`status` is the single field a client switches on:
+
+- **`pending`** — still collecting; more signatures can be added, and quorum is not yet met.
+- **`complete`** — every signing requirement is satisfied (quorum, plus any required `BatchSigners`/auxiliary co-signatures), so the stored `Transaction` is ready to copy and submit (§6.5).
+- **`expired`** — the proposal is terminal (§4.5): its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed. It no longer accepts signatures and can be cleaned up by anyone.
+
+`status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §12.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
+
+All of these are derived from live ledger state at the queried ledger and are not stored on the object.
+
+The `ledger_entry` method gains a `transaction_proposal` argument for retrieving one `TransactionProposal`. It accepts either form:
+
+- a **string** — the `ProposalID` (§4.1) directly; or
+- an **object** identifying the proposal by its components, from which the server derives the ID: `owner` (the proposer), `account` (the target account), and exactly one of `seq` or `ticket` (the proposed transaction's `Sequence` or `TicketSequence`).
+
+**Example request** (by components):
+
+```json
+{
+  "command": "ledger_entry",
+  "transaction_proposal": {
+    "owner": "rPROPOSER........................",
+    "account": "rTARGET..........................",
+    "ticket": 1201
+  },
+  "ledger_index": "validated"
+}
+```
+
+**Example response:**
+
+```json
+{
+  "index": "C1A2B3D4E5F6...............................",
+  "node": {
+    "LedgerEntryType": "TransactionProposal",
+    "Owner": "rPROPOSER........................",
+    "Expiration": 800000000,
+    "Transaction": { "TransactionType": "Payment", "Account": "rTARGET..........................", "TicketSequence": 1201, "...": "..." },
+    "signed_weight": 3,
+    "quorum": 6,
+    "status": "pending"
+  },
+  "ledger_index": 12345678,
+  "validated": true
+}
+```
+
+If no such proposal exists, the method returns `entryNotFound`, as it does for any other entry type.
 
 # Appendix
 
