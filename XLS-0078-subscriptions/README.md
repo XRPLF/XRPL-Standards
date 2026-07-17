@@ -14,7 +14,7 @@
 
 ## Abstract
 
-This proposal introduces a subscription (recurring payments) mechanism to the XRP Ledger (XRPL), enabling functionality similar to direct debits. The amendment allows account owners to authorize automated recurring payments with predefined parameters such as amount, frequency, and destination, supporting XRP, Trustline-based tokens (IOUs), and Multi-Purpose Tokens (MPTs).
+This proposal introduces a subscription (recurring payments) mechanism to the XRP Ledger (XRPL), enabling functionality similar to direct debits. The amendment allows account owners to authorize automated recurring payments with predefined parameters such as amount, frequency, and destination, supporting XRP, Trustline-based tokens (IOUs), and Multi-Purpose Tokens (MPTs). A subscription may be metered (a cap per period), unmetered (a per-claim cap with no schedule), or single-use (deleted on the first claim), and its claiming can be delegated to a third party through Account Permission Delegation (XLS-75).
 
 ## Motivation
 
@@ -45,23 +45,23 @@ The Subscription object ID is computed as the SHA-512Half of:
 
 ##### 2.1.1.2. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                     |
-| ----------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------------------------------------------- |
-| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x008A        | Identifies this as a Subscription object                                        |
-| Flags             | No       | Yes      | UINT32        | 0             | Reserved for future use                                                         |
-| PreviousTxnID     | No       | Yes      | HASH256       | N/A           | Hash of the transaction that most recently modified this object                 |
-| PreviousTxnLgrSeq | No       | Yes      | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object |
-| Account           | Yes      | Yes      | ACCOUNTID     | N/A           | The account that owns the subscription (the payer)                              |
-| Destination       | Yes      | Yes      | ACCOUNTID     | N/A           | The account authorized to claim subscription payments                           |
-| DestinationTag    | Yes      | No       | UINT32        | N/A           | Destination tag identifying the beneficiary or purpose at the destination       |
-| Amount            | No       | Yes      | AMOUNT        | N/A           | Maximum amount that can be claimed per period (XRP, IOU, or MPT)                |
-| Balance           | No       | Yes      | AMOUNT        | N/A           | Remaining amount claimable in the current period                                |
-| Frequency         | Yes      | Yes      | UINT32        | N/A           | Length of each period in seconds (must be greater than 0)                       |
-| NextClaimTime     | No       | Yes      | UINT32        | N/A           | Ripple epoch time at which the current period begins (claims allowed from here) |
-| Expiration        | No       | No       | UINT32        | N/A           | Ripple epoch time when the subscription expires                                 |
-| Sequence          | Yes      | Yes      | UINT32        | N/A           | Transaction sequence (or ticket sequence) used to create this subscription      |
-| OwnerNode         | No       | Yes      | UINT64        | N/A           | Page of the source account's owner directory                                    |
-| DestinationNode   | No       | Yes      | UINT64        | N/A           | Page of the destination account's owner directory                               |
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                                                |
+| ----------------- | -------- | -------- | ------------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
+| LedgerEntryType   | Yes      | Yes      | UINT16        | 0x008A        | Identifies this as a Subscription object                                                                   |
+| Flags             | No       | Yes      | UINT32        | 0             | Bit field of ledger flags. `lsfSingleUse` (0x00010000): delete on first claim                              |
+| PreviousTxnID     | No       | Yes      | HASH256       | N/A           | Hash of the transaction that most recently modified this object                                            |
+| PreviousTxnLgrSeq | No       | Yes      | UINT32        | N/A           | Ledger index containing the transaction that most recently modified this object                            |
+| Account           | Yes      | Yes      | ACCOUNTID     | N/A           | The account that owns the subscription (the payer)                                                         |
+| Destination       | Yes      | Yes      | ACCOUNTID     | N/A           | The account authorized to claim subscription payments                                                      |
+| DestinationTag    | Yes      | No       | UINT32        | N/A           | Destination tag identifying the beneficiary or purpose at the destination                                  |
+| Amount            | No       | Yes      | AMOUNT        | N/A           | Maximum amount that can be claimed per period (XRP, IOU, or MPT)                                           |
+| Balance           | No       | Yes      | AMOUNT        | N/A           | Remaining amount claimable in the current period. Stays equal to `Amount` when unmetered                   |
+| Frequency         | Yes      | Yes      | UINT32        | N/A           | Length of each period in seconds. `0` means unmetered: no period accounting, each claim capped at `Amount` |
+| NextClaimTime     | No       | Yes      | UINT32        | N/A           | Ripple epoch time at which the current period begins (claims allowed from here)                            |
+| Expiration        | No       | No       | UINT32        | N/A           | Ripple epoch time when the subscription expires                                                            |
+| Sequence          | Yes      | Yes      | UINT32        | N/A           | Transaction sequence (or ticket sequence) used to create this subscription                                 |
+| OwnerNode         | No       | Yes      | UINT64        | N/A           | Page of the source account's owner directory                                                               |
+| DestinationNode   | No       | Yes      | UINT64        | N/A           | Page of the destination account's owner directory                                                          |
 
 Note that the subscription's start time is not stored on the object: the optional `StartTime` of the creating transaction only initializes `NextClaimTime`.
 
@@ -84,6 +84,7 @@ This reserve is returned when the subscription is deleted.
 The Subscription can be deleted through:
 
 - `SubscriptionCancel` transaction (see permission rules in 2.2.2)
+- `SubscriptionClaim` when `lsfSingleUse` is set, on the first successful claim
 - Account deletion is blocked while any subscriptions exist (either as owner or destination): `tecHAS_OBLIGATIONS`
 
 Once a subscription's `Expiration` has passed it can no longer be claimed; it remains on the ledger (holding the owner's reserve) until it is cancelled, and any account may cancel it at that point.
@@ -107,7 +108,6 @@ Before and after any transaction:
 - `Balance` ≥ 0
 - `Balance` ≤ `Amount` at the start of every period (`Balance` is reset to `Amount` on rollover; lowering `Amount` mid-period via update does not retroactively reduce the current period's `Balance`, but claims are always capped at the current `Amount`)
 - `Balance` and `Amount` are denominated in the same asset
-- `Frequency` > 0
 - `Account` ≠ `Destination`
 - If non-XRP: asset must exist and be valid
 
@@ -153,9 +153,10 @@ Creates a new subscription or updates an existing one.
 | Destination     | Conditional | String        | ACCOUNTID     | N/A           | Destination account (required for creation, forbidden for updates)                                            |
 | DestinationTag  | No          | Number        | UINT32        | N/A           | Destination tag (creation only; required if the destination has `lsfRequireDestTag` set)                      |
 | Amount          | Yes         | Object/String | AMOUNT        | N/A           | Maximum amount per period (XRP, IOU, or MPT)                                                                  |
-| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds between payments (required for creation, forbidden for updates)                             |
+| Frequency       | Conditional | Number        | UINT32        | N/A           | Period in seconds. Required on creation, optional on update. `0` means unmetered                              |
 | StartTime       | No          | Number        | UINT32        | Current Time  | When the first period begins (creation only, forbidden for updates; not stored — initializes `NextClaimTime`) |
-| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires                                                                                     |
+| Expiration      | No          | Number        | UINT32        | N/A           | When subscription expires. On update, `0` removes an existing expiration                                      |
+| Flags           | No          | Number        | UINT32        | 0             | `tfSingleUse` (0x00010000), creation only: delete the subscription on the first successful claim              |
 | SubscriptionID  | Conditional | String        | HASH256       | N/A           | ID of the subscription to update (present for updates only)                                                   |
 
 ##### 2.2.1.2. Failure Conditions
@@ -168,7 +169,6 @@ Creates a new subscription or updates an existing one.
    - Destination doesn't exist (`tecNO_DST`)
    - Destination requires tag but none provided (`tecDST_TAG_NEEDED`)
    - Amount ≤ 0 or invalid (`temBAD_AMOUNT`)
-   - Frequency ≤ 0 (`temMALFORMED`)
    - StartTime < current time (`temMALFORMED`)
    - Expiration < current time or < initial NextClaimTime (`temBAD_EXPIRATION`)
    - Insufficient reserve (`tecINSUFFICIENT_RESERVE`)
@@ -205,12 +205,13 @@ Creates a new subscription or updates an existing one.
 
 5. **Update Validation:**
    - Amount missing (`temMALFORMED`)
-   - Destination, Frequency, or StartTime present (`temMALFORMED`)
+   - Destination or StartTime present (`temMALFORMED`)
+   - `tfSingleUse` set (`temINVALID_FLAG`) — the flag is fixed at creation
    - XRP, IOU and MPT Validation (as above)
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not owner (`tecNO_PERMISSION`)
    - Invalid Amount (`temBAD_AMOUNT`)
-   - Expiration in past (`temBAD_EXPIRATION`)
+   - Expiration in past, nonzero (`temBAD_EXPIRATION`)
    - Asset type differs from original (`tecWRONG_ASSET`)
 
 None of the token-eligibility checks (trustline/MPToken existence, authorization, freeze/lock, spendable balance) apply when the subscription is denominated in XRP.
@@ -222,14 +223,16 @@ None of the token-eligibility checks (trustline/MPToken existence, authorization
 1. Create Subscription object with all specified fields
 2. Set Balance = Amount
 3. Set NextClaimTime = StartTime (if provided) or current ledger time
-4. Add to source account's owner directory (increment owner count)
-5. Add to destination account's owner directory (no owner count change)
-6. Deduct reserve from source account
+4. Set `lsfSingleUse` when `tfSingleUse` is present
+5. Add to source account's owner directory (increment owner count)
+6. Add to destination account's owner directory (no owner count change)
+7. Deduct reserve from source account
 
 **Update:**
 
 1. Replace the Amount field. The current period's Balance is not modified: an increase or decrease of Amount takes full effect from the next period rollover, but claims are immediately capped at the new Amount.
-2. Update Expiration if provided (an existing Expiration cannot be removed).
+2. Replace Frequency if provided. Changing Frequency starts a clean period: NextClaimTime is reset to the current ledger time and Balance is reset to Amount. This covers metered→unmetered, unmetered→metered, and metered→metered transitions.
+3. Update Expiration if provided; an Expiration of `0` removes an existing expiration.
 
 ##### 2.2.1.4. Example JSON
 
@@ -316,11 +319,11 @@ Claims a payment from an active subscription. Only the subscription's destinatio
 
 ##### 2.2.3.1. Fields
 
-| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                                        |
-| --------------- | --------- | ------------- | ------------- | ------------- | -------------------------------------------------- |
-| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"                         |
-| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim                        |
-| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ the period's available balance) |
+| Field Name      | Required? | JSON Type     | Internal Type | Default Value | Description                                                                       |
+| --------------- | --------- | ------------- | ------------- | ------------- | --------------------------------------------------------------------------------- |
+| TransactionType | Yes       | String        | UINT16        | N/A           | Value: "SubscriptionClaim"                                                        |
+| SubscriptionID  | Yes       | String        | HASH256       | N/A           | ID of subscription to claim                                                       |
+| Amount          | Yes       | Object/String | AMOUNT        | N/A           | Amount to claim (≤ `Amount`; when metered, also ≤ the period's remaining Balance) |
 
 ##### 2.2.3.2. Failure Conditions
 
@@ -362,12 +365,13 @@ Claims a payment from an active subscription. Only the subscription's destinatio
 
 ##### 2.2.3.3. State Changes
 
-1. **Rollover / Arrears Handling:**
+1. **Rollover / Arrears Handling** (metered only, `Frequency > 0`):
    - If currentTime ≥ NextClaimTime + Frequency (the tracked period has fully elapsed) AND Balance < Amount (the period was partially used):
      - Forfeit the remaining Balance of the partially-used period
      - Advance NextClaimTime by exactly one Frequency
      - Reset Balance to Amount
    - If the tracked period was never claimed against (Balance = Amount), nothing is forfeited: the untouched period remains claimable in full, and later periods accrue behind it (see Section 4).
+   - When `Frequency = 0` (unmetered) there is no period accounting: each claim is capped at Amount, Balance and NextClaimTime are never modified.
 
 2. **Token Transfer:**
 
@@ -388,13 +392,16 @@ Claims a payment from an active subscription. Only the subscription's destinatio
    - Apply current TransferFee if applicable
    - Handle issuer special cases (no MPToken for issuer)
 
-3. **Balance Management:**
+3. **Balance Management** (metered only, `Frequency > 0`):
    - Deduct claimed amount from Balance
    - If Balance reaches zero:
      - Advance NextClaimTime by one Frequency
      - Reset Balance to Amount
 
-4. **Update Metadata:**
+4. **Single-use Deletion:**
+   - If `lsfSingleUse` is set, delete the subscription on this first successful claim (partial or full, metered or unmetered): remove it from both owner directories, decrement the owner count, and release the reserve to the owner.
+
+5. **Update Metadata:**
    - Update PreviousTxnID and PreviousTxnLgrSeq
 
 ##### 2.2.3.4. Example JSON
@@ -465,6 +472,18 @@ Allowing trustlines and MPTokens to be created during claims (when authorized) i
 
 Any `Frequency` greater than zero is legal. Rather than enforcing an arbitrary protocol-level floor, spam is deterred economically: every claim costs a transaction fee, and every subscription locks an owner reserve. Wallets and services are expected to choose sensible frequencies for their billing model.
 
+### 5.7. Unmetered Subscriptions
+
+A `Frequency` of `0` creates an unmetered subscription. There is no period accounting: each claim is capped at `Amount`, there is no aggregate cap, and the destination can claim any number of times until the owner cancels or the subscription expires. This covers a per-transaction limit without a recurring schedule — for example a card-style authorization where the on-chain limit is the per-charge cap and any per-day or per-month rules are enforced off-chain by the processor.
+
+### 5.8. Single-Use Subscriptions
+
+`tfSingleUse` creates a subscription that is deleted on its first successful claim, returning the reserve to the owner. It covers one-off pulls such as an invoice or a pending payment. The flag is fixed at creation and cannot be added or removed by `SubscriptionSet`; termination is therefore always visible on-chain as either a claim (single-use) or a `SubscriptionCancel`. It composes with any `Frequency`, though it is most useful with `Frequency = 0`.
+
+### 5.9. Delegated Claiming
+
+The destination is both the claimant and the receiver. To let a third party (such as a billing processor) initiate claims without changing the receiver, the destination delegates the `SubscriptionClaim` transaction to that account using Account Permission Delegation (XLS-75). The delegate signs and pays the fee; funds still move from the owner to the destination. Because delegation is granted at the account level, one grant authorizes claiming across all of the destination's subscriptions, and revoking it withdraws that authorization from all of them at once — without any per-subscription update.
+
 ## 6. Backwards Compatibility
 
 This amendment introduces:
@@ -473,7 +492,7 @@ This amendment introduces:
 - Three new transaction types
 - No modifications to existing functionality
 
-The amendment is fully backwards compatible. Existing transactions and ledger objects are unaffected.
+The amendment is fully backwards compatible. Existing transactions and ledger objects are unaffected. The unmetered, single-use, and delegated-claiming behaviors are opt-in: a subscription created with a positive `Frequency` and no `tfSingleUse` behaves exactly as a metered subscription, and claiming without a delegate behaves exactly as a destination-signed claim.
 
 ## 7. Security Considerations
 
@@ -525,7 +544,7 @@ A reference implementation is available on the `dangell7/subscriptions` branch o
 
 ### 8.1. Test Coverage
 
-The reference test suite (61 test cases) covers, for XRP, IOUs, and MPTs: create/update/cancel/claim success and all failure paths; the period state machine (multiple partial claims, advance-on-zero, partial-period forfeiture, untouched-period arrears with exact claim counts); timing boundaries (claims exactly at `NextClaimTime`, at `Expiration`, before `StartTime`); expiration semantics (post-expiry claims rejected, third-party reaping with reserve release and directory cleanup); permission enforcement (owner/destination/third-party matrices for cancel and claim); update rules (same-asset enforcement, no balance clamping, RequireAuth); trustline and MPToken auto-creation with reserve edges; issuer redemption; transfer rates; freeze, deep freeze, and MPT lock; precision loss; destination tags; account deletion blocking; tickets, regular keys, multisigning, and delegation; `account_objects` and `ledger_entry` RPC retrieval including malformed-input handling; and adversarial cases (third-party cancel, expired-arrears drain, asset-switch updates, claim overdraw, period-boundary bursts).
+The reference test suite (73 test cases) covers, for XRP, IOUs, and MPTs: create/update/cancel/claim success and all failure paths; the period state machine (multiple partial claims, advance-on-zero, partial-period forfeiture, untouched-period arrears with exact claim counts); unmetered mode (`Frequency = 0`: per-claim cap, Balance and NextClaimTime never modified, `temBAD_AMOUNT` over the cap); single-use (`lsfSingleUse` set from `tfSingleUse`, deletion on first claim with full cleanup, flag immutability on update, replay rejection, composition with metered and unmetered); flexible updates (Frequency change with clean-period reset across all transitions, arrears forfeited on change, Expiration removal via `0`); delegated claiming (destination delegates `SubscriptionClaim`; delegate signs and pays the fee, funds move to the destination; revoked and never-delegated cases); timing boundaries (claims exactly at `NextClaimTime`, at `Expiration`, before `StartTime`); expiration semantics (post-expiry claims rejected, third-party reaping with reserve release and directory cleanup); permission enforcement (owner/destination/third-party matrices for cancel and claim); update rules (same-asset enforcement, no balance clamping, RequireAuth); trustline and MPToken auto-creation with reserve edges; issuer redemption; transfer rates; freeze, deep freeze, and MPT lock; precision loss; destination tags; account deletion blocking; tickets, regular keys, and multisigning; `account_objects` and `ledger_entry` RPC retrieval including malformed-input handling; and adversarial cases (third-party cancel, expired-arrears drain, asset-switch updates, claim overdraw, period-boundary bursts, single-use replay, unmetered partial drain).
 
 ## 9. FAQ
 
