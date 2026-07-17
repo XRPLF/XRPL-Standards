@@ -919,11 +919,15 @@ If the `AccountRoot` associated with the `tx.Account` has a `SponsoredOwnerCount
 
 [`Batch`](../XLS-0056-batch/README.md) (XLS-56) groups multiple transactions into a single atomic unit. Sponsorship interacts with `Batch` in a few specific ways.
 
-### 13.1. Outer Transaction
+### 13.1. Fields
+
+This amendment proposes no changes to the fields of the outer `Batch` transaction. Inner transactions may use the common sponsorship fields described in [section 8.1](#81-fields) (`Sponsor`, `SponsorFlags`), subject to the constraints in [section 13.3](#133-inner-transactions).
+
+### 13.2. Outer Transaction
 
 The outer `Batch` transaction itself does not create any ledger objects, so reserve sponsorship on the outer transaction is meaningless and is disallowed: the outer `Batch` transaction **must not** include `SponsorFlags.spfSponsorReserve`. Fee sponsorship of the outer transaction (`spfSponsorFee`) follows the standard rules in [section 8](#8-transactions-common-fields).
 
-### 13.2. Inner Transactions
+### 13.3. Inner Transactions
 
 Inner transactions inside a `Batch` may individually use `Sponsor` and `SponsorFlags` to declare a sponsor for that inner transaction. However, sponsor signatures for inner transactions are not provided on the inner transactions themselves — they live in the outer `Batch` transaction's `BatchSigners` array.
 
@@ -935,13 +939,53 @@ Specifically:
 - Fee and reserve resolution for an inner transaction otherwise follows the standard rules in [sections 8.3.2](#832-fee-sponsorship-failures), [8.3.3](#833-reserve-sponsorship-failures), and [section 18](#18-feature-interactions).
 - Inner transactions **must not** have `SponsorFlags.spfSponsorFee` enabled, as the outer `Batch` transaction pays the fee for all inner transactions.
 
-### 13.3. Failure Conditions
+### 13.4. Failure Conditions
 
 In addition to the general failures in [section 8.3](#83-failure-conditions):
 
 1. The outer `Batch` transaction includes `SponsorFlags.spfSponsorReserve` (`temINVALID_FLAG`).
 2. An inner transaction includes a `SponsorSignature` field (`temMALFORMED`).
 3. An inner transaction names a `Sponsor` that does not appear in the outer transaction's `BatchSigners`, and no `Sponsorship` object satisfies the relationship without requiring a signature (`tecNO_SPONSOR_PERMISSION`).
+
+### 13.5. State Changes
+
+State changes for `Batch` are the sum of the state changes of its inner transactions, applied per the rules in [section 8.4](#84-state-changes) for each inner transaction's declared sponsorship. The outer `Batch` transaction itself only triggers fee sponsorship state changes (see [section 8.4.1](#841-fee-sponsorship-state-changes)) when `spfSponsorFee` is set.
+
+### 13.6. Example JSON
+
+```json
+{
+  "TransactionType": "Batch",
+  "Account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+  "Flags": 65536, // tfAllOrNothing
+  "Fee": "10",
+  "Sequence": 5,
+  "RawTransactions": [
+    {
+      "RawTransaction": {
+        "TransactionType": "Payment",
+        "Account": "rwBYyfufTVATCbpTS9bcSpvXtq6QYUB1AK",
+        "Destination": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
+        "Amount": "1000000",
+        "Sponsor": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+        "SponsorFlags": 65536, // spfSponsorReserve
+        "Sequence": 0,
+        "Fee": "0",
+        "SigningPubKey": ""
+      }
+    }
+  ],
+  "BatchSigners": [
+    {
+      "BatchSigner": {
+        "Account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
+        "SigningPubKey": "ED...",
+        "TxnSignature": "..."
+      }
+    }
+  ]
+}
+```
 
 ## 14. Granular Permission: `SponsorFee`
 
