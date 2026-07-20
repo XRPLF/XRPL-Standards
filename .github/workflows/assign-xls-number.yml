@@ -219,7 +219,7 @@ jobs:
 
       - name: Setup Python
         if: steps.check-drafts.outputs.has_drafts == 'true'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
