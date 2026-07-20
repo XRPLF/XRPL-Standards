@@ -422,29 +422,31 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 ##### 3.3.2.1 Data Verification
 
-_TBD_
+1. The `VaultID` field is zero. (`temMALFORMED`)
+2. The `Data` field, if provided, is empty or exceeds 256 bytes. (`temMALFORMED`)
+3. The `AssetsMaximum` field, if provided, is negative. (`temMALFORMED`)
+4. None of `Data`, `AssetsMaximum`, or `DomainID` are provided (nothing to update). (`temMALFORMED`)
 
 ##### 3.3.2.2 Protocol-Level Failures
 
-1. `Vault` object with the specified `VaultID` does not exist on the ledger.
-2. The submitting account is not the `Owner` of the vault.
-3. The `Data` field is larger than 256 bytes.
-4. If `Vault.AssetsMaximum` > `0` AND `tx.AssetsMaximum` > 0 AND:
-   1. The `tx.AssetsMaximum` < `Vault.AssetsTotal` (new `tx.AssetsMaximum` cannot be lower than the current `AssetsTotal`).
-5. The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
-6. The `PermissionedDomain` object does not exist with the provided `DomainID`.
-7. The transaction is attempting to modify an immutable field.
-8. The transaction does not specify any of the modifiable fields.
+1. The `Vault` object with the specified `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
+3. The `DomainID` field is provided and the vault does not have `lsfVaultPrivate` set. (`tecNO_PERMISSION`)
+4. The `DomainID` field is provided, is non-zero, and the referenced `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
+5. The `AssetsMaximum` field is non-zero and is less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
 
 #### 3.3.3 State Changes
 
-1. Update mutable fields in the `Vault` ledger object.
-2. If `DomainID` is provided:
-   1. Set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain).
+1. Update the mutable fields `Data` and `AssetsMaximum` in the `Vault` ledger object, if provided.
+2. If `DomainID` is provided and non-zero: set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID`.
+3. If `DomainID` is provided and is zero: remove `DomainID` from `MPTokenIssuance(Vault.ShareMPTID)`.
 
 #### 3.3.4 Invariants
 
-**TBD**
+1. `VaultSet` must not change the vault pseudo-account's asset balance.
+2. `VaultSet` must not change `Vault.AssetsTotal` or `Vault.AssetsAvailable`.
+3. `VaultSet` must not change `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount`.
+4. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.4 Transaction: `VaultDelete`
 
