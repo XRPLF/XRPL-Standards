@@ -1,14 +1,3 @@
----
-xls: TBD
-title: Closed-Ended Single Asset Vault
-description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
-author: TBD
-status: Draft
-category: Amendment
-created: 2026-07-21
-updated: 2026-07-21
----
-
 <pre>
   title: WASM VM
   description: WebAssembly VM integration into rippled
@@ -114,6 +103,7 @@ VaultPhase getVaultPhase(ReadView const& view, SLE::const_ref vault)
 | ------------- | --------------------- | ------------ | ---------- | ---------- |
 | VaultDeposit  | allowed               | allowed      | rejected   | rejected   |
 | VaultWithdraw | allowed               | allowed      | rejected   | allowed    |
+| VaultDonation | allowed               | allowed      | allowed    | allowed    |
 | LoanSet       | allowed               | allowed\*    | allowed\*  | rejected   |
 | LoanAccept    | allowed               | allowed      | allowed    | rejected   |
 | LoanPay       | allowed               | allowed      | allowed    | allowed    |
