@@ -1250,8 +1250,9 @@ This transaction uses the standard transaction fee.
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
 6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
-7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
-8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
+7. `tfLoanImpair` flag is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
+8. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
+9. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
 #### 3.10.5 State Changes
 
@@ -1291,19 +1292,12 @@ This transaction uses the standard transaction fee.
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
      - Set `lsfLoanImpaired` flag.
-     - If `Loan.NextPaymentDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = currentTime`.
 3. If the `tfLoanUnimpair` flag is specified:
    - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
    - Update `Vault` object:
      - Decrease `Vault.LossUnrealized` by `LossReversed`.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
-     - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
-     - If `NormalDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = NormalDueDate`.
-     - Otherwise:
-       - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
 
 #### 3.10.6 Invariants
 
