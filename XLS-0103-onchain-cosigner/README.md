@@ -633,13 +633,44 @@ Three signatures arrive — one per account that must authorize:
 
 ```json
 // 1) rOUTERKEY signs for the outer account rOUTER (multi-sign) → Transaction.Signers
-{ "TransactionType": "TransactionProposalSign", "Account": "rOUTERKEY.......................", "Fee": "10", "Sequence": 3, "ProposalID": "F0F0...", "SigningFor": "rOUTER..........................", "SigningPubKey": "03A1...", "TxnSignature": "3045..." }
+{
+  "TransactionType": "TransactionProposalSign",
+  "Account": "rOUTERKEY.......................",
+  "Fee": "10",
+  "Sequence": 3,
+  "ProposalID": "F0F0...............................",
+  "SigningFor": "rOUTER..........................",
+  "SigningPubKey": "03A1...",
+  "TxnSignature": "3045..."
+}
+```
 
+```json
 // 2) rBOB signs for itself (single-sign) → BatchSigners[rBOB]
-{ "TransactionType": "TransactionProposalSign", "Account": "rBOB............................", "Fee": "10", "Sequence": 9, "ProposalID": "F0F0...", "SigningFor": "rBOB............................", "SigningPubKey": "02B2...", "TxnSignature": "3044..." }
+{
+  "TransactionType": "TransactionProposalSign",
+  "Account": "rBOB............................",
+  "Fee": "10",
+  "Sequence": 9,
+  "ProposalID": "F0F0...............................",
+  "SigningFor": "rBOB............................",
+  "SigningPubKey": "02B2...",
+  "TxnSignature": "3044..."
+}
+```
 
+```json
 // 3) rCAROLKEY signs for rCAROL (multi-sign) → BatchSigners[rCAROL].Signers
-{ "TransactionType": "TransactionProposalSign", "Account": "rCAROLKEY.......................", "Fee": "10", "Sequence": 4, "ProposalID": "F0F0...", "SigningFor": "rCAROL..........................", "SigningPubKey": "03C3...", "TxnSignature": "3046..." }
+{
+  "TransactionType": "TransactionProposalSign",
+  "Account": "rCAROLKEY.......................",
+  "Fee": "10",
+  "Sequence": 4,
+  "ProposalID": "F0F0...............................",
+  "SigningFor": "rCAROL..........................",
+  "SigningPubKey": "03C3...",
+  "TxnSignature": "3046..."
+}
 ```
 
 After all three, the outer account's quorum is met **and** every participant is authorized → **complete**. `BatchSigners` is sorted by `Account`; `rBOB` is a single-signature entry, `rCAROL` a nested multi-sign one:
