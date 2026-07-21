@@ -1,13 +1,14 @@
 <pre>
-  title: WASM VM
-  description: WebAssembly VM integration into rippled
-  author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuelling (@sappenin)
-  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/303
-  status: Draft
-  category: Amendment
-  created: 2025-08-08
-  updated: 2026-02-03
+xls: TBD
+title: Closed-Ended Single Asset Vault
+description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
+author: TBD
+status: Draft
+category: Amendment
+created: 2026-07-21
+updated: 2026-07-21
 </pre>
+
 
 # Closed-Ended Single Asset Vault
 
