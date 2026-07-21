@@ -498,49 +498,63 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ##### 3.5.2.1 Data Verification
 
-_None._
+1. The `VaultID` field is zero. (`temMALFORMED`)
+2. The `Amount` field is zero or negative. (`temBAD_AMOUNT`)
 
 ##### 3.5.2.2 Protocol-Level Failures
 
-1. `Vault` object with the `VaultID` does not exist on the ledger.
-2. The asset type of the vault does not match the asset type the depositor is depositing.
-3. The depositor does not have sufficient funds to make a deposit.
-4. Adding the `Amount` to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`.
-5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets is not a member of the `MPTokenIssuance(Vault.ShareMPTID).DomainID` permissioned domain.
+1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
+2. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
 
-6. If the `Vault.Asset` is `MPT`:
-   1. `MPTokenIssuance.lsfMPTCanTransfer` is not set (the asset is not transferable).
-   2. `MPTokenIssuance.lsfMPTLocked` flag is set (the asset is globally locked).
-   3. `MPToken(MPTokenIssuanceID, AccountID).lsfMPTLocked` flag is set (the asset is locked for the depositor).
-   4. `MPToken(MPTokenIssuanceID, AccountID).MPTAmount` < `Amount` (insufficient balance).
+3. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
+   1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
+   2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
 
-7. If the `Vault.Asset` is an `IOU`:
-   1. The `lsfGlobalFreeze` flag is set on the issuing account (the asset is frozen).
-   2. The `lsfHighFreeze` or `lsfLowFreeze` flag is set on the `RippleState` object between the Asset `Issuer` and the depositor.
-   3. The `RippleState` object `Balance` < `Amount` (insufficient balance).
+4. If `Vault.Asset` is an `MPT`:
+   1. The `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object (the asset is not transferable). (`tecNO_AUTH`)
+   2. The asset is globally or individually locked for the depositor. (`tecLOCKED`)
+
+5. If `Vault.Asset` is an `IOU`:
+   1. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
+
+6. The vault shares are locked for the depositor. (`tecLOCKED`)
+7. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
+8. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
+9. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
+10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
+11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
+12. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
+13. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
 
 #### 3.5.3 State Changes
 
-1. If no `MPToken` object exists for the depositor, create one. For object details, see [2.1.6.2 `MPToken`](#2162-mptoken).
-2. Increase the `MPTAmount` field of the share `MPToken` object of the `Account` by $\Delta_{share}$.
-3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
-4. Increase the `AssetsTotal` and `AssetsAvailable` of the `Vault` by `Amount`.
+1. If no share `MPToken` object exists for the depositor, create one. For private vaults, the `MPToken` is created only after domain authorization is verified.
+2. Increase the `MPTAmount` field of the depositor's share `MPToken` by $\Delta_{share}$.
+3. Increase the `OutstandingAmount` field of the share `MPTokenIssuance` by $\Delta_{share}$.
+4. Increase `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
 
-5. If the `Vault.Asset` is `XRP`:
-   1. Increase the `Balance` field of _pseudo-account_ `AccountRoot` by `Amount`.
-   2. Decrease the `Balance` field of the depositor `AccountRoot` by `Amount`.
+5. If `Vault.Asset` is `XRP`:
+   1. Increase the `Balance` field of the _pseudo-account_ `AccountRoot` by $\Delta_{asset}$.
+   2. Decrease the `Balance` field of the depositor `AccountRoot` by $\Delta_{asset}$.
 
-6. If the `Vault.Asset` is an `IOU`:
-   1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
-   2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by `Amount`.
+6. If `Vault.Asset` is an `IOU`:
+   1. Increase the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
+   2. Decrease the `RippleState` balance between the depositor `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
 
-7. If the `Vault.Asset` is an `MPT`:
-   1. Increase the `MPToken.MPTAmount` by `Amount` of the _pseudo-account_ `MPToken` object for the `Vault.Asset`.
-   2. Decrease the `MPToken.MPTAmount` by `Amount` of the depositor `MPToken` object for the `Vault.Asset`.
+7. If `Vault.Asset` is an `MPT`:
+   1. Increase the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
+   2. Decrease the `MPToken.MPTAmount` of the depositor `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
+
+> **Note:** $\Delta_{asset}$ is the actual asset amount transferred, which may be slightly less than the requested `Amount` due to scale rounding for IOU assets.
 
 #### 3.5.4 Invariants
 
-**TBD**
+1. The vault pseudo-account's asset balance must increase by a positive amount not exceeding the transaction `Amount`.
+2. Unless the depositor is the asset issuer, the depositor's asset balance must decrease by the same amount as the vault increases.
+3. The depositor's share `MPToken.MPTAmount` must increase by a positive amount.
+4. The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
+5. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by exactly the vault's asset balance increase.
+6. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.6 Transaction: `VaultWithdraw`
 
