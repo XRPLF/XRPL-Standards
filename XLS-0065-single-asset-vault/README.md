@@ -319,7 +319,18 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 
 #### 3.1.10 Invariants
 
-**TBD**
+1. `Vault.AssetsAvailable >= 0`.
+2. `Vault.AssetsTotal >= 0`.
+3. `Vault.AssetsMaximum >= 0`.
+4. `Vault.AssetsAvailable <= Vault.AssetsTotal`.
+5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`.
+6. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
+7. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
+8. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (the _pseudo-account_ is the issuer of vault shares).
+9. `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` field points to this vault.
+10. `Vault.Asset`, `Vault.Account`, and `Vault.ShareMPTID` are immutable once set.
+11. `Vault.LossUnrealized` can only be modified by lending protocol transactions.
+12. A `Vault` object is modified only by vault transaction types, and at most one `Vault` is modified per transaction.
 
 ### 3.2 Transaction: `VaultCreate`
 
