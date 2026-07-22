@@ -550,7 +550,7 @@ Any transaction with `tfInnerBatchTxn` should have a `Fee` of `0` (the fee will 
   - Has a `TxnSignature` field included (`temBAD_SIGNATURE`).
   - Has a non-empty `SigningPubKey` (`temBAD_REGKEY`).
   - Has a `Signers` field included (`temBAD_SIGNER`).
-  - Both or neither of `TicketSequence` and `Sequence` are set (`temSEQ_AND_TICKET`).
+  - `TicketSequence` is set and `Sequence` is non-zero, or `TicketSequence` is not set and `Sequence` is 0 (`temSEQ_AND_TICKET`).
 
 A standalone (non-batch) transaction that sets `tfInnerBatchTxn` is rejected. This prevents an attacker from submitting an unsigned inner transaction directly. A transaction applied via the batch path that does not set `tfInnerBatchTxn` is also rejected (this should not occur in practice; it indicates a programming error).
 
