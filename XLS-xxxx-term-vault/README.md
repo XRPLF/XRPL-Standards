@@ -27,35 +27,27 @@ This feature is gated behind `LendingProtocolV1_1`.
 
 ### 3.1. Enumerations
 
-```c++
-enum class VaultKind : uint8_t {
-    OpenEnded      = 0,   // default; existing behaviour
-    ClosedEndedFixed = 1, // fixed-term, phase-based
-};
+`VaultKind` (`uint8_t`):
 
-enum class VaultPhase : uint8_t {
-    Invalid      = 0,     // returned for open-ended vaults (no phases)
-    Subscription = 1,
-    Investment   = 2,
-    Redemption   = 3,
-};
-```
+| Name               | Value | Description                 |
+| ------------------ | :---: | --------------------------- |
+| `OpenEnded`        | `0`   | Default; existing behaviour |
+| `ClosedEnded`      | `1`   | Fixed-term, phase-based     |
+
+`VaultPhase` (`uint8_t`):
+
+| Name           | Value | Description                                |
+| -------------- | :---: | ------------------------------------------ |
+| `Invalid`      | `0`   | Returned for open-ended vaults (no phases) |
+| `Subscription` | `1`   | Raising capital                            |
+| `Investment`   | `2`   | Capital locked                             |
+| `Redemption`   | `3`   | Depositors exit at NAV                     |
 
 `VaultKind` is persisted on the ledger (in `sfVaultKind`). `VaultPhase` is **never stored**; it is derived at run time from the vault's kind, its `SubscriptionDate`, its `RedemptionDate`, and the parent ledger close time (see 3.4).
 
-### 3.2. New Serialized Fields
+### 3.2. Vault Phases
 
-| SField               | Type   | Notes                                                        |
-| -------------------- | ------ | ----------------------------------------------------------- |
-| `sfVaultKind`        | UINT8  | Next free UINT8 index. Stores a `VaultKind` value.          |
-| `sfSubscriptionDate` | UINT32 | Next free UINT32 index. Seconds since Ripple epoch.         |
-| `sfRedemptionDate`   | UINT32 | Next free UINT32 index. Seconds since Ripple epoch.         |
-
-> The exact numeric field codes MUST be assigned to currently-unused indices in
-> `sfields.macro` at implementation time; they are intentionally left as "next
-> free" here to avoid collisions with concurrent proposals.
-
-**Design note** The phases are derived from the vault's two immutable dates and the parent ledger close time - a closed-ended vault advances through them in one direction only:
+The phases are derived from the vault's two immutable dates (`SubscriptionDate`, `RedemptionDate`; see 3.3) and the parent ledger close time - a closed-ended vault advances through them in one direction only:
 
 - **Subscription** (before `SubscriptionDate`): deposits and withdrawals are open. Capital can enter and exit freely while the vault is still raising funds.
 - **Investment** (on/after `SubscriptionDate`, before `RedemptionDate`): both deposits and withdrawals are rejected. The vault is locked while capital is deployed into loans.
@@ -67,35 +59,23 @@ See 4.1 for how the phases behave over the vault's lifetime.
 
 The following fields are added to the existing `ltVAULT` ledger entry. All are `SoeOptional`/`SoeDefault` so pre-existing serialized vaults remain valid; open-ended vaults retain their existing behaviour.
 
-| Field Name         | Constant | Required     | Internal Type | Default   | Description                                                                                    |
-| ------------------ | -------- | ------------ | ------------- | --------- | --------------------------------------------------------------------------------------------- |
-| `VaultKind`        | Yes      | No           | UINT8         | `0`       | `VaultKind`. Absent/`0` means open-ended. Immutable after creation.                            |
-| `SubscriptionDate` | Yes      | Conditional  | UINT32        | N/A       | End of Subscription / start of Investment phase. REQUIRED iff `VaultKind == ClosedEndedFixed`. |
-| `RedemptionDate`   | Yes      | Conditional  | UINT32        | N/A       | Start of Redemption phase. REQUIRED iff `VaultKind == ClosedEndedFixed`.                       |
+| Field Name         | Constant | Required    | JSON Type | Internal Type | Default Value | Description                                                                                    |
+| ------------------ | :------: | :---------: | :-------: | :-----------: | :-----------: | --------------------------------------------------------------------------------------------- |
+| `VaultKind`        |   Yes    |     No      | `number`  |    `UINT8`    |      `0`      | `VaultKind`. Absent/`0` means open-ended. Immutable after creation.                            |
+| `SubscriptionDate` |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | End of Subscription / start of Investment phase. REQUIRED iff `VaultKind == ClosedEnded`.      |
+| `RedemptionDate`   |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | Start of Redemption phase. REQUIRED iff `VaultKind == ClosedEnded`.                            |
 
-**Field semantics.**
+### 3.4. Phase derivation
 
-- `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are **immutable**: they are set only by `VaultCreate` and MUST NOT be changed by `VaultSet` or any other transaction.
-- For a closed-ended vault, `SubscriptionDate` MUST be strictly greater than the ledger close time at creation and strictly less than `RedemptionDate`.
-- `SubscriptionDate` marks the end of the subscription period: on and after it, new deposits are rejected and the Investment phase begins. `RedemptionDate` marks the start of the Redemption phase, on and after which withdrawals are permitted. Both fields have no behavioural effect on open-ended vaults, for which `getVaultPhase` returns `Invalid`.
+A vault's phase is derived at run time and never stored. Let `now` be the parent ledger close time (seconds since the Ripple epoch). An open-ended vault has no phases and its phase is `Invalid`. A closed-ended vault's phase is determined by comparing `now` against its two immutable dates:
 
-### 3.4. Helper: `getVaultPhase`
+| Condition                                    | Phase          |
+| -------------------------------------------- | :------------: |
+| `now < SubscriptionDate`                     | `Subscription` |
+| `SubscriptionDate <= now < RedemptionDate`   | `Investment`   |
+| `now >= RedemptionDate`                       | `Redemption`   |
 
-```c++
-VaultPhase getVaultPhase(ReadView const& view, SLE::const_ref vault) 
-{
-    if (getVaultKind(vault) != VaultKind::ClosedEndedFixed)
-        return VaultPhase::Invalid;          // open-ended: no phases
-    now = view.parentCloseTime();            // seconds since Ripple epoch
-    if (now >= vault[sfRedemptionDate])
-        return VaultPhase::Redemption;
-    if (now >= vault[sfSubscriptionDate])
-        return VaultPhase::Investment;       // subscription closed, pre-redemption
-    return VaultPhase::Subscription;         // still raising capital
-}
-```
-
-`getVaultKind` mirrors `getVaultVersion`: it returns `OpenEnded` when `sfVaultKind` is absent, the decoded value when present and valid, and a distinct invalid sentinel otherwise.
+The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`; a present and recognised value decodes to that kind; any unrecognised value is treated as invalid.
 
 ### 3.5. Phase / Kind rules matrix
 
@@ -122,7 +102,7 @@ The Subscription and Investment columns are delimited by the immutable `Subscrip
 #### 3.6.1. `VaultCreate`
 
 - Accepts a new OPTIONAL field `sfVaultKind`. If absent, the vault is `OpenEnded` and behaviour is unchanged.
-- If `sfVaultKind == ClosedEndedFixed`:
+- If `sfVaultKind == ClosedEnded`:
   - `sfSubscriptionDate` and `sfRedemptionDate` are REQUIRED.
   - `SubscriptionDate >` ledger close time, otherwise `temMALFORMED`.
   - `SubscriptionDate < RedemptionDate`, otherwise `temMALFORMED`.
@@ -132,21 +112,16 @@ The Subscription and Investment columns are delimited by the immutable `Subscrip
 
 #### 3.6.2. `VaultDeposit`
 
-`preclaim` computes `getVaultPhase`. Regardless of vault kind, deposits are
-rejected when the phase is `Investment` or `Redemption`, returning
-`tecNO_PERMISSION`; they are permitted in `Subscription` and `Invalid`. Because
-`getVaultPhase` returns `Invalid` for open-ended vaults, they are never rejected
-and thus unaffected; closed-ended vaults are rejected in `Investment` and
-`Redemption`.
+A deposit is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment` or `Redemption`; it is permitted in `Subscription` and `Invalid`. Open-ended vaults have phase `Invalid`, so they are never rejected and remain unaffected; a closed-ended vault rejects deposits in `Investment` and `Redemption`.
 
 #### 3.6.3. `VaultWithdraw`
 
-`preclaim` computes `getVaultPhase`. Regardless of vault kind, withdrawals are rejected when the phase is `Investment`, returning `tecNO_PERMISSION`; they are permitted in `Subscription`, `Redemption`, and `Invalid`. Because `getVaultPhase` returns `Invalid` for open-ended vaults, they are always permitted and thus unaffected; closed-ended vaults are blocked only in `Investment`. The existing `AssetsAvailable` cap and share-pricing logic are unchanged.
+A withdrawal is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment`; it is permitted in `Subscription`, `Redemption`, and `Invalid`. Open-ended vaults have phase `Invalid`, so withdrawals are always permitted and remain unaffected; a closed-ended vault is blocked only in `Investment`. The existing `AssetsAvailable` cap and share-pricing logic are unchanged.
 
 #### 3.6.4. `LoanSet`
 
 - For closed-ended vaults (both the immediate and two-step flows):
-  - **Origination timing:** the vault MUST be before `RedemptionDate` (i.e. `getVaultPhase` is `Subscription` or `Investment`), else `tecNO_PERMISSION`. `LoanSet` is rejected on/after `RedemptionDate`; no new loans are allowed once Redemption begins.
+  - **Origination timing:** the vault MUST be before `RedemptionDate` (i.e. its phase is `Subscription` or `Investment`), else `tecNO_PERMISSION`. `LoanSet` is rejected on/after `RedemptionDate`; no new loans are allowed once Redemption begins.
   - **Maturity constraint:** the loan's maturity, `startDate + (paymentInterval × paymentTotal) + gracePeriod`, MUST be strictly before `RedemptionDate`, else `tecNO_PERMISSION`. A loan whose maturity falls on/after `RedemptionDate` is rejected, ensuring all repayments are received before depositors begin exiting.
 - `LoanSet` does not read or write any loan-tracking field on the vault; the vault remains unaware of individual loans.
 
@@ -180,9 +155,9 @@ and thus unaffected; closed-ended vaults are rejected in `Investment` and
 - `VaultKind`, `SubscriptionDate`, and `RedemptionDate` never change after creation.
 - For a closed-ended vault, `SubscriptionDate < RedemptionDate` always holds (enforced at creation).
 - A closed-ended vault's phase advances monotonically from Subscription to Investment to Redemption and never regresses, since both boundaries are immutable dates and the ledger close time only increases.
-- No `VaultDeposit` succeeds unless `getVaultPhase` is `Subscription` or `Invalid` (the latter being open-ended vaults, which are unaffected).
-- No `VaultWithdraw` succeeds when `getVaultPhase == Investment` (closed-ended).
-- No `LoanSet`/`LoanAccept` succeeds when `getVaultPhase == Redemption` (closed-ended).
+- No `VaultDeposit` succeeds unless the vault's phase is `Subscription` or `Invalid` (the latter being open-ended vaults, which are unaffected).
+- No `VaultWithdraw` succeeds when the vault's phase is `Investment` (closed-ended).
+- No `LoanSet`/`LoanAccept` succeeds when the vault's phase is `Redemption` (closed-ended).
 - No closed-ended `LoanSet` succeeds whose loan maturity falls on/after `RedemptionDate`.
 
 ## 4. Rationale
@@ -206,13 +181,13 @@ A date-driven `SubscriptionDate` keeps the vault entirely unaware of loans: the 
 ## 5. Backwards Compatibility
 
 - The feature is inert unless the `ClosedEndedVault` amendment is enabled. Ledger entries and transactions are unchanged for nodes that have not activated it.
-- **Open-ended vaults** retain their existing behaviour: `getVaultPhase` returns `Invalid`, so no deposit, withdrawal, or loan restriction is added.
+- **Open-ended vaults** retain their existing behaviour: their phase is `Invalid`, so no deposit, withdrawal, or loan restriction is added.
 - All new fields are `SoeOptional`, so existing serialised vaults deserialise unchanged.
 
 ## 6. Test Plan
 
 - **VaultCreate:** valid closed-ended creation; missing `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`; `SubscriptionDate` in the past returns `temMALFORMED`; `SubscriptionDate >= RedemptionDate` returns `temMALFORMED`; open-ended (or absent kind) with `SubscriptionDate` or `RedemptionDate` present returns `temMALFORMED`; unknown `VaultKind` returns `temMALFORMED`.
-- **Phase derivation:** `getVaultPhase` returns `Subscription` before `SubscriptionDate`, `Investment` on/after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` at/after `RedemptionDate`; open-ended returns `Invalid`.
+- **Phase derivation:** the vault's phase is `Subscription` before `SubscriptionDate`, `Investment` on/after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` at/after `RedemptionDate`; open-ended vaults are `Invalid`.
 - **VaultDeposit:** allowed in Subscription; rejected in Investment and Redemption; open-ended unaffected.
 - **VaultWithdraw:** allowed in Subscription and Redemption; rejected in Investment; open-ended unaffected; `AssetsAvailable` cap still applies.
 - **LoanSet:** rejected on/after `RedemptionDate`; rejected when loan maturity falls on/after `RedemptionDate`; permitted in Subscription and Investment when maturity is strictly before `RedemptionDate`.
