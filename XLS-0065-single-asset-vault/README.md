@@ -126,9 +126,9 @@ The `Vault` object supports the following flags:
 For the `Vault` object, `LEVersion` distinguishes the share-valuation and accounting behavior applied to the vault:
 
 - **Absent (default value `0`)**: The Vault was created before the `LendingProtocolV1_1` amendment was enabled, or otherwise predates ledger entry versioning. It uses the legacy, accrual-basis accounting described throughout this document and in [XLS-66](../XLS-0066-lending-protocol/README.md) — `AssetsTotal` includes accrued interest.
-- **`2`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` is principal-only (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
+- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` is principal-only (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
 
-Any Vault created once `LendingProtocolV1_1` is enabled is always assigned `LEVersion = 2` — cash-basis accounting is not optional or user-selectable at creation time. A future revision of the `Vault` ledger entry would increment `LEVersion` to `3`, and so on.
+Any Vault created once `LendingProtocolV1_1` is enabled is always assigned `LEVersion = 1` — cash-basis accounting is not optional or user-selectable at creation time. A future revision of the `Vault` ledger entry would increment `LEVersion` to `2`, and so on.
 
 #### 3.1.3 Pseudo-Account
 
@@ -332,7 +332,7 @@ Under the `LendingProtocolV1_1` amendment, `Vault.LEVersion` (see [3.1.2.2](#312
 - `LEVersion` absent (`0`, legacy/accrual-basis): `AssetsTotal` includes interest upfront, as accrued over the life of connected Loans. This is the pre-amendment behavior and continues unchanged for Vaults created before `LendingProtocolV1_1` was enabled.
 - `LEVersion = 2` (cash-basis): `AssetsTotal` is principal-only and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
 
-See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 2`.
+See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
 
 #### 3.1.8 Frozen Assets
 
@@ -429,7 +429,7 @@ _TBD_
 
 Under the `LendingProtocolV1_1` amendment, step 1 of [3.2.6](#326-state-changes) is amended; all other steps are unchanged:
 
-1. Create a new `Vault` ledger object, setting `Vault.LEVersion = 2` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
+1. Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
 
 #### 3.2.7 Invariants
 

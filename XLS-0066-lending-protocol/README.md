@@ -1091,7 +1091,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.8.5.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. Checks 19, and 20 of [3.8.5.2](#3852-protocol-level-failures) are replaced by the following (all other checks are unchanged); for a legacy (`LEVersion` absent) `Vault`, checks 19 and 20 of [3.8.5.2](#3852-protocol-level-failures) continue to apply unchanged:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. Checks 19, and 20 of [3.8.5.2](#3852-protocol-level-failures) are replaced by the following (all other checks are unchanged); for a legacy (`LEVersion` absent) `Vault`, checks 19 and 20 of [3.8.5.2](#3852-protocol-level-failures) continue to apply unchanged:
 
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
@@ -1132,7 +1132,7 @@ Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (
 
 ##### 3.8.6.1 State Changes (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only — neither tracks interest. Steps 6 and 7 of [3.8.6](#386-state-changes) are replaced by the following; all other steps are unchanged. For a legacy (`LEVersion` absent) `Vault`, steps 6 and 7 of [3.8.6](#386-state-changes) continue to apply unchanged, even while this amendment is enabled:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only — neither tracks interest. Steps 6 and 7 of [3.8.6](#386-state-changes) are replaced by the following; all other steps are unchanged. For a legacy (`LEVersion` absent) `Vault`, steps 6 and 7 of [3.8.6](#386-state-changes) continue to apply unchanged, even while this amendment is enabled:
 
 6. Update `Vault` object:
    - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
@@ -1274,7 +1274,7 @@ This transaction uses the standard transaction fee.
 
 ##### 3.10.4.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis), check 8 of [3.10.4.2](#31042-protocol-level-failures) is replaced by the following, consistent with the amended impairment amount in [3.10.5.1](#31051-state-changes-lendingprotocolv1_1) (all other checks are unchanged). For a legacy (`LEVersion` absent) `Vault`, check 8 of [3.10.4.2](#31042-protocol-level-failures) continues to apply unchanged:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis), check 8 of [3.10.4.2](#31042-protocol-level-failures) is replaced by the following, consistent with the amended impairment amount in [3.10.5.1](#31051-state-changes-lendingprotocolv1_1) (all other checks are unchanged). For a legacy (`LEVersion` absent) `Vault`, check 8 of [3.10.4.2](#31042-protocol-level-failures) continues to apply unchanged:
 
 8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + Loan.PrincipalOutstanding > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
@@ -1332,7 +1332,7 @@ Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (
 
 ##### 3.10.5.1 State Changes (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. The `DefaultAmount`, `LossUnrealized`, and `LossReversed` computations in items 1–3 of [3.10.5](#3105-state-changes) are replaced by the following, collapsing each to a single, unified principal-only amount (all other steps — including the `MinimumCover`/`DefaultCovered`/`VaultLoss` mechanics, the `CoverAvailable` drawdown, and the `Loan` object updates — are unchanged). For a legacy (`LEVersion` absent) `Vault`, items 1–3 of [3.10.5](#3105-state-changes) continue to apply unchanged, even while this amendment is enabled:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. The `DefaultAmount`, `LossUnrealized`, and `LossReversed` computations in items 1–3 of [3.10.5](#3105-state-changes) are replaced by the following, collapsing each to a single, unified principal-only amount (all other steps — including the `MinimumCover`/`DefaultCovered`/`VaultLoss` mechanics, the `CoverAvailable` drawdown, and the `Loan` object updates — are unchanged). For a legacy (`LEVersion` absent) `Vault`, items 1–3 of [3.10.5](#3105-state-changes) continue to apply unchanged, even while this amendment is enabled:
 
 1. If the `tfLoanDefault` flag is specified:
    - Compute `DefaultAmount = Loan.PrincipalOutstanding` (principal only, replacing `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`). This single `DefaultAmount` is used, as before, for the `Vault` (`VaultLoss`/`DefaultCovered`) and `LoanBroker.DebtTotal` updates, and for `Vault.LossUnrealized` if the Loan was impaired.
@@ -1348,7 +1348,7 @@ See [3.10.5.2](#31052-worked-example-pre--vs-post-lendingprotocolv1_1-loan-defau
 
 This example walks a single Loan through `LoanSet` → `LoanPay` → `LoanManage(tfLoanDefault)`, computing both the current (pre-amendment) and `LendingProtocolV1_1` (post-amendment) trajectories side by side. It uses the same figures as the [`LoanBroker` Accounting](#3110-accounting) and [First-Loss Capital](#3111-first-loss-capital) examples above, for continuity.
 
-"Pre-amendment" here describes a legacy `Vault` (`LEVersion` absent), and "post-amendment (`LendingProtocolV1_1`)" describes a cash-basis `Vault` (`LEVersion == 2`). Both trajectories can coexist side by side once the amendment is enabled, since `LEVersion` — not amendment activation alone — determines which accounting a given `Vault` follows; a legacy `Vault` never transitions to the post-amendment column, even after the amendment activates.
+"Pre-amendment" here describes a legacy `Vault` (`LEVersion` absent), and "post-amendment (`LendingProtocolV1_1`)" describes a cash-basis `Vault` (`LEVersion == 1`). Both trajectories can coexist side by side once the amendment is enabled, since `LEVersion` — not amendment activation alone — determines which accounting a given `Vault` follows; a legacy `Vault` never transitions to the post-amendment column, even after the amendment activates.
 
 **Initial State (before `LoanSet`)**
 
@@ -1555,7 +1555,7 @@ These transfers are performed according to the asset type:
 
 ##### 3.11.5.1 State Changes (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis), `valueChange` is removed entirely from the `LoanBroker` and `Vault` accounting — since neither `LoanBroker.DebtTotal` nor `Vault.AssetsTotal` tracks interest anymore (see [3.8.6.1](#3861-state-changes-lendingprotocolv1_1)), there is nothing left to reconcile for late payments, overpayments, or early full repayments. Steps 6 and 7 of [3.11.5](#3115-state-changes) are replaced by the following (all other steps, including the asset transfers in section 4, are unchanged). For a legacy (`LEVersion` absent) `Vault`, steps 6 and 7 of [3.11.5](#3115-state-changes) continue to apply unchanged, even while this amendment is enabled:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis), `valueChange` is removed entirely from the `LoanBroker` and `Vault` accounting — since neither `LoanBroker.DebtTotal` nor `Vault.AssetsTotal` tracks interest anymore (see [3.8.6.1](#3861-state-changes-lendingprotocolv1_1)), there is nothing left to reconcile for late payments, overpayments, or early full repayments. Steps 6 and 7 of [3.11.5](#3115-state-changes) are replaced by the following (all other steps, including the asset transfers in section 4, are unchanged). For a legacy (`LEVersion` absent) `Vault`, steps 6 and 7 of [3.11.5](#3115-state-changes) continue to apply unchanged, even while this amendment is enabled:
 
 6. **`LoanBroker` Updates**:
    - `LoanBroker.DebtTotal` is decreased by `principalPaid` only (`valueChange` does not apply) — the principal portion of the payment, from the same payment breakdown produced by [Appendix A-3](#a-3-loanpay-implementation-reference).
@@ -2162,7 +2162,7 @@ The `valueChange` is a critical accounting mechanism that represents the change 
 
 This `valueChange` is always split between the Vault (as a change in its net interest) and the Loan Broker (as a change in the `managementFee`).
 
-**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 2` (cash-basis)**, `valueChange` has no remaining purpose. For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be computed and used exactly as described above, even while this amendment is enabled. In the pseudo-code in [A-3.3](#a-33-pseudo-code) below, `valueChange` is never used to derive the `Loan` object's own state — `loan.totalValueOutstanding`, `loan.principalOutstanding`, `loan.managementFeeOutstanding`, and `loan.roundedState`/`loan.periodicPayment` are all computed independently, directly from the amortization/re-amortization formulas (see `compute_late_payment_interest`, `compute_full_payment`, and `try_overpayment`). `valueChange` is *only* ever returned so that [`LoanPay`](#3115-state-changes) can reconcile `Vault.AssetsTotal` and `LoanBroker.DebtTotal` against it. Since the amendment removes that reconciliation entirely (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)), `valueChange` becomes dead output under the amendment — an implementation only supporting `LendingProtocolV1_1` need not compute it at all. `principalPaid`, `interestPaid`, and `feePaid` are unaffected and continue to be computed and used exactly as described here.
+**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis)**, `valueChange` has no remaining purpose. For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be computed and used exactly as described above, even while this amendment is enabled. In the pseudo-code in [A-3.3](#a-33-pseudo-code) below, `valueChange` is never used to derive the `Loan` object's own state — `loan.totalValueOutstanding`, `loan.principalOutstanding`, `loan.managementFeeOutstanding`, and `loan.roundedState`/`loan.periodicPayment` are all computed independently, directly from the amortization/re-amortization formulas (see `compute_late_payment_interest`, `compute_full_payment`, and `try_overpayment`). `valueChange` is *only* ever returned so that [`LoanPay`](#3115-state-changes) can reconcile `Vault.AssetsTotal` and `LoanBroker.DebtTotal` against it. Since the amendment removes that reconciliation entirely (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)), `valueChange` becomes dead output under the amendment — an implementation only supporting `LendingProtocolV1_1` need not compute it at all. `principalPaid`, `interestPaid`, and `feePaid` are unaffected and continue to be computed and used exactly as described here.
 
 #### A-3.2.1 Regular Payment
 
