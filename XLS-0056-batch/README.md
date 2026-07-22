@@ -191,7 +191,7 @@ The standard transaction failure conditions still apply here.
    4. The batch signer is multi-signing:
       1. The account does not have a signer list (`tefNOT_MULTI_SIGNING`).
       2. The signing account is not a signer on the signer list (`tefBAD_SIGNATURE`).
-      3. The `SigningPubkey` field in a `SignerEntry` field is empty or not a valid public key (`tefBAD_SIGNATURE`).
+      3. The `SigningPubKey` field in a `SignerEntry` field is empty or not a valid public key (`tefBAD_SIGNATURE`).
       4. The signing account is signing with the account's master key, but the master key is disabled (`tefMASTER_DISABLED`).
       5. The `SigningPubKey` field is not the `Account`'s master or regular key (`tefBAD_SIGNATURE`).
       6. There is not enough signing weight to meet the `SignerQuorum` (`tefBAD_QUORUM`).
