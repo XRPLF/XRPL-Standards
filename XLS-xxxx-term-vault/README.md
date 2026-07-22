@@ -38,7 +38,7 @@ This feature is gated behind `LendingProtocolV1_1`.
 
 | Name           | Value | Description                                |
 | -------------- | :---: | ------------------------------------------ |
-| `Invalid`      | `0`   | Returned for open-ended vaults (no phases) |
+| `NoPhase`      | `0`   | Returned for open-ended vaults (no phases) |
 | `Subscription` | `1`   | Raising capital                            |
 | `Investment`   | `2`   | Capital locked                             |
 | `Redemption`   | `3`   | Depositors exit at NAV                     |
@@ -67,7 +67,7 @@ The following fields are added to the existing `ltVAULT` ledger entry. All are `
 
 ### 3.4. Phase derivation
 
-A vault's phase is derived at run time and never stored. Let `now` be the parent ledger close time (seconds since the Ripple epoch). An open-ended vault has no phases and its phase is `Invalid`. A closed-ended vault's phase is determined by comparing `now` against its two immutable dates:
+A vault's phase is derived at run time and never stored. Let `now` be the parent ledger close time (seconds since the Ripple epoch). An open-ended vault has no phases and its phase is `NoPhase`. A closed-ended vault's phase is determined by comparing `now` against its two immutable dates:
 
 | Condition                                    | Phase          |
 | -------------------------------------------- | :------------: |
@@ -112,11 +112,11 @@ The Subscription and Investment columns are delimited by the immutable `Subscrip
 
 #### 3.6.2. `VaultDeposit`
 
-A deposit is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment` or `Redemption`; it is permitted in `Subscription` and `Invalid`. Open-ended vaults have phase `Invalid`, so they are never rejected and remain unaffected; a closed-ended vault rejects deposits in `Investment` and `Redemption`.
+A deposit is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment` or `Redemption`; it is permitted in `Subscription` and `NoPhase`. Open-ended vaults have phase `NoPhase`, so they are never rejected and remain unaffected; a closed-ended vault rejects deposits in `Investment` and `Redemption`.
 
 #### 3.6.3. `VaultWithdraw`
 
-A withdrawal is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment`; it is permitted in `Subscription`, `Redemption`, and `Invalid`. Open-ended vaults have phase `Invalid`, so withdrawals are always permitted and remain unaffected; a closed-ended vault is blocked only in `Investment`. The existing `AssetsAvailable` cap and share-pricing logic are unchanged.
+A withdrawal is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4) is `Investment`; it is permitted in `Subscription`, `Redemption`, and `NoPhase`. Open-ended vaults have phase `NoPhase`, so withdrawals are always permitted and remain unaffected; a closed-ended vault is blocked only in `Investment`. The existing `AssetsAvailable` cap and share-pricing logic are unchanged.
 
 #### 3.6.4. `LoanSet`
 
@@ -155,7 +155,7 @@ A withdrawal is rejected with `tecNO_PERMISSION` when the vault's phase (see 3.4
 - `VaultKind`, `SubscriptionDate`, and `RedemptionDate` never change after creation.
 - For a closed-ended vault, `SubscriptionDate < RedemptionDate` always holds (enforced at creation).
 - A closed-ended vault's phase advances monotonically from Subscription to Investment to Redemption and never regresses, since both boundaries are immutable dates and the ledger close time only increases.
-- No `VaultDeposit` succeeds unless the vault's phase is `Subscription` or `Invalid` (the latter being open-ended vaults, which are unaffected).
+- No `VaultDeposit` succeeds unless the vault's phase is `Subscription` or `NoPhase` (the latter being open-ended vaults, which are unaffected).
 - No `VaultWithdraw` succeeds when the vault's phase is `Investment` (closed-ended).
 - No `LoanSet`/`LoanAccept` succeeds when the vault's phase is `Redemption` (closed-ended).
 - No closed-ended `LoanSet` succeeds whose loan maturity falls on/after `RedemptionDate`.
@@ -181,13 +181,13 @@ A date-driven `SubscriptionDate` keeps the vault entirely unaware of loans: the 
 ## 5. Backwards Compatibility
 
 - The feature is inert unless the `ClosedEndedVault` amendment is enabled. Ledger entries and transactions are unchanged for nodes that have not activated it.
-- **Open-ended vaults** retain their existing behaviour: their phase is `Invalid`, so no deposit, withdrawal, or loan restriction is added.
+- **Open-ended vaults** retain their existing behaviour: their phase is `NoPhase`, so no deposit, withdrawal, or loan restriction is added.
 - All new fields are `SoeOptional`, so existing serialised vaults deserialise unchanged.
 
 ## 6. Test Plan
 
 - **VaultCreate:** valid closed-ended creation; missing `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`; `SubscriptionDate` in the past returns `temMALFORMED`; `SubscriptionDate >= RedemptionDate` returns `temMALFORMED`; open-ended (or absent kind) with `SubscriptionDate` or `RedemptionDate` present returns `temMALFORMED`; unknown `VaultKind` returns `temMALFORMED`.
-- **Phase derivation:** the vault's phase is `Subscription` before `SubscriptionDate`, `Investment` on/after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` at/after `RedemptionDate`; open-ended vaults are `Invalid`.
+- **Phase derivation:** the vault's phase is `Subscription` before `SubscriptionDate`, `Investment` on/after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` at/after `RedemptionDate`; open-ended vaults are `NoPhase`.
 - **VaultDeposit:** allowed in Subscription; rejected in Investment and Redemption; open-ended unaffected.
 - **VaultWithdraw:** allowed in Subscription and Redemption; rejected in Investment; open-ended unaffected; `AssetsAvailable` cap still applies.
 - **LoanSet:** rejected on/after `RedemptionDate`; rejected when loan maturity falls on/after `RedemptionDate`; permitted in Subscription and Investment when maturity is strictly before `RedemptionDate`.
