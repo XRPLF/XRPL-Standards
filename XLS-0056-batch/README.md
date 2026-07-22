@@ -186,7 +186,7 @@ The standard transaction failure conditions still apply here.
    1. The public key for a signer is not a valid public key (`tefBAD_AUTH`). (This should be caught by preflight checks, but it is an additional backup check just in case).
    2. A `BatchSigners` entry references a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tefBAD_AUTH`). Pseudo-accounts cannot sign batch entries.
    3. The batch signer is single-signing:
-      1. The public key for a signer is not valid for the account ('`tefBAD_AUTH`).
+      1. The public key for a signer is not valid for the account (`tefBAD_AUTH`).
       2. The account is signing with the account's master key, but the master key is disabled (`tefMASTER_DISABLED`).
    4. The batch signer is multi-signing:
       1. The account does not have a signer list (`tefNOT_MULTI_SIGNING`).
