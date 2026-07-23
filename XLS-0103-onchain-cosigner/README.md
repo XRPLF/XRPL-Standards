@@ -910,7 +910,7 @@ All of these are derived from live ledger state at the queried ledger and are no
 The `ledger_entry` method gains a `transaction_proposal` argument for retrieving one `TransactionProposal`. It accepts either form:
 
 - a **string** — the `ProposalID` (§4.1) directly; or
-- an **object** identifying the proposal by its components, from which the server derives the ID: `account` (the target account) and exactly one of `seq` or `ticket` (the proposed transaction's `Sequence` or `TicketSequence`).
+- an **object** identifying the proposal by its components, from which the server derives the ID: `account` (the target account) and `seq_or_ticket` (the proposed transaction's `Sequence` or `TicketSequence`).
 
 **Example request** (by components):
 
@@ -919,7 +919,7 @@ The `ledger_entry` method gains a `transaction_proposal` argument for retrieving
   "command": "ledger_entry",
   "transaction_proposal": {
     "account": "rTARGET..........................",
-    "ticket": 1201
+    "seq_or_ticket": 1201
   },
   "ledger_index": "validated"
 }
