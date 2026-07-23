@@ -1363,6 +1363,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Amount: "20000000",
   Sequence: 3,
   Fee: "10",
+  Flags: 0x00080000, // tfSponsorCreatedAccount
   Sponsor: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
   SponsorFlags: 2,
 }
@@ -1382,6 +1383,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Amount: "20000000",
   Sequence: 3,
   Fee: "10",
+  Flags: 0x00080000, // tfSponsorCreatedAccount
   Sponsor: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
   SponsorFlags: 2,
   SponsorSignature: {
