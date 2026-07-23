@@ -253,11 +253,12 @@ Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signin
 
 All Data Verification failures return a `tem`-level error.
 
-1. `Transaction` is missing or is not a well-formed transaction (`temMALFORMED`).
-2. The proposed transaction has a non-empty `SigningPubKey` or includes a `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, or `BatchSigners` field (`temBAD_SIGNER`).
-3. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`); or carries the `tfInnerBatchTxn` flag (`temINVALID`).
-4. The proposed transaction specifies neither `Sequence` nor `TicketSequence`, or specifies both (`temSEQ_AND_TICKET`).
-5. `Expiration` is missing or zero (`temMALFORMED`).
+1. `Transaction` is missing or is not a well-formed transaction of a known type (`temMALFORMED`).
+2. The proposed transaction fails the **stateless format checks (preflight) for its own transaction type**. These are the same checks it would receive if submitted directly, except for signature-presence and signature-verification checks because the payload is intentionally unsigned (§4.2.1). If any check fails, the proposal returns the `tem` code from that transaction type's preflight. Running these checks at creation is cheap and rejects malformed payloads immediately, instead of letting an invalid proposal gather signatures only to fail later. State-dependent (preclaim) checks are **not** run here; they are evaluated when the completed transaction is submitted.
+3. The proposed transaction has a non-empty `SigningPubKey` or includes a `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, or `BatchSigners` field (`temBAD_SIGNER`).
+4. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`); or carries the `tfInnerBatchTxn` flag (`temINVALID`).
+5. The proposed transaction specifies neither `Sequence` nor `TicketSequence`, or specifies both (`temSEQ_AND_TICKET`).
+6. `Expiration` is missing or zero (`temMALFORMED`).
 
 #### 5.3.2. Protocol-Level Failures
 
@@ -359,7 +360,7 @@ All Data Verification failures return a `tem`-level error.
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
 2. The proposal is terminal — its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed (`tecEXPIRED`). This is a claimed-fee failure: no signature is recorded, but the terminal proposal is deleted as a side effect (see §6.4). This condition is checked before the authorization conditions below.
 3. `SigningFor` is not an account the proposed transaction requires a signature from — it is not the transaction's `Account`/`Delegate`, its `Counterparty`, its `Sponsor`, or (for a `Batch`) an account owning an inner transaction in `RawTransactions` (`tecNO_PERMISSION`).
-4. The submitting `Account` is not authorized to sign for `SigningFor`: in the single-signature case (`Account` == `SigningFor`) the `SigningPubKey` is not `SigningFor`'s master or regular key; in the multi-signature case (`Account` != `SigningFor`) `Account` is not a member of `SigningFor`'s applicable `SignerList` (`tecNO_PERMISSION`).
+4. The submitter is not authorized: for single-signing, `SigningPubKey` is not `SigningFor`'s master or regular key; for multi-signing, `Account` is not on `SigningFor`'s applicable `SignerList`, or `SigningPubKey` is not a valid key for `Account` (`tecNO_PERMISSION`).
 5. The contribution is already recorded — `Account` is already present in that destination, or a single-signature entry for `SigningFor` already exists (`tecDUPLICATE`). (The same `Account` may still sign for a different `SigningFor`.)
 6. The contribution conflicts with the existing authorization mode for `SigningFor` — a multi-signature share when a single-signature entry is already recorded, or vice versa (`tecNO_PERMISSION`).
 7. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array (`tecOVERSIZE`).
@@ -449,7 +450,13 @@ The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it sta
     "Fee": "10",
     "SigningPubKey": "",
     "Signers": [
-      { "Signer": { "Account": "rCEO............................", "SigningPubKey": "03AB...", "TxnSignature": "3045..." } }
+      {
+        "Signer": {
+          "Account": "rCEO............................",
+          "SigningPubKey": "03AB...",
+          "TxnSignature": "3045..."
+        }
+      }
     ]
   },
   "OwnerNode": "0000000000000000",
@@ -476,8 +483,20 @@ The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it sta
     "Fee": "10",
     "SigningPubKey": "",
     "Signers": [
-      { "Signer": { "Account": "rCEO............................", "SigningPubKey": "03AB...", "TxnSignature": "3045..." } },
-      { "Signer": { "Account": "rCFO............................", "SigningPubKey": "02DE...", "TxnSignature": "3044..." } }
+      {
+        "Signer": {
+          "Account": "rCEO............................",
+          "SigningPubKey": "03AB...",
+          "TxnSignature": "3045..."
+        }
+      },
+      {
+        "Signer": {
+          "Account": "rCFO............................",
+          "SigningPubKey": "02DE...",
+          "TxnSignature": "3044..."
+        }
+      }
     ]
   },
   "OwnerNode": "0000000000000000",
@@ -549,7 +568,13 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
     "Fee": "10",
     "SigningPubKey": "",
     "Signers": [
-      { "Signer": { "Account": "rBORROWERKEY....................", "SigningPubKey": "03BB...", "TxnSignature": "3045..." } }
+      {
+        "Signer": {
+          "Account": "rBORROWERKEY....................",
+          "SigningPubKey": "03BB...",
+          "TxnSignature": "3045..."
+        }
+      }
     ]
   },
   "OwnerNode": "0000000000000000",
@@ -590,9 +615,18 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
     "Fee": "10",
     "SigningPubKey": "",
     "Signers": [
-      { "Signer": { "Account": "rBORROWERKEY....................", "SigningPubKey": "03BB...", "TxnSignature": "3045..." } }
+      {
+        "Signer": {
+          "Account": "rBORROWERKEY....................",
+          "SigningPubKey": "03BB...",
+          "TxnSignature": "3045..."
+        }
+      }
     ],
-    "CounterpartySignature": { "SigningPubKey": "03CD...", "TxnSignature": "3047..." }
+    "CounterpartySignature": {
+      "SigningPubKey": "03CD...",
+      "TxnSignature": "3047..."
+    }
   },
   "OwnerNode": "0000000000000000",
   "PreviousTxnID": "E5E5000000000000000000000000000000000000000000000000000000000000",
@@ -621,9 +655,42 @@ A **multi-sign** lender would instead accumulate into `CounterpartySignature.Sig
     "Fee": "60",
     "SigningPubKey": "",
     "RawTransactions": [
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rOUTER..........................", "Destination": "rX..............................", "Amount": "1000000", "Flags": 1073741824, "Sequence": 501, "Fee": "0", "SigningPubKey": "" } },
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rBOB............................", "Destination": "rY..............................", "Amount": "2000000", "Flags": 1073741824, "Sequence": 88, "Fee": "0", "SigningPubKey": "" } },
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rCAROL..........................", "Destination": "rZ..............................", "Amount": "3000000", "Flags": 1073741824, "Sequence": 12, "Fee": "0", "SigningPubKey": "" } }
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rOUTER..........................",
+          "Destination": "rX..............................",
+          "Amount": "1000000",
+          "Flags": 1073741824,
+          "Sequence": 501,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      },
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rBOB............................",
+          "Destination": "rY..............................",
+          "Amount": "2000000",
+          "Flags": 1073741824,
+          "Sequence": 88,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      },
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rCAROL..........................",
+          "Destination": "rZ..............................",
+          "Amount": "3000000",
+          "Flags": 1073741824,
+          "Sequence": 12,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      }
     ]
   },
   "OwnerNode": "0000000000000000",
@@ -693,18 +760,74 @@ After all three, the outer account's quorum is met **and** every participant is 
     "Fee": "60",
     "SigningPubKey": "",
     "RawTransactions": [
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rOUTER..........................", "Destination": "rX..............................", "Amount": "1000000", "Flags": 1073741824, "Sequence": 501, "Fee": "0", "SigningPubKey": "" } },
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rBOB............................", "Destination": "rY..............................", "Amount": "2000000", "Flags": 1073741824, "Sequence": 88, "Fee": "0", "SigningPubKey": "" } },
-      { "RawTransaction": { "TransactionType": "Payment", "Account": "rCAROL..........................", "Destination": "rZ..............................", "Amount": "3000000", "Flags": 1073741824, "Sequence": 12, "Fee": "0", "SigningPubKey": "" } }
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rOUTER..........................",
+          "Destination": "rX..............................",
+          "Amount": "1000000",
+          "Flags": 1073741824,
+          "Sequence": 501,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      },
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rBOB............................",
+          "Destination": "rY..............................",
+          "Amount": "2000000",
+          "Flags": 1073741824,
+          "Sequence": 88,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      },
+      {
+        "RawTransaction": {
+          "TransactionType": "Payment",
+          "Account": "rCAROL..........................",
+          "Destination": "rZ..............................",
+          "Amount": "3000000",
+          "Flags": 1073741824,
+          "Sequence": 12,
+          "Fee": "0",
+          "SigningPubKey": ""
+        }
+      }
     ],
     "Signers": [
-      { "Signer": { "Account": "rOUTERKEY.......................", "SigningPubKey": "03A1...", "TxnSignature": "3045..." } }
+      {
+        "Signer": {
+          "Account": "rOUTERKEY.......................",
+          "SigningPubKey": "03A1...",
+          "TxnSignature": "3045..."
+        }
+      }
     ],
     "BatchSigners": [
-      { "BatchSigner": { "Account": "rBOB............................", "SigningPubKey": "02B2...", "TxnSignature": "3044..." } },
-      { "BatchSigner": { "Account": "rCAROL..........................", "Signers": [
-        { "Signer": { "Account": "rCAROLKEY.......................", "SigningPubKey": "03C3...", "TxnSignature": "3046..." } }
-      ] } }
+      {
+        "BatchSigner": {
+          "Account": "rBOB............................",
+          "SigningPubKey": "02B2...",
+          "TxnSignature": "3044..."
+        }
+      },
+      {
+        "BatchSigner": {
+          "Account": "rCAROL..........................",
+          "Signers": [
+            {
+              "Signer": {
+                "Account": "rCAROLKEY.......................",
+                "SigningPubKey": "03C3...",
+                "TxnSignature": "3046..."
+              }
+            }
+          ]
+        }
+      }
     ]
   },
   "OwnerNode": "0000000000000000",
