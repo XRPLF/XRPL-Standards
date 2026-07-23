@@ -147,10 +147,10 @@ The target account is the proposed transaction's `Account` field. It may differ 
 Signatures are stored directly in the proposed transaction's own native signature fields — there is no separate signatures field on the proposal object. This means a **complete** proposal requires no assembly at all: the `Transaction` field is already a valid, fully-signed transaction that can be copied verbatim and submitted. Where a signature lands depends on the proposed transaction type:
 
 - **Ordinary transaction:** into `Transaction.Signers`, the [standard multi-sign `Signers` array](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field), authorizing the target account (the transaction's `Account`) — or, if that account signs with its own key, directly into the proposed transaction's top-level `SigningPubKey`/`TxnSignature` (§6.1.2).
-- **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `Transaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `Transaction.BatchSigners`. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
+- **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `Transaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `Transaction.BatchSigners`, which holds at most 24 entries. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
 - **Auxiliary co-signature (e.g. [`LoanSet`, XLS-66](../XLS-0066-lending-protocol/README.md); sponsored transactions, [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)):** a transaction that requires a second party to co-authorize carries a dedicated signature field for that party — `CounterpartySignature` for the `Counterparty`, `SponsorSignature` for the `Sponsor`. Each party's signature goes into its own field (`SigningPubKey`/`TxnSignature` for a single-signature party, or a nested `Signers` array for a multi-signing one), while the transaction's own `Account` is authorized through `Transaction.Signers` as above. A transaction may require more than one. See §6.1.
 
-Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature to the correct location from its `SigningFor` account and submitter.
+Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). `BatchSigners` is also sorted by `Account` and holds at most 24 entries. **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature to the correct location from its `SigningFor` account and submitter.
 
 ### 4.3. Ownership
 
@@ -193,6 +193,7 @@ This removes only the leftover object. Signatures already copied off-ledger stay
 
 - `Expiration` is always present and non-zero.
 - Every entry in `Transaction.Signers` is unique by `Account`, and the array is sorted by `Account` with at most 32 entries.
+- Every entry in `Transaction.BatchSigners`, if present, is unique by `Account`, and the array is sorted by `Account` with at most 24 entries.
 - Every entry in `Transaction.Signers` is a signature that was cryptographically valid over the proposed `Transaction` (excluding its `Signers` field) at the time it was added.
 - Only the proposed `Transaction`'s signature fields change over the life of the proposal — its top-level `SigningPubKey`/`TxnSignature` (empty at creation; filled only when the target account signs with its own key, §6.1.2), `Signers`, `CounterpartySignature`, `SponsorSignature`, and `BatchSigners`. Every non-signature field is fixed at creation.
 
@@ -363,7 +364,7 @@ All Data Verification failures return a `tem`-level error.
 4. The submitter is not authorized: for single-signing, `SigningPubKey` is not `SigningFor`'s master or regular key; for multi-signing, `Account` is not on `SigningFor`'s applicable `SignerList`, or `SigningPubKey` is not a valid key for `Account` (`tecNO_PERMISSION`).
 5. The contribution is already recorded — `Account` is already present in that destination, or a single-signature entry for `SigningFor` already exists (`tecDUPLICATE`). (The same `Account` may still sign for a different `SigningFor`.)
 6. The contribution conflicts with the existing authorization mode for `SigningFor` — a multi-signature share when a single-signature entry is already recorded, or vice versa (`tecNO_PERMISSION`).
-7. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array (`tecOVERSIZE`).
+7. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
 
 ### 6.4. State Changes
 
@@ -887,12 +888,30 @@ Cancellation is only fully effective before a proposal is complete. If a quorum-
 
 ## 8. API
 
-To use a proposal, a signer or wallet has to fetch it and see how far along it is. This is done by extending the existing [`ledger_entry`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger_entry) method to retrieve a `TransactionProposal` by ID. (Listing the proposals an account owns is already covered by [`account_objects`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_objects) with a `TransactionProposal` type filter; no dedicated listing method is introduced.)
+To use a proposal, a signer or wallet has to fetch it and see how far along it is. This proposal introduces a new `transaction_proposal` RPC for retrieving one `TransactionProposal` and its computed status. (Listing the proposals an account owns is already covered by [`account_objects`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_objects) with a `TransactionProposal` type filter; no dedicated listing method is introduced.)
 
-The response returns, alongside the raw ledger fields, a few **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §12):
+### 8.1. RPC: `transaction_proposal`
+
+Returns a `TransactionProposal` by ID, or by the target account and proposed transaction sequence/ticket.
+
+#### 8.1.1. Request Fields
+
+| Field           | Type             | Required | Description                                                                                                                                           |
+| --------------- | ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proposal_id`   | string           | No       | The `ProposalID` (§4.1). Required unless `account` and `seq_or_ticket` are provided.                                                                  |
+| `account`       | string           | No       | The target account. Used with `seq_or_ticket` to derive the `ProposalID`. Required unless `proposal_id` is provided.                                  |
+| `seq_or_ticket` | number           | No       | The proposed transaction's `Sequence` or `TicketSequence`. Used with `account` to derive the `ProposalID`. Required unless `proposal_id` is provided. |
+| `ledger_hash`   | string           | No       | A 32-byte hex string identifying the ledger to query.                                                                                                 |
+| `ledger_index`  | string or number | No       | The ledger index, or a shortcut such as `"validated"`.                                                                                                |
+
+#### 8.1.2. Response Fields
+
+The response returns the raw ledger object plus **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §12):
 
 | Field           | Type   | Description                                                                                                   |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| `proposal_id`   | string | The ID of the `TransactionProposal`.                                                                          |
+| `proposal`      | object | The raw `TransactionProposal` ledger object.                                                                  |
 | `signed_weight` | number | Total weight of the signatures collected so far, scored against the target account's applicable `SignerList`. |
 | `quorum`        | number | The `SignerQuorum` the collected weight must reach (the target account's applicable quorum).                  |
 | `status`        | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                |
@@ -905,32 +924,30 @@ The response returns, alongside the raw ledger fields, a few **computed convenie
 
 `status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §13.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
 
-All of these are derived from live ledger state at the queried ledger and are not stored on the object.
+The computed fields are derived from live ledger state at the queried ledger and are not stored on the object.
 
-The `ledger_entry` method gains a `transaction_proposal` argument for retrieving one `TransactionProposal`. It accepts either form:
+#### 8.1.3. Failure Conditions
 
-- a **string** — the `ProposalID` (§4.1) directly; or
-- an **object** identifying the proposal by its components, from which the server derives the ID: `account` (the target account) and `seq_or_ticket` (the proposed transaction's `Sequence` or `TicketSequence`).
+- `proposal_id` is missing or malformed, and `account`/`seq_or_ticket` are not both present (`invalidParams`).
+- No proposal exists with the requested ID (`proposalNotFound`).
 
-**Example request** (by components):
+#### 8.1.4. Example Request
 
 ```json
 {
-  "command": "ledger_entry",
-  "transaction_proposal": {
-    "account": "rTARGET..........................",
-    "seq_or_ticket": 1201
-  },
+  "command": "transaction_proposal",
+  "account": "rTARGET..........................",
+  "seq_or_ticket": 1201,
   "ledger_index": "validated"
 }
 ```
 
-**Example response:**
+#### 8.1.5. Example Response
 
 ```json
 {
-  "index": "C1A2B3D4E5F6...............................",
-  "node": {
+  "proposal_id": "C1A2B3D4E5F6...............................",
+  "proposal": {
     "LedgerEntryType": "TransactionProposal",
     "Owner": "rPROPOSER........................",
     "Expiration": 800000000,
@@ -939,17 +956,15 @@ The `ledger_entry` method gains a `transaction_proposal` argument for retrieving
       "Account": "rTARGET..........................",
       "TicketSequence": 1201,
       "...": "..."
-    },
-    "signed_weight": 3,
-    "quorum": 6,
-    "status": "pending"
+    }
   },
+  "signed_weight": 3,
+  "quorum": 6,
+  "status": "pending",
   "ledger_index": 12345678,
   "validated": true
 }
 ```
-
-If no such proposal exists, the method returns `entryNotFound`, as it does for any other entry type.
 
 ## 9. Rationale
 
