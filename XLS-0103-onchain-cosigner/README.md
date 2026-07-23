@@ -108,7 +108,7 @@ where `Account` and `SeqOrTicket` are taken from the **proposed transaction**: `
 
 Since the ID depends only on the target account and its `Sequence`/`TicketSequence`, any ordinary transaction that consumes them lets the ledger rebuild the ID and delete the stale proposal (§4.5).
 
-The trade-off: only **one** live proposal can exist per `(target account, sequence/ticket)`. A second `TransactionProposalCreate` for the same pair fails with `tecDUPLICATE` (§5.3.2), whatever its payload or proposer. Only one of them could ever execute anyway, so this costs nothing in practice — and a proposer wanting several concurrent proposals just uses a different `TicketSequence` for each (§8.2).
+The trade-off: only **one** live proposal can exist per `(target account, sequence/ticket)`. A second `TransactionProposalCreate` for the same pair fails with `tecDUPLICATE` (§5.3.2), whatever its payload or proposer. Only one of them could ever execute anyway, so this costs nothing in practice — and a proposer wanting several concurrent proposals just uses a different `TicketSequence` for each (§9.2).
 
 ### 4.2. Fields
 
@@ -132,7 +132,7 @@ The trade-off: only **one** live proposal can exist per `(target account, sequen
 The proposed transaction:
 
 - **Must** be submitted unsigned: at creation its `SigningPubKey` field must be an empty string (`""`), and its `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, and (for a `Batch`) `BatchSigners` fields must be omitted. (Fields that _define_ an auxiliary party — e.g. `Counterparty`, or `Sponsor`/`SponsorFlags` — are ordinary payload fields and must be present at creation if used; only the signature containers are collected on-chain.) This is the exact canonical form over which signers produce their signatures; the ledger populates the signature fields as they arrive. If it is a `Batch`, its `RawTransactions` must follow the XLS-56 rules for inner transactions (each unsigned, with the `tfInnerBatchTxn` flag).
-- **Must** specify either a `Sequence` or a `TicketSequence` for its target account. Using a `TicketSequence` is **RECOMMENDED**, as it decouples the proposed transaction from the target account's live sequence and avoids the "restart the round" problem (see §8.2).
+- **Must** specify either a `Sequence` or a `TicketSequence` for its target account. Using a `TicketSequence` is **RECOMMENDED**, as it decouples the proposed transaction from the target account's live sequence and avoids the "restart the round" problem (see §9.2).
 - **Must** carry a `Fee`. The proposed transaction's fee is paid by the **target account** (the proposed transaction's `Account`) when the completed transaction is submitted.
 - **Must** be a transaction that can be independently multi-signed and submitted through the ordinary path. In particular it **must not** be:
   - a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel` (no nesting of proposals);
@@ -150,7 +150,7 @@ Signatures are stored directly in the proposed transaction's own native signatur
 - **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `Transaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `Transaction.BatchSigners`. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
 - **Auxiliary co-signature (e.g. [`LoanSet`, XLS-66](../XLS-0066-lending-protocol/README.md); sponsored transactions, [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)):** a transaction that requires a second party to co-authorize carries a dedicated signature field for that party — `CounterpartySignature` for the `Counterparty`, `SponsorSignature` for the `Sponsor`. Each party's signature goes into its own field (`SigningPubKey`/`TxnSignature` for a single-signature party, or a nested `Signers` array for a multi-signing one), while the transaction's own `Account` is authorized through `Transaction.Signers` as above. A transaction may require more than one. See §6.1.
 
-Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §8.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature to the correct location from its `SigningFor` account and submitter.
+Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature to the correct location from its `SigningFor` account and submitter.
 
 ### 4.3. Ownership
 
@@ -185,7 +185,7 @@ A terminal proposal stops accepting new signatures and exists in ledger state on
 - **Incidental cleanup by a late signer:** a `TransactionProposalSign` submitted against a terminal proposal **fails** with `tecEXPIRED` — its intended action (recording a signature) cannot happen — but, as a side effect of that claimed-fee result, it deletes the terminal proposal and releases the reserve (see §6.4).
 - **Automatic cleanup on sequence consumption:** whenever the **target account** applies a transaction that consumes a `Sequence` or `TicketSequence`, the ledger looks up `hash(<space key>, Account, <consumed value>)` and, if a proposal exists there, deletes it and refunds the `Owner`'s reserve. This catches both the proposal's own completed transaction running and the account spending that `Sequence`/`TicketSequence` on something else — either way the proposal can no longer execute, so it is cleaned up for free (§4.1). A proposal whose `Sequence`/`TicketSequence` is never consumed is cleaned up on expiry instead.
 
-This removes only the leftover object. Signatures already copied off-ledger stay valid and submittable until the `Sequence`/`TicketSequence` is consumed (§12.4).
+This removes only the leftover object. Signatures already copied off-ledger stay valid and submittable until the `Sequence`/`TicketSequence` is consumed (§13.4).
 
 **Account Deletion Blocker:** Yes. A `TransactionProposal` object must be deleted before its owner account can be deleted.
 
@@ -853,7 +853,7 @@ Deletes a `TransactionProposal` object and releases the owner's reserve.
 - **Non-terminal proposal:** Only the **owner** (the proposal's `Owner`, i.e. the proposer) may cancel.
 - **Terminal proposal:** **Any** account may cancel, to clean up the object and release the owner's reserve.
 
-Cancellation is only fully effective before a proposal is complete. If a quorum-weight of valid signatures has already been collected, an observer may have copied them and can still submit the completed transaction even after the proposal object is gone; see §12.4.
+Cancellation is only fully effective before a proposal is complete. If a quorum-weight of valid signatures has already been collected, an observer may have copied them and can still submit the completed transaction even after the proposal object is gone; see §13.4.
 
 ### 7.3. Failure Conditions
 
@@ -885,79 +885,11 @@ Cancellation is only fully effective before a proposal is complete. If a quorum-
 }
 ```
 
-## 8. Rationale
-
-### 8.1. Why collect signatures on-ledger
-
-The problem multi-sign users actually face is not the cryptography of signing — it is coordination: sharing the exact payload, gathering signatures, and getting them submitted without a trusted middleman. On-Chain Cosigner keeps the standard multi-sign signatures but moves their collection point from a coordinator's inbox to an immutable ledger object. Every signer signs the same immutable payload; every signature is validated on arrival; and the collected set is always available to everyone. This removes the coordinator as a single point of failure — there is no blob to lose, no blob to swap, and, because the collected set is a standard multi-signed transaction, anyone can submit it.
-
-### 8.2. Solving the auto-fill problem with Tickets
-
-Standard multi-sign forces every field — including `Sequence` and `LastLedgerSequence` — to be fixed before the first signature, so a slow signing round can render the transaction permanently unsubmittable and force a restart. On-Chain Cosigner addresses this in two ways. First, the collection window is bounded by the proposal's own `Expiration`, so a slow round expires cleanly instead of leaving an unusable half-signed blob in someone's inbox; the proposed transaction's `LastLedgerSequence` (optional) separately bounds the _submission_ window. Second, using a `TicketSequence` for the proposed transaction (recommended) decouples the payload from the target account's live sequence number, so other activity on the target account during the signing round does not invalidate the proposal.
-
-### 8.3. How quorum is enforced
-
-Quorum is never evaluated by a bespoke rule in this feature. Each signature is validated against the target account's `SignerList` when it is added (so garbage cannot accumulate), and the completed transaction is validated again by the existing multi-sign machinery when it is finally submitted. Both checks use the account's live `SignerList`, so the executed action always reflects the account's **current** authority model — including per-transaction-type lists resolved from the proposed transaction's type, exactly as in ordinary multi-sign under [XLS-49 (Multiple Signer Lists)](../XLS-0049-multiple-signer-lists/README.md).
-
-### 8.4. Why there is no execution transaction
-
-Because signatures are collected directly into the proposed transaction's own `Signers` field, a complete proposal _is_ a fully-signed multi-sign transaction waiting to be submitted — no assembly step exists to get wrong. Adding a dedicated on-ledger execute step (a fourth transaction, or auto-execution inside `TransactionProposalSign`) would duplicate logic the ledger already has and would couple execution to a specific submitter or to the moment a particular signature lands. Instead, execution reuses the ordinary submission path and any account may perform it. Proposal and execution stay decoupled — deleting the proposal does not revoke already-collected signatures (§12.4) — but the object is not left stranded: running the completed transaction consumes the target account's `Sequence`/`TicketSequence`, which auto-deletes the proposal (§4.5).
-
-## 9. Composability
-
-- **Batch (XLS-56):** The proposed transaction may be a `Batch`, enabling multi-account, atomic, multi-signed settlement (e.g. end-of-day repo netting, flash-style capital operations). The outer account is authorized by `SigningFor` = the outer account (into `Transaction.Signers`); each participant account by `SigningFor` = that participant — single-signature (its own key) or multi-sign (§6.1). A signer authorized on several of the batch's accounts submits one `TransactionProposalSign` per account, since each signature is bound to its owning account. Once every participant's requirement is met the completed batch executes atomically. This is the primary motivating case for On-Chain Cosigner, since multi-account Batches otherwise require the most off-chain signature coordination.
-- **Lending protocols:** A borrower can post a `LoanSet` (or equivalent) as a proposal; the lender signs on-chain as counterparty (`SigningFor` = the lender, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `CounterpartySignature` field, while the borrower's account is authorized through `Transaction.Signers`. This turns loan origination into a trustless, asynchronous flow with no synchronous coordination.
-- **Sponsored fees & reserves (XLS-68):** A user posts a transaction carrying `Sponsor`/`SponsorFlags`; the sponsor signs on-chain (`SigningFor` = the sponsor, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `SponsorSignature` field, co-authorizing the fee/reserve sponsorship. This is the same auxiliary-co-signature mechanism used for a `LoanSet` counterparty, and the two can be collected on the same proposal (e.g. a sponsored `LoanSet`).
-- **Multiple Signer Lists (XLS-49):** Per-transaction-type signer lists are honored automatically, since both the per-signature check and the final submission use standard multi-sign resolution for the proposed transaction's type.
-
-## 10. Backwards Compatibility
-
-This proposal is purely additive: it introduces one new ledger entry type and three new transaction types, all gated behind the `Cosigner` amendment. Existing multi-sign, `SignerListSet`, and off-chain signing workflows are unaffected and continue to function. Because a completed proposal is submitted through the ordinary multi-sign path, the multi-sign validation rules are unchanged. The one addition to the common path is a cleanup check: when any account consumes a `Sequence`/`TicketSequence`, the ledger removes a matching `TransactionProposal` if one exists (§4.5). Accounts that do not use On-Chain Cosigner are not impacted.
-
-## 11. Open Questions
-
-- **Completion signalling:** Should the ledger set a convenience flag (or expose an RPC field) marking a proposal "complete" once collected weight reaches quorum, so wallets need not join against the `SignerList` themselves?
-- **Reducing the initial construction burden:** Can the initial proposed-transaction construction be simplified further, beyond the Ticket-based approach in §8.2?
-- **Revocation:** Should there be a first-class way to revoke a completed proposal's signatures on-ledger (beyond invalidating the `Sequence`/`Ticket`), given that cancellation alone does not prevent submission of already-collected signatures (§12.4)?
-- **Recurring / standing orders:** Use Case 7 (recurring allowances and treasury stipends) suggests a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
-
-## 12. Security Considerations
-
-### 12.1. Authority derives solely from the collected signatures
-
-The completed transaction is authorized entirely by the multi-signatures collected on-ledger and validated against the applicable `SignerList`(s) — never by the identity of the account that finally submits it. Submission grants no authority the collected signatures did not already confer, so anyone may submit. A `TransactionProposalSign`, by contrast, must be posted by the signer itself — the submitting `Account` is the key holder (its own key when signing single-signature, or the `SignerList` member when contributing a multi-sign share for `SigningFor`) — which ties each collected signature to a deliberate on-ledger act by that signer.
-
-### 12.2. Immutable payload
-
-The proposed transaction is fixed at creation and cannot be altered by any subsequent transaction. Signers therefore always sign exactly what is stored, eliminating the manipulation risk of a coordinator presenting different payloads to different signers.
-
-### 12.3. Every collected signature is pre-validated
-
-Each `TransactionProposalSign` is rejected unless the supplied signature is cryptographically valid over the immutable proposed transaction and the submitter is authorized for the `SigningFor` account (its own key, or a member of its applicable `SignerList`). This prevents an attacker from polluting a proposal with junk entries and guarantees that a complete proposal will pass standard multi-sign validation at submission.
-
-### 12.4. Cancellation does not revoke already-collected signatures
-
-This is the central security consideration of the copy-and-submit model. The proposal object is a bulletin board, not an execution gate: once a quorum-weight of valid signatures has been collected, any observer may have copied them, and those signatures remain valid regardless of whether the proposal object still exists. Cancelling or expiring the proposal frees the reserve but does **not** guarantee the transaction will not execute. To positively prevent execution of a completed (or nearly-completed) proposal, the target account must invalidate the proposed transaction's `Sequence`/`TicketSequence` (e.g. consume the `Ticket` or advance the account `Sequence`) and/or rely on its `LastLedgerSequence` window elapsing. Architects and wallets should surface this clearly.
-
-### 12.5. Stale signatures under SignerList changes
-
-Because both the per-signature check and the final submission validate against the live `SignerList`, removing a signer or raising the quorum while a proposal is pending is honored: a removed signer's contribution no longer counts toward quorum at submission. Conversely, lowering the quorum can make a previously-incomplete set sufficient. Modifying an account's `SignerList` therefore affects all pending proposals against that account.
-
-### 12.6. Denial-of-service and reserve pressure
-
-Each proposal consumes an elevated flat owner reserve (§4.4) held against the `Owner` — higher than a typical ledger entry, and higher still for a `Batch` — pricing the larger state burden and disincentivizing spam. Because every appended signature must be valid, an attacker cannot inflate a proposal with junk. Built-in expiry ensures abandoned proposals can always be cleaned up (by anyone, once terminal) so they do not accumulate indefinitely in ledger state.
-
-Because anyone may propose against any account and there is one slot per `(target account, sequence/ticket)` (§4.1), an attacker could **squat** a slot the real proposer wanted, blocking it with `tecDUPLICATE`. Each attempt costs a full reserve, and using a `TicketSequence` (§8.2) gives the honest proposer far more slots than an attacker could block.
-
-### 12.7. Fee accountability
-
-The proposed transaction's fee is paid by the target account when the completed transaction is submitted, consistent with the target account being the party that authorized the action via its signers. Each `TransactionProposalCreate`, `TransactionProposalSign`, and `TransactionProposalCancel` pays its own fee from its submitter.
-
-## 13. API
+## 8. API
 
 To use a proposal, a signer or wallet has to fetch it and see how far along it is. This is done by extending the existing [`ledger_entry`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger_entry) method to retrieve a `TransactionProposal` by ID. (Listing the proposals an account owns is already covered by [`account_objects`](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/account_objects) with a `TransactionProposal` type filter; no dedicated listing method is introduced.)
 
-The response returns, alongside the raw ledger fields, a few **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §11):
+The response returns, alongside the raw ledger fields, a few **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §12):
 
 | Field           | Type   | Description                                                                                                   |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
@@ -971,7 +903,7 @@ The response returns, alongside the raw ledger fields, a few **computed convenie
 - **`complete`** — every signing requirement is satisfied (quorum, plus any required `BatchSigners`/auxiliary co-signatures), so the stored `Transaction` is ready to copy and submit (§6.5).
 - **`expired`** — the proposal is terminal (§4.5): its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed. It no longer accepts signatures and can be cleaned up by anyone.
 
-`status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §12.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
+`status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §13.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
 
 All of these are derived from live ledger state at the queried ledger and are not stored on the object.
 
@@ -1019,6 +951,74 @@ The `ledger_entry` method gains a `transaction_proposal` argument for retrieving
 
 If no such proposal exists, the method returns `entryNotFound`, as it does for any other entry type.
 
+## 9. Rationale
+
+### 9.1. Why collect signatures on-ledger
+
+The problem multi-sign users actually face is not the cryptography of signing — it is coordination: sharing the exact payload, gathering signatures, and getting them submitted without a trusted middleman. On-Chain Cosigner keeps the standard multi-sign signatures but moves their collection point from a coordinator's inbox to an immutable ledger object. Every signer signs the same immutable payload; every signature is validated on arrival; and the collected set is always available to everyone. This removes the coordinator as a single point of failure — there is no blob to lose, no blob to swap, and, because the collected set is a standard multi-signed transaction, anyone can submit it.
+
+### 9.2. Solving the auto-fill problem with Tickets
+
+Standard multi-sign forces every field — including `Sequence` and `LastLedgerSequence` — to be fixed before the first signature, so a slow signing round can render the transaction permanently unsubmittable and force a restart. On-Chain Cosigner addresses this in two ways. First, the collection window is bounded by the proposal's own `Expiration`, so a slow round expires cleanly instead of leaving an unusable half-signed blob in someone's inbox; the proposed transaction's `LastLedgerSequence` (optional) separately bounds the _submission_ window. Second, using a `TicketSequence` for the proposed transaction (recommended) decouples the payload from the target account's live sequence number, so other activity on the target account during the signing round does not invalidate the proposal.
+
+### 9.3. How quorum is enforced
+
+Quorum is never evaluated by a bespoke rule in this feature. Each signature is validated against the target account's `SignerList` when it is added (so garbage cannot accumulate), and the completed transaction is validated again by the existing multi-sign machinery when it is finally submitted. Both checks use the account's live `SignerList`, so the executed action always reflects the account's **current** authority model — including per-transaction-type lists resolved from the proposed transaction's type, exactly as in ordinary multi-sign under [XLS-49 (Multiple Signer Lists)](../XLS-0049-multiple-signer-lists/README.md).
+
+### 9.4. Why there is no execution transaction
+
+Because signatures are collected directly into the proposed transaction's own `Signers` field, a complete proposal _is_ a fully-signed multi-sign transaction waiting to be submitted — no assembly step exists to get wrong. Adding a dedicated on-ledger execute step (a fourth transaction, or auto-execution inside `TransactionProposalSign`) would duplicate logic the ledger already has and would couple execution to a specific submitter or to the moment a particular signature lands. Instead, execution reuses the ordinary submission path and any account may perform it. Proposal and execution stay decoupled — deleting the proposal does not revoke already-collected signatures (§13.4) — but the object is not left stranded: running the completed transaction consumes the target account's `Sequence`/`TicketSequence`, which auto-deletes the proposal (§4.5).
+
+## 10. Composability
+
+- **Batch (XLS-56):** The proposed transaction may be a `Batch`, enabling multi-account, atomic, multi-signed settlement (e.g. end-of-day repo netting, flash-style capital operations). The outer account is authorized by `SigningFor` = the outer account (into `Transaction.Signers`); each participant account by `SigningFor` = that participant — single-signature (its own key) or multi-sign (§6.1). A signer authorized on several of the batch's accounts submits one `TransactionProposalSign` per account, since each signature is bound to its owning account. Once every participant's requirement is met the completed batch executes atomically. This is the primary motivating case for On-Chain Cosigner, since multi-account Batches otherwise require the most off-chain signature coordination.
+- **Lending protocols:** A borrower can post a `LoanSet` (or equivalent) as a proposal; the lender signs on-chain as counterparty (`SigningFor` = the lender, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `CounterpartySignature` field, while the borrower's account is authorized through `Transaction.Signers`. This turns loan origination into a trustless, asynchronous flow with no synchronous coordination.
+- **Sponsored fees & reserves (XLS-68):** A user posts a transaction carrying `Sponsor`/`SponsorFlags`; the sponsor signs on-chain (`SigningFor` = the sponsor, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `SponsorSignature` field, co-authorizing the fee/reserve sponsorship. This is the same auxiliary-co-signature mechanism used for a `LoanSet` counterparty, and the two can be collected on the same proposal (e.g. a sponsored `LoanSet`).
+- **Multiple Signer Lists (XLS-49):** Per-transaction-type signer lists are honored automatically, since both the per-signature check and the final submission use standard multi-sign resolution for the proposed transaction's type.
+
+## 11. Backwards Compatibility
+
+This proposal is purely additive: it introduces one new ledger entry type and three new transaction types, all gated behind the `Cosigner` amendment. Existing multi-sign, `SignerListSet`, and off-chain signing workflows are unaffected and continue to function. Because a completed proposal is submitted through the ordinary multi-sign path, the multi-sign validation rules are unchanged. The one addition to the common path is a cleanup check: when any account consumes a `Sequence`/`TicketSequence`, the ledger removes a matching `TransactionProposal` if one exists (§4.5). Accounts that do not use On-Chain Cosigner are not impacted.
+
+## 12. Open Questions
+
+- **Completion signalling:** Should the ledger set a convenience flag (or expose an RPC field) marking a proposal "complete" once collected weight reaches quorum, so wallets need not join against the `SignerList` themselves?
+- **Reducing the initial construction burden:** Can the initial proposed-transaction construction be simplified further, beyond the Ticket-based approach in §9.2?
+- **Revocation:** Should there be a first-class way to revoke a completed proposal's signatures on-ledger (beyond invalidating the `Sequence`/`Ticket`), given that cancellation alone does not prevent submission of already-collected signatures (§13.4)?
+- **Recurring / standing orders:** Use Case 7 (recurring allowances and treasury stipends) suggests a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
+
+## 13. Security Considerations
+
+### 13.1. Authority derives solely from the collected signatures
+
+The completed transaction is authorized entirely by the multi-signatures collected on-ledger and validated against the applicable `SignerList`(s) — never by the identity of the account that finally submits it. Submission grants no authority the collected signatures did not already confer, so anyone may submit. A `TransactionProposalSign`, by contrast, must be posted by the signer itself — the submitting `Account` is the key holder (its own key when signing single-signature, or the `SignerList` member when contributing a multi-sign share for `SigningFor`) — which ties each collected signature to a deliberate on-ledger act by that signer.
+
+### 13.2. Immutable payload
+
+The proposed transaction is fixed at creation and cannot be altered by any subsequent transaction. Signers therefore always sign exactly what is stored, eliminating the manipulation risk of a coordinator presenting different payloads to different signers.
+
+### 13.3. Every collected signature is pre-validated
+
+Each `TransactionProposalSign` is rejected unless the supplied signature is cryptographically valid over the immutable proposed transaction and the submitter is authorized for the `SigningFor` account (its own key, or a member of its applicable `SignerList`). This prevents an attacker from polluting a proposal with junk entries and guarantees that a complete proposal will pass standard multi-sign validation at submission.
+
+### 13.4. Cancellation does not revoke already-collected signatures
+
+This is the central security consideration of the copy-and-submit model. The proposal object is a bulletin board, not an execution gate: once a quorum-weight of valid signatures has been collected, any observer may have copied them, and those signatures remain valid regardless of whether the proposal object still exists. Cancelling or expiring the proposal frees the reserve but does **not** guarantee the transaction will not execute. To positively prevent execution of a completed (or nearly-completed) proposal, the target account must invalidate the proposed transaction's `Sequence`/`TicketSequence` (e.g. consume the `Ticket` or advance the account `Sequence`) and/or rely on its `LastLedgerSequence` window elapsing. Architects and wallets should surface this clearly.
+
+### 13.5. Stale signatures under SignerList changes
+
+Because both the per-signature check and the final submission validate against the live `SignerList`, removing a signer or raising the quorum while a proposal is pending is honored: a removed signer's contribution no longer counts toward quorum at submission. Conversely, lowering the quorum can make a previously-incomplete set sufficient. Modifying an account's `SignerList` therefore affects all pending proposals against that account.
+
+### 13.6. Denial-of-service and reserve pressure
+
+Each proposal consumes an elevated flat owner reserve (§4.4) held against the `Owner` — higher than a typical ledger entry, and higher still for a `Batch` — pricing the larger state burden and disincentivizing spam. Because every appended signature must be valid, an attacker cannot inflate a proposal with junk. Built-in expiry ensures abandoned proposals can always be cleaned up (by anyone, once terminal) so they do not accumulate indefinitely in ledger state.
+
+Because anyone may propose against any account and there is one slot per `(target account, sequence/ticket)` (§4.1), an attacker could **squat** a slot the real proposer wanted, blocking it with `tecDUPLICATE`. Each attempt costs a full reserve, and using a `TicketSequence` (§9.2) gives the honest proposer far more slots than an attacker could block.
+
+### 13.7. Fee accountability
+
+The proposed transaction's fee is paid by the target account when the completed transaction is submitted, consistent with the target account being the party that authorized the action via its signers. Each `TransactionProposalCreate`, `TransactionProposalSign`, and `TransactionProposalCancel` pays its own fee from its submitter.
+
 # Appendix
 
 ## Appendix A: FAQ
@@ -1041,7 +1041,7 @@ There is no on-ledger execute step. Signatures accumulate inside the proposed tr
 
 ### A.5: Does cancelling a proposal guarantee it won't execute?
 
-Only if a quorum-weight of valid signatures has not yet been collected. Once enough signatures exist on-ledger, someone may have copied them and can still submit the completed transaction. To positively block execution, invalidate the proposed transaction's `Sequence`/`Ticket` or let its `LastLedgerSequence` elapse. See §12.4.
+Only if a quorum-weight of valid signatures has not yet been collected. Once enough signatures exist on-ledger, someone may have copied them and can still submit the completed transaction. To positively block execution, invalidate the proposed transaction's `Sequence`/`Ticket` or let its `LastLedgerSequence` elapse. See §13.4.
 
 ### A.6: What happens if quorum is never reached before expiry?
 
