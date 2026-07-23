@@ -291,7 +291,11 @@ Note that this transaction will fail if:
 
 An account should never be able to send a transaction on behalf of another account without a valid `Delegate` object.
 
-## 7. Security
+## 7. Rationale
+
+This proposal is motivated by the need for account holders, especially issuers and businesses, to safely share day-to-day operational responsibilities, such as issuing tokens, managing trustlines, or authorizing counterparties, with employees, contractors, or external parties, without granting them full control of the account. By letting an account holder delegate narrowly scoped, granular, revocable permissions to other accounts, this mechanism enables separation of duties and better key-management practices while keeping the account holder in ultimate control of what can be delegated.
+
+## 8. Security
 
 Delegating permissions to other accounts requires a high degree of trust, especially when the delegate can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `DelegateSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
 
