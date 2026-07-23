@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-07-21
 </pre>
 
 # Single Asset Vault
@@ -107,6 +107,7 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    |       0       | Introduced by the `LendingProtocolV1_1` amendment. See [3.1.2.2](#3122-leversion-lendingprotocolv1_1).                                                 |
 
 ##### 3.1.2.1 Flags
 
@@ -115,6 +116,19 @@ The `Vault` object supports the following flags:
 | Flag Name         |  Flag Value  | Modifiable? |                 Description                  |
 | ----------------- | :----------: | :---------: | :------------------------------------------: |
 | `lsfVaultPrivate` | `0x00010000` |     No      | If set, indicates that the vault is private. |
+
+##### 3.1.2.2 `LEVersion` (`LendingProtocolV1_1`)
+
+`LEVersion` is a generalized ledger entry schema version field, introduced by the `LendingProtocolV1_1` amendment. Rather than encoding schema variants as ledger entry flags — which structurally allow mutually exclusive states to be set simultaneously — `LEVersion` is a dedicated field that unambiguously identifies which schema/behavior revision a ledger entry follows. While `LEVersion` is a general-purpose mechanism applicable to any ledger entry type, `Vault` is its first consumer.
+
+`LEVersion` is strictly protocol-driven: it is never a field of any transaction and cannot be set or changed by the transaction submitter. It is written exclusively by protocol logic, such as a Transactor's state changes at amendment activation.
+
+For the `Vault` object, `LEVersion` distinguishes the share-valuation and accounting behavior applied to the vault:
+
+- **Absent (default value `0`)**: The Vault was created before the `LendingProtocolV1_1` amendment was enabled, or otherwise predates ledger entry versioning. It uses the legacy, accrual-basis accounting described throughout this document and in [XLS-66](../XLS-0066-lending-protocol/README.md) — `AssetsTotal` includes accrued interest.
+- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` is principal-only (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
+
+Any Vault created once `LendingProtocolV1_1` is enabled is always assigned `LEVersion = 1` — cash-basis accounting is not optional or user-selectable at creation time. A future revision of the `Vault` ledger entry would increment `LEVersion` to `2`, and so on.
 
 #### 3.1.3 Pseudo-Account
 
@@ -309,6 +323,17 @@ Withdrawal policy controls the logic used when removing liquidity from a vault. 
 
 The First Come, First Serve strategy treats all requests equally, allowing a depositor to redeem any amount of assets provided they have a sufficient number of shares.
 
+##### 3.1.7.4 Cash-Basis vs. Accrual-Basis Accounting (`LendingProtocolV1_1`)
+
+The exchange rate algorithms in [3.1.7.2](#3172-exchange-rate-algorithms) above operate on $\Gamma_{assets}$ (`Vault.AssetsTotal`) without regard to how that value is accrued — that accrual behavior is defined by the connected protocol (see [XLS-66](../XLS-0066-lending-protocol/README.md)), not by the Vault's own exchange-rate math, which is unchanged by this amendment.
+
+Under the `LendingProtocolV1_1` amendment, `Vault.LEVersion` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)) determines which of the two accounting models a Vault's `AssetsTotal` follows:
+
+- `LEVersion` absent (`0`, legacy/accrual-basis): `AssetsTotal` includes interest upfront, as accrued over the life of connected Loans. This is the pre-amendment behavior and continues unchanged for Vaults created before `LendingProtocolV1_1` was enabled.
+- `LEVersion = 2` (cash-basis): `AssetsTotal` is principal-only and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
+
+See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
+
 #### 3.1.8 Frozen Assets
 
 The issuer of the Vaults asset may enact a freeze either through a [Global Freeze](https://xrpl.org/docs/concepts/tokens/fungible-tokens/freezes/#global-freeze) for IOUs or [locking MPT](../XLS-0033-multi-purpose-tokens/README.md#21122-flags). When the vaults asset is frozen, it can only be withdrawn by specifying the `Destination` account as the `Issuer` of the asset. Similarly, a frozen asset _may not_ be deposited into a vault. Furthermore, when the asset of a vault is frozen, the shares corresponding to the asset may not be transferred.
@@ -399,6 +424,12 @@ _TBD_
 
 5. If `Vault.Asset` is an `MPT`:
    1. Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+
+##### 3.2.6.1 State Changes (`LendingProtocolV1_1`)
+
+Under the `LendingProtocolV1_1` amendment, step 1 of [3.2.6](#326-state-changes) is amended; all other steps are unchanged:
+
+1. Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
 
 #### 3.2.7 Invariants
 
