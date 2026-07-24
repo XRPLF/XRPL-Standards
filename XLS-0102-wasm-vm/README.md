@@ -6,7 +6,7 @@
   status: Draft
   category: Amendment
   created: 2025-08-08
-  updated: 2026-02-03
+  updated: 2026-07-24
 </pre>
 
 # WASM VM Configuration
@@ -32,7 +32,7 @@ This feature does not (directly) involve any new transactions, ledger objects, o
 
 Using [Smart Escrows](../XLS-0100-smart-escrows/README.md) as an example:
 
-1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `FinishFunction` code to determine if the escrow is finishable).
+1. Process the transaction until it has done everything it needs to do before processing anything that requires the WASM engine (in this case, running the `Bytecode` to determine if the escrow is finishable).
 2. Enter the WASM engine, where the WASM environment is set up to run the code.
 3. Run the WASM code, using host functions to fetch on-ledger information.
 4. Return the output (whether or not the escrow can be finished) to the transaction processing engine, and continue onwards with the rest of the transaction code.
@@ -197,7 +197,7 @@ Fetch information about NFTs.
 
 | Function Signature                                                                                                                                                                                 | Description                                   | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- | :------- |
-| `nft_uri(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 1000     |
+| `nft_uri(`<br/>&emsp;`owner_ptr: i32,`<br/>&emsp;`owner_len: i32,`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)` | Get an NFT URI from its owner and ID.         | 5000     |
 | `nft_issuer(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT issuer from the NFT ID.       | 70       |
 | `nft_taxon(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                       | Extract the NFT taxon from the NFT ID.        | 60       |
 | `nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                     | Extract the NFT flags from the NFT ID.        | 60       |
@@ -217,15 +217,15 @@ Miscellaneous utility functions.
 
 Helper functions for performing floating point arithmetic via rippled. These are used for any calculation requiring XRPL's decimal floating point format — including IOU amounts, lending protocol math, fee calculations, or arbitrary numeric operations within a smart contract.
 
-All float buffers (`XFloat`) are exactly **12 bytes**. Contracts must treat these buffers as opaque and must not decode or construct them directly. Instead, all operations on XFloat types SHOULD go through these host functions.
+All float buffers are exactly **12 bytes**. Contracts SHOULD treat these buffers as opaque and should not decode or construct them directly. Instead, all operations on float types SHOULD go through these host functions.
 
-The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `1` = toward zero, `2` = downward (floor), `3` = upward (ceiling).
+The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1` (toward zero), `2` (downward, floor), `3` (upward, ceiling).
 
 | Function Signature                                                                                                                                                                                                         | Description                                                                   | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :------- |
 | `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.              | 130      |
-| `float_from_stamount(`<br/>&emsp;`stamount_buf: i32,`<br/>&emsp;`stamount_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from the bytes of a serialized STAmount.                         | 150      |
-| `float_from_stnumber(`<br/>&emsp;`stnumber_buf: i32,`<br/>&emsp;`stnumber_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                           | Load a float from a serialized STNumber value, validating and normalizing it. | 150      |
+| `float_from_stamount(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                       | Load a float from the bytes of a serialized STAmount.                         | 150      |
+| `float_from_stnumber(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                       | Load a float from a serialized STNumber value, validating and normalizing it. | 150      |
 | `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.             | 100      |
 | `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                   | 130      |
 | `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in rippled format.                                         | 80       |
@@ -236,15 +236,15 @@ The `rounding_modes` parameter accepts: `0` = round to nearest (ties to even), `
 | `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                           | 5500     |
 | `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                            | 5500     |
 
-#### 5.8.1. XFloat Type
+#### 5.8.1. The XFloat Type
 
-`XFloat` is an opaque 12-byte (96-bit) floating point number. The `Number` class in `xrpld` is the core decimal floating-point type used throughout the ledger; all `XFloat` arithmetic is delegated to it via host functions.
+Any floating point types in xrpld WASM is an opaque 12-byte (96-bit) buffer referred to in this document and in SDKs as an `XFloat`. The `Number` class in `xrpld` is the core decimal floating-point type used throughout the ledger; all floating point arithmetic is delegated to it via host functions.
 
-Important — treat as opaque: Smart contracts SHOULD NOT inspect, decode, or construct `XFloat` bytes directly. All operations SHOULD go through the host functions defined in [§5.8](#58-floats). Bypassing host functions is gas-inefficient — each host call is priced to amortize the cost of the operation, and hand-rolling arithmetic in WASM bytecode incurs more gas for less precision. A contract that reads or writes the individual bytes of an `XFloat` buffer is also relying on an implementation detail that may change, and will produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to host functions, and discarded — nothing else.
+Smart contracts SHOULD NOT inspect, decode, or construct XFloat bytes directly. All operations should instead go through the host functions defined in [§5.8](#58-floats). Bypassing host functions is gas-inefficient — each host call is priced to amortize the cost of the operation, and hand-rolling arithmetic in WASM bytecode incurs more gas for less precision. A contract that reads or writes the individual bytes of an XFloat buffer is also relying on an implementation detail that may change, and could produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to a host functions, and discarded — nothing else.
 
-**Warning — do not persist XFloat bytes:** Contracts MUST NOT write `XFloat` buffers into contract storage (e.g., the `data` field of a smart escrow or smart feature). The 12-byte encoding is an in-memory convention tied to a specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in [§5.11](#511-host-function-versioning-rules) explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running against the updated host functions.
+**Warning — do not persist XFloat bytes:** Contracts MUST NOT write XFloat buffers into contract storage (e.g., the `data` field of a smart feature). The 12-byte encoding is an in-memory convention tied to a specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in [§5.11](#511-host-function-versioning-rules) explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running against the updated host functions.
 
-If a contract needs to persist a floating point value across invocations, it should store the **mantissa and exponent as separate integers** in a contract-defined format, then reconstruct the `XFloat` at runtime using`float_from_mant_exp`. For example:
+If a contract needs to persist an XFloat across invocations, it should store the **mantissa and exponent as separate integers** in a contract-defined format, then reconstruct the XFloat at runtime using `float_from_mant_exp`. For example:
 
 ```rust
 // Persisting: decompose into primitive integers and write to contract data
@@ -256,13 +256,13 @@ let mantissa: i64 = /* obtained from contract logic */;
 let mut f = [0u8; 12]; float_from_mant_exp(mantissa, exponent, f.as_mut_ptr(), 12, 0 /* TO_NEAREST */);
 ```
 
-This approach uses only stable primitive types (`i32`, `i64`) and is completely independent of any future changes to the `XFloat` binary layout.
+This approach uses only stable primitive types (`i32`, `i64`) and is completely independent of any future changes to the XFloat binary layout.
 
 #### 5.8.2. XFloat Serialization Format
 
-This section documents the `XFloat` encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
+This section documents the XFloat encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
 
-`XFloat` uses a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why `float_from_stnumber` is a conversion function rather than a no-op):
+XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why `float_from_stnumber` is a conversion function rather than a no-op):
 
 - **Layout:** 12 bytes total — 8-byte big-endian signed mantissa followed by a 4-byte big-endian signed exponent.
 - **No type prefix:** The buffer contains only the 12 payload bytes
@@ -287,21 +287,21 @@ This section documents the `XFloat` encoding for **rippled implementers and tool
 
 **Relationship to On-Ledger Formats:**
 
-When an `XFloat` is used to represent a fungible token amount in an `STAmount` field, the on-ledger wire format is unchanged:
+The on-ledger wire format of any floating points numbers is unchanged. However, the byte layout is frequently incompatible with XFloat numbers accepted by float-prefixed host functions. For example, a fungible token amount in an `STAmount` field is not an XFloat. In particular:
 
 ```
 [STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
 ```
 
-The 12-byte `XFloat` format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions `float_from_stamount` and `float_from_stnumber` bridge between those formats and `XFloat`.
+The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions `float_from_stamount` and `float_from_stnumber` bridge between those formats and WASM floating point numbers.
 
 #### 5.8.3. XFloat Motivation
 
 XRPL Smart Contracts running in WebAssembly need to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
 
-Getting floating-point arithmetic "right" is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to rippled's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain.
+Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to rippled's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
 
-Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (`f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions — for example, to work with integer ratios or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
+Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions — for example, to work with integer ratios or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
 
 #### 5.8.4. XFloat Example Usage
 
@@ -309,36 +309,30 @@ Note that the XRPL WASM VM does not enable the WASM floating-point instruction s
 #![no_std]
 #![no_main]
 
-use xrpl_wasm_stdlib::host::{
-  float_from_stamount, float_from_mant_exp, float_add, float_to_mant_exp,
-  Result, Error,
-};
-use xrpl_wasm_stdlib::host::Result::{Ok, Err};
-
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
   // Load an XFloat from a serialized STAmount (IOU variant, 8 bytes)
-  let stamount_bytes = [0u8; 8]; // obtained from transaction or ledger object
-  let mut float_a = [0u8; 12];
+  let iou_amount_bytes = [0u8; 8]; // obtained from transaction or ledger object
+  let mut xfloat_a = [0u8; 12];
   if float_from_stamount(
-    stamount_bytes.as_ptr(), 8,
-    float_a.as_mut_ptr(), 12,
+    iou_amount_bytes.as_ptr(), 8,
+    xfloat_a.as_mut_ptr(), 12,
   ) < 0 {
     return 0; // error
   }
 
   // Convert an integer to XFloat (exponent 0 → value is exactly the mantissa)
-  let mut float_b = [0u8; 12];
-  if float_from_mant_exp(100, 0, float_b.as_mut_ptr(), 12, 0) < 0 {
+  let mut xfloat_b = [0u8; 12];
+  if float_from_mant_exp(100, 0, xfloat_b.as_mut_ptr(), 12, 0) < 0 {
     return 0;
   }
 
   // Add the two floats
-  let mut result = [0u8; 12];
+  let mut xfloat_result = [0u8; 12];
   if float_add(
-    float_a.as_ptr(), 12,
-    float_b.as_ptr(), 12,
-    result.as_mut_ptr(), 12,
+    xfloat_a.as_ptr(), 12,
+    xfloat_b.as_ptr(), 12,
+    xfloat_result.as_mut_ptr(), 12,
     0, // TO_NEAREST
   ) < 0 {
     return 0;
@@ -348,7 +342,7 @@ pub extern "C" fn finish() -> i32 {
   let mut mantissa_result = [0u8; 8];
   let mut exponent_result = [0u8; 4];
   if float_to_mant_exp(
-    result.as_ptr(), 12,
+    xfloat_result.as_ptr(), 12,
     mantissa_result.as_mut_ptr(), 8,
     exponent_result.as_mut_ptr(), 4,
   ) < 0 {
@@ -372,7 +366,7 @@ let exponent:i32 = i32::from_be_bytes(exponent_result);
 Offset  Size  Type   Description
 ------  ----  -----  -----------
 0       8     i64    Signed mantissa, big-endian
-8       4    i32    Signed exponent, big-endian
+8       4     i32    Signed exponent, big-endian
 ```
 
 **Zero value (12 bytes):**
@@ -415,20 +409,13 @@ This section is the only section of functions that will likely be different for 
 
 ### 5.11. Host Function Versioning Rules
 
-The following rules govern the lifecycle of all host functions in this specification and must be respected by all
-implementations:
+The following rules govern the lifecycle of all host functions in this specification and must be respected by all implementations:
 
-1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a
-   new function are unaffected.
-2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for
-   backward compatibility. Deployed contracts may rely on any host function that was available at deployment time.
-3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types,
-   parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts
-   hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a buffer size
-   changes, a new host function with a different name MUST be introduced.
+1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a new function are unaffected.
+2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for backward compatibility. Deployed contracts may rely on any host function that was available at deployment time.
+3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types, parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a buffer size changes, a new host function with a different name MUST be introduced.
 
-These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future
-versions of the platform.
+These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future versions of the platform.
 
 ## 6. Security
 
@@ -468,7 +455,13 @@ These constraints prevent denial-of-service attacks and ensure that WASM executi
 
 ### 6.5. Future-Proofing
 
-All future changes to this spec (even just a simple change to the gas cost of a host function) will need to be gated by an amendment. Updates to the `wasmi` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
+The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type must never change — there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
+
+- **Adding a new host function.** Existing extensions are unaffected; new extensions opt in by importing the new name only after the amendment is enabled.
+- **Adjusting the gas cost of an existing host function.** The function's signature and behavior are unchanged; only the metered cost moves.
+- **Backward-compatible changes to the behavior of a host function.** For example, a host function that currently accepts values less than 500 could be changed to accept values less than 1000.
+
+Updates to the `wasmi` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
 
 For example, this is what it might look like to add a new host function:
 
@@ -594,25 +587,25 @@ The host function design ensures that **all contracts always use exactly the ari
 
 ### C.6: Why not provide a Rust implementation of Number arithmetic in `xrpl-wasm-stdlib`?
 
-For similar reasons, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place.
+For reasons related to C.5, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem defined in C.5: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place.
 
 ### C.7: Why the 12-byte encoding for XFloat?
 
-Using an unpacked 12-byte layout (4-byte exponent + 8-byte mantissa) rather than existing XRPL serialization formats:
+Using an unpacked 12-byte layout (8-byte mantissa + 4-byte exponent) rather than existing XRPL serialization formats:
 
-**Compared to STAmount (8 bytes):** XFloat uses 4 extra bytes, but provides:
+**Compared to `STAmount` (8 bytes):** `XFloat` uses 4 extra bytes, but provides:
 
-1. **Larger mantissa precision:** 64-bit signed mantissa vs. 54-bit mantissa in STAmount
-2. **Wider exponent range:** 32-bit signed exponent vs. 8-bit exponent in STAmount
+1. **Larger mantissa precision:** 64-bit signed mantissa vs. 54-bit mantissa in `STAmount`
+2. **Wider exponent range:** 32-bit signed exponent vs. 8-bit exponent in `STAmount`
 3. **Simpler layout:** Unpacked integer fields are straightforward to serialize and deserialize
 
 The 4 extra bytes per value are negligible given the `no_std` stack-only model.
 
-**Compared to STNumber (14 bytes):** XFloat is 2 bytes shorter because it omits the type prefix — the host functions already know they're working with a float, so the prefix is unnecessary.
+**Compared to `STNumber` (14 bytes):** `XFloat` is 2 bytes shorter because it omits the type prefix — the host functions already know they're working with an `XFloat`, so the prefix is unnecessary.
 
 ### C.8: Why are ledger serialization formats unchanged by XFloat?
 
-The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `STAmount` IOU encoding — are unchanged by this specification.`float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
+The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `IouNumber` encoding in `STAmount` — are unchanged by this specification. `float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
 
 ### C.9: Why is host function immutability required?
 
