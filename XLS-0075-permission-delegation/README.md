@@ -89,13 +89,20 @@ This transaction allows an account to delegate certain permissions to another ac
 
 #### 3.1.1. `Permissions`
 
-This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list. The list of permissions, if included and non-empty, will replace the existing list.
+This transaction works slightly differently from the `DepositPreauth` transaction type. Instead of using an `Unauthorize` field, an account is unauthorized by using an empty `Permissions` list. The list of permissions, if included and non-empty, will replace the existing list. Providing an empty list will delete the `Delegate` object.
 
 ### 3.2. Failure Conditions
 
-- `Permissions` is too long (the limit is 10), or includes duplicates.
-- Any of the specified permissions are invalid.
-- `Authorize` is the same as `Account`.
+- `PermissionDelegationV1_1` amendment is not enabled. (`temDISABLED`)
+- `Permissions` is too long (the limit is 10) (`temARRAY_TOO_LARGE`)
+- `Permissions` includes duplicates. (`temMALFORMED`)
+- Any of the specified permissions is not a valid tx-level or granular permission. (`temMALFORMED`)
+- Any of the specified tx-level permissions corresponds is not delegable. (`temMALFORMED`)
+- Any of the specified granular permissions corresponds to a tx type whose amendment is not enabled. (`temMALFORMED`)
+- `Authorize` is the same as `Account`. (`temMALFORMED`)
+- `Authorize` account does not exist. (`tecNO_TARGET`)
+- `Authorize` account is a pseudo-account. (`tecNO_PERMISSION`)
+- `Permissions` is empty (trying to delete the `Delegate` object), but the `Delegate` object does not exist. (`tecNO_ENTRY`)
 
 ### 3.3. State Changes
 
@@ -109,6 +116,20 @@ If a `Delegate` object exists:
 ### 3.4. Reserves
 
 This object will cost 1 reserve, which is charged to the `Account`.
+
+### 3.5. Example JSON
+
+```json
+{
+    TransactionType: "DelegateSet",
+    Account: "rISAAC......",
+    Authorize: "rALICE......",
+    Permissions: [{Permission: {PermissionValue: "Payment", "NFTokenMint"}}],
+}
+```
+
+Isaac is delegating the `Payment` and `NFTokenMint` permissions to Alice.
+Then later Alice can send a `Payment` or `NFTokenMint` transaction on behalf of Isaac.
 
 ## 4. Transactions: Common Fields
 
@@ -132,13 +153,32 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 ### 4.2. Failure Conditions
 
-- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it.
-- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it.
-- `Delegate` is the same as `Account`.
+- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+- `Delegate` is the same as `Account`. (`temBAD_SIGNER`)
+- The `Delegate` holds a granular permission for this tx type, but the transaction sets a flag not permitted by the held granular permission(s) (`allowedFlags` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
+- The `Delegate` holds a granular permission for this tx type, but the transaction includes a field not permitted by the held granular permission(s) (`allowedFields` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
 
 ### 4.3. State Changes
 
 The transaction succeeds, and the fee is charged to the `Delegate` account.
+
+### 4.4. Example JSON
+
+```json
+{
+  "Transaction": "Payment",
+  "Account": "rISAAC......",
+  "Amount": "1000000000",
+  "Destination": "rBOB......",
+  "Delegate": "rALICE......",
+  "SigningPubKey": "ALICE...."
+}
+```
+
+Alice is sending a payment to Bob on behalf of Isaac.
+If Alice has the `Payment` permission delegated from Isaac, she can send this transaction successfully.
+The payment happens from Isaac to Bob. Alice will pay the transaction fee and sign the transaction.
 
 ## 5. Examples
 
@@ -148,12 +188,12 @@ In this example, Isaac is delegating the `Payment` permission to Alice.
 
 #### 5.1.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rALICE......",
-    Permissions: [{Permission: {PermissionValue: "Payment"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "Payment" } }]
 }
 ```
 
@@ -161,25 +201,25 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 
 #### 5.1.2. `Delegate` Ledger Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rALICE......",
-    Permissions: [{Permission: {PermissionValue: "Payment"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "Payment" } }]
 }
 ```
 
 #### 5.1.3. `Payment` Transaction
 
-```typescript
+```json
 {
-    Transaction: "Payment",
-    Account: "rISAAC......",
-    Amount: "1000000000",
-    Destination: "rCHARLIE......",
-    Delegate: "rALICE......",
-    SigningPubKey: "ALICE...."
+  "Transaction": "Payment",
+  "Account": "rISAAC......",
+  "Amount": "1000000000",
+  "Destination": "rCHARLIE......",
+  "Delegate": "rALICE......",
+  "SigningPubKey": "ALICE...."
 }
 ```
 
@@ -189,23 +229,23 @@ In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
 #### 5.2.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rBOB......",
-    Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rBOB......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustSet" } }]
 }
 ```
 
 #### 5.2.2. `Delegate` Ledger Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rBOB......",
-    Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rBOB......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustSet" } }]
 }
 ```
 
@@ -213,18 +253,18 @@ In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
 In this example, Bob is freezing a trustline from Holden, a USD.Isaac token holder.
 
-```typescript
+```json
 {
-    Transaction: "TrustSet",
-    Account: "rISAAC......",
-    LimitAmount: {
-        currency: "USD",
-        issuer: "rHOLDEN......",
-        value: "0",
-    },
-    Flags: 0x00100000, // tfSetFreeze
-    Delegate: "rBOB......",
-    SigningPubKey: "BOB......"
+  "Transaction": "TrustSet",
+  "Account": "rISAAC......",
+  "LimitAmount": {
+    "currency": "USD",
+    "issuer": "rHOLDEN......",
+    "value": "0"
+  },
+  "Flags": 0x00100000, // tfSetFreeze
+  "Delegate": "rBOB......",
+  "SigningPubKey": "BOB......"
 }
 ```
 
@@ -234,23 +274,23 @@ In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kyli
 
 #### 5.3.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rKYLIE......",
-    Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rKYLIE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustlineAuthorize" } }]
 }
 ```
 
 #### 5.3.2. `Delegate` Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rKYLIE......",
-    Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rKYLIE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustlineAuthorize" } }]
 }
 ```
 
@@ -258,18 +298,18 @@ In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kyli
 
 In this example, Kylie is authorizing Holden's trustline.
 
-```typescript
+```json
 {
-    Transaction: "TrustSet",
-    Account: "rISAAC......",
-    LimitAmount: {
-        currency: "USD",
-        issuer: "rHOLDEN......",
-        value: "0",
-    },
-    Flags: 0x00010000, // tfSetfAuth
-    Delegate: "rKYLIE......",
-    SigningPubKey: "KYLIE...."
+  "Transaction": "TrustSet",
+  "Account": "rISAAC......",
+  "LimitAmount": {
+    "currency": "USD",
+    "issuer": "rHOLDEN......",
+    "value": "0"
+  },
+  "Flags": 0x00010000, // tfSetfAuth
+  "Delegate": "rKYLIE......",
+  "SigningPubKey": "KYLIE...."
 }
 ```
 
@@ -282,13 +322,22 @@ Note that this transaction will fail if:
 
 An account should never be able to send a transaction on behalf of another account without a valid `Delegate` object.
 
-## 7. Security
+## 7. Rationale
+
+This proposal is motivated by the need for account holders, especially issuers and businesses, to safely share day-to-day operational responsibilities, such as issuing tokens, managing trustlines, or authorizing counterparties, with employees, contractors, or external parties, without granting them full control of the account. By letting an account holder delegate narrowly scoped, granular, revocable permissions to other accounts, this mechanism enables separation of duties and better key-management practices while keeping the account holder in ultimate control of what can be delegated.
+
+## 8. Security
 
 Delegating permissions to other accounts requires a high degree of trust, especially when the delegate can potentially access funds (`Payment`s) or charge reserves (any transaction that can create objects). In addition, any account that has access to the entire `AccountSet`, `SetRegularKey`, `SignerListSet`, or `DelegateSet` transactions can give themselves any permissions even if this was not originally part of the intention. Authorizing users for those transactions should have heavy warnings associated with it in tooling and UIs.
 
 To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
 On the other hand, this mechanism also offers a granular approach to authorization, allowing accounts to selectively grant specific permissions without compromising overall account control. This approach provides a balance between security and usability, empowering account holders to manage their assets and interactions more effectively.
+
+In addition, the system-generated transaction type are not delegable: `EnableAmendment`, `SetFee` and `UNLModify`.
+`Batch` transaction itself is not delegable, but its inner transactions can be delegated.
+
+Any newly introduced transactions must remain `non-delegable` until they have been fully integrated and tested with the delegation amendment. Currently, the following transactions are not delegable: `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanBrokerSet`, `LoanBrokerDelete`, `LoanBrokerCoverDeposit`, `LoanBrokerCoverWithdraw`, `LoanBrokerCoverClawback`, `LoanSet`, `LoanDelete`, `LoanManage`, `LoanPay`, and `SponsorshipTransfer`.
 
 # Appendix
 
