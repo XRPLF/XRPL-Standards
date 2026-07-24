@@ -117,6 +117,20 @@ If a `Delegate` object exists:
 
 This object will cost 1 reserve, which is charged to the `Account`.
 
+### 3.5. Example JSON
+
+```json
+{
+    TransactionType: "DelegateSet",
+    Account: "rISAAC......",
+    Authorize: "rALICE......",
+    Permissions: [{Permission: {PermissionValue: "Payment", "NFTokenMint"}}],
+}
+```
+
+Isaac is delegating the `Payment` and `NFTokenMint` permissions to Alice.
+Then later Alice can send a `Payment` or `NFTokenMint` transaction on behalf of Isaac.
+
 ## 4. Transactions: Common Fields
 
 ### 4.1. Fields
@@ -149,6 +163,23 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 The transaction succeeds, and the fee is charged to the `Delegate` account.
 
+### 4.4. Example JSON
+
+```json
+{
+  "Transaction": "Payment",
+  "Account": "rISAAC......",
+  "Amount": "1000000000",
+  "Destination": "rBOB......",
+  "Delegate": "rALICE......",
+  "SigningPubKey": "ALICE...."
+}
+```
+
+Alice is sending a payment to Bob on behalf of Isaac.
+If Alice has the `Payment` permission delegated from Isaac, she can send this transaction successfully.
+The payment happens from Isaac to Bob. Alice will pay the transaction fee and sign the transaction.
+
 ## 5. Examples
 
 ### 5.1. `Payment` Permission
@@ -157,12 +188,12 @@ In this example, Isaac is delegating the `Payment` permission to Alice.
 
 #### 5.1.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rALICE......",
-    Permissions: [{Permission: {PermissionValue: "Payment"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "Payment" } }]
 }
 ```
 
@@ -170,25 +201,25 @@ _Note: the weird format of `Permissions`, with needing an internal object, is du
 
 #### 5.1.2. `Delegate` Ledger Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rALICE......",
-    Permissions: [{Permission: {PermissionValue: "Payment"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "Payment" } }]
 }
 ```
 
 #### 5.1.3. `Payment` Transaction
 
-```typescript
+```json
 {
-    Transaction: "Payment",
-    Account: "rISAAC......",
-    Amount: "1000000000",
-    Destination: "rCHARLIE......",
-    Delegate: "rALICE......",
-    SigningPubKey: "ALICE...."
+  "Transaction": "Payment",
+  "Account": "rISAAC......",
+  "Amount": "1000000000",
+  "Destination": "rCHARLIE......",
+  "Delegate": "rALICE......",
+  "SigningPubKey": "ALICE...."
 }
 ```
 
@@ -198,23 +229,23 @@ In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
 #### 5.2.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rBOB......",
-    Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rBOB......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustSet" } }]
 }
 ```
 
 #### 5.2.2. `Delegate` Ledger Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rBOB......",
-    Permissions: [{Permission: {PermissionValue: "TrustSet"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rBOB......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustSet" } }]
 }
 ```
 
@@ -222,18 +253,18 @@ In this example, Isaac is delegating the `TrustSet` permission to Bob.
 
 In this example, Bob is freezing a trustline from Holden, a USD.Isaac token holder.
 
-```typescript
+```json
 {
-    Transaction: "TrustSet",
-    Account: "rISAAC......",
-    LimitAmount: {
-        currency: "USD",
-        issuer: "rHOLDEN......",
-        value: "0",
-    },
-    Flags: 0x00100000, // tfSetFreeze
-    Delegate: "rBOB......",
-    SigningPubKey: "BOB......"
+  "Transaction": "TrustSet",
+  "Account": "rISAAC......",
+  "LimitAmount": {
+    "currency": "USD",
+    "issuer": "rHOLDEN......",
+    "value": "0"
+  },
+  "Flags": 0x00100000, // tfSetFreeze
+  "Delegate": "rBOB......",
+  "SigningPubKey": "BOB......"
 }
 ```
 
@@ -243,23 +274,23 @@ In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kyli
 
 #### 5.3.1. `DelegateSet` Transaction
 
-```typescript
+```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rKYLIE......",
-    Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rKYLIE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustlineAuthorize" } }]
 }
 ```
 
 #### 5.3.2. `Delegate` Object
 
-```typescript
+```json
 {
-    LedgerEntryType: "Delegate",
-    Account: "rISAAC......",
-    Authorize: "rKYLIE......",
-    Permissions: [{Permission: {PermissionValue: "TrustlineAuthorize"}}],
+  "LedgerEntryType": "Delegate",
+  "Account": "rISAAC......",
+  "Authorize": "rKYLIE......",
+  "Permissions": [{ "Permission": { "PermissionValue": "TrustlineAuthorize" } }]
 }
 ```
 
@@ -267,18 +298,18 @@ In this example, Isaac is delegating the `TrustlineAuthorize` permission to Kyli
 
 In this example, Kylie is authorizing Holden's trustline.
 
-```typescript
+```json
 {
-    Transaction: "TrustSet",
-    Account: "rISAAC......",
-    LimitAmount: {
-        currency: "USD",
-        issuer: "rHOLDEN......",
-        value: "0",
-    },
-    Flags: 0x00010000, // tfSetfAuth
-    Delegate: "rKYLIE......",
-    SigningPubKey: "KYLIE...."
+  "Transaction": "TrustSet",
+  "Account": "rISAAC......",
+  "LimitAmount": {
+    "currency": "USD",
+    "issuer": "rHOLDEN......",
+    "value": "0"
+  },
+  "Flags": 0x00010000, // tfSetfAuth
+  "Delegate": "rKYLIE......",
+  "SigningPubKey": "KYLIE...."
 }
 ```
 
