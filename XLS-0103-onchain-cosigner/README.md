@@ -56,7 +56,7 @@ Multi-sign is inherently signature-heavy, and this feature is designed to compos
 - **Proposer**: The account that submits `TransactionProposalCreate`. It owns the proposal object and pays its reserve. The proposer need not be a signer or the target account.
 - **Signer**: An account on the target account's applicable `SignerList` that can append its signature to the proposal, contributing its weight toward quorum.
 - **Quorum**: The `SignerQuorum` value of the target account's applicable `SignerList`. Weights and quorum are **inherited unchanged** from the account's existing multi-sign configuration; this feature does not define its own quorum mechanics.
-- **Complete**: A proposal is complete when the collected signatures satisfy all of the proposed transaction's signing requirements — the target account's quorum, plus any auxiliary co-signature the transaction requires (the `Counterparty` of a `LoanSet`, the `Sponsor` of a sponsored transaction; §6.1) — or, for a `Batch`, the outer account's quorum plus a satisfied authorization for every participant account. Its `Transaction` field is then a valid signed transaction that anyone can copy and submit.
+- **Complete**: A proposal is complete when the collected signatures satisfy all of the proposed transaction's signing requirements — the target account's quorum, plus any auxiliary co-signature the transaction requires (the `Counterparty` of a `LoanSet`, the `Sponsor` of a sponsored transaction; §6.1) — or, for a `Batch`, the outer account's quorum plus a satisfied authorization for every participant account. Its `ProposedTransaction` field is then a valid signed transaction that anyone can copy and submit.
 
 ### 3.2. Lifecycle
 
@@ -112,22 +112,22 @@ The trade-off: only **one** live proposal can exist per `(target account, ticket
 
 ### 4.2. Fields
 
-| Field Name          | Constant | Required | Internal Type | Default Value         | Description                                                                                                                                                                                                                                          |
-| ------------------- | -------- | -------- | ------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | UINT16        | `TransactionProposal` | Identifies this as a `TransactionProposal` object.                                                                                                                                                                                                   |
-| `Flags`             | No       | Yes      | UINT32        | `0`                   | Flag values associated with this object. No flags are currently defined.                                                                                                                                                                             |
-| `Owner`             | Yes      | Yes      | ACCOUNT       | N/A                   | The proposer — the account that created and owns this object and pays its reserve.                                                                                                                                                                   |
-| `Transaction`       | No       | Yes      | STOBJECT      | N/A                   | The proposed transaction. Immutable except for its signature fields (`Signers`; `CounterpartySignature`/`SponsorSignature` for a type that requires one; and `BatchSigners` for a `Batch`), into which collected signatures accumulate (see §4.2.1). |
-| `Expiration`        | Yes      | Yes      | UINT32        | N/A                   | Ledger close-time (seconds since the Ripple Epoch) after which the proposal stops accepting signatures and becomes terminal.                                                                                                                         |
-| `OwnerNode`         | Yes      | Yes      | UINT64        | N/A                   | Hint for which page this object appears on in the owner directory.                                                                                                                                                                                   |
-| `PreviousTxnID`     | No       | Yes      | HASH256       | N/A                   | Hash of the previous transaction that modified this object.                                                                                                                                                                                          |
-| `PreviousTxnLgrSeq` | No       | Yes      | UINT32        | N/A                   | Ledger sequence of the previous transaction that modified this object.                                                                                                                                                                               |
+| Field Name            | Constant | Required | Internal Type | Default Value         | Description                                                                                                                                                                                                                                          |
+| --------------------- | -------- | -------- | ------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`     | Yes      | Yes      | UINT16        | `TransactionProposal` | Identifies this as a `TransactionProposal` object.                                                                                                                                                                                                   |
+| `Flags`               | No       | Yes      | UINT32        | `0`                   | Flag values associated with this object. No flags are currently defined.                                                                                                                                                                             |
+| `Owner`               | Yes      | Yes      | ACCOUNT       | N/A                   | The proposer — the account that created and owns this object and pays its reserve.                                                                                                                                                                   |
+| `ProposedTransaction` | No       | Yes      | STOBJECT      | N/A                   | The proposed transaction. Immutable except for its signature fields (`Signers`; `CounterpartySignature`/`SponsorSignature` for a type that requires one; and `BatchSigners` for a `Batch`), into which collected signatures accumulate (see §4.2.1). |
+| `Expiration`          | Yes      | Yes      | UINT32        | N/A                   | Ledger close-time (seconds since the Ripple Epoch) after which the proposal stops accepting signatures and becomes terminal.                                                                                                                         |
+| `OwnerNode`           | Yes      | Yes      | UINT64        | N/A                   | Hint for which page this object appears on in the owner directory.                                                                                                                                                                                   |
+| `PreviousTxnID`       | No       | Yes      | HASH256       | N/A                   | Hash of the previous transaction that modified this object.                                                                                                                                                                                          |
+| `PreviousTxnLgrSeq`   | No       | Yes      | UINT32        | N/A                   | Ledger sequence of the previous transaction that modified this object.                                                                                                                                                                               |
 
 **Field Details:**
 
-#### 4.2.1. `Transaction`
+#### 4.2.1. `ProposedTransaction`
 
-`Transaction` is the proposed transaction the proposal collects signatures for. Every field of it is **immutable** for the life of the proposal **except its signature fields** — the top-level `SigningPubKey`/`TxnSignature` (filled only when the target account signs with its own key, §6.1.2); `Signers`; the auxiliary co-signature field(s) a type requires (`CounterpartySignature`, `SponsorSignature`); and, for a `Batch`, `BatchSigners` — into which the ledger inserts each validated signature (see §4.2.2). Because the XRPL signing payloads exclude these signature fields, appending a signature never changes what any signer signed over, so previously-collected signatures stay valid and later signers sign the same canonical payload.
+`ProposedTransaction` is the proposed transaction the proposal collects signatures for. Every field of it is **immutable** for the life of the proposal **except its signature fields** — the top-level `SigningPubKey`/`TxnSignature` (filled only when the target account signs with its own key, §6.1.2); `Signers`; the auxiliary co-signature field(s) a type requires (`CounterpartySignature`, `SponsorSignature`); and, for a `Batch`, `BatchSigners` — into which the ledger inserts each validated signature (see §4.2.2). Because the XRPL signing payloads exclude these signature fields, appending a signature never changes what any signer signed over, so previously-collected signatures stay valid and later signers sign the same canonical payload.
 
 The proposed transaction:
 
@@ -144,11 +144,11 @@ The target account is the proposed transaction's `Account` field. It may differ 
 
 #### 4.2.2. Collected signatures
 
-Signatures are stored directly in the proposed transaction's own native signature fields — there is no separate signatures field on the proposal object. This means a **complete** proposal requires no assembly at all: the `Transaction` field is already a valid, fully-signed transaction that can be copied verbatim and submitted. Where a signature lands depends on the proposed transaction type:
+Signatures are stored directly in the proposed transaction's own native signature fields — there is no separate signatures field on the proposal object. This means a **complete** proposal requires no assembly at all: the `ProposedTransaction` field is already a valid, fully-signed transaction that can be copied verbatim and submitted. Where a signature lands depends on the proposed transaction type:
 
-- **Ordinary transaction:** into `Transaction.Signers`, the [standard multi-sign `Signers` array](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field), authorizing the target account (the transaction's `Account`) — or, if that account signs with its own key, directly into the proposed transaction's top-level `SigningPubKey`/`TxnSignature` (§6.1.2).
-- **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `Transaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `Transaction.BatchSigners`, which holds at most 24 entries. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
-- **Auxiliary co-signature (e.g. [`LoanSet`, XLS-66](../XLS-0066-lending-protocol/README.md); sponsored transactions, [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)):** a transaction that requires a second party to co-authorize carries a dedicated signature field for that party — `CounterpartySignature` for the `Counterparty`, `SponsorSignature` for the `Sponsor`. Each party's signature goes into its own field (`SigningPubKey`/`TxnSignature` for a single-signature party, or a nested `Signers` array for a multi-signing one), while the transaction's own `Account` is authorized through `Transaction.Signers` as above. A transaction may require more than one. See §6.1.
+- **Ordinary transaction:** into `ProposedTransaction.Signers`, the [standard multi-sign `Signers` array](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field), authorizing the target account (the transaction's `Account`) — or, if that account signs with its own key, directly into the proposed transaction's top-level `SigningPubKey`/`TxnSignature` (§6.1.2).
+- **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `ProposedTransaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `ProposedTransaction.BatchSigners`, which holds at most 24 entries. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
+- **Auxiliary co-signature (e.g. [`LoanSet`, XLS-66](../XLS-0066-lending-protocol/README.md); sponsored transactions, [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)):** a transaction that requires a second party to co-authorize carries a dedicated signature field for that party — `CounterpartySignature` for the `Counterparty`, `SponsorSignature` for the `Sponsor`. Each party's signature goes into its own field (`SigningPubKey`/`TxnSignature` for a single-signature party, or a nested `Signers` array for a multi-signing one), while the transaction's own `Account` is authorized through `ProposedTransaction.Signers` as above. A transaction may require more than one. See §6.1.
 
 Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). `BatchSigners` is also sorted by `Account` and holds at most 24 entries. **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature to the correct location from its `SigningFor` account and submitter.
 
@@ -192,10 +192,10 @@ This removes only the leftover object. Signatures already copied off-ledger stay
 ### 4.6. Invariants
 
 - `Expiration` is always present and non-zero.
-- Every entry in `Transaction.Signers` is unique by `Account`, and the array is sorted by `Account` with at most 32 entries.
-- Every entry in `Transaction.BatchSigners`, if present, is unique by `Account`, and the array is sorted by `Account` with at most 24 entries.
-- Every entry in `Transaction.Signers` is a signature that was cryptographically valid over the proposed `Transaction` (excluding its `Signers` field) at the time it was added.
-- Only the proposed `Transaction`'s signature fields change over the life of the proposal — its top-level `SigningPubKey`/`TxnSignature` (empty at creation; filled only when the target account signs with its own key, §6.1.2), `Signers`, `CounterpartySignature`, `SponsorSignature`, and `BatchSigners`. Every non-signature field is fixed at creation.
+- Every entry in `ProposedTransaction.Signers` is unique by `Account`, and the array is sorted by `Account` with at most 32 entries.
+- Every entry in `ProposedTransaction.BatchSigners`, if present, is unique by `Account`, and the array is sorted by `Account` with at most 24 entries.
+- Every entry in `ProposedTransaction.Signers` is a signature that was cryptographically valid over the proposed transaction (excluding its `Signers` field) at the time it was added.
+- Only the proposed transaction's signature fields change over the life of the proposal — its top-level `SigningPubKey`/`TxnSignature` (empty at creation; filled only when the target account signs with its own key, §6.1.2), `Signers`, `CounterpartySignature`, `SponsorSignature`, and `BatchSigners`. Every non-signature field is fixed at creation.
 
 ### 4.7. Example JSON
 
@@ -205,7 +205,7 @@ This removes only the leftover object. Signatures already copied off-ledger stay
   "Flags": 0,
   "Owner": "rPROPOSER........................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -235,12 +235,12 @@ Creates a `TransactionProposal` object holding an unsigned proposed transaction,
 
 ### 5.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Default Value               | Description                                                            |
-| ----------------- | --------- | --------- | ------------- | --------------------------- | ---------------------------------------------------------------------- |
-| `TransactionType` | ✔️        | string    | UINT16        | `TransactionProposalCreate` | Identifies this as a `TransactionProposalCreate` transaction.          |
-| `Account`         | ✔️        | string    | ACCOUNT       | N/A                         | The proposer submitting the proposal.                                  |
-| `Transaction`     | ✔️        | object    | STOBJECT      | N/A                         | The unsigned proposed transaction (see §4.2.1).                        |
-| `Expiration`      | ✔️        | number    | UINT32        | N/A                         | Ledger close-time after which the proposal stops accepting signatures. |
+| Field Name            | Required? | JSON Type | Internal Type | Default Value               | Description                                                            |
+| --------------------- | --------- | --------- | ------------- | --------------------------- | ---------------------------------------------------------------------- |
+| `TransactionType`     | ✔️        | string    | UINT16        | `TransactionProposalCreate` | Identifies this as a `TransactionProposalCreate` transaction.          |
+| `Account`             | ✔️        | string    | ACCOUNT       | N/A                         | The proposer submitting the proposal.                                  |
+| `ProposedTransaction` | ✔️        | object    | STOBJECT      | N/A                         | The unsigned proposed transaction (see §4.2.1).                        |
+| `Expiration`          | ✔️        | number    | UINT32        | N/A                         | Ledger close-time after which the proposal stops accepting signatures. |
 
 Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signing fields) apply. `Memos` and `SourceTag` MAY be used to attach a reason code or reconciliation identifier to the proposal.
 
@@ -254,7 +254,7 @@ Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signin
 
 All Data Verification failures return a `tem`-level error.
 
-1. `Transaction` is missing or is not a well-formed transaction of a known type (`temMALFORMED`).
+1. `ProposedTransaction` is missing or is not a well-formed transaction of a known type (`temMALFORMED`).
 2. The proposed transaction fails the **stateless format checks (preflight) for its own transaction type**. These are the same checks it would receive if submitted directly, except for signature-presence and signature-verification checks because the payload is intentionally unsigned (§4.2.1). If any check fails, the proposal returns the `tem` code from that transaction type's preflight. Running these checks at creation is cheap and rejects malformed payloads immediately, instead of letting an invalid proposal gather signatures only to fail later. State-dependent (preclaim) checks are **not** run here; they are evaluated when the completed transaction is submitted.
 3. The proposed transaction has a non-empty `SigningPubKey` or includes a `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, or `BatchSigners` field (`temBAD_SIGNER`).
 4. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`); or carries the `tfInnerBatchTxn` flag (`temINVALID`).
@@ -286,7 +286,7 @@ All Data Verification failures return a `tem`-level error.
   "Fee": "10",
   "Sequence": 42,
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -326,12 +326,12 @@ There are no per-role contribution objects. Every `TransactionProposalSign` look
 
 If `SigningFor` does not match one of these required accounts, the transaction fails with `tecNO_PERMISSION`. When it does match, the ledger records the signature in the location that corresponds to that account's role:
 
-| If `SigningFor` is the transaction's… | The signature is recorded in…                    |
-| ------------------------------------- | ------------------------------------------------ |
-| `Account` / `Delegate`                | `Transaction.Signers` (or top-level, see §6.1.2) |
-| `Counterparty`                        | `Transaction.CounterpartySignature`              |
-| `Sponsor`                             | `Transaction.SponsorSignature`                   |
-| `Batch` participant                   | `Transaction.BatchSigners[SigningFor]`           |
+| If `SigningFor` is the transaction's… | The signature is recorded in…                            |
+| ------------------------------------- | -------------------------------------------------------- |
+| `Account` / `Delegate`                | `ProposedTransaction.Signers` (or top-level, see §6.1.2) |
+| `Counterparty`                        | `ProposedTransaction.CounterpartySignature`              |
+| `Sponsor`                             | `ProposedTransaction.SponsorSignature`                   |
+| `Batch` participant                   | `ProposedTransaction.BatchSigners[SigningFor]`           |
 
 If the same account fills **more than one** role, such as being both the `Counterparty` and the `Sponsor`, the same contribution is recorded in **every** matching slot. Each slot is still validated independently. In most cases these roles are different accounts, so one contribution fills one slot.
 
@@ -340,7 +340,7 @@ If the same account fills **more than one** role, such as being both the `Counte
 The transaction does not include a flag that says whether the contribution is a single-signature or a multi-signature share. The ledger determines that from the relationship between the submitting `Account` and `SigningFor`:
 
 - **`Account` == `SigningFor` → single-signature.** The account is signing for itself using its master key or regular key. `SigningPubKey` must be a valid key for `SigningFor`. This one signature fully authorizes `SigningFor`. The ledger stores it directly as `SigningPubKey`/`TxnSignature`: at the proposed transaction's **top level** for the main `Account` or `Delegate`, or inside the relevant `Counterparty`, `Sponsor`, or `Batch` participant signature slot.
-- **`Account` != `SigningFor` → multi-signature share.** The submitting `Account` is contributing one multi-signature share for `SigningFor`. The submitting `Account` must be in `SigningFor`'s applicable `SignerList`. The ledger stores the contribution as a standard `Signer` entry (`{Account, SigningPubKey, TxnSignature}`) in the relevant `Signers` array: `Transaction.Signers` for the main account, or the nested `Signers` array inside the `CounterpartySignature`, `SponsorSignature`, or participant `BatchSigner` slot. These entries are kept sorted and deduplicated by `Account`. More shares may be added until `SigningFor`'s quorum is reached.
+- **`Account` != `SigningFor` → multi-signature share.** The submitting `Account` is contributing one multi-signature share for `SigningFor`. The submitting `Account` must be in `SigningFor`'s applicable `SignerList`. The ledger stores the contribution as a standard `Signer` entry (`{Account, SigningPubKey, TxnSignature}`) in the relevant `Signers` array: `ProposedTransaction.Signers` for the main account, or the nested `Signers` array inside the `CounterpartySignature`, `SponsorSignature`, or participant `BatchSigner` slot. These entries are kept sorted and deduplicated by `Account`. More shares may be added until `SigningFor`'s quorum is reached.
 
 ### 6.2. Transaction Fee
 
@@ -371,7 +371,7 @@ All Data Verification failures return a `tem`-level error.
 **On Success (`tesSUCCESS`):**
 
 - Validates the contribution and records it into the destination for `SigningFor`'s role and mode (§6.1.1, §6.1.2): a single-signature is written directly (top-level for the main account, or that slot's `SigningPubKey`/`TxnSignature`), and a multi-signature share is appended as a `Signer` entry into the relevant `Signers` array. Any `Signers` array is kept sorted by `Account`.
-- No execution occurs. Once the collected signatures satisfy every signing requirement for the proposed transaction — the target account's quorum, plus a satisfied signature for each `Counterparty`/`Sponsor` the transaction requires, or, for a `Batch`, the outer account's quorum plus a satisfied authorization for every participant account — the proposal is **complete**: the `Transaction` field is a valid signed transaction that anyone can copy and submit (see §6.5).
+- No execution occurs. Once the collected signatures satisfy every signing requirement for the proposed transaction — the target account's quorum, plus a satisfied signature for each `Counterparty`/`Sponsor` the transaction requires, or, for a `Batch`, the outer account's quorum plus a satisfied authorization for every participant account — the proposal is **complete**: the `ProposedTransaction` field is a valid signed transaction that anyone can copy and submit (see §6.5).
 
 **On failure against a terminal proposal (`tecEXPIRED`):**
 
@@ -382,7 +382,7 @@ All Data Verification failures return a `tem`-level error.
 This specification introduces no on-ledger execution step, and no assembly is required. Once a proposal is complete, any observer simply:
 
 1. Reads the `TransactionProposal` by `ProposalID`.
-2. Copies the proposed `Transaction` verbatim — it already contains the collected `Signers` (and, for a `Batch`, `BatchSigners`), sorted, and is a fully-formed signed transaction.
+2. Copies the `ProposedTransaction` verbatim — it already contains the collected `Signers` (and, for a `Batch`, `BatchSigners`), sorted, and is a fully-formed signed transaction.
 3. Submits it through the ordinary transaction path (e.g. the `submit` API).
 
 The existing multi-sign (and, for a `Batch`, `BatchSigners`) validation then checks the signatures against the applicable accounts' current `SignerList`(s) and applies the transaction, charging its `Fee` to the target account. No field of On-Chain Cosigner appears on the submitted transaction — it is an ordinary transaction. Applying it consumes the target account's `TicketSequence`, which auto-deletes the proposal and refunds its reserve (§4.5).
@@ -402,7 +402,7 @@ The `TransactionProposalSign` transaction is trivial — `SigningFor` plus one s
   "Flags": 0,
   "Owner": "rPROPOSER........................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -433,7 +433,7 @@ The `TransactionProposalSign` transaction is trivial — `SigningFor` plus one s
 }
 ```
 
-The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it stays pending:
+The object gains one `ProposedTransaction.Signers` entry. Weight 4 < quorum 6, so it stays pending:
 
 ```json
 // TransactionProposal — after rCEO   ·   status: pending · signed_weight 4 / quorum 6
@@ -442,7 +442,7 @@ The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it sta
   "Flags": 0,
   "Owner": "rPROPOSER........................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -475,7 +475,7 @@ The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it sta
   "Flags": 0,
   "Owner": "rPROPOSER........................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -506,7 +506,7 @@ The object gains one `Transaction.Signers` entry. Weight 4 < quorum 6, so it sta
 }
 ```
 
-The `Transaction` field is now a valid multi-signed `Payment`; anyone can copy it and submit it (§6.5).
+The `ProposedTransaction` field is now a valid multi-signed `Payment`; anyone can copy it and submit it (§6.5).
 
 #### 6.6.2. Ordinary transaction — single-sign with the account's own key
 
@@ -533,7 +533,7 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
   "Flags": 0,
   "Owner": "rPROPOSER........................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Payment",
     "Account": "rTARGET..........................",
     "Destination": "rDEST............................",
@@ -551,7 +551,7 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
 
 #### 6.6.3. Auxiliary co-signature — a `LoanSet` counterparty
 
-**Setup.** A `LoanSet` proposal: borrower `rBORROWER` (target account) with the lender `rLENDER` as `Counterparty`. The borrower's account is collected into `Transaction.Signers`; the lender co-signs into `Transaction.CounterpartySignature`. Suppose the borrower's quorum is already met and only the lender is outstanding:
+**Setup.** A `LoanSet` proposal: borrower `rBORROWER` (target account) with the lender `rLENDER` as `Counterparty`. The borrower's account is collected into `ProposedTransaction.Signers`; the lender co-signs into `ProposedTransaction.CounterpartySignature`. Suppose the borrower's quorum is already met and only the lender is outstanding:
 
 ```json
 // TransactionProposal — before the lender signs   ·   status: pending (CounterpartySignature missing)
@@ -560,7 +560,7 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
   "Flags": 0,
   "Owner": "rBORROWER.......................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "LoanSet",
     "Account": "rBORROWER.......................",
     "Counterparty": "rLENDER.........................",
@@ -607,7 +607,7 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
   "Flags": 0,
   "Owner": "rBORROWER.......................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "LoanSet",
     "Account": "rBORROWER.......................",
     "Counterparty": "rLENDER.........................",
@@ -635,11 +635,11 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
 }
 ```
 
-A **multi-sign** lender would instead accumulate into `CounterpartySignature.Signers` — a nested array filling until the lender's own quorum is met, exactly like `Transaction.Signers` above. A `SponsorSignature` (for a sponsored transaction) behaves identically.
+A **multi-sign** lender would instead accumulate into `CounterpartySignature.Signers` — a nested array filling until the lender's own quorum is met, exactly like `ProposedTransaction.Signers` above. A `SponsorSignature` (for a sponsored transaction) behaves identically.
 
 #### 6.6.4. `Batch` — outer account plus participants
 
-**Setup.** A multi-account `Batch` by outer account `rOUTER`, with inner transactions for `rOUTER`, `rBOB`, and `rCAROL`. Authorizations: the outer account `rOUTER` into `Transaction.Signers`; each other participant into `Transaction.BatchSigners[account]`. `SignerList`s: `rOUTER = { rOUTERKEY: 1 }` quorum 1; `rBOB` signs with its own key; `rCAROL = { rCAROLKEY: 1 }` quorum 1.
+**Setup.** A multi-account `Batch` by outer account `rOUTER`, with inner transactions for `rOUTER`, `rBOB`, and `rCAROL`. Authorizations: the outer account `rOUTER` into `ProposedTransaction.Signers`; each other participant into `ProposedTransaction.BatchSigners[account]`. `SignerList`s: `rOUTER = { rOUTERKEY: 1 }` quorum 1; `rBOB` signs with its own key; `rCAROL = { rCAROLKEY: 1 }` quorum 1.
 
 ```json
 // TransactionProposal — before any signature   ·   status: pending
@@ -648,7 +648,7 @@ A **multi-sign** lender would instead accumulate into `CounterpartySignature.Sig
   "Flags": 0,
   "Owner": "rPROPOSER2......................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Batch",
     "Account": "rOUTER..........................",
     "Flags": 65536,
@@ -703,7 +703,7 @@ A **multi-sign** lender would instead accumulate into `CounterpartySignature.Sig
 Three signatures arrive — one per account that must authorize:
 
 ```json
-// 1) rOUTERKEY signs for the outer account rOUTER (multi-sign) → Transaction.Signers
+// 1) rOUTERKEY signs for the outer account rOUTER (multi-sign) → ProposedTransaction.Signers
 {
   "TransactionType": "TransactionProposalSign",
   "Account": "rOUTERKEY.......................",
@@ -753,7 +753,7 @@ After all three, the outer account's quorum is met **and** every participant is 
   "Flags": 0,
   "Owner": "rPROPOSER2......................",
   "Expiration": 800000000,
-  "Transaction": {
+  "ProposedTransaction": {
     "TransactionType": "Batch",
     "Account": "rOUTER..........................",
     "Flags": 65536,
@@ -919,7 +919,7 @@ The response returns the raw ledger object plus **computed convenience fields** 
 `status` is the single field a client switches on:
 
 - **`pending`** — still collecting; more signatures can be added, and quorum is not yet met.
-- **`complete`** — every signing requirement is satisfied (quorum, plus any required `BatchSigners`/auxiliary co-signatures), so the stored `Transaction` is ready to copy and submit (§6.5).
+- **`complete`** — every signing requirement is satisfied (quorum, plus any required `BatchSigners`/auxiliary co-signatures), so the stored `ProposedTransaction` is ready to copy and submit (§6.5).
 - **`expired`** — the proposal is terminal (§4.5): its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed. It no longer accepts signatures and can be cleaned up by anyone.
 
 `status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §13.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
@@ -951,7 +951,7 @@ The computed fields are derived from live ledger state at the queried ledger and
     "LedgerEntryType": "TransactionProposal",
     "Owner": "rPROPOSER........................",
     "Expiration": 800000000,
-    "Transaction": {
+    "ProposedTransaction": {
       "TransactionType": "Payment",
       "Account": "rTARGET..........................",
       "TicketSequence": 1201,
@@ -986,8 +986,8 @@ Because signatures are collected directly into the proposed transaction's own `S
 
 ## 10. Composability
 
-- **Batch (XLS-56):** The proposed transaction may be a `Batch`, enabling multi-account, atomic, multi-signed settlement (e.g. end-of-day repo netting, flash-style capital operations). The outer account is authorized by `SigningFor` = the outer account (into `Transaction.Signers`); each participant account by `SigningFor` = that participant — single-signature (its own key) or multi-sign (§6.1). A signer authorized on several of the batch's accounts submits one `TransactionProposalSign` per account, since each signature is bound to its owning account. Once every participant's requirement is met the completed batch executes atomically. This is the primary motivating case for On-Chain Cosigner, since multi-account Batches otherwise require the most off-chain signature coordination.
-- **Lending protocols:** A borrower can post a `LoanSet` (or equivalent) as a proposal; the lender signs on-chain as counterparty (`SigningFor` = the lender, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `CounterpartySignature` field, while the borrower's account is authorized through `Transaction.Signers`. This turns loan origination into a trustless, asynchronous flow with no synchronous coordination.
+- **Batch (XLS-56):** The proposed transaction may be a `Batch`, enabling multi-account, atomic, multi-signed settlement (e.g. end-of-day repo netting, flash-style capital operations). The outer account is authorized by `SigningFor` = the outer account (into `ProposedTransaction.Signers`); each participant account by `SigningFor` = that participant — single-signature (its own key) or multi-sign (§6.1). A signer authorized on several of the batch's accounts submits one `TransactionProposalSign` per account, since each signature is bound to its owning account. Once every participant's requirement is met the completed batch executes atomically. This is the primary motivating case for On-Chain Cosigner, since multi-account Batches otherwise require the most off-chain signature coordination.
+- **Lending protocols:** A borrower can post a `LoanSet` (or equivalent) as a proposal; the lender signs on-chain as counterparty (`SigningFor` = the lender, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `CounterpartySignature` field, while the borrower's account is authorized through `ProposedTransaction.Signers`. This turns loan origination into a trustless, asynchronous flow with no synchronous coordination.
 - **Sponsored fees & reserves (XLS-68):** A user posts a transaction carrying `Sponsor`/`SponsorFlags`; the sponsor signs on-chain (`SigningFor` = the sponsor, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `SponsorSignature` field, co-authorizing the fee/reserve sponsorship. This is the same auxiliary-co-signature mechanism used for a `LoanSet` counterparty, and the two can be collected on the same proposal (e.g. a sponsored `LoanSet`).
 - **Multiple Signer Lists (XLS-49):** Per-transaction-type signer lists are honored automatically, since both the per-signature check and the final submission use standard multi-sign resolution for the proposed transaction's type.
 
@@ -1048,11 +1048,11 @@ Yes. The target account is the `Account` of the proposed transaction; the propos
 
 ### A.3: How does a signer know what they are signing?
 
-The full proposed transaction is stored, immutable, in the `Transaction` field of the on-ledger object. A signer (or their wallet) reads the object by `ProposalID`, inspects the payload, signs exactly that payload, and submits the signature via `TransactionProposalSign`. There is nothing to pass around off-chain.
+The full proposed transaction is stored, immutable, in the `ProposedTransaction` field of the on-ledger object. A signer (or their wallet) reads the object by `ProposalID`, inspects the payload, signs exactly that payload, and submits the signature via `TransactionProposalSign`. There is nothing to pass around off-chain.
 
 ### A.4: How is the proposed transaction actually executed?
 
-There is no on-ledger execute step. Signatures accumulate inside the proposed transaction's own `Signers` field, so once quorum weight is reached the `Transaction` field is already a valid multi-signed transaction: any observer copies it verbatim and submits it through the normal transaction path. The existing multi-sign machinery validates and applies it. See §6.5.
+There is no on-ledger execute step. Signatures accumulate inside the proposed transaction's own `Signers` field, so once quorum weight is reached the `ProposedTransaction` field is already a valid multi-signed transaction: any observer copies it verbatim and submits it through the normal transaction path. The existing multi-sign machinery validates and applies it. See §6.5.
 
 ### A.5: Does cancelling a proposal guarantee it won't execute?
 
@@ -1072,11 +1072,11 @@ The proposed transaction acts on behalf of the target account, authorized by tha
 
 ### A.9: How does signing work when the proposed transaction is a multi-account Batch?
 
-Each `TransactionProposalSign` names an account with `SigningFor`: the outer account (recorded into `Transaction.Signers`) or a participant account (recorded into that participant's entry in `Transaction.BatchSigners`). A participant is authorized either single-signature (its own key, when the submitter equals `SigningFor`) or multi-sign (a share per contributing `SignerList` member). Because an XLS-56 batch signature binds the owning account (`message = <batch data> + <owning account> + <signer account>`), a signer authorized on several accounts must submit one `TransactionProposalSign` per account, each with a distinct signature and `SigningFor`; the same signer key may therefore appear across several participants' `BatchSigners`. The proposal is complete once the outer account's quorum and every participant's authorization are satisfied; the `Transaction` field is then a fully-signed Batch ready to submit. See §6.1.
+Each `TransactionProposalSign` names an account with `SigningFor`: the outer account (recorded into `ProposedTransaction.Signers`) or a participant account (recorded into that participant's entry in `ProposedTransaction.BatchSigners`). A participant is authorized either single-signature (its own key, when the submitter equals `SigningFor`) or multi-sign (a share per contributing `SignerList` member). Because an XLS-56 batch signature binds the owning account (`message = <batch data> + <owning account> + <signer account>`), a signer authorized on several accounts must submit one `TransactionProposalSign` per account, each with a distinct signature and `SigningFor`; the same signer key may therefore appear across several participants' `BatchSigners`. The proposal is complete once the outer account's quorum and every participant's authorization are satisfied; the `ProposedTransaction` field is then a fully-signed Batch ready to submit. See §6.1.
 
 ### A.10: How is a transaction with a second signer — a `LoanSet` counterparty or a sponsor — handled?
 
-Such a transaction has more than one authorization slot: its own `Account` (recorded into `Transaction.Signers`) plus one **auxiliary co-signature** per required second party — the `Counterparty` of a `LoanSet` (recorded into `Transaction.CounterpartySignature`), the `Sponsor` of a sponsored transaction (recorded into `Transaction.SponsorSignature`). Each slot is filled by naming that party in `SigningFor` (§6.1); a single contribution supplies one party's signature (single-key or one multi-sign share), and the proposal is complete once every slot is satisfied. Because these fields are excluded from every party's signing data, the parties can sign in any order — and a single transaction may need several (a sponsored `LoanSet` collects the borrower, the `Counterparty`, and the `Sponsor` independently).
+Such a transaction has more than one authorization slot: its own `Account` (recorded into `ProposedTransaction.Signers`) plus one **auxiliary co-signature** per required second party — the `Counterparty` of a `LoanSet` (recorded into `ProposedTransaction.CounterpartySignature`), the `Sponsor` of a sponsored transaction (recorded into `ProposedTransaction.SponsorSignature`). Each slot is filled by naming that party in `SigningFor` (§6.1); a single contribution supplies one party's signature (single-key or one multi-sign share), and the proposal is complete once every slot is satisfied. Because these fields are excluded from every party's signing data, the parties can sign in any order — and a single transaction may need several (a sponsored `LoanSet` collects the borrower, the `Counterparty`, and the `Sponsor` independently).
 
 ### A.11: Does this replace off-chain multi-sign?
 
