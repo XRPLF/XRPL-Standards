@@ -300,20 +300,19 @@ All Data Verification failures return a `tem`-level error.
 
 ## 6. Transaction: `TransactionProposalSign`
 
-Appends one signature toward the proposed transaction to the proposal. A single, uniform contribution — `SigningFor` + `SigningPubKey` + `TxnSignature` — supplies a signature for one account the proposed transaction requires authorization from. The ledger derives everything else from the proposed transaction and from who submits: **where** the signature is recorded, and **whether** it is a single- or multi-signature. The signature is validated exactly as it would be during standard signing, guaranteeing that the collected set remains submittable. If the proposal is already terminal, this transaction cannot record a signature and instead **fails with `tecEXPIRED`**, deleting the terminal proposal as a side effect (see §6.4).
+Appends one signature toward the proposed transaction to the proposal. A single, uniform contribution — `SigningFor` + `ProposalSignature` — supplies a signature for one account the proposed transaction requires authorization from. The ledger derives everything else from the proposed transaction and from who submits: **where** the signature is recorded, and **whether** it is a single- or multi-signature. The contributed signature is nested in `ProposalSignature` so it does not conflict with the standard `SigningPubKey`/`TxnSignature` fields that authorize the `TransactionProposalSign` transaction itself. The signature is validated exactly as it would be during standard signing, guaranteeing that the collected set remains submittable. If the proposal is already terminal, this transaction cannot record a signature and instead **fails with `tecEXPIRED`**, deleting the terminal proposal as a side effect (see §6.4).
 
 ### 6.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Default Value             | Description                                                                                                                         |
-| ----------------- | --------- | --------- | ------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | ✔️        | string    | UINT16        | `TransactionProposalSign` | Identifies this as a `TransactionProposalSign` transaction.                                                                         |
-| `Account`         | ✔️        | string    | ACCOUNT       | N/A                       | The account submitting (and paying for) this transaction. Its relationship to `SigningFor` decides single- vs multi-sign (§6.1.2).  |
-| `ProposalID`      | ✔️        | string    | HASH256       | N/A                       | The ID of the `TransactionProposal` being signed.                                                                                   |
-| `SigningFor`      | ✔️        | string    | ACCOUNT       | N/A                       | An account **in the proposed transaction** that requires a signature for it to be valid — i.e. any of its signature slots (§6.1.1). |
-| `SigningPubKey`   | ✔️        | string    | BLOB          | N/A                       | The public key of the supplied signature.                                                                                           |
-| `TxnSignature`    | ✔️        | string    | BLOB          | N/A                       | The signature over `SigningFor`'s signing data for the proposed transaction (§6.1.2).                                               |
+| Field Name          | Required? | JSON Type | Internal Type | Default Value             | Description                                                                                                                         |
+| ------------------- | --------- | --------- | ------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`   | ✔️        | string    | UINT16        | `TransactionProposalSign` | Identifies this as a `TransactionProposalSign` transaction.                                                                         |
+| `Account`           | ✔️        | string    | ACCOUNT       | N/A                       | The account submitting (and paying for) this transaction. Its relationship to `SigningFor` decides single- vs multi-sign (§6.1.2).  |
+| `ProposalID`        | ✔️        | string    | HASH256       | N/A                       | The ID of the `TransactionProposal` being signed.                                                                                   |
+| `SigningFor`        | ✔️        | string    | ACCOUNT       | N/A                       | An account **in the proposed transaction** that requires a signature for it to be valid — i.e. any of its signature slots (§6.1.1). |
+| `ProposalSignature` | ✔️        | object    | STOBJECT      | N/A                       | The contributed signature: `SigningPubKey` plus `TxnSignature` over `SigningFor`'s signing data (§6.1.2).                           |
 
-There are no per-role contribution objects. Every `TransactionProposalSign` looks the same — it names the account being authorized (`SigningFor`) and supplies one signature for it. The ledger works out the rest.
+`ProposalSignature` contains two required fields: `SigningPubKey` and `TxnSignature`. There are no per-role contribution objects. Every `TransactionProposalSign` looks the same — it names the account being authorized (`SigningFor`) and supplies one `ProposalSignature` for it. The ledger works out the rest.
 
 #### 6.1.1. `SigningFor` — which account is being authorized, and where the signature lands
 
@@ -339,7 +338,7 @@ If the same account fills **more than one** role, such as being both the `Counte
 
 The transaction does not include a flag that says whether the contribution is a single-signature or a multi-signature share. The ledger determines that from the relationship between the submitting `Account` and `SigningFor`:
 
-- **`Account` == `SigningFor` → single-signature.** The account is signing for itself using its master key or regular key. `SigningPubKey` must be a valid key for `SigningFor`. This one signature fully authorizes `SigningFor`. The ledger stores it directly as `SigningPubKey`/`TxnSignature`: at the proposed transaction's **top level** for the main `Account` or `Delegate`, or inside the relevant `Counterparty`, `Sponsor`, or `Batch` participant signature slot.
+- **`Account` == `SigningFor` → single-signature.** The account is signing for itself using its master key or regular key. `ProposalSignature.SigningPubKey` must be a valid key for `SigningFor`. This one signature fully authorizes `SigningFor`. The ledger stores it directly as `SigningPubKey`/`TxnSignature`: at the proposed transaction's **top level** for the main `Account` or `Delegate`, or inside the relevant `Counterparty`, `Sponsor`, or `Batch` participant signature slot.
 - **`Account` != `SigningFor` → multi-signature share.** The submitting `Account` is contributing one multi-signature share for `SigningFor`. The submitting `Account` must be in `SigningFor`'s applicable `SignerList`. The ledger stores the contribution as a standard `Signer` entry (`{Account, SigningPubKey, TxnSignature}`) in the relevant `Signers` array: `ProposedTransaction.Signers` for the main account, or the nested `Signers` array inside the `CounterpartySignature`, `SponsorSignature`, or participant `BatchSigner` slot. These entries are kept sorted and deduplicated by `Account`. More shares may be added until `SigningFor`'s quorum is reached.
 
 ### 6.2. Transaction Fee
@@ -353,15 +352,15 @@ The transaction does not include a flag that says whether the contribution is a 
 All Data Verification failures return a `tem`-level error.
 
 1. `ProposalID` is missing or malformed (`temMALFORMED`).
-2. `SigningFor`, `SigningPubKey`, or `TxnSignature` is missing (`temMALFORMED`).
-3. The supplied signature is not valid over `SigningFor`'s signing data for the proposed transaction (§6.1.2) (`temBAD_SIGNATURE`).
+2. `SigningFor`, `ProposalSignature`, `ProposalSignature.SigningPubKey`, or `ProposalSignature.TxnSignature` is missing (`temMALFORMED`).
+3. `ProposalSignature.TxnSignature` is not valid over `SigningFor`'s signing data for the proposed transaction (§6.1.2) (`temBAD_SIGNATURE`).
 
 #### 6.3.2. Protocol-Level Failures
 
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
 2. The proposal is terminal — its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed (`tecEXPIRED`). This is a claimed-fee failure: no signature is recorded, but the terminal proposal is deleted as a side effect (see §6.4). This condition is checked before the authorization conditions below.
 3. `SigningFor` is not an account the proposed transaction requires a signature from — it is not the transaction's `Account`/`Delegate`, its `Counterparty`, its `Sponsor`, or (for a `Batch`) an account owning an inner transaction in `RawTransactions` (`tecNO_PERMISSION`).
-4. The submitter is not authorized: for single-signing, `SigningPubKey` is not `SigningFor`'s master or regular key; for multi-signing, `Account` is not on `SigningFor`'s applicable `SignerList`, or `SigningPubKey` is not a valid key for `Account` (`tecNO_PERMISSION`).
+4. The submitter is not authorized: for single-signing, `ProposalSignature.SigningPubKey` is not `SigningFor`'s master or regular key; for multi-signing, `Account` is not on `SigningFor`'s applicable `SignerList`, or `ProposalSignature.SigningPubKey` is not a valid key for `Account` (`tecNO_PERMISSION`).
 5. The contribution is already recorded — `Account` is already present in that destination, or a single-signature entry for `SigningFor` already exists (`tecDUPLICATE`). (The same `Account` may still sign for a different `SigningFor`.)
 6. The contribution conflicts with the existing authorization mode for `SigningFor` — a multi-signature share when a single-signature entry is already recorded, or vice versa (`tecNO_PERMISSION`).
 7. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
@@ -428,8 +427,10 @@ The `TransactionProposalSign` transaction is trivial — `SigningFor` plus one s
   "Sequence": 7,
   "ProposalID": "C1A2B3D4E5F6...............................",
   "SigningFor": "rTARGET..........................",
-  "SigningPubKey": "03AB...",
-  "TxnSignature": "3045..."
+  "ProposalSignature": {
+    "SigningPubKey": "03AB...",
+    "TxnSignature": "3045..."
+  }
 }
 ```
 
@@ -521,8 +522,10 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
   "Sequence": 4,
   "ProposalID": "C1A2B3D4E5F6...............................",
   "SigningFor": "rTARGET..........................",
-  "SigningPubKey": "02FF...",
-  "TxnSignature": "3046..."
+  "ProposalSignature": {
+    "SigningPubKey": "02FF...",
+    "TxnSignature": "3046..."
+  }
 }
 ```
 
@@ -595,8 +598,10 @@ If `rTARGET` instead authorizes with its **own** key — `Account` == `SigningFo
   "Sequence": 5,
   "ProposalID": "E5E6...............................",
   "SigningFor": "rLENDER.........................",
-  "SigningPubKey": "03CD...",
-  "TxnSignature": "3047..."
+  "ProposalSignature": {
+    "SigningPubKey": "03CD...",
+    "TxnSignature": "3047..."
+  }
 }
 ```
 
@@ -711,8 +716,10 @@ Three signatures arrive — one per account that must authorize:
   "Sequence": 3,
   "ProposalID": "F0F0...............................",
   "SigningFor": "rOUTER..........................",
-  "SigningPubKey": "03A1...",
-  "TxnSignature": "3045..."
+  "ProposalSignature": {
+    "SigningPubKey": "03A1...",
+    "TxnSignature": "3045..."
+  }
 }
 ```
 
@@ -725,8 +732,10 @@ Three signatures arrive — one per account that must authorize:
   "Sequence": 9,
   "ProposalID": "F0F0...............................",
   "SigningFor": "rBOB............................",
-  "SigningPubKey": "02B2...",
-  "TxnSignature": "3044..."
+  "ProposalSignature": {
+    "SigningPubKey": "02B2...",
+    "TxnSignature": "3044..."
+  }
 }
 ```
 
@@ -739,8 +748,10 @@ Three signatures arrive — one per account that must authorize:
   "Sequence": 4,
   "ProposalID": "F0F0...............................",
   "SigningFor": "rCAROL..........................",
-  "SigningPubKey": "03C3...",
-  "TxnSignature": "3046..."
+  "ProposalSignature": {
+    "SigningPubKey": "03C3...",
+    "TxnSignature": "3046..."
+  }
 }
 ```
 
