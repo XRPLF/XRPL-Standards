@@ -89,6 +89,8 @@ The following fields are added to the existing `ltVAULT` ledger entry. All are `
 | `SubscriptionDate` |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. |
 | `RedemptionDate`   |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`.                       |
 
+When present on a vault, these fields are surfaced in the JSON responses of the `vault_info` and `ledger_entry` RPC methods alongside the other vault fields (see 3.8 and 3.9). Open-ended vaults have the three fields absent from the response, which callers MUST interpret as `VaultKind = OpenEnded`.
+
 ### 3.2. Transaction: `VaultCreate` (modified)
 
 #### 3.2.1. Fields
@@ -209,6 +211,78 @@ No changes.
 
 - `VaultKind`, `SubscriptionDate`, and `RedemptionDate` never change after creation.
 
+### 3.8. RPC: `vault_info` (modified)
+
+The `vault_info` method retrieves a `Vault` ledger entry. This proposal does not change its request fields; it only adds the three new `Vault` fields to the response when they are present.
+
+#### 3.8.1. Request Fields
+
+No changes.
+
+#### 3.8.2. Response
+
+The following fields are added to the `vault` object in the response. Only the newly introduced fields are listed here; all existing XLS-65 `vault_info` response fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
+
+| Field Name               | Required? | JSON Type | Description                                                                            |
+| ------------------------ | --------- | --------- | ------------------------------------------------------------------------------------- |
+| `vault.VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
+| `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
+| `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
+
+#### 3.8.2.1. Example
+
+The `vault` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
+
+```json
+{
+  "result": {
+    "vault": {
+      "LedgerEntryType": "Vault",
+      "VaultKind": 1,
+      "SubscriptionDate": 800000000,
+      "RedemptionDate": 900000000
+    }
+  }
+}
+```
+
+An open-ended vault omits `VaultKind`, `SubscriptionDate`, and `RedemptionDate`; its response is identical to the existing XLS-65 `vault_info` response.
+
+### 3.9. RPC: `ledger_entry` (modified)
+
+The `ledger_entry` method returns a `Vault` object when queried with a `vault` object ID. This proposal does not change its request fields; it only adds the three new `Vault` fields to the returned object when they are present.
+
+#### 3.9.1. Request Fields
+
+No changes.
+
+#### 3.9.2. Response
+
+The same three fields added to `vault_info` (see 3.8.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
+
+| Field Name         | Required? | JSON Type | Description                                                                            |
+| ------------------ | --------- | --------- | ------------------------------------------------------------------------------------- |
+| `VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
+| `SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
+| `RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
+
+#### 3.9.2.1. Example
+
+The `node` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
+
+```json
+{
+  "result": {
+    "node": {
+      "LedgerEntryType": "Vault",
+      "VaultKind": 1,
+      "SubscriptionDate": 800000000,
+      "RedemptionDate": 900000000
+    }
+  }
+}
+```
+
 ## 4. Rationale
 
 ### 4.1. Two stored boundaries: date-driven phases
@@ -242,6 +316,7 @@ A date-driven `SubscriptionDate` keeps the vault entirely unaware of loans: the 
 - **LoanSet:** rejected in Subscription and Redemption; permitted in Investment when the loan's final payment plus `REDEMPTION_BUFFER` is strictly before `RedemptionDate`; rejected when it is not.
 - **LoanAccept:** rejected in Subscription and Redemption; permitted in Investment.
 - **VaultSet:** attempts to mutate `VaultKind`, `SubscriptionDate`, or `RedemptionDate` return `temMALFORMED`.
+- **RPC surface:** `vault_info` and `ledger_entry` return `VaultKind`, `SubscriptionDate` and `RedemptionDate` for a closed-ended vault, and omit all three for an open-ended vault.
 - **Invariant checks:** end-to-end lifecycle (subscribe, invest, redeem) with multiple LPs and loans, asserting the per-transaction invariants (3.2.4, 3.3.4, 3.4.4, 3.5.4, 3.6.4, 3.7.4).
 
 ## 7. Reference Implementation
