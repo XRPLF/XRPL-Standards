@@ -84,8 +84,8 @@ Only the fields, failure conditions, and state changes newly introduced by this 
 The following fields are added to the existing `ltVAULT` ledger entry. All are `SoeOptional`/`SoeDefault` so pre-existing serialized vaults remain valid; open-ended vaults retain their existing behaviour.
 
 | Field Name         | Modifiable? |  Required   | JSON Type | Internal Type | Default Value | Description                                                                              |
-| ------------------ | :---------: | :---------: | :-------: | :-----------: | :-----------: | --------------------------------------------------------------------------------------- |
-| `VaultKind`        |     No      |     No      | `number`  |    `UINT8`    |      `0`      | The vault kind. Absent/`0` means open-ended. Immutable after creation.                  |
+| ------------------ | :---------: | :---------: | :-------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------- |
+| `VaultKind`        |     No      |     No      | `number`  |    `UINT8`    |      `0`      | The vault kind. Absent/`0` means open-ended. Immutable after creation.                   |
 | `SubscriptionDate` |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. |
 | `RedemptionDate`   |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`.                       |
 
@@ -95,19 +95,24 @@ When present on a vault, these fields are surfaced in the JSON responses of the 
 
 #### 3.2.1. Fields
 
-| Field Name         |     Required?      |     JSON Type      | Internal Type |      Default Value       | Description                                                                              |
-| ------------------ | :----------------: | :----------------: | :-----------: | :----------------------: | :--------------------------------------------------------------------------------------- |
-| `VaultKind`        |   No               |      `number`      |    `UINT8`    |            0             | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                                                  |
-| `SubscriptionDate` |   No               |      `number`      |   `UINT32`    |          `N/A`           | **New.** End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                            |
-| `RedemptionDate`   |   No               |      `number`      |   `UINT32`    |          `N/A`           | **New.** Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                                                  |
+| Field Name         | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                 |
+| ------------------ | :-------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------- |
+| `VaultKind`        |    No     | `number`  |    `UINT8`    |       0       | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                        |
+| `SubscriptionDate` |    No     | `number`  |   `UINT32`    |     `N/A`     | **New.** End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation. |
+| `RedemptionDate`   |    No     | `number`  |   `UINT32`    |     `N/A`     | **New.** Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                       |
 
 #### 3.2.2. Failure Conditions
+
+The following conditions are decided from the transaction alone and return `temMALFORMED`:
 
 - If `sfVaultKind` holds an unrecognised enum value, return `temMALFORMED`.
 - If `sfVaultKind` is `OpenEnded` or absent but `sfSubscriptionDate` or `sfRedemptionDate` is present, return `temMALFORMED`.
 - If `sfVaultKind` is `ClosedEnded` but `sfSubscriptionDate` or `sfRedemptionDate` is absent, return `temMALFORMED`.
-- If `sfVaultKind` is `ClosedEnded` and `SubscriptionDate` is not strictly after the parent ledger close time, return `temMALFORMED`.
 - If `sfVaultKind` is `ClosedEnded` and `RedemptionDate - SubscriptionDate` is less than `REDEMPTION_BUFFER`, return `temMALFORMED`.
+
+The following condition depends on ledger state (the parent ledger close time) and returns `tecEXPIRED`, consuming the transaction fee:
+
+- If `sfVaultKind` is `ClosedEnded` and `SubscriptionDate` is not strictly after the parent ledger close time, return `tecEXPIRED`.
 
 #### 3.2.3. State Changes
 
@@ -201,7 +206,7 @@ No changes.
 
 #### 3.7.2. Failure Conditions
 
-- If the transaction attempts to set or alter `sfVaultKind`, `sfSubscriptionDate`, or `sfRedemptionDate`, return `temMALFORMED`.
+`sfVaultKind`, `sfSubscriptionDate`, and `sfRedemptionDate` are not declared in the `VaultSet` transaction template. Any `VaultSet` transaction that carries one of these fields is rejected by the transaction framework during template application, before the transactor runs, and never reaches `preflight`. No additional check is required inside `VaultSet` itself.
 
 #### 3.7.3. State Changes
 
@@ -224,7 +229,7 @@ No changes.
 The following fields are added to the `vault` object in the response. Only the newly introduced fields are listed here; all existing XLS-65 `vault_info` response fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
 | Field Name               | Required? | JSON Type | Description                                                                            |
-| ------------------------ | --------- | --------- | ------------------------------------------------------------------------------------- |
+| ------------------------ | --------- | --------- | -------------------------------------------------------------------------------------- |
 | `vault.VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
 | `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
@@ -261,7 +266,7 @@ No changes.
 The same three fields added to `vault_info` (see 3.8.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
 | Field Name         | Required? | JSON Type | Description                                                                            |
-| ------------------ | --------- | --------- | ------------------------------------------------------------------------------------- |
+| ------------------ | --------- | --------- | -------------------------------------------------------------------------------------- |
 | `VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
 | `SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
