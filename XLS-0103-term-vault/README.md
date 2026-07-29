@@ -104,7 +104,7 @@ The following fields are added to the existing `ltVAULT` ledger entry. All are `
 - If `sfVaultKind` holds an unrecognised enum value, return `temMALFORMED`.
 - If `sfVaultKind` is `OpenEnded` or absent but `sfSubscriptionDate` or `sfRedemptionDate` is present, return `temMALFORMED`.
 - If `sfVaultKind` is `ClosedEnded` but `sfSubscriptionDate` or `sfRedemptionDate` is absent, return `temMALFORMED`.
-- If `sfVaultKind` is `ClosedEnded` and `SubscriptionDate` is not strictly after the ledger close time, return `temMALFORMED`.
+- If `sfVaultKind` is `ClosedEnded` and `SubscriptionDate` is not strictly after the parent ledger close time, return `temMALFORMED`.
 - If `sfVaultKind` is `ClosedEnded` and `RedemptionDate - SubscriptionDate` is less than `REDEMPTION_BUFFER`, return `temMALFORMED`.
 
 #### 3.2.3. State Changes
