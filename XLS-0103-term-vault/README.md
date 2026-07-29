@@ -33,12 +33,12 @@ The current phase is never stored on the ledger; it is derived at run time by co
 
 A vault's phase is derived at run time and never stored. Let `now` be the parent ledger close time (seconds since the Ripple epoch). An open-ended vault has no phases and its phase is `NoPhase`. A closed-ended vault's phase is determined by comparing `now` against its two immutable dates:
 
-| Condition                                  |     Phase      |
-| ------------------------------------------ | :------------: |
-| `VaultKind == OpenEnded`                   |   `NoPhase`    |
-| `now < SubscriptionDate`                   | `Subscription` |
-| `SubscriptionDate <= now < RedemptionDate` |  `Investment`  |
-| `now >= RedemptionDate`                    |  `Redemption`  |
+| Condition                                 |     Phase      |
+| ----------------------------------------- | :------------: |
+| `VaultKind == OpenEnded`                  |   `NoPhase`    |
+| `now <= SubscriptionDate`                 | `Subscription` |
+| `SubscriptionDate < now < RedemptionDate` |  `Investment`  |
+| `now >= RedemptionDate`                   |  `Redemption`  |
 
 The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`; a present and recognised value decodes to that kind; any unrecognised value is treated as invalid.
 
