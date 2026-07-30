@@ -297,7 +297,7 @@ Because both boundaries are calendar dates fixed at creation, the vault's lifecy
 - **VaultWithdraw:** allowed in Subscription and Redemption; rejected in Investment; open-ended unaffected; `AssetsAvailable` cap still applies.
 - **LoanSet:** rejected in Subscription and Redemption; permitted in Investment when the loan's final payment is strictly before `RedemptionDate`; rejected when it is not.
 - **LoanAccept:** rejected in Subscription and Redemption; permitted in Investment.
-- **Pending loans:** a pending two-step loan abandoned into Redemption can no longer be accepted (`LoanAccept` rejected); `LoanDelete` on such a pending loan succeeds during Redemption and frees its reserved principal back into `AssetsAvailable`; `VaultDelete` is blocked while a pending loan still exists and succeeds once it is deleted.
+- **Pending loans:** a two-step loan whose start date has passed can no longer be accepted (`LoanAccept` rejected), both while the vault is still in `Investment` and once it reaches `Redemption`; `LoanDelete` on such an expired pending loan succeeds in the `Investment` phase — freeing its reserved principal back into `AssetsAvailable` even during the lock-up — and likewise succeeds in `Redemption`; `VaultDelete` is blocked while a pending loan still exists and succeeds once it is deleted.
 - **RPC surface:** `vault_info` and `ledger_entry` return `VaultKind`, `SubscriptionDate` and `RedemptionDate` for a closed-ended vault, and omit all three for an open-ended vault.
 - **Invariant checks:** end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans, asserting the per-transaction invariants (4.4, 5.4, 6.4, 7.4, 8.4).
 
