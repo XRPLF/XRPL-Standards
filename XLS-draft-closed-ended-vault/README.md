@@ -383,7 +383,7 @@ Because both boundaries are calendar dates fixed at creation, the vault's lifecy
 
 - The feature is inert unless the amendment is enabled. Ledger entries and transactions are unchanged for nodes that have not activated it.
 - **Open-ended vaults** retain their existing behaviour: their phase is `NoPhase`, so no deposit, withdrawal, or loan restriction is added.
-- All new fields are `SoeOptional`, so existing serialised vaults deserialise unchanged.
+- All new fields are optional, so existing serialised vaults deserialise unchanged.
 
 ## 13. Test Plan
 
