@@ -8,7 +8,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   requires: XLS-74
   created: 2024-05-02
-  updated: 2026-07-22
+  updated: 2026-07-28
 </pre>
 
 # Sponsored Fees and Reserves
@@ -238,7 +238,7 @@ The reserve is charged to the sponsor's account (the `Owner` field).
 
 - The `SponsorshipSet` transaction must be submitted by the sponsor (the `Owner` of the `Sponsorship` object).
 - The `tfDeleteObject` flag must be enabled.
-- No other fields (`FeeAmount`, `MaxFee`, `RemainingOwnerCount`, or flag-setting fields) may be specified in the deletion transaction.
+- No other fields (`FeeAmountDelta`, `MaxFee`, `RemainingOwnerCountDelta`, or flag-setting fields) may be specified in the deletion transaction.
 - **Note:** Non-zero `FeeAmount` and `RemainingOwnerCount` values **are** permitted at deletion time. Any remaining XRP in `FeeAmount` is returned to the sponsor's account upon deletion.
 
 #### 5.6.3. Account Deletion Blocker
@@ -566,16 +566,16 @@ _Note: This transaction may still be sponsored, via the standard `Sponsor` field
 
 ### 9.1. Fields
 
-| Field Name            | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                    |
-| --------------------- | --------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`     | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                                       |
-| `Account`             | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the counterparty sponsor or the sponsee.                                                                                                               |
-| `Flags`               |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                                    |
-| `CounterpartySponsor` |           | `string`  | `AccountID`   | The counterparty sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.                    |
-| `Sponsee`             |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `CounterpartySponsor`.                                                                            |
-| `FeeAmount`           |           | `string`  | `Amount`      | The (remaining) amount of XRP that the counterparty sponsor has provided for the sponsee to use for fees. This value will replace what is currently in the `Sponsorship.FeeAmount` field (if it exists).       |
-| `MaxFee`              |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                                                 |
-| `RemainingOwnerCount` |           | `number`  | `UInt32`      | The (remaining) amount of reserves that the counterparty sponsor has provided for the sponsee to use. This value will replace what is currently in the `Sponsorship.RemainingOwnerCount` field (if it exists). |
+| Field Name                 | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`          | ✔️        | `string`  | `UInt16`      | The transaction type (`SponsorshipSet`).                                                                                                                                                                                                                                                                                                                                                                                  |
+| `Account`                  | ✔️        | `string`  | `AccountID`   | The account sending the transaction. This may be either the counterparty sponsor or the sponsee.                                                                                                                                                                                                                                                                                                                          |
+| `Flags`                    |           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this transaction. The flags are defined in [section 9.2](#92-flags).                                                                                                                                                                                                                                                                                                               |
+| `CounterpartySponsor`      |           | `string`  | `AccountID`   | The counterparty sponsor associated with this relationship. This account also pays for the reserve of this object. If this field is included, the `Account` is assumed to be the `Sponsee`.                                                                                                                                                                                                                               |
+| `Sponsee`                  |           | `string`  | `AccountID`   | The sponsee associated with this relationship. If this field is included, the `Account` is assumed to be the `CounterpartySponsor`.                                                                                                                                                                                                                                                                                       |
+| `FeeAmountDelta`           |           | `string`  | `Amount`      | The change (positive or negative) to apply to the `Sponsorship.FeeAmount` field. A positive value adds to the sponsee's fee budget (deducted from the counterparty sponsor's balance); a negative value removes from it (refunded to the counterparty sponsor's balance, clamped so the result never goes below zero). If the object doesn't yet exist, this value must be positive (it becomes the initial `FeeAmount`). |
+| `MaxFee`                   |           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                                                                                                                                                                                                                                                            |
+| `RemainingOwnerCountDelta` |           | `number`  | `Int32`       | The change (positive or negative) to apply to the `Sponsorship.RemainingOwnerCount` field. A positive value increases the sponsee's reserve budget; a negative value decreases it, clamped so the result never goes below zero.                                                                                                                                                                                           |
 
 `SponsorshipSet` is delegable via [XLS-75 permissioned delegation](../XLS-0075-permission-delegation/README.md) — a `Delegate` may submit this transaction on behalf of `Account` subject to the standard delegation permission checks.
 
@@ -604,17 +604,20 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 5. Both `tfSponsorshipSetRequireSignForReserve` and `tfSponsorshipClearRequireSignForReserve` are enabled (`temINVALID_FLAG`)
 6. `CounterpartySponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the counterparty sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
 7. `MaxFee` is not denominated in XRP, or is negative (`temBAD_AMOUNT`)
-8. `FeeAmount` is not denominated in XRP, or is negative (`temBAD_AMOUNT`)
+8. `FeeAmountDelta` is not denominated in XRP, or is zero (`temBAD_AMOUNT`)
 9. `CounterpartySponsor` or `Sponsee` does not exist on the ledger (`tecNO_DST`)
 10. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
 11. `CounterpartySponsor` does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecUNFUNDED`)
-12. `CounterpartySponsor` does not have sufficient XRP to cover the `FeeAmount` being committed (`tecUNFUNDED`)
+12. `CounterpartySponsor` does not have sufficient XRP to cover the `FeeAmountDelta` being committed (`tecUNFUNDED`)
 13. `Sponsee` **or** `CounterpartySponsor` is a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tecNO_PERMISSION` — see [section 17.3](#173-pseudo-accounts))
-14. The resulting `Sponsorship` object would have no budget at all — neither a positive `FeeAmount` nor a positive `RemainingOwnerCount` once the transaction's field values (or, for omitted fields, the object's existing stored values) are applied (`tecNO_PERMISSION`)
-15. If `tfDeleteObject` is enabled:
-    1. `FeeAmount` is specified (`temMALFORMED`)
+14. The resulting `Sponsorship` object would have no budget at all — neither a positive `FeeAmount` nor a positive `RemainingOwnerCount` once `FeeAmountDelta`/`RemainingOwnerCountDelta` (or, for omitted fields, a delta of `0`) are applied to the object's existing stored values (`tecNO_PERMISSION`)
+15. `RemainingOwnerCountDelta` is zero (`temINVALID`)
+16. Applying `RemainingOwnerCountDelta` to the object's current `RemainingOwnerCount` would overflow past the maximum `UInt32` value (`tecLIMIT_EXCEEDED`)
+17. No modification is requested at all — none of `FeeAmountDelta`, `MaxFee`, or `RemainingOwnerCountDelta` is present, and no flags are set (`temREDUNDANT`)
+18. If `tfDeleteObject` is enabled:
+    1. `FeeAmountDelta` is specified (`temMALFORMED`)
     2. `MaxFee` is specified (`temMALFORMED`)
-    3. `RemainingOwnerCount` is specified (`temMALFORMED`)
+    3. `RemainingOwnerCountDelta` is specified (`temMALFORMED`)
     4. `tfSponsorshipSetRequireSignForFee` is enabled (`temINVALID_FLAG`)
     5. `tfSponsorshipSetRequireSignForReserve` is enabled (`temINVALID_FLAG`)
     6. `tfSponsorshipClearRequireSignForFee` is enabled (`temINVALID_FLAG`)
@@ -625,22 +628,28 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 If creating a new `Sponsorship` object:
 
-- Create the `Sponsorship` ledger entry with the specified fields
+- Create the `Sponsorship` ledger entry. Since the object has no prior `FeeAmount`/`RemainingOwnerCount`, `FeeAmountDelta` and `RemainingOwnerCountDelta` are applied against a starting value of `0`: `FeeAmountDelta` must be positive to result in a stored `FeeAmount` (a negative value here fails the budget check below, since it can never establish a positive balance from `0`); `RemainingOwnerCountDelta` is stored as-is on `RemainingOwnerCount` only if positive (a non-positive value simply results in the field being omitted).
 - Increment the counterparty sponsor's `OwnerCount` by 1
 - Add the object to both the counterparty sponsor's and sponsee's owner directories
 - Deduct the object reserve from the counterparty sponsor's available XRP
 
 If updating an existing `Sponsorship` object:
 
-- The update is **partial** — fields that are omitted from the transaction are left unchanged on the ledger entry. To explicitly clear an optional field, send it with the value `0` (`FeeAmount`, `MaxFee`, and `RemainingOwnerCount` are all clearable this way).
+- The update is **partial** — fields that are omitted from the transaction are left unchanged on the ledger entry (equivalent to a delta of `0` for `FeeAmountDelta`/`RemainingOwnerCountDelta`). `MaxFee` is still a direct-set field: it is replaced with the transaction's value if present, and cleared (removed) if present with the value `0`.
 
-* For each of `FeeAmount`, `MaxFee`, and `RemainingOwnerCount`:
-  - If the field is omitted from the transaction, the corresponding field on the `Sponsorship` object is left unchanged.
-  - If the field is present with a non-zero value, the corresponding field on the `Sponsorship` object is replaced with that value.
-  - If the field is present with the value `0`, the corresponding field on the `Sponsorship` object is cleared (removed).
+* `FeeAmountDelta` is added to the existing `Sponsorship.FeeAmount` (treated as `0` if absent):
+  - If the delta is omitted, `FeeAmount` is left unchanged.
+  - If the delta is negative and its magnitude exceeds the current `FeeAmount`, it is clamped so that the result is exactly `0` (i.e. the sponsee cannot be left with a negative fee budget, and the counterparty sponsor is only refunded up to the amount currently held).
+  - If the resulting `FeeAmount` is `0`, the field is cleared (removed) from the object.
+  - Otherwise, `FeeAmount` is set to the resulting (clamped) sum.
+* `RemainingOwnerCountDelta` is added to the existing `Sponsorship.RemainingOwnerCount` (treated as `0` if absent), using signed 64-bit arithmetic to avoid unsigned wraparound:
+  - If the delta is omitted, `RemainingOwnerCount` is left unchanged.
+  - Overflow past the maximum `UInt32` value is rejected in `preclaim` (`tecLIMIT_EXCEEDED`); it does not clamp.
+  - If a negative delta would bring the result to `0` or below, it is clamped to `0` and the field is cleared (removed) from the object.
+  - Otherwise, `RemainingOwnerCount` is set to the resulting (clamped) sum.
 * Update flags based on `tfSponsorshipSetRequireSignForFee`, `tfSponsorshipClearRequireSignForFee`, `tfSponsorshipSetRequireSignForReserve`, and `tfSponsorshipClearRequireSignForReserve`. Set/clear flags are only applied when the corresponding tx flag is enabled; otherwise the existing object flag is left unchanged.
-* If `FeeAmount` is increased, deduct the additional XRP from the counterparty sponsor's balance.
-* If `FeeAmount` is decreased (or cleared), return the difference to the counterparty sponsor's balance.
+* If the net `FeeAmountDelta` (after clamping) is positive, deduct that amount of XRP from the counterparty sponsor's balance.
+* If the net `FeeAmountDelta` (after clamping) is negative, return that amount of XRP to the counterparty sponsor's balance.
 
 _Note: If the outer transaction is itself sponsored (via the standard `Sponsor` / `SponsorSignature` fields, as described in [section 9](#9-transaction-sponsorshipset)), that outer sponsor pays the transaction fee. `spfSponsorReserve` is not supported on `SponsorshipSet` (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)), so the reserve for the newly created `Sponsorship` object is always paid by the `CounterpartySponsor` (`Sponsorship.Owner`), never by the outer sponsor. The outer sponsor and the `CounterpartySponsor` are distinct roles._
 
@@ -661,9 +670,9 @@ _Note: Deleting a `Sponsorship` object does not affect already-sponsored ledger 
   "TransactionType": "SponsorshipSet",
   "Account": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
   "Sponsee": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
-  "FeeAmount": "1000000",
+  "FeeAmountDelta": "1000000",
   "MaxFee": "1000",
-  "RemainingOwnerCount": 5,
+  "RemainingOwnerCountDelta": 5,
   "Fee": "12",
   "Sequence": 42
 }
@@ -1559,7 +1568,7 @@ This section outlines the testing strategy for the sponsored fees and reserves f
 **`Sponsorship` Object Tests:**
 
 - Creation of `Sponsorship` objects via `SponsorshipSet` with various field combinations
-- Updates to existing `Sponsorship` objects (modifying `FeeAmount`, `MaxFee`, `RemainingOwnerCount`)
+- Updates to existing `Sponsorship` objects (modifying `FeeAmount` via `FeeAmountDelta`, `MaxFee`, `RemainingOwnerCount` via `RemainingOwnerCountDelta`)
 - Deletion of `Sponsorship` objects via `SponsorshipSet` with `tfDeleteObject` flag
 - Validation of invariants: `Owner != Sponsee`, `FeeAmount >= 0` and denominated in XRP, `RemainingOwnerCount >= 0`
 - Proper handling of `lsfSponsorshipRequireSignForFee` and `lsfSponsorshipRequireSignForReserve` flags
