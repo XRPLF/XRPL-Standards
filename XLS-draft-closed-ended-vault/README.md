@@ -3,7 +3,7 @@ xls: TBD
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/590
 title: Closed-Ended Single Asset Vault
 description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
-author: TBD
+author: Jingchen Wu (@a1q123456), Vita Tumas (@Tapanito), Gregory Tsipenyuk (@gtsipenyuk)
 status: Draft
 category: Amendment
 created: 2026-07-21
@@ -87,6 +87,39 @@ A vault's phase is derived at run time and never stored. Let `now` be the parent
 
 The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`; a present and recognised value decodes to that kind; any unrecognised value is treated as invalid.
 
+### 3.4 Invariants
+
+- For a closed-ended vault, `SubscriptionDate + MIN_INVESTMENT_PERIOD <= RedemptionDate` always holds (equivalently `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate`), which implies `SubscriptionDate < RedemptionDate`.
+- `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are immutable: once set at creation they are never added, removed, or changed by any transaction.
+
+### 3.5. Example JSON
+
+```json
+{
+  "LedgerEntryType": "Vault",
+  "Account": "rwCNM7SeUHTajEBQDiNqxDG8p1Mreizw85",
+  "Asset": {
+      "currency": "USD",
+      "issuer": "rXJSJiZMxaLuH3kQBUV5DLipnYtrE6iVb"
+  },
+  "AssetsAvailable": "0",
+  "AssetsMaximum": "1000000",
+  "AssetsTotal": "0",
+  "Data": "5661756C74206D65746164617461",
+  "Flags": 0,
+  "LossUnrealized": "0",
+  "Owner": "rNGHoQwNG753zyfDrib4qDvvswbrtmV8Es",
+  "OwnerNode": "0",
+  "Scale": 6,
+  "Sequence": 200370,
+  "ShareMPTID": "0000000169F415C9F1AB6796AB9224CE635818AFD74F8175",
+  "WithdrawalPolicy": 1,
+  "VaultKind": 1,
+  "SubscriptionDate": 711232800,
+  "RedemptionDate": 721600800
+}
+```
+
 ## 4. Transaction: `VaultCreate` (modified)
 
 ### 4.1. Fields
@@ -122,6 +155,30 @@ On Success (tesSUCCESS):
 
 - For a closed-ended vault, `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD` always holds, which implies `SubscriptionDate < RedemptionDate`.
 
+### 4.5 Example JSON
+
+```json
+{
+  "TransactionType": "VaultCreate",
+  "Account": "rNGHoQwNG753zyfDrib4qDvvswbrtmV8Es",
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rXJSJiZMxaLuH3kQBUV5DLipnYtrE6iVb"
+  },
+  "AssetsMaximum": "1000000",
+  "Data": "5661756C74206D65746164617461",
+  "Fee": "5000000",
+  "Flags": 0,
+  "MPTokenMetadata": "7B2274223A225473745368617265222C226E223A2254657374205661756C74205368617265222C2264223A22412074657374207661756C742073686172652E222C2269223A226578616D706C652E6F72672F73686172652D69636F6E2E706E67222C226163223A22727761222C226173223A22657175697479222C22696E223A224D53205465737420497373756572222C227573223A5B7B2275223A226578616D706C657969656C642E636F2F7473747368617265222C2263223A2277656273697465222C2274223A2250726F647563742050616765227D2C7B2275223A226578616D706C657969656C642E636F2F646F6373222C2263223A22646F6373222C2274223A225969656C6420546F6B656E20446F6373227D5D2C226169223A7B22766F6C6174696C697479223A226C6F77227D7D",
+  "Scale": 6,
+  "Sequence": 200370,
+  "WithdrawalPolicy": 1,
+  "VaultKind": 1,
+  "SubscriptionDate": 711232800,
+  "RedemptionDate": 721600800
+}
+```
+
 ## 5. Transaction: `VaultDeposit` (modified)
 
 ### 5.1. Fields
@@ -139,6 +196,10 @@ No changes.
 ### 5.4. Invariants
 
 - No `VaultDeposit` succeeds unless the vault's phase is `Subscription` or `NoPhase` (the latter being open-ended vaults, which are unaffected).
+
+### 5.5. Example JSON
+
+Not changed
 
 ## 6. Transaction: `VaultWithdraw` (modified)
 
@@ -159,6 +220,10 @@ No changes.
 ### 6.4. Invariants
 
 - No `VaultWithdraw` succeeds when the vault's phase is `Investment` (closed-ended).
+
+### 6.5. Example JSON
+
+Not changed
 
 ## 7. Transaction: `LoanSet` (modified)
 
@@ -183,6 +248,10 @@ No changes.
 - No closed-ended `LoanSet` succeeds unless the vault's phase is `Investment`.
 - No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is strictly before `RedemptionDate`.
 
+### 7.5. Example JSON
+
+Not changed
+
 ### 8. Transaction: `LoanAccept` (modified)
 
 #### 8.1. Fields
@@ -204,6 +273,10 @@ No changes.
 
 - No closed-ended `LoanAccept` succeeds unless the vault's phase is `Investment`.
 
+### 8.5. Example JSON
+
+Not changed
+
 ## 9. RPC: `vault_info` (modified)
 
 The `vault_info` method retrieves a `Vault` ledger entry. This proposal does not change its request fields; it only adds the three new `Vault` fields to the response when they are present.
@@ -212,7 +285,7 @@ The `vault_info` method retrieves a `Vault` ledger entry. This proposal does not
 
 No changes.
 
-### 9.2. Response
+### 9.2. Response Fields
 
 The following fields are added to the `vault` object in the response. Only the newly introduced fields are listed here; all existing XLS-65 `vault_info` response fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
@@ -222,7 +295,15 @@ The following fields are added to the `vault` object in the response. Only the n
 | `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
 
-#### 9.2.1. Example
+#### 9.2.1. Failure Conditions
+
+No changes.
+
+#### 9.2.2. Example Request
+
+No changes.
+
+#### 9.2.3. Example Response
 
 The `vault` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
 
@@ -249,7 +330,7 @@ The `ledger_entry` method returns a `Vault` object when queried with a `vault` o
 
 No changes.
 
-### 10.2. Response
+### 10.2. Response Fields
 
 The same three fields added to `vault_info` (see 9.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
@@ -259,7 +340,15 @@ The same three fields added to `vault_info` (see 9.2) are added to the `Vault` o
 | `SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
 
-### 10.2.1. Example
+### 10.2.1. Failure Conditions
+
+No changes.
+
+### 10.2.2. Example Request
+
+No changes.
+
+### 10.2.3. Example Response
 
 The `node` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
 
