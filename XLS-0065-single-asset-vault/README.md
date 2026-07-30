@@ -681,10 +681,10 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
 3. If the `Holder` is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
 
-4. If the submitter is the vault owner (share burn — vault has shares but no assets):
+4. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — share burn (see 3.7.2.2 item 2; the vault owner is always the submitter here, and 3.7.2.2 item 4 rejects the ambiguous case where the vault owner is also the asset `Issuer` and no `Amount` is specified):
    1. `Vault.AssetsTotal` and `Vault.AssetsAvailable` remain unchanged (no asset transfer occurs).
 
-5. If the submitter is the asset `Issuer` (asset clawback):
+5. If the `Amount` asset is `Vault.Asset` — asset clawback (see 3.7.2.2 item 3; the asset `Issuer` is always the submitter here):
    1. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
    2. If `Vault.Asset` is an `IOU`:
       1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
