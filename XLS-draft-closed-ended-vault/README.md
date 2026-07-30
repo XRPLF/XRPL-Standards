@@ -1,5 +1,5 @@
 <pre>
-xls: 103
+xls: TBD
 title: Closed-Ended Single Asset Vault
 description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
 author: TBD
