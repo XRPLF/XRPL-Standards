@@ -503,24 +503,27 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 ##### 3.5.2.2 Protocol-Level Failures
 
+> The order below reflects the evaluation order in `VaultDeposit.cpp` (preclaim, then doApply).
+
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
 
-3. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
-   1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
-   2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
-
-4. If `Vault.Asset` is an `MPT`:
+3. If `Vault.Asset` is an `MPT`:
    1. The `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object (the asset is not transferable). (`tecNO_AUTH`)
    2. The asset is globally or individually locked for the depositor. (`tecLOCKED`)
 
-5. If `Vault.Asset` is an `IOU`:
+4. If `Vault.Asset` is an `IOU`:
    1. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
 
-6. The vault shares are locked for the depositor. (`tecLOCKED`)
+5. The vault shares are locked for the depositor. (`tecLOCKED`)
+
+6. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
+   1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
+   2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
+
 7. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
-8. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
-9. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
+8. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
+9. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
 10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
 11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
 12. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
