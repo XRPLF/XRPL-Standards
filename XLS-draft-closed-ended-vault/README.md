@@ -239,11 +239,11 @@ No changes.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
 3. If `startDate + (paymentInterval × paymentTotal)` is not strictly before `RedemptionDate`, return `tecNO_PERMISSION`.
 
-#### 7.3. State Changes
+### 7.3. State Changes
 
 No changes.
 
-#### 7.4. Invariants
+### 7.4. Invariants
 
 - No closed-ended `LoanSet` succeeds unless the vault's phase is `Investment`.
 - No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is strictly before `RedemptionDate`.
@@ -252,24 +252,26 @@ No changes.
 
 Not changed
 
-### 8. Transaction: `LoanAccept` (modified)
+## 8. Transaction: `LoanAccept` (modified)
 
-#### 8.1. Fields
+### 8.1. Fields
 
 No changes.
 
-#### 8.2. Failure Conditions
+### 8.2. Failure Conditions
+
+No changes.
 
 #### 8.2.1. Protocol-Level Failures
 
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
 
-#### 8.3. State Changes
+### 8.3. State Changes
 
 No changes.
 
-#### 8.4. Invariants
+### 8.4. Invariants
 
 - No closed-ended `LoanAccept` succeeds unless the vault's phase is `Investment`.
 
@@ -295,15 +297,15 @@ The following fields are added to the `vault` object in the response. Only the n
 | `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
 
-#### 9.2.1. Failure Conditions
+### 9.3. Failure Conditions
 
 No changes.
 
-#### 9.2.2. Example Request
+### 9.4. Example Request
 
 No changes.
 
-#### 9.2.3. Example Response
+### 9.5. Example Response
 
 The `vault` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
 
