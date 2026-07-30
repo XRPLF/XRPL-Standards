@@ -99,8 +99,8 @@ The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`
   "LedgerEntryType": "Vault",
   "Account": "rwCNM7SeUHTajEBQDiNqxDG8p1Mreizw85",
   "Asset": {
-      "currency": "USD",
-      "issuer": "rXJSJiZMxaLuH3kQBUV5DLipnYtrE6iVb"
+    "currency": "USD",
+    "issuer": "rXJSJiZMxaLuH3kQBUV5DLipnYtrE6iVb"
   },
   "AssetsAvailable": "0",
   "AssetsMaximum": "1000000",
