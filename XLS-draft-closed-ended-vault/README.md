@@ -1,5 +1,6 @@
 <pre>
 xls: TBD
+proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/590
 title: Closed-Ended Single Asset Vault
 description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
 author: TBD
@@ -68,10 +69,10 @@ This proposal modifies the existing XLS-65 `Vault` ledger entry rather than intr
 
 `VaultKind` is a `UINT8` enum. The following values are valid; any other value is treated as invalid.
 
-| Name          | Value | Description                                                                                                    |
-| ------------- | :---: | ------------------------------------------------------------------------------------------------------------- |
-| `OpenEnded`   |  `0`  | Default. An open-ended vault with no phases (`NoPhase`); existing XLS-65 behaviour. Applies when absent.       |
-| `ClosedEnded` |  `1`  | A closed-ended vault that moves through the Subscription, Investment, and Redemption phases.                   |
+| Name          | Value | Description                                                                                              |
+| ------------- | :---: | -------------------------------------------------------------------------------------------------------- |
+| `OpenEnded`   |  `0`  | Default. An open-ended vault with no phases (`NoPhase`); existing XLS-65 behaviour. Applies when absent. |
+| `ClosedEnded` |  `1`  | A closed-ended vault that moves through the Subscription, Investment, and Redemption phases.             |
 
 ### 3.3. Phase Derivation
 
@@ -90,9 +91,9 @@ The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`
 
 ### 4.1. Fields
 
-| Field Name         | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                 |
-| ------------------ | :-------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------- |
-| `VaultKind`        |    No     | `number`  |    `UINT8`    |       0       | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                        |
+| Field Name         |  Required?  | JSON Type | Internal Type | Default Value | Description                                                                                                                 |
+| ------------------ | :---------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------- |
+| `VaultKind`        |     No      | `number`  |    `UINT8`    |       0       | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                        |
 | `SubscriptionDate` | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation. |
 | `RedemptionDate`   | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                       |
 
@@ -113,6 +114,7 @@ The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`
 ### 4.3. State Changes
 
 On Success (tesSUCCESS):
+
 - If `sfVaultKind` is absent or `OpenEnded`: no change to existing state changes.
 - If `sfVaultKind == ClosedEnded`: set `sfVaultKind`, `sfSubscriptionDate`, and `sfRedemptionDate` on the new `Vault` object.
 
@@ -147,6 +149,7 @@ No changes.
 ### 6.2. Failure Conditions
 
 #### 6.2.1. Protocol-Level Failures
+
 1. If the vault is closed-ended and `SubscriptionDate < now < RedemptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 
 ### 6.3. State Changes
@@ -166,6 +169,7 @@ No changes.
 ### 7.2. Failure Conditions
 
 #### 7.2.1. Protocol-Level Failures
+
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
 3. If `startDate + (paymentInterval × paymentTotal)` is not strictly before `RedemptionDate`, return `tecNO_PERMISSION`.
@@ -188,6 +192,7 @@ No changes.
 #### 8.2. Failure Conditions
 
 #### 8.2.1. Protocol-Level Failures
+
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
 
@@ -313,7 +318,7 @@ TBD
 - **Investment period bounds.** Enforcing `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD` prevents both a degenerate vault whose Investment phase is too short to deploy capital (which could otherwise be used to advertise a fixed-term product that effectively skips the lock-up) and a vault whose lock-up is unreasonably long.
 - **Maturity bound on loans.** Requiring the loan's final payment to fall strictly before `RedemptionDate` prevents the owner from originating loans that would keep capital illiquid past the advertised redemption date.
 - **Reserved/abandoned pending-loan capital.** An un-accepted two-step loan strands its principal outside redeemable `AssetsAvailable`: the capital is reserved against the pending loan and cannot be redeemed by depositors, and the loan's `Loan` object continues to hold a broker owner-count that blocks `LoanBrokerDelete` and therefore `VaultDelete` until it is cleaned up. Once `now >= RedemptionDate` the loan can no longer be accepted (see A.6), so the only resolution is for the broker to delete it; until then the reserved principal remains outside the redeemable pool.
-- **Asset-total changes during Investment.** The Investment-phase lock restricts *depositor* deposits and withdrawals, not every change to the vault's asset total. A stranded two-step loan — one that can no longer be accepted because its start date has passed while the vault is still in Investment — MUST remain deletable, and deleting it MUST return its reserved principal to `AssetsAvailable`, raising the redeemable total even during the lock-up. Phase enforcement must therefore be scoped to block depositor-initiated withdrawals without preventing this legitimate return of reserved capital.
+- **Asset-total changes during Investment.** The Investment-phase lock restricts _depositor_ deposits and withdrawals, not every change to the vault's asset total. A stranded two-step loan — one that can no longer be accepted because its start date has passed while the vault is still in Investment — MUST remain deletable, and deleting it MUST return its reserved principal to `AssetsAvailable`, raising the redeemable total even during the lock-up. Phase enforcement must therefore be scoped to block depositor-initiated withdrawals without preventing this legitimate return of reserved capital.
 - **Time source.** Both phase transitions rely on the ledger close time, which is consensus-derived and not manipulable by a single participant.
 
 # Appendix
