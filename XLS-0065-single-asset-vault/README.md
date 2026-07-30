@@ -562,7 +562,7 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 In sections below assume the following variables:
 
 - $\Gamma_{share}$ - the total number of shares issued by the vault.
-- $\Gamma_{asset}$ - the total assets in the vault, including any future yield.
+- $\Gamma_{asset}$ - `Vault.AssetsTotal - Vault.LossUnrealized`. Exception: if the withdrawer is the sole outstanding shareholder, the `LossUnrealized` deduction is waived and $\Gamma_{asset}$ = `Vault.AssetsTotal`, since the sole holder is entitled to the vault's full realized and unrealized value.
 
 - $\Delta_{asset}$ - the change in the total amount of assets after a deposit, withdrawal, or redemption.
 - $\Delta_{share}$ - che change in the total amount of shares after a deposit, withdrawal, or redemption.
