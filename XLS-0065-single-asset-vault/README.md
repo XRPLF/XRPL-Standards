@@ -373,20 +373,25 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.2.5.2 Protocol-Level Failures
 
+> The order below reflects the evaluation order in `VaultCreate.cpp` (preclaim, then doApply).
+
 1. If the `Asset` is an `IOU`:
    1. The issuer account does not exist on the ledger. (`terNO_ACCOUNT`)
    2. The issuer account does not have `lsfDefaultRipple` set. (`terNO_RIPPLE`)
-   3. The `lsfGlobalFreeze` flag is set on the issuing account, or the vault owner's trust line to the issuer is individually frozen (`lsfHighFreeze`/`lsfLowFreeze` on an existing `RippleState`). Note: no `RippleState` exists between the _pseudo-account_ and the issuer yet at this point — this check applies to the vault owner's own trust line. (`tecFROZEN`)
 
 2. If the `Asset` is an `MPT`:
    1. The `MPTokenIssuance` object does not exist. (`tecOBJECT_NOT_FOUND`)
    2. The `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object (the asset is not transferable). (`tecNO_AUTH`)
-   3. The asset is globally locked (`lsfMPTLocked` on `MPTokenIssuance`) or locked for the vault owner (`lsfMPTLocked` on the vault owner's `MPToken`). (`tecLOCKED`)
 
 3. The asset's issuer is a _pseudo-account_ (e.g. vault shares or AMM LP tokens). (`tecWRONG_ASSET`)
-4. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
-5. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve. (`tecINSUFFICIENT_RESERVE`)
+
+4. The vault owner's holding of the `Asset` is frozen or locked:
+   1. IOU: the `lsfGlobalFreeze` flag is set on the issuing account, or the vault owner's trust line to the issuer is individually frozen (`lsfHighFreeze`/`lsfLowFreeze` on an existing `RippleState`). Note: no `RippleState` exists between the _pseudo-account_ and the issuer yet at this point — this check applies to the vault owner's own trust line. (`tecFROZEN`)
+   2. MPT: the asset is globally locked (`lsfMPTLocked` on `MPTokenIssuance`) or locked for the vault owner (`lsfMPTLocked` on the vault owner's `MPToken`). (`tecLOCKED`)
+
+5. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
 6. The computed _pseudo-account_ address for the new `Vault` collides with an existing account. (`terADDRESS_COLLISION`)
+7. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve. (`tecINSUFFICIENT_RESERVE`)
 
 #### 3.2.6 State Changes
 
