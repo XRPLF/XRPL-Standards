@@ -387,15 +387,61 @@ Because both boundaries are calendar dates fixed at creation, the vault's lifecy
 
 ## 13. Test Plan
 
-- **VaultCreate:** valid closed-ended creation; missing `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`; `SubscriptionDate` in the past (not strictly after the parent ledger close time) returns `tecEXPIRED`; `RedemptionDate` in the past (not strictly after the parent ledger close time) returns `tecEXPIRED`; a gap smaller than `MIN_INVESTMENT_PERIOD` (including `SubscriptionDate >= RedemptionDate`) returns `temMALFORMED`; a gap of `MAX_INVESTMENT_PERIOD` or larger returns `temMALFORMED`; a gap exactly equal to `MIN_INVESTMENT_PERIOD` is accepted; a gap one second smaller than `MAX_INVESTMENT_PERIOD` is accepted; open-ended (or absent kind) with `SubscriptionDate` or `RedemptionDate` present returns `temMALFORMED`; unknown `VaultKind` returns `temMALFORMED`.
-- **Phase derivation:** the vault's phase is `Subscription` on/before `SubscriptionDate`, `Investment` after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` on/after `RedemptionDate`; open-ended vaults are `NoPhase`.
-- **VaultDeposit:** allowed in Subscription; rejected in Investment and Redemption; open-ended unaffected.
-- **VaultWithdraw:** allowed in Subscription and Redemption; rejected in Investment; open-ended unaffected; `AssetsAvailable` cap still applies.
-- **LoanSet:** rejected in Subscription and Redemption; permitted in Investment when the loan's final payment is strictly before `RedemptionDate`; rejected when it is not.
-- **LoanAccept:** rejected in Subscription and Redemption; permitted in Investment.
-- **Pending loans:** a two-step loan whose start date has passed can no longer be accepted (`LoanAccept` rejected), both while the vault is still in `Investment` and once it reaches `Redemption`; `LoanDelete` on such an expired pending loan succeeds in the `Investment` phase — freeing its reserved principal back into `AssetsAvailable` even during the lock-up — and likewise succeeds in `Redemption`; `VaultDelete` is blocked while a pending loan still exists and succeeds once it is deleted.
-- **RPC surface:** `vault_info` and `ledger_entry` return `VaultKind`, `SubscriptionDate` and `RedemptionDate` for a closed-ended vault, and omit all three for an open-ended vault.
-- **Invariant checks:** end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans, asserting the per-transaction invariants (4.4, 5.4, 6.4, 7.4, 8.4).
+### 13.1. VaultCreate
+
+- A valid closed-ended creation succeeds.
+- Creation with a missing `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`.
+- Creation with a `SubscriptionDate` in the past (not strictly after the parent ledger close time) returns `tecEXPIRED`.
+- Creation with a `RedemptionDate` in the past (not strictly after the parent ledger close time) returns `tecEXPIRED`.
+- Creation with a gap smaller than `MIN_INVESTMENT_PERIOD` (including `SubscriptionDate >= RedemptionDate`) returns `temMALFORMED`.
+- Creation with a gap of `MAX_INVESTMENT_PERIOD` or larger returns `temMALFORMED`.
+- Creation with a gap exactly equal to `MIN_INVESTMENT_PERIOD` is accepted.
+- Creation with a gap one second smaller than `MAX_INVESTMENT_PERIOD` is accepted.
+- Creation of an open-ended vault (or one with an absent kind) that carries a `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`.
+- Creation with an unknown `VaultKind` returns `temMALFORMED`.
+
+### 13.2. Phase derivation
+
+- The vault's phase is `Subscription` on/before `SubscriptionDate`, `Investment` after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` on/after `RedemptionDate`.
+- Open-ended vaults are always `NoPhase`.
+
+### 13.3. VaultDeposit
+
+- A deposit is allowed during Subscription.
+- A deposit is rejected during Investment and Redemption.
+- Deposits into open-ended vaults are unaffected.
+
+### 13.4. VaultWithdraw
+
+- A withdrawal is allowed during Subscription and Redemption.
+- A withdrawal is rejected during Investment.
+- Withdrawals from open-ended vaults are unaffected.
+- The `AssetsAvailable` cap still applies.
+
+### 13.5. LoanSet
+
+- `LoanSet` is rejected during Subscription and Redemption.
+- `LoanSet` is permitted during Investment when the loan's final payment is strictly before `RedemptionDate`.
+- `LoanSet` is rejected when the loan's final payment is not strictly before `RedemptionDate`.
+
+### 13.6. LoanAccept
+
+- `LoanAccept` is rejected during Subscription and Redemption.
+- `LoanAccept` is permitted during Investment.
+
+### 13.7. Pending loans
+
+- A two-step loan whose start date has passed can no longer be accepted (`LoanAccept` is rejected), both while the vault is still in `Investment` and once it reaches `Redemption`.
+- `LoanDelete` on such an expired pending loan succeeds in the `Investment` phase — freeing its reserved principal back into `AssetsAvailable` even during the lock-up — and likewise succeeds in `Redemption`.
+- `VaultDelete` is blocked while a pending loan still exists and succeeds once that loan is deleted.
+
+### 13.8. RPC surface
+
+- `vault_info` and `ledger_entry` return `VaultKind`, `SubscriptionDate`, and `RedemptionDate` for a closed-ended vault, and omit all three for an open-ended vault.
+
+### 13.9. Invariant checks
+
+- An end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans asserts the per-transaction invariants (4.4, 5.4, 6.4, 7.4, 8.4).
 
 ## 14. Reference Implementation
 
