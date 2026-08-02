@@ -12,6 +12,8 @@
 
 > This proposal, XLS-93, extends payment channels to tokens in the same way [XLS-85](../XLS-0085-token-escrow/README.md) extends escrows, and reuses the issuer opt-in flags and locked-amount accounting introduced there.
 
+## Abstract
+
 The proposed `TokenPaychan` amendment to the XRP Ledger (XRPL) protocol enhances the existing `PaymentChannel` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow payment channels to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity.
 
 # 1. Implementation
@@ -71,6 +73,8 @@ The `PaymentChannelCreate` transaction is modified as follows:
 - **Source or Destination is Frozen or Token is Locked:**
   - **IOU Tokens**: If the token is frozen (global/individual/deepfreeze) for the source or the destination, the transaction fails with `tecFROZEN`.
   - **MPTs**: If the token is locked for the source or the destination, the transaction fails with `tecLOCKED`.
+  - Note: this is deliberately stricter than base freeze semantics, under which an individual freeze only prevents the frozen holder from sending. Opening a lock is blocked by any freeze on either party, while paying out to the destination at claim time only requires that the destination is not deep frozen (see Normal Claim). This matches the lock creation rules of [XLS-85](../XLS-0085-token-escrow/README.md).
+  - The destination MAY be the issuer of the token; claims on such a channel redeem tokens back to the issuer. Because the freeze check above applies to the destination unconditionally, no channel can be created while the issuer has a global freeze in effect, including a channel whose destination is the issuer. This is intentionally stricter than direct payments, which always permit redemption to the issuer.
 
 - **Insufficient Spendable Balance:**
   - If the source account lacks sufficient spendable balance, the transaction fails with `tecINSUFFICIENT_FUNDS`.
@@ -165,9 +169,11 @@ When claiming without closing the channel:
 
 #### Channel Closure
 
-When closing the channel (either explicitly with the close flag, or automatically when fully drained or expired):
+A channel closes when a claim carries the `tfClose` flag (immediately if the requester is the destination or the channel is fully drained; otherwise an expiration is scheduled per `SettleDelay`), or when any claim is processed against an already-expired channel.
 
-**Failure Conditions:**
+Closure returns the remaining channel funds (`Amount` minus `Balance`) to the source. **The failure conditions below apply only when this remainder is positive.** A fully drained channel has nothing to refund, so it closes without any source-side checks; the destination's ability to claim earned funds is never gated by the source's authorization, trustline, or freeze state.
+
+**Failure Conditions (positive remainder only):**
 
 - **Source Not Authorized to Hold Token:**
   - If authorization is required and the source is not authorized, the transaction fails with `tecNO_AUTH`.
@@ -201,23 +207,24 @@ When closing the channel (either explicitly with the close flag, or automaticall
 
 ## 1.3. Key Differences Between IOU and MPT Payment Channels
 
-| Aspect                        | IOU Tokens                                                                                                                             | Multi-Purpose Tokens (MPTs)                                                                             |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Trustlines**                | Required between accounts and issuer                                                                                                   | Not used                                                                                                |
-| **Issuer Flag for Channels**  | `lsfAllowTrustLineLocking` (account flag)                                                                                              | `lsfMPTCanEscrow` (issuance flag)                                                                       |
-| **Transfer Flags**            | N/A                                                                                                                                    | `lsfMPTCanTransfer` must be enabled for payment channels                                                |
-| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                                     | Applicable (`lsfMPTRequireAuth`); accounts must be authorized prior to holding tokens                   |
-| **Destination Authorization** | Required at creation and at claim; cannot be granted during claim if authorization required                                            | Required at creation and at claim; cannot be granted during claim if authorization required             |
-| **Freeze/Lock Conditions**    | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure |
-| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                                                            | `TransferFee` stored at creation and applied during claims                                              |
-| **Outstanding Amount**        | Remains unchanged during channel operations                                                                                            | Remains unchanged during channel operations                                                             |
-| **Account Deletion**          | Payment channels prevent account deletion                                                                                              | Payment channels prevent account deletion                                                               |
+| Aspect                        | IOU Tokens                                                                                                                                                                  | Multi-Purpose Tokens (MPTs)                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Trustlines**                | Required between accounts and issuer                                                                                                                                        | Not used                                                                                                |
+| **Issuer Flag for Channels**  | `lsfAllowTrustLineLocking` (account flag)                                                                                                                                   | `lsfMPTCanEscrow` (issuance flag)                                                                       |
+| **Transfer Flags**            | N/A                                                                                                                                                                         | `lsfMPTCanTransfer` must be enabled for payment channels                                                |
+| **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                                                                          | Applicable (`lsfMPTRequireAuth`); accounts must be authorized prior to holding tokens                   |
+| **Destination Authorization** | Required at creation and at claim; cannot be granted during claim if authorization required                                                                                 | Required at creation and at claim; cannot be granted during claim if authorization required             |
+| **Freeze/Lock Conditions**    | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure                                      | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure |
+| **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                                                                                                 | `TransferFee` stored at creation and applied during claims                                              |
+| **Outstanding Amount**        | Remains unchanged during channel operations                                                                                                                                 | Remains unchanged during channel operations                                                             |
+| **Account Deletion**          | Payment channels prevent account deletion                                                                                                                                   | Payment channels prevent account deletion                                                               |
+| **Holding Deletion**          | Trustline deletion is NOT blocked by open channels (locked value lives in the channel object); closure refund then fails with `tecNO_LINE` until the line is re-established | `MPToken` deletion is blocked while `sfLockedAmount` is non-zero (`tecHAS_OBLIGATIONS`)                 |
 
 ## 1.4. Transfer Rates and Fees
 
 ### 1.4.1. IOU Tokens (`TransferRate`)
 
-- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PaymentChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims.
+- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PaymentChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
 - **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
 
 ### 1.4.2. MPTs (`TransferFee`)
@@ -256,3 +263,17 @@ No new flags are introduced. Token-denominated payment channels reuse the `lsfAl
 1. Clawback: XLS-93 currently does not provide a direct "clawback" mechanism within an active Payment Channel. If your use case requires clawback, you can close the channel and then perform a clawback of the funds outside of the payment channel context. In other words, once the token amount returns to the source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
 
 2. Issuer as Source: XLS-93 currently does not allow the issuer to be the source of the Payment Channel. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then create the payment channel with that account as the source.
+
+3. Trustline Deletion While Locked: because the locked IOU value lives in the `PaymentChannel` object rather than on the trustline, an empty trustline can be deleted while channels remain open (see Section 3). Per-trustline lock accounting that would prevent this, for both escrows and payment channels, is deliberately left to a separate future amendment so that XLS-93 stays behaviorally aligned with the activated XLS-85.
+
+## 2. Rationale
+
+Payment channels are the last remaining XRP-only locking primitive; XLS-85 already extended escrows to IOUs and MPTs. Reusing the XLS-85 model wholesale, the same issuer opt-in flags (`lsfAllowTrustLineLocking`, `lsfMPTCanEscrow`), the same `sfLockedAmount` accounting, and the same shared lock/unlock logic in the implementation, means issuers make one opt-in decision that covers both primitives, and both primitives fail and succeed under identical token conditions. Every place where XLS-93 is stricter than base token semantics (any freeze blocks lock creation, no channel creation during global freeze even to the issuer) is inherited from the activated XLS-85 behavior rather than newly invented, keeping the two locking primitives coherent.
+
+## 3. Security Considerations
+
+- **Payee protection.** The destination's earned funds are never gated by source-side state. Normal claims check only destination-side conditions, and the source-side conditions in Channel Closure apply only to refunding a positive remainder; a fully drained channel closes without them.
+- **Issuer trust surface.** An issuer that uses `RequireAuth` can deauthorize the source and thereby block the refund leg of closure (`tecNO_AUTH`) until re-authorized. The channel and its locked funds remain on ledger; no funds are lost. This is the same issuer trust surface that exists for XLS-85 escrow refunds and for clawback generally.
+- **Transfer rate.** The claim rate is capped at the rate stored at creation (the lower of stored and current is applied), so an issuer cannot retroactively tax funds already locked by raising `TransferRate`/`TransferFee`.
+- **Trustline deletion.** The source can delete an empty trustline while a channel is open. Closure refunds then fail with `tecNO_LINE` until the source re-establishes the line; the destination's claims are unaffected. `MPToken` deletion is blocked while locked (`tecHAS_OBLIGATIONS`).
+- **Signature domain.** Claim signatures bind the specific channel ID and amount, unchanged from XRP payment channels; token support does not weaken replay protection.
