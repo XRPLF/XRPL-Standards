@@ -2,7 +2,7 @@
   xls: TBD
   title: On-Chain Cosigner
   description: Native on-ledger proposal and multi-signature collection for XRPL transactions.
-  author: Shawn Xie, Zhiyuan Wang, Chenna Keshava B S
+  author: Shawn Xie, Zhiyuan Wang, Chenna Keshava B S, Mayukha Vadari
   category: Amendment
   status: Draft
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/TBD
