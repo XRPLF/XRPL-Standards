@@ -390,7 +390,7 @@ The existing multi-sign (and, for a `Batch`, `BatchSigners`) validation then che
 
 ### 6.6. Example JSON
 
-The `TransactionProposalSign` transaction is trivial — `SigningFor` plus one signature. What matters is how it mutates the `TransactionProposal` object, so each example shows the full object **before** and **after** every signature.
+The `TransactionProposalSign` transaction is trivial — `SigningFor` plus one signature. What matters is how it mutates the `TransactionProposal` object, so §6.6.1 walks through one case with the full object shown **before** and **after** every signature. The remaining variants (§6.6.2–§6.6.4) show only the `TransactionProposalSign` JSON and the resulting fragment of `ProposedTransaction`, since the routing rules are already covered by §6.1.1's table.
 
 #### 6.6.1. Ordinary transaction — multi-sign shares accumulate to quorum
 
@@ -533,26 +533,13 @@ If `rTARGET` instead authorizes with its **own** key — `ProposalSignature.Acco
 }
 ```
 
+The proposed transaction's top level gains just the two signature fields — no `Signers` array is used:
+
 ```json
-// TransactionProposal — after rTARGET signs for itself   ·   status: complete
+// ProposedTransaction fragment — after rTARGET signs for itself   ·   status: complete
 {
-  "LedgerEntryType": "TransactionProposal",
-  "Flags": 0,
-  "Owner": "rPROPOSER........................",
-  "Expiration": 800000000,
-  "ProposedTransaction": {
-    "TransactionType": "Payment",
-    "Account": "rTARGET..........................",
-    "Destination": "rDEST............................",
-    "Amount": "5000000000",
-    "TicketSequence": 1201,
-    "Fee": "10",
-    "SigningPubKey": "02FF...",
-    "TxnSignature": "3046..."
-  },
-  "OwnerNode": "0000000000000000",
-  "PreviousTxnID": "C3C3000000000000000000000000000000000000000000000000000000000000",
-  "PreviousTxnLgrSeq": 12345688
+  "SigningPubKey": "02FF...",
+  "TxnSignature": "3046..."
 }
 ```
 
@@ -610,42 +597,19 @@ If `rTARGET` instead authorizes with its **own** key — `ProposalSignature.Acco
 }
 ```
 
+The proposed transaction gains a new top-level field for the auxiliary signature, alongside the borrower's existing `Signers`:
+
 ```json
-// TransactionProposal — after the lender signs   ·   status: complete
+// ProposedTransaction fragment — after the lender signs   ·   status: complete
 {
-  "LedgerEntryType": "TransactionProposal",
-  "Flags": 0,
-  "Owner": "rBORROWER.......................",
-  "Expiration": 800000000,
-  "ProposedTransaction": {
-    "TransactionType": "LoanSet",
-    "Account": "rBORROWER.......................",
-    "Counterparty": "rLENDER.........................",
-    "LoanBrokerID": "9F1E...",
-    "TicketSequence": 77,
-    "Fee": "10",
-    "SigningPubKey": "",
-    "Signers": [
-      {
-        "Signer": {
-          "Account": "rBORROWERKEY....................",
-          "SigningPubKey": "03BB...",
-          "TxnSignature": "3045..."
-        }
-      }
-    ],
-    "CounterpartySignature": {
-      "SigningPubKey": "03CD...",
-      "TxnSignature": "3047..."
-    }
-  },
-  "OwnerNode": "0000000000000000",
-  "PreviousTxnID": "E5E5000000000000000000000000000000000000000000000000000000000000",
-  "PreviousTxnLgrSeq": 12345715
+  "CounterpartySignature": {
+    "SigningPubKey": "03CD...",
+    "TxnSignature": "3047..."
+  }
 }
 ```
 
-A **multi-sign** lender would instead accumulate into `CounterpartySignature.Signers` — a nested array filling until the lender's own quorum is met, exactly like `ProposedTransaction.Signers` above. A `SponsorSignature` (for a sponsored transaction) behaves identically.
+A **multi-sign** lender would instead accumulate into `CounterpartySignature.Signers` — a nested array filling until the lender's own quorum is met, exactly like `ProposedTransaction.Signers` in §6.6.1. A `SponsorSignature` (for a sponsored transaction) behaves identically.
 
 #### 6.6.4. `Batch` — outer account plus participants
 
@@ -763,96 +727,43 @@ Three signatures arrive — one per account that must authorize:
 }
 ```
 
-After all three, the outer account's quorum is met **and** every participant is authorized → **complete**. `BatchSigners` is sorted by `Account`; `rBOB` is a single-signature entry, `rCAROL` a nested multi-sign one:
+After all three, the outer account's quorum is met **and** every participant is authorized → **complete**. `BatchSigners` is sorted by `Account`; `rBOB` is a single-signature entry, `rCAROL` a nested multi-sign one. `RawTransactions` is unchanged from the setup above, so only the new signature fields are shown:
 
 ```json
-// TransactionProposal — after all three   ·   status: complete
+// ProposedTransaction fragment — after all three   ·   status: complete
 {
-  "LedgerEntryType": "TransactionProposal",
-  "Flags": 0,
-  "Owner": "rPROPOSER2......................",
-  "Expiration": 800000000,
-  "ProposedTransaction": {
-    "TransactionType": "Batch",
-    "Account": "rOUTER..........................",
-    "Flags": 65536,
-    "TicketSequence": 500,
-    "Fee": "60",
-    "SigningPubKey": "",
-    "RawTransactions": [
-      {
-        "RawTransaction": {
-          "TransactionType": "Payment",
-          "Account": "rOUTER..........................",
-          "Destination": "rX..............................",
-          "Amount": "1000000",
-          "Flags": 1073741824,
-          "Sequence": 501,
-          "Fee": "0",
-          "SigningPubKey": ""
-        }
-      },
-      {
-        "RawTransaction": {
-          "TransactionType": "Payment",
-          "Account": "rBOB............................",
-          "Destination": "rY..............................",
-          "Amount": "2000000",
-          "Flags": 1073741824,
-          "Sequence": 88,
-          "Fee": "0",
-          "SigningPubKey": ""
-        }
-      },
-      {
-        "RawTransaction": {
-          "TransactionType": "Payment",
-          "Account": "rCAROL..........................",
-          "Destination": "rZ..............................",
-          "Amount": "3000000",
-          "Flags": 1073741824,
-          "Sequence": 12,
-          "Fee": "0",
-          "SigningPubKey": ""
-        }
+  "Signers": [
+    {
+      "Signer": {
+        "Account": "rOUTERKEY.......................",
+        "SigningPubKey": "03A1...",
+        "TxnSignature": "3045..."
       }
-    ],
-    "Signers": [
-      {
-        "Signer": {
-          "Account": "rOUTERKEY.......................",
-          "SigningPubKey": "03A1...",
-          "TxnSignature": "3045..."
-        }
+    }
+  ],
+  "BatchSigners": [
+    {
+      "BatchSigner": {
+        "Account": "rBOB............................",
+        "SigningPubKey": "02B2...",
+        "TxnSignature": "3044..."
       }
-    ],
-    "BatchSigners": [
-      {
-        "BatchSigner": {
-          "Account": "rBOB............................",
-          "SigningPubKey": "02B2...",
-          "TxnSignature": "3044..."
-        }
-      },
-      {
-        "BatchSigner": {
-          "Account": "rCAROL..........................",
-          "Signers": [
-            {
-              "Signer": {
-                "Account": "rCAROLKEY.......................",
-                "SigningPubKey": "03C3...",
-                "TxnSignature": "3046..."
-              }
+    },
+    {
+      "BatchSigner": {
+        "Account": "rCAROL..........................",
+        "Signers": [
+          {
+            "Signer": {
+              "Account": "rCAROLKEY.......................",
+              "SigningPubKey": "03C3...",
+              "TxnSignature": "3046..."
             }
-          ]
-        }
+          }
+        ]
       }
-    ]
-  },
-  "OwnerNode": "0000000000000000",
-  "PreviousTxnID": "B8B8000000000000000000000000000000000000000000000000000000000000",
-  "PreviousTxnLgrSeq": 12345730
+    }
+  ]
 }
 ```
 
@@ -1049,7 +960,7 @@ Because both the per-signature check and the final submission validate against t
 
 Each proposal consumes an elevated flat owner reserve (§4.4) held against the `Owner` — higher than a typical ledger entry, and higher still for a `Batch` — pricing the larger state burden and disincentivizing spam. Because every appended signature must be valid, an attacker cannot inflate a proposal with junk. Built-in expiry ensures abandoned proposals can always be cleaned up (by anyone, once terminal) so they do not accumulate indefinitely in ledger state.
 
-Because anyone may propose against any account and there is one slot per `(target account, ticket)` (§4.1), an attacker could **squat** a slot the real proposer wanted, blocking it with `tecDUPLICATE`. Each attempt costs a full reserve, and tickets give the honest proposer far more slots than an attacker could block.
+Because anyone may propose against any account and there is one slot per `(target account, ticket)` (§4.1), an attacker could **squat** a slot the real proposer wanted, blocking it with `tecDUPLICATE`. Each attempt costs a full reserve, and tickets give the honest proposer far more slots than an attacker could block. The target account is also never stuck with an unwanted proposal: it may delete any proposal made for it via `TransactionProposalCancel` at any time (§7.2), clearing the slot and the reserved ticket regardless of who created the proposal or how far along it is.
 
 ### 13.7. Fee accountability
 
@@ -1093,11 +1004,11 @@ The proposed transaction acts on behalf of the target account, authorized by tha
 
 ### A.9: How does signing work when the proposed transaction is a multi-account Batch?
 
-Each `TransactionProposalSign` names an account with `SigningFor`: the outer account (recorded into `ProposedTransaction.Signers`) or a participant account (recorded into that participant's entry in `ProposedTransaction.BatchSigners`). A participant is authorized either single-signature (`ProposalSignature.Account` equals `SigningFor`) or multi-sign (a share per contributing `SignerList` member). Because an XLS-56 batch signature binds the owning account (`message = <batch data> + <owning account> + <signer account>`), a signer authorized on several accounts must provide one `ProposalSignature` per account, each with a distinct signature and `SigningFor`; the same signer key may therefore appear across several participants' `BatchSigners`. The proposal is complete once the outer account's quorum and every participant's authorization are satisfied; the `ProposedTransaction` field is then a fully-signed Batch ready to submit. See §6.1.
+As described in §6.1.1/§6.1.2, plus one Batch-specific wrinkle: an XLS-56 batch signature binds the owning account (`message = <batch data> + <owning account> + <signer account>`), so a signer authorized on several participant accounts must submit one `TransactionProposalSign` per account — a distinct signature and `SigningFor` each time. The same signer key can therefore appear across several participants' `BatchSigners`.
 
 ### A.10: How is a transaction with a second signer — a `LoanSet` counterparty or a sponsor — handled?
 
-Such a transaction has more than one authorization slot: its own `Account` (recorded into `ProposedTransaction.Signers`) plus one **auxiliary co-signature** per required second party — the `Counterparty` of a `LoanSet` (recorded into `ProposedTransaction.CounterpartySignature`), the `Sponsor` of a sponsored transaction (recorded into `ProposedTransaction.SponsorSignature`). Each slot is filled by naming that party in `SigningFor` (§6.1); a single contribution supplies one party's signature (single-key or one multi-sign share), and the proposal is complete once every slot is satisfied. Because these fields are excluded from every party's signing data, the parties can sign in any order — and a single transaction may need several (a sponsored `LoanSet` collects the borrower, the `Counterparty`, and the `Sponsor` independently).
+As described in §6.1.1/§4.2.2: each required party is named in its own `TransactionProposalSign` via `SigningFor`. Because the auxiliary signature fields are excluded from every party's signing data, the parties can sign in any order, and a transaction needing several (e.g. a sponsored `LoanSet`) collects them independently.
 
 ### A.11: Does this replace off-chain multi-sign?
 
