@@ -132,7 +132,7 @@ The trade-off: only **one** live proposal can exist per `(target account, ticket
 The proposed transaction:
 
 - **Must** be submitted unsigned: at creation its `SigningPubKey` field must be an empty string (`""`), and its `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, and (for a `Batch`) `BatchSigners` fields must be omitted. (Fields that _define_ an auxiliary party — e.g. `Counterparty`, or `Sponsor`/`SponsorFlags` — are ordinary payload fields and must be present at creation if used; only the signature containers are collected on-chain.) This is the exact canonical form over which signers produce their signatures; the ledger populates the signature fields as they arrive. If it is a `Batch`, its `RawTransactions` must follow the XLS-56 rules for inner transactions (each unsigned, with the `tfInnerBatchTxn` flag).
-- **Must** specify a `TicketSequence` for its target account and **must not** specify `Sequence`. Requiring a ticket decouples the proposed transaction from the target account's live sequence, so unrelated target-account activity cannot invalidate the proposal while signatures are being collected (see §9.2).
+- **Must** specify a `TicketSequence` for its target account and **must not** specify `Sequence`. Requiring a ticket decouples the proposed transaction from the target account's live sequence, so unrelated target-account activity cannot invalidate the proposal while signatures are being collected (see §9.2). For as long as the proposal exists, that ticket is reserved for its own proposed transaction: any other transaction that tries to consume it is rejected.
 - **Must** carry a `Fee`. The proposed transaction's fee is paid by the **target account** (the proposed transaction's `Account`) when the completed transaction is submitted.
 - **Must** be a transaction that can be independently multi-signed and submitted through the ordinary path. In particular it **must not** be:
   - a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel` (no nesting of proposals);
@@ -180,10 +180,11 @@ A terminal proposal stops accepting new signatures and exists in ledger state on
 
 **Deletion Conditions:** The object is deleted when any one of the following occurs:
 
-- **Owner cancellation (non-terminal):** while the proposal is not terminal, only the **`Owner`** (the proposer) may delete it, via `TransactionProposalCancel` (result `tesSUCCESS`).
+- **Owner cancellation (non-terminal):** while the proposal is not terminal, the **`Owner`** (the proposer) may delete it via `TransactionProposalCancel` (result `tesSUCCESS`).
+- **Target-account cancellation (any time):** the **target account** may delete any proposal made for it via `TransactionProposalCancel`, whether or not it is terminal and no matter how many signatures have been collected (result `tesSUCCESS`). See §7.2.
 - **Permissionless cleanup (terminal):** once the proposal is terminal, **any** account may delete it via `TransactionProposalCancel` (result `tesSUCCESS`, since deletion is that transaction's intended action).
 - **Incidental cleanup by a late signer:** a `TransactionProposalSign` submitted against a terminal proposal **fails** with `tecEXPIRED` — its intended action (recording a signature) cannot happen — but, as a side effect of that claimed-fee result, it deletes the terminal proposal and releases the reserve (see §6.4).
-- **Automatic cleanup on ticket consumption:** whenever the **target account** applies a transaction that consumes a `TicketSequence`, the ledger looks up `hash(<space key>, Account, <consumed ticket>)` and, if a proposal exists there, deletes it and refunds the `Owner`'s reserve. This catches both the proposal's own completed transaction running and the account spending that ticket on something else — either way the proposal can no longer execute, so it is cleaned up for free (§4.1). A proposal whose `TicketSequence` is never consumed is cleaned up on expiry instead.
+- **Automatic cleanup when the proposed transaction executes:** the reserved `TicketSequence` can only be consumed by the proposal's own proposed transaction (§4.2.1), so this is the only way a ticket consumption deletes a proposal — running the completed transaction spends the ticket, and the ledger looks up `hash(<space key>, Account, <consumed ticket>)` (§4.1) and deletes the matching proposal, refunding the `Owner`'s reserve.
 
 This removes only the leftover object. Signatures already copied off-ledger stay valid and submittable until the `TicketSequence` is consumed (§13.4).
 
@@ -269,6 +270,7 @@ All Data Verification failures return a `tem`-level error.
 4. The target account (the proposed transaction's `Account`) does not exist (`tecNO_TARGET`).
 5. The target account is a pseudo-account (e.g. an AMM, Vault, or LoanBroker pseudo-account) and therefore cannot authorize a transaction through a `SignerList` (`tecNO_PERMISSION`).
 6. A `TransactionProposal` with the same `ProposalID` already exists — i.e. a live proposal (owned by anyone) already targets the same account with the same `TicketSequence` (`tecDUPLICATE`, §4.1).
+7. The proposed transaction's `TicketSequence` is not a valid `Ticket` of the target account (`tefNO_TICKET`).
 
 ### 5.4. State Changes
 
@@ -868,8 +870,10 @@ Deletes a `TransactionProposal` object and releases the owner's reserve.
 
 ### 7.2. Authorization
 
-- **Non-terminal proposal:** Only the **owner** (the proposal's `Owner`, i.e. the proposer) may cancel.
+- **Non-terminal proposal:** the **owner** (the proposal's `Owner`, i.e. the proposer) or the **target account** (the proposed transaction's `Account` or `Delegate`) may cancel.
 - **Terminal proposal:** **Any** account may cancel, to clean up the object and release the owner's reserve.
+
+The target account can cancel at any point in the lifecycle — even after the proposal is complete — without owning the object. Since anyone can create a proposal against any account, and doing so reserves one of that account's tickets (§5.4), the target account needs a way to refuse; cancelling clears the proposal and frees the ticket.
 
 Cancellation is only fully effective before a proposal is complete. If a quorum-weight of valid signatures has already been collected, an observer may have copied them and can still submit the completed transaction even after the proposal object is gone; see §13.4.
 
@@ -882,7 +886,7 @@ Cancellation is only fully effective before a proposal is complete. If a quorum-
 #### 7.3.2. Protocol-Level Failures
 
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
-2. The proposal is not terminal and `Account` is not the `Owner` (`tecNO_PERMISSION`).
+2. The proposal is not terminal and `Account` is neither the `Owner` nor the target account (`tecNO_PERMISSION`).
 
 ### 7.4. State Changes
 
