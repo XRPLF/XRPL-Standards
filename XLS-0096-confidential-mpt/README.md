@@ -689,15 +689,15 @@ The following existing field is extended with a new bit flag to support enabling
 
 #### 12.2.1. New `Flags` Bit
 
-The following bit flag is added to the `MutableFlags` field to enable the confidential amount feature:
+The following bit flag is added to the `Flags` field to enable the confidential amount feature:
 
-| Flag Name                            | Hex Value    | Decimal Value | Description                                                                                                                             |
-| :----------------------------------- | :----------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `tfMPTSetCanHoldConfidentialBalance` | `0x00000100` | 256           | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lifMPTCanHoldConfidentialBalance` is not set. |
+| Flag Name                            | Hex Value    | Decimal Value | Description                                                                                                                              |
+| :----------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `tfMPTSetCanHoldConfidentialBalance` | `0x00000100` | 256           | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsifMPTCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
 
-- These flags can only be used if the `lifMPTCanHoldConfidentialBalance` flag was **not** set under `sfImmutableFlags` during `MPTokenIssuanceCreate`.
+- These flags can only be used if the `lsifMPTCanHoldConfidentialBalance` flag was **not** set under `sfImmutableFlags` during `MPTokenIssuanceCreate`.
 - Setting `tfMPTSetCanHoldConfidentialBalance` enables confidential transfers for the token.
 - Enabling confidential transfers is one-way: there is no flag to clear `lsfMPTCanHoldConfidentialBalance` once it has been set.
 
@@ -712,7 +712,7 @@ The following bit flag is added to the `MutableFlags` field to enable the confid
 
 #### 12.3.2. Protocol-Level Failures
 
-1. The transaction attempts to use `tmfMPTCanHoldConfidentialBalance`, but the `lifMPTCanHoldConfidentialBalance` flag is set (feature is immutable). (`tecNO_PERMISSION`)
+1. The transaction attempts to use `tfMPTCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in sfImmutableFlags. (`tecNO_PERMISSION`)
 2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
 3. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
    - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
