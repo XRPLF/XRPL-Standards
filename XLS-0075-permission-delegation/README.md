@@ -332,6 +332,8 @@ Delegating permissions to other accounts requires a high degree of trust, especi
 
 To avoid this issue, those transactions, along with `AccountDelete`, will not be delegable.
 
+`ConfidentialMPTConvert` is also not delegable, because it is used to register the account's ElGamal key used for confidential transactions.
+
 On the other hand, this mechanism also offers a granular approach to authorization, allowing accounts to selectively grant specific permissions without compromising overall account control. This approach provides a balance between security and usability, empowering account holders to manage their assets and interactions more effectively.
 
 In addition, the system-generated transaction type are not delegable: `EnableAmendment`, `SetFee` and `UNLModify`.
