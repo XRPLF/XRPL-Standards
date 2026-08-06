@@ -911,7 +911,7 @@ An inner transaction initiated by the outer account adds no row: the outer accou
 Each signature was cryptographically verified when `TransactionProposalSign` appended it (§6.3.2), and ledger data cannot change after that. What *can* change is whether the signature still **authorizes** the account, so `signed` is computed by re-applying the standard authorization rules against the queried ledger — the same rules submission applies:
 
 - A single signature must be by the account's current regular key, or by its master key while the master key is enabled.
-- A collected `Signers` array is scored against the account's **live** `SignerList`: entries no longer on the list contribute nothing, an entry the list does not authorize invalidates the whole set (as it would at submission), and the surviving weight must meet the live `SignerQuorum`.
+- A collected `Signers` array is validated against the account's **live** `SignerList`, and it fails **as a whole** if *any* collected entry is not currently authorized: an entry absent from the list, one whose master key has since been disabled, one whose regular key has since rotated, or a non-phantom entry whose account no longer exists each void the entire set at submission (`tefBAD_SIGNATURE` / `tefMASTER_DISABLED`). Otherwise the set's weight must meet the live `SignerQuorum`. Because signatures only ever accumulate on a proposal, a voided set cannot be repaired by further signing — the practical remedy is `TransactionProposalCancel` and a fresh proposal.
 - A `BatchSigners` entry for an account that does not exist yet is authorized only by that account's own master key (an earlier inner transaction may create the account).
 - A sponsor row is satisfied by a valid `SponsorSignature`, or — only while no `SponsorSignature` field has been collected at all — by an on-ledger `Sponsorship` entry between the sponsor and the initiator whose flags do not require a co-signature for what this transaction sponsors. A collected-but-no-longer-authorizing `SponsorSignature` is **not** rescued by the exemption, because submission validates a present `SponsorSignature` unconditionally.
 
@@ -927,6 +927,14 @@ Consequently a signature that counted yesterday may not count today (disabled ma
 ##### 8.1.3.4. `complete` Is an Authorization Verdict
 
 `complete` asserts that every required authorization is satisfied on the queried ledger — no more. It does not re-validate everything submission will: the ticket the proposal is keyed on may never have been created (`tefNO_TICKET`), the target account may since have been deleted, the fixed `Fee` may be unfundable, or an amendment the transaction needs may have been disabled. Clients should treat `complete` as "assemble and submit now, and expect success under normal conditions", not as a guarantee of `tesSUCCESS`.
+
+`complete` is also only as fresh as the ledger it was computed against. Signatures are immutable once collected, but the ledger state they are judged against is not, and submission applies gates beyond signature authorization that this RPC does not model. Examples of state changes that can silently invalidate a `complete` verdict:
+
+- **Deleting the `LoanBroker`** an implicit counterparty was resolved from: the completed `LoanSet` then fails `temBAD_SIGNER` at submission, because the counterparty is re-resolved from the live broker at that time.
+- **Revoking or narrowing a delegation** (`DelegateSet`): a delegate's on-ledger *permission* for the proposed transaction type is a submission-time gate separate from — and not attested by — the delegate's signature.
+- **The exact-set rule for a proposed `Batch`**: submission requires the stored `BatchSigners` array to correspond exactly to the required signer set (sorted, unique, no extras, never the outer account), and rejects any mismatch wholesale (`temBAD_SIGNER`); this structural property is likewise not attested by the per-row verdicts.
+
+For the most accurate result, invoke this RPC against the **most recent validated ledger** and treat the verdict as point-in-time: re-evaluate immediately before assembling and submitting the completed transaction, since any intervening ledger may have changed the answer.
 
 #### 8.1.4. Failure Conditions
 
@@ -1079,7 +1087,7 @@ This is the central security consideration of the copy-and-submit model. The pro
 
 ### 13.5. Stale signatures under SignerList changes
 
-Because both the per-signature check and the final submission validate against the live `SignerList`, removing a signer or raising the quorum while a proposal is pending is honored: a removed signer's contribution no longer counts toward quorum at submission. Conversely, lowering the quorum can make a previously-incomplete set sufficient. Modifying an account's `SignerList` therefore affects all pending proposals against that account.
+Because both the per-signature check and the final submission validate against the live `SignerList`, changing a `SignerList` while a proposal is pending is honored — but asymmetrically. Lowering the quorum can make a previously-incomplete set sufficient. Removing a collected signer (or a collected signer disabling their master key or rotating their regular key) does **not** merely subtract their weight: submission rejects the entire collected set (`tefBAD_SIGNATURE`), and since signatures only accumulate on a proposal, the proposal becomes permanently unsatisfiable and must be cancelled and re-proposed (§8.1.3.2). Modifying an account's `SignerList` therefore affects all pending proposals against that account.
 
 ### 13.6. Denial-of-service and reserve pressure
 
