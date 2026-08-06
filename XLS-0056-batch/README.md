@@ -7,7 +7,7 @@
   status: Final
   category: Amendment
   created: 2023-12-13
-  updated: 2026-06-15
+  updated: 2026-08-06
 </pre>
 
 # Atomic/Batch Transactions
@@ -98,7 +98,7 @@ _Note: the 8 transaction limit can be relaxed in the future._
 
 This field operates similarly to [multi-signing](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Batch` transaction; otherwise, the normal transaction signature provides the same security guarantees.
 
-This field must be provided if more than one account has inner transactions included in the `Batch`. In that case, this field must contain signatures from all accounts whose inner transactions are included, excluding the account signing the outer transaction (if applicable).
+This field must be provided if any account other than the account signing the outer transaction is required to authorize an inner transaction. In that case, this field must contain a signature from every such account, excluding the account signing the outer transaction (if applicable). The set of required signers is exactly the set of accounts that would ordinarily have to sign the inner transactions (see [section 2.1.3.1](#2131-account)), and the `BatchSigners` array must match that set exactly — no missing entries, and no extra entries.
 
 The entries in `BatchSigners` **must be sorted in strictly ascending order by `Account`**. Duplicate entries are not permitted.
 
@@ -115,7 +115,9 @@ Either the `SigningPubKey` and `TxnSignature` fields must be included, or the `S
 
 ##### 2.1.3.1. `Account`
 
-This is an account that has at least one inner transaction, or would ordinarily have to sign at least one of the inner transactions (e.g. a co-signed or delegated transaction).
+This is an account that would ordinarily have to sign at least one of the inner transactions. This includes the account that submits an inner transaction, the delegate that signs a delegated inner transaction (in which case the delegate, not the account holder, is the required signer), and any other account whose signature the inner transaction would normally require (e.g. a co-signer).
+
+Since a single inner transaction can require more than one signer, the number of entries in `BatchSigners` is not bounded by the number of inner transactions.
 
 ##### 2.1.3.2. Signing Payload
 
@@ -172,16 +174,15 @@ The standard transaction failure conditions still apply here.
    10. There is a duplicate transaction in the `RawTransactions` field (`temREDUNDANT`).
    11. One of the inner transactions does not have the `tfInnerBatchTxn` flag set (`temINVALID_FLAG`).
    12. One of the inner transactions fails its preflight checks (i.e. is invalid, irrespective of ledger state) (`temINVALID_INNER_BATCH`).
-   13. Either both or neither of `TicketSequence` and `Sequence` are set (`temSEQ_AND_TICKET`).
+   13. One of the inner transactions has `TicketSequence` set and a non-zero `Sequence`, or has no `TicketSequence` and a `Sequence` of 0 (`temSEQ_AND_TICKET`). In other words, exactly one of the two must be used: a ticketed inner transaction sets `TicketSequence` and `Sequence: 0`, and a sequence-based inner transaction sets a non-zero `Sequence` and omits `TicketSequence`.
 1. `BatchSigners`
-   1. The length of `BatchSigners` is greater than 8 (`temARRAY_TOO_LARGE`).
+   1. The length of `BatchSigners` is greater than 24 (`temARRAY_TOO_LARGE`). This is three times the maximum number of inner transactions, since a single inner transaction can require up to three distinct signers.
    2. The `BatchSigners` field contains a signature from the account signing the outer transaction (`temBAD_SIGNER`).
    3. The `BatchSigners` field contains a duplicate signer (`temBAD_SIGNER`).
    4. The `BatchSigners` field is not sorted in strictly ascending order by `Account` (`temBAD_SIGNER`).
-   5. The `BatchSigners` field contains a signature from an account that does not have any inner transactions (`temBAD_SIGNER`).
-   6. The `BatchSigners` field is missing a signature from an account that has inner transactions (`temBAD_SIGNER`).
-   7. The `BatchSigners` field is required but is not present (`tefBAD_AUTH`).
-   8. The `BatchSigners` field contains an invalid signature (`temBAD_SIGNATURE`).
+   5. The `BatchSigners` field contains a signature from an account that is not a required signer of any inner transaction (`temBAD_SIGNER`).
+   6. The `BatchSigners` field is missing a signature from an account that is a required signer of an inner transaction (`temBAD_SIGNER`). This includes the case where the `BatchSigners` field is required but is not present at all.
+   7. The `BatchSigners` field contains an invalid signature (`temINVALID`). Batch signer signatures are verified as part of standard transaction signature checking, alongside the outer transaction's own signature, so a bad batch signature surfaces the same way any bad signature does.
 1. Preclaim/doApply errors
    1. The public key for a signer is not a valid public key (`tefBAD_AUTH`). (This should be caught by preflight checks, but it is an additional backup check just in case).
    2. A `BatchSigners` entry references a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tefBAD_AUTH`). Pseudo-accounts cannot sign batch entries.
