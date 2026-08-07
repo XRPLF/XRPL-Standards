@@ -89,7 +89,7 @@ The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`
 
 ### 3.4 Invariants
 
-- For a closed-ended vault, `SubscriptionDate + MIN_INVESTMENT_PERIOD <= RedemptionDate` always holds (equivalently `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate`), which implies `SubscriptionDate < RedemptionDate`.
+- For a closed-ended vault, `SubscriptionDate + MIN_INVESTMENT_PERIOD <= RedemptionDate < SubscriptionDate + MAX_INVESTMENT_PERIOD` always holds (equivalently `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD`), which implies `SubscriptionDate < RedemptionDate`.
 - `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are immutable: once set at creation they are never added, removed, or changed by any transaction.
 
 ### 3.5. Example JSON
@@ -137,7 +137,7 @@ The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`
 1. If `sfVaultKind` holds an unrecognised enum value, return `temMALFORMED`.
 2. If `sfVaultKind` is `OpenEnded` or absent but `sfSubscriptionDate` or `sfRedemptionDate` is present, return `temMALFORMED`.
 3. If `sfVaultKind` is `ClosedEnded` but `sfSubscriptionDate` or `sfRedemptionDate` is absent, return `temMALFORMED`.
-4. If `sfVaultKind` is `ClosedEnded` and `RedemptionDate - SubscriptionDate` is less than `MIN_INVESTMENT_PERIOD` or greater than or equal to `MAX_INVESTMENT_PERIOD`, return `temMALFORMED`.
+4. If `sfVaultKind` is `ClosedEnded` and `SubscriptionDate + MIN_INVESTMENT_PERIOD` is greater than `RedemptionDate` or `RedemptionDate` is greater than or equal to `SubscriptionDate` + `MAX_INVESTMENT_PERIOD`, return `temMALFORMED`.
 
 #### 4.2.2. Protocol-Level Failures
 
@@ -187,7 +187,7 @@ No changes.
 
 ### 5.2. Failure Conditions
 
-- If the vault is closed-ended and `now > SubscriptionDate` (`now` is the parent ledger close time), return `tecNO_PERMISSION`.
+- If the vault is closed-ended and `now > SubscriptionDate` (`now` is the parent ledger close time), return `tecEXPIRED`.
 
 ### 5.3. State Changes
 
@@ -441,7 +441,11 @@ Because both boundaries are calendar dates fixed at creation, the vault's lifecy
 
 ### 13.9. Invariant checks
 
-- An end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans asserts the per-transaction invariants (4.4, 5.4, 6.4, 7.4, 8.4).
+- Each per-transaction invariant (3.4, 4.4, 5.4, 6.4, 7.4, 8.4) is asserted directly, so that no transaction can leave the vault in a state that violates it.
+
+### 13.10. End-to-end tests
+
+- An end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans exercises every phase transition and verifies the expected deposit, withdrawal, and lending behaviour in each phase.
 
 ## 14. Reference Implementation
 
