@@ -3,6 +3,7 @@
   title: ElGamal Key Rotation for Confidential MPTs
   description: Defines ElGamal key rotation for issuer, auditor, and holder roles in the Confidential MPT protocol, with key loss recovery mechanisms.
   author: Aanchal Malhotra (@amalhotra-ripple)
+  co-author: Yinyi Qian <yqian@ripple.com>
   category: Amendment
   status: Draft
   requires: XLS-0096
@@ -81,6 +82,11 @@ The epoch check (`IssuerKeyMirrorEpoch < IssuerKeyEpoch`) makes this detectable 
 
 `Auditor key rotation` follows the identical pattern using `AuditorEncryptionKey` and `AuditorKeyEpoch`.
 
+**Auditor key late-registration by issuer** allows the issuer to register auditor key after the issuer key was already registered.
+
+- Pre-`ConfidentialMPTKeyRotation` amendment: when registering the key for the auditor first time, it has to be registered together with the issuer key in `MPTokenIssuanceSet`. The issuer is not allowed to register issuer key in one transaction and later register auditor key in another transaction.
+- Now with `ConfidentialMPTKeyRotation` amendment: with the issuer key already registered, the issuer can register the auditor key in a separate `MPTokenIssuanceSet` whenever they want to enable auditor.
+
 **Holder self-migration** is available as an alternative to issuer-driven active re-encryption in all rotation scenarios. Rather than waiting for the issuer to submit `ConfidentialMPTMirrorUpdate`, any holder may self-migrate their issuer or auditor mirror by submitting `ConfidentialMPTMirrorUpdate` without a `Holder` field, using a cross-key equality proof anchored to their `ConfidentialBalanceSpending`. Prerequisites: `ConfidentialMPTMergeInbox` must be run first (inbox must be canonical zero), and the holder must have `sk_H`. See Section 9.9 for the full proof construction.
 
 **Simultaneous issuer and auditor key rotation**: The issuer may rotate both `IssuerEncryptionKey` and `AuditorEncryptionKey` in a single `MPTokenIssuanceSet` transaction, though this is rare in practice. In this case, per-holder migration may be performed in a single `ConfidentialMPTMirrorUpdate` transaction with both `IssuerEncryptedAmount` and `AuditorEncryptedAmount` present. A single compact AND-composed Chaum-Pedersen equality proof covers both statements under one Fiat-Shamir challenge.
@@ -129,6 +135,8 @@ The existing `MPTokenIssuance` ledger object is extended with three new fields. 
 | `IssuerKeyEpoch`  | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each issuer ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0.                                                                                                                                                                                                                                                                               |
 | `AuditorKeyEpoch` | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each auditor ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0.                                                                                                                                                                                                                                                                              |
 | `HolderCount`     | No        | `number`  | `UINT64`      | The number of holders with initialized confidential state for this issuance. A holder is considered initialized once `HolderEncryptionKey` is registered on their `MPToken` via their first `ConfidentialMPTConvert`. `HolderCount` is incremented on that first conversion and is never decremented - `HolderEncryptionKey` is not removed by any existing transaction including `ConfidentialMPTClawback`. Not stored when at default value 0. |
+
+**Note**: To accommodate existing `MPTokenIssuance` ledger objects that lack epoch fields even when keys are registered, the epoch value should remain absent after initial registration. It is set to 1 only when rotating a key for the first time successfully, and then increments with each subsequent rotation.
 
 ### 6.2 Flags
 
@@ -282,10 +290,12 @@ Holder with active recovery authorization:
 
 ## 8. Transaction: `MPTokenIssuanceSet` (Modified)
 
-The existing `MPTokenIssuanceSet` transaction is extended to allow replacement of `IssuerEncryptionKey` and `AuditorEncryptionKey` when already present. Two existing guards in preclaim must be relaxed:
+The existing `MPTokenIssuanceSet` transaction is extended to allow replacement of `IssuerEncryptionKey` and `AuditorEncryptionKey` when already present. Some existing guards in preclaim must be relaxed:
 
 1.  Key presence guard: The current implementation rejects updates to `IssuerEncryptionKey` and `AuditorEncryptionKey` once already present on the issuance object (`tecNO_PERMISSION`). This guard is relaxed to allow replacement when the field is already present. Key rotation does not reintroduce the vulnerability this guard was introduced to prevent - when rotating, the field already exists and every holder's `MPToken` already has the corresponding ciphertext column.
 2.  `sfConfidentialOutstandingAmount` > 0 guard: The current implementation unconditionally rejects updates to `IssuerEncryptionKey` when `sfConfidentialOutstandingAmount` is already present (i.e. COA > 0). This guard must also be relaxed. Key rotation is only meaningful and necessary precisely when COA > 0 - if COA were zero, no holder would have a mirror yet and none of the migration logic would be needed. Maintaining this guard makes key rotation impossible in any real deployment.
+3.  Pre-`ConfidentialMPTKeyRotation` amendment, an issuer cannot register an auditor key in `MPTokenIssuanceSet` unless the issuer key is being registered in the same transaction. This means
+    the issuer can either register the issuer key alone or register both keys together initially. With the `ConfidentialMPTKeyRotation` amendment, the issuer can now register an auditor key at any time after the issuer key is already registered or rotated—allowing them to opt in whenever they want. The only constraint is that an auditor key cannot be registered before an issuer key.
 
 The guard against adding `IssuerEncryptionKey` when `lsfMPTCanHoldConfidentialBalance` is not enabled remains unchanged - confidential transfers must be enabled before keys can be set or rotated.
 All existing `MPTokenIssuanceSet` behavior (lock/unlock, `DomainID`) is completely unaffected.
@@ -309,18 +319,16 @@ No new tf flags introduced.
 
 #### 8.4.1 Data Verification
 
-1. The `ConfidentialMPTKeyRotation` amendment is not enabled. (`temDISABLED`)
-2. `IssuerEncryptionKey` is present but is not exactly 33 bytes or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
-3. `AuditorEncryptionKey` is present but is not exactly 33 bytes or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
+1. `IssuerEncryptionKey` is present but is not exactly 33 bytes or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
+2. `AuditorEncryptionKey` is present but is not exactly 33 bytes or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
+
+**Note**: Pre-`ConfidentialMPTKeyRotation` amendment: `AuditorEncryptionKey` is present without `IssuerEncryptionKey` returns `temMALFORMED`; Now it is allowed in preflight and will be further verified in preclaim.
 
 #### 8.4.2 Protocol-Level Failures
 
-1. `IssuerEncryptionKey` is present but the transaction is not signed by the issuer account. (`tecNO_PERMISSION`)
-2. `AuditorEncryptionKey` is present but the transaction is not signed by the issuer account. (`tecNO_PERMISSION`)
-3. `IssuerEncryptionKey` matches the current on-ledger value (no-op rotation). (`tecNO_PERMISSION`)
-4. `AuditorEncryptionKey` matches the current on-ledger value (no-op rotation). (`tecNO_PERMISSION`)
-5. `IssuerEncryptionKey` is not already present on the issuance (initial late addition guard - unchanged from existing behavior). (`tecNO_PERMISSION`)
-6. `AuditorEncryptionKey` is not already present on the issuance (initial late addition guard - unchanged from existing behavior). (`tecNO_PERMISSION`)
+1. `AuditorEncryptionKey` is being registered for the first time (not present on the issuance), but the issuance has no `IssuerEncryptionKey` and the current `MPTokenIssuanceSet` transaction does not provide one. (`tecNO_PERMISSION`)
+2. `IssuerEncryptionKey` matches the current on-ledger value (no-op rotation). (`tecNO_PERMISSION`)
+3. `AuditorEncryptionKey` matches the current on-ledger value (no-op rotation). (`tecNO_PERMISSION`)
 
 ### 8.5 State Changes (Delta Only)
 
@@ -841,7 +849,7 @@ The issuer subscribes to the XRPL WebSocket API and listens for `ConfidentialMPT
 
 **Option 2: Periodic Clio query (catch-up mechanism)**
 
-As a reliability backstop for missed WebSocket events (e.g. connection drops), the issuer periodically queries Clio using the account_objects method to retrieve all `MPToken` objects for their issuance, then filters client-side for those with `RecoveryKey` present. No new Clio API changes are required - `RecoveryKey` will be included in `MPToken` object responses once this amendment is implemented.
+As a reliability backstop for missed WebSocket events (e.g. connection drops), the issuer periodically queries Clio using the `mpt_holders` method to retrieve all the holders and their `MPToken` indexes, then filters client-side for those with `RecoveryKey` present. No new Clio API changes are required - `RecoveryKey` will be included in `MPToken` object responses once this amendment is implemented.
 
 ```json
 {
