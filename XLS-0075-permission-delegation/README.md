@@ -93,16 +93,16 @@ This transaction works slightly differently from the `DepositPreauth` transactio
 
 ### 3.2. Failure Conditions
 
-- `PermissionDelegationV1_1` amendment is not enabled. (`temDISABLED`)
-- `Permissions` is too long (the limit is 10) (`temARRAY_TOO_LARGE`)
-- `Permissions` includes duplicates. (`temMALFORMED`)
-- Any of the specified permissions is not a valid tx-level or granular permission. (`temMALFORMED`)
-- Any of the specified tx-level permissions corresponds is not delegable. (`temMALFORMED`)
-- Any of the specified granular permissions corresponds to a tx type whose amendment is not enabled. (`temMALFORMED`)
-- `Authorize` is the same as `Account`. (`temMALFORMED`)
-- `Authorize` account does not exist. (`tecNO_TARGET`)
-- `Authorize` account is a pseudo-account. (`tecNO_PERMISSION`)
-- `Permissions` is empty (trying to delete the `Delegate` object), but the `Delegate` object does not exist. (`tecNO_ENTRY`)
+1. `PermissionDelegationV1_1` amendment is not enabled. (`temDISABLED`)
+2. `Permissions` is too long. (the limit is 10) (`temARRAY_TOO_LARGE`)
+3. `Permissions` includes duplicates. (`temMALFORMED`)
+4. Any of the specified permissions is not a valid tx-level or granular permission. (`temMALFORMED`)
+5. Any of the specified tx-level permissions corresponds is not delegable. (`temMALFORMED`)
+6. Any of the specified granular permissions corresponds to a tx type whose amendment is not enabled. (`temMALFORMED`)
+7. `Authorize` is the same as `Account`. (`temMALFORMED`)
+8. `Authorize` account does not exist. (`tecNO_TARGET`)
+9. `Authorize` account is a pseudo-account. (`tecNO_PERMISSION`)
+10. `Permissions` is empty (trying to delete the `Delegate` object), but the `Delegate` object does not exist. (`tecNO_ENTRY`)
 
 ### 3.3. State Changes
 
@@ -121,10 +121,10 @@ This object will cost 1 reserve, which is charged to the `Account`.
 
 ```json
 {
-    TransactionType: "DelegateSet",
-    Account: "rISAAC......",
-    Authorize: "rALICE......",
-    Permissions: [{Permission: {PermissionValue: "Payment", "NFTokenMint"}}],
+    "TransactionType": "DelegateSet",
+    "Account": "rISAAC......",
+    "Authorize": "rALICE......",
+    "Permissions": [{Permission: {PermissionValue: "Payment", "NFTokenMint"}}],
 }
 ```
 
