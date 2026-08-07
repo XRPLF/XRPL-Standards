@@ -121,15 +121,45 @@ This object will cost 1 reserve, which is charged to the `Account`.
 
 ```json
 {
-    "TransactionType": "DelegateSet",
-    "Account": "rISAAC......",
-    "Authorize": "rALICE......",
-    "Permissions": [{Permission: {PermissionValue: "Payment", "NFTokenMint"}}],
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [
+    {
+      "Permission": {
+        "PermissionValue": "Payment"
+      }
+    },
+    {
+      "Permission": {
+        "PermissionValue": "NFTokenMint"
+      }
+    }
+  ]
 }
 ```
 
 Isaac is delegating the `Payment` and `NFTokenMint` permissions to Alice.
 Then later Alice can send a `Payment` or `NFTokenMint` transaction on behalf of Isaac.
+
+`PermissionValue` can use a number as well, the tx-level permission is tx type plus one, and the granular permission value can be found in [XLS-74, Account Permissions](../XLS-0074-account-permissions/README.md).
+So the json above is equivalent to:
+
+```json
+{
+  "TransactionType": "DelegateSet",
+  "Account": "rISAAC......",
+  "Authorize": "rALICE......",
+  "Permissions": [
+    {
+      "Permission": 1 // Payment type + 1
+    },
+    {
+      "Permission": 26 // NFTokenMint type + 1
+    }
+  ]
+}
+```
 
 ## 4. Transactions: Common Fields
 
@@ -153,11 +183,11 @@ The delegate will pay the fees on the transaction, to prevent a delegate from dr
 
 ### 4.2. Failure Conditions
 
-- The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it. (`terNO_DELEGATE_PERMISSION`)
-- The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it. (`terNO_DELEGATE_PERMISSION`)
-- `Delegate` is the same as `Account`. (`temBAD_SIGNER`)
-- The `Delegate` holds a granular permission for this tx type, but the transaction sets a flag not permitted by the held granular permission(s) (`allowedFlags` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
-- The `Delegate` holds a granular permission for this tx type, but the transaction includes a field not permitted by the held granular permission(s) (`allowedFields` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
+1. The `Account` hasn't authorized the `Delegate` to send transactions on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+2. The `Account` hasn't authorized the `Delegate` to send this particular transaction type/granular permission on behalf of it. (`terNO_DELEGATE_PERMISSION`)
+3. `Delegate` is the same as `Account`. (`temBAD_SIGNER`)
+4. The `Delegate` holds a granular permission for this tx type, but the transaction sets a flag not permitted by the held granular permission(s) (`allowedFlags` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
+5. The `Delegate` holds a granular permission for this tx type, but the transaction includes a field not permitted by the held granular permission(s) (`allowedFields` in `permissions.macro`). (`terNO_DELEGATE_PERMISSION`)
 
 ### 4.3. State Changes
 
