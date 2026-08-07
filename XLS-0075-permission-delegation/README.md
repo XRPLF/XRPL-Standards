@@ -152,14 +152,17 @@ So the json above is equivalent to:
   "Authorize": "rALICE......",
   "Permissions": [
     {
-      "Permission": 1 // Payment type + 1
+      "Permission": 1
     },
     {
-      "Permission": 26 // NFTokenMint type + 1
+      "Permission": 26
     }
   ]
 }
 ```
+
+- `Payment`: Tx type 0 -> Permission value 1
+- `NFTokenMint`: Tx type 25 -> Permission value 26
 
 ## 4. Transactions: Common Fields
 
@@ -292,7 +295,7 @@ In this example, Bob is freezing a trustline from Holden, a USD.Isaac token hold
     "issuer": "rHOLDEN......",
     "value": "0"
   },
-  "Flags": 0x00100000, // tfSetFreeze
+  "Flags": 1048576,
   "Delegate": "rBOB......",
   "SigningPubKey": "BOB......"
 }
@@ -337,7 +340,7 @@ In this example, Kylie is authorizing Holden's trustline.
     "issuer": "rHOLDEN......",
     "value": "0"
   },
-  "Flags": 0x00010000, // tfSetfAuth
+  "Flags": 65536,
   "Delegate": "rKYLIE......",
   "SigningPubKey": "KYLIE...."
 }
