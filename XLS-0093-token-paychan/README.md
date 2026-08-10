@@ -6,7 +6,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/287
   status: Draft
   category: Amendment
-  requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md), [XLS-85](../XLS-0085-token-escrow/README.md)
+  requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md), [XLS-39](../XLS-0039-clawback/README.md), [XLS-85](../XLS-0085-token-escrow/README.md)
   created: 2025-05-24
 </pre>
 
@@ -14,11 +14,11 @@
 
 ## Abstract
 
-The proposed `TokenPaychan` amendment to the XRP Ledger (XRPL) protocol enhances the existing `PaymentChannel` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow payment channels to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity.
+The proposed `TokenPaychan` amendment to the XRP Ledger (XRPL) protocol enhances the existing `PaymentChannel` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow payment channels to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity. It also adds one new transaction, `PaymentChannelClawback`, so that an issuer whose holders can already be clawed back retains that reach over value locked in a channel.
 
 # 1. Implementation
 
-This amendment extends the functionality of payment channels to support both IOUs and MPTs, accounting for the specific behaviors and constraints associated with each token type. Token-denominated channels share their locking model — the `lsfAllowTrustLineLocking` / `lsfMPTCanEscrow` issuer opt-in flags and the `sfLockedAmount` accounting fields — with Token-Enabled Escrows (XLS-85).
+This amendment extends the functionality of payment channels to support both IOUs and MPTs, accounting for the specific behaviors and constraints associated with each token type. Token-denominated channels share their locking model with Token-Enabled Escrows (XLS-85): the same `lsfAllowTrustLineLocking` and `lsfMPTCanEscrow` issuer opt-in flags, and the same `sfLockedAmount` accounting fields.
 
 ## 1.1. Overview of Token Types
 
@@ -205,6 +205,56 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 - **Deletion of Payment Channel Object:**
   - The `PaymentChannel` object is deleted after successful closure.
 
+### 1.2.4. `PaymentChannelClawback`
+
+Locking a token into a channel moves it out of reach of the ordinary `Clawback` and `MPTokenIssuance` clawback transactions, which are both bounded by the holder's spendable balance and so cannot see locked value. `PaymentChannelClawback` gives the issuer that reach back. It requires the same opt-in the issuer already needed to claw back an ordinary holding, so it grants no new authority over a token; it removes a place the token could be kept out of reach.
+
+Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be clawed. The destination's earned `Balance` is never touched, so a clawback cannot reverse value the payee has already claimed.
+
+| Field     | Required? | JSON Type        | Internal Type | Description                                                                                                                                                                   |
+| --------- | --------- | ---------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Channel` | Yes       | String           | Hash256       | The ID of the `PaymentChannel` to claw from.                                                                                                                                  |
+| `Amount`  | No        | Object or String | Amount        | The amount to claw back. Must be a positive, non-XRP amount of the channel's asset. If omitted, or if it is at least the unclaimed remainder, the entire remainder is clawed. |
+
+**Failure Conditions:**
+
+- **Malformed `Amount`:**
+  - If `Amount` is present and is XRP or is not positive, the transaction fails with `temBAD_AMOUNT`. An MPT amount above the maximum MPT value fails the same way.
+  - If `Amount` is present and names XRP as an IOU currency code, the transaction fails with `temBAD_CURRENCY`.
+
+- **Channel Does Not Exist:**
+  - If no `PaymentChannel` object matches `Channel`, the transaction fails with `tecNO_TARGET`.
+
+- **Channel Holds XRP:**
+  - XRP cannot be clawed back, so a channel denominated in XRP fails with `tecNO_PERMISSION`.
+
+- **Submitter Is Not the Issuer:**
+  - If the submitting account is not the issuer of the channel's asset, the transaction fails with `tecNO_PERMISSION`.
+
+- **Asset Mismatch:**
+  - If `Amount` is present and is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
+
+- **Issuer Does Not Allow Clawback:**
+  - **IOU Tokens**: If the issuer's account lacks the `lsfAllowTrustLineClawback` flag, or has the `lsfNoFreeze` flag set, the transaction fails with `tecNO_PERMISSION`. These are the same conditions that gate the [XLS-39](../XLS-0039-clawback/README.md) `Clawback` transaction.
+  - **MPTs**: If the `MPTokenIssuance` lacks the `lsfMPTCanClawback` flag, the transaction fails with `tecNO_PERMISSION`. If the `MPTokenIssuance` does not exist, the transaction fails with `tecOBJECT_NOT_FOUND`.
+
+**State Changes:**
+
+- **Adjustment to the Issuer:**
+  - No transfer fee is applied. A clawback is a redemption rather than a transfer between holders.
+  - **IOU Tokens**: No trustline is modified. The locked value was already removed from the source's trustline balance when the channel was created or funded, so retiring the channel's obligation is the whole of the clawback.
+  - **MPTs**: The clawed amount is deducted from the `sfLockedAmount` on both the source's `MPToken` and the `MPTokenIssuance`, and from the `sfOutstandingAmount` on the `MPTokenIssuance`. No `MPToken` is created for the issuer, since MPT issuers do not hold their own `MPToken`.
+
+- **Payment Channel Object Update:**
+  - For a partial clawback, the channel's `Amount` is reduced by the clawed amount and the channel remains open.
+  - For a full clawback, the channel's `Amount` is set equal to its `Balance`, leaving no remainder, and the channel is closed and deleted as described in Channel Closure. Because the remainder is zero, no refund is made to the source and no source-side authorization, holding, or freeze condition applies.
+
+**Effect on Outstanding Claims:**
+
+A clawback lowers the channel's `Amount`, which is the ceiling on what the destination can claim. Any authorization the source has already signed for a balance above the new `Amount` becomes unusable, and a claim presenting it fails with `tecUNFUNDED_PAYMENT`; the destination needs a fresh signature from the source for a balance at or below the new `Amount`. This is a consequence of the issuer's authority over the token rather than of the channel mechanics, and it mirrors what an ordinary clawback does to a holder's pending obligations.
+
+An expired channel can still be clawed. Expiry entitles the source to a refund but does not perform one until some account submits a transaction against the channel, so an issuer clawback and the source's refund race for the remainder.
+
 ## 1.3. Key Differences Between IOU and MPT Payment Channels
 
 | Aspect                        | IOU Tokens                                                                                                                                                                  | Multi-Purpose Tokens (MPTs)                                                                             |
@@ -216,6 +266,8 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 | **Destination Authorization** | Required at creation and at claim; cannot be granted during claim if authorization required                                                                                 | Required at creation and at claim; cannot be granted during claim if authorization required             |
 | **Freeze/Lock Conditions**    | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure                                      | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure |
 | **Transfer Rates/Fees**       | `TransferRate` stored at creation and applied during claims                                                                                                                 | `TransferFee` stored at creation and applied during claims                                              |
+| **Clawback Opt-In**           | `lsfAllowTrustLineClawback` (account flag), and `lsfNoFreeze` must not be set                                                                                               | `lsfMPTCanClawback` (issuance flag)                                                                     |
+| **Clawback Accounting**       | Channel `Amount` is reduced; no trustline changes                                                                                                                           | `sfLockedAmount` and `sfOutstandingAmount` are reduced                                                  |
 | **Outstanding Amount**        | Remains unchanged during channel operations                                                                                                                                 | Remains unchanged during channel operations                                                             |
 | **Account Deletion**          | Payment channels prevent account deletion                                                                                                                                   | Payment channels prevent account deletion                                                               |
 | **Holding Deletion**          | Trustline deletion is NOT blocked by open channels (locked value lives in the channel object); closure refund then fails with `tecNO_LINE` until the line is re-established | `MPToken` deletion is blocked while `sfLockedAmount` is non-zero (`tecHAS_OBLIGATIONS`)                 |
@@ -260,15 +312,15 @@ No new flags are introduced. Token-denominated payment channels reuse the `lsfAl
 
 ## 1.6. Future Considerations
 
-1. Clawback: XLS-93 currently does not provide a direct "clawback" mechanism within an active Payment Channel. If your use case requires clawback, you can close the channel and then perform a clawback of the funds outside of the payment channel context. In other words, once the token amount returns to the source account, the existing clawback features for IOUs or MPTs can be used on those returned funds.
+1. Issuer as Source: XLS-93 currently does not allow the issuer to be the source of the Payment Channel. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then create the payment channel with that account as the source.
 
-2. Issuer as Source: XLS-93 currently does not allow the issuer to be the source of the Payment Channel. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then create the payment channel with that account as the source.
-
-3. Trustline Deletion While Locked: because the locked IOU value lives in the `PaymentChannel` object rather than on the trustline, an empty trustline can be deleted while channels remain open (see Section 3). Per-trustline lock accounting that would prevent this, for both escrows and payment channels, is deliberately left to a separate future amendment so that XLS-93 stays behaviorally aligned with the activated XLS-85.
+2. Trustline Deletion While Locked: because the locked IOU value lives in the `PaymentChannel` object rather than on the trustline, an empty trustline can be deleted while channels remain open (see Section 3). Per-trustline lock accounting that would prevent this, for both escrows and payment channels, is deliberately left to a separate future amendment so that XLS-93 stays behaviorally aligned with the activated XLS-85.
 
 ## 2. Rationale
 
 Payment channels are the last remaining XRP-only locking primitive; XLS-85 already extended escrows to IOUs and MPTs. Reusing the XLS-85 model wholesale, the same issuer opt-in flags (`lsfAllowTrustLineLocking`, `lsfMPTCanEscrow`), the same `sfLockedAmount` accounting, and the same shared lock/unlock logic in the implementation, means issuers make one opt-in decision that covers both primitives, and both primitives fail and succeed under identical token conditions. Every place where XLS-93 is stricter than base token semantics (any freeze blocks lock creation, no channel creation during global freeze even to the issuer) is inherited from the activated XLS-85 behavior rather than newly invented, keeping the two locking primitives coherent.
+
+`PaymentChannelClawback` is included in the same amendment for the same reason. An issuer's clawback opt-in is a property of the token, so it should hold wherever that token sits. Deferring the transaction would have meant shipping a lock that quietly suspends an issuer control the token already carries, and the alternative of closing the channel first is not open to the issuer, which is not a party to the channel and cannot close it.
 
 ## 3. Security Considerations
 
@@ -277,3 +329,5 @@ Payment channels are the last remaining XRP-only locking primitive; XLS-85 alrea
 - **Transfer rate.** The claim rate is capped at the rate stored at creation (the lower of stored and current is applied), so an issuer cannot retroactively tax funds already locked by raising `TransferRate`/`TransferFee`.
 - **Trustline deletion.** The source can delete an empty trustline while a channel is open. Closure refunds then fail with `tecNO_LINE` until the source re-establishes the line; the destination's claims are unaffected. `MPToken` deletion is blocked while locked (`tecHAS_OBLIGATIONS`).
 - **Signature domain.** Claim signatures bind the specific channel ID and amount, unchanged from XRP payment channels; token support does not weaken replay protection.
+- **Clawback scope.** `PaymentChannelClawback` reaches only the unclaimed remainder and only for an issuer who already holds the clawback opt-in for that token. It cannot reverse a claim the destination has settled, and it cannot touch XRP or a token whose issuer never enabled clawback.
+- **Clawback and pending authorizations.** An issuer clawback can invalidate a signed claim authorization the destination is holding, because the authorized balance may exceed the reduced channel `Amount`. A destination that wants to settle ahead of this should claim rather than accumulate authorizations, the same tradeoff that applies to holding an unsettled balance with any clawback-enabled issuer.
