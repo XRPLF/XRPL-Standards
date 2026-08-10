@@ -274,7 +274,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 ### 7.4. Invariants
 
 - **Deletion Blocker:** A holder's `MPToken` cannot be deleted from the ledger once confidential fields have been initialized, even if `sfConfidentialBalanceSpending`, `sfConfidentialBalanceInbox`, and `sfIssuerEncryptedBalance` all contain the canonical encrypted zero (i.e., the holder's confidential balance is zero). The issuer may delete the `MPTokenIssuance` object only when `sfConfidentialOutstandingAmount` is 0 (in addition to the standard XLS-33 deletion requirements).
-- **Confidential Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
+- **Confidential Balance Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
 - **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
 - **Version Modification:** If `sfConfidentialBalanceSpending != sfConfidentialBalanceSpending` (the spending balance is modified), then `sfConfidentialBalanceVersion != sfConfidentialBalanceVersion` (the version must be changed).
 
@@ -592,7 +592,7 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 
 1. Issuer Decrypts and Prepares: The issuer takes the EncryptedBalanceIssuer ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
 2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes a compact Clawback sigma proof.
-3. Transactor Verification and Execution: Transactor receive the transaction and perform a series of checks and state changes as a single:
+3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that the RevealedAmount is the true value hidden in the holder's on-ledger ciphertext.
    - Ledger Changes: If the proof is valid, the validators execute all of the following changes at once:
      1. The ConfidentialBalance_Spending and ConfidentialBalance_Inbox are set to a valid encryption of zero.
@@ -687,7 +687,7 @@ The following existing field is extended with a new bit flag to support enabling
 | :--------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------- |
 | `ImmutableFlags` | No        | `number`  | `UINT32`      | Indicates which fields or flags of this token issuance can NOT be modified after creation. |
 
-#### 12.2.1. New `Flags` Bit
+### 12.3. Flags
 
 The following bit flag is added to the `Flags` field to enable the confidential amount feature:
 
@@ -701,16 +701,16 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 - Setting `tfMPTSetCanHoldConfidentialBalance` enables confidential transfers for the token.
 - Enabling confidential transfers is one-way: there is no flag to clear `lsfMPTCanHoldConfidentialBalance` once it has been set.
 
-### 12.3. Failure Conditions
+### 12.4. Failure Conditions
 
-#### 12.3.1. Data Verification
+#### 12.4.1. Data Verification
 
 1. The `featureConfidentialTransfer` is not enabled. (`temDISABLED`)
 2. The provided Public Key is not exactly 33 bytes (`ecPubKeyLength`). (`temMALFORMED`)
 3. The transaction attempts to mutate confidential amount fields while also acting as a Holder. (`temMALFORMED`)
 4. The transaction contains `sfAuditorEncryptionKey` but does **not** contain `sfIssuerEncryptionKey`. (`temMALFORMED`)
 
-#### 12.3.2. Protocol-Level Failures
+#### 12.4.2. Protocol-Level Failures
 
 1. The transaction attempts to use `tfMPTCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in sfImmutableFlags. (`tecNO_PERMISSION`)
 2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
@@ -718,16 +718,16 @@ The following bit flag is added to the `Flags` field to enable the confidential 
    - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
 4. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
-### 12.4. State Changes
+### 12.5. State Changes
 
 If successful:
 
 - **Flags:** The `lsfMPTCanHoldConfidentialBalance` flag is updated (if mutable).
 - **Keys:** The `sfIssuerEncryptionKey` and/or `sfAuditorEncryptionKey` are stored on the `MPTokenIssuance` ledger entry.
 
-### 12.5. Example JSON
+### 12.6. Example JSON
 
-#### 12.5.1. Enabling Confidential Amount Feature
+#### 12.6.1. Enabling Confidential Amount Feature
 
 ```json
 {
