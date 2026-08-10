@@ -161,7 +161,7 @@ The `lsfMPTCanHoldConfidentialBalance` flag enables the use of confidential tran
 - `sfFlags`: The prefix `lsf` refers to ledger state flags, while `tf` refers to the transaction flags.
 - `sfImmutableFlags`: The prefix `lsif` refers to the immutable ledger state flags.
 
-- **Default Behavior (Mutable):** By default, without setting `tifMPTCanHoldConfidentialBalance`, the issuer retains the ability to enable the confidential amount setting (`lsfMPTCanHoldConfidentialBalance`) via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions. Enabling is one-way; the flag cannot be cleared once set.
+- **Default Behavior (Mutable):** By default, without setting `tifMPTCanHoldConfidentialBalance`, the issuer retains the ability to enable the confidential balance setting (`lsfMPTCanHoldConfidentialBalance`) via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions. Enabling is one-way; the flag cannot be cleared once set.
 - **Permanent Lock (Immutable):** If the issuer sets the immutable flag `tifMPTCanHoldConfidentialBalance` through [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanHoldConfidentialBalance` can never be changed after issuance.
 
 #### 6.3.2. Enabling Confidentiality
@@ -173,7 +173,7 @@ There are two ways to enable the `lsfMPTCanHoldConfidentialBalance` flag:
 
 #### 6.3.3. Disabling Confidentiality
 
-Enabling confidentiality is **one-way**. Once `lsfMPTCanHoldConfidentialBalance` is set it cannot be cleared — there is no transaction flag to disable confidential amounts on an existing issuance. This guarantees that funds already converted to a confidential state can never be stranded by the capability being turned off underneath them.
+Enabling confidentiality is **one-way**. Once `lsfMPTCanHoldConfidentialBalance` is set it cannot be cleared — there is no transaction flag to disable confidential balance on an existing issuance. This guarantees that funds already converted to a confidential state can never be stranded by the capability being turned off underneath them.
 
 ### 6.4. Transfer Fee Compatibility
 
@@ -351,7 +351,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 1. The destination account does not exist. (`tecNO_TARGET`)
 2. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
-3. The issuance does not support confidential amounts (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
+3. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
 4. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
 5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
 6. Either the sender's or receiver's balance is currently frozen. (`terFROZEN`)
@@ -394,7 +394,7 @@ If the transaction is successful:
 }
 ```
 
-Net effect: Public balances unchanged; confidential amount is redistributed (sender CB_S ↓, receiver CB_IN ↑). OA (plaintext) unchanged; COA (plaintext) unchanged.
+Net effect: Public balances unchanged; confidential balance is redistributed (sender CB_S ↓, receiver CB_IN ↑). OA (plaintext) unchanged; COA (plaintext) unchanged.
 
 ## 9. Transaction: `ConfidentialMPTMergeInbox`
 
@@ -664,11 +664,11 @@ If the transaction is successful, the holder's confidential state is reset, and 
 
 ## 12. Transaction: `MPTokenIssuanceSet`
 
-The existing `MPTokenIssuanceSet` transaction is extended to manage the confidential lifecycle of an MPT issuance. This includes enabling confidential amount status and registering encryption keys.
+The existing `MPTokenIssuanceSet` transaction is extended to manage the confidential lifecycle of an MPT issuance. This includes enabling confidential balance status and registering encryption keys.
 
 ### 12.1. Usage & Mutability
 
-This transaction is the only method to register keys or enable the confidential amount status (via the `Flags` field with the `tfMPTSetCanHoldConfidentialBalance` bit flag) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
+This transaction is the only method to register keys or enable the confidential balance status (via the `Flags` field with the `tfMPTSetCanHoldConfidentialBalance` bit flag) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
 **Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanHoldConfidentialBalance` flag using `tfMPTSetCanHoldConfidentialBalance`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
 
@@ -681,7 +681,7 @@ The following fields are introduced by this extension to support encryption key 
 | `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
 | `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
 
-The following existing field is extended with a new bit flag to support enabling the confidential amount feature post-issuance:
+The following existing field is extended with a new bit flag to support enabling the confidential balance feature post-issuance:
 
 | Field Name       | Required? | JSON Type | Internal Type | Description                                                                                |
 | :--------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------- |
@@ -689,7 +689,7 @@ The following existing field is extended with a new bit flag to support enabling
 
 ### 12.3. Flags
 
-The following bit flag is added to the `Flags` field to enable the confidential amount feature:
+The following bit flag is added to the `Flags` field to enable the confidential balance feature:
 
 | Flag Name                            | Hex Value    | Decimal Value | Description                                                                                                                              |
 | :----------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
@@ -727,7 +727,7 @@ If successful:
 
 ### 12.6. Example JSON
 
-#### 12.6.1. Enabling Confidential Amount Feature
+#### 12.6.1. Enabling Confidential Balance Feature
 
 ```json
 {
@@ -740,7 +740,7 @@ If successful:
 }
 ```
 
-This transaction enables the confidential amount feature by setting the `tfMPTSetCanHoldConfidentialBalance` bit flag in the `Flags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
+This transaction enables the confidential balance feature by setting the `tfMPTSetCanHoldConfidentialBalance` bit flag in the `Flags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
 
 ## 13. Operational Considerations
 
