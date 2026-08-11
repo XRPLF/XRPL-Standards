@@ -221,20 +221,19 @@ All float buffers are exactly **12 bytes**. Contracts SHOULD treat these buffers
 
 The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1` (toward zero), `2` (downward, floor), `3` (upward, ceiling).
 
-| Function Signature                                                                                                                                                                                                         | Description                                                                   | Gas Cost |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :------- |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.              | 130      |
-| `float_from_stnumber(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                       | Load a float from a serialized STNumber value, validating and normalizing it. | 150      |
-| `float_from_iou_number_amount(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                              | Load a float from the 8-byte IOU amount field of a serialized STAmount.       | 150      |
-| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.             | 100      |
-| `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                   | 130      |
-| `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in rippled format.                                         | 80       |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in rippled format.                                             | 160      |
-| `float_sub(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Subtract two floats in rippled format.                                        | 160      |
-| `float_mul(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Multiply two floats in rippled format.                                        | 300      |
-| `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Divide two floats in rippled format.                                          | 300      |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                           | 5500     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                            | 5500     |
+| Function Signature                                                                                                                                                                                                         | Description                                                             | Gas Cost |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- | :------- |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.        | 130      |
+| `float_from_iou_number_amount(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                              | Load a float from the 8-byte IOU amount field of a serialized STAmount. | 150      |
+| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.       | 100      |
+| `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.             | 130      |
+| `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in rippled format.                                   | 80       |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in rippled format.                                       | 160      |
+| `float_sub(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Subtract two floats in rippled format.                                  | 160      |
+| `float_mul(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Multiply two floats in rippled format.                                  | 300      |
+| `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Divide two floats in rippled format.                                    | 300      |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                     | 5500     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                      | 5500     |
 
 #### 5.8.1. The XFloat Type
 
@@ -242,7 +241,7 @@ Any floating point types in xrpld WASM is an opaque 12-byte (96-bit) buffer refe
 
 Smart contracts SHOULD NOT inspect, decode, or construct XFloat bytes directly. All operations should instead go through the host functions defined in [§5.8](#58-floats). Bypassing host functions is gas-inefficient — each host call is priced to amortize the cost of the operation, and hand-rolling arithmetic in WASM bytecode incurs more gas for less precision. A contract that reads or writes the individual bytes of an XFloat buffer is also relying on an implementation detail that may change, and could produce incorrect or undefined behavior if it does. The buffer should be allocated, passed to a host functions, and discarded — nothing else.
 
-**Warning — do not persist XFloat bytes:** Contracts MUST NOT write XFloat buffers into contract storage (e.g., the `data` field of a smart feature). The 12-byte encoding is an in-memory convention tied to a specific version of rippled's implementation. If the encoding ever changes — which the versioning rules in [§5.11](#511-host-function-versioning-rules) explicitly allow for — stored bytes would become unreadable or silently misinterpreted by contracts running against the updated host functions.
+**Warning — do not persist XFloat bytes:** Contracts MUST NOT write XFloat buffers into contract storage (e.g., the `data` field of a smart feature). The 12-byte encoding is an in-memory convention tied to today's float host functions. Per [§5.11](#511-host-function-versioning-rules) rule 3, that encoding can never change for these functions — but a future need for a different layout would ship as a new host function under a new name, and bytes persisted under today's convention would not be readable by it.
 
 If a contract needs to persist an XFloat across invocations, it should store the **mantissa and exponent as separate integers** in a contract-defined format, then reconstruct the XFloat at runtime using `float_from_mant_exp`. For example:
 
@@ -262,7 +261,7 @@ This approach uses only stable primitive types (`i32`, `i64`) and is completely 
 
 This section documents the XFloat encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
 
-XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization (which is why `float_from_stnumber` is a conversion function rather than a no-op):
+XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization:
 
 - **Layout:** 12 bytes total — 8-byte big-endian signed mantissa followed by a 4-byte big-endian signed exponent.
 - **No type prefix:** The buffer contains only the 12 payload bytes
@@ -293,7 +292,7 @@ The on-ledger wire format of any floating points numbers is unchanged. However, 
 [STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
 ```
 
-The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions `float_from_iou_number_amount` and `float_from_stnumber` bridge between those formats and WASM floating point numbers.
+The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host function `float_from_iou_number_amount` bridges the IOU amount format to WASM floating point numbers. `STNumber` values are decoded in Rust by `xrpl-wasm-stdlib` — for the IOU-precision case, the decoded 8-byte value is layout-identical to an `IouNumber` and is passed to `float_from_iou_number_amount` directly, without a dedicated host function.
 
 #### 5.8.3. XFloat Motivation
 
@@ -412,7 +411,7 @@ This section is the only section of functions that will likely be different for 
 The following rules govern the lifecycle of all host functions in this specification and must be respected by all implementations:
 
 1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a new function are unaffected.
-2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for backward compatibility. Deployed contracts may rely on any host function that was available at deployment time.
+2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for backward compatibility. Deployed contracts may rely on any host function that was available at deployment time. Deprecation does not remove or change the function — it signals to new contract authors that a function is discouraged, so documentation and tooling (e.g. `xrpl-wasm-stdlib`) can steer new development away from it even though it remains available for existing contracts.
 3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types, parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a buffer size changes, a new host function with a different name MUST be introduced.
 
 These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future versions of the platform.
@@ -459,7 +458,8 @@ The host functions defined by this spec form a **stable ABI**. Once a host funct
 
 - **Adding a new host function.** Existing extensions are unaffected; new extensions opt in by importing the new name only after the amendment is enabled.
 - **Adjusting the gas cost of an existing host function.** The function's signature and behavior are unchanged; only the metered cost moves.
-- **Backward-compatible changes to the behavior of a host function.** For example, a host function that currently accepts values less than 500 could be changed to accept values less than 1000.
+
+Changes to a host function's observable behavior are not on this list — per [§5.11](#511-host-function-versioning-rules) rule 3, any such change requires introducing a new host function with a new name; the amendment gates adoption of the new function, not a change to the old one.
 
 Updates to the `wasmi` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
 
@@ -468,7 +468,7 @@ For example, this is what it might look like to add a new host function:
 ```c
 WASM_IMPORT_FUNC2(i, didindex, "did_index", hfs,     350);
 WASM_IMPORT_FUNC2(i, escrowindex, "escrow_index", hfs,       350);
-if (hfs->isAmendmentEnabled(featureLendingProtocol))
+if (rules.enabled(featureLendingProtocol))
     WASM_IMPORT_FUNC2(i, loanindex, "loan_index", hfs,     350);
 ```
 
@@ -603,9 +603,11 @@ The 4 extra bytes per value are negligible given the `no_std` stack-only model.
 
 **Compared to `STNumber` (14 bytes):** `XFloat` is 2 bytes shorter because it omits the type prefix — the host functions already know they're working with an `XFloat`, so the prefix is unnecessary.
 
+An alternative considered was adopting `STNumber`'s 14-byte layout directly as the `XFloat` format. This was rejected in favor of the unpacked 12-byte layout: the 2 extra bytes from the type prefix are wasted since the host functions already know the type from context, and keeping `XFloat` independent of `STNumber`'s wire format avoids coupling the in-memory buffer convention to a ledger serialization format that could itself change.
+
 ### C.8: Why are ledger serialization formats unchanged by XFloat?
 
-The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `IouNumber` encoding in `STAmount` — are unchanged by this specification. `float_from_iou_number_amount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
+The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `IouNumber` encoding in `STAmount` — are unchanged by this specification. `float_from_iou_number_amount` exists to load values from that on-ledger format into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire. `STNumber` values reuse the same host function after `xrpl-wasm-stdlib` decodes the `STNumber` bytes in Rust (see [C.16](#c16-how-do-i-get-an-xfloat-from-an-stnumber)).
 
 ### C.9: Why is host function immutability required?
 
@@ -645,7 +647,9 @@ Use `float_cmp` against a zero `XFloat`:
 
 ### C.13: How do I get an XFloat from an STAmount?
 
-Use `float_from_iou_number_amount` (see [§5.8](#58-floats)). This function does not take the whole 48-byte `STAmount` (amount + currency + issuer) — it takes only the 8-byte IOU amount field. Parse the `STAmount` down to its `IOUNumber` amount bytes first, then pass those 8 bytes in:
+The approach depends on the `STAmount`'s underlying type:
+
+**IOU amounts:** Use `float_from_iou_number_amount` (see [§5.8](#58-floats)). This function does not take the whole 48-byte `STAmount` (amount + currency + issuer) — it takes only the 8-byte IOU amount field. Parse the `STAmount` down to its `IOUNumber` amount bytes first, then pass those 8 bytes in:
 
 - Extract the 8-byte IOU amount field from the parsed `STAmount`.
 - Allocate a 12-byte output buffer, and call `float_from_iou_number_amount`, passing the 8-byte IOU amount field as the input buffer/length pair and the output buffer/length pair to receive the result.
@@ -653,15 +657,17 @@ Use `float_from_iou_number_amount` (see [§5.8](#58-floats)). This function does
 
 `float_from_stamount` was the earlier name for this function; it has been renamed to `float_from_iou_number_amount` to make clear that it operates on the 8-byte IOU amount value, not the whole `STAmount` structure.
 
-**Note:** `xrpl-wasm-stdlib` will provide a helper function that performs this extraction and conversion internally, so most contract developers won't need to parse `STAmount` bytes or call `float_from_iou_number_amount` directly.
+**XRP and MPT amounts:** These are plain integers rather than the packed IOU encoding, so use `float_from_mant_exp` instead — pass the amount as the mantissa and `0` as the exponent.
 
-### C.14: How do I create an STAmount from an XFloat?
+**Note:** `xrpl-wasm-stdlib` will provide a helper function that performs the appropriate extraction and conversion internally for each `STAmount` type, so most contract developers won't need to parse `STAmount` bytes or choose the right host function directly.
 
-There is currently no host function to go the other direction. This is a known gap: contracts today don't need to emit transactions or ledger data requiring the raw `STAmount`/`IOUNumber` byte format, since `XFloat` is only used for in-contract computation ([§5.8.1](#581-the-xfloat-type)). As a result, a value that started as an `STAmount`, was converted to an `XFloat` via `float_from_iou_number_amount`, and then had arithmetic applied to it (see [C.15](#c15-how-do-i-add-two-stamounts-together)) has no way to be converted back into the 8-byte value the ledger expects.
+### C.14: How do I create an STAmount or STNumber from an XFloat?
 
-This gap is expected to be addressed if transaction emissions ever becomes a supported feature in the WASM layer.
+There is currently no host function to go the other direction for either format — no `float_to_iou_number_amount` and no `float_to_stnumber`. This is a known gap: contracts today don't need to emit transactions or ledger data requiring the raw `STAmount`/`IOUNumber` or `STNumber` byte format, since `XFloat` is only used for in-contract computation ([§5.8.1](#581-the-xfloat-type)). As a result, a value that started as an `STAmount`, was converted to an `XFloat` via `float_from_iou_number_amount`, and then had arithmetic applied to it (see [C.15](#c15-how-do-i-add-two-stamounts-together)) has no way to be converted back into the 8-byte value the ledger expects; the same is true for `STNumber`, which is decoded via `xrpl-wasm-stdlib` and `float_from_iou_number_amount` (see [C.16](#c16-how-do-i-get-an-xfloat-from-an-stnumber)).
 
-**Note:** If/when a reverse conversion host function is added, `xrpl-wasm-stdlib` is expected to expose it via an idiomatic Rust helper as well, consistent with the rest of the float API — so contract developers still won't need to construct `STAmount`/`IOUNumber` bytes by hand.
+This gap is expected to be addressed if transaction emissions ever becomes a supported feature in the WASM layer — at which point `float_to_iou_number_amount` and/or `float_to_stnumber` could be added as new host functions.
+
+**Note:** If/when reverse conversion host functions are added, `xrpl-wasm-stdlib` is expected to expose them via idiomatic Rust helpers as well, consistent with the rest of the float API — so contract developers still won't need to construct `STAmount`/`IOUNumber`/`STNumber` bytes by hand.
 
 ### C.15: How do I add two STAmounts together?
 
@@ -672,6 +678,16 @@ Convert each `STAmount`'s 8-byte IOU amount field to an `XFloat` via `float_from
 - Allocate a third 12-byte output buffer, and call `float_add`, passing the two `XFloat`s as the first and second buffer/length pairs and the third buffer/length pair to receive the sum.
 - The output buffer now holds the sum as an `XFloat`.
 
-As noted in [C.14](#c14-how-do-i-create-an-stamount-from-an-xfloat), the sum exists only as an `XFloat` — there is currently no host function to convert it back into `STAmount`-compatible bytes.
+As noted in [C.14](#c14-how-do-i-create-an-stamount-or-stnumber-from-an-xfloat), the sum exists only as an `XFloat` — there is currently no host function to convert it back into `STAmount`-compatible bytes.
+
+### C.16: How do I get an XFloat from an STNumber?
+
+`STNumber` is decoded in Rust by `xrpl-wasm-stdlib`, not by a dedicated host function. For the IOU-precision case, the stdlib types the decoded 8-byte value as `NarrowNumber` — a Rust type that is layout-identical to the `IouNumber` type used in `STAmount`'s IOU amount field. Once decoded to a `NarrowNumber`, use `float_from_iou_number_amount` (see [§5.8](#58-floats)) exactly as you would for an `STAmount`'s IOU amount field:
+
+- Decode the `STNumber` bytes to a `NarrowNumber` using `xrpl-wasm-stdlib`.
+- Allocate a 12-byte output buffer, and call `float_from_iou_number_amount`, passing the `NarrowNumber`'s 8 bytes as the input buffer/length pair and the output buffer/length pair to receive the result.
+- The output buffer now holds the `XFloat` representation of that value.
+
+There is no dedicated `float_from_stnumber` host function — decoding happens entirely in Rust, and only the resulting `NarrowNumber` bytes cross into a host function call.
 
 **Note:** `xrpl-wasm-stdlib` will provide helper functions that perform these conversions and the addition internally, so most contract developers will use an idiomatic Rust API (e.g. adding two amount types directly) rather than manipulating buffers and pointers themselves.
