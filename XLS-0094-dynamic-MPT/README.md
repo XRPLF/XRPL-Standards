@@ -127,7 +127,7 @@ This proposal extends the functionality of the `MPTokenIssuanceSet` transaction,
 
 For details on the original `MPTokenIssuanceSet` transaction see: [**The MPTokenIssuanceSet Transaction**](https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0033-multi-purpose-tokens/README.md#33-the-mptokenissuanceset-transaction)
 
-### 4.1. New Fields
+### 4.1. Fields
 
 | Field Name        | Required? | JSON Type | Internal Type |
 | ----------------- | :-------: | :-------: | :-----------: |
@@ -153,7 +153,7 @@ To declare which fields or flags are immutable.
 Once a bit is set, the corresponding field or flag can never be set or modified again. The bit layout is the same as `ImmutableFlags` in `MPTokenIssuanceCreate`.
 Whether it was made immutable at creation through `MPTokenIssuanceCreate` or afterward via `MPTokenIssuanceSet`. Submitting a bit that is already set is harmless and has no additional effect.
 
-### 4.2. New `Flags` Values
+### 4.2. Flags
 
 These flags are added to the the `sfFlags` field of `MPTokenIssuanceSet` (Original values see in [XLS-33: Transaction-specific Fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3311-mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
 
@@ -179,21 +179,24 @@ We will call those flags `tfMPTSet*` as **capability-setting flags**.
 
 ---
 
-### 4.2. Failure Conditions
+### 4.3. Failure Conditions
 
-1. `MPTokenHolder` is present together with capability-setting flags (e.g. `tfMPTSetCanLock`, etc.), `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags` (`temMALFORMED`)
-2. `tfMPTLock` or `tfMPTUnlock` is set together with a capability-setting flag, `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags` (`temMALFORMED`)
-3. `TransferFee` exceeds the limit, which is 50000 (`temBAD_TRANSFER_FEE`)
-4. `MPTokenMetadata` length exceeds the limit, which is 1024 (`temMALFORMED`)
-5. A capability-setting flag, `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags` is present but `featureDynamicMPT` is disabled (`temDISABLED`)
-6. `ImmutableFlags` contains `tifMPTCanHoldConfidentialBalance` but `featureConfidentialTransfer` is disabled (`temDISABLED`)
-7. `ImmutableFlags` is `0`, or contains a bit not defined. (`temINVALID_FLAG`)
-8. A capability-setting flag is set, but the corresponding `lsif` bit is already set in `ImmutableFlags` (`tecNO_PERMISSION`)
-9. `MPTokenMetadata` is present, but `lsifMPTMetadata` is set in `ImmutableFlags` (`tecNO_PERMISSION`)
-10. `TransferFee` is present, but `lsifMPTTransferFee` is set in `ImmutableFlags` (`tecNO_PERMISSION`)
-11. A non-zero `TransferFee` is included, `lsfMPTCanTransfer` is not already set on the ledger, and this same transaction does not also enable it via `tfMPTSetCanTransfer` (`tecNO_PERMISSION`)
+1. `MPTokenHolder` is present together with capability-setting flags (e.g. `tfMPTSetCanLock`, etc.), `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags`. (`temMALFORMED`)
+2. `tfMPTLock` or `tfMPTUnlock` is set together with a capability-setting flag, `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags`. (`temMALFORMED`)
+3. `TransferFee` exceeds the limit, which is 50000. (`temBAD_TRANSFER_FEE`)
+4. `MPTokenMetadata` length exceeds the limit, which is 1024. (`temMALFORMED`)
+5. A capability-setting flag, `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags` is present but `featureDynamicMPT` is disabled. (`temDISABLED`)
+6. `ImmutableFlags` contains `tifMPTCanHoldConfidentialBalance` but `featureConfidentialTransfer` is disabled. (`temDISABLED`)
+7. Providing `tfMPTSetCanHoldConfidentialBalance` but `featureConfidentialTransfer` is disabled. (`temDISABLED`)
+8. `ImmutableFlags` is `0`, or contains a bit not defined. (`temINVALID_FLAG`)
+9. `MPTokenIssuance` object doesn't exist for the provided `MPTokenIssuanceID`. (`tecOBJECT_NOT_FOUND`)
+10. `MPTokenIssuance`'s issuer is not `Account`. (`tecNO_PERMISSION`)
+11. A capability-setting flag is set, but the corresponding `lsif` bit is already set in `ImmutableFlags`. (`tecNO_PERMISSION`)
+12. `MPTokenMetadata` is present, but `lsifMPTMetadata` is set in `ImmutableFlags`. (`tecNO_PERMISSION`)
+13. `TransferFee` is present, but `lsifMPTTransferFee` is set in `ImmutableFlags`. (`tecNO_PERMISSION`)
+14. A non-zero `TransferFee` is included, `lsfMPTCanTransfer` is not already set on the ledger, and this same transaction does not also enable it via `tfMPTSetCanTransfer`. (`tecNO_PERMISSION`)
 
-### 4.3. `TransferFee` Modification Rules
+### 4.4. `TransferFee` Modification Rules
 
 The ability to modify `TransferFee` depends on two conditions:
 
