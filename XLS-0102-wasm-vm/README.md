@@ -224,8 +224,8 @@ The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1
 | Function Signature                                                                                                                                                                                                         | Description                                                                   | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :------- |
 | `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.              | 130      |
-| `float_from_stamount(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                       | Load a float from the bytes of a serialized STAmount.                         | 150      |
 | `float_from_stnumber(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                       | Load a float from a serialized STNumber value, validating and normalizing it. | 150      |
+| `float_from_iou_number_amount(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                              | Load a float from the 8-byte IOU amount field of a serialized STAmount.       | 150      |
 | `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.             | 100      |
 | `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.                   | 130      |
 | `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in rippled format.                                         | 80       |
@@ -293,7 +293,7 @@ The on-ledger wire format of any floating points numbers is unchanged. However, 
 [STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
 ```
 
-The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions `float_from_stamount` and `float_from_stnumber` bridge between those formats and WASM floating point numbers.
+The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host functions `float_from_iou_number_amount` and `float_from_stnumber` bridge between those formats and WASM floating point numbers.
 
 #### 5.8.3. XFloat Motivation
 
@@ -314,7 +314,7 @@ pub extern "C" fn finish() -> i32 {
   // Load an XFloat from a serialized STAmount (IOU variant, 8 bytes)
   let iou_amount_bytes = [0u8; 8]; // obtained from transaction or ledger object
   let mut xfloat_a = [0u8; 12];
-  if float_from_stamount(
+  if float_from_iou_number_amount(
     iou_amount_bytes.as_ptr(), 8,
     xfloat_a.as_mut_ptr(), 12,
   ) < 0 {
@@ -605,7 +605,7 @@ The 4 extra bytes per value are negligible given the `no_std` stack-only model.
 
 ### C.8: Why are ledger serialization formats unchanged by XFloat?
 
-The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `IouNumber` encoding in `STAmount` — are unchanged by this specification. `float_from_stamount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
+The 12-byte `XFloat` format is exclusively a host-function buffer convention. Existing ledger serialization formats — including the 8-byte `IouNumber` encoding in `STAmount` — are unchanged by this specification. `float_from_iou_number_amount` and `float_from_stnumber` exist to load values from those on-ledger formats into `XFloat` for in-contract computation, without touching how those values are stored or transmitted on the wire.
 
 ### C.9: Why is host function immutability required?
 
@@ -614,3 +614,64 @@ The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a 
 **Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
 
 **Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable forever) rather than on contract authors or users. This is a conservative choice appropriate for financial infrastructure.
+
+### C.10: Can an XFloat be negative?
+
+Yes. Unlike XRP drop amounts, the `XFloat` mantissa is a signed 8-byte (`i64`) integer ([§5.8.2](#582-xfloat-serialization-format)), so an `XFloat` can represent negative values directly — a negative value is encoded with a negative mantissa and the same exponent that would be used for the equivalent positive value.
+
+**Note:** `xrpl-wasm-stdlib` will provide an idiomatic Rust `XFloat` type with normal negative-number semantics (comparisons, sign checks, etc.), so most contract developers won't need to reason about mantissa signs directly.
+
+### C.11: How do I negate an XFloat?
+
+There is no dedicated `float_negate` host function. The simplest approach is to multiply by negative one:
+
+- Allocate a 12-byte output buffer for negative one, and call `float_from_mant_exp` with a mantissa of `-1` and an exponent of `0` to produce an `XFloat` equal to `-1`.
+- Allocate a second 12-byte output buffer for the result, and call `float_mul`, passing the `XFloat` you want to negate as the first buffer/length pair and the `-1` `XFloat` from the previous step as the second buffer/length pair.
+- The output buffer now holds the negated `XFloat`.
+
+Calling `float_sub` with a zero `XFloat` as the first operand and the value to negate as the second operand works just as well.
+
+**Note:** `xrpl-wasm-stdlib` will provide a helper function (e.g. implementing Rust's `Neg` trait) that performs this multiply-by-negative-one sequence internally, so most contract developers won't need to call `float_from_mant_exp`/`float_mul` directly.
+
+### C.12: How do I check if an XFloat is negative?
+
+Use `float_cmp` against a zero `XFloat`:
+
+- Allocate a 12-byte buffer for zero, and call `float_from_mant_exp` with a mantissa of `0` and an exponent of `0` to produce an `XFloat` equal to `0`.
+- Call `float_cmp`, passing the `XFloat` you want to check as the first buffer/length pair and the zero `XFloat` as the second buffer/length pair.
+- A negative return value means the `XFloat` is negative; zero means it's exactly zero; a positive return value means it's positive.
+
+**Note:** `xrpl-wasm-stdlib` will provide a helper function (e.g. `is_negative()`) that performs this zero-comparison internally, so most contract developers won't need to construct a zero `XFloat` or call `float_cmp` directly.
+
+### C.13: How do I get an XFloat from an STAmount?
+
+Use `float_from_iou_number_amount` (see [§5.8](#58-floats)). This function does not take the whole 48-byte `STAmount` (amount + currency + issuer) — it takes only the 8-byte IOU amount field. Parse the `STAmount` down to its `IOUNumber` amount bytes first, then pass those 8 bytes in:
+
+- Extract the 8-byte IOU amount field from the parsed `STAmount`.
+- Allocate a 12-byte output buffer, and call `float_from_iou_number_amount`, passing the 8-byte IOU amount field as the input buffer/length pair and the output buffer/length pair to receive the result.
+- The output buffer now holds the `XFloat` representation of that amount.
+
+`float_from_stamount` was the earlier name for this function; it has been renamed to `float_from_iou_number_amount` to make clear that it operates on the 8-byte IOU amount value, not the whole `STAmount` structure.
+
+**Note:** `xrpl-wasm-stdlib` will provide a helper function that performs this extraction and conversion internally, so most contract developers won't need to parse `STAmount` bytes or call `float_from_iou_number_amount` directly.
+
+### C.14: How do I create an STAmount from an XFloat?
+
+There is currently no host function to go the other direction. This is a known gap: contracts today don't need to emit transactions or ledger data requiring the raw `STAmount`/`IOUNumber` byte format, since `XFloat` is only used for in-contract computation ([§5.8.1](#581-the-xfloat-type)). As a result, a value that started as an `STAmount`, was converted to an `XFloat` via `float_from_iou_number_amount`, and then had arithmetic applied to it (see [C.15](#c15-how-do-i-add-two-stamounts-together)) has no way to be converted back into the 8-byte value the ledger expects.
+
+This gap is expected to be addressed if transaction emissions ever becomes a supported feature in the WASM layer.
+
+**Note:** If/when a reverse conversion host function is added, `xrpl-wasm-stdlib` is expected to expose it via an idiomatic Rust helper as well, consistent with the rest of the float API — so contract developers still won't need to construct `STAmount`/`IOUNumber` bytes by hand.
+
+### C.15: How do I add two STAmounts together?
+
+Convert each `STAmount`'s 8-byte IOU amount field to an `XFloat` via `float_from_iou_number_amount`, then use `float_add`:
+
+- Extract the 8-byte IOU amount field from each of the two `STAmount`s.
+- Allocate a 12-byte output buffer for each, and call `float_from_iou_number_amount` once per amount to produce two `XFloat`s.
+- Allocate a third 12-byte output buffer, and call `float_add`, passing the two `XFloat`s as the first and second buffer/length pairs and the third buffer/length pair to receive the sum.
+- The output buffer now holds the sum as an `XFloat`.
+
+As noted in [C.14](#c14-how-do-i-create-an-stamount-from-an-xfloat), the sum exists only as an `XFloat` — there is currently no host function to convert it back into `STAmount`-compatible bytes.
+
+**Note:** `xrpl-wasm-stdlib` will provide helper functions that perform these conversions and the addition internally, so most contract developers will use an idiomatic Rust API (e.g. adding two amount types directly) rather than manipulating buffers and pointers themselves.
