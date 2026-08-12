@@ -416,9 +416,20 @@ The following rules govern the lifecycle of all host functions in this specifica
 
 These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future versions of the platform.
 
-## 6. Security
+## 6. Rationale
 
-### 6.1. Consensus
+This section summarizes the main design decisions in this specification and why they were made. The appendices contain the full analysis of the alternatives that were considered.
+
+- **Interpreted Wasmi runtime.** Different WASM runtimes meter gas differently, so the same code can produce different gas costs across implementations — a consensus hazard. Fixing the runtime (Wasmi), its version, and an interpreted compile mode guarantees identical, deterministic gas costs on every validator. Interpretation also avoids the larger attack surface and platform-dependent behavior of JIT/AOT compilation. See [Appendix A](#appendix-a-other-wasm-vms-considered) for the full comparison of runtimes and compilation modes.
+- **Caller-allocated memory.** WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
+- **Host functions rather than direct ledger access.** WASM code can only interact with the ledger through an explicitly defined host function interface. This keeps user code sandboxed, bounds what data is visible, and moves expensive operations into native C++ code where they are cheaper and their gas cost can be priced deterministically.
+- **A custom float type (`XFloat`) rather than native WASM floating point.** Native floating point is a source of non-determinism across platforms, so it is disallowed; float arithmetic is instead provided by host functions over an opaque buffer type (see [§5.8](#58-floats) and [FAQ C.5](#c5-why-not-use-native-wasm-floating-point)).
+- **An immutable host-function ABI, with amendment-gated additions.** Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
+- **UNL-votable execution limits.** The code size limit, computation limit, and gas price are votable parameters rather than hard-coded constants, so they can be tuned without requiring a new amendment for every adjustment (see [§3](#3-execution-limits)).
+
+## 7. Security
+
+### 7.1. Consensus
 
 The WASM VM and spec guarantees that all WASM code will run identically on all machines (though, of course, a lot of testing will be done to ensure that this is the case).
 
@@ -432,11 +443,11 @@ To that end:
 
 To ensure that all of this is the case, thorough testing across platforms and architectures will be conducted. Any divergence will be considered a critical consensus-breaking bug.
 
-### 6.2. Mitigations for Bugs
+### 7.2. Mitigations for Bugs
 
 If there happens to be a bug in the WASM execution layer, the UNL can shut down all usage of WASM code by setting the computation limit to 0.
 
-### 6.3. Data Security
+### 7.3. Data Security
 
 User-provided WASM code is executed within a strict sandbox. It has no access to system-level resources and can only interact with the XRP Ledger via an explicitly defined host function interface. These host functions enforce strict boundaries on what ledger data is visible and what operations are permitted. For example, there is no way for user-provided WASM code to directly modify a ledger object (to e.g. transfer XRP between accounts without permission).
 
@@ -444,7 +455,7 @@ A new WASM VM instance will be created for each WASM module execution. This ensu
 
 WASM code cannot directly traverse arbitrary ledger directories or iterate through global ledger state. All access must be via bounded, predefined inputs (e.g., indexes or account IDs passed into the subroutine). This design ensures that malicious WASM code cannot manipulate or exfiltrate ledger state beyond the narrow scope allowed by the host API.
 
-### 6.4. Resource Limiting
+### 7.4. Resource Limiting
 
 As discussed above, there is a strict gas limit and exceeding it will result in execution being immediately terminated with an exception.
 
@@ -452,7 +463,7 @@ Additionally, memory and stack usage are tightly constrained - the linear memory
 
 These constraints prevent denial-of-service attacks and ensure that WASM execution remains fast and predictable, without any WASM-related transaction taking more than its share of `rippled` resources.
 
-### 6.5. Future-Proofing
+### 7.5. Future-Proofing
 
 The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type must never change — there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
 
