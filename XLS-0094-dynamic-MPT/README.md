@@ -179,7 +179,7 @@ The ability to modify `TransferFee` depends on two conditions:
 - `lsfMPTCanTransfer`: must already be set on the ledger, **or** be enabled by this same transaction via `tfMPTSetCanTransfer`, in order to set a non-zero `TransferFee`.
 - `lsifMPTTransferFee`: must **not** be set in `ImmutableFlags`, in order to modify `TransferFee` at all (zero or non-zero).
 
-#### The rules break down as follows:
+The rules break down as follows:
 
 **Case 1**: `lsfMPTCanTransfer` not set, and not being enabled by this transaction:
 
@@ -390,7 +390,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 
 - Rejected: `lsifMPTTransferFee` is now set in `ImmutableFlags`, so `TransferFee` can no longer be modified, even to remove it.
 
-## Rationale
+## 6. Rationale
 
 Dynamic MPT gives issuers control over which parts of their token issuance can evolve after creation, while defaulting to maximum flexibility: `MPTokenMetadata`, `TransferFee`, and MPT issuance flags are mutable unless the issuer takes explicit action to make them immutable. This "mutable by default, immutable on demand" design lets issuers respond to changing business needs — adjusting metadata, tuning a transfer fee, or enabling a capability that wasn't needed at launch — without requiring every possible future need to be anticipated and pre-declared at issuance time.
 
@@ -398,7 +398,7 @@ Making fields or flags immutable via `ImmutableFlags` is available both at creat
 
 MPT issuance flag mutability remains intentionally one-way: once enabled via `MPTokenIssuanceSet`, a flag cannot be disabled. This preserves the issuer's ability to opt into additional issuance behavior without ever retracting behavior that holders, integrations, or compliance workflows may have relied on. Making a flag immutable via `ImmutableFlags` (whether before or after it is enabled) makes that one-way guarantee permanent and auditable on-ledger.
 
-## Security
+## 7. Security
 
 Only the issuer of the `MPTokenIssuance` can use `MPTokenIssuanceSet` to modify `MPTokenMetadata` or `TransferFee`, enable MPT issuance flags, or set `ImmutableFlags`.
 
