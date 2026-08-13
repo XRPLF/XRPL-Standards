@@ -7,6 +7,7 @@
   status: Draft
   category: Amendment
   created: 2025-06-09
+  updated: 2026-08-13
 </pre>
 
 # Dynamic Multi-Purpose Tokens
@@ -204,6 +205,7 @@ The rules break down as follows:
 **Case 2**: `lsfMPTCanTransfer` already set on the ledger, **or** being enabled by this same transaction via `tfMPTSetCanTransfer`:
 
 - Setting `TransferFee` to any value (zero or non-zero): allowed, unless `lsifMPTTransferFee` has been set (making `TransferFee` immutable).
+- An exception is from XLS-96 Confidential MPT, if `lsfMPTCanHoldConfidentialBalance` is set, `TransferFee` must be 0. (See [6.4. Transfer Fee Compatibility](https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0096-confidential-mpt/README.md#64-transfer-fee-compatibility))
 
 **Note**:
 
