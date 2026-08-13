@@ -15,7 +15,7 @@
 
 This proposal introduces a new amendment `DynamicMPT` as an extension to [XLS-33 Multi-Purpose Tokens](https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0033-multi-purpose-tokens/README.md). Dynamic Multi-Purpose Tokens (Dynamic MPTs) allow specific fields and MPT issuance flags within an `MPTokenIssuance` to be modified after creation via the `MPTokenIssuanceSet` transaction. By default, `MPTokenMetadata`, `TransferFee`, and a defined set of MPT issuance flags remain mutable for the life of the issuance. Issuers may instead choose to permanently make any of these fields or flags immutable — at creation, or at any later point — by setting the corresponding bit in a new `ImmutableFlags` field. Once a bit is set in `ImmutableFlags`, the corresponding field or flag can never be modified again. This accommodates evolving token use cases and compliance demands while giving issuers a way to make firm, permanent commitments about their issuance's behavior.
 
-## 1. Speficication
+## 1. Specification
 
 This proposal introduces:
 
@@ -56,7 +56,7 @@ By default without declaring `sfImmutableFlags`:
 - `MPTokenMetadata` and `TransferFee` may be freely modified via `MPTokenIssuanceSet`.
 - Each of the MPT issuance flags listed below may be enabled (one-way) via `MPTokenIssuanceSet` after issuance.
 
-Declaring immutablity via `sfImmutableFlags`:
+Declaring immutability via `sfImmutableFlags`:
 
 - Flags set in `sfImmutableFlags` indicates the corresponding field/flag is immutable. The issuer can not modify the field/flag via `MPTokenIssuanceSet` after issuance.
 
@@ -68,9 +68,9 @@ Declaring immutablity via `sfImmutableFlags`:
 
 To declare which fields or flags are immutable.
 
-### Bit Layout of `ImmutableFlags`
+#### 2.1.1. `ImmutableFlags`
 
-Transaction-level bits are prefixed `tif`. The corresponding on-ledger bits (prefixed `lsif`) share the same numeric values — see [Section 4](#bit-layout-of-immutableflags-on-ledger).
+Transaction-level bits are prefixed `tif` (`Transaction Immutable Flag`). The corresponding on-ledger bits (prefixed `lsif`) share the same numeric values — see [Section 4](#bit-layout-of-immutableflags-on-ledger).
 
 | Flag Name                          |  Hex Value   | Decimal Value | Description                                                                       |
 | ---------------------------------- | :----------: | :-----------: | --------------------------------------------------------------------------------- |
@@ -101,25 +101,25 @@ For details on the original `MPTokenIssuanceSet` transaction see: [**The MPToken
 
 ### 3.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type |
-| ----------------- | :-------: | :-------: | :-----------: |
-| `MPTokenMetadata` |           | `string`  |    `BLOB`     |
+| Field Name        | Required? | JSON Type | Internal Type | Description                                 |
+| ----------------- | :-------: | :-------: | :-----------: | :------------------------------------------ |
+| `MPTokenMetadata` |           | `string`  |    `BLOB`     | New metadata to replace the existing value. |
 
 New metadata to replace the existing value. The transaction will be rejected if `lsifMPTMetadata` has been set in `ImmutableFlags`. Setting an empty `MPTokenMetadata` removes the field.
 
 ---
 
-| Field Name    | Required? | JSON Type | Internal Type |
-| ------------- | :-------: | :-------: | :-----------: |
-| `TransferFee` |           | `number`  |   `UINT16`    |
+| Field Name    | Required? | JSON Type | Internal Type | Description             |
+| ------------- | :-------: | :-------: | :-----------: | :---------------------- |
+| `TransferFee` |           | `number`  |   `UINT16`    | New transfer fee value. |
 
 New transfer fee value. The transaction will be rejected if `lsifMPTTransferFee` has been set in `ImmutableFlags`. Setting `TransferFee` to zero removes the field.
 
 ---
 
-| Field Name       | Required? | JSON Type | Internal Type |
-| ---------------- | :-------: | :-------: | :-----------: |
-| `ImmutableFlags` |           | `number`  |   `UINT32`    |
+| Field Name       | Required? | JSON Type | Internal Type | Description                                 |
+| ---------------- | :-------: | :-------: | :-----------: | :------------------------------------------ |
+| `ImmutableFlags` |           | `number`  |   `UINT32`    | To make specific fields or flags immutable. |
 
 To declare which fields or flags are immutable.
 Once a bit is set, the corresponding field or flag can never be set or modified again. The bit layout is the same as `ImmutableFlags` in `MPTokenIssuanceCreate`.
@@ -127,7 +127,7 @@ Whether it was made immutable at creation through `MPTokenIssuanceCreate` or aft
 
 ### 3.2. Flags
 
-These flags are added to the the `sfFlags` field of `MPTokenIssuanceSet` (Original values see in [XLS-33: Transaction-specific Fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3311-mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
+These flags are added to the `sfFlags` field of `MPTokenIssuanceSet` (see the original values in [XLS-33: Transaction-specific Fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3311-mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
 
 | Flag Name                            |  Hex Value   | Decimal Value | Description                                                                                                                         |
 | ------------------------------------ | :----------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -147,7 +147,6 @@ We will call those flags `tfMPTSet*` as **capability-setting flags**.
 - An MPT issuance flag can only be enabled by `MPTokenIssuanceSet` if the corresponding `lsif` bit is **not** set in the `MPTokenIssuance` object's `ImmutableFlags`.
 - If an MPT issuance flag is already enabled, re-enabling it is valid and has no additional effect.
 - A single `MPTokenIssuanceSet` transaction may enable multiple MPT issuance flags, as long as none of them have been made immutable via `ImmutableFlags`.
-- Setting the flag and setting `ImmutableFlags` in the same transaction is allowed, and is atomic. We only check the existing ledger object's `ImmutableFlags` when validating if it is immutable. For example, setting `lsfMPTCanLock` and `lsifMPTCanLock` in the same transaction is allowed, setting `lsfMPTCanLock` will succeed because on the ledger, `lsifMPTCanLock` is not set yet. After this transaction, the ledger object will have both `lsfMPTCanLock` and `lsifMPTCanLock` set.
 
 ---
 
@@ -165,8 +164,13 @@ We will call those flags `tfMPTSet*` as **capability-setting flags**.
 10. `MPTokenIssuance`'s issuer is not `Account`. (`tecNO_PERMISSION`)
 11. A capability-setting flag is set, but the corresponding `lsif` bit is already set in `ImmutableFlags`. (`tecNO_PERMISSION`)
 12. `MPTokenMetadata` is present, but `lsifMPTMetadata` is set in `ImmutableFlags`. (`tecNO_PERMISSION`)
-13. `TransferFee` is present, but `lsifMPTTransferFee` is set in `ImmutableFlags`. (`tecNO_PERMISSION`)
+13. `TransferFee` is present, but `lsifMPTTransferFee` is set in `ImmutableFlags`.(`tecNO_PERMISSION`)
 14. A non-zero `TransferFee` is included, `lsfMPTCanTransfer` is not already set on the ledger, and this same transaction does not also enable it via `tfMPTSetCanTransfer`. (`tecNO_PERMISSION`)
+
+**Note**:
+
+- Setting a capability-setting flag and its corresponding `tif` bit in `ImmutableFlags` in the same transaction is allowed and atomic. Only the existing ledger object's `ImmutableFlags` is checked when determining whether the capability is immutable. For example, submitting `tfMPTSetCanLock` together with `tifMPTCanLock` is allowed because `lsifMPTCanLock` is not yet set on the ledger. After the transaction, the ledger object has both `lsfMPTCanLock` and `lsifMPTCanLock` set.
+- The same rule applies to `MPTokenMetadata` and `TransferFee`. Conditions 12 and 13 are also evaluated against the existing ledger object's `ImmutableFlags`, so a single transaction may update the field **and** make it immutable.
 
 ### 3.4. `TransferFee` Modification Rules
 
@@ -186,22 +190,24 @@ The ability to modify `TransferFee` depends on two conditions:
 
 - Setting `TransferFee` to any value (zero or non-zero): allowed, unless `lsifMPTTransferFee` has been set (making `TransferFee` immutable).
 
-**Note**: enabling `lsfMPTCanTransfer` and setting a non-zero `TransferFee` **in the same transaction** is supported — there is no requirement to submit two separate transactions.
+**Note**:
+
+- enabling `lsfMPTCanTransfer` and setting a non-zero `TransferFee` **in the same transaction** is supported — there is no requirement to submit two separate transactions.
 
 ## 4. Ledger Entry: `MPTokenIssuance`
 
 This proposal adds a new optional field, `ImmutableFlags` to the `MPTokenIssuance` ledger object.
 
-### 4.1. New Optional Field: `ImmutableFlags`
+### 4.1. Fields
 
-| Field Name       | Required? | JSON Type | Internal Type |
-| ---------------- | :-------: | :-------: | :-----------: |
-| `ImmutableFlags` |           | `number`  |   `UINT32`    |
+| Field Name       | Required? | JSON Type | Internal Type | Description                                  |
+| ---------------- | :-------: | :-------: | :-----------: | :------------------------------------------- |
+| `ImmutableFlags` |           | `number`  |   `UINT32`    | Defines which fields or flags are immutable. |
 
 The field is type `soeDEFAULT`. So if it is present in the ledger object, it must not be 0.
 Being absent is equivalent to being 0.
 
-### Bit Layout of `ImmutableFlags` (On-Ledger)
+#### 4.1.1. ImmutableFlags
 
 On-ledger bits are prefixed `lsif`, and share the same numeric values as the corresponding `tif` bits in [Section 2](#bit-layout-of-immutableflags).
 
@@ -236,7 +242,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 
 - No `ImmutableFlags` is set, so `MPTokenMetadata` remains mutable by default.
 
-#### 5.1.2. `MPTokenIssuanceSet` Transactions
+#### 5.1.2. `MPTokenIssuanceSet` Transaction
 
 **Sample 1** (successful):
 
