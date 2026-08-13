@@ -93,6 +93,23 @@ For both `MPTokenIssuanceCreate` and `MPTokenIssuanceSet`.
 2. `ImmutableFlags` is present but `featureDynamicMPT` is disabled. (`temDISABLED`)
 3. `tifMPTCanHoldConfidentialBalance` is set but `featureConfidentialTransfer` or `featureDynamicMPT` is not enabled. (`temDISABLED`)
 
+### 3.3. State Changes
+
+If the transaction succeeds, the created `MPTokenIssuance` object's `ImmutableFlags` field is set to the value provided in the transaction. The corresponding flags or fields are now immutable.
+If `ImmutableFlags` is omitted, the object's `ImmutableFlags` field is absent, then the flags default to being able to be enabled once, but can never be disabled; And the metadata and transfer fee fields are mutable.
+
+### 3.4. Example JSON
+
+```typescript
+{
+  "TransactionType": "MPTokenIssuanceCreate",
+  "Account": "rIssuer...",
+  "AssetScale": "2",
+  "MaximumAmount": "100000000",
+  "ImmutableFlags": 4
+}
+```
+
 ## 4. Transaction: `MPTokenIssuanceSet`
 
 This proposal extends the functionality of the `MPTokenIssuanceSet` transaction, allowing the issuer to modify `MPTokenMetadata` and `TransferFee`, enable MPT issuance flags, and permanently make any of these immutable via `ImmutableFlags`. The `ImmutableFlags` provided in this transaction adds those bit to the current ledger object's `ImmutableFlags`, it is not a complete replacement.
@@ -148,8 +165,6 @@ We will call those flags `tfMPTSet*` as **capability-setting flags**.
 - If an MPT issuance flag is already enabled, re-enabling it is valid and has no additional effect.
 - A single `MPTokenIssuanceSet` transaction may enable multiple MPT issuance flags, as long as none of them have been made immutable via `ImmutableFlags`.
 
----
-
 ### 4.3. Failure Conditions
 
 1. `MPTokenHolder` is present together with capability-setting flags (e.g. `tfMPTSetCanLock`, etc.), `MPTokenMetadata`, `TransferFee`, or `ImmutableFlags`. (`temMALFORMED`)
@@ -194,6 +209,27 @@ The rules break down as follows:
 
 - enabling `lsfMPTCanTransfer` and setting a non-zero `TransferFee` **in the same transaction** is supported — there is no requirement to submit two separate transactions.
 
+### 4.5. State Changes
+
+If the transaction succeeds:
+
+- `MPTokenMetadata` is replaced with the provided value, or removed if an empty value is provided, unless `lsifMPTMetadata` is already set in `ImmutableFlags`.
+- `TransferFee` is replaced with the provided value, or removed if zero is provided, unless `lsifMPTTransferFee` is already set in `ImmutableFlags`.
+- Each MPT issuance flag set via `Flags` is enabled on the `MPTokenIssuance` object, unless its corresponding `lsif` bit is already set in `ImmutableFlags`.
+- Each bit set via `ImmutableFlags` is added to the `MPTokenIssuance` object's existing `ImmutableFlags` value; existing bits are never cleared.
+
+### 4.6. Example JSON
+
+```typescript
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
+  "Flags": 64, // tfMPTSetCanTransfer
+  "TransferFee": 200
+}
+```
+
 ## 5. Ledger Entry: `MPTokenIssuance`
 
 This proposal adds a new optional field, `ImmutableFlags` to the `MPTokenIssuance` ledger object.
@@ -223,6 +259,26 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 | `lsifMPTCanHoldConfidentialBalance` | `0x00000080` |      128      | Indicate flag `lsfMPTCanHoldConfidentialBalance` immutable. (XLS-96 Confidential MPT) |
 | `lsifMPTMetadata`                   | `0x00010000` |     65536     | Indicate field `MPTokenMetadata` immutable.                                           |
 | `lsifMPTTransferFee`                | `0x00020000` |    131072     | Indicate field `TransferFee` immutable.                                               |
+
+### 5.2. Invariants
+
+Once a bit is set in `ImmutableFlags`, it is never cleared. A field or MPT issuance flag whose corresponding bit is set in `ImmutableFlags` can never be modified again by any `MPTokenIssuanceSet` transaction.
+
+### 5.3. Example JSON
+
+```typescript
+{
+  "LedgerEntryType": "MPTokenIssuance",
+  "Account": "rIssuer...",
+  "AssetScale": 2,
+  "MaximumAmount": "100000000",
+  "OutstandingAmount": "5000000",
+  "MPTokenMetadata": "575C5C",
+  "Flags": 66, // lsfMPTCanTransfer + lsfMPTCanEscrow
+  "TransferFee": 200,
+  "ImmutableFlags": 131072 // lsifMPTTransferFee
+}
+```
 
 ## 6. Examples
 
