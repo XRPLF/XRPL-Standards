@@ -250,6 +250,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "MPTokenMetadata": "575C5C"
 }
 ```
@@ -262,6 +263,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "ImmutableFlags": 65536 // tifMPTMetadata
 }
 ```
@@ -274,6 +276,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "MPTokenMetadata": "AABBCC"
 }
 ```
@@ -304,6 +307,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "Flags": 48 // tfMPTSetCanEscrow (0x00000010) + tfMPTSetCanTrade (0x00000020)
 }
 ```
@@ -316,6 +320,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "Flags": 8 // tfMPTSetRequireAuth
 }
 ```
@@ -347,6 +352,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "TransferFee": 200
 }
 ```
@@ -359,6 +365,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "Flags": 64, // tfMPTSetCanTransfer
   "TransferFee": 200
 }
@@ -372,6 +379,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "ImmutableFlags": 131072 // tifMPTTransferFee
 }
 ```
@@ -384,6 +392,7 @@ On-ledger bits are prefixed `lsif`, and share the same numeric values as the cor
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuer...",
+  "MPTokenIssuanceID": "000004C463C52827307480341125DA0577DEFC38405B0E3E",
   "TransferFee": 0
 }
 ```
