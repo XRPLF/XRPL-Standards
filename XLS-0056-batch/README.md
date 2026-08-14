@@ -7,7 +7,7 @@
   status: Final
   category: Amendment
   created: 2023-12-13
-  updated: 2026-08-06
+  updated: 2026-08-14
 </pre>
 
 # Atomic/Batch Transactions
@@ -163,13 +163,13 @@ The standard transaction failure conditions still apply here.
 1. The `Flags` field is not set to exactly one of the supported batch modes (`temINVALID_FLAG`).
 1. Inner transactions
    1. There are fewer than 2 transactions in the `RawTransactions` field (`temARRAY_EMPTY`).
-   2. There are more than 8 transactions in the `RawTransactions` field (`temARRAY_TOO_LARGE`).
+   2. There are more than 8 transactions in the `RawTransactions` field. The `Batch` fails to deserialize, so it is rejected as malformed before preflight and no result code is returned.
    3. The `RawTransactions` field contains a transaction that is not a valid transaction.
    4. One of the inner transactions has a `Fee` greater than 0 (`temBAD_FEE`).
    5. One of the inner transactions has a `TxnSignature` field included (`temBAD_SIGNATURE`).
    6. One of the inner transactions has a non-empty `SigningPubKey` (`temBAD_REGKEY`).
    7. One of the inner transactions is has a `Signers` field included (`temBAD_SIGNER`).
-   8. One of the inner transactions has `TransactionType` of `Batch` (`temINVALID`).
+   8. One of the inner transactions has `TransactionType` of `Batch`. As above, the `Batch` fails to deserialize and is rejected as malformed before preflight.
    9. One of the inner transactions has a different invalid `TransactionType` (`temINVALID_INNER_BATCH`).
    10. There is a duplicate transaction in the `RawTransactions` field (`temREDUNDANT`).
    11. One of the inner transactions does not have the `tfInnerBatchTxn` flag set (`temINVALID_FLAG`).
@@ -555,7 +555,7 @@ Any transaction with `tfInnerBatchTxn` should have a `Fee` of `0` (the fee will 
 
 A standalone (non-batch) transaction that sets `tfInnerBatchTxn` is rejected. This prevents an attacker from submitting an unsigned inner transaction directly. A transaction applied via the batch path that does not set `tfInnerBatchTxn` is also rejected (this should not occur in practice; it indicates a programming error).
 
-In addition, inner transactions are required to pass standard local checks (the same `passesLocalChecks` validation a normal transaction would pass) as part of the outer `Batch` preflight; failures surface as `temINVALID_INNER_BATCH`.
+In addition, each inner transaction must pass its own local checks (`passesLocalChecks`) as part of the outer `Batch`'s local checks at submit and relay time. A `Batch` whose inner transaction fails them is rejected before it reaches the transaction engine, so no result code is returned.
 
 ## 4. Rationale
 
