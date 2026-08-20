@@ -3,7 +3,7 @@
     description: This amendment introduces Confidential Transfers for Multi-Purpose Tokens (MPTs) on the XRP Ledger.
     author: Murat Cenk <mcenk@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>, Ayo Akinyele <jakinyele@ripple.com>, Peter Chen <ychen@ripple.com>, Shawn Xie <shawnxie@ripple.com>, Yinyi Qian <yqian@ripple.com>
     proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/372
-    status: Draft
+    status: Final
     category: Amendment
     requires: XLS-33
     created: 2026-01-15
