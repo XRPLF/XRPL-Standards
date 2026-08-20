@@ -327,6 +327,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 | `TransactionType`            | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTSend`, which is 88.                                                                                                                                                                                                                                                                                       |
 | `Account`                    | Yes       | `string`  | `ACCOUNTID`   | N/A           | The sender's XRPL account.                                                                                                                                                                                                                                                                                                                     |
 | `Destination`                | Yes       | `string`  | `ACCOUNTID`   | N/A           | The receiver's XRPL account.                                                                                                                                                                                                                                                                                                                   |
+| `DestinationTag`             | No        | `number`  | `UINT32`      | N/A           | Arbitrary tag identifying the reason for the transfer, or a hosted recipient at the destination. **Required** if the destination account has `lsfRequireDestTag` set.                                                                                                                                                                          |
 | `MPTokenIssuanceID`          | Yes       | `string`  | `UINT192`     | N/A           | Identifier of the MPT issuance being transferred.                                                                                                                                                                                                                                                                                              |
 | `SenderEncryptedAmount`      | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext used to homomorphically debit the sender's spending balance.                                                                                                                                                                                                                                                                        |
 | `DestinationEncryptedAmount` | Yes       | `string`  | `BLOB`        | N/A           | Ciphertext credited to the receiver's inbox balance.                                                                                                                                                                                                                                                                                           |
@@ -352,11 +353,12 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 #### 8.3.2. Protocol-Level Failures
 
 1. The destination account does not exist. (`tecNO_TARGET`)
-2. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
-3. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
-4. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
-5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
-6. Either the sender's or receiver's balance is currently locked. (`tecLOCKED`)
+2. The destination account has `lsfRequireDestTag` set, but the transaction does not include a `DestinationTag`. (`tecDST_TAG_NEEDED`)
+3. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
+4. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
+5. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
+6. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
+7. Either the sender's or receiver's balance is currently locked. (`tecLOCKED`)
 
 ##### 8.3.2.1. Authorization Failures
 
