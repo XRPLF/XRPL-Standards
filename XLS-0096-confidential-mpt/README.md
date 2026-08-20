@@ -127,6 +127,8 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
 
 The issuer may designate one or more **delegate accounts** to act on its behalf, for example, to submit `ConfidentialMPTClawback` transactions or to manage the dedicated account (Confidential Vault). Delegate accounts must be considered **fully trusted** by the issuer. A delegate account has complete operational authority within the scope delegated to it, and the protocol does not impose additional on-chain restrictions on delegate actions beyond those that apply to the issuer itself. Issuers should apply the same key-management standards to delegate accounts as to their primary issuer account.
 
+`ConfidentialMPTSend`, `ConfidentialMPTMergeInbox`, `ConfidentialMPTConvertBack`, and `ConfidentialMPTClawback` are delegable. **`ConfidentialMPTConvert` is NOT delegable.** It is the transaction that registers an account's `HolderEncryptionKey`, and that key carries exclusive spending authority over the account's confidential balance — delegating it would let the delegate register a key whose secret it alone controls, and thereby take over the account's confidential funds.
+
 ## 6. Ledger Entry: `MPTokenIssuance`
 
 To support confidential MPTs, the existing `MPTokenIssuance` ledger object is extended. These new fields and flags serve as the global configuration and control settings for the token's confidential features.
