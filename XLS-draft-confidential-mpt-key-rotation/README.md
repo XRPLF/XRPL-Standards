@@ -2,12 +2,11 @@
   xls: ??
   title: ElGamal Key Rotation for Confidential MPTs
   description: Defines ElGamal key rotation for issuer, auditor, and holder roles in the Confidential MPT protocol, with key loss recovery mechanisms.
-  author: Aanchal Malhotra (@amalhotra-ripple)
-  co-author: Yinyi Qian <yqian@ripple.com>
+  author: Aanchal Malhotra <amalhotra@ripple.com> Yinyi Qian <yqian@ripple.com>
   category: Amendment
   status: Draft
   requires: XLS-0096
-  proposal-from: TBD
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/599
   created: 2026-04-01
   updated: 2026-07-22
 </pre>
@@ -36,7 +35,7 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 - **Key Epoch**: A monotonically increasing counter on `MPTokenIssuance` that increments on each ElGamal key rotation for the issuer or auditor role.
 - **Mirror Epoch**: A monotonically increasing counter on `MPToken` that tracks the last key epoch at which the holder's issuer or auditor mirror ciphertext was re-encrypted.
-- **Stale Mirror**: A holder's issuer (or auditor) mirror ciphertext is stale when its mirror epoch is less than the current key epoch on `MPTokenIssuance`. A stale mirror is encrypted under an old key and cannot be combined homomorphically with new transaction deltas encrypted under the current key. Validators enforce staleness checks on all confidential transactions that touch the issuer mirror - see Section 13.1 for the full list of affected transactions and failure conditions.
+- **Stale Mirror**: A holder's issuer (or auditor) mirror ciphertext is stale when its mirror epoch is less than the current key epoch on `MPTokenIssuance`. A stale mirror is encrypted under an old key and cannot be combined homomorphically with new transaction deltas encrypted under the current key. Validators enforce staleness checks on all confidential transactions that touch the issuer or auditor mirror - see Section 14.1 for the full list of affected transactions and failure conditions.
 - **Active Re-encryption**: The process by which the issuer submits `ConfidentialMPTMirrorUpdate` for each holder after a key rotation to re-encrypt mirror ciphertexts under the new key.
 - **Recovery Key** (`sfRecoveryKey`): A transient field on `MPToken` set by the holder to authorize replacement of their ElGamal key when they have lost `sk_H`.
 
@@ -48,13 +47,13 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 ### 4.2. New Transaction Types
 
-- `ConfidentialMPTMirrorUpdate` (transaction type 90): Re-encrypts a single holder's issuer and/or auditor mirror ciphertext under the new key. Operates in two modes selected by transaction flag:
-  -Issuer mode (`tfIssuerMirrorUpdate`): submitted by the issuer using a Chaum-Pedersen equality proof anchored to the on-ledger issuer mirror.
-  - Holder mode (`tfHolderMirrorUpdate`): submitted by the holder using a cross-key equality proof anchored to `ConfidentialBalanceSpending`. Requires `ConfidentialBalanceInbox` to be canonical zero.
-- `ConfidentialMPTHolderKeyUpdate` (transaction type 91): Rotates a holder's ElGamal key. Operates in two modes selected by transaction flag:
+- `ConfidentialMPTMirrorUpdate`: Re-encrypts a single holder's issuer and/or auditor mirror ciphertext under the new key. Operates in two modes selected by `Holder` field presence:
+  -Issuer mode (`Holder` present): submitted by the issuer using a Chaum-Pedersen equality proof anchored to the on-ledger issuer mirror.
+  - Holder mode (`Holder` absent): submitted by the holder using a cross-key equality proof anchored to `ConfidentialBalanceSpending`. Requires `ConfidentialBalanceInbox` to be canonical zero.
+- `ConfidentialMPTHolderKeyUpdate`: Rotates a holder's ElGamal key. Operates in two modes selected by transaction flag:
   - Rotation mode (`tfHolderKeyRotation`): holder re-encrypts `ConfidentialBalanceSpending` and `ConfidentialBalanceInbox` under the new key atomically.
   - Recovery mode (`tfHolderKeyRecovery`): holder has lost `sk_H`; registers new key as `RecoveryKey` for issuer-completed recovery.
-- `ConfidentialMPTRecoverBalance` (transaction type 92): Completes holder key loss recovery by re-encrypting balances under the authorized new key. Submitted by the issuer.
+- `ConfidentialMPTRecoverBalance`: Completes holder key loss recovery by re-encrypting balances under the authorized new key. Submitted by the issuer.
 
 ### 4.3. Modified Ledger Entries
 
@@ -97,7 +96,7 @@ The epoch check (`IssuerKeyMirrorEpoch < IssuerKeyEpoch`) makes this detectable 
 
 **Holder key loss recovery** is a two-step process: the holder registers the new key on-chain via `ConfidentialMPTHolderKeyUpdate` with `tfHolderKeyRecovery`, then the issuer completes recovery via `ConfidentialMPTRecoverBalance`.
 
-**Issuer key loss** is handled via holder-driven mirror reconstruction for both issuer and auditor mirrors. In the issuer key loss scenario, holder self-migration is the only path for issuer mirrors since the issuer cannot decrypt old mirrors without `sk_I`. For auditor mirrors, the issuer can still perform active re-encryption via the issuer mirror (`sk_I`) even when `sk_A` is lost - holder self-migration is an alternative but not the only path. See Section 12.
+**Issuer key loss** is handled via holder-driven mirror reconstruction for both issuer and auditor mirrors. In the issuer key loss scenario, holder self-migration is the only path for issuer mirrors since the issuer cannot decrypt old mirrors without `sk_I`. For auditor mirrors, the issuer can still perform active re-encryption via the issuer mirror (`sk_I`) even when `sk_A` is lost - holder self-migration is an alternative but not the only path. See Section 13.
 
 ### 5.2. Re-encryption Strategy
 
@@ -375,9 +374,9 @@ Re-encrypts a single holder's issuer and/or auditor mirror ciphertext under the 
 | Field Name               | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                     |
 | :----------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `TransactionType`        | Yes       | `string`  | `UINT16`      | `ConfidentialMPTMirrorUpdate`, which is 90.                                                                                                                                                                                     |
-| `Account`                | Yes       | `string`  | `ACCOUNTID`   | The issuer account.                                                                                                                                                                                                             |
+| `Account`                | Yes       | `string`  | `ACCOUNTID`   | The issuer account in issuer mode, or the holder account in holder mode.                                                                                                                                                        |
 | `MPTokenIssuanceID`      | Yes       | `string`  | `UINT192`     | The unique identifier of the MPT issuance.                                                                                                                                                                                      |
-| `Holder`                 | Yes       | `string`  | `ACCOUNTID`   | The holder whose mirror(s) are being re-encrypted.                                                                                                                                                                              |
+| `Holder`                 | No        | `string`  | `ACCOUNTID`   | **Required** in issuer mode and **must be absent** in holder mode. Identifies the holder whose mirror(s) are being re-encrypted.                                                                                                |
 | `IssuerEncryptedAmount`  | No        | `string`  | `BLOB`        | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new issuer key. Reuses `sfIssuerEncryptedAmount` from XLS-0096. Present to migrate holder's issuer mirror.                                               |
 | `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new auditor key. Reuses `sfAuditorEncryptedAmount` from XLS-0096. Present to migrate holder's auditor mirror.                                            |
 | `ZKProof`                | Yes       | `string`  | `BLOB`        | A single compact Chaum-Pedersen equality proof proving the new ciphertext(s) encrypt the same value as the on-ledger mirror(s). When both fields are present, the proof covers both statements under one Fiat-Shamir challenge. |
