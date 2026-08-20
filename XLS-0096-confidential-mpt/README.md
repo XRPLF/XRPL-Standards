@@ -344,11 +344,12 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 1. The `ConfidentialTransfer` feature is not enabled on the ledger. (`temDISABLED`)
 2. The sender is the issuer of the MPT. (`temMALFORMED`)
-3. The sender and destination accounts are the same. (`temMALFORMED`)
-4. The `ZKProof` is not exactly 946 bytes. (`temMALFORMED`)
-5. The `BalanceCommitment` or `AmountCommitment` is not a valid 33-byte compressed elliptic curve point. (`temMALFORMED`)
-6. Any required encrypted amount (`SenderEncryptedAmount`, `DestinationEncryptedAmount`, or `IssuerEncryptedAmount`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-7. The `AuditorEncryptedAmount` (if present) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
+3. The destination is the issuer of the MPT. (`temMALFORMED`)
+4. The sender and destination accounts are the same. (`temMALFORMED`)
+5. The `ZKProof` is not exactly 946 bytes. (`temMALFORMED`)
+6. The `BalanceCommitment` or `AmountCommitment` is not a valid 33-byte compressed elliptic curve point. (`temMALFORMED`)
+7. Any required encrypted amount (`SenderEncryptedAmount`, `DestinationEncryptedAmount`, or `IssuerEncryptedAmount`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
+8. The `AuditorEncryptedAmount` (if present) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 
 #### 8.3.2. Protocol-Level Failures
 
@@ -719,11 +720,11 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 
 #### 12.4.2. Protocol-Level Failures
 
-1. The transaction attempts to use `tfMPTCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in sfImmutableFlags. (`tecNO_PERMISSION`)
+1. The transaction attempts to use `tfMPTSetCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in `sfImmutableFlags`. (`tecNO_PERMISSION`)
 2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
 3. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
    - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
-4. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
+4. The transaction attempts to upload keys or set `tfMPTSetCanHoldConfidentialBalance`, but `sfConfidentialOutstandingAmount` is greater than zero (tokens are already in confidential circulation). (`tecNO_PERMISSION`)
 
 ### 12.5. State Changes
 
