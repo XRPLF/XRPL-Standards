@@ -267,11 +267,14 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 
 #### 7.3.2. Protocol-Level Failures
 
-1. The issuance has `sfAuditorEncryptionKey` set, but the transaction does not include `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
-2. The holder does not have sufficient public MPT balance to cover the `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
-3. A public key is provided in the transaction, but the account already has a registered key. (`tecDUPLICATE`)
-4. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
-5. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
+1. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
+2. The issuance has `sfAuditorEncryptionKey` set, but the transaction does not include `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
+3. The holder's `MPToken` is locked, or the entire issuance is locked. (`tecLOCKED`)
+4. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
+5. The holder does not have sufficient public MPT balance to cover the `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
+6. A public key is provided in the transaction, but the account already has a registered key. (`tecDUPLICATE`)
+7. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
+8. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
 
 ### 7.4. Invariants
 
@@ -288,7 +291,8 @@ If the transaction is successful:
 2. The **`sfConfidentialOutstandingAmount`** on the `MPTokenIssuance` object is increased by the converted amount.
 3. The holder's **`sfHolderEncryptionKey`** is registered on their `MPToken` object if it was not already present.
 4. The **`sfConfidentialBalanceInbox`** and **`sfIssuerEncryptedBalance`** are updated by homomorphically adding the provided ciphertexts.
-5. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
+5. If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), **`sfAuditorEncryptedBalance`** is likewise updated by homomorphically adding `AuditorEncryptedAmount`.
+6. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
 
 ### 7.6 Example JSON
 
@@ -355,11 +359,13 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 1. The destination account does not exist. (`tecNO_TARGET`)
 2. The destination account has `lsfRequireDestTag` set, but the transaction does not include a `DestinationTag`. (`tecDST_TAG_NEEDED`)
-3. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
-4. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
-5. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
-6. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
+3. The `MPTokenIssuance`, or the sender's or destination's `MPToken` object, does not exist. (`tecOBJECT_NOT_FOUND`)
+4. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
+5. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
+6. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
 7. Either the sender's or receiver's balance is currently locked. (`tecLOCKED`)
+8. The issuance requires authorization (`lsfMPTRequireAuth`) and either the sender's or the destination's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
+9. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
 
 ##### 8.3.2.1. Authorization Failures
 
@@ -523,10 +529,11 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 3. The user's `MPToken` is missing the `sfConfidentialBalanceSpending` or `sfHolderEncryptionKey` fields. (`tecNO_PERMISSION`)
 4. The issuance has `sfAuditorEncryptionKey` set, but the transaction does not include `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
 5. The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
-6. The `BlindingFactor` fails to verify the integrity of the ciphertexts. (`tecBAD_PROOF`)
-7. The `ZKProof` fails the **compact sigma proof** check. (`tecBAD_PROOF`)
-8. The `ZKProof` fails the **Bulletproof range proof** check. (`tecBAD_PROOF`)
-9. The account or issuance is frozen. (`terFROZEN`)
+6. The holder's `MPToken` is locked, or the entire issuance is locked. (`tecLOCKED`)
+7. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
+8. The `BlindingFactor` fails to verify the integrity of the ciphertexts. (`tecBAD_PROOF`)
+9. The `ZKProof` fails the **compact sigma proof** check. (`tecBAD_PROOF`)
+10. The `ZKProof` fails the **Bulletproof range proof** check. (`tecBAD_PROOF`)
 
 ### 10.5. State Changes
 
@@ -536,6 +543,7 @@ If the transaction is successful:
 - **Global Supply:** The `sfConfidentialOutstandingAmount` on the issuance is decreased by `MPTAmount`.
 - **Spending Balance:** The `sfConfidentialBalanceSpending` is updated via **homomorphic subtraction** of `HolderEncryptedAmount`.
 - **Issuer Mirror:** The `sfIssuerEncryptedBalance` is updated via **homomorphic subtraction** of `IssuerEncryptedAmount`.
+- **Auditor Mirror:** If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the `sfAuditorEncryptedBalance` is updated via **homomorphic subtraction** of `AuditorEncryptedAmount`.
 - **Version:** The `sfConfidentialBalanceVersion` is incremented by 1.
 
 ### 10.6. Example JSON
