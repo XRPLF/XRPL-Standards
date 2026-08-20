@@ -354,7 +354,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 3. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
 4. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
 5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
-6. Either the sender's or receiver's balance is currently frozen. (`terFROZEN`)
+6. Either the sender's or receiver's balance is currently locked. (`tecLOCKED`)
 
 ##### 8.3.2.1. Authorization Failures
 
@@ -369,12 +369,15 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 If the transaction is successful:
 
-- **Sender Balance**: The sender's `sfConfidentialBalanceSpending` is homomorphically decremented.
+- **Sender Balance**: The sender's `sfConfidentialBalanceSpending` is homomorphically decremented by `SenderEncryptedAmount`.
 - **Sender Versioning**: The sender's `sfConfidentialBalanceVersion` is incremented by 1 to prevent stale-proof replay.
-- **Receiver Balance**: The receiver's `sfConfidentialBalanceInbox` is homomorphically incremented.
-- **Issuer Mirrors**: The `sfIssuerEncryptedBalance` for both the sender and receiver are updated homomorphically to maintain audit consistency.
-- **Auditor Mirrors**: If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the `sfAuditorEncryptedBalance` for both the sender and receiver are also updated homomorphically.
+- **Receiver Balance**: The receiver's `sfConfidentialBalanceInbox` is homomorphically incremented by the **re-randomized** `DestinationEncryptedAmount` (see §8.4.1).
+- **Issuer Mirrors**: The sender's `sfIssuerEncryptedBalance` is homomorphically decremented by `IssuerEncryptedAmount`, and the receiver's `sfIssuerEncryptedBalance` is homomorphically incremented by the **re-randomized** `IssuerEncryptedAmount`.
+- **Auditor Mirrors**: If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the sender's `sfAuditorEncryptedBalance` is homomorphically decremented by `AuditorEncryptedAmount`, and the receiver's `sfAuditorEncryptedBalance` is homomorphically incremented by the **re-randomized** `AuditorEncryptedAmount`.
+- **Receiver Versioning**: The receiver's `sfConfidentialBalanceVersion` is **not** modified. Incoming transfers land in the inbox and therefore cannot invalidate proofs bound to the receiver's spending balance.
 - **Global Supply**: Plaintext supply fields (`OA` and `COA`) remain unchanged.
+
+**Note on re-randomization:** "Re-randomized" means that, before a ciphertext is credited to the receiver, an encryption of **zero** under the same public key is homomorphically added to it. The randomness for that zero encryption is the first 32 bytes of the `ZKProof` field. Since the added ciphertext encrypts 0, the credited value is unchanged; and since the randomness is read directly from the transaction, every validator derives identical ledger state. Only the three credit-side ciphertexts are treated this way, the ciphertexts subtracted from the sender are applied exactly as submitted. This prevents an attacker from choosing transfer randomness that cancels against a target holder's existing ciphertexts (see §13.8).
 
 ### 8.5. Example JSON
 
@@ -880,6 +883,7 @@ Every confidential transaction must carry appropriate ZKPs:
 - Replay attacks: Transactions bound to unique ledger indices/versions; proofs must include domain separation.
 - Malformed ciphertexts: Validators reject invalid EC points.
 - Balance underflow: Range proofs prevent spending more than available.
+- Ciphertext cancellation: Homomorphic addition adds the ciphertexts' randomness, so ciphertexts with randomness `r` and `−r` sum to the point at infinity, which is not representable and makes the update fail. Because the canonical encrypted zero (§9.4) is deterministic, its randomness is publicly computable, so an attacker free to choose the transfer randomness could cancel it against a target holder's existing ciphertexts and permanently break their `ConfidentialMPTMergeInbox` or auditor-balance update. Any holder of the issuance can attempt this with an unsolicited, arbitrarily small transfer, since incoming confidential transfers cannot be refused. Mitigated by re-randomizing the credit-side ciphertexts (§8.4) with the proof's Fiat–Shamir challenge, which the attacker cannot steer.
 - Auditor collusion: Auditors see balances only if granted view keys; public supply integrity remains trustless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
