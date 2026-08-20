@@ -599,14 +599,13 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 ### 11.1 How the Clawback Process Works
 
 1. Issuer Decrypts and Prepares: The issuer takes the EncryptedBalanceIssuer ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
-2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the RevealedAmount field to m. It also generates and includes a compact Clawback sigma proof.
+2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the `MPTAmount` field to m. It also generates and includes a compact Clawback sigma proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
-   - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that the RevealedAmount is the true value hidden in the holder's on-ledger ciphertext.
+   - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that `MPTAmount` is the true value hidden in the holder's on-ledger ciphertext.
    - Ledger Changes: If the proof is valid, the validators execute all of the following changes at once:
      1. The ConfidentialBalance_Spending and ConfidentialBalance_Inbox are set to a valid encryption of zero.
-     2. The global COA is decreased by the RevealedAmount.
-     3. The global OA is also decreased by the RevealedAmount.
-     4. The global `OutstandingAmount` is decreased by `RevealedAmount`, burning the clawed-back tokens. The funds are permanently removed from circulation and are **not** credited to any account.
+     2. The global `ConfidentialOutstandingAmount` (COA) is decreased by `MPTAmount`.
+     3. The global `OutstandingAmount` (OA) is decreased by `MPTAmount`, burning the clawed-back tokens. The funds are permanently removed from circulation and are **not** credited to any account.
 
 **Note**: We recommend locking the MPT before clawing back. This prevents the holder from sending any more mpt transactions while the clawback is in progress.
 
