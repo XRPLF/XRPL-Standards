@@ -58,7 +58,7 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 ### 4.3. Modified Ledger Entries
 
-- `MPTokenIssuance`: Three new fields - `IssuerKeyEpoch`, `AuditorKeyEpoch`, `HolderCount`.
+- `MPTokenIssuance`: Three new fields - `IssuerKeyEpoch`, `AuditorKeyEpoch`.
 - `MPToken`: Three new fields - `IssuerKeyMirrorEpoch`, `AuditorKeyMirrorEpoch`, `RecoveryKey`.
 
 ### 4.4. APIs
@@ -120,8 +120,6 @@ The issuer may rotate keys multiple times. Holders with stale mirrors are blocke
 
 `IssuerKeyEpoch` and `AuditorKeyEpoch` on `MPTokenIssuance`, together with `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` on each `MPToken`, provide complete on-chain attestation of migration progress. Whether a holder's mirror is stale is trivially known on-ledger in O(1) - no off-ledger information required.
 
-The `HolderCount` field on `MPTokenIssuance` provides the total number of holders with active confidential state, enabling issuers to track migration progress off-chain.
-
 A holder who executes `ConfidentialMPTConvert` after a key rotation will have their `MPToken` initialized with ciphertexts under the current key and epoch fields set to the current epoch values. These holders are never stale - they start at the current epoch with no migration needed.
 
 ## 6. Ledger Entry: `MPTokenIssuance`
@@ -130,11 +128,10 @@ The existing `MPTokenIssuance` ledger object is extended with three new fields. 
 
 ### 6.1. Fields
 
-| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| :---------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IssuerKeyEpoch`  | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each issuer ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0.                                                                                                                                                                                                                                                                               |
-| `AuditorKeyEpoch` | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each auditor ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0.                                                                                                                                                                                                                                                                              |
-| `HolderCount`     | No        | `number`  | `UINT64`      | The number of holders with initialized confidential state for this issuance. A holder is considered initialized once `HolderEncryptionKey` is registered on their `MPToken` via their first `ConfidentialMPTConvert`. `HolderCount` is incremented on that first conversion and is never decremented - `HolderEncryptionKey` is not removed by any existing transaction including `ConfidentialMPTClawback`. Not stored when at default value 0. |
+| Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                                         |
+| :---------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `IssuerKeyEpoch`  | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each issuer ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0.  |
+| `AuditorKeyEpoch` | No        | `number`  | `UINT32`      | Monotonically increasing counter incremented on each auditor ElGamal key rotation. Not stored when at default value 0. Validators treat an absent field as epoch 0. |
 
 **Note**: To accommodate existing `MPTokenIssuance` ledger objects that lack epoch fields even when keys are registered, the epoch value should remain absent after initial registration. It is set to 1 only when rotating a key for the first time successfully, and then increments with each subsequent rotation.
 
@@ -182,7 +179,6 @@ After issuer and auditor key rotation:
   "AuditorEncryptionKey": "02b1c2d3e4f5a6...",
   "IssuerKeyEpoch": 1,
   "AuditorKeyEpoch": 1,
-  "HolderCount": 42,
   "PreviousTxnID": "A1B2C3D4...",
   "PreviousTxnLgrSeq": 1234567
 }
@@ -200,7 +196,6 @@ Before any key rotation (epoch fields absent):
   "OutstandingAmount": "500000000",
   "ConfidentialOutstandingAmount": "250000000",
   "IssuerEncryptionKey": "02a1b2c3d4e5f6...",
-  "HolderCount": 42,
   "PreviousTxnID": "A1B2C3D4...",
   "PreviousTxnLgrSeq": 1234567
 }
@@ -806,7 +801,7 @@ Validators must check both `IssuerKeyMirrorEpoch` == `IssuerKeyEpoch` and `Audit
 
 | Transaction                  | Failure Code       | Condition                                                                                                                   |
 | :--------------------------- | :----------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Sender's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                                |
+| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Sender or's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                             |
 | `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Sender's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured).                     |
 | `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Destination's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                           |
 | `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Destination's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured).                |
@@ -819,7 +814,7 @@ The holder must wait for the issuer to submit `ConfidentialMPTMirrorUpdate` - or
 
 ### 14.2. Migration Throughput
 
-Each `ConfidentialMPTMirrorUpdate` carries a new mirror ciphertext (~66 bytes) and a compact Chaum-Pedersen equality proof. Fees are 10x base fee. The `HolderCount` field on `MPTokenIssuance` allows issuers to determine the total migration scope off-chain.
+Each `ConfidentialMPTMirrorUpdate` carries a new mirror ciphertext (~66 bytes) and a compact Chaum-Pedersen equality proof. Fees are 10x base fee. Traversing the entire holders are done off-chain.
 
 ### 14.3. Wallet Implementation Guidance
 
@@ -865,7 +860,8 @@ For each returned `mptoken_index`, the issuer retrieves the corresponding `MPTok
 
 ### 14.5. Regulatory Verification
 
-A regulator (or any observer) can verify migration completion by comparing `IssuerKeyEpoch` on `MPTokenIssuance` against `IssuerKeyMirrorEpoch` on each `MPToken`. `HolderCount` provides the total number of holders to check.
+A regulator (or any observer) can verify migration completion by comparing `IssuerKeyEpoch` on `MPTokenIssuance` against `IssuerKeyMirrorEpoch` on each `MPToken`. While traversing all the holders off-chain, the issuer can easily tell
+if the migration is complete or not.
 
 ### 14.6. Ledger Replay Integrity
 
@@ -876,8 +872,6 @@ Each XRPL ledger version is a complete, immutable snapshot including `IssuerEncr
 After issuer key rotation, `ConfidentialMPTConvert`, `ConfidentialMPTSend`, and `ConfidentialMPTConvertBack` must use the new pk_I' for issuer mirror ciphertexts. Clients that read the current key from the issuance object will naturally use the new key.
 
 For `ConfidentialMPTClawback`, the issuer must use sk_I' after the holder's mirror has been migrated. An unmigrated holder cannot be clawed back with sk_I; the issuer must migrate the mirror first.
-
-`ConfidentialMPTConvert` must initialize `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` to the current epoch values when creating a new `MPToken`. It must also increment `HolderCount` on `MPTokenIssuance` when `HolderEncryptionKey` is being registered for the first time - i.e. when the transaction includes `HolderEncryptionKey` and the holder's `MPToken` does not yet have one registered. Subsequent `ConfidentialMPTConvert` calls for an already-initialized holder do not affect `HolderCount`. No other existing XLS-0096 transactions modify `HolderCount`.
 
 ## 15. Security Considerations
 
@@ -1113,7 +1107,7 @@ No. `ConfidentialMPTRecoverBalance` is rejected if `RecoveryKey` is not set on y
 
 ### C.6: How long does bulk mirror re-encryption take at scale?
 
-Each `ConfidentialMPTMirrorUpdate` carries a new mirror ciphertext and compact Chaum-Pedersen equality proof. Fees are 10x base fee. `HolderCount` on `MPTokenIssuance` provides the total migration scope.
+Each `ConfidentialMPTMirrorUpdate` carries a new mirror ciphertext and compact Chaum-Pedersen equality proof. Fees are 10x base fee. Traversing the entire holders list is done off-chain.
 
 ### C.7: Can the issuer rotate keys multiple times in quick succession?
 
@@ -1159,8 +1153,6 @@ No global enforcement of "no second rotation until first migration complete" is 
 
 The transactor architecture confirms this is the right approach: `ConfidentialMPTMirrorUpdate` is a per-holder transaction, so the transactor only sees one holder at a time and cannot enforce a global migration completeness check across all holders.
 
-`HolderCount` on `MPTokenIssuance` provides the authoritative total for off-chain migration tracking. MirrorsMigrated as an on-ledger counter is not adopted - see D5.
-
 ### D3: Granular Permission Delegation
 
 **Issuer-side**: Should `ConfidentialMPTMirrorUpdate` be delegatable to a separate bulk migration account without granting full `MPTokenIssuanceSet` authority?
@@ -1169,29 +1161,11 @@ The transactor architecture confirms this is the right approach: `ConfidentialMP
 
 Resolution needed before Draft can be finalized.
 
-### D4: Synthetic Metadata Fields
-
-Candidates for discussion:
-
-- `ConfidentialMPTMirrorUpdate`: migration_complete boolean or holders_remaining counter.
-- `ConfidentialMPTRecoverBalance`: recovery_complete boolean.
-- `ConfidentialMPTHolderKeyUpdate`: mode field indicating rotation or recovery.
-
-Resolution needed before Draft can be finalized.
-
-### D5: MirrorsMigrated Counter - RESOLVED (not adopted)
-
-MirrorsMigrated as an on-ledger counter is not adopted. See D2 for rationale. `HolderCount` on `MPTokenIssuance` is the chosen approach - it provides the authoritative total number of holders with initialized confidential state. Migration progress is tracked off-chain.
-
-### D6: API / RPCs
-
-No new RPCs anticipated, but response schemas for account_objects and ledger_data are modified. Open question: is a dedicated migration status query needed (e.g. retrieve all holders where `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch`)? Or is this out of scope?
-
-### D7: Freeze and Holder Key Rotation
+### D4: Freeze and Holder Key Rotation
 
 Should `ConfidentialMPTHolderKeyUpdate` in rotation mode be permitted while `lsfMPTLocked` = true? The holder is re-encrypting their balance without moving value, which does not inherently enable spending that was not already permitted. However, allowing key rotation on frozen accounts introduces operational complexity. Resolution needed before Draft can be finalized.
 
-### D8: Recovery Mode Delegation
+### D5: Recovery Mode Delegation
 
 Should `ConfidentialMPTHolderKeyUpdate` in recovery mode be delegatable under XLS-0074?
 
@@ -1201,20 +1175,8 @@ Should `ConfidentialMPTHolderKeyUpdate` in recovery mode be delegatable under XL
 
 Resolution needed before Draft can be finalized.
 
-### D9: Issuer-Side Permission Granularity
+### D6: Issuer-Side Permission Granularity
 
 Should `ConfidentialMPTMirrorUpdate` and `ConfidentialMPTRecoverBalance` be separately delegatable permissions, or combined into a single issuer operational permission? Separate permissions allow finer-grained access control - a bulk migration operator does not need recovery authority and vice versa. Combined permissions simplify the permission model but grant broader authority than necessary for each use case.
-
-Resolution needed before Draft can be finalized.
-
-### D10: `ConfidentialBalanceSpending` and `ConfidentialBalanceInbox` in Rotation Mode
-
-Currently `ConfidentialMPTHolderKeyUpdate` in rotation mode requires both `ConfidentialBalanceSpending` and `ConfidentialBalanceInbox` as separate fields. Three options under consideration:
-
-**Option A**: Keep two fields (current design). Holder re-encrypts both CBS and CBIN under pk_H' and submits both. No merge required before rotation.
-
-**Option B**: Require merge before rotation. Holder must run `ConfidentialMPTMergeInbox` first. After merge CBIN is `EncZero` - deterministic and not needed as a field. Only `ConfidentialBalanceSpending` submitted. Smaller proof, simpler transaction, but costs an extra mandatory transaction.
-
-**Option C**: Make `ConfidentialBalanceInbox` optional. If absent, validators treat on-ledger CBIN as zero and reset to `EncZero`(pk_H') automatically. If present, equality proof covers it. New failure condition: `ConfidentialBalanceInbox` absent but on-ledger CBIN is not `EncZero`. No mandatory merge, no extra transaction cost when inbox is already empty.
 
 Resolution needed before Draft can be finalized.
