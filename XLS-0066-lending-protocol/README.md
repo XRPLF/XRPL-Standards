@@ -543,7 +543,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-When the Loan Broker discovers that the Borower cannot make an upcoming payment, impairment allows the Loan Broker to register a "paper loss" with the Vault. The impairment mechanism moves the Next Payment Due Date to the time the Loan was impaired, allowing to default the Loan more quickly. However, if the Borrower makes a payment, the impairment status is automatically cleared.
+Once a payment becomes overdue, impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Impairment does not modify the Loan's `NextPaymentDueDate` and has no effect on default timing, which is determined solely by `NextPaymentDueDate` and `GracePeriod`. However, if the Borrower makes a payment, the impairment status is automatically cleared.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
