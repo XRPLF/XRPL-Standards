@@ -104,7 +104,7 @@ To prevent stale-proof failures—where an incoming transfer could invalidate a 
 A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. Compact sigma proofs ensure that all ciphertexts correspond to the same hidden amount.
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
-- **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`sfIssuerEncryptedBalance `). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
+- **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`sfIssuerEncryptedBalance`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
 - **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
 
 ### 5.4. Proof System
@@ -301,12 +301,13 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 #### 8.3.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled on the ledger. (`temDISABLED`)
-2. `sfHolderEncryptionKey` is present but `sfZKProof` is missing. (`temMALFORMED`)
-3. `sfHolderEncryptionKey` is absent but `sfZKProof` is present. (`temMALFORMED`)
-4. The length of `sfHolderEncryptionKey` is not exactly 33 bytes. (`temMALFORMED`)
-5. The length of `sfZKProof` is not exactly 64 bytes. (`temMALFORMED`)
-6. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-7. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
+2. `sfAccount` is the Issuer. (`temMALFORMED`)
+3. `sfHolderEncryptionKey` is present but `sfZKProof` is missing. (`temMALFORMED`)
+4. `sfHolderEncryptionKey` is absent but `sfZKProof` is present. (`temMALFORMED`)
+5. The length of `sfHolderEncryptionKey` is not exactly 33 bytes. (`temMALFORMED`)
+6. The length of `sfZKProof` is not exactly 64 bytes. (`temMALFORMED`)
+7. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
+8. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
 
 #### 8.3.2. Protocol-Level Failures
 
@@ -323,7 +324,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 
 ### 8.4. Invariants
 
-- **Deletion Blocker:** A holder's `MPToken` that carries confidential balance fields cannot be deleted while the issuance's `sfConfidentialOutstandingAmount` is non-zero, because the ledger cannot tell from the ciphertexts alone whether that particular holder's balance is zero. Once `sfConfidentialOutstandingAmount` reaches 0, every holder's confidential balance is necessarily zero and the `MPToken` may be deleted normally. The issuer may delete the `MPTokenIssuance` object only when `sfConfidentialOutstandingAmount` is 0 (in addition to the standard XLS-33 deletion requirements).
+- **Deletion Blocker:** A holder's `MPToken` that carries confidential balance fields cannot be deleted while the issuance's `sfConfidentialOutstandingAmount` is non-zero, because the ledger cannot tell from the ciphertexts alone whether that particular holder's balance is zero. An attempt to delete it, for example via `MPTokenAuthorize` with `tfMPTUnauthorize`, fails with `tecHAS_OBLIGATIONS`. Once `sfConfidentialOutstandingAmount` reaches 0, every holder's confidential balance is necessarily zero and the `MPToken` may be deleted normally. The issuer may delete the `MPTokenIssuance` object only when `sfConfidentialOutstandingAmount` is 0 (in addition to the standard XLS-33 deletion requirements).
 - **Confidential Balance Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
 - **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
 - **Version Modification:** If an `MPToken` update changes `sfConfidentialBalanceSpending` (its value before the transaction differs from its value after), then `sfConfidentialBalanceVersion` must also change.
@@ -649,7 +650,7 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 
 ### 12.1 How the Clawback Process Works
 
-1. Issuer Decrypts and Prepares: The issuer takes the `sfIssuerEncryptedBalance ` ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
+1. Issuer Decrypts and Prepares: The issuer takes the `sfIssuerEncryptedBalance` ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
 2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the `MPTAmount` field to m. It also generates and includes a compact Clawback sigma proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that `MPTAmount` is the true value hidden in the holder's on-ledger ciphertext.
@@ -864,7 +865,7 @@ The primary method for compliance is on-chain selective disclosure, which provid
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
 - Dynamic, Forward-Looking Compliance: This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can facilitate this without disrupting the system. The process is as follows:
-  1. The issuer uses its private key to decrypt its own on-ledger copy of a holder's balance (`sfIssuerEncryptedBalance `).
+  1. The issuer uses its private key to decrypt its own on-ledger copy of a holder's balance (`sfIssuerEncryptedBalance`).
   2. The issuer then re-encrypts this balance under the new auditor’s public key.
   3. Finally, the issuer provides the new ciphertext to the auditor along with a ZK equality proof that cryptographically proves that the new ciphertext matches the official on-ledger version.
 
@@ -882,7 +883,7 @@ As a simpler, trust-based alternative, the protocol also supports an issuer-medi
 
 Both compliance models are built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
-- Issuer Ciphertexts (`sfIssuerEncryptedBalance `): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
+- Issuer Ciphertexts (`sfIssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
   - It acts as the "master copy" that enables the issuer to perform the re-encryption required for dynamic selective disclosure.
   - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaximumAmount.
@@ -993,7 +994,7 @@ No, this version of confidential MPT extensions focuses solely on regular confid
 
 ### A.5 How does compliance fit in?
 
-Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (`sfIssuerEncryptedBalance `), and an optional auditor’s key (`sfAuditorEncryptedBalance`) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
+Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (`sfIssuerEncryptedBalance`), and an optional auditor’s key (`sfAuditorEncryptedBalance`) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
 
 ### A.6 What happens if a holder loses their ElGamal private key?
 
