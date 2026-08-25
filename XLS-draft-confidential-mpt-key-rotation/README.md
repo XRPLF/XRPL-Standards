@@ -37,8 +37,11 @@ Terms not defined here carry the same meaning as in XLS-0096.
 - **Mirror Epoch**: A monotonically increasing counter on `MPToken` that tracks the last key epoch at which the holder's issuer or auditor mirror ciphertext was re-encrypted.
 - **Stale Mirror**: A present issuer or auditor mirror ciphertext whose mirror epoch is less than the corresponding key epoch on `MPTokenIssuance`. A stale mirror is encrypted under an older key and cannot be combined homomorphically with new transaction deltas encrypted under the current key.
 - **Current Mirror**: A holder's issuer or auditor mirror ciphertext is current when the mirror ciphertext is present and its mirror epoch equals the corresponding key epoch on MPTokenIssuance. A missing auditor mirror is not current when an auditor key is configured, even if both absent epoch fields are interpreted as epoch 0. When no auditor key is configured, no auditor mirror is required.
+- **Missing Mirror**: The corresponding encryption key is configured on `MPTokenIssuance`, but the mirror ciphertext is absent from the holder's `MPToken`. This is a valid state only for an auditor mirror following late auditor registration. A missing issuer mirror on initialized confidential state is invalid.
 - **Active Re-encryption**: The process by which the issuer submits `ConfidentialMPTMirrorUpdate` for each holder after a key rotation to re-encrypt mirror ciphertexts under the new key.
-- **Recovery Key** (`sfRecoveryKey`): A transient field on `MPToken` set by the holder to authorize replacement of their ElGamal key when they have lost `sk_H`.
+- **Recovery Key** (`sfRecoveryKey`): A field on `MPToken` set by the holder to authorize replacement of their ElGamal key when they have lost `sk_H`.
+- **No Recovery Pending**: `RecoveryKey` is absent. The registered `HolderEncryptionKey` remains the holder's active ElGamal key.
+- **Recovery Pending**: `RecoveryKey` is present. The existing `HolderEncryptionKey` and encrypted balances remain unchanged until recovery is completed or cancelled.
 - **Context Hash**: The 256-bit value defined in XLS-0096 that binds a zero-knowledge proof to a specific transaction and ledger state, providing domain separation and replay protection. For proofs over a holder's own balances it incorporates the holder's `ConfidentialBalanceVersion`, so any change to the spending balance invalidates outstanding proofs.
 
 ## 4. Scope
@@ -184,6 +187,39 @@ does not require migration.
 Mirror status for a single holder can be determined on-ledger in O(1) from
 mirror presence and epoch equality. Determining whether migration is complete
 for an entire issuance requires traversing the holders off-chain through `mpt_holders` API.
+
+### 5.4. State Transition Summary
+
+This section is an informative summary using the states defined in Section 3.
+The referenced transaction sections remain normative. In the tables below,
+**Before** and **After** describe the abstract state before and after the
+transition; **Trigger** identifies the transaction or ledger event;
+**Preconditions** summarizes the required state and proof; **State Changes**
+lists the affected ledger fields; and **Reference** points to the normative
+rules.
+
+#### 5.4.1. Mirror Lifecycle
+
+| Before                                                        | Trigger                                                                          | Preconditions                                              | State Changes                                                                                               | After                                                           | Reference                  |
+| :------------------------------------------------------------ | :------------------------------------------------------------------------------- | :--------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- | :------------------------- |
+| No auditor mirror required                                    | Initial auditor key registration                                                 | Issuer key is already registered                           | `AuditorEncryptionKey` is registered; existing holder objects are unchanged                                 | Missing auditor mirror for each initialized confidential holder | Sections 5.1 and 8         |
+| No initialized confidential state                             | First `ConfidentialMPTConvert`                                                   | Current issuer key and any configured auditor key are used | Mirror ciphertexts are created and mirror epochs are set to the current key epochs                          | Current mirror or mirrors                                       | Section 5.3.4 and XLS-0096 |
+| Current mirror                                                | Corresponding issuer or auditor key rotation                                     | A different valid key is submitted                         | The key is replaced and its key epoch increments; holder mirrors are unchanged                              | Stale mirror                                                    | Section 8                  |
+| Stale mirror                                                  | Another rotation of the corresponding key                                        | Successive rotation is permitted                           | The key epoch increments again; the holder mirror remains unchanged                                         | Stale mirror, possibly multiple epochs behind                   | Sections 5.1 and 15.9      |
+| Stale issuer mirror                                           | `ConfidentialMPTMirrorUpdate` updates the issuer mirror                          | Required issuer-mode or holder-mode proof succeeds         | `IssuerEncryptedBalance` is replaced and `IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`                  | Current issuer mirror                                           | Section 9                  |
+| Missing or stale auditor mirror                               | `ConfidentialMPTMirrorUpdate` updates the auditor mirror                         | Auditor key is configured and the required proof succeeds  | `AuditorEncryptedBalance` is created or replaced and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`    | Current auditor mirror                                          | Section 9                  |
+| Current mirrors                                               | `ConfidentialMPTConvert`, `ConfidentialMPTSend`, or `ConfidentialMPTConvertBack` | Every required mirror is current                           | Mirror ciphertexts change under the current keys; mirror epochs do not change                               | Current mirrors                                                 | Section 5.3.2 and XLS-0096 |
+| Current issuer mirror and any configured auditor-mirror state | `ConfidentialMPTClawback`                                                        | Clawback proof succeeds against the current issuer mirror  | Mirror ciphertexts are reset to canonical encrypted zero and their epochs are set to the current key epochs | Current mirrors encrypting zero                                 | Section 12.1               |
+
+#### 5.4.2. Holder Key and Recovery Lifecycle
+
+| Before              | Trigger                                           | Preconditions                                                 | State Changes                                                                                                                                                     | After               | Reference              |
+| :------------------ | :------------------------------------------------ | :------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------ | :--------------------- |
+| No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | `HolderEncryptionKey`, holder balance ciphertexts, and `ConfidentialBalanceVersion` are updated                                                                   | No Recovery Pending | Sections 10.5 and 10.6 |
+| No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in recovery mode | New-key Schnorr proof succeeds                                | `RecoveryKey` is created; the existing holder key and balances are unchanged                                                                                      | Recovery Pending    | Sections 10.5 and 10.6 |
+| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in cancel mode   | Holder authorizes the transaction with their XRPL signing key | `RecoveryKey` is removed; the existing holder key and balances are unchanged                                                                                      | No Recovery Pending | Sections 10.5 and 10.6 |
+| Recovery Pending    | `ConfidentialMPTRecoverBalance`                   | Issuer mirror is current and the recovery proof succeeds      | `HolderEncryptionKey` is replaced by `RecoveryKey`, the recovered balance is placed in spending, inbox is reset, version increments, and `RecoveryKey` is removed | No Recovery Pending | Section 11             |
+| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | The holder key, holder balance ciphertexts, and version are updated; `RecoveryKey` remains unchanged                                                              | Recovery Pending    | Sections 10.5 and 10.6 |
 
 ## 6. Ledger Entry: `MPTokenIssuance`
 
