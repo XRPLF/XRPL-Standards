@@ -31,6 +31,7 @@ This repository is the canonical home for **XRP Ledger Standards (XLSes)** — s
 │   └── instructions.md     # Symlink to .github/copilot-instructions.md (Ripple review bot)
 └── .github/
     ├── copilot-instructions.md  # This file — repo context + review guidelines
+    ├── skills/code-review/  # Agent skill Copilot code review loads on PRs
     ├── pull_request_template.md
     ├── workflows/           # CI workflows (see below)
     └── scripts/             # Scripts used by CI (assign_xls_number.py, etc.)
