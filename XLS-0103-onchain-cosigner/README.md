@@ -824,57 +824,138 @@ To use a proposal, a signer or wallet has to fetch it and see how far along it i
 
 ### 8.1. RPC: `transaction_proposal`
 
-Returns a `TransactionProposal` by ID, or by the target account and proposed transaction ticket.
+Returns a `TransactionProposal` by ID, or by the target account and proposed transaction ticket, together with a computed, per-account view of how far the proposal is from a submittable transaction.
 
 #### 8.1.1. Request Fields
 
-| Field          | Type             | Required | Description                                                                                                                             |
-| -------------- | ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `proposal_id`  | string           | No       | The `ProposalID` (§4.1). Required unless `account` and `ticket` are provided.                                                           |
-| `account`      | string           | No       | The target account. Used with `ticket` to derive the `ProposalID`. Required unless `proposal_id` is provided.                           |
-| `ticket`       | number           | No       | The proposed transaction's `TicketSequence`. Used with `account` to derive the `ProposalID`. Required unless `proposal_id` is provided. |
-| `ledger_hash`  | string           | No       | A 32-byte hex string identifying the ledger to query.                                                                                   |
-| `ledger_index` | string or number | No       | The ledger index, or a shortcut such as `"validated"`.                                                                                  |
+| Field          | Type             | Required | Description                                                                                                                                 |
+| -------------- | ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proposal_id`  | string           | No       | The `ProposalID` (§4.1). Required unless `account` and `ticket_seq` are provided.                                                           |
+| `account`      | string           | No       | The target account. Used with `ticket_seq` to derive the `ProposalID`. Required unless `proposal_id` is provided.                           |
+| `ticket_seq`   | number           | No       | The proposed transaction's `TicketSequence`. Used with `account` to derive the `ProposalID`. Required unless `proposal_id` is provided. Numeric strings are accepted. |
+| `ledger_hash`  | string           | No       | A 32-byte hex string identifying the ledger to query.                                                                                       |
+| `ledger_index` | string or number | No       | The ledger index, or a shortcut such as `"validated"`.                                                                                      |
+
+`account` + `ticket_seq` is the same addressing `ledger_entry` accepts for a `transaction_proposal` object; the two methods accept identical field types and return identical error codes for malformed addressing.
 
 #### 8.1.2. Response Fields
 
-The response returns the raw ledger object plus **computed convenience fields** so a client does not have to join the collected signatures against the `SignerList` itself (see the "Completion signalling" open question in §12):
+The response returns the raw ledger object plus **computed convenience fields** so a client does not have to join the collected signatures against live `SignerList`s itself:
 
-| Field           | Type   | Description                                                                                                   |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| `proposal_id`   | string | The ID of the `TransactionProposal`.                                                                          |
-| `proposal`      | object | The raw `TransactionProposal` ledger object.                                                                  |
-| `signed_weight` | number | Total weight of the signatures collected so far, scored against the target account's applicable `SignerList`. |
-| `quorum`        | number | The `SignerQuorum` the collected weight must reach (the target account's applicable quorum).                  |
-| `status`        | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                |
+| Field             | Type   | Description                                                                                                       |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| `proposal_id`     | string | The ID of the `TransactionProposal`.                                                                                |
+| `proposal`        | object | The raw `TransactionProposal` ledger object.                                                                        |
+| `proposal_status` | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                      |
+| `signing_status`  | array  | One entry per required authorization (§8.1.3.1), in a stable order: the initiator first, then auxiliary co-signers, then batch participants. |
+| `tx_blob`         | string | Present only when `proposal_status` is `"complete"`: the stored `ProposedTransaction` serialized in submit-ready binary form, so a client does not have to reassemble and re-serialize it. Providing it implies nothing beyond §8.1.3.4. |
 
-`status` is the single field a client switches on:
+> The field is named `proposal_status`, not `status`, because `status` is already the RPC envelope's success/error indicator and the two would collide in the same JSON object.
 
-- **`pending`** — still collecting; more signatures can be added, and quorum is not yet met.
-- **`complete`** — every signing requirement is satisfied (quorum, plus any required `BatchSigners`/auxiliary co-signatures), so the stored `ProposedTransaction` is ready to copy and submit (§6.5).
-- **`expired`** — the proposal is terminal (§4.5): its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed. It no longer accepts signatures and can be cleaned up by anyone.
+Each `signing_status` entry:
 
-`status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if it had reached quorum earlier (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §13.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
+| Field           | Type    | Description                                                                                                          |
+| --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `account`       | string  | The account whose authorization is required.                                                                            |
+| `signed`        | boolean | Whether the signature material collected so far currently authorizes this account on the queried ledger (§8.1.3.2).     |
+| `reason`        | string  | Present only when `signed` is `false`: why (see below).                                                                 |
+| `signed_weight` | number  | (Optional, present on Accounts with SignerList only) Present only when a `Signers` array has been collected for this row: its weight against the account's live `SignerList`. |
+| `quorum`        | number  | (Optional, present on Accounts with SignerList only) Present only when the account has a live `SignerList`: its `SignerQuorum`.                                              |
+| `signers`       | array   | (Optional, present on Accounts with SignerList only) Present only when the account has a live `SignerList`: one entry per list member — `{account, weight, signed}` — where `signed` is whether a currently-valid signature from that member has been collected. This is the list a wallet chases: every member with `signed: false` is a candidate next signer. Collected signatures from accounts *not* on the live list do not appear here; they surface as `reason: "invalid_signer_set"`. |
 
-The computed fields are derived from live ledger state at the queried ledger and are not stored on the object.
+Rows are keyed by the pair (`account`, `role`), not by `account` alone. The same account can owe two independent authorizations through different signature slots — for example, the fee sponsor of a proposed `Batch` who is also an inner participant signs once through `SponsorSignature` and once through `BatchSigners` — and each slot succeeds or fails on its own.
 
-#### 8.1.3. Failure Conditions
+`reason` values:
 
-- `proposal_id` is missing or malformed, and `account`/`ticket` are not both present (`invalidParams`).
-- No proposal exists with the requested ID (`proposalNotFound`).
+| Value                            | Meaning                                                                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `inadequate_signatures` | `bool` | In the case of Single-Sign configuration, the account has not received any signatures. In the case of Multi-Sign configuration, the received signatures do not yet satisfy the requisite quorum |
+| `invalid_signer_set`             | The collected `Signers` array contains an entry the live `SignerList` does not authorize; submission rejects the set wholesale. This occurs when the Account has removed a Signer from its erstwhile SignerList configuration    |
+| `no_signer_list`                 | A `Signers` array is collected but the account has no `SignerList` on the queried ledger. This error occurs when the Account had a SignerList but has since deleted it and switched to a SingleSign configuration                                          |
+| `master_disabled`                | The collected signature is by the master key, and the master key has since been disabled. This is caused by the updated ledger-state since the collection of this signature.                                           |
+| `not_authorized`                 | The signing key does not currently authorize the account (e.g. a rotated regular key).                                              |
+| `account_not_found`              | The account does not exist on the queried ledger (and is not one an earlier inner transaction of the proposed `Batch` would create). |
+| `awaiting_sponsorship_signature` | Sponsor rows only: an on-ledger `Sponsorship` entry exists, but its flags require a co-signature for what this transaction sponsors. |
+| `malformed`                      | The stored signature material is not usable (defensive; should be unreachable through `TransactionProposalSign`).                   |
 
-#### 8.1.4. Example Request
+`proposal_status` is the single field a client switches on:
+
+- **`pending`** — still collecting: at least one `signing_status` row is unsatisfied.
+- **`complete`** — every `signing_status` row is satisfied, so the stored `ProposedTransaction` is ready to copy and submit (§6.5). See §8.1.3.4 for what `complete` does **not** guarantee.
+- **`expired`** — the proposal is terminal (§4.5): its `Expiration` has passed, or the proposed transaction's `LastLedgerSequence` has passed (§8.1.3.3). It no longer accepts signatures and can be cleaned up by anyone.
+
+`proposal_status` is evaluated terminal-first: a proposal that is terminal reports `expired` even if every authorization is satisfied (the proposal object is dead and cleanable, though its already-collected signatures may still be independently submittable — see §13.4). Otherwise it reports `complete` if the requirements are met, else `pending`.
+
+The computed fields are derived from live ledger state at the queried ledger and are not stored on the object. Querying the same proposal at different ledgers can give different answers — that is the point.
+
+#### 8.1.3. Completeness Evaluation
+
+##### 8.1.3.1. Required Authorizations
+
+The server derives the set of required authorizations from the stored `ProposedTransaction`, mirroring exactly what submission-time validation will demand:
+
+| Role                | Required when                                                                                                                                       | Signature slot                                        |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `account`           | Always: the transaction's initiator — its `Account`, or its `Delegate` when present.                                                                  | Top-level `SigningPubKey`/`TxnSignature`, or `Signers` |
+| `counterparty`      | The transaction carries a `Counterparty`; or it is a `LoanSet` (XLS-0066) without one, in which case the required co-signer is the owner of the `LoanBroker` it names. | `CounterpartySignature`                                |
+| `sponsor`           | The transaction carries a `Sponsor` (XLS-0068).                                                                                                       | `SponsorSignature`, or exemption via a `Sponsorship` entry (§8.1.3.2) |
+| `batch_participant` | The transaction is a `Batch` (XLS-0056): one row per distinct inner-transaction initiator other than the outer account. Inner counterparties and inner co-signing sponsors (other than the outer account) are likewise required, reported under their own roles. | That account's `BatchSigners` entry                    |
+
+An inner transaction initiated by the outer account adds no row: the outer account authorizes all of its inners by signing the batch itself.
+
+##### 8.1.3.2. Authorization, Not Cryptography
+
+Each signature was cryptographically verified when `TransactionProposalSign` appended it (§6.3.2), and ledger data cannot change after that. What *can* change is whether the signature still **authorizes** the account, so `signed` is computed by re-applying the standard authorization rules against the queried ledger — the same rules submission applies:
+
+- A single signature must be by the account's current regular key, or by its master key while the master key is enabled.
+- A collected `Signers` array is validated against the account's **live** `SignerList`, and it fails **as a whole** if *any* collected entry is not currently authorized: an entry absent from the list, one whose master key has since been disabled, one whose regular key has since rotated, or a non-phantom entry whose account no longer exists each void the entire set at submission (`tefBAD_SIGNATURE` / `tefMASTER_DISABLED`). Otherwise the set's weight must meet the live `SignerQuorum`. Because signatures only ever accumulate on a proposal, a voided set cannot be repaired by further signing — the practical remedy is `TransactionProposalCancel` and a fresh proposal.
+- A `BatchSigners` entry for an account that does not exist yet is authorized only by that account's own master key (an earlier inner transaction may create the account).
+- A sponsor row is satisfied by a valid `SponsorSignature`, or — only while no `SponsorSignature` field has been collected at all — by an on-ledger `Sponsorship` entry between the sponsor and the initiator whose flags do not require a co-signature for what this transaction sponsors. A collected-but-no-longer-authorizing `SponsorSignature` is **not** rescued by the exemption, because submission validates a present `SponsorSignature` unconditionally.
+
+Consequently a signature that counted yesterday may not count today (disabled master key, rotated regular key, replaced `SignerList`), and `signed_weight` can even meet `quorum` while `signed` is `false` (`invalid_signer_set`). Clients must treat `signed` as authoritative and the numbers as progress detail.
+
+##### 8.1.3.3. Expiry Bounds
+
+`expired` is reported when either terminal condition of §4.5 holds at the queried ledger:
+
+- `Expiration`: the queried ledger's parent close time has reached or passed the proposal's `Expiration`.
+- `LastLedgerSequence`: the proposed transaction can no longer be included in any ledger. The earliest ledger it could still enter is the queried ledger itself when that ledger is open, and the next ledger otherwise — so the proposal is expired when `LastLedgerSequence` is below that bound. (A transaction with `LastLedgerSequence` equal to the current open ledger's sequence is still submittable and reports `pending`/`complete`, not `expired`.)
+
+##### 8.1.3.4. `complete` Is an Authorization Verdict
+
+`complete` asserts that every required authorization is satisfied on the queried ledger — no more. It does not re-validate everything submission will: the ticket the proposal is keyed on may never have been created (`tefNO_TICKET`), the target account may since have been deleted, the fixed `Fee` may be unfundable, or an amendment the transaction needs may have been disabled. Clients should treat `complete` as "assemble and submit now, and expect success under normal conditions", not as a guarantee of `tesSUCCESS`.
+
+`complete` is also only as fresh as the ledger it was computed against. Signatures are immutable once collected, but the ledger state they are judged against is not, and submission applies gates beyond signature authorization that this RPC does not model. Examples of state changes that can silently invalidate a `complete` verdict:
+
+- **Deleting the `LoanBroker`** an implicit counterparty was resolved from: the completed `LoanSet` then fails `temBAD_SIGNER` at submission, because the counterparty is re-resolved from the live broker at that time.
+- **Revoking or narrowing a delegation** (`DelegateSet`): a delegate's on-ledger *permission* for the proposed transaction type is a submission-time gate separate from — and not attested by — the delegate's signature.
+- **The exact-set rule for a proposed `Batch`**: submission requires the stored `BatchSigners` array to correspond exactly to the required signer set (sorted, unique, no extras, never the outer account), and rejects any mismatch wholesale (`temBAD_SIGNER`); this structural property is likewise not attested by the per-row verdicts.
+
+For the most accurate result, invoke this RPC against the **most recent validated ledger** and treat the verdict as point-in-time: re-evaluate immediately before assembling and submitting the completed transaction, since any intervening ledger may have changed the answer.
+
+#### 8.1.4. Failure Conditions
+
+- Neither `proposal_id` nor both `account` and `ticket_seq` are present, or `proposal_id` is combined with them (`invalidParams`).
+- `proposal_id` is not a 256-bit hex string (`malformedRequest`).
+- `account` is not a valid account address (`malformedAddress`).
+- `ticket_seq` is not a number or numeric string (`malformedRequest`).
+- No `TransactionProposal` exists at the derived ID in the queried ledger — including when the index names a ledger entry of a different type (`entryNotFound`).
+- The requested ledger is not available (`lgrNotFound`).
+
+#### 8.1.5. Example Request
 
 ```json
 {
   "command": "transaction_proposal",
   "account": "rTARGET..........................",
-  "ticket": 1201,
+  "ticket_seq": 1201,
   "ledger_index": "validated"
 }
 ```
 
-#### 8.1.5. Example Response
+#### 8.1.6. Example Responses
+
+An ordinary (non-batch) proposal mid-collection — the target multi-signs, two of six weight collected:
 
 ```json
 {
@@ -890,10 +971,60 @@ The computed fields are derived from live ledger state at the queried ledger and
       "...": "..."
     }
   },
-  "signed_weight": 3,
-  "quorum": 6,
-  "status": "pending",
+  "proposal_status": "pending",
+  "signing_status": [
+    {
+      "account": "rTARGET..........................",
+      "role": "account",
+      "signed": false,
+      "reason": "below_quorum",
+      "signed_weight": 2,
+      "quorum": 6,
+      "signers": [
+        { "account": "rSIGNER1.........................", "weight": 2, "signed": true },
+        { "account": "rSIGNER2.........................", "weight": 2, "signed": false },
+        { "account": "rSIGNER3.........................", "weight": 2, "signed": false }
+      ]
+    }
+  ],
   "ledger_index": 12345678,
+  "validated": true
+}
+```
+
+A proposed `Batch` — the motivating case for this design. The outer account has signed; one participant authorizes through its own `SignerList` and is below quorum; an inner `LoanSet`'s counterparty has not signed at all:
+
+```json
+{
+  "proposal_id": "D4E5F6A1B2C3...............................",
+  "proposal": { "...": "..." },
+  "proposal_status": "pending",
+  "signing_status": [
+    {
+      "account": "rOUTER...........................",
+      "role": "account",
+      "signed": true
+    },
+    {
+      "account": "rLENDER..........................",
+      "role": "counterparty",
+      "signed": false,
+      "reason": "no_signature"
+    },
+    {
+      "account": "rPARTICIPANT.....................",
+      "role": "batch_participant",
+      "signed": false,
+      "reason": "below_quorum",
+      "signed_weight": 1,
+      "quorum": 2,
+      "signers": [
+        { "account": "rPCOSIGNER1......................", "weight": 1, "signed": true },
+        { "account": "rPCOSIGNER2......................", "weight": 1, "signed": false }
+      ]
+    }
+  ],
+  "ledger_index": 12345679,
   "validated": true
 }
 ```
@@ -929,7 +1060,6 @@ This proposal is purely additive: it introduces one new ledger entry type and th
 
 ## 12. Open Questions
 
-- **Completion signalling:** Should the ledger set a convenience flag (or expose an RPC field) marking a proposal "complete" once collected weight reaches quorum, so wallets need not join against the `SignerList` themselves?
 - **Reducing the initial construction burden:** Can the initial proposed-transaction construction be simplified further, beyond the ticket-based approach in §9.2?
 - **Revocation:** Should there be a first-class way to revoke a completed proposal's signatures on-ledger (beyond consuming the `TicketSequence`), given that cancellation alone does not prevent submission of already-collected signatures (§13.4)?
 - **Recurring / standing orders:** Use Case 7 (recurring allowances and treasury stipends) suggests a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
@@ -954,7 +1084,7 @@ This is the central security consideration of the copy-and-submit model. The pro
 
 ### 13.5. Stale signatures under SignerList changes
 
-Because both the per-signature check and the final submission validate against the live `SignerList`, removing a signer or raising the quorum while a proposal is pending is honored: a removed signer's contribution no longer counts toward quorum at submission. Conversely, lowering the quorum can make a previously-incomplete set sufficient. Modifying an account's `SignerList` therefore affects all pending proposals against that account.
+Because both the per-signature check and the final submission validate against the live `SignerList`, changing a `SignerList` while a proposal is pending is honored — but asymmetrically. Lowering the quorum can make a previously-incomplete set sufficient. Removing a collected signer (or a collected signer disabling their master key or rotating their regular key) does **not** merely subtract their weight: submission rejects the entire collected set (`tefBAD_SIGNATURE`), and since signatures only accumulate on a proposal, the proposal becomes permanently unsatisfiable and must be cancelled and re-proposed (§8.1.3.2). Modifying an account's `SignerList` therefore affects all pending proposals against that account.
 
 ### 13.6. Denial-of-service and reserve pressure
 
