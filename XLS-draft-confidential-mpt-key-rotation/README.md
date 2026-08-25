@@ -912,46 +912,13 @@ All new transactions are charged 10x the base fee, consistent with XLS-0096.
 
 ## 17. Permissions
 
-Per XLS-0074 (Granular Account Permissions), an account can grant another account permission to submit specific transaction types on its behalf. This amendment introduces new delegatable permissions.
+Per XLS-75 permission delegation, an account can grant another account permission to submit specific transaction types on its behalf.
 
-### 17.1. Issuer-Side Delegation
+In this amendment, when interacting with permission delegation, a delegate must never be able to introduce an ElGamal encryption key of its own choosing:
 
-**`ConfidentialMPTMirrorUpdate`**
-
-At large holder counts, the issuer may want to delegate bulk mirror re-encryption to a separate operational account without granting full `MPTokenIssuanceSet` authority. A bulk migration operator should not be able to rotate keys, lock or unlock holder balances, or modify other issuance properties.
-
-Proposed permission: `ConfidentialMPTMirrorUpdate` is independently delegatable under XLS-0074.
-
-**`ConfidentialMPTRecoverBalance`**
-
-The issuer may want a dedicated recovery operations account that can complete holder key loss recovery without full issuer authority.
-
-Proposed permission: `ConfidentialMPTRecoverBalance` is independently delegatable under XLS-0074.
-
-`MPTokenIssuanceSet` (key rotation) uses the existing `MPTokenIssuanceSet` permission under XLS-0074. Key rotation must always be submitted by the primary issuer account or an account explicitly granted `MPTokenIssuanceSet` authority.
-
-### 17.2. Holder-Side Delegation
-
-**`ConfidentialMPTHolderKeyUpdate`** - Rotation Mode
-
-A custody provider may want to submit key rotation on behalf of the holder. Rotation mode requires sk_H to construct the equality proofs - if the custody provider constructs the proofs, they have access to sk_H by definition. Granting them signing authority is not a meaningful additional security risk.
-
-Proposed permission: `ConfidentialMPTHolderKeyUpdate` rotation mode is delegatable under XLS-0074.
-
-**`ConfidentialMPTHolderKeyUpdate`** - Recovery Mode
-
-Recovery mode is more sensitive - it sets `RecoveryKey` on the holder's `MPToken`, effectively authorizing key replacement. Unlike rotation mode, recovery mode does not require sk_H. Delegation therefore grants meaningful additional authority. Whether recovery mode should be delegatable is an open question. If it is, it should require a permission distinct from rotation mode delegation, so that a custody provider authorized to rotate cannot also trigger recovery.
-
-### 17.3. Permission Summary
-
-| Transaction                                      | Permission Name                          | Delegatable?                | Notes                                                                                                                                   |
-| :----------------------------------------------- | :--------------------------------------- | :-------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `MPTokenIssuanceSet` (key rotation)              | Existing `MPTokenIssuanceSet` permission | Per XLS-0074 existing rules | Key rotation uses same permission as all other `MPTokenIssuanceSet` operations                                                          |
-| `ConfidentialMPTMirrorUpdate` (issuer mode)      | `ConfidentialMPTMirrorUpdate`            | Yes                         | Grants bulk migration authority without `MPTokenIssuanceSet` authority                                                                  |
-| `ConfidentialMPTMirrorUpdate` (holder mode)      | N/A - holder self-migration              | Holder signs directly       | No delegation needed                                                                                                                    |
-| `ConfidentialMPTHolderKeyUpdate` (rotation mode) | `ConfidentialMPTHolderKeyUpdate`         | Yes                         | Custody provider use case                                                                                                               |
-| `ConfidentialMPTHolderKeyUpdate` (recovery mode) | TBD                                      | TBD - see Section 17.2      | Sensitive operation                                                                                                                     |
-| `ConfidentialMPTRecoverBalance`                  | `ConfidentialMPTRecoverBalance`          | Yes                         | Grants recovery completion authority without full issuer authority; granularity vs `ConfidentialMPTMirrorUpdate` TBD - see Section 17.1 |
+- `ConfidentialMPTHolderKeyUpdate` is not delegable. Rotation and recovery modes both register a submitter-chosen holder key, and cancel mode is covered as well because delegability is set per transaction type. This matches `ConfidentialMPTConvert`, which XLS-0096 makes non-delegable for the same reason.
+- `MPTokenIssuanceSet` remains delegable, but a delegated submission **MUST NOT** carry `IssuerEncryptionKey` or `AuditorEncryptionKey`, meaning the delegated account cannot rotate the issuer or auditor key.
+- `ConfidentialMPTMirrorUpdate` and `ConfidentialMPTRecoverBalance` are delegable.
 
 ## 18. Rationale
 
