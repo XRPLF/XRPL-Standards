@@ -847,7 +847,6 @@ The response returns the raw ledger object plus **computed convenience fields** 
 | `proposal_id`     | string | The ID of the `TransactionProposal`.                                                                                |
 | `proposal`        | object | The raw `TransactionProposal` ledger object.                                                                        |
 | `proposal_status` | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                      |
-| `expired_reason`  | string | Present only when `proposal_status` is `"expired"`: `"expiration"` or `"last_ledger_sequence"` (§8.1.3.3).          |
 | `signing_status`  | array  | One entry per required authorization (§8.1.3.1), in a stable order: the initiator first, then auxiliary co-signers, then batch participants. |
 | `tx_blob`         | string | Present only when `proposal_status` is `"complete"`: the stored `ProposedTransaction` serialized in submit-ready binary form, so a client does not have to reassemble and re-serialize it. Providing it implies nothing beyond §8.1.3.4. |
 
@@ -858,12 +857,11 @@ Each `signing_status` entry:
 | Field           | Type    | Description                                                                                                          |
 | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `account`       | string  | The account whose authorization is required.                                                                            |
-| `role`          | string  | Why it is required: `"account"`, `"batch_participant"`, `"counterparty"`, or `"sponsor"` (§8.1.3.1).                    |
 | `signed`        | boolean | Whether the signature material collected so far currently authorizes this account on the queried ledger (§8.1.3.2).     |
 | `reason`        | string  | Present only when `signed` is `false`: why (see below).                                                                 |
-| `signed_weight` | number  | Present only when a `Signers` array has been collected for this row: its weight against the account's live `SignerList`. |
-| `quorum`        | number  | Present only when the account has a live `SignerList`: its `SignerQuorum`.                                              |
-| `signers`       | array   | Present only when the account has a live `SignerList`: one entry per list member — `{account, weight, signed}` — where `signed` is whether a currently-valid signature from that member has been collected. This is the list a wallet chases: every member with `signed: false` is a candidate next signer. Collected signatures from accounts *not* on the live list do not appear here; they surface as `reason: "invalid_signer_set"`. |
+| `signed_weight` | number  | (Optional, present on Accounts with SignerList only) Present only when a `Signers` array has been collected for this row: its weight against the account's live `SignerList`. |
+| `quorum`        | number  | (Optional, present on Accounts with SignerList only) Present only when the account has a live `SignerList`: its `SignerQuorum`.                                              |
+| `signers`       | array   | (Optional, present on Accounts with SignerList only) Present only when the account has a live `SignerList`: one entry per list member — `{account, weight, signed}` — where `signed` is whether a currently-valid signature from that member has been collected. This is the list a wallet chases: every member with `signed: false` is a candidate next signer. Collected signatures from accounts *not* on the live list do not appear here; they surface as `reason: "invalid_signer_set"`. |
 
 Rows are keyed by the pair (`account`, `role`), not by `account` alone. The same account can owe two independent authorizations through different signature slots — for example, the fee sponsor of a proposed `Batch` who is also an inner participant signs once through `SponsorSignature` and once through `BatchSigners` — and each slot succeeds or fails on its own.
 
@@ -873,9 +871,9 @@ Rows are keyed by the pair (`account`, `role`), not by `account` alone. The same
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `no_signature`                   | No signature material has been collected for this row yet.                                                                          |
 | `below_quorum`                   | A `Signers` array is collected but its weight against the live `SignerList` is below the live `SignerQuorum`.                       |
-| `invalid_signer_set`             | The collected `Signers` array contains an entry the live `SignerList` does not authorize; submission rejects the set wholesale.     |
-| `no_signer_list`                 | A `Signers` array is collected but the account has no `SignerList` on the queried ledger.                                           |
-| `master_disabled`                | The collected signature is by the master key, and the master key has since been disabled.                                           |
+| `invalid_signer_set`             | The collected `Signers` array contains an entry the live `SignerList` does not authorize; submission rejects the set wholesale. This occurs when the Account has removed a Signer from its erstwhile SignerList configuration    |
+| `no_signer_list`                 | A `Signers` array is collected but the account has no `SignerList` on the queried ledger. This error occurs when the Account had a SignerList but has since deleted it and switched to a SingleSign configuration                                          |
+| `master_disabled`                | The collected signature is by the master key, and the master key has since been disabled. This is caused by the updated ledger-state since the collection of this signature.                                           |
 | `not_authorized`                 | The signing key does not currently authorize the account (e.g. a rotated regular key).                                              |
 | `account_not_found`              | The account does not exist on the queried ledger (and is not one an earlier inner transaction of the proposed `Batch` would create). |
 | `awaiting_sponsorship_signature` | Sponsor rows only: an on-ledger `Sponsorship` entry exists, but its flags require a co-signature for what this transaction sponsors. |
