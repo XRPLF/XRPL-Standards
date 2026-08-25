@@ -35,7 +35,7 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 - **Key Epoch**: A monotonically increasing counter on `MPTokenIssuance` that increments on each ElGamal key rotation for the issuer or auditor role.
 - **Mirror Epoch**: A monotonically increasing counter on `MPToken` that tracks the last key epoch at which the holder's issuer or auditor mirror ciphertext was re-encrypted.
-- **Stale Mirror**: A holder's issuer (or auditor) mirror ciphertext is stale when its mirror epoch is less than the current key epoch on `MPTokenIssuance`. A stale mirror is encrypted under an old key and cannot be combined homomorphically with new transaction deltas encrypted under the current key. Validators enforce staleness checks on all confidential transactions that touch the issuer or auditor mirror - see Section 14.1 for the full list of affected transactions and failure conditions.
+- **Stale Mirror**: A present issuer or auditor mirror ciphertext whose mirror epoch is less than the corresponding key epoch on `MPTokenIssuance`. A stale mirror is encrypted under an older key and cannot be combined homomorphically with new transaction deltas encrypted under the current key.
 - **Current Mirror**: A holder's issuer or auditor mirror ciphertext is current when the mirror ciphertext is present and its mirror epoch equals the corresponding key epoch on MPTokenIssuance. A missing auditor mirror is not current when an auditor key is configured, even if both absent epoch fields are interpreted as epoch 0. When no auditor key is configured, no auditor mirror is required.
 - **Active Re-encryption**: The process by which the issuer submits `ConfidentialMPTMirrorUpdate` for each holder after a key rotation to re-encrypt mirror ciphertexts under the new key.
 - **Recovery Key** (`sfRecoveryKey`): A transient field on `MPToken` set by the holder to authorize replacement of their ElGamal key when they have lost `sk_H`.
@@ -75,10 +75,10 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 Until a holder's mirror is migrated, confidential transactions for that holder are rejected. The underlying reason is cryptographic: in `ConfidentialMPTSend` and other transactions, the holder correctly reads the current `IssuerEncryptionKey` (`pk_I'`) from the issuance and constructs `IssuerEncryptedAmount` under it. However, the on-ledger accumulated `IssuerEncryptedBalance` is still under the old key (`pk_I`). Adding a delta under `pk_I'` to an accumulated balance under `pk_I` is cryptographically invalid - ciphertexts under different keys cannot be combined homomorphically.
 
-The epoch check (`IssuerKeyMirrorEpoch < IssuerKeyEpoch`) makes this detectable cleanly:
+Comparing the holder's mirror epoch with the corresponding issuance key epoch makes this detectable cleanly:
 
 - Validators use it to reject the transaction explicitly and early, before attempting an invalid homomorphic addition
-- Wallet software uses it proactively - by comparing `IssuerKeyMirrorEpoch` on the holder's `MPToken` against `IssuerKeyEpoch` on `MPTokenIssuance`, the wallet knows the send will fail and can warn the holder and block submission before it reaches the network
+- Wallet software applies the same comparison proactively, allowing it to warn the holder and block a transaction that would fail before submission
 
 **Auditor key rotation** follows the identical pattern using `AuditorEncryptionKey` and `AuditorKeyEpoch`.
 
@@ -110,7 +110,7 @@ Prioritization for bulk migration:
 3. Regulatory-sensitive accounts - under specific compliance obligations.
 4. Remaining inactive accounts - clawback remains blocked for these holders until migrated.
 
-The issuer may rotate keys multiple times. Holders with stale mirrors are blocked from transacting at the per-transaction level regardless of how many epochs behind they are. See Section 14.1.
+The issuer may rotate keys multiple times. Holders with stale mirrors are blocked from transacting at the per-transaction level regardless of how many epochs behind they are. See Section 5.3.2.
 
 **Clawback and migration urgency**: Clawback is blocked for any unmigrated holder after key rotation - the issuer must complete `ConfidentialMPTMirrorUpdate` before executing `ConfidentialMPTClawback` for that holder.
 
@@ -134,25 +134,44 @@ mirror is current by requiring equality between its mirror epoch and the
 corresponding key epoch. Ledger invariants separately ensure that a mirror
 epoch cannot exceed its corresponding key epoch.
 
-#### 5.3.2. Migration-Required Conditions
+#### 5.3.2. Transactions Requiring Current Mirrors
+
+- `ConfidentialMPTSend` requires current issuer and auditor mirrors for both
+  the sender and destination.
+- `ConfidentialMPTConvert` requires current issuer and auditor mirrors for an
+  already-initialized holder.
+- `ConfidentialMPTConvertBack` requires current issuer and auditor mirrors for
+  the holder.
+- `ConfidentialMPTClawback` requires a current issuer mirror for the holder.
+
+A transaction fails with `tecNO_PERMISSION` when any required mirror is not
+current.
+
+After issuer or auditor key rotation, transactions that carry issuer or
+auditor encrypted amounts MUST construct those ciphertexts under the
+currently registered encryption keys on `MPTokenIssuance`.
+`ConfidentialMPTClawback` MUST use the secret key corresponding to the current
+`IssuerEncryptionKey` and can proceed only after the holder's issuer mirror is
+current.
+
+#### 5.3.3. Migration-Required Conditions
 
 The required migration is determined as follows:
 
-1. If the issuer mirror epoch does not match the current issuer key epoch, the
-   issuer mirror must be migrated.
+1. If the issuer mirror is not current, it must be migrated.
 2. If an auditor key is configured but `AuditorEncryptedBalance` is absent, the
    auditor mirror must be initialized. This is the late-registration case.
    Initial auditor-key registration remains at epoch 0, so field presence must
    be checked separately from epoch equality.
-3. If `AuditorEncryptedBalance` is present but its mirror epoch does not match
-   the current auditor key epoch, the auditor mirror must be migrated.
+3. If `AuditorEncryptedBalance` is present but the auditor mirror is not
+   current, it must be migrated.
 4. If both mirrors require migration, they may be updated in one
    `ConfidentialMPTMirrorUpdate`.
 
 A missing `IssuerEncryptedBalance` on an initialized confidential `MPToken` is
 an invalid ledger state, not a migration state.
 
-#### 5.3.3. New Holder Initialization
+#### 5.3.4. New Holder Initialization
 
 A holder who executes `ConfidentialMPTConvert` after key registration or
 rotation has their `MPToken` initialized with mirror ciphertexts under the
@@ -160,7 +179,7 @@ current keys. Its mirror epoch fields are set to the corresponding current key
 epochs, with epoch 0 fields omitted from ledger storage. The holder therefore
 does not require migration.
 
-#### 5.3.4. Issuance-Wide Migration Completion
+#### 5.3.5. Issuance-Wide Migration Completion
 
 Mirror status for a single holder can be determined on-ledger in O(1) from
 mirror presence and epoch equality. Determining whether migration is complete
@@ -216,8 +235,8 @@ The existing `MPToken` ledger object is extended with three new fields. All othe
 
 | Field Name              | Constant | Required | Internal Type | Default Value | Description                                                                                                                                                                                                                                                                                                                                                                                 |
 | :---------------------- | :------- | :------- | :------------ | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `IssuerKeyMirrorEpoch`  | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` at which this holder's issuer mirror was last re-encrypted. Stale when `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` on `MPTokenIssuance`. Not stored when at its default value.                                                                                                                                                                                           |
-| `AuditorKeyMirrorEpoch` | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` at which this holder's auditor mirror was last re-encrypted. Stale when `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` on `MPTokenIssuance`. Not stored when at its default value.                                                                                                                                                                                       |
+| `IssuerKeyMirrorEpoch`  | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` at which this holder's issuer mirror was last re-encrypted. The mirror is stale when this value is less than the current `IssuerKeyEpoch`. Not stored when at its default value.                                                                                                                                                                                       |
+| `AuditorKeyMirrorEpoch` | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` at which this holder's auditor mirror was last re-encrypted. The mirror is stale when this value is less than the current `AuditorKeyEpoch`. Not stored when at its default value.                                                                                                                                                                                    |
 | `RecoveryKey`           | No       | No       | `BLOB`        | N/A           | A 33-byte compressed ElGamal public key authorized for key loss recovery. Set by `ConfidentialMPTHolderKeyUpdate` in recovery mode (`tfHolderKeyRecovery`). Cleared by exactly two paths: (1) `ConfidentialMPTRecoverBalance` when the issuer completes recovery; (2) `ConfidentialMPTHolderKeyUpdate` with `tfCancelRecovery` when the holder explicitly cancels. Has no automatic expiry. |
 
 ### 7.2. Deletion
@@ -397,9 +416,9 @@ Whether it is issuer mode or holder mode is determined by `Holder` field's prese
 5. The target holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 6. The target holder's `MPToken` has no `sfIssuerEncryptedBalance`, there is no mirror to re-encrypt. (`tecNO_PERMISSION`)
 7. `AuditorEncryptedAmount` is present but the issuance has no registered `sfAuditorEncryptionKey`. (`tecNO_PERMISSION`)
-8. `IssuerEncryptedAmount` is present but the holder's `sfIssuerKeyMirrorEpoch` already equals the issuance's `sfIssuerKeyEpoch`, the mirror is not stale. (`tecNO_PERMISSION`)
-9. Issuer mode, auditor-only migration (`AuditorEncryptedAmount` present, `IssuerEncryptedAmount` absent): the holder's `sfIssuerKeyMirrorEpoch` does not equal the issuance's `sfIssuerKeyEpoch`, the issuer mirror must be brought up to date first. (`tecNO_PERMISSION`)
-10. `AuditorEncryptedAmount` is present, the holder already has an `sfAuditorEncryptedBalance`, and `sfAuditorKeyMirrorEpoch` already equals the issuance's `sfAuditorKeyEpoch` — the mirror is not stale. First-time registration of an auditor mirror is exempt. (`tecNO_PERMISSION`)
+8. `IssuerEncryptedAmount` is present but `IssuerKeyMirrorEpoch` already equals `IssuerKeyEpoch`; the issuer mirror is already current. (`tecNO_PERMISSION`)
+9. Issuer mode, auditor-only migration (`AuditorEncryptedAmount` present, `IssuerEncryptedAmount` absent): `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`; the issuer mirror must be migrated first. (`tecNO_PERMISSION`)
+10. `AuditorEncryptedAmount` is present, the holder already has an `sfAuditorEncryptedBalance`, and `AuditorKeyMirrorEpoch` already equals `AuditorKeyEpoch`; the auditor mirror is already current. First-time registration of an auditor mirror is exempt. (`tecNO_PERMISSION`)
 11. Holder mode: `sfConfidentialBalanceInbox` is absent or is not the canonical encrypted zero — the holder must run `ConfidentialMPTMergeInbox` first. (`tecNO_PERMISSION`)
 12. Issuer mode: `ZKProof` fails the compact Chaum-Pedersen equality proof verification. (`tecBAD_PROOF`)
 13. Holder mode: `ZKProof` fails the cross-key equality proof verification. (`tecBAD_PROOF`)
@@ -527,13 +546,12 @@ Exactly one of the three flags must be set.
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 3. The holder's `MPToken` is missing confidential state (`HolderEncryptionKey`, `ConfidentialBalanceSpending`, or `ConfidentialBalanceInbox`). (`tecNO_PERMISSION`)
 4. Rotation or recovery mode: `HolderEncryptionKey` equals the current on-ledger `HolderEncryptionKey` (no-op). (`tecNO_PERMISSION`)
-5. Rotation mode: `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - holder's issuer mirror is stale, must migrate before rotating. (`tecNO_PERMISSION`)
-6. Rotation mode: `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - holder's auditor mirror is stale, must migrate before rotating (if auditor configured). (`tecNO_PERMISSION`)
-7. Rotation mode: the holder's `MPToken` has the `lsfMPTLocked` flag set. (`tecNO_PERMISSION`)
-8. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
-9. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
-10. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
-11. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing both that the submitted `ConfidentialBalanceSpending` encrypts under `HolderEncryptionKey` the same value the on-ledger `ConfidentialBalanceSpending` encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. (`tecBAD_PROOF`)
+5. Rotation mode: `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`; the issuer mirror must be migrated before rotating. (`tecNO_PERMISSION`)
+6. Rotation mode: an auditor key is configured and `AuditorEncryptedBalance` is absent or `AuditorKeyMirrorEpoch` does not equal `AuditorKeyEpoch`; the auditor mirror must be initialized or migrated before rotating. (`tecNO_PERMISSION`)
+7. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
+8. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
+9. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
+10. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing both that the submitted `ConfidentialBalanceSpending` encrypts under `HolderEncryptionKey` the same value the on-ledger `ConfidentialBalanceSpending` encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. (`tecBAD_PROOF`)
 
 **Cancel mode** (`tfCancelRecovery`): No additional fields are required beyond `TransactionType`, Account, `MPTokenIssuanceID`, and Flags. The transaction must be signed by the holder's XRPL signing key. No cryptographic proof is required - the holder's signing key signature is sufficient authorization to cancel their own pending recovery.
 
@@ -635,7 +653,7 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
 2. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 3. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 4. The holder's `MPToken` has no pending `RecoveryKey` - holder has not authorized recovery. (`tecNO_PERMISSION`)
-5. The holder's issuer mirror is stale (`IssuerKeyMirrorEpoch` < `IssuerKeyEpoch`) - the issuer must first migrate the mirror via `ConfidentialMPTMirrorUpdate` before recovery can proceed, so the proof can be verified against the current issuer key. (`tecNO_PERMISSION`)
+5. `IssuerEncryptedBalance` is absent or `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`; the issuer must first migrate the issuer mirror via `ConfidentialMPTMirrorUpdate` before recovery can proceed. (`tecNO_PERMISSION`)
 6. `ZKProof` fails the compact Chaum-Pedersen equality verification against `IssuerEncryptedBalance` and `RecoveryKey`. (`tecBAD_PROOF`)
 
 ### 11.4. State Changes
@@ -664,35 +682,23 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
 
 ### 12.1. Clawback
 
-Per XLS-0096, `ConfidentialMPTClawback` burns the holder's confidential balance - it decreases both OA and COA permanently and requires a ZKP proving the issuer mirror encrypts the revealed amount, anchored to the on-ledger `IssuerEncryptedBalance`.
-
-After issuer key rotation, `ConfidentialMPTClawback` verifies the ZKP against `sfIssuerEncryptionKey` on `MPTokenIssuance` - whichever key is currently recorded there, not a caller-selectable key. After rotation, `sfIssuerEncryptionKey` is pk_I'. An unmigrated holder's `IssuerEncryptedBalance` is still encrypted under pk_I (the old key), so the issuer's ZKP - which must use sk_I to prove against the old mirror - will fail verification against pk_I'.
-
-Clawback is therefore blocked for unmigrated holders after key rotation. The issuer must first migrate the holder's mirror via `ConfidentialMPTMirrorUpdate` before executing clawback. There is no path to claw back an unmigrated holder using the old key after rotation.
-
-This adds a new failure condition to `ConfidentialMPTClawback` (existing XLS-0096 transaction):
-
-| Code               | Condition                                                                                                                                                        |
-| :----------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tecNO_PERMISSION` | Holder's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - mirror is stale. Issuer must migrate the holder's mirror via `ConfidentialMPTMirrorUpdate` before clawback. |
-
-**Post-clawback state**: After a successful clawback, `IssuerEncryptedBalance` is reset to canonical encrypted zero and `IssuerKeyMirrorEpoch` is updated to the current `IssuerKeyEpoch`.
-
-**Issuer key loss and clawback**: If the issuer has lost sk_I, clawback is impossible for all holders - the required ZKP cannot be produced against pk_I' without sk_I', and the old mirrors cannot be migrated without sk_I. Clawback authority is restored progressively as holders self-migrate their mirrors under pk_I'. See Section 13.
+`ConfidentialMPTClawback` requires the holder's issuer mirror to be current, as
+specified in Section 5.3.2. On success, `IssuerEncryptedBalance` is reset to
+canonical encrypted zero under the current issuer key and
+`IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`. If an auditor key is
+configured, `AuditorEncryptedBalance` is reset under the current auditor key
+and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`. All other clawback
+semantics remain unchanged from XLS-0096.
 
 ### 12.2. Freeze
 
-Per XLS-0096, freezing a holder sets `lsfMPTLocked` on their `MPToken`, blocking `ConfidentialMPTSend` and `ConfidentialMPTConvertBack` but not incoming transfers or `ConfidentialMPTMergeInbox`.
-
-The following key rotation transactions interact with freeze status:
-
-`ConfidentialMPTMirrorUpdate` while frozen: Permitted. The issuer is re-encrypting the mirror ciphertext, not enabling spending. Freeze status is unchanged.
-
-`ConfidentialMPTHolderKeyUpdate` in rotation mode while frozen: Rejected with `tecNO_PERMISSION` - see condition 7 of Section 10.5.2. Rotation moves no value, but it rewrites both of the holder's confidential balance ciphertexts, and the conservative choice is to require the freeze to be lifted first.
-
-`ConfidentialMPTHolderKeyUpdate` in recovery mode while frozen: Permitted. The holder is registering `RecoveryKey` only - no balance is modified and no spending capability is granted.
-
-`ConfidentialMPTRecoverBalance` while frozen: Permitted. The issuer is re-encrypting the holder's balance under the new key - no value is moved and freeze status remains in effect after recovery. The holder regains the ability to decrypt their balance but cannot spend until unfrozen.
+This amendment does not change the lock behavior defined by XLS-0096. A
+holder-level or issuance-level lock does not prevent key rotation through
+`MPTokenIssuanceSet` or any transaction introduced by this amendment, because
+these operations only rotate keys, migrate mirrors, manage recovery
+authorization, or re-encrypt balances without moving value. They do not clear
+or otherwise modify the lock, so the holder remains unable to spend while the
+lock is set. Specifically, holders are allowed to rotate their keys while locked, as a locked account remains vulnerable to key compromise
 
 ## 13. Issuer Key Loss
 
@@ -738,7 +744,7 @@ This is a one-step process per holder - unlike holder key loss recovery which re
 
 1. Issuer registers new pk_I' via `MPTokenIssuanceSet` (they still have their XRPL signing key).
 2. `IssuerKeyEpoch` increments.
-3. Validators reject holder confidential transactions where `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch`.
+3. Validators reject holder confidential transactions that require an issuer mirror while `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`.
 4. Each holder runs `ConfidentialMPTMergeInbox` first, then submits `ConfidentialMPTMirrorUpdate` without a Holder field with the cross-key equality proof to self-migrate their issuer mirror. Merge is required because the cross-key equality proof anchors to `ConfidentialBalanceSpending` which encodes only b_s - if `ConfidentialBalanceInbox` is non-zero, the new issuer mirror would encode b_s instead of the full b = b_s + b_in, producing a mirror that doesn't match the holder's actual total balance and breaking clawback correctness. Holders may also self-migrate their auditor mirror in the same transaction if needed.
 5. Issuer regains clawback authority over each holder as their mirror is reconstructed.
 
@@ -746,44 +752,35 @@ This is a one-step process per holder - unlike holder key loss recovery which re
 
 **Limitation**: Historical decryption. The issuer cannot decrypt historical ciphertexts from before the key loss.
 
-### 13.5. Fallback: Inactive Holders
+### 13.5. Counterparty Dependency and Recovery Limitations
 
-There is no clean on-chain fallback for inactive holders when the issuer has lost sk_I. The options are:
+Holder key recovery is not unilateral. It requires an active issuer that
+retains `sk_I` and completes `ConfidentialMPTRecoverBalance`. If the issuer is
+inactive or unavailable, a holder's pending key recovery cannot complete even
+after `RecoveryKey` has been registered.
 
-**Option 1**: Wait. Inactive holders will self-migrate when they next transact confidentially - they will hit the epoch staleness check and be prompted to submit `ConfidentialMPTMirrorUpdate`. The issuer regains clawback authority progressively as holders act.
+Issuer key-loss recovery is likewise not unilateral. It requires an active
+holder that retains `sk_H` and self-migrates the issuer mirror. If the issuer
+loses `sk_I` while a holder is inactive or unavailable, that holder's issuer
+mirror cannot be reconstructed and the issuer's clawback authority over that
+holder remains suspended. The protocol provides no on-chain fallback without
+participation from a party that can decrypt an equivalent mirror.
 
-**Option 2**: Off-chain communication. The issuer contacts inactive holders off-chain to prompt them to self-migrate. No protocol changes needed.
-
-**Option 3**: Accept permanent suspension. For holders who remain permanently inactive, the issuer's clawback authority over those specific holders is permanently suspended. The issuer can still claw back active holders whose mirrors are reconstructed.
-
-Note: `ConfidentialMPTConvertBack` is not a viable fallback here. It requires the holder to have sk_H to produce the required ZKP - active holders with sk_H already have a better path via Section 13.4 self-migration without publicly revealing their balance. And inactive holders who will not self-migrate are equally unlikely to voluntarily convert back to public. `ConfidentialMPTClawback` is also unavailable without sk_I.
+An inactive holder cannot self-migrate their issuer mirror. The issuer may wait
+for the holder to return or contact them through off-chain channels, but until
+the holder participates, confidential transactions and clawback remain
+unavailable for that holder. If the holder never participates, the suspension
+is permanent. This combined situation is expected to be rare under the issuer
+key-management practices recommended in Section 13.3, but it is an explicit
+limitation of the recovery model.
 
 ## 14. Operational Considerations
 
-### 14.1. Epoch Staleness as a Mandatory Validation Check
-
-Epoch consistency is a mandatory validation step for every confidential transaction that touches the issuer or auditor mirror. After key rotation, the on-ledger `IssuerEncryptedBalance` (or `AuditorEncryptedBalance`) is under the old key while any new transaction delta is under the new key. These cannot be combined homomorphically - ciphertexts under different keys cannot be added. The epoch check makes this detectable and actionable: validators reject stale-mirror transactions cleanly rather than failing at the cryptographic combination step, and wallet software can proactively detect staleness by comparing `IssuerKeyMirrorEpoch` on the holder's `MPToken` against `IssuerKeyEpoch` on `MPTokenIssuance` (and similarly for auditor) before constructing or submitting transactions.
-
-Validators must check both `IssuerKeyMirrorEpoch` == `IssuerKeyEpoch` and `AuditorKeyMirrorEpoch` == `AuditorKeyEpoch` (treating absent as 0) before processing the following existing XLS-0096 transactions:
-
-| Transaction                  | Failure Code       | Condition                                                                                                                   |
-| :--------------------------- | :----------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Sender's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                                |
-| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Sender's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured).                     |
-| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Destination's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                           |
-| `ConfidentialMPTSend`        | `tecNO_PERMISSION` | Destination's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured).                |
-| `ConfidentialMPTConvert`     | `tecNO_PERMISSION` | Already-initialized holder's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                            |
-| `ConfidentialMPTConvert`     | `tecNO_PERMISSION` | Already-initialized holder's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured). |
-| `ConfidentialMPTConvertBack` | `tecNO_PERMISSION` | Holder's `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - issuer mirror is stale.                                                |
-| `ConfidentialMPTConvertBack` | `tecNO_PERMISSION` | Holder's `AuditorKeyMirrorEpoch` < `AuditorKeyEpoch` - auditor mirror is stale (if auditor configured).                     |
-
-The holder must wait for the issuer to submit `ConfidentialMPTMirrorUpdate` - or self-migrate via the cross-key equality proof - before they can transact confidentially.
-
-### 14.2. Migration Throughput
+### 14.1. Migration Throughput
 
 Each `ConfidentialMPTMirrorUpdate` carries a new mirror ciphertext (66 bytes) and a 128-byte compact Chaum-Pedersen equality proof. Fees are 10x base fee. Traversing the entire holders list is done off-chain.
 
-### 14.3. Wallet Implementation Guidance
+### 14.2. Wallet Implementation Guidance
 
 Wallet software implementing `ConfidentialMPTHolderKeyUpdate` in rotation mode must:
 
@@ -799,7 +796,7 @@ Wallet software implementing `ConfidentialMPTHolderKeyUpdate` in rotation mode m
 
 In both cases the result is a cleanly rejected transaction requiring resubmission - not a partial or ambiguous state. Clawback is unaffected in either scenario: `ConfidentialMPTClawback` uses `IssuerEncryptedBalance` (the issuer mirror), not `ConfidentialBalanceSpending` or `ConfidentialBalanceVersion`. The operational note is a UX concern, not a safety concern.
 
-### 14.4. Issuer Recovery Request Detection
+### 14.3. Issuer Recovery Request Detection
 
 After a holder submits `ConfidentialMPTHolderKeyUpdate` with `tfHolderKeyRecovery`, `RecoveryKey` is set on their `MPToken`. The issuer needs to detect this to submit `ConfidentialMPTRecoverBalance` promptly. Two complementary mechanisms are recommended:
 
@@ -825,21 +822,6 @@ For each returned `mptoken_index`, the issuer retrieves the corresponding `MPTok
 
 **No protocol changes required**. Both mechanisms use existing XRPL and Clio infrastructure. This is purely an operational implementation concern for issuers.
 
-### 14.5. Regulatory Verification
-
-A regulator (or any observer) can verify migration completion by comparing `IssuerKeyEpoch` on `MPTokenIssuance` against `IssuerKeyMirrorEpoch` on each `MPToken`. While traversing all the holders off-chain, the issuer can easily tell
-if the migration is complete or not.
-
-### 14.6. Ledger Replay Integrity
-
-Each XRPL ledger version is a complete, immutable snapshot including `IssuerEncryptionKey` as it was at that moment. When replaying a historical transaction from before a key rotation, the replaying node uses the `MPTokenIssuance` state from that exact ledger version - preserving the old key. This is identical to how signing key rotation works on XRPL.
-
-### 14.7. Interaction with Existing XLS-0096 Transactions
-
-After issuer key rotation, `ConfidentialMPTConvert`, `ConfidentialMPTSend`, and `ConfidentialMPTConvertBack` must use the new pk_I' for issuer mirror ciphertexts. Clients that read the current key from the issuance object will naturally use the new key.
-
-For `ConfidentialMPTClawback`, the issuer must use sk_I' after the holder's mirror has been migrated. An unmigrated holder cannot be clawed back with sk_I; the issuer must migrate the mirror first.
-
 ## 15. Security Considerations
 
 ### 15.1. Key Compromise vs. Key Loss
@@ -862,7 +844,7 @@ Consistent with XLS-0096's existing behavior for initial key setting. A rogue is
 
 ### 15.5. `ConfidentialBalanceVersion` Increment on Holder Key Rotation
 
-`ConfidentialMPTHolderKeyUpdate` in rotation mode increments `ConfidentialBalanceVersion`, invalidating in-flight `ConfidentialMPTSend` proofs. See Section 14.3.
+`ConfidentialMPTHolderKeyUpdate` in rotation mode increments `ConfidentialBalanceVersion`, invalidating in-flight `ConfidentialMPTSend` proofs. See Section 14.2.
 
 ### 15.6. Two-Step Recovery Authorization
 
@@ -874,11 +856,11 @@ If the issuer never completes recovery, the holder remains locked out indefinite
 
 ### 15.8. Issuer Key Loss and Clawback Authority
 
-After key rotation, clawback is blocked for any holder whose `IssuerKeyMirrorEpoch` < `IssuerKeyEpoch` - the ZKP is verified against the current `sfIssuerEncryptionKey`, not a caller-selectable key. Loss of sk_I therefore suspends clawback authority for all holders - without sk_I the issuer cannot migrate mirrors, and without migrated mirrors clawback cannot proceed. Authority is restored progressively as holders self-migrate their mirrors under pk_I'.
+After key rotation, clawback is blocked until the holder's `IssuerKeyMirrorEpoch` equals `IssuerKeyEpoch` - the ZKP is verified against the current `sfIssuerEncryptionKey`, not a caller-selectable key. Loss of sk_I therefore suspends clawback authority for all holders - without sk_I the issuer cannot migrate mirrors, and without migrated mirrors clawback cannot proceed. Authority is restored progressively as holders self-migrate their mirrors under pk_I'.
 
 ### 15.9. Successive Rotations and Historical Key Retention
 
-The protocol does not enforce a global gate preventing successive rotations before migration is complete. Per-transaction staleness checks (`IssuerKeyMirrorEpoch` < `IssuerKeyEpoch`) enforce correctness at the point of use for each individual holder, regardless of how many epochs behind they are.
+The protocol does not enforce a global gate preventing successive rotations before migration is complete. Per-transaction mirror checks enforce correctness at the point of use for each individual holder, regardless of how many epochs behind they are.
 
 An operational security consideration: after multiple successive rotations, migrating a holder still at an old epoch requires the historical secret key for that epoch. If an issuer destroys a historical secret key before all holders at that epoch are migrated (e.g. during an emergency rotation due to compromise), those holders cannot be actively migrated and must fall back to self-migration (Section 9.7). Issuers should retain historical secret keys until all holders at each epoch are fully migrated.
 
