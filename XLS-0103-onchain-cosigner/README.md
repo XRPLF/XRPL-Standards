@@ -869,8 +869,7 @@ Rows are keyed by the pair (`account`, `role`), not by `account` alone. The same
 
 | Value                            | Meaning                                                                                                                          |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `no_signature`                   | No signature material has been collected for this row yet.                                                                          |
-| `below_quorum`                   | A `Signers` array is collected but its weight against the live `SignerList` is below the live `SignerQuorum`.                       |
+| `inadequate_signatures` | `bool` | In the case of Single-Sign configuration, the account has not received any signatures. In the case of Multi-Sign configuration, the received signatures do not yet satisfy the requisite quorum |
 | `invalid_signer_set`             | The collected `Signers` array contains an entry the live `SignerList` does not authorize; submission rejects the set wholesale. This occurs when the Account has removed a Signer from its erstwhile SignerList configuration    |
 | `no_signer_list`                 | A `Signers` array is collected but the account has no `SignerList` on the queried ledger. This error occurs when the Account had a SignerList but has since deleted it and switched to a SingleSign configuration                                          |
 | `master_disabled`                | The collected signature is by the master key, and the master key has since been disabled. This is caused by the updated ledger-state since the collection of this signature.                                           |
