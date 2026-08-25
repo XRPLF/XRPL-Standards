@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Generate token from GitHub App
         id: generate_token

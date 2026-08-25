@@ -120,7 +120,7 @@ The protocol relies on a set of ZKPs to validate confidential transactions witho
   - **Compact Clawback sigma proof (64 bytes)**: Used in `ConfidentialMPTClawback`. Proves the issuer's on-ledger encrypted balance mirror contains the plaintext amount being claimed.
 - **Plaintext–ciphertext equality (deterministic):** In `ConfidentialMPTConvert` and `ConfidentialMPTConvertBack`, the disclosed blinding factor allows validators to verify ciphertexts deterministically without a ZKP.
 - **Range proofs (Bulletproofs):** Prove that confidential amounts and post-transfer balances lie within a valid range, enforcing non-negativity and preventing overspending.
-  - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64).
+  - **Aggregated Bulletproof (754 bytes)**: Used in `ConfidentialMPTSend`. Proves both the transfer amount and the remaining balance are in [0, 2^64). Note that, while the Bulletproof covers the full 64-bit range, transactors independently reject any amount exceeding the protocol cap `maxMPTokenAmount` (2^63 − 1), so accepted values lie in [0, 2^63 − 1].
   - **Single Bulletproof (688 bytes)**: Used in `ConfidentialMPTConvertBack`. Proves the remaining balance after withdrawal is non-negative.
 
 ### 5.5. Delegate Accounts
@@ -141,69 +141,52 @@ To support confidential MPTs, the existing `MPTokenIssuance` ledger object is ex
 
 ### 6.2. Flags
 
-Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanConfidentialAmount`** is stored in the standard `sfFlags` field, while **`lsmfMPTCannotMutateCanConfidentialAmount`** is stored in the `sfMutableFlags` field.
+Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanHoldConfidentialBalance`** is stored in the standard `sfFlags` field, while **`lsifMPTCanHoldConfidentialBalance`** is stored in the `sfImmutableFlags` field.
 
-| Flag Name                                  | Field            | Hex Value    | Description                                                                                    |
-| :----------------------------------------- | :--------------- | :----------- | :--------------------------------------------------------------------------------------------- |
-| `lsfMPTCanConfidentialAmount`              | `sfFlags`        | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                     |
-| `lsmfMPTCannotMutateCanConfidentialAmount` | `sfMutableFlags` | `0x00040000` | If set, the `lsfMPTCanConfidentialAmount` flag can never be changed after the token is issued. |
+| Flag Name                           | Field              | Hex Value    | Description                                                                                         |
+| :---------------------------------- | :----------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
+| `lsfMPTCanHoldConfidentialBalance`  | `sfFlags`          | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
+| `lsifMPTCanHoldConfidentialBalance` | `sfImmutableFlags` | `0x00000080` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
 
-**Note**: `sfMutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
-
-### 6.2.1. Prerequisite: Enabling Freeze and Clawback for Confidential Funds
-
-The ability to freeze (lock) a holder's confidential balance and to perform `ConfidentialMPTClawback` depends on the `lsfMPTCanLock` and `lsfMPTCanClawback` flags respectively. These flags are governed by XLS-94 (`DynamicMPT`) mutable flags.
-
-**`lsmfMPTCanMutateCanLock` defaults to `false`**. Unless the issuer explicitly opts in at issuance time, the `lsfMPTCanLock` flag cannot be set or cleared after creation, meaning confidential balances cannot be frozen.
-
-To enable freeze and clawback of confidential funds, the issuer **must** set `tmfMPTCanMutateCanLock` (and, for clawback, `tmfMPTCanMutateCanClawback`) in the `MutableFlags` field of the `MPTokenIssuanceCreate` transaction. Once set, the issuer may later use `MPTokenIssuanceSet` with `tmfMPTSetCanLock` / `tmfMPTSetCanClawback` to activate those controls.
-
-| `MutableFlags` bit (creation) | On-ledger flag                | Effect when later set via `MPTokenIssuanceSet`                             |
-| :---------------------------- | :---------------------------- | :------------------------------------------------------------------------- |
-| `tmfMPTCanMutateCanLock`      | `lsmfMPTCanMutateCanLock`     | Allows issuer to freeze/unfreeze individual or global balances.            |
-| `tmfMPTCanMutateCanClawback`  | `lsmfMPTCanMutateCanClawback` | Allows issuer to enable `lsfMPTCanClawback` for `ConfidentialMPTClawback`. |
-
-If `lsmfMPTCanMutateCanLock` is **not** set, any attempt to freeze a confidential balance or perform `ConfidentialMPTClawback` will fail with `tecNO_PERMISSION`.
+**Note**: `sfImmutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
 
 ### 6.3. Managing Confidentiality Settings
 
-The `lsfMPTCanConfidentialAmount` flag enables the use of confidential transactions for an `MPTokenIssuance`. Only when this flag is enabled can the token support confidential transfers.
+The `lsfMPTCanHoldConfidentialBalance` flag enables the use of confidential transactions for an `MPTokenIssuance`. Only when this flag is enabled can the token support confidential transfers.
 
 #### 6.3.1. Mutability & Defaults
 
 > **Note on Terminology:**
 
 - `sfFlags`: The prefix `lsf` refers to ledger state flags, while `tf` refers to the transaction flags.
-- `sfMutableFlags`: The prefix `lsmf` refers to the mutable ledger state flags, while `tmf` refers to the transaction mutable flags.
+- `sfImmutableFlags`: The prefix `lsif` refers to the immutable ledger state flags.
 
-- **Default Behavior (Mutable):** By default, without setting `tmfMPTCannotMutateCanConfidentialAmount`, the issuer retains the ability to toggle the confidential amount setting (`lsfMPTCanConfidentialAmount`) on or off via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions.
-- **Permanent Lock (Immutable):** If the issuer sets the mutable flag `tmfMPTCannotMutateCanConfidentialAmount` through [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanConfidentialAmount` can never be changed after issuance.
+- **Default Behavior (Mutable):** By default, without setting `tifMPTCanHoldConfidentialBalance`, the issuer retains the ability to enable the confidential balance setting (`lsfMPTCanHoldConfidentialBalance`) via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions. Enabling is one-way; the flag cannot be cleared once set.
+- **Permanent Lock (Immutable):** If the issuer sets the immutable flag `tifMPTCanHoldConfidentialBalance` through [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanHoldConfidentialBalance` can never be changed after issuance.
 
 #### 6.3.2. Enabling Confidentiality
 
-There are two ways to enable the `lsfMPTCanConfidentialAmount` flag:
+There are two ways to enable the `lsfMPTCanHoldConfidentialBalance` flag:
 
-- **At Creation:** The issuer can enable the `tfMPTCanConfidentialAmount` flag directly within the `MPTokenIssuanceCreate` transaction at the time the token is issued.
-- **Post-Creation (Update):** If the issuance was created with confidential amount mutability allowed (that is, `lsmfMPTCannotMutateCanConfidentialAmount` was not set — which is the default behavior), the issuer may later submit an `MPTokenIssuanceSet` transaction to activate the `lsfMPTCanConfidentialAmount` flag.
+- **At Creation:** The issuer can enable the `tfMPTCanHoldConfidentialBalance` flag directly within the `MPTokenIssuanceCreate` transaction at the time the token is issued.
+- **Post-Creation (Update):** If the issuance was created with confidential mutability allowed (that is, `lsifMPTCanHoldConfidentialBalance` was not set — which is the default behavior), the issuer may later submit an `MPTokenIssuanceSet` transaction to activate the `lsfMPTCanHoldConfidentialBalance` flag.
 
 #### 6.3.3. Disabling Confidentiality
 
-If the issuance is mutable (tmfMPTCannotMutateCanConfidentialAmount is not set, which is the default), the issuer may disable `lsfMPTCanConfidentialAmount` via `MPTokenIssuanceSet`, but only under strict conditions:
-
-- **Zero Confidential Supply:** The transaction will fail if the `ConfidentialOutstandingAmount` (COA) is greater than 0. This constraint prevents user funds from being trapped in a confidential state that the ledger no longer recognizes.
+Enabling confidentiality is **one-way**. Once `lsfMPTCanHoldConfidentialBalance` is set it cannot be cleared — there is no transaction flag to disable confidential balance on an existing issuance. This guarantees that funds already converted to a confidential state can never be stranded by the capability being turned off underneath them.
 
 ### 6.4. Transfer Fee Compatibility
 
-Confidential MPTs are incompatible with non-zero `TransferFee`. An `MPTokenIssuance` MUST NOT have both a non-zero `TransferFee` and `lsfMPTCanConfidentialAmount` enabled.
+Confidential MPTs are incompatible with non-zero `TransferFee`. An `MPTokenIssuance` MUST NOT have both a non-zero `TransferFee` and `lsfMPTCanHoldConfidentialBalance` enabled.
 
 This restriction is required because XLS-33 transfer fees are percentage-based, while `ConfidentialMPTSend` hides the transferred amount. Enforcing a percentage-based fee would require revealing, trusting, or separately proving the hidden transfer amount, which is outside the scope of this amendment.
 
 The following cases are invalid:
 
-- `MPTokenIssuanceCreate` with both a non-zero `TransferFee` and `tfMPTCanConfidentialAmount`. (`temBAD_TRANSFER_FEE`)
-- `MPTokenIssuanceSet` that sets `tmfMPTSetCanConfidentialAmount` while the issuance already has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
-- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` while the issuance already has `lsfMPTCanConfidentialAmount`. (`tecNO_PERMISSION`)
-- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` and `tmfMPTSetCanConfidentialAmount` in the same transaction. (`temBAD_TRANSFER_FEE`)
+- `MPTokenIssuanceCreate` with both a non-zero `TransferFee` and `tfMPTCanHoldConfidentialBalance`. (`temBAD_TRANSFER_FEE`)
+- `MPTokenIssuanceSet` that sets `tfMPTSetCanHoldConfidentialBalance` while the issuance already has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
+- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` while the issuance already has `lsfMPTCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
+- `MPTokenIssuanceSet` that sets a non-zero `TransferFee` and `tfMPTSetCanHoldConfidentialBalance` in the same transaction. (`temBAD_TRANSFER_FEE`)
 
 `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `TransferFee`.
 
@@ -291,7 +274,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 ### 7.4. Invariants
 
 - **Deletion Blocker:** A holder's `MPToken` cannot be deleted from the ledger once confidential fields have been initialized, even if `sfConfidentialBalanceSpending`, `sfConfidentialBalanceInbox`, and `sfIssuerEncryptedBalance` all contain the canonical encrypted zero (i.e., the holder's confidential balance is zero). The issuer may delete the `MPTokenIssuance` object only when `sfConfidentialOutstandingAmount` is 0 (in addition to the standard XLS-33 deletion requirements).
-- **Confidential Amount Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanConfidentialAmount` flag enabled.
+- **Confidential Balance Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
 - **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
 - **Version Modification:** If `sfConfidentialBalanceSpending != sfConfidentialBalanceSpending` (the spending balance is modified), then `sfConfidentialBalanceVersion != sfConfidentialBalanceVersion` (the version must be changed).
 
@@ -368,7 +351,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 
 1. The destination account does not exist. (`tecNO_TARGET`)
 2. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
-3. The issuance does not support confidential amounts (`lsfMPTCanConfidentialAmount` is not set). (`tecNO_PERMISSION`)
+3. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
 4. One of the participating accounts lacks a registered ElGamal public key or required confidential fields (`sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, etc.). (`tecNO_PERMISSION`)
 5. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
 6. Either the sender's or receiver's balance is currently frozen. (`terFROZEN`)
@@ -411,7 +394,7 @@ If the transaction is successful:
 }
 ```
 
-Net effect: Public balances unchanged; confidential amount is redistributed (sender CB_S ↓, receiver CB_IN ↑). OA (plaintext) unchanged; COA (plaintext) unchanged.
+Net effect: Public balances unchanged; confidential balance is redistributed (sender CB_S ↓, receiver CB_IN ↑). OA (plaintext) unchanged; COA (plaintext) unchanged.
 
 ## 9. Transaction: `ConfidentialMPTMergeInbox`
 
@@ -443,7 +426,7 @@ This transaction respects **authorization** and **lock** constraints, ensuring t
 #### 9.2.1.2. Protocol-Level Failures
 
 1. The `MPTokenIssuance` or the user's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
-2. The issuance does not have the `lsfMPTCanConfidentialAmount` flag set. (`tecNO_PERMISSION`)
+2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 3. The user's `MPToken` object has not been initialized (missing `sfConfidentialBalanceInbox` or `sfConfidentialBalanceSpending`). (`tecNO_PERMISSION`)
 4. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
 5. The holder's `MPToken` is **locked** at the individual level (the `lsfMPTLocked` flag is set on the `MPToken`). (`tecLOCKED`)
@@ -528,7 +511,7 @@ return (R = r·G, S = r·Pk), Pk: ElGamal public key of Acct
 #### 10.4.2. Protocol-Level Failures
 
 1. The `MPToken` or `MPTokenIssuance` does not exist. (`tecOBJECT_NOT_FOUND`)
-2. The issuance does not have the `lsfMPTCanConfidentialAmount` flag set. (`tecNO_PERMISSION`)
+2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 3. The user's `MPToken` is missing the `sfConfidentialBalanceSpending` or `sfHolderEncryptionKey` fields. (`tecNO_PERMISSION`)
 4. The issuance has `sfAuditorEncryptionKey` set, but the transaction does not include `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
 5. The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
@@ -617,6 +600,8 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
      3. The global OA is also decreased by the RevealedAmount.
      4. The global `OutstandingAmount` is decreased by `RevealedAmount`, burning the clawed-back tokens. The funds are permanently removed from circulation and are **not** credited to any account.
 
+**Note**: We recommend locking the MPT before clawing back. This prevents the holder from sending any more mpt transactions while the clawback is in progress.
+
 ### 11.2. Fields
 
 | Field Name          | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                             |
@@ -679,13 +664,13 @@ If the transaction is successful, the holder's confidential state is reset, and 
 
 ## 12. Transaction: `MPTokenIssuanceSet`
 
-The existing `MPTokenIssuanceSet` transaction is extended to manage the confidential lifecycle of an MPT issuance. This includes enabling/disabling confidential amount status and registering encryption keys.
+The existing `MPTokenIssuanceSet` transaction is extended to manage the confidential lifecycle of an MPT issuance. This includes enabling confidential balance status and registering encryption keys.
 
 ### 12.1. Usage & Mutability
 
-This transaction is the only method to register keys or modify the confidential amount status (via the `MutableFlags` field with `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount` bit flags) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
+This transaction is the only method to register keys or enable the confidential balance status (via the `Flags` field with the `tfMPTSetCanHoldConfidentialBalance` bit flag) of an issuance. However, these actions are subject to strict state constraints to prevent funds from becoming locked or un-auditable.
 
-**Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanConfidentialAmount` flag using `tmfMPTSetCanConfidentialAmount`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
+**Key Registration:** Encryption keys (`IssuerEncryptionKey` and `AuditorEncryptionKey`) can be set in the same transaction that enables the `lsfMPTCanHoldConfidentialBalance` flag using `tfMPTSetCanHoldConfidentialBalance`, allowing issuers to enable confidential transfers and register keys in a single atomic operation.
 
 ### 12.2. Fields
 
@@ -696,84 +681,66 @@ The following fields are introduced by this extension to support encryption key 
 | `IssuerEncryptionKey`  | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for the issuer's mirror balances.         |
 | `AuditorEncryptionKey` | No        | `string`  | `BLOB`        | The 33-byte EC-ElGamal public key used for regulatory oversight (if applicable). |
 
-The following existing field is extended with new bit flags to support toggling the confidential amount feature post-issuance:
+The following existing field is extended with a new bit flag to support enabling the confidential balance feature post-issuance:
 
-| Field Name     | Required? | JSON Type | Internal Type | Description                                                                                                                                                                                                                             |
-| :------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MutableFlags` | No        | `number`  | `UINT32`      | Indicates which fields or flags of this token issuance can be modified after creation. See [MPTokenIssuance MutableFlags](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT#31-new-optional-field-mutableflags). |
+| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                |
+| :--------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------- |
+| `ImmutableFlags` | No        | `number`  | `UINT32`      | Indicates which fields or flags of this token issuance can NOT be modified after creation. |
 
-#### 12.2.1. `MutableFlags` Bit Flags
+### 12.3. Flags
 
-The following bit flags are added to the `MutableFlags` field to enable or disable the confidential amount feature:
+The following bit flag is added to the `Flags` field to enable the confidential balance feature:
 
-| Flag Name                          | Hex Value    | Decimal Value | Description                                                                                                                                  |
-| :--------------------------------- | :----------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmfMPTSetCanConfidentialAmount`   | `0x00001000` | 4096          | Sets the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set.   |
-| `tmfMPTClearCanConfidentialAmount` | `0x00002000` | 8192          | Clears the `lsfMPTCanConfidentialAmount` flag on the `MPTokenIssuance`. Only valid if `lsmfMPTCannotMutateCanConfidentialAmount` is not set. |
+| Flag Name                            | Hex Value    | Decimal Value | Description                                                                                                                              |
+| :----------------------------------- | :----------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `tfMPTSetCanHoldConfidentialBalance` | `0x00000100` | 256           | Sets the `lsfMPTCanHoldConfidentialBalance` flag on the `MPTokenIssuance`. Only valid if `lsifMPTCanHoldConfidentialBalance` is not set. |
 
 **Usage Notes:**
 
-- These flags can only be used if the `lsmfMPTCannotMutateCanConfidentialAmount` flag was **not** set during `MPTokenIssuanceCreate`.
-- Setting `tmfMPTSetCanConfidentialAmount` enables confidential transfers for the token.
-- Setting `tmfMPTClearCanConfidentialAmount` disables confidential transfers, but only if `ConfidentialOutstandingAmount` is zero.
-- These flags are mutually exclusive and cannot be used together in the same transaction.
+- These flags can only be used if the `lsifMPTCanHoldConfidentialBalance` flag was **not** set under `sfImmutableFlags` during `MPTokenIssuanceCreate`.
+- Setting `tfMPTSetCanHoldConfidentialBalance` enables confidential transfers for the token.
+- Enabling confidential transfers is one-way: there is no flag to clear `lsfMPTCanHoldConfidentialBalance` once it has been set.
 
-### 12.3. Failure Conditions
+### 12.4. Failure Conditions
 
-#### 12.3.1. Data Verification
+#### 12.4.1. Data Verification
 
 1. The `featureConfidentialTransfer` is not enabled. (`temDISABLED`)
 2. The provided Public Key is not exactly 33 bytes (`ecPubKeyLength`). (`temMALFORMED`)
 3. The transaction attempts to mutate confidential amount fields while also acting as a Holder. (`temMALFORMED`)
 4. The transaction contains `sfAuditorEncryptionKey` but does **not** contain `sfIssuerEncryptionKey`. (`temMALFORMED`)
-5. Both `tmfMPTSetCanConfidentialAmount` and `tmfMPTClearCanConfidentialAmount` are set in the same transaction. (`temINVALID_FLAG`)
-6. The transaction provides encryption keys (`sfIssuerEncryptionKey` or `sfAuditorEncryptionKey`) while also setting `tmfMPTClearCanConfidentialAmount`. (`temINVALID_FLAG`)
 
-#### 12.3.2. Protocol-Level Failures
+#### 12.4.2. Protocol-Level Failures
 
-1. The transaction attempts to **clear** the `lsfMPTCanConfidentialAmount` flag, but the `sfConfidentialOutstandingAmount` is greater than 0. (`tecNO_PERMISSION`)
-2. The transaction attempts to use `tmfMPTSetCanConfidentialAmount` or `tmfMPTClearCanConfidentialAmount`, but the `lsmfMPTCannotMutateCanConfidentialAmount` flag is set (feature is immutable). (`tecNO_PERMISSION`)
-3. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
-4. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanConfidentialAmount` flag enabled.
-   - **Exception:** Keys can be set if the `lsfMPTCanConfidentialAmount` flag is being enabled in the same transaction via `tmfMPTSetCanConfidentialAmount`. (`tecNO_PERMISSION`)
-5. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
+1. The transaction attempts to use `tfMPTCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in sfImmutableFlags. (`tecNO_PERMISSION`)
+2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
+3. The transaction provides a `sfIssuerEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
+   - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
+4. The transaction attempts to upload keys, but the `sfConfidentialOutstandingAmount` field is already present (tokens are already in circulation). (`tecNO_PERMISSION`)
 
-### 12.4. State Changes
+### 12.5. State Changes
 
 If successful:
 
-- **Flags:** The `lsfMPTCanConfidentialAmount` flag is updated (if mutable).
+- **Flags:** The `lsfMPTCanHoldConfidentialBalance` flag is updated (if mutable).
 - **Keys:** The `sfIssuerEncryptionKey` and/or `sfAuditorEncryptionKey` are stored on the `MPTokenIssuance` ledger entry.
 
-### 12.5. Example JSON
+### 12.6. Example JSON
 
-#### 12.5.1. Enabling Confidential Amount Feature
+#### 12.6.1. Enabling Confidential Balance Feature
 
 ```json
 {
   "Account": "rIssuerAccount...",
   "TransactionType": "MPTokenIssuanceSet",
   "MPTokenIssuanceID": "610F33...",
-  "MutableFlags": 4096, // tmfMPTSetCanConfidentialAmount
+  "Flags": 256, // tfMPTSetCanHoldConfidentialBalance
   "IssuerEncryptionKey": "028d...",
   "AuditorEncryptionKey": "037c..."
 }
 ```
 
-This transaction enables the confidential amount feature by setting the `tmfMPTSetCanConfidentialAmount` bit flag in the `MutableFlags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanConfidentialAmount` flag is being enabled in the same transaction.
-
-#### 12.5.2. Disabling Confidential Amount Feature
-
-```json
-{
-  "Account": "rIssuerAccount...",
-  "TransactionType": "MPTokenIssuanceSet",
-  "MPTokenIssuanceID": "610F33...",
-  "MutableFlags": 8192 // tmfMPTClearCanConfidentialAmount
-}
-```
-
-This transaction disables the confidential amount feature by setting the `tmfMPTClearCanConfidentialAmount` bit flag in the `MutableFlags` field. This will only succeed if `ConfidentialOutstandingAmount` is zero and the feature was marked as mutable during creation.
+This transaction enables the confidential balance feature by setting the `tfMPTSetCanHoldConfidentialBalance` bit flag in the `Flags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
 
 ## 13. Operational Considerations
 
@@ -924,7 +891,7 @@ We assume the common configuration where the transfer amount is encrypted under 
 
 ### 14.1 Cryptographic Payload Structure (Nciphers = 4)
 
-Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 × 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 × 33 = 66 bytes. The compact sigma proof (`ZKProof` prefix) is a fixed 192 bytes regardless of recipient count, replacing the legacy shared-randomness equality proof. An aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in [0, 2^64); for two aggregated 64-bit values, the proof size is 754 bytes. The `ZKProof` field therefore carries 192 + 754 = 946 bytes total. Combining all components:
+Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 × 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 × 33 = 66 bytes. The compact sigma proof (`ZKProof` prefix) is a fixed 192 bytes regardless of recipient count, replacing the legacy shared-randomness equality proof. An aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in [0, 2^64), though transactors cap accepted amounts at `maxMPTokenAmount` (2^63 − 1); for two aggregated 64-bit values, the proof size is 754 bytes. The `ZKProof` field therefore carries 192 + 754 = 946 bytes total. Combining all components:
 
 Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 946 bytes (ZKProof: 192-byte compact sigma proof + 754 aggregated Bulletproof)
 = 1276 bytes (with auditor). Without auditor (Nciphers = 3): 198 + 66 + 946 = 1210 bytes. Ledger metadata and transaction headers are excluded from this estimate, as the goal is to isolate the cryptographic overhead.
@@ -934,6 +901,8 @@ Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 
 To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The compact sigma proof introduces only a small additional overhead compared to Bulletproof verification, as it consists of a fixed number of scalar multiplications and curve additions independent of the number of recipients. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
 These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
+
+The reference implementation charges 10x the normal base fee for each Confidential MPT transaction. This multiplier is intended to reflect the additional validation work from ciphertext checks, compact sigma proof verification, and Bulletproof verification while remaining simple for fee calculation and transaction construction.
 
 # Appendix
 
