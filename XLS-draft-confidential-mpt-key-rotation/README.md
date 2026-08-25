@@ -858,11 +858,26 @@ If the issuer never completes recovery, the holder remains locked out indefinite
 
 After key rotation, clawback is blocked until the holder's `IssuerKeyMirrorEpoch` equals `IssuerKeyEpoch` - the ZKP is verified against the current `sfIssuerEncryptionKey`, not a caller-selectable key. Loss of sk_I therefore suspends clawback authority for all holders - without sk_I the issuer cannot migrate mirrors, and without migrated mirrors clawback cannot proceed. Authority is restored progressively as holders self-migrate their mirrors under pk_I'.
 
-### 15.9. Successive Rotations and Historical Key Retention
+### 15.9. Successive Rotations and Historical Issuer-Key Retention
 
 The protocol does not enforce a global gate preventing successive rotations before migration is complete. Per-transaction mirror checks enforce correctness at the point of use for each individual holder, regardless of how many epochs behind they are.
 
-An operational security consideration: after multiple successive rotations, migrating a holder still at an old epoch requires the historical secret key for that epoch. If an issuer destroys a historical secret key before all holders at that epoch are migrated (e.g. during an emergency rotation due to compromise), those holders cannot be actively migrated and must fall back to self-migration (Section 9.7). Issuers should retain historical secret keys until all holders at each epoch are fully migrated.
+Historical issuer secret-key retention is optional and depends on the issuer's
+migration strategy. If the issuer intends to actively migrate any holder whose
+`IssuerEncryptedBalance` remains encrypted under an older issuer key, the
+issuer MUST retain the corresponding historical secret key until those holder
+mirrors have been migrated.
+
+Once an issuance-wide holder traversal confirms that no issuer mirror remains
+at the corresponding epoch, the historical secret key is no longer required
+and may be destroyed. An issuer may instead destroy the old secret key earlier
+and rely on the remaining holders to self-migrate using `sk_H`. Doing so does
+not affect ledger correctness, but permanently removes the issuer-driven
+migration path for those holders.
+
+Historical auditor secret keys are not required for mirror migration because
+auditor mirrors are reconstructed from a current issuer mirror or through
+holder self-migration.
 
 ### 15.10. Holder Self-Migration Security
 
