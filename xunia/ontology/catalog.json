@@ -1,0 +1,150 @@
+{
+  "id": "XUNIA-XRPL-STANDARDS-ONTOLOGY",
+  "version": "1.0.0",
+  "generatedFrom": {
+    "xuniaRepository": "sonoxo/XRPL-StandardsXUNIA-",
+    "authoritativeUpstream": "XRPLF/XRPL-Standards",
+    "authorityClaim": false
+  },
+  "objectTypes": [
+    "STANDARD",
+    "CATEGORY",
+    "STATUS",
+    "PROTOCOL_FEATURE",
+    "TRANSACTION_TYPE",
+    "LEDGER_OBJECT",
+    "RPC_METHOD",
+    "TOKEN_MODEL",
+    "WALLET_CAPABILITY",
+    "IMPLEMENTATION",
+    "TEST_EVIDENCE",
+    "SECURITY_CONSIDERATION",
+    "APPROVAL_POLICY"
+  ],
+  "linkTypes": [
+    "HAS_CATEGORY",
+    "HAS_STATUS",
+    "SPECIFIES",
+    "INTRODUCES_TRANSACTION",
+    "INTRODUCES_LEDGER_OBJECT",
+    "INTRODUCES_RPC",
+    "SUPPORTS_TOKEN_MODEL",
+    "REQUIRES_WALLET_CAPABILITY",
+    "IMPLEMENTED_BY",
+    "TESTED_BY",
+    "SUPERSEDES",
+    "DEPENDS_ON",
+    "GOVERNED_BY"
+  ],
+  "statuses": [
+    "IDEA",
+    "PROPOSAL",
+    "DRAFT",
+    "FINAL",
+    "LIVING",
+    "DEPRECATED",
+    "STAGNANT",
+    "WITHDRAWN"
+  ],
+  "categories": [
+    "AMENDMENT",
+    "SYSTEM",
+    "ECOSYSTEM",
+    "META"
+  ],
+  "repositories": [
+    {
+      "id": "repo:xrpl-standards-xunia",
+      "role": "XUNIA_STANDARDS_SURFACE",
+      "repository": "sonoxo/XRPL-StandardsXUNIA-",
+      "upstream": "XRPLF/XRPL-Standards",
+      "license": "MIT"
+    },
+    {
+      "id": "repo:xrpl-js-xunia",
+      "role": "CLIENT_IMPLEMENTATION",
+      "repository": "sonoxo/xrpl.jsXUNIA",
+      "upstream": "XRPLF/xrpl.js",
+      "license": "ISC"
+    },
+    {
+      "id": "repo:rippled-xunia",
+      "role": "NODE_IMPLEMENTATION",
+      "repository": "sonoxo/rippledXUNIA",
+      "upstream": "XRPLF/rippled",
+      "license": "ISC"
+    },
+    {
+      "id": "repo:xuniadao",
+      "role": "GOVERNANCE_ROOT",
+      "repository": "sonoxo/xuniadao",
+      "upstream": null,
+      "license": "Apache-2.0"
+    }
+  ],
+  "pathways": [
+    {
+      "id": "pathway:standards-to-read",
+      "name": "Standards to validated ledger read",
+      "actions": [
+        "DISCOVER_STANDARD",
+        "VERIFY_STATUS",
+        "RESOLVE_CLIENT_IMPLEMENTATION",
+        "CONNECT_NODE",
+        "READ_VALIDATED_LEDGER",
+        "ATTACH_PROVENANCE",
+        "WRITE_AUDIT_EVIDENCE"
+      ],
+      "mutation": false,
+      "humanApprovalRequired": false
+    },
+    {
+      "id": "pathway:standards-to-wallet",
+      "name": "Standards to governed wallet transaction",
+      "actions": [
+        "DISCOVER_STANDARD",
+        "VERIFY_STATUS",
+        "RESOLVE_TRANSACTION_TYPE",
+        "BUILD_UNSIGNED_TRANSACTION",
+        "VALIDATE_AGAINST_STANDARD",
+        "REQUEST_HUMAN_APPROVAL",
+        "SIGN_WITH_EXTERNAL_WALLET",
+        "SUBMIT_TO_NODE",
+        "VERIFY_VALIDATED_LEDGER",
+        "WRITE_SECRET_FREE_AUDIT_EVIDENCE"
+      ],
+      "mutation": true,
+      "humanApprovalRequired": true
+    },
+    {
+      "id": "pathway:token-lifecycle",
+      "name": "Issued token and trust-line lifecycle",
+      "actions": [
+        "RESOLVE_TOKEN_STANDARD",
+        "RESOLVE_ISSUER",
+        "RESOLVE_TRUST_LINE_REQUIREMENTS",
+        "BUILD_UNSIGNED_TRANSACTION",
+        "VALIDATE_AGAINST_STANDARD",
+        "REQUEST_HUMAN_APPROVAL",
+        "SIGN_WITH_EXTERNAL_WALLET",
+        "VERIFY_VALIDATED_LEDGER"
+      ],
+      "mutation": true,
+      "humanApprovalRequired": true
+    }
+  ],
+  "controls": {
+    "provenanceRequired": true,
+    "officialStatusReadFromDocumentPreamble": true,
+    "draftIsNotFinal": true,
+    "implementationEvidenceRequired": true,
+    "humanApprovalRequiredForMutation": true,
+    "externalSignerRequired": true,
+    "walletSeedStorage": false,
+    "privateKeyStorage": false,
+    "automaticFundMovement": false,
+    "automaticTokenIssuance": false,
+    "upstreamOwnershipPreserved": true,
+    "upstreamAffiliationClaim": false
+  }
+}
