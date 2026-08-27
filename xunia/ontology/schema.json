@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sonoxo/XRPL-StandardsXUNIA-/blob/master/xunia/ontology/schema.json",
+  "title": "XUNIA XRPL Standards Ontology",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "generatedFrom",
+    "objectTypes",
+    "linkTypes",
+    "statuses",
+    "categories",
+    "repositories",
+    "pathways",
+    "controls"
+  ],
+  "properties": {
+    "id": { "const": "XUNIA-XRPL-STANDARDS-ONTOLOGY" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "generatedFrom": {
+      "type": "object",
+      "required": ["xuniaRepository", "authoritativeUpstream", "authorityClaim"],
+      "properties": {
+        "xuniaRepository": { "const": "sonoxo/XRPL-StandardsXUNIA-" },
+        "authoritativeUpstream": { "const": "XRPLF/XRPL-Standards" },
+        "authorityClaim": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "objectTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+    },
+    "linkTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+    },
+    "statuses": {
+      "type": "array",
+      "items": {
+        "enum": ["IDEA", "PROPOSAL", "DRAFT", "FINAL", "LIVING", "DEPRECATED", "STAGNANT", "WITHDRAWN"]
+      },
+      "uniqueItems": true
+    },
+    "categories": {
+      "type": "array",
+      "items": { "enum": ["AMENDMENT", "SYSTEM", "ECOSYSTEM", "META"] },
+      "uniqueItems": true
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "repository", "upstream", "license"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^repo:" },
+          "role": { "type": "string" },
+          "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+          "upstream": { "type": ["string", "null"] },
+          "license": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pathways": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "actions", "mutation", "humanApprovalRequired"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^pathway:" },
+          "name": { "type": "string", "minLength": 1 },
+          "actions": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+          },
+          "mutation": { "type": "boolean" },
+          "humanApprovalRequired": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "controls": {
+      "type": "object",
+      "required": [
+        "provenanceRequired",
+        "officialStatusReadFromDocumentPreamble",
+        "draftIsNotFinal",
+        "implementationEvidenceRequired",
+        "humanApprovalRequiredForMutation",
+        "externalSignerRequired",
+        "walletSeedStorage",
+        "privateKeyStorage",
+        "automaticFundMovement",
+        "automaticTokenIssuance",
+        "upstreamOwnershipPreserved",
+        "upstreamAffiliationClaim"
+      ],
+      "properties": {
+        "provenanceRequired": { "const": true },
+        "officialStatusReadFromDocumentPreamble": { "const": true },
+        "draftIsNotFinal": { "const": true },
+        "implementationEvidenceRequired": { "const": true },
+        "humanApprovalRequiredForMutation": { "const": true },
+        "externalSignerRequired": { "const": true },
+        "walletSeedStorage": { "const": false },
+        "privateKeyStorage": { "const": false },
+        "automaticFundMovement": { "const": false },
+        "automaticTokenIssuance": { "const": false },
+        "upstreamOwnershipPreserved": { "const": true },
+        "upstreamAffiliationClaim": { "const": false }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
