@@ -20,7 +20,11 @@
     "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
     "generatedFrom": {
       "type": "object",
-      "required": ["xuniaRepository", "authoritativeUpstream", "authorityClaim"],
+      "required": [
+        "xuniaRepository",
+        "authoritativeUpstream",
+        "authorityClaim"
+      ],
       "properties": {
         "xuniaRepository": { "const": "sonoxo/XRPL-StandardsXUNIA-" },
         "authoritativeUpstream": { "const": "XRPLF/XRPL-Standards" },
@@ -43,7 +47,16 @@
     "statuses": {
       "type": "array",
       "items": {
-        "enum": ["IDEA", "PROPOSAL", "DRAFT", "FINAL", "LIVING", "DEPRECATED", "STAGNANT", "WITHDRAWN"]
+        "enum": [
+          "IDEA",
+          "PROPOSAL",
+          "DRAFT",
+          "FINAL",
+          "LIVING",
+          "DEPRECATED",
+          "STAGNANT",
+          "WITHDRAWN"
+        ]
       },
       "uniqueItems": true
     },
@@ -73,7 +86,13 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "name", "actions", "mutation", "humanApprovalRequired"],
+        "required": [
+          "id",
+          "name",
+          "actions",
+          "mutation",
+          "humanApprovalRequired"
+        ],
         "properties": {
           "id": { "type": "string", "pattern": "^pathway:" },
           "name": { "type": "string", "minLength": 1 },
