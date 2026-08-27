@@ -1134,7 +1134,7 @@ The proposed transaction's fee is paid by the target account when the completed 
 
 ### A.1: Who can create a proposal?
 
-Any account. The proposer need not be a signer on the target account nor the target account itself. The proposer owns the object and pays its reserve.
+Only a member of the applicable `SignerList` may create a proposal. When `ProposedTransaction.Delegate` is absent, the proposer must be a signer on the target account's applicable `SignerList` for the proposed transaction type. When `Delegate` is present, the proposer must instead be a signer on the delegate's applicable `SignerList`. The proposer owns the object and pays its reserve.
 
 ### A.2: Can the target account be different from the proposer?
 
