@@ -22,4 +22,3 @@ This XUNIA-maintained repository includes a machine-readable standards ontology 
 - [Validator](scripts/validate-xunia-ontology.cjs)
 
 The ontology preserves `XRPLF/XRPL-Standards` as the authoritative upstream. It does not change the official category or lifecycle status of any XLS, and it does not claim XRPLF or Ripple endorsement.
-
