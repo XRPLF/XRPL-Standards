@@ -242,6 +242,15 @@ Creates a `TransactionProposal` object holding an unsigned proposed transaction,
 
 Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signing fields) apply. `Memos` and `SourceTag` MAY be used to attach a reason code or reconciliation identifier to the proposal.
 
+#### 5.1.1. Creation authorization
+
+Only a signer on the applicable `SignerList` may create a proposal. The `Account` submitting `TransactionProposalCreate` must be a member of:
+
+- the target account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is absent; or
+- the `Delegate` account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is present.
+
+Creation authorization is checked against the current ledger when the `TransactionProposalCreate` transaction is applied. It does not add a signature to `ProposedTransaction`; the proposal begins unsigned and still requires the normal signature collection and submission-time authorization checks.
+
 ### 5.2. Transaction Fee
 
 **Fee Structure:** Standard. This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes). Note that the proposed transaction's own `Fee` is not charged here; it is charged to the target account when the completed transaction is submitted.
@@ -250,14 +259,19 @@ Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signin
 
 #### 5.3.1. Data Verification
 
-All Data Verification failures return a `tem`-level error.
+Except for missing required fields, Data Verification failures return a `tem`-level error.
 
-1. `ProposedTransaction` is missing or is not a well-formed transaction of a known type (`temMALFORMED`).
+1. If present, `ProposedTransaction` is not a well-formed transaction of a known type (`temMALFORMED`). `ProposedTransaction` is required by the transaction format, so if it is missing, deserialization fails before preflight; submission returns a parse error rather than a transaction result, and no fee is charged.
 2. The proposed transaction fails the **stateless format checks (preflight) for its own transaction type**. These are the same checks it would receive if submitted directly, except for signature-presence and signature-verification checks because the payload is intentionally unsigned (§4.2.1). If any check fails, the proposal returns the `tem` code from that transaction type's preflight. Running these checks at creation is cheap and rejects malformed payloads immediately, instead of letting an invalid proposal gather signatures only to fail later. State-dependent (preclaim) checks are **not** run here; they are evaluated when the completed transaction is submitted.
-3. The proposed transaction has a non-empty `SigningPubKey` or includes a `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, or `BatchSigners` field (`temBAD_SIGNER`).
-4. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`); or carries the `tfInnerBatchTxn` flag (`temINVALID`).
-5. The proposed transaction does not specify `TicketSequence`, or specifies `Sequence` instead of or in addition to `TicketSequence` (`temSEQ_AND_TICKET`).
-6. `Expiration` is missing or zero (`temMALFORMED`).
+3. The proposed transaction is not unsigned. The result depends on the signature field and its contents:
+   - A non-empty `TxnSignature`; a non-empty `SigningPubKey` combined with a `Signers` array; or `Signers` entries carrying real signatures returns `temINVALID`.
+   - A non-empty `SigningPubKey` that is not a valid key type returns `temBAD_SIGNATURE`.
+   - A proposed `LoanSet` whose `CounterpartySignature` holds a real signature returns `temINVALID`.
+   - A `SponsorSignature` without the corresponding `Sponsor` and `SponsorFlags` fields returns `temMALFORMED`.
+4. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; or a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`) (`temINVALID`).
+5. The proposed transaction carries the `tfInnerBatchTxn` flag. If `featureBatchV1_1` is disabled, this returns `temINVALID_FLAG`; otherwise, it returns `temINVALID_INNER_BATCH`.
+6. The proposed transaction does not specify `TicketSequence`, or specifies `Sequence` instead of or in addition to `TicketSequence` (`temSEQ_AND_TICKET`).
+7. `Expiration` is zero (`temBAD_EXPIRATION`). `Expiration` is required by the transaction format, so if it is missing, deserialization fails before preflight; submission returns a parse error rather than a transaction result, and no fee is charged.
 
 #### 5.3.2. Protocol-Level Failures
 
@@ -268,6 +282,7 @@ All Data Verification failures return a `tem`-level error.
 5. The target account is a pseudo-account (e.g. an AMM, Vault, or LoanBroker pseudo-account) and therefore cannot authorize a transaction through a `SignerList` (`tecNO_PERMISSION`).
 6. A `TransactionProposal` with the same `ProposalID` already exists — i.e. a live proposal (owned by anyone) already targets the same account with the same `TicketSequence` (`tecDUPLICATE`, §4.1).
 7. The proposed transaction's `TicketSequence` is not a valid `Ticket` of the target account (`tefNO_TICKET`).
+8. The proposer is not a member of the applicable `SignerList` for the proposed transaction's initiator — the target account when no `Delegate` is present, or the `Delegate` when one is present (`tecNO_PERMISSION`).
 
 ### 5.4. State Changes
 
