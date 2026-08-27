@@ -1,0 +1,35 @@
+name: XUNIA Standards Ontology
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'xunia/ontology/**'
+      - 'scripts/validate-xunia-ontology.cjs'
+      - '.github/workflows/xunia-ontology.yml'
+      - 'README.md'
+  pull_request:
+    paths:
+      - 'xunia/ontology/**'
+      - 'scripts/validate-xunia-ontology.cjs'
+      - '.github/workflows/xunia-ontology.yml'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate XUNIA XRPL standards ontology
+        run: node scripts/validate-xunia-ontology.cjs
+      - name: Verify JSON syntax
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('xunia/ontology/catalog.json', 'utf8'))"
+          node -e "JSON.parse(require('node:fs').readFileSync('xunia/ontology/schema.json', 'utf8'))"
