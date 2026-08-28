@@ -228,14 +228,24 @@ The existing `MPTokenIssuance` ledger object is extended with two new fields. Al
 
 **Note**: To accommodate existing `MPTokenIssuance` ledger objects that lack epoch fields even when keys are registered, the epoch value should remain absent after initial registration. It is set to 1 only when rotating a key for the first time successfully, and then increments with each subsequent rotation.
 
-#### 5.1.2. Invariants
+#### 5.1.2. Freeze/Lock
+
+**Lock Support:** Yes
+
+Setting `lsfMPTLocked` on `MPTokenIssuance` locks the entire issuance. This
+amendment adds no new lock flag and does not change how the existing one is set,
+cleared, or enforced, so lock support is unchanged from XLS-0033 and XLS-0096.
+See Section 6 for how a lock interacts with key rotation, mirror migration, and
+holder key loss recovery.
+
+#### 5.1.3. Invariants
 
 - I1: `IssuerKeyEpoch`, if present, must be ≥ 1.
 - I2: `AuditorKeyEpoch`, if present, must be ≥ 1.
 - I3: `IssuerEncryptionKey` must be present if `IssuerKeyEpoch` is present.
 - I4: `AuditorEncryptionKey` must be present if `AuditorKeyEpoch` is present.
 
-#### 5.1.3. Example JSON
+#### 5.1.4. Example JSON
 
 After issuer and auditor key rotation:
 
@@ -273,14 +283,25 @@ The existing `MPToken` ledger object is extended with three new fields. All othe
 
 Deletion conditions are unchanged from XLS-0033. The `MPToken` deletion question raised by `RecoveryKey` is a non-issue: per XLS-0096 Section 5.2.4, an `MPToken` cannot be deleted once confidential fields have been initialized, even if all balances contain canonical encrypted zero. Since `RecoveryKey` only appears on initialized `MPToken` objects (Invariant I8), an `MPToken` with `RecoveryKey` set can never be deleted. No new deletion concern is introduced by this amendment.
 
-#### 5.2.3. Invariants
+#### 5.2.3. Freeze/Lock
+
+**Lock Support:** Yes
+
+Setting `lsfMPTLocked` on a holder's `MPToken` locks that holder individually,
+independently of the issuance-level lock described in Section 5.1.2. This
+amendment adds no new lock flag and does not change how the existing one is set,
+cleared, or enforced, so lock support is unchanged from XLS-0033 and XLS-0096.
+See Section 6 for how a lock interacts with key rotation, mirror migration, and
+holder key loss recovery.
+
+#### 5.2.4. Invariants
 
 - I5: `IssuerKeyMirrorEpoch`, if present, must be ≤ `IssuerKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
 - I6: `AuditorKeyMirrorEpoch`, if present, must be ≤ `AuditorKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
 - I7: `RecoveryKey`, if present, must be a well-formed compressed secp256k1 point (33 bytes) and must differ from the current `HolderEncryptionKey`.
 - I8: `RecoveryKey` must not be present on an `MPToken` that has no `HolderEncryptionKey` registered. A holder initializes confidential state via their first `ConfidentialMPTConvert` (with `HolderEncryptionKey` present, MPTAmount may be zero). `RecoveryKey` is only meaningful for holders who have completed this initialization.
 
-#### 5.2.4. Example JSON
+#### 5.2.5. Example JSON
 
 Fully migrated holder:
 
