@@ -317,7 +317,7 @@ Fully migrated holder:
   "ConfidentialBalanceVersion": 3,
   "IssuerEncryptedBalance": "02f1a2b3c4d5e6...",
   "IssuerKeyMirrorEpoch": 1,
-  "AuditorEncryptedBalance": "02a1b2c3d4e5f6...",
+  "AuditorEncryptedBalance": "02a3b4c5d6e7f8...",
   "AuditorKeyMirrorEpoch": 1,
   "PreviousTxnID": "B2C3D4E5...",
   "PreviousTxnLgrSeq": 1234568
@@ -338,7 +338,7 @@ Holder with active recovery authorization:
   "ConfidentialBalanceVersion": 3,
   "IssuerEncryptedBalance": "02f1a2b3c4d5e6...",
   "IssuerKeyMirrorEpoch": 1,
-  "RecoveryKey": "02g1h2i3j4k5l6...",
+  "RecoveryKey": "03a9b8c7d6e5f4...",
   "PreviousTxnID": "C3D4E5F6...",
   "PreviousTxnLgrSeq": 1234569
 }
@@ -506,10 +506,10 @@ Issuer mode:
   "Account": "rIssuerAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Holder": "rHolderAccountAddress",
-  "IssuerEncryptedAmount": "02a1b2c3d4e5f6...",
+  "IssuerEncryptedAmount": "02f3a4b5c6d7e8...",
   "AuditorEncryptedAmount": "02c3d4e5f6a7b8...",
   "PreviousIssuerEncryptionKey": "02b7c8d9e0f1a2...",
-  "ZKProof": "03f1e2d3c4b5a6..."
+  "ZKProof": "a7f3c1d8e2b9..."
 }
 ```
 
@@ -520,9 +520,9 @@ Holder mode:
   "TransactionType": "ConfidentialMPTMirrorUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "IssuerEncryptedAmount": "02a1b2c3d4e5f6...",
+  "IssuerEncryptedAmount": "02f3a4b5c6d7e8...",
   "AuditorEncryptedAmount": "02c3d4e5f6a7b8...",
-  "ZKProof": "03a1b2c3d4e5f6..."
+  "ZKProof": "b8e4d2c9f3a1..."
 }
 ```
 
@@ -647,10 +647,10 @@ Rotation mode:
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Flags": 1,
-  "HolderEncryptionKey": "02a1b2c3d4e5f6...",
-  "ConfidentialBalanceSpending": "02b1c2d3e4f5a6...",
-  "ConfidentialBalanceInbox": "02c1d2e3f4a5b6...",
-  "ZKProof": "03d1e2f3a4b5c6...",
+  "HolderEncryptionKey": "02c7d8e9f0a1b2...",
+  "ConfidentialBalanceSpending": "02d7e8f9a0b1c2...",
+  "ConfidentialBalanceInbox": "02e7f8a9b0c1d2...",
+  "ZKProof": "c9f5e3d1a2b8...",
   "Fee": "120",
   "Sequence": 46
 }
@@ -664,8 +664,8 @@ Recovery mode:
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Flags": 2,
-  "HolderEncryptionKey": "02a1b2c3d4e5f6...",
-  "ZKProof": "03f1e2d3c4b5a6...",
+  "HolderEncryptionKey": "03a9b8c7d6e5f4...",
+  "ZKProof": "d1a6f4e2b3c9...",
   "Fee": "120",
   "Sequence": 47
 }
@@ -732,8 +732,8 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
   "Account": "rIssuerAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Holder": "rHolderAccountAddress",
-  "ConfidentialBalanceSpending": "02a1b2c3d4e5f6...",
-  "ZKProof": "03f1e2d3c4b5a6..."
+  "ConfidentialBalanceSpending": "02d9e0f1a2b3c4...",
+  "ZKProof": "e2b7a5f3c4d1..."
 }
 ```
 
