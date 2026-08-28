@@ -221,12 +221,24 @@ The existing `MPTokenIssuance` ledger object is extended with two new fields. Al
 
 #### 5.1.1. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                                                                                                                                                           |
-| :---------------- | :------- | :------- | :------------ | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IssuerKeyEpoch`  | No       | No       | `UINT32`      | `0`           | Monotonically increasing counter incremented on each issuer ElGamal key rotation. Not stored when at its default value; validators treat an absent field as epoch 0.  |
-| `AuditorKeyEpoch` | No       | No       | `UINT32`      | `0`           | Monotonically increasing counter incremented on each auditor ElGamal key rotation. Not stored when at its default value; validators treat an absent field as epoch 0. |
+| Field Name        | Constant | Required | Internal Type | Default Value | Description                               |
+| :---------------- | :------- | :------- | :------------ | :------------ | :---------------------------------------- |
+| `IssuerKeyEpoch`  | No       | No       | `UINT32`      | `0`           | Counter of issuer ElGamal key rotations.  |
+| `AuditorKeyEpoch` | No       | No       | `UINT32`      | `0`           | Counter of auditor ElGamal key rotations. |
 
-**Note**: To accommodate existing `MPTokenIssuance` ledger objects that lack epoch fields even when keys are registered, the epoch value should remain absent after initial registration. It is set to 1 only when rotating a key for the first time successfully, and then increments with each subsequent rotation.
+**Field Details:**
+
+##### 5.1.1.1. `IssuerKeyEpoch`
+
+An absent field means epoch 0, and the field is not stored while at that value. Initial registration of `IssuerEncryptionKey` leaves the epoch absent rather than writing 0. This is what allows `MPTokenIssuance` objects created before this amendment, which carry a registered key but no epoch field, to be read as epoch 0 without a ledger migration.
+
+The first successful rotation of `IssuerEncryptionKey` creates the field with value 1, and each subsequent rotation increments it by 1. The counter never decreases (I7).
+
+##### 5.1.1.2. `AuditorKeyEpoch`
+
+The counter follows the same rules as `IssuerKeyEpoch`: an absent field means 0 and is not stored, initial registration of `AuditorEncryptionKey` leaves it absent, the first rotation creates it with value 1, and it never decreases.
+
+Unlike the issuer key, the auditor key is optional and may be registered at any time, including after confidential balances already exist. An epoch of 0 therefore carries two possible meanings: no auditor key is configured at all, or an auditor key is registered but has never been rotated. The two are distinguished by the presence of `AuditorEncryptionKey`, not by the epoch, and only the first removes the requirement for holders to carry an auditor mirror (Section 4.6.1).
 
 #### 5.1.2. Freeze/Lock
 
@@ -276,11 +288,33 @@ The existing `MPToken` ledger object is extended with three new fields. All othe
 
 #### 5.2.1. Fields
 
-| Field Name              | Constant | Required | Internal Type | Default Value | Description                                                                                                                                                                                                                                                                                                                                                                                 |
-| :---------------------- | :------- | :------- | :------------ | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `IssuerKeyMirrorEpoch`  | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` at which this holder's issuer mirror was last re-encrypted. The mirror is stale when this value is less than the current `IssuerKeyEpoch`. Not stored when at its default value.                                                                                                                                                                                       |
-| `AuditorKeyMirrorEpoch` | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` at which this holder's auditor mirror was last re-encrypted. The mirror is stale when this value is less than the current `AuditorKeyEpoch`. Not stored when at its default value.                                                                                                                                                                                    |
-| `RecoveryKey`           | No       | No       | `BLOB`        | N/A           | A 33-byte compressed ElGamal public key authorized for key loss recovery. Set by `ConfidentialMPTHolderKeyUpdate` in recovery mode (`tfHolderKeyRecovery`). Cleared by exactly two paths: (1) `ConfidentialMPTRecoverBalance` when the issuer completes recovery; (2) `ConfidentialMPTHolderKeyUpdate` with `tfCancelRecovery` when the holder explicitly cancels. Has no automatic expiry. |
+| Field Name              | Constant | Required | Internal Type | Default Value | Description                                                                  |
+| :---------------------- | :------- | :------- | :------------ | :------------ | :--------------------------------------------------------------------------- |
+| `IssuerKeyMirrorEpoch`  | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` under which this holder's issuer mirror is encrypted.   |
+| `AuditorKeyMirrorEpoch` | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` under which this holder's auditor mirror is encrypted. |
+| `RecoveryKey`           | No       | No       | `BLOB`        | N/A           | A compressed ElGamal public key authorized for key loss recovery.            |
+
+**Field Details:**
+
+##### 5.2.1.1. `IssuerKeyMirrorEpoch`
+
+An absent field means epoch 0, and the field is not stored while at that value. The mirror is current when the field equals the issuance's `IssuerKeyEpoch` and stale when it is less; staleness is what blocks the transactions listed in Section 4.6.2.
+
+The field is written whenever the mirror is re-encrypted under the currently registered key: by `ConfidentialMPTMirrorUpdate`, by `ConfidentialMPTClawback`, and by the `ConfidentialMPTConvert` that initializes a holder's confidential state. It never decreases (I14) and never exceeds the issuance's key epoch (I8).
+
+##### 5.2.1.2. `AuditorKeyMirrorEpoch`
+
+The field is written on the same occasions as `IssuerKeyMirrorEpoch`, with one exception: when the issuance's `AuditorKeyEpoch` is 0, the field is left absent rather than written, since an absent epoch is already equivalent to 0. This arises when an auditor mirror is created before any auditor key rotation has occurred. The field never decreases (I14) and never exceeds the issuance's auditor key epoch (I9).
+
+Epoch equality alone does not make the auditor mirror current: `AuditorEncryptedBalance` must also be present (Section 4.6.1). A holder who initialized confidential state before an auditor key was registered has no auditor mirror at all, so their absent epoch equals the issuance's epoch of 0 while the mirror is missing rather than current. Such a holder is repaired by `ConfidentialMPTMirrorUpdate` in the same way as a stale one.
+
+##### 5.2.1.3. `RecoveryKey`
+
+A 33-byte compressed secp256k1 point. It must be a well-formed point and must differ from the holder's current `HolderEncryptionKey` (I10), and it is only meaningful on an `MPToken` that has completed confidential initialization (I11).
+
+The field is set by `ConfidentialMPTHolderKeyUpdate` in recovery mode (`tfHolderKeyRecovery`), recording the holder's consent to issuer-completed recovery under the new key.
+
+It is cleared by exactly two paths: `ConfidentialMPTRecoverBalance`, when the issuer completes recovery; and `ConfidentialMPTHolderKeyUpdate` with `tfCancelRecovery`, when the holder revokes consent. There is no automatic expiry, so an authorization persists until one of those two transactions occurs. Section 9.7 discusses the resulting liveness concern.
 
 #### 5.2.2. Deletion
 
