@@ -437,14 +437,33 @@ When `AuditorEncryptionKey` is present and valid:
 
 #### 5.3.4. Example JSON
 
+Rotating the issuer key:
+
 ```json
 {
   "TransactionType": "MPTokenIssuanceSet",
   "Account": "rIssuerAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "IssuerEncryptionKey": "02a1b2c3d4e5f6...",
-  "Fee": "120",
+  "Fee": "10",
   "Sequence": 42
+}
+```
+
+Registering an auditor key for the first time on an issuance that already has an
+`IssuerEncryptionKey`. This shape is rejected with `temMALFORMED` before the
+`ConfidentialMPTKeyRotation` amendment (Section 5.3.2.1) and leaves
+`AuditorKeyEpoch` absent, since it is an initial registration rather than a
+rotation:
+
+```json
+{
+  "TransactionType": "MPTokenIssuanceSet",
+  "Account": "rIssuerAccountAddress",
+  "MPTokenIssuanceID": "000000012A9F1D3C...",
+  "AuditorEncryptionKey": "02b3c4d5e6f7a8...",
+  "Fee": "10",
+  "Sequence": 43
 }
 ```
 
@@ -551,7 +570,9 @@ Issuer mode:
   "IssuerEncryptedAmount": "02f3a4b5c6d7e8...",
   "AuditorEncryptedAmount": "02c3d4e5f6a7b8...",
   "PreviousIssuerEncryptionKey": "02b7c8d9e0f1a2...",
-  "ZKProof": "a7f3c1d8e2b9..."
+  "ZKProof": "a7f3c1d8e2b9...",
+  "Fee": "100",
+  "Sequence": 44
 }
 ```
 
@@ -564,7 +585,9 @@ Holder mode:
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "IssuerEncryptedAmount": "02f3a4b5c6d7e8...",
   "AuditorEncryptedAmount": "02c3d4e5f6a7b8...",
-  "ZKProof": "b8e4d2c9f3a1..."
+  "ZKProof": "b8e4d2c9f3a1...",
+  "Fee": "100",
+  "Sequence": 45
 }
 ```
 
@@ -695,7 +718,7 @@ Rotation mode:
   "ConfidentialBalanceSpending": "02d7e8f9a0b1c2...",
   "ConfidentialBalanceInbox": "02e7f8a9b0c1d2...",
   "ZKProof": "c9f5e3d1a2b8...",
-  "Fee": "120",
+  "Fee": "100",
   "Sequence": 46
 }
 ```
@@ -710,7 +733,7 @@ Recovery mode:
   "Flags": 2,
   "HolderEncryptionKey": "03a9b8c7d6e5f4...",
   "ZKProof": "d1a6f4e2b3c9...",
-  "Fee": "120",
+  "Fee": "100",
   "Sequence": 47
 }
 ```
@@ -723,7 +746,7 @@ Cancel mode:
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Flags": 4,
-  "Fee": "120",
+  "Fee": "100",
   "Sequence": 48
 }
 ```
@@ -792,7 +815,9 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
   "MPTokenIssuanceID": "000000012A9F1D3C...",
   "Holder": "rHolderAccountAddress",
   "ConfidentialBalanceSpending": "02d9e0f1a2b3c4...",
-  "ZKProof": "e2b7a5f3c4d1..."
+  "ZKProof": "e2b7a5f3c4d1...",
+  "Fee": "100",
+  "Sequence": 45
 }
 ```
 
