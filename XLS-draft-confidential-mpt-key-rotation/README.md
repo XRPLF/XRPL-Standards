@@ -244,6 +244,9 @@ holder key loss recovery.
 - I2: `AuditorKeyEpoch`, if present, must be ≥ 1.
 - I3: `IssuerEncryptionKey` must be present if `IssuerKeyEpoch` is present.
 - I4: `AuditorEncryptionKey` must be present if `AuditorKeyEpoch` is present.
+- I5: On a successful issuer key rotation, `<MPTokenIssuance>'.IssuerKeyEpoch == <MPTokenIssuance>.IssuerKeyEpoch + 1`. An absent epoch is treated as 0, so the first rotation yields 1.
+- I6: On a successful auditor key rotation, `<MPTokenIssuance>'.AuditorKeyEpoch == <MPTokenIssuance>.AuditorKeyEpoch + 1`. An absent epoch is treated as 0, so the first rotation yields 1.
+- I7: `<MPTokenIssuance>'.IssuerKeyEpoch >= <MPTokenIssuance>.IssuerKeyEpoch AND <MPTokenIssuance>'.AuditorKeyEpoch >= <MPTokenIssuance>.AuditorKeyEpoch`. Key epochs never decrease.
 
 #### 5.1.4. Example JSON
 
@@ -281,7 +284,7 @@ The existing `MPToken` ledger object is extended with three new fields. All othe
 
 #### 5.2.2. Deletion
 
-Deletion conditions are unchanged from XLS-0033. The `MPToken` deletion question raised by `RecoveryKey` is a non-issue: per XLS-0096 Section 5.2.4, an `MPToken` cannot be deleted once confidential fields have been initialized, even if all balances contain canonical encrypted zero. Since `RecoveryKey` only appears on initialized `MPToken` objects (Invariant I8), an `MPToken` with `RecoveryKey` set can never be deleted. No new deletion concern is introduced by this amendment.
+Deletion conditions are unchanged from XLS-0033. The `MPToken` deletion question raised by `RecoveryKey` is a non-issue: per XLS-0096 Section 5.2.4, an `MPToken` cannot be deleted once confidential fields have been initialized, even if all balances contain canonical encrypted zero. Since `RecoveryKey` only appears on initialized `MPToken` objects (Invariant I11), an `MPToken` with `RecoveryKey` set can never be deleted. No new deletion concern is introduced by this amendment.
 
 #### 5.2.3. Freeze/Lock
 
@@ -296,10 +299,13 @@ holder key loss recovery.
 
 #### 5.2.4. Invariants
 
-- I5: `IssuerKeyMirrorEpoch`, if present, must be ≤ `IssuerKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
-- I6: `AuditorKeyMirrorEpoch`, if present, must be ≤ `AuditorKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
-- I7: `RecoveryKey`, if present, must be a well-formed compressed secp256k1 point (33 bytes) and must differ from the current `HolderEncryptionKey`.
-- I8: `RecoveryKey` must not be present on an `MPToken` that has no `HolderEncryptionKey` registered. A holder initializes confidential state via their first `ConfidentialMPTConvert` (with `HolderEncryptionKey` present, MPTAmount may be zero). `RecoveryKey` is only meaningful for holders who have completed this initialization.
+- I8: `IssuerKeyMirrorEpoch`, if present, must be ≤ `IssuerKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
+- I9: `AuditorKeyMirrorEpoch`, if present, must be ≤ `AuditorKeyEpoch` on the parent `MPTokenIssuance` (treated as 0 if absent).
+- I10: `RecoveryKey`, if present, must be a well-formed compressed secp256k1 point (33 bytes) and must differ from the current `HolderEncryptionKey`.
+- I11: `RecoveryKey` must not be present on an `MPToken` that has no `HolderEncryptionKey` registered. A holder initializes confidential state via their first `ConfidentialMPTConvert` (with `HolderEncryptionKey` present, MPTAmount may be zero). `RecoveryKey` is only meaningful for holders who have completed this initialization.
+- I12: On a successful transaction that rewrites `IssuerEncryptedBalance`, `<MPToken>'.IssuerKeyMirrorEpoch == <MPTokenIssuance>.IssuerKeyEpoch`.
+- I13: On a successful transaction that rewrites `AuditorEncryptedBalance`, `<MPToken>'.AuditorKeyMirrorEpoch == <MPTokenIssuance>.AuditorKeyEpoch`.
+- I14: `<MPToken>'.IssuerKeyMirrorEpoch >= <MPToken>.IssuerKeyMirrorEpoch AND <MPToken>'.AuditorKeyMirrorEpoch >= <MPToken>.AuditorKeyMirrorEpoch`. Mirror epochs never decrease.
 
 #### 5.2.5. Example JSON
 
