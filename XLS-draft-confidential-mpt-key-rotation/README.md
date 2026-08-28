@@ -15,7 +15,7 @@
 
 ## 1. Abstract
 
-This amendment extends XLS-0096 (Confidential Transfers for Multi-Purpose Tokens) with ElGamal key rotation for all three participant roles: issuer, auditor, and holder. It introduces 3 new transaction types (`ConfidentialMPTMirrorUpdate`, `ConfidentialMPTHolderKeyUpdate`, `ConfidentialMPTRecoverBalance`), extends `MPTokenIssuanceSet` to permit replacement of already-registered encryption keys, adds mirror staleness validation to four existing XLS-0096 transaction types (`ConfidentialMPTSend`, `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`, `ConfidentialMPTClawback`), and adds new fields to the `MPTokenIssuance` and `MPToken` ledger objects. Key rotation is supported for both voluntary and loss-recovery scenarios. All new cryptographic constructions reuse existing primitives from XLS-0096 (compact Chaum-Pedersen equality proofs, Schnorr proofs of knowledge) and introduce no new cryptographic assumptions.
+This amendment extends XLS-0096 (Confidential Transfers for Multi-Purpose Tokens) with ElGamal key rotation for all three participant roles: issuer, auditor, and holder. It introduces 3 new transaction types (`ConfidentialMPTMirrorUpdate`, `ConfidentialMPTHolderKeyUpdate`, `ConfidentialMPTRecoverBalance`), extends `MPTokenIssuanceSet` to permit replacement of already-registered encryption keys, adds mirror staleness validation to four existing XLS-0096 transaction types (`ConfidentialMPTSend`, `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`, `ConfidentialMPTClawback`) together with mirror resets and epoch rewrites on clawback, and adds new fields to the `MPTokenIssuance` and `MPToken` ledger objects. Key rotation is supported for both voluntary and loss-recovery scenarios. All new cryptographic constructions reuse existing primitives from XLS-0096 (compact Chaum-Pedersen equality proofs, Schnorr proofs of knowledge) and introduce no new cryptographic assumptions.
 
 ## 2. Motivation
 
@@ -48,11 +48,11 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 ### 4.1. Modified Transaction Types
 
-- `MPTokenIssuanceSet`: Extended to allow replacement of `IssuerEncryptionKey` and `AuditorEncryptionKey` when already present, enabling issuer and auditor key rotation.
-- `ConfidentialMPTSend`: Rejected when the sender's or the destination's issuer or auditor mirror is stale.
-- `ConfidentialMPTConvert`: Rejected when an already-initialized holder's issuer or auditor mirror is stale.
-- `ConfidentialMPTConvertBack`: Rejected when the holder's issuer or auditor mirror is stale.
-- `ConfidentialMPTClawback`: Rejected when the holder's issuer mirror is stale. See Section 6.1.
+- `MPTokenIssuanceSet`: Extended to allow replacement of `IssuerEncryptionKey` and `AuditorEncryptionKey` when already present, enabling issuer and auditor key rotation. See Section 5.3.
+- `ConfidentialMPTConvert`: Rejected when an already-initialized holder's issuer or auditor mirror is stale; sets mirror epochs when a holder initializes confidential state. See Section 5.7.
+- `ConfidentialMPTSend`: Rejected when the sender's or the destination's issuer or auditor mirror is stale. See Section 5.8.
+- `ConfidentialMPTConvertBack`: Rejected when the holder's issuer or auditor mirror is stale. See Section 5.9.
+- `ConfidentialMPTClawback`: Rejected when the holder's issuer mirror is stale; resets both mirror ciphertexts and rewrites both mirror epochs on success. See Section 5.10.
 
 ### 4.2. New Transaction Types
 
@@ -137,23 +137,17 @@ epoch cannot exceed its corresponding key epoch.
 
 #### 4.6.2. Transactions Requiring Current Mirrors
 
-- `ConfidentialMPTSend` requires current issuer and auditor mirrors for both
-  the sender and destination.
-- `ConfidentialMPTConvert` requires current issuer and auditor mirrors for an
-  already-initialized holder.
-- `ConfidentialMPTConvertBack` requires current issuer and auditor mirrors for
-  the holder.
-- `ConfidentialMPTClawback` requires a current issuer mirror for the holder.
+The transactions below are rejected with `tecNO_PERMISSION` when a mirror they
+require is not current. An auditor mirror is required only when an auditor key
+is configured. The normative failure conditions and state changes for each
+transaction are specified in its own section.
 
-A transaction fails with `tecNO_PERMISSION` when any required mirror is not
-current.
-
-After issuer or auditor key rotation, transactions that carry issuer or
-auditor encrypted amounts MUST construct those ciphertexts under the
-currently registered encryption keys on `MPTokenIssuance`.
-`ConfidentialMPTClawback` MUST use the secret key corresponding to the current
-`IssuerEncryptionKey` and can proceed only after the holder's issuer mirror is
-current.
+| Transaction                  | Required current mirrors                              | Specified in |
+| :--------------------------- | :---------------------------------------------------- | :----------- |
+| `ConfidentialMPTConvert`     | Issuer and auditor, for an already-initialized holder | Section 5.7  |
+| `ConfidentialMPTSend`        | Issuer and auditor, for both sender and destination   | Section 5.8  |
+| `ConfidentialMPTConvertBack` | Issuer and auditor, for the holder                    | Section 5.9  |
+| `ConfidentialMPTClawback`    | Issuer only, for the holder                           | Section 5.10 |
 
 #### 4.6.3. Migration-Required Conditions
 
@@ -206,8 +200,8 @@ rules.
 | Stale mirror                                                  | Another rotation of the corresponding key                                        | Successive rotation is permitted                           | The key epoch increments again; the holder mirror remains unchanged                                         | Stale mirror, possibly multiple epochs behind                   | Sections 4.4 and 9.9       |
 | Stale issuer mirror                                           | `ConfidentialMPTMirrorUpdate` updates the issuer mirror                          | Required issuer-mode or holder-mode proof succeeds         | `IssuerEncryptedBalance` is replaced and `IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`                  | Current issuer mirror                                           | Section 5.4                |
 | Missing or stale auditor mirror                               | `ConfidentialMPTMirrorUpdate` updates the auditor mirror                         | Auditor key is configured and the required proof succeeds  | `AuditorEncryptedBalance` is created or replaced and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`    | Current auditor mirror                                          | Section 5.4                |
-| Current mirrors                                               | `ConfidentialMPTConvert`, `ConfidentialMPTSend`, or `ConfidentialMPTConvertBack` | Every required mirror is current                           | Mirror ciphertexts change under the current keys; mirror epochs do not change                               | Current mirrors                                                 | Section 4.6.2 and XLS-0096 |
-| Current issuer mirror and any configured auditor-mirror state | `ConfidentialMPTClawback`                                                        | Clawback proof succeeds against the current issuer mirror  | Mirror ciphertexts are reset to canonical encrypted zero and their epochs are set to the current key epochs | Current mirrors encrypting zero                                 | Section 6.1                |
+| Current mirrors                                               | `ConfidentialMPTConvert`, `ConfidentialMPTSend`, or `ConfidentialMPTConvertBack` | Every required mirror is current                           | Mirror ciphertexts change under the current keys; mirror epochs do not change                               | Current mirrors                                                 | Sections 5.7 through 5.9   |
+| Current issuer mirror and any configured auditor-mirror state | `ConfidentialMPTClawback`                                                        | Clawback proof succeeds against the current issuer mirror  | Mirror ciphertexts are reset to canonical encrypted zero and their epochs are set to the current key epochs | Current mirrors encrypting zero                                 | Section 5.10               |
 
 #### 4.7.2. Holder Key and Recovery Lifecycle
 
@@ -368,6 +362,8 @@ All existing `MPTokenIssuanceSet` behavior (lock/unlock, `DomainID`) is complete
 
 #### 5.3.3. State Changes
 
+**On Success (`tesSUCCESS`):**
+
 When `IssuerEncryptionKey` is present and valid:
 
 1. `IssuerEncryptionKey` on `MPTokenIssuance` ← new key value
@@ -460,6 +456,8 @@ Whether it is issuer mode or holder mode is determined by `Holder` field's prese
 13. Holder mode: `ZKProof` fails the cross-key equality proof verification. (`tecBAD_PROOF`)
 
 #### 5.4.5. State Changes
+
+**On Success (`tesSUCCESS`):**
 
 If `IssuerEncryptedAmount` is present:
 
@@ -599,6 +597,8 @@ Exactly one of the three flags must be set.
 
 #### 5.5.6. State Changes
 
+**On Success (`tesSUCCESS`):**
+
 **Rotation mode**:
 
 1. `HolderEncryptionKey` on `MPToken` ← new key value
@@ -694,6 +694,8 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
 
 #### 5.6.4. State Changes
 
+**On Success (`tesSUCCESS`):**
+
 1. `HolderEncryptionKey` on `MPToken` ← `RecoveryKey`
 2. `ConfidentialBalanceSpending` on `MPToken` ← new ciphertext
 3. `ConfidentialBalanceInbox` on `MPToken` ← `EncZero` (canonical encryption of zero under pk_H')
@@ -714,19 +716,87 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
 }
 ```
 
-## 6. Clawback and Freeze Interactions with Key Rotation
+### 5.7. Transaction: `ConfidentialMPTConvert`
 
-### 6.1. Clawback
+`ConfidentialMPTConvert` is defined in XLS-0096. This amendment adds a mirror-staleness precondition for holders whose confidential state is already initialized, and specifies the mirror epochs written when a holder initializes confidential state. Its fields, flags, and fee are unchanged.
 
-`ConfidentialMPTClawback` requires the holder's issuer mirror to be current, as
-specified in Section 4.6.2. On success, `IssuerEncryptedBalance` is reset to
-canonical encrypted zero under the current issuer key and
-`IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`. If an auditor key is
-configured, `AuditorEncryptedBalance` is reset under the current auditor key
-and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`. All other clawback
-semantics remain unchanged from XLS-0096.
+#### 5.7.1. Failure Conditions
 
-### 6.2. Freeze
+This amendment introduces no new data-verification (`tem`) failures. It adds the following protocol-level failures, using the definition of a current mirror in Section 4.6.1:
+
+1. The holder's confidential state is already initialized and the holder's issuer mirror is not current. (`tecNO_PERMISSION`)
+2. The holder's confidential state is already initialized, an auditor key is configured, and the holder's auditor mirror is not current. (`tecNO_PERMISSION`)
+
+A holder initializing confidential state for the first time cannot be stale, because the mirrors are created under the current keys in the same transaction. These conditions therefore apply only to already-initialized holders.
+
+#### 5.7.2. State Changes
+
+**On Success (`tesSUCCESS`):**
+
+All state changes specified in XLS-0096 §7.5 apply unchanged. This amendment adds the following:
+
+- When confidential state is initialized for the first time, the mirror epochs are set to the corresponding key epochs: `IssuerKeyMirrorEpoch` ← `IssuerKeyEpoch`, and `AuditorKeyMirrorEpoch` ← `AuditorKeyEpoch` when an auditor key is configured. An epoch of 0 is omitted from ledger storage rather than written explicitly.
+- For an already-initialized holder, `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values, since both mirrors are current as a precondition of success.
+
+### 5.8. Transaction: `ConfidentialMPTSend`
+
+`ConfidentialMPTSend` is defined in XLS-0096. This amendment adds a mirror-staleness precondition for both parties. Its fields, flags, and fee are unchanged.
+
+#### 5.8.1. Failure Conditions
+
+This amendment introduces no new data-verification (`tem`) failures. It adds the following protocol-level failures, using the definition of a current mirror in Section 4.6.1:
+
+1. The sender's issuer mirror is not current. (`tecNO_PERMISSION`)
+2. An auditor key is configured and the sender's auditor mirror is not current. (`tecNO_PERMISSION`)
+3. The destination's issuer mirror is not current. (`tecNO_PERMISSION`)
+4. An auditor key is configured and the destination's auditor mirror is not current. (`tecNO_PERMISSION`)
+
+#### 5.8.2. State Changes
+
+**On Success (`tesSUCCESS`):**
+
+All state changes specified in XLS-0096 §8.4 apply unchanged. No field introduced by this amendment changes: both parties' mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values.
+
+### 5.9. Transaction: `ConfidentialMPTConvertBack`
+
+`ConfidentialMPTConvertBack` is defined in XLS-0096. This amendment adds a mirror-staleness precondition. Its fields, flags, and fee are unchanged.
+
+#### 5.9.1. Failure Conditions
+
+This amendment introduces no new data-verification (`tem`) failures. It adds the following protocol-level failures, using the definition of a current mirror in Section 4.6.1:
+
+1. The holder's issuer mirror is not current. (`tecNO_PERMISSION`)
+2. An auditor key is configured and the holder's auditor mirror is not current. (`tecNO_PERMISSION`)
+
+#### 5.9.2. State Changes
+
+**On Success (`tesSUCCESS`):**
+
+All state changes specified in XLS-0096 §10.5 apply unchanged. No field introduced by this amendment changes: the holder's mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values.
+
+### 5.10. Transaction: `ConfidentialMPTClawback`
+
+`ConfidentialMPTClawback` is defined in XLS-0096. This amendment adds a mirror-staleness precondition on the issuer mirror and rewrites both mirror epochs on success. Its fields, flags, and fee are unchanged.
+
+#### 5.10.1. Failure Conditions
+
+This amendment introduces no new data-verification (`tem`) failures. It adds the following protocol-level failure, using the definition of a current mirror in Section 4.6.1:
+
+1. The holder's issuer mirror is not current. (`tecNO_PERMISSION`)
+
+Only the issuer mirror is required to be current, because the clawback proof is verified against `IssuerEncryptedBalance`. Producing the clawed-back amount therefore requires decrypting that mirror, so the issuer needs the secret key for the currently registered `IssuerEncryptionKey`; see Section 7 for the issuer key loss case. A stale or missing auditor mirror does not block clawback; it is repaired by the state changes below.
+
+#### 5.10.2. State Changes
+
+**On Success (`tesSUCCESS`):**
+
+All state changes specified in XLS-0096 §11.4 apply unchanged. This amendment adds the following:
+
+- `IssuerEncryptedBalance` ← canonical encrypted zero under the currently registered `IssuerEncryptionKey`, and `IssuerKeyMirrorEpoch` ← `IssuerKeyEpoch`.
+- When an auditor key is configured, `AuditorEncryptedBalance` ← canonical encrypted zero under the currently registered `AuditorEncryptionKey`, and `AuditorKeyMirrorEpoch` ← `AuditorKeyEpoch`.
+- Because both mirrors are rewritten as encryptions of zero under the current keys, a clawed-back holder is left with current mirrors even if a mirror was stale or missing beforehand. No `ConfidentialMPTMirrorUpdate` is required for that holder afterwards.
+
+## 6. Freeze Interactions with Key Rotation
 
 This amendment does not change the lock behavior defined by XLS-0096. A
 holder-level or issuance-level lock does not prevent key rotation through
