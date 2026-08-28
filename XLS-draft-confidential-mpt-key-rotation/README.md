@@ -671,6 +671,19 @@ Recovery mode:
 }
 ```
 
+Cancel mode:
+
+```json
+{
+  "TransactionType": "ConfidentialMPTHolderKeyUpdate",
+  "Account": "rHolderAccountAddress",
+  "MPTokenIssuanceID": "000000012A9F1D3C...",
+  "Flags": 4,
+  "Fee": "120",
+  "Sequence": 48
+}
+```
+
 ### 5.6. Transaction: `ConfidentialMPTRecoverBalance`
 
 Completes holder key loss recovery. The issuer re-encrypts the holder's balance under the authorized `RecoveryKey` and submits a compact Chaum-Pedersen equality proof. Validators enforce that `RecoveryKey` is present - the issuer cannot act without prior holder authorization.
