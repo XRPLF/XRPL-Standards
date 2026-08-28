@@ -484,7 +484,9 @@ Whether it is issuer mode or holder mode is determined by `Holder` field's prese
 
 #### 5.4.3. Transaction Fee
 
-10x base fee, consistent with XLS-0096 confidential transactions.
+**Fee Structure:** Custom
+
+This transaction requires 10x the base fee because it carries a 128-byte zero-knowledge proof requiring elliptic curve verification, consistent with the XLS-0096 confidential transactions.
 
 #### 5.4.4. Failure Conditions
 
@@ -619,7 +621,9 @@ Exactly one of the three flags must be set.
 
 #### 5.5.4. Transaction Fee
 
-10x base fee, consistent with XLS-0096 confidential transactions.
+**Fee Structure:** Custom
+
+This transaction requires 10x the base fee because rotation and recovery modes carry a zero-knowledge proof requiring elliptic curve verification, 160 bytes and 64 bytes respectively, consistent with the XLS-0096 confidential transactions. Cancel mode carries no proof but pays the same fee, because the fee is set per transaction type rather than per mode.
 
 #### 5.5.5. Failure Conditions
 
@@ -745,7 +749,9 @@ Additionally, any incoming confidential transfers that arrived in the inbox duri
 
 #### 5.6.2. Transaction Fee
 
-10x base fee, consistent with XLS-0096 confidential transactions.
+**Fee Structure:** Custom
+
+This transaction requires 10x the base fee because it carries a 128-byte zero-knowledge proof requiring elliptic curve verification, consistent with the XLS-0096 confidential transactions.
 
 #### 5.6.3. Failure Conditions
 
