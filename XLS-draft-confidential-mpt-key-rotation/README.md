@@ -1120,13 +1120,75 @@ All new transactions are charged 10x the base fee, consistent with XLS-0096.
 
 ## 11. Permissions
 
-Per XLS-75 permission delegation, an account can grant another account permission to submit specific transaction types on its behalf.
+Per XLS-75 permission delegation, an account can grant another account permission to submit specific transaction types on its behalf
+This amendment introduces **no new granular permissions**.
+The tx-level permissions introduced or modified by this amendment are listed below.
 
-In this amendment, when interacting with permission delegation, a delegate must never be able to introduce an ElGamal encryption key of its own choosing:
+### 11.1. Permission: `ConfidentialMPTMirrorUpdate`
 
-- `ConfidentialMPTHolderKeyUpdate` is not delegable. Rotation and recovery modes both register a submitter-chosen holder key, and cancel mode is covered as well because delegability is set per transaction type. This matches `ConfidentialMPTConvert`, which XLS-0096 makes non-delegable for the same reason.
-- `MPTokenIssuanceSet` remains delegable, but a delegated submission **MUST NOT** carry `IssuerEncryptionKey` or `AuditorEncryptionKey`, meaning the delegated account cannot rotate the issuer or auditor key.
-- `ConfidentialMPTMirrorUpdate` and `ConfidentialMPTRecoverBalance` are delegable.
+#### 11.1.1. Permission Description
+
+Grants the ability to submit `ConfidentialMPTMirrorUpdate` on behalf of the
+granting account, in both issuer mode and holder mode. Delegation is safe here
+because the transaction carries no submitter-chosen encryption key: it
+re-encrypts a balance already on the ledger under a key already registered on
+`MPTokenIssuance`, and the equality proof of Section 5.4.7 binds the result to
+that existing balance. `PreviousIssuerEncryptionKey` is a verification input
+rather than a registration, so a delegate cannot substitute a key of its own -
+any other value makes the proof fail. A delegate can advance migration but can
+neither read nor move funds.
+
+#### 11.1.2. Transaction Types Affected
+
+`ConfidentialMPTMirrorUpdate`
+
+#### 11.1.3. Permission Value
+
+93, derived from transaction type 92.
+
+### 11.2. Not delegable: `ConfidentialMPTHolderKeyUpdate`
+
+Not delegable, so this permission can never be granted. Rotation and recovery
+modes both register a submitter-chosen holder key, which would let a delegate
+take over the holder's confidential balance. Cancel mode carries no key, but
+delegability is set per transaction type and cannot be scoped to a single mode.
+This matches `ConfidentialMPTConvert`, which XLS-0096 makes non-delegable for the
+same reason.
+
+### 11.3. Permission: `ConfidentialMPTRecoverBalance`
+
+#### 11.3.1. Permission Description
+
+Grants the ability to submit `ConfidentialMPTRecoverBalance` on behalf of the
+issuer, completing a recovery the holder has already authorized. Delegation is
+safe here because the delegate does not choose the destination key: the
+transaction is rejected unless `RecoveryKey` is already present on the holder's
+`MPToken` (Section 5.6.3), and only the holder can set that field. The worst a
+delegate can do is complete an authorized recovery, or decline to.
+
+#### 11.3.2. Transaction Types Affected
+
+`ConfidentialMPTRecoverBalance`
+
+#### 11.3.3. Permission Value
+
+95, derived from transaction type 94.
+
+### 11.4. Permission: `MPTokenIssuanceSet`
+
+#### 11.4.1. Permission Description
+
+Unchanged by this amendment. It continues to grant the ability to send `MPTokenIssuanceSet` on behalf of delegator, but a delegated submission **MUST NOT** carry `IssuerEncryptionKey`
+or `AuditorEncryptionKey`, so a delegate cannot rotate or register an issuer or
+auditor key.
+
+#### 11.4.2. Transaction Types Affected
+
+`MPTokenIssuanceSet`
+
+#### 11.4.3. Permission Value
+
+57, derived from transaction type 56, which predates this amendment.
 
 ## 12. Rationale
 
