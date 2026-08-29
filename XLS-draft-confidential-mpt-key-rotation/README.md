@@ -1013,11 +1013,11 @@ After a holder submits `ConfidentialMPTHolderKeyUpdate` with `tfHolderKeyRecover
 
 **Option 1: Real-time WebSocket subscription**
 
-The issuer subscribes to the XRPL WebSocket API and listens for `ConfidentialMPTHolderKeyUpdate` transactions with `tfHolderKeyRecovery` flag set. When one arrives, the issuer is notified in real-time and can immediately prepare and submit `ConfidentialMPTRecoverBalance`. Clio is optimized for WebSocket API calls for validated ledger data and supports transaction stream subscriptions.
+The issuer subscribes to the XRPL WebSocket API and listens for `ConfidentialMPTHolderKeyUpdate` transactions with `tfHolderKeyRecovery` flag set. When one arrives, the issuer is notified in real-time and can immediately prepare and submit `ConfidentialMPTRecoverBalance`.
 
 **Option 2: Periodic Clio query (catch-up mechanism)**
 
-As a reliability backstop for missed WebSocket events (e.g. connection drops), the issuer periodically pages through Clio's `mpt_holders` method. Each result supplies an `mptoken_index`; the issuer then queries that ledger entry and filters the returned `MPToken` objects for `RecoveryKey`. This requires per-holder lookups unless `mpt_holders` is extended to return `RecoveryKey`.
+As a reliability backstop for missed WebSocket events (e.g. connection drops), the issuer periodically pages through Clio's `mpt_holders` method. Each result supplies an `mptoken_index`; the issuer then queries that ledger entry and filters the returned `MPToken` objects for `RecoveryKey`.
 
 ```json
 {
@@ -1031,7 +1031,7 @@ For each returned `mptoken_index`, the issuer retrieves the corresponding `MPTok
 
 **Recommended approach**: Both mechanisms together. Option 1 provides real-time processing of recovery requests; Option 2 provides periodic catch-up for events missed during WebSocket downtime. The polling interval for Option 2 can be tuned based on the issuer's SLA for recovery completion.
 
-**No protocol changes required**. Both mechanisms use existing XRPL and Clio infrastructure. This is purely an operational implementation concern for issuers.
+**No API changes required**. Both mechanisms use existing XRPL and Clio infrastructure exactly as it is today. This is purely an operational implementation concern for issuers.
 
 ## 9. Security Considerations
 
