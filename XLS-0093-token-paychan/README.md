@@ -238,6 +238,9 @@ Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be cl
   - **IOU Tokens**: If the issuer's account lacks the `lsfAllowTrustLineClawback` flag, or has the `lsfNoFreeze` flag set, the transaction fails with `tecNO_PERMISSION`. These are the same conditions that gate the [XLS-39](../XLS-0039-clawback/README.md) `Clawback` transaction.
   - **MPTs**: If the `MPTokenIssuance` lacks the `lsfMPTCanClawback` flag, the transaction fails with `tecNO_PERMISSION`. If the `MPTokenIssuance` does not exist, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
+- **No Unclaimed Remainder:**
+  - If the channel's `Balance` equals its `Amount` there is nothing to claw, and the transaction fails with `tecUNFUNDED_PAYMENT`. A claim that draws the channel down to its full `Amount` without `tfClose` leaves the channel open in exactly this state.
+
 **State Changes:**
 
 - **Adjustment to the Issuer:**
