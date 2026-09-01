@@ -67,8 +67,8 @@ Terms not defined here carry the same meaning as in XLS-0096.
 
 ### 4.3. Modified Ledger Entries
 
-- `MPTokenIssuance`: Two new fields - `IssuerKeyEpoch`, `AuditorKeyEpoch`.
-- `MPToken`: Three new fields - `IssuerKeyMirrorEpoch`, `AuditorKeyMirrorEpoch`, `RecoveryKey`.
+- `MPTokenIssuance`: Three new fields - `IssuerKeyEpoch`, `AuditorKeyEpoch`, `InitialIssuerEncryptionKey`.
+- `MPToken`: Four new fields - `IssuerKeyMirrorEpoch`, `AuditorKeyMirrorEpoch`, `IssuerMirrorEncryptionKey`, `RecoveryKey`.
 
 ### 4.4. Key Rotation Model
 
@@ -165,16 +165,16 @@ This section is an informative summary using the states defined in Section 3. Th
 
 #### 4.7.1. Mirror Lifecycle
 
-| Before                                                        | Trigger                                                                          | Preconditions                                              | State Changes                                                                                               | After                                                           | Reference                  |
-| :------------------------------------------------------------ | :------------------------------------------------------------------------------- | :--------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- | :------------------------- |
-| No auditor mirror required                                    | Initial auditor key registration                                                 | Issuer key is already registered                           | `AuditorEncryptionKey` is registered; existing holder objects are unchanged                                 | Missing auditor mirror for each initialized confidential holder | Sections 4.4 and 5.3       |
-| No initialized confidential state                             | First `ConfidentialMPTConvert`                                                   | Current issuer key and any configured auditor key are used | Mirror ciphertexts are created and mirror epochs are set to the current key epochs                          | Current mirror or mirrors                                       | Section 4.6.4 and XLS-0096 |
-| Current mirror                                                | Corresponding issuer or auditor key rotation                                     | A different valid key is submitted                         | The key is replaced and its key epoch increments; holder mirrors are unchanged                              | Stale mirror                                                    | Section 5.3                |
-| Stale mirror                                                  | Another rotation of the corresponding key                                        | Successive rotation is permitted                           | The key epoch increments again; the holder mirror remains unchanged                                         | Stale mirror, possibly multiple epochs behind                   | Sections 4.4 and 12.9      |
-| Stale issuer mirror                                           | `ConfidentialMPTMirrorUpdate` updates the issuer mirror                          | Required issuer-mode or holder-mode proof succeeds         | `IssuerEncryptedBalance` is replaced and `IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`                  | Current issuer mirror                                           | Section 5.4                |
-| Missing or stale auditor mirror                               | `ConfidentialMPTMirrorUpdate` updates the auditor mirror                         | Auditor key is configured and the required proof succeeds  | `AuditorEncryptedBalance` is created or replaced and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`    | Current auditor mirror                                          | Section 5.4                |
-| Current mirrors                                               | `ConfidentialMPTConvert`, `ConfidentialMPTSend`, or `ConfidentialMPTConvertBack` | Every required mirror is current                           | Mirror ciphertexts change under the current keys; mirror epochs do not change                               | Current mirrors                                                 | Sections 5.7 through 5.9   |
-| Current issuer mirror and any configured auditor-mirror state | `ConfidentialMPTClawback`                                                        | Clawback proof succeeds against the current issuer mirror  | Mirror ciphertexts are reset to canonical encrypted zero and their epochs are set to the current key epochs | Current mirrors encrypting zero                                 | Section 5.10               |
+| Before                                                        | Trigger                                                                          | Preconditions                                              | State Changes                                                                                                                                                             | After                                                           | Reference                  |
+| :------------------------------------------------------------ | :------------------------------------------------------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------- | :------------------------- |
+| No auditor mirror required                                    | Initial auditor key registration                                                 | Issuer key is already registered                           | `AuditorEncryptionKey` is registered; existing holder objects are unchanged                                                                                               | Missing auditor mirror for each initialized confidential holder | Sections 4.4 and 5.3       |
+| No initialized confidential state                             | First `ConfidentialMPTConvert`                                                   | Current issuer key and any configured auditor key are used | Mirror ciphertexts are created, mirror epochs are set to the current key epochs, and `IssuerMirrorEncryptionKey` is set to `IssuerEncryptionKey`                          | Current mirror or mirrors                                       | Section 4.6.4 and XLS-0096 |
+| Current mirror                                                | Corresponding issuer or auditor key rotation                                     | A different valid key is submitted                         | The key is replaced and its key epoch increments; a first issuer key rotation also records the replaced key as `InitialIssuerEncryptionKey`; holder mirrors are unchanged | Stale mirror                                                    | Section 5.3                |
+| Stale mirror                                                  | Another rotation of the corresponding key                                        | Successive rotation is permitted                           | The key epoch increments again; the holder mirror remains unchanged                                                                                                       | Stale mirror, possibly multiple epochs behind                   | Sections 4.4 and 12.9      |
+| Stale issuer mirror                                           | `ConfidentialMPTMirrorUpdate` updates the issuer mirror                          | Required issuer-mode or holder-mode proof succeeds         | `IssuerEncryptedBalance` is replaced, `IssuerKeyMirrorEpoch` is set to `IssuerKeyEpoch`, and `IssuerMirrorEncryptionKey` is set to `IssuerEncryptionKey`                  | Current issuer mirror                                           | Section 5.4                |
+| Missing or stale auditor mirror                               | `ConfidentialMPTMirrorUpdate` updates the auditor mirror                         | Auditor key is configured and the required proof succeeds  | `AuditorEncryptedBalance` is created or replaced and `AuditorKeyMirrorEpoch` is set to `AuditorKeyEpoch`                                                                  | Current auditor mirror                                          | Section 5.4                |
+| Current mirrors                                               | `ConfidentialMPTConvert`, `ConfidentialMPTSend`, or `ConfidentialMPTConvertBack` | Every required mirror is current                           | Mirror ciphertexts change under the current keys; mirror epochs do not change                                                                                             | Current mirrors                                                 | Sections 5.7 through 5.9   |
+| Current issuer mirror and any configured auditor-mirror state | `ConfidentialMPTClawback`                                                        | Clawback proof succeeds against the current issuer mirror  | Mirror ciphertexts are reset to canonical encrypted zero and their epochs are set to the current key epochs                                                               | Current mirrors encrypting zero                                 | Section 5.10               |
 
 #### 4.7.2. Holder Key and Recovery Lifecycle
 
@@ -194,10 +194,11 @@ The existing `MPTokenIssuance` ledger object is extended with two new fields. Al
 
 #### 5.1.1. Fields
 
-| Field Name        | Constant | Required | Internal Type | Default Value | Description                               |
-| :---------------- | :------- | :------- | :------------ | :------------ | :---------------------------------------- |
-| `IssuerKeyEpoch`  | No       | No       | `UINT32`      | `0`           | Counter of issuer ElGamal key rotations.  |
-| `AuditorKeyEpoch` | No       | No       | `UINT32`      | `0`           | Counter of auditor ElGamal key rotations. |
+| Field Name                   | Constant | Required | Internal Type | Default Value | Description                                               |
+| :--------------------------- | :------- | :------- | :------------ | :------------ | :-------------------------------------------------------- |
+| `IssuerKeyEpoch`             | No       | No       | `UINT32`      | `0`           | Counter of issuer ElGamal key rotations.                  |
+| `AuditorKeyEpoch`            | No       | No       | `UINT32`      | `0`           | Counter of auditor ElGamal key rotations.                 |
+| `InitialIssuerEncryptionKey` | Yes      | No       | `BLOB`        | N/A           | The issuer ElGamal public key that was in use at epoch 0. |
 
 **Field Details:**
 
@@ -212,6 +213,12 @@ The first successful rotation of `IssuerEncryptionKey` creates the field with va
 The counter follows the same rules as `IssuerKeyEpoch`: an absent field means 0 and is not stored, initial registration of `AuditorEncryptionKey` leaves it absent, the first rotation creates it with value 1, and it never decreases.
 
 Unlike the issuer key, the auditor key is optional and may be registered at any time, including after confidential balances already exist. An epoch of 0 therefore carries two possible meanings: no auditor key is configured at all, or an auditor key is registered but has never been rotated. The two are distinguished by the presence of `AuditorEncryptionKey`, not by the epoch, and only the first removes the requirement for holders to carry an auditor mirror (Section 4.6.1).
+
+##### 5.1.1.3. `InitialIssuerEncryptionKey`
+
+A 33-byte compressed secp256k1 point, preserving the issuer key that was registered at epoch 0. Rotation overwrites `IssuerEncryptionKey` in place, so without this field the epoch 0 key would be unrecoverable from ledger state, and an issuer-mode migration of a mirror still at epoch 0 could not be verified.
+
+The field is written exactly once, by the first issuer key rotation, which stores the key it is replacing. Later rotations leave it untouched. Any mirror belonging to a later epoch carries on the holder's `MPToken` as `IssuerMirrorEncryptionKey`.
 
 #### 5.1.2. Freeze/Lock
 
@@ -228,6 +235,8 @@ Setting `lsfMPTLocked` on `MPTokenIssuance` locks the entire issuance. This amen
 - I5: On a successful issuer key rotation, `<MPTokenIssuance>'.IssuerKeyEpoch == <MPTokenIssuance>.IssuerKeyEpoch + 1`. An absent epoch is treated as 0, so the first rotation yields 1.
 - I6: On a successful auditor key rotation, `<MPTokenIssuance>'.AuditorKeyEpoch == <MPTokenIssuance>.AuditorKeyEpoch + 1`. An absent epoch is treated as 0, so the first rotation yields 1.
 - I7: `<MPTokenIssuance>'.IssuerKeyEpoch >= <MPTokenIssuance>.IssuerKeyEpoch AND <MPTokenIssuance>'.AuditorKeyEpoch >= <MPTokenIssuance>.AuditorKeyEpoch`. Key epochs never decrease.
+- I15: `InitialIssuerEncryptionKey` is present if and only if `IssuerKeyEpoch` is present. It must be a well-formed compressed secp256k1 point (33 bytes).
+- I16: `InitialIssuerEncryptionKey` is immutable once written: if it is present before a transaction, `<MPTokenIssuance>'.InitialIssuerEncryptionKey == <MPTokenIssuance>.InitialIssuerEncryptionKey`. It may differ from the current `IssuerEncryptionKey`, and may also equal it, since nothing prevents an issuer from eventually rotating back to a previously used key.
 
 #### 5.1.4. Example JSON
 
@@ -247,6 +256,7 @@ After issuer and auditor key rotation:
   "AuditorEncryptionKey": "02b1c2d3e4f5a6...",
   "IssuerKeyEpoch": 1,
   "AuditorKeyEpoch": 1,
+  "InitialIssuerEncryptionKey": "02b7c8d9e0f1a2...",
   "PreviousTxnID": "A1B2C3D4...",
   "PreviousTxnLgrSeq": 1234567
 }
@@ -254,15 +264,16 @@ After issuer and auditor key rotation:
 
 ### 5.2. Ledger Entry: `MPToken`
 
-The existing `MPToken` ledger object is extended with three new fields. All other fields, flags, ownership, reserves, and the object identifier are unchanged from XLS-0033.
+The existing `MPToken` ledger object is extended with four new fields. All other fields, flags, ownership, reserves, and the object identifier are unchanged from XLS-0033.
 
 #### 5.2.1. Fields
 
-| Field Name              | Constant | Required | Internal Type | Default Value | Description                                                                  |
-| :---------------------- | :------- | :------- | :------------ | :------------ | :--------------------------------------------------------------------------- |
-| `IssuerKeyMirrorEpoch`  | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` under which this holder's issuer mirror is encrypted.   |
-| `AuditorKeyMirrorEpoch` | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` under which this holder's auditor mirror is encrypted. |
-| `RecoveryKey`           | No       | No       | `BLOB`        | N/A           | A compressed ElGamal public key authorized for key loss recovery.            |
+| Field Name                  | Constant | Required | Internal Type | Default Value | Description                                                                   |
+| :-------------------------- | :------- | :------- | :------------ | :------------ | :---------------------------------------------------------------------------- |
+| `IssuerKeyMirrorEpoch`      | No       | No       | `UINT32`      | `0`           | The `IssuerKeyEpoch` under which this holder's issuer mirror is encrypted.    |
+| `AuditorKeyMirrorEpoch`     | No       | No       | `UINT32`      | `0`           | The `AuditorKeyEpoch` under which this holder's auditor mirror is encrypted.  |
+| `IssuerMirrorEncryptionKey` | No       | No       | `BLOB`        | N/A           | The issuer ElGamal public key this holder's issuer mirror is encrypted under. |
+| `RecoveryKey`               | No       | No       | `BLOB`        | N/A           | A compressed ElGamal public key authorized for key loss recovery.             |
 
 **Field Details:**
 
@@ -278,7 +289,13 @@ The field is written on the same occasions as `IssuerKeyMirrorEpoch`, with one e
 
 Epoch equality alone does not make the auditor mirror current: `AuditorEncryptedBalance` must also be present (Section 4.6.1). A holder who initialized confidential state before an auditor key was registered has no auditor mirror at all, so their absent epoch equals the issuance's epoch of 0 while the mirror is missing rather than current. Such a holder is repaired by `ConfidentialMPTMirrorUpdate` in the same way as a stale one.
 
-##### 5.2.1.3. `RecoveryKey`
+##### 5.2.1.3. `IssuerMirrorEncryptionKey`
+
+A 33-byte compressed secp256k1 point recording which issuer key the holder's `IssuerEncryptedBalance` is encrypted under. Since the issuance retains only the current key and the epoch 0 key, this is what lets an issuer-mode migration be verified however far behind the mirror is.
+
+Two transactions write the field: the `ConfidentialMPTConvert` that initializes confidential state, and `ConfidentialMPTMirrorUpdate` which updates the mirror.
+
+##### 5.2.1.4. `RecoveryKey`
 
 A 33-byte compressed secp256k1 point. It must be a well-formed point and must differ from the holder's current `HolderEncryptionKey` (I10), and it is only meaningful on an `MPToken` that has completed confidential initialization (I11).
 
@@ -305,6 +322,10 @@ Setting `lsfMPTLocked` on a holder's `MPToken` locks that holder individually, i
 - I12: On a successful transaction that rewrites `IssuerEncryptedBalance`, `<MPToken>'.IssuerKeyMirrorEpoch == <MPTokenIssuance>.IssuerKeyEpoch`.
 - I13: On a successful transaction that rewrites `AuditorEncryptedBalance`, `<MPToken>'.AuditorKeyMirrorEpoch == <MPTokenIssuance>.AuditorKeyEpoch`.
 - I14: `<MPToken>'.IssuerKeyMirrorEpoch >= <MPToken>.IssuerKeyMirrorEpoch AND <MPToken>'.AuditorKeyMirrorEpoch >= <MPToken>.AuditorKeyMirrorEpoch`. Mirror epochs never decrease.
+- I17: `IssuerMirrorEncryptionKey` is present if and only if `IssuerKeyMirrorEpoch` is present. Equivalently, a mirror with no recorded key is at epoch 0.
+- I18: `IssuerMirrorEncryptionKey`, if present, must be a well-formed compressed secp256k1 point (33 bytes), and `IssuerEncryptedBalance` must also be present.
+- I19: If `IssuerKeyMirrorEpoch` equals the issuance's `IssuerKeyEpoch`, `IssuerMirrorEncryptionKey` must equal the issuance's `IssuerEncryptionKey`. A current mirror is by definition encrypted under the registered key. For a stale mirror the recorded key cannot be checked against ledger state, since the key of an earlier epoch is no longer registered.
+- I20: A transaction that rewrites `IssuerEncryptedBalance` without advancing `IssuerKeyMirrorEpoch` must leave `IssuerMirrorEncryptionKey` unchanged. Such a transaction combines a delta under the current key into a mirror that is already current, so the key it is encrypted under does not change.
 
 #### 5.2.5. Example JSON
 
@@ -322,6 +343,7 @@ Fully migrated holder:
   "ConfidentialBalanceVersion": 3,
   "IssuerEncryptedBalance": "02f1a2b3c4d5e6...",
   "IssuerKeyMirrorEpoch": 1,
+  "IssuerMirrorEncryptionKey": "02a1b2c3d4e5f6...",
   "AuditorEncryptedBalance": "02a3b4c5d6e7f8...",
   "AuditorKeyMirrorEpoch": 1,
   "OwnerNode": "0",
@@ -344,6 +366,7 @@ Holder with active recovery authorization:
   "ConfidentialBalanceVersion": 3,
   "IssuerEncryptedBalance": "02f1a2b3c4d5e6...",
   "IssuerKeyMirrorEpoch": 1,
+  "IssuerMirrorEncryptionKey": "02a1b2c3d4e5f6...",
   "RecoveryKey": "03a9b8c7d6e5f4...",
   "OwnerNode": "0",
   "PreviousTxnID": "C3D4E5F6...",
@@ -392,8 +415,9 @@ The guard against adding `IssuerEncryptionKey` when `lsfMPTCanHoldConfidentialBa
 
 When `IssuerEncryptionKey` is present and valid:
 
-1. `IssuerEncryptionKey` on `MPTokenIssuance` ← new key value
-2. If `IssuerEncryptionKey` already existed, `IssuerKeyEpoch` on `MPTokenIssuance` ← `IssuerKeyEpoch` + 1 (field created with value 1 if previously absent); on initial registration, leave the epoch absent.
+1. If `IssuerEncryptionKey` already existed and `IssuerKeyEpoch` is absent, `InitialIssuerEncryptionKey` on `MPTokenIssuance` ← the key being replaced. This is the first rotation, so the replaced key is the epoch 0 key. On any later rotation the field already exists and is left untouched, and on initial registration it is not written at all.
+2. `IssuerEncryptionKey` on `MPTokenIssuance` ← new key value
+3. If `IssuerEncryptionKey` already existed, `IssuerKeyEpoch` on `MPTokenIssuance` ← `IssuerKeyEpoch` + 1 (field created with value 1 if previously absent); on initial registration, leave the epoch absent.
 
 When `AuditorEncryptionKey` is present and valid:
 
@@ -449,16 +473,17 @@ Re-encrypts a single holder's issuer and/or auditor mirror ciphertext under the 
 
 Whether it is issuer mode or holder mode is determined by `Holder` field's presence. If `Holder` is present, it is issuer mode. If `Holder` is absent, it is holder self-migration mode.
 
-| Field Name                    | Required?   | JSON Type | Internal Type | Default Value                 | Description                                                                                                                                                                                                                                                  |
-| :---------------------------- | :---------- | :-------- | :------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`             | Yes         | `string`  | `UINT16`      | `ConfidentialMPTMirrorUpdate` | `ConfidentialMPTMirrorUpdate`.                                                                                                                                                                                                                               |
-| `Account`                     | Yes         | `string`  | `ACCOUNTID`   | N/A                           | The issuer account in issuer mode, or the holder account in holder mode.                                                                                                                                                                                     |
-| `MPTokenIssuanceID`           | Yes         | `string`  | `UINT192`     | N/A                           | The unique identifier of the MPT issuance.                                                                                                                                                                                                                   |
-| `Holder`                      | Conditional | `string`  | `ACCOUNTID`   | N/A                           | **Required** in issuer mode and **must be absent** in holder mode. Identifies the holder whose mirror(s) are being re-encrypted.                                                                                                                             |
-| `IssuerEncryptedAmount`       | Conditional | `string`  | `BLOB`        | N/A                           | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new issuer key. Reuses `sfIssuerEncryptedAmount` from XLS-0096. Present to migrate holder's issuer mirror. At least one of this field and `AuditorEncryptedAmount` must be present.   |
-| `AuditorEncryptedAmount`      | Conditional | `string`  | `BLOB`        | N/A                           | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new auditor key. Reuses `sfAuditorEncryptedAmount` from XLS-0096. Present to migrate holder's auditor mirror. At least one of this field and `IssuerEncryptedAmount` must be present. |
-| `PreviousIssuerEncryptionKey` | Conditional | `string`  | `BLOB`        | N/A                           | A 33-byte compressed ElGamal public key: the issuer key the holder's existing `sfIssuerEncryptedBalance` was encrypted under. **Required** when `Holder` and `IssuerEncryptedAmount` are both present, and **forbidden** otherwise.                          |
-| `ZKProof`                     | Yes         | `string`  | `BLOB`        | N/A                           | A single compact Chaum-Pedersen equality proof proving the new ciphertext(s) encrypt the same value as the on-ledger mirror(s). When both fields are present, the proof covers both statements under one Fiat-Shamir challenge.                              |
+| Field Name               | Required?   | JSON Type | Internal Type | Default Value                 | Description                                                                                                                                                                                                                                                  |
+| :----------------------- | :---------- | :-------- | :------------ | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType`        | Yes         | `string`  | `UINT16`      | `ConfidentialMPTMirrorUpdate` | `ConfidentialMPTMirrorUpdate`.                                                                                                                                                                                                                               |
+| `Account`                | Yes         | `string`  | `ACCOUNTID`   | N/A                           | The issuer account in issuer mode, or the holder account in holder mode.                                                                                                                                                                                     |
+| `MPTokenIssuanceID`      | Yes         | `string`  | `UINT192`     | N/A                           | The unique identifier of the MPT issuance.                                                                                                                                                                                                                   |
+| `Holder`                 | Conditional | `string`  | `ACCOUNTID`   | N/A                           | **Required** in issuer mode and **must be absent** in holder mode. Identifies the holder whose mirror(s) are being re-encrypted.                                                                                                                             |
+| `IssuerEncryptedAmount`  | Conditional | `string`  | `BLOB`        | N/A                           | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new issuer key. Reuses `sfIssuerEncryptedAmount` from XLS-0096. Present to migrate holder's issuer mirror. At least one of this field and `AuditorEncryptedAmount` must be present.   |
+| `AuditorEncryptedAmount` | Conditional | `string`  | `BLOB`        | N/A                           | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new auditor key. Reuses `sfAuditorEncryptedAmount` from XLS-0096. Present to migrate holder's auditor mirror. At least one of this field and `IssuerEncryptedAmount` must be present. |
+| `ZKProof`                | Yes         | `string`  | `BLOB`        | N/A                           | A single compact Chaum-Pedersen equality proof proving the new ciphertext(s) encrypt the same value as the on-ledger mirror(s). When both fields are present, the proof covers both statements under one Fiat-Shamir challenge.                              |
+
+The key the holder's existing `sfIssuerEncryptedBalance` is encrypted under is not carried on the transaction. Validators resolve it from ledger state, from `IssuerMirrorEncryptionKey` on the holder's `MPToken` or, for a mirror never rewritten since this amendment activated, from `InitialIssuerEncryptionKey` on the issuance. Section 5.4.6 states the rule and Section 12.11 explains why it is resolved rather than submitted.
 
 #### 5.4.2. Transaction Fee
 
@@ -476,9 +501,7 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 4. Holder mode(`Holder` is absent): `Account` is the issuer. (`temMALFORMED`)
 5. Neither `IssuerEncryptedAmount` nor `AuditorEncryptedAmount` is present. (`temMALFORMED`)
 6. Any present `IssuerEncryptedAmount` or `AuditorEncryptedAmount` has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-7. `PreviousIssuerEncryptionKey` is present but is not a valid 33-byte compressed elliptic curve point. (`temMALFORMED`)
-8. `PreviousIssuerEncryptionKey` does not follow the presence rule: the field is required only when `Holder` and `IssuerEncryptedAmount` are both present, and must be absent in every other case. (`temMALFORMED`)
-9. `ZKProof` length is not exactly the expected proof size for the detected mode. (128 bytes in every mode - see Section 11) (`temMALFORMED`)
+7. `ZKProof` length is not exactly the expected proof size for the detected mode. (128 bytes in every mode - see Section 11) (`temMALFORMED`)
 
 ##### 5.4.3.2. Protocol-Level Failures
 
@@ -504,6 +527,7 @@ If `IssuerEncryptedAmount` is present:
 
 1. `sfIssuerEncryptedBalance` on the holder's `MPToken` is replaced by `IssuerEncryptedAmount`.
 2. `sfIssuerKeyMirrorEpoch` on the `MPToken` is set to the issuance's current `sfIssuerKeyEpoch`.
+3. `sfIssuerMirrorEncryptionKey` on the `MPToken` is set to the issuance's current `sfIssuerEncryptionKey`, creating the field if the holder did not previously carry it.
 
 If `AuditorEncryptedAmount` is present:
 
@@ -512,7 +536,7 @@ If `AuditorEncryptedAmount` is present:
 
 #### 5.4.5. Example JSON
 
-Which of `IssuerEncryptedAmount` and `AuditorEncryptedAmount` a transaction carries depends on the use case, at least one must be present, and both may be. `PreviousIssuerEncryptionKey` follows from that: it is required whenever the transaction is in issuer mode and carries `IssuerEncryptedAmount`, and must be absent in every other case.
+Which of `IssuerEncryptedAmount` and `AuditorEncryptedAmount` a transaction carries depends on the use case, at least one must be present, and both may be. The two modes differ only in the presence of `Holder`.
 
 Issuer mode:
 
@@ -524,7 +548,6 @@ Issuer mode:
   "Holder": "rHolderAccountAddress",
   "IssuerEncryptedAmount": "02f3a4b5c6d7e8...",
   "AuditorEncryptedAmount": "02c3d4e5f6a7b8...",
-  "PreviousIssuerEncryptionKey": "02b7c8d9e0f1a2...",
   "ZKProof": "a7f3c1d8e2b9...",
   "Fee": "100",
   "Sequence": 44
@@ -554,9 +577,15 @@ Every variant proves the same thing: that the new ciphertext or ciphertexts encr
 
 **Issuer mode** anchors to the holder's on-ledger `IssuerEncryptedBalance`, decrypted with the issuer secret key. That mirror is the issuer's only source of the balance, which is why the issuer can migrate the auditor mirror without holding the auditor secret key.
 
-- Issuer mirror: proves `IssuerEncryptedAmount` encrypts the balance the mirror encodes under the pre-rotation issuer key. Because rotation overwrites `sfIssuerEncryptionKey` in place, that key is not recoverable from ledger state at verification time and is carried on the transaction as `PreviousIssuerEncryptionKey` (Section 5.4.1).
+- Issuer mirror: proves `IssuerEncryptedAmount` encrypts the balance the mirror encodes under the pre-rotation issuer key. The pre-rotation key is from the mirror's `IssuerMirrorEncryptionKey` or the issuance's `InitialIssuerEncryptionKey` (see below).
 - Auditor mirror only: proves `AuditorEncryptedAmount` encrypts the balance the mirror encodes under the _current_ issuer key. Condition 9 of Section 5.4.3.2 requires the issuer mirror to be up to date for this variant, so no historical key is involved. The same relation covers auditor late registration, which differs only in the ledger precondition - the auditor mirror is absent rather than stale.
 - Both mirrors: a single AND-composed proof covering both statements under one Fiat-Shamir challenge.
+
+**Resolving the anchor key**: `ConfidentialMPTMirrorUpdate` issuer modes need the key the existing mirror ciphertext is encrypted under for the equality proof. Validators resolve it entirely from ledger state, in this order:
+
+1. `IssuerMirrorEncryptionKey` on the holder's `MPToken`, when present. It was written by whichever transaction last moved the mirror to a new epoch, so it is the key the mirror is encrypted under regardless of how many rotations have happened since.
+2. Otherwise `InitialIssuerEncryptionKey` on the `MPTokenIssuance`. An absent stamp places the mirror at epoch 0 by I17, and this field holds the epoch 0 key.
+3. Otherwise the currently registered `IssuerEncryptionKey`. This case only arises when the issuer key has never been rotated, in which case the mirror is current and no issuer-mirror migration is admissible in the first place.
 
 **Holder mode** anchors to the holder's own `ConfidentialBalanceSpending`, decrypted with sk_H. Knowledge of sk_H both establishes key possession and decrypts the anchor, so a holder who cannot decrypt their spending balance cannot prove any claimed balance. The same three variants exist as in issuer mode, and the auditor-only variant is a separate relation rather than the issuer-mirror one re-parameterized. All three require `ConfidentialBalanceInbox` to be the canonical encrypted zero - see condition 11 of Section 5.4.3.2 - because the spending balance encodes only the spendable portion while the mirrors encode the total. Holder mode is what makes migration possible at all in the issuer key loss scenario, where the issuer cannot perform active re-encryption. See Section 9.
 
@@ -807,6 +836,8 @@ All state changes specified in XLS-0096 §7.5 apply unchanged. This amendment ad
 
 - When confidential state is initialized for the first time, the mirror epochs are set to the corresponding key epochs: `IssuerKeyMirrorEpoch` ← `IssuerKeyEpoch`, and `AuditorKeyMirrorEpoch` ← `AuditorKeyEpoch` when an auditor key is configured. An epoch of 0 is omitted from ledger storage rather than written explicitly.
 - For an already-initialized holder, `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values, since both mirrors are current as a precondition of success.
+- On first-time initialization, `IssuerMirrorEncryptionKey` ← `IssuerEncryptionKey`, alongside the mirror epochs and under the same convention: the field is omitted when `IssuerKeyEpoch` is 0. A holder initializing after a rotation is therefore stamped at the current epoch, not left to be read as epoch 0.
+- For an already-initialized holder, `IssuerMirrorEncryptionKey` retains its existing value. The mirror is current as a precondition of success, so the delta is under the key the mirror already carries and the ciphertext does not change keys.
 
 #### 5.7.5. Example JSON
 
@@ -841,7 +872,7 @@ This amendment introduces no new data-verification (`tem`) failures.
 
 **On Success (`tesSUCCESS`):**
 
-All state changes specified in XLS-0096 §8.4 apply unchanged. No field introduced by this amendment changes: both parties' mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values.
+All state changes specified in XLS-0096 §8.4 apply unchanged. No field introduced by this amendment changes: both parties' mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch`, `AuditorKeyMirrorEpoch`, and `IssuerMirrorEncryptionKey` retain their existing values on both the sender's and the destination's `MPToken`.
 
 #### 5.8.5. Example JSON
 
@@ -874,7 +905,7 @@ This amendment introduces no new data-verification (`tem`) failures.
 
 **On Success (`tesSUCCESS`):**
 
-All state changes specified in XLS-0096 §10.5 apply unchanged. No field introduced by this amendment changes: the holder's mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch` and `AuditorKeyMirrorEpoch` retain their existing values.
+All state changes specified in XLS-0096 §10.5 apply unchanged. No field introduced by this amendment changes: the holder's mirrors are current as a precondition of success, so `IssuerKeyMirrorEpoch`, `AuditorKeyMirrorEpoch`, and `IssuerMirrorEncryptionKey` retain their existing values.
 
 #### 5.9.5. Example JSON
 
@@ -924,7 +955,7 @@ Per XLS-75 permission delegation, an account can grant another account permissio
 
 #### 5.11.1. Permission Description
 
-Grants the ability to submit `ConfidentialMPTMirrorUpdate` on behalf of the granting account, in both issuer mode and holder mode. Delegation is safe here because the transaction carries no submitter-chosen encryption key: it re-encrypts a balance already on the ledger under a key already registered on `MPTokenIssuance`, and the equality proof of Section 5.4.6 binds the result to that existing balance. `PreviousIssuerEncryptionKey` is a verification input rather than a registration, so a delegate cannot substitute a key of its own - any other value makes the proof fail. A delegate can advance migration but can neither read nor move funds.
+Grants the ability to submit `ConfidentialMPTMirrorUpdate` on behalf of the granting account, in both issuer mode and holder mode. Delegation is safe here because the transaction carries no encryption key at all: it re-encrypts a balance already on the ledger under a key already registered on `MPTokenIssuance`, the key the existing mirror is under is resolved from ledger state rather than submitted (Section 5.4.6), and the equality proof binds the result to that existing balance. A delegate can advance migration but can neither read nor move funds.
 
 #### 5.11.2. Transaction Types Affected
 
