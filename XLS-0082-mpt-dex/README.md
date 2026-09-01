@@ -88,10 +88,10 @@ On success `AMMCreate` creates and authorizes an `MPToken` object for each MPT t
 
 `MPToken` object is created for each asset representing `MPToken` as follows:
 
-| Field Name  | JSON Type | Internal Type | Description                                                                                                                          |
-| ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `Account`   | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                     |
-| `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount.                                                                                                        |
+| Field Name  | JSON Type | Internal Type | Description                                                                                                                        |
+| ----------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ AMM Pseudo-account.                                                                                                   |
+| `MPTAmount` | String    | UINT64        | _(Required)_ AMM pool amount.                                                                                                      |
 | `Flags`     | String    | UINT32        | _(Required)_ `lsfMPTAMM` (0x00000004) and `lsfMPTAuthorized` (0x00000002). The AMM pseudo-account is always implicitly authorized. |
 
 ### 2.5. Example JSON
@@ -194,10 +194,10 @@ On success `AMMWithdraw` creates an `MPToken` object if the Liquidity Provider d
 
 `MPToken` object is created as follows:
 
-| Field Name  | JSON Type | Internal Type | Description                              |
-| ----------- | --------- | ------------- | ---------------------------------------- |
-| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount.           |
+| Field Name  | JSON Type | Internal Type | Description                                                                                                               |
+| ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account.                                                                                  |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Withdrawn amount.                                                                                            |
 | `Flags`     | String    | UINT32        | _(Required)_ 0, unless created during `AMMClawback` of the clawback issuer's own asset, in which case `lsfMPTAuthorized`. |
 
 ### 4.5. Example JSON
@@ -365,10 +365,10 @@ On success `AMMClawback` creates an `MPToken` object if the Liquidity Provider d
 
 `MPToken` object is created as follows:
 
-| Field Name  | JSON Type | Internal Type | Description                              |
-| ----------- | --------- | ------------- | ---------------------------------------- |
-| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account. |
-| `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount.          |
+| Field Name  | JSON Type | Internal Type | Description                                                                                |
+| ----------- | --------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `Account`   | String    | ACCOUNTID     | _(Required)_ Liquidity Provider account.                                                   |
+| `MPTAmount` | String    | UINT64        | _(Required)_ Clawbacked amount.                                                            |
 | `Flags`     | String    | UINT32        | _(Required)_ `lsfMPTAuthorized` if the asset's issuer is the clawback signer; otherwise 0. |
 
 ### 8.5. Example JSON
@@ -574,14 +574,14 @@ We extend the `Payment` with the following failure conditions, where `MPTokenIss
 2. `MPTokenIssuance` object doesn't exist, fail with `tecOBJECT_NOT_FOUND`.
 3. `MPToken` object doesn't exist and the account is not the issuer of MPT, fail with `tecNO_AUTH`.
 4. `lsfMPTLocked` flag is set on `MPTokenIssuance`. The outcome depends on where the locked asset appears in the payment path:
-    - Source holder's asset is globally locked: path validation fails with `tecPATH_DRY`.
-    - Deliver or book-step asset is globally locked: affected offers are removed from the book as unfunded at execution, resulting in `tecPATH_PARTIAL`.
-    - Exception: if the source is the issuer of the globally-locked asset, the issuer's outgoing transfer is not subject to the global lock check, so the path is not rejected during validation; failure is detected at execution: `tecPATH_PARTIAL`.
-    - An issuer's pre-placed offer is permitted to cross during payment execution when the globally-locked MPT is that offer's `TakerGets`. When the locked MPT is `TakerPays`, the issuer's offer is removed from the book (the global lock is issuance-level). Non-issuer offers for a globally-locked `TakerGets` are removed as unfunded.
+   - Source holder's asset is globally locked: path validation fails with `tecPATH_DRY`.
+   - Deliver or book-step asset is globally locked: affected offers are removed from the book as unfunded at execution, resulting in `tecPATH_PARTIAL`.
+   - Exception: if the source is the issuer of the globally-locked asset, the issuer's outgoing transfer is not subject to the global lock check, so the path is not rejected during validation; failure is detected at execution: `tecPATH_PARTIAL`.
+   - An issuer's pre-placed offer is permitted to cross during payment execution when the globally-locked MPT is that offer's `TakerGets`. When the locked MPT is `TakerPays`, the issuer's offer is removed from the book (the global lock is issuance-level). Non-issuer offers for a globally-locked `TakerGets` are removed as unfunded.
 5. `lsfMPTLocked` flag is set on `MPToken`. The outcome depends on which account's token is locked and their role in the payment:
-    - Source's `MPToken` is individually locked: path validation fails with `tecPATH_DRY`.
-    - Destination's `MPToken` is individually locked: path validation fails with `tecPATH_DRY`. Unlike `IOU`, where a frozen trust line still allows the destination to receive, an individually locked `MPToken` blocks receiving, so the path is rejected rather than succeeding.
-    - A DEX offer owner's `MPToken` is individually locked on either side: the offer is removed from the book at execution (as unfunded on the `TakerGets` side; by the `TakerPays` lock check on the other), resulting in `tecPATH_PARTIAL`. Unlike `IOU`, where a frozen holder can still receive (causing the crossing to succeed), a locked `MPToken` prevents the offer owner from receiving the locked asset.
+   - Source's `MPToken` is individually locked: path validation fails with `tecPATH_DRY`.
+   - Destination's `MPToken` is individually locked: path validation fails with `tecPATH_DRY`. Unlike `IOU`, where a frozen trust line still allows the destination to receive, an individually locked `MPToken` blocks receiving, so the path is rejected rather than succeeding.
+   - A DEX offer owner's `MPToken` is individually locked on either side: the offer is removed from the book at execution (as unfunded on the `TakerGets` side; by the `TakerPays` lock check on the other), resulting in `tecPATH_PARTIAL`. Unlike `IOU`, where a frozen holder can still receive (causing the crossing to succeed), a locked `MPToken` prevents the offer owner from receiving the locked asset.
 6. `lsfMPTRequireAuth` flag is set and the account is not authorized. Any transfer between unauthorized accounts fail with `tecNO_AUTH`.
 7. `lsfMPTCanTransfer` flag is not set. A holder-to-holder transfer fails with `tecNO_AUTH` (direct MPT step) or `tecPATH_PARTIAL` (DEX book step). Holder-owned book offers that fail the transfer check are removed from the book. Transfers that involve the issuer succeed.
 8. `lsfMPTCanTrade` is not set on a DEX book-step asset, fail with `tecNO_PERMISSION`. Direct issuer/holder MPT payments do not require `lsfMPTCanTrade`.
