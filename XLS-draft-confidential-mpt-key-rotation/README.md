@@ -78,7 +78,7 @@ Until a holder's mirror is migrated, confidential transactions for that holder a
 
 Comparing the holder's mirror epoch with the corresponding issuance key epoch makes this detectable cleanly:
 
-- Validators use it to reject the transaction explicitly and early, before attempting an invalid homomorphic addition
+- Transaction processing uses it to reject the transaction explicitly and early, before attempting an invalid homomorphic addition
 - Wallet software applies the same comparison proactively, allowing it to warn the holder and block a transaction that would fail before submission
 
 **Auditor key rotation** follows the identical pattern using `AuditorEncryptionKey` and `AuditorKeyEpoch`.
@@ -127,7 +127,7 @@ For an `MPToken` with initialized confidential state:
 - When an auditor key is configured, the auditor mirror is current when `AuditorEncryptedBalance` is present and `AuditorKeyMirrorEpoch` equals `AuditorKeyEpoch`. When no auditor key is configured, no auditor mirror is required.
 - Migration is required whenever a required mirror is not current.
 
-An absent epoch field is treated as epoch 0. Validators determine whether a mirror is current by requiring equality between its mirror epoch and the corresponding key epoch. Ledger invariants separately ensure that a mirror epoch cannot exceed its corresponding key epoch.
+An absent epoch field is treated as epoch 0. A mirror field is current if its mirror epoch and the corresponding key epoch are equal. Ledger invariants separately ensure that a mirror epoch cannot exceed its corresponding key epoch.
 
 #### 4.6.2. Transactions Requiring Current Mirrors
 
@@ -483,7 +483,7 @@ Whether it is issuer mode or holder mode is determined by `Holder` field's prese
 | `AuditorEncryptedAmount` | Conditional | `string`  | `BLOB`        | N/A                           | A 66-byte ElGamal ciphertext encrypting the holder's balance under the new auditor key. Reuses `sfAuditorEncryptedAmount` from XLS-0096. Present to migrate holder's auditor mirror. At least one of this field and `IssuerEncryptedAmount` must be present. |
 | `ZKProof`                | Yes         | `string`  | `BLOB`        | N/A                           | A single compact Chaum-Pedersen equality proof proving the new ciphertext(s) encrypt the same value as the on-ledger mirror(s). When both fields are present, the proof covers both statements under one Fiat-Shamir challenge.                              |
 
-The key the holder's existing `sfIssuerEncryptedBalance` is encrypted under is not carried on the transaction. Validators resolve it from ledger state, from `IssuerMirrorEncryptionKey` on the holder's `MPToken` or, for a mirror never rewritten since this amendment activated, from `InitialIssuerEncryptionKey` on the issuance. Section 5.4.6 states the rule and Section 12.11 explains why it is resolved rather than submitted.
+The key the holder's existing `sfIssuerEncryptedBalance` is encrypted under is not carried on the transaction. It is resolved from ledger state, from `IssuerMirrorEncryptionKey` on the holder's `MPToken` or, for a mirror never rewritten since this amendment activated, from `InitialIssuerEncryptionKey` on the issuance. Section 5.4.6 states the rule and Section 12.11 explains why it is resolved rather than submitted.
 
 #### 5.4.2. Transaction Fee
 
@@ -581,7 +581,7 @@ Every variant proves the same thing: that the new ciphertext or ciphertexts encr
 - Auditor mirror only: proves `AuditorEncryptedAmount` encrypts the balance the mirror encodes under the _current_ issuer key. Condition 9 of Section 5.4.3.2 requires the issuer mirror to be up to date for this variant, so no historical key is involved. The same relation covers auditor late registration, which differs only in the ledger precondition - the auditor mirror is absent rather than stale.
 - Both mirrors: a single AND-composed proof covering both statements under one Fiat-Shamir challenge.
 
-**Resolving the anchor key**: `ConfidentialMPTMirrorUpdate` issuer modes need the key the existing mirror ciphertext is encrypted under for the equality proof. Validators resolve it entirely from ledger state, in this order:
+**Resolving the anchor key**: `ConfidentialMPTMirrorUpdate` issuer modes need the key the existing mirror ciphertext is encrypted under for the equality proof. It is resolved entirely from ledger state, in this order:
 
 1. `IssuerMirrorEncryptionKey` on the holder's `MPToken`, when present. It was written by whichever transaction last moved the mirror to a new epoch, so it is the key the mirror is encrypted under regardless of how many rotations have happened since.
 2. Otherwise `InitialIssuerEncryptionKey` on the `MPTokenIssuance`. An absent stamp places the mirror at epoch 0 by I17, and this field holds the epoch 0 key.
@@ -591,7 +591,7 @@ Every variant proves the same thing: that the new ciphertext or ciphertexts encr
 
 Two limits on what these proofs establish are worth stating. Holder-mode proofs never reference the mirror they overwrite, so they are equivalent to issuer mode only under the XLS-0096 invariant that a holder's issuer mirror encodes the same balance as spending plus inbox; that invariant is a hypothesis of these proofs, not a consequence. And no variant references a holder's prior auditor mirror: an auditor mirror migration is proved equal to the issuer's decryption of the issuer mirror or to the holder's spending balance, never to the auditor mirror it replaces.
 
-**Shared randomness**: the two AND-composed variants reuse a single randomness value for both new ciphertexts, which is what keeps them at 128 bytes rather than 160. It also forces the two ciphertexts to share an identical first component, and the sigma equations do not themselves constrain the auditor one, so validators MUST reject the transaction when the two do not match. The randomness MUST be sampled freshly for every transaction and every holder; reusing one value across a migration batch exposes every pairwise balance difference on-ledger.
+**Shared randomness**: the two AND-composed variants reuse a single randomness value for both new ciphertexts, which is what keeps them at 128 bytes rather than 160. It also forces the two ciphertexts to share an identical first component, and the sigma equations do not themselves constrain the auditor one, so the transaction MUST be rejected when the two do not match. The randomness MUST be sampled freshly for every transaction and every holder; reusing one value across a migration batch exposes every pairwise balance difference on-ledger.
 
 ### 5.5. Transaction: `ConfidentialMPTHolderKeyUpdate`
 
@@ -659,7 +659,7 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 
 **Cancel mode** (`tfCancelRecovery`): No additional fields are required beyond `TransactionType`, Account, `MPTokenIssuanceID`, and Flags. The transaction must be signed by the holder's XRPL signing key. No cryptographic proof is required - the holder's signing key signature is sufficient authorization to cancel their own pending recovery.
 
-**Operational note**: This is a wallet-level concern - validators cannot detect in-flight transactions. When a `ConfidentialMPTSend` and a `ConfidentialMPTHolderKeyUpdate` (rotation) are submitted close together, both proofs are bound to `ConfidentialBalanceVersion` via the context hash. Whichever transaction lands second will find the version has already incremented and will be rejected with `tecBAD_PROOF`. No funds are lost - just a rejected transaction requiring resubmission. To avoid this, wallet software should:
+**Operational note**: This is a wallet-level concern - a transaction that has not yet been applied is not visible in ledger state. When a `ConfidentialMPTSend` and a `ConfidentialMPTHolderKeyUpdate` (rotation) are submitted close together, both proofs are bound to `ConfidentialBalanceVersion` via the context hash. Whichever transaction lands second will find the version has already incremented and will be rejected with `tecBAD_PROOF`. No funds are lost - just a rejected transaction requiring resubmission. To avoid this, wallet software should:
 
 1. Check for pending (submitted but unconfirmed) `ConfidentialMPTSend` transactions before initiating rotation.
 2. Queue rotation until all pending sends are confirmed in a closed ledger.
@@ -735,7 +735,7 @@ Cancel mode:
 
 ### 5.6. Transaction: `ConfidentialMPTRecoverBalance`
 
-Completes holder key loss recovery. The issuer re-encrypts the holder's balance under the authorized `RecoveryKey` and submits a compact Chaum-Pedersen equality proof. Validators enforce that `RecoveryKey` is present - the issuer cannot act without prior holder authorization.
+Completes holder key loss recovery. The issuer re-encrypts the holder's balance under the authorized `RecoveryKey` and submits a compact Chaum-Pedersen equality proof. The transaction is rejected unless `RecoveryKey` is present - the issuer cannot act without prior holder authorization.
 
 #### 5.6.1. Fields
 
@@ -1027,7 +1027,7 @@ The holder cannot re-encrypt balances without sk_I. Knowing b in plaintext is no
 
 ### 6.5. Explicit Flags over Field Presence for Mode Detection
 
-`ConfidentialMPTHolderKeyUpdate` selects its mode with explicit flags (`tfHolderKeyRotation` / `tfHolderKeyRecovery` / `tfCancelRecovery`) rather than inferring it from field presence. Flags make validator logic unambiguous and eliminate edge cases with partial field sets - rotation and recovery both carry `HolderEncryptionKey`, and cancel mode carries no additional field at all, so there is no field whose presence could serve as the discriminator.
+`ConfidentialMPTHolderKeyUpdate` selects its mode with explicit flags (`tfHolderKeyRotation` / `tfHolderKeyRecovery` / `tfCancelRecovery`) rather than inferring it from field presence. Flags make the processing rules unambiguous and eliminate edge cases with partial field sets - rotation and recovery both carry `HolderEncryptionKey`, and cancel mode carries no additional field at all, so there is no field whose presence could serve as the discriminator.
 
 ## 7. Backwards Compatibility
 
@@ -1090,7 +1090,7 @@ This is a one-step process per holder - unlike holder key loss recovery which re
 
 1. Issuer registers new pk_I' via `MPTokenIssuanceSet` (they still have their XRPL signing key).
 2. `IssuerKeyEpoch` increments.
-3. Validators reject holder confidential transactions that require an issuer mirror while `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`.
+3. Holder confidential transactions that require an issuer mirror fail if `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`.
 4. Each holder runs `ConfidentialMPTMergeInbox` first, then submits `ConfidentialMPTMirrorUpdate` without a Holder field with the cross-key equality proof to self-migrate their issuer mirror. Merge is required because the cross-key equality proof anchors to `ConfidentialBalanceSpending` which encodes only b_s - if `ConfidentialBalanceInbox` is non-zero, the new issuer mirror would encode b_s instead of the full b = b_s + b_in, producing a mirror that doesn't match the holder's actual total balance and breaking clawback correctness. Holders may also self-migrate their auditor mirror in the same transaction if needed.
 5. Issuer regains clawback authority over each holder as their mirror is reconstructed.
 
@@ -1196,7 +1196,7 @@ Consistent with XLS-0096's existing behavior for initial key setting. A rogue is
 
 ### 12.6. Two-Step Recovery Authorization
 
-The holder's authorization (`tfHolderKeyRecovery`) is signed by the holder's XRPL signing key. Validators enforce that `RecoveryKey` is present before accepting `ConfidentialMPTRecoverBalance`. The issuer cannot act unilaterally.
+The holder's authorization (`tfHolderKeyRecovery`) is signed by the holder's XRPL signing key. `ConfidentialMPTRecoverBalance` is rejected unless `RecoveryKey` is present. The issuer cannot act unilaterally.
 
 ### 12.7. `RecoveryKey` Liveness Concern
 
@@ -1218,7 +1218,7 @@ Historical auditor secret keys are not required for mirror migration because aud
 
 ### 12.10. Holder Self-Migration Security
 
-For holder self-migration (Section 5.4.6), validators must enforce:
+Holder self-migration (Section 5.4.6) requires all of the following::
 
 - `ConfidentialBalanceInbox` equals canonical encrypted zero before accepting the transaction.
 - Proof is bound to the current `ConfidentialBalanceVersion` via the context hash.
