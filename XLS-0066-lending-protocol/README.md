@@ -702,6 +702,8 @@ This transaction uses the standard transaction fee.
 #### 3.4.5 Invariants
 
 - If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
+- The transaction must not touch any `Loan`.
+- `LoanBroker.DebtTotal` and `LoanBroker.CoverAvailable` must both be zero when the `LoanBroker` is deleted.
 
 #### 3.4.6 Example JSON
 
@@ -1125,7 +1127,31 @@ The account specified in the `Account` field pays the transaction fee.
 
 #### 3.8.7 Invariants
 
-**TBD**
+In this section, _amount owed to the Vault_ means `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` for an accrual-basis Vault (the `DefaultAmount` of section 3.10.5) and `Loan.PrincipalOutstanding` for a cash-basis Vault; _interest due_ means `Loan.TotalValueOutstanding - Loan.PrincipalOutstanding - Loan.ManagementFeeOutstanding` (the Vault's share of the interest, excluding the management fee). Equalities on IOU amounts are evaluated as a single rounded residual with a tolerance of one unit at the comparison scale; XRP and MPT amounts compare exactly.
+
+Shape:
+
+- The transaction must create exactly one `Loan`, must not modify or delete any other `Loan`, and must touch exactly one `Vault`.
+- The transaction must modify exactly one `LoanBroker` — the one referenced by the created `Loan.LoanBrokerID`.
+- The created `Loan.PrincipalOutstanding` must equal `PrincipalRequested`.
+
+Exact changes:
+
+- `Vault.AssetsAvailable` must decrease by exactly `PrincipalRequested`.
+- The Vault pseudo-account balance must decrease by exactly `PrincipalRequested`.
+- `Vault.AssetsTotal` must increase by exactly the amount the new `Loan` owes the Vault minus `PrincipalRequested` — the interest due for an accrual-basis Vault, and zero for a cash-basis Vault.
+- `Vault.LossUnrealized` must not change — a new `Loan` carries no provision.
+- `LoanBroker.DebtTotal` must increase by exactly the amount the new `Loan` owes the Vault.
+- `LoanBroker.CoverAvailable` and the LoanBroker pseudo-account balance must not change.
+- The Borrower's balance must increase by exactly `PrincipalRequested - LoanOriginationFee`.
+- The LoanBroker owner's balance must increase by exactly `LoanOriginationFee`.
+- When the Borrower is also the LoanBroker owner, the two credits land on one balance and are only observable as their sum: that account's balance must increase by exactly `PrincipalRequested`.
+
+Notes:
+
+- The `AssetsAvailable` and `AssetsTotal` changes combine into the conservation identity: the change in `Vault.AssetsTotal` minus the change in `Vault.AssetsAvailable` equals the amount the new `Loan` owes the Vault. Evaluate it as a single rounded residual rather than comparing terms independently.
+- The balance changes conserve value: what the Vault paid out is exactly what the Borrower and the LoanBroker owner received.
+- The credit checks do not apply to a participant who is the issuer of the Vault's asset (an issuer holds no trust line against themselves, so the credit is unobservable), and the transaction fee must be added back when that participant paid it and the Vault's asset is XRP. A missing LoanBroker-owner credit is valid when `LoanOriginationFee` is zero, since the field is then absent from the ledger entry.
 
 #### 3.8.8 Example JSON
 
@@ -1198,6 +1224,8 @@ This transaction uses the standard transaction fee.
 #### 3.9.5 Invariants
 
 - If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0 && Loan.TotalValueOutstanding = 0`
+- A `Loan` may only be deleted once `Loan.PaymentRemaining`, `Loan.TotalValueOutstanding`, `Loan.PrincipalOutstanding` and `Loan.ManagementFeeOutstanding` are all zero.
+- The transaction must change nothing else: `Vault.AssetsTotal`, `Vault.AssetsAvailable`, `Vault.LossUnrealized`, the Vault pseudo-account balance, `LoanBroker.DebtTotal`, `LoanBroker.CoverAvailable` and the LoanBroker pseudo-account balance all unchanged.
 
 #### 3.9.6 Example JSON
 
@@ -1307,7 +1335,37 @@ This transaction uses the standard transaction fee.
 
 #### 3.10.6 Invariants
 
-**TBD**
+This section uses `DefaultAmount` and `DefaultCovered` as computed in section 3.10.5, both taken from the pre-transaction state; for a cash-basis Vault, `DefaultAmount = Loan.PrincipalOutstanding`. Equalities on IOU amounts are evaluated as a single rounded residual with a tolerance of one unit at the comparison scale; XRP and MPT amounts compare exactly.
+
+Shape (any sub-operation):
+
+- The transaction must modify exactly one `Loan`, must delete none, and must touch exactly one `Vault`.
+- The transaction must modify exactly one `LoanBroker` — the one referenced by `Loan.LoanBrokerID`.
+- With `tfLoanImpair`: must set `lsfLoanImpaired` on a `Loan` that was not impaired.
+- With `tfLoanUnimpair`: must clear `lsfLoanImpaired` on a `Loan` that was impaired.
+- With `tfLoanDefault`: must set `lsfLoanDefault` on a `Loan` that was not already in default.
+- With none of the three flags: the transaction must change nothing — the Vault, the LoanBroker accounting fields, all balances, and the `Loan`'s fields untouched.
+
+Impair and unimpair:
+
+- Impair must increase `Vault.LossUnrealized` by exactly `DefaultAmount`; unimpair must decrease it by exactly `DefaultAmount`.
+- Impair and unimpair must change nothing else: `Vault.AssetsAvailable`, `Vault.AssetsTotal`, the Vault pseudo-account balance, `LoanBroker.DebtTotal`, `LoanBroker.CoverAvailable`, the LoanBroker pseudo-account balance, and the `Loan`'s balance fields all unchanged.
+
+Default:
+
+- `Vault.AssetsAvailable` and the Vault pseudo-account balance must increase by exactly `DefaultCovered`.
+- `Vault.AssetsTotal` must decrease by exactly the uncovered portion, `DefaultAmount - DefaultCovered`, rounded down at the Vault scale.
+- `Vault.LossUnrealized` must decrease by exactly `DefaultAmount` if the `Loan` was impaired, and must not change otherwise.
+- `LoanBroker.DebtTotal` must decrease by exactly `DefaultAmount`.
+- `LoanBroker.CoverAvailable` and the LoanBroker pseudo-account balance must decrease by exactly `DefaultCovered`.
+- `DefaultCovered` must be at least zero, at most `DefaultAmount` (plus one unit at the Loan scale — the clamp precedes an upward rounding), and at most the pre-transaction `LoanBroker.CoverAvailable`.
+- `Loan.TotalValueOutstanding`, `Loan.PrincipalOutstanding`, `Loan.ManagementFeeOutstanding` and `Loan.PaymentRemaining` must all be zero after the transaction.
+- The Vault pseudo-account balance must change whenever `LoanBroker.CoverAvailable` changed — this closes the case where both accounting fields are updated but no funds move, which the two balance checks cannot see when both balance deltas are absent.
+
+Notes:
+
+- The Vault's balance gain and the LoanBroker pseudo-account's balance loss are equal and opposite: first-loss capital is conserved in transit. A default that credits the Vault from anywhere but the LoanBroker's cover manufactures value.
+- The `Vault.AssetsTotal` check must tolerate the dust adjustment in which the implementation sets `AssetsTotal` equal to `AssetsAvailable` outright when the two cross by a dust amount after the write-off.
 
 #### 3.10.7 Example JSON
 
@@ -1451,7 +1509,26 @@ These transfers are performed according to the asset type:
 
 #### 3.11.6 Invariants
 
-**TBD**
+A payment splits into a principal portion and an interest portion (both paid to the Vault) and a fee portion (paid to the LoanBroker side); the split itself is not recorded on the ledger. The principal portion is observable as the decrease in `Loan.PrincipalOutstanding`; the interest and fee portions are not independently observable, so the invariants below are stated in ledger observables, with the split quantities in parentheses as interpretation. _Amount owed to the Vault_ means `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` for an accrual-basis Vault and `Loan.PrincipalOutstanding` for a cash-basis Vault. Equalities on IOU amounts are evaluated as a single rounded residual with a tolerance of one unit at the comparison scale; XRP and MPT amounts compare exactly.
+
+Shape:
+
+- The transaction must modify exactly one `Loan`, must delete none, and must touch exactly one `Vault`.
+- The transaction must modify exactly one `LoanBroker` — the one referenced by `Loan.LoanBrokerID`.
+- On a partial repayment (`Loan.PaymentRemaining > 0` afterwards): `Loan.PrincipalOutstanding` must strictly decrease, `Loan.PaymentRemaining` must decrease, and `Loan.NextPaymentDueDate` must advance by a positive multiple of `Loan.PaymentInterval`.
+
+Exact changes:
+
+- `Vault.AssetsAvailable` must increase by exactly the change in `Vault.AssetsTotal` minus the change in the amount owed to the Vault (this equals the principal plus interest portions of the payment, rounded down at the Vault scale, and it is the check that the payment was split correctly between principal and interest).
+- The Vault pseudo-account balance must change by the same amount as `Vault.AssetsAvailable`.
+- For an accrual-basis Vault, `Vault.AssetsTotal` must not change on a regular on-time payment (in general it changes by the Loan's value change, which is non-zero only for an overpayment, a late-payment penalty, or an early full payment). For a cash-basis Vault, `Vault.AssetsTotal` must increase by the interest portion.
+- `Vault.LossUnrealized` must decrease by exactly the amount the `Loan` owed the Vault before the transaction if the `Loan` was impaired — the payment unimpairs it before applying — and must not change otherwise.
+- The amount owed to the Vault must not increase (penalties and fees are settled from the payment, never added to the `Loan`).
+- `LoanBroker.DebtTotal` must change by exactly the change in the amount owed to the Vault.
+- `LoanBroker.CoverAvailable` must change by exactly the same amount as the LoanBroker pseudo-account balance — both zero when the fee portion is paid to the LoanBroker owner, and both increased by the full fee portion when the owner cannot receive it and the fee is redirected to the pseudo-account (see section 4.6).
+- The LoanBroker owner's balance must increase by the fee portion when the fee is paid to the owner, and must not change otherwise.
+- The Borrower's, Vault pseudo-account's, LoanBroker pseudo-account's and LoanBroker owner's balance changes must sum to zero (with the transaction fee added back when the Vault's asset is XRP): the Borrower pays out exactly what the other three receive.
+- `Vault.AssetsAvailable` must increase by more than zero and by no more than `Amount`.
 
 #### 3.11.7 Example JSON
 
