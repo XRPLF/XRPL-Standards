@@ -102,8 +102,7 @@ Comparing the holder's mirror epoch with the corresponding issuance key epoch ma
 
 ### 4.5. Re-encryption Strategy
 
-Active re-encryption is the recommended strategy. The issuer submits `ConfidentialMPTMirrorUpdate` for all holders after rotating the key. The issuer is recommended to lock each holder's `MPToken` before submitting `ConfidentialMPTMirrorUpdate` and unlock after success. Note: this is a recommendation, not a requirement. The epoch staleness check already prevents the holder from successfully transacting with a stale mirror - the lock only prevents the holder from wasting fees on transactions that will be rejected. However, lock + `ConfidentialMPTMirrorUpdate` + unlock = 3 transactions per holder, tripling migration transaction volume at large holder counts. Issuers should weigh this cost against the UX benefit.
-
+Active re-encryption is the recommended strategy: after rotating the key, the issuer submits `ConfidentialMPTMirrorUpdate` for every holder.
 Prioritization for bulk migration:
 
 1. Largest balances first - greatest value at risk if old key is compromised, and clawback is blocked until migrated.
