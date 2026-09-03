@@ -259,12 +259,9 @@ Either the sponsor or the sponsee may delete the `Sponsorship` object via the `S
 
 #### 5.6.3. Account Deletion Blocker
 
-This object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
+This object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements) for **both** the sponsor and the sponsee — it appears in both accounts' owner directories (via `OwnerNode` and `SponseeNode`; see [section 5.2](#52-fields)), so attempting to delete either account while a `Sponsorship` object still exists between them fails with `tecHAS_OBLIGATIONS`.
 
-This object must be deleted before its owner account (the sponsor) can be deleted. The sponsor must either:
-
-1. Delete the `Sponsorship` object via `SponsorshipSet` with `tfDeleteObject`, or
-2. Wait for the sponsee to delete it (if the sponsee has permission to do so)
+The object must be deleted before either party can be deleted. Either the sponsor or the sponsee may submit `SponsorshipSet` with `tfDeleteObject` to delete it (see [section 5.6.2](#562-deletion-conditions)).
 
 **Note on Existing Sponsored Objects:** Deleting a `Sponsorship` object **does not** affect already-sponsored ledger entries or accounts. Those existing sponsored objects/accounts will retain their `Sponsor` field and continue to be sponsored. To dissolve sponsorship for existing objects, the `SponsorshipTransfer` transaction must be used.
 
@@ -478,6 +475,17 @@ There will be no additional transaction fee required for the use of the `TxnSign
 
 Either `SigningPubKey`+`TxnSignature` or `Signers` must be included in the transaction. There is one exception to this: if a `Sponsorship` object exists and `lsfSponsorshipRequireSignForFee`/`lsfSponsorshipRequireSignForReserve` are not enabled for the type(s) of sponsorship in the transaction.
 
+##### 8.1.2.2. Signature Prefixes
+
+The bytes that a `SponsorSignature` signs over are prefixed with a role-specific hash prefix, distinct from the account's own signature prefix and from other role signatures (e.g. the `CounterpartySignature` used in [XLS-66](../XLS-0066-lending-protocol/README.md)):
+
+| Signing mode                                      | Hash prefix |
+| ------------------------------------------------- | ----------- |
+| Single-signing (`SigningPubKey` + `TxnSignature`) | `SPN`       |
+| Multi-signing (`Signers`)                         | `SPM`       |
+
+These prefixes are gated on `fixCleanup3_4_0` (see [section 22.5](#225-amendment-activation)). Their purpose is to prevent signature-substitution attacks: a signature made for one role (or for the account's own signature) cannot be copied into `SponsorSignature`, and vice versa. Before `fixCleanup3_4_0`, all signatures on a transaction covered the same bytes, so a signature produced for one slot could be moved into another.
+
 ### 8.2. Transaction Fee
 
 If the `SponsorSignature.Signers` field is necessary, then the total fee of the transaction will be increased, due to the extra signatures that need to be processed. This is similar to the additional fees for [multisigning](https://xrpl.org/docs/concepts/accounts/multi-signing/). The minimum fee will be $(|signatures|+1)*base\textunderscore fee$.
@@ -493,7 +501,7 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 1. `SponsorSignature.SigningPubKey` is invalid — the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid (`tefBAD_AUTH` or `temBAD_SIGNATURE`).
 1. The `Sponsor` doesn't exist on the ledger (`terNO_ACCOUNT`).
 1. An invalid sponsorship flag is used (`temINVALID_FLAG`).
-1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included, or other incorrect combinations of signing fields — this is not a dedicated check; it is caught by the same signature-validity logic used elsewhere ("cannot both single- and multi-sign"), so it surfaces as `temINVALID`, not a distinct malformed error.
+1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included, or other incorrect combinations of signing fields — this is not a dedicated check; it is caught by the same signature-validity logic used elsewhere ("cannot both single- and multi-sign"), so it surfaces as `temBAD_SIGNATURE`, not a distinct malformed error.
 1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) (`temINVALID_FLAG`).
 1. Exactly one of `Sponsor` and `SponsorFlags` is included (they must either both be included, if the transaction is sponsored, or neither, if it is not) (`temINVALID_FLAG`).
 1. `SponsorSignature` is included but `Sponsor` or `SponsorFlags` is missing (`temMALFORMED`).
@@ -519,14 +527,14 @@ _Note: if a transaction doesn't charge a fee (such as an account's first `SetReg
 
 #### 8.3.3. Reserve Sponsorship Failures
 
-1. The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`).
+1. The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`, or the transaction-type-specific variant when applicable — e.g. `tecINSUF_RESERVE_LINE` for `TrustSet` and for other transactions that can establish a trust line as a side effect, such as `EscrowFinish` or `CheckCash`).
 2. The transaction does not support reserve sponsorship — see [section 8.3.4](#834-transactions-that-cannot-be-sponsored) (`temINVALID_FLAG`).
 3. The transaction includes an `sfDelegate` field and `spfSponsorReserve` is enabled (reserve sponsorship combined with permissioned delegation is disallowed, see [section 17.1](#171-permissioned-delegation)) (`temINVALID`).
 
 If a `Sponsorship` object exists (it is [always used if it exists](#36-sponsorship-resolution-rules)):
 
 1. The `lsfSponsorshipRequireSignForReserve` flag is enabled and there is no sponsor signature included (`terNO_PERMISSION`).
-2. There is not enough remaining count in the `RemainingOwnerCount` to pay for the transaction (`tecINSUFFICIENT_RESERVE`), even if the sponsor co-signed the transaction.
+2. There is not enough remaining count in the `RemainingOwnerCount` to pay for the transaction (`tecINSUFFICIENT_RESERVE`, or the transaction-type-specific variant per item 1), even if the sponsor co-signed the transaction.
 
 If a `Sponsorship` object does not exist:
 
@@ -756,7 +764,7 @@ This scenario ends the sponsorship for a sponsored ledger object or account. The
 The following fields are used in this scenario:
 
 - `ObjectID` must be included (if ending sponsorship of an object)
-- `Sponsee` must be included if the **sponsor** is submitting the transaction to end an _account_ sponsorship of another account (the target account is identified by `Sponsee`). If the **sponsee** is ending their own sponsorship, `Sponsee` must be omitted and the target is `tx.Account`.
+- `Sponsee` is only used for **account-level** ends where the **sponsor** is submitting the transaction against another account; in that case, `Sponsee` names the target account. If the **sponsee** is ending their own account sponsorship, `Sponsee` must be omitted and the target is `tx.Account`. For **object-level** ends, `Sponsee` must be omitted regardless of who is submitting: `ObjectID` alone identifies both the object and (via its `Owner` field) the sponsee.
 - `Sponsor` must be excluded
 - `SponsorFlags.spfSponsorReserve` must be excluded
 - The object specified by `ObjectID` (or the account specified by `Sponsee` / `tx.Account`) must have a `Sponsor` field
@@ -1767,6 +1775,8 @@ Yes, a sponsor can sponsor both fees and reserves for a transaction, by specifyi
 If the account itself is sponsored, then it can be deleted, but the destination of the `AccountDelete` transaction (in other words, where the leftover XRP goes) **must** be the sponsor's account. This ensures that the sponsor gets their reserve back, and the sponsee cannot run away with those funds.
 
 If the sponsee still has sponsored objects, those objects will follow the same rules of [deletion blockers](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements). Whether or not they are sponsored is irrelevant.
+
+If the sponsee is the counterparty on any `Sponsorship` objects (i.e., a sponsor has pre-funded a fee/reserve budget against them), those must also be deleted first — a `Sponsorship` object is a deletion blocker on **both** the sponsor and sponsee sides (see [section 5.6.3](#563-account-deletion-blocker)). Either party may delete the object via `SponsorshipSet` with `tfDeleteObject`.
 
 If a sponsored object is deleted (either due to normal object deletion processes or, in the case of objects that aren't deletion blockers, because the owner account is deleted), the sponsor's reserve becomes available again.
 
