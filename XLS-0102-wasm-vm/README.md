@@ -415,7 +415,7 @@ The following rules govern the lifecycle of all host functions in this specifica
 
 1. **New host functions MAY be added** at any time without breaking existing contracts. Contracts that do not call a new function are unaffected.
 2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for backward compatibility. Deployed contracts may rely on any host function that was available at deployment time. Deprecation does not remove or change the function — it signals to new contract authors that a function is discouraged, so documentation and tooling (e.g. `xrpl-wasm-stdlib`) can steer new development away from it even though it remains available for existing contracts.
-3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types, parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a buffer size changes, a new host function with a different name MUST be introduced.
+3. **Host functions MUST be permanently backwards compatible.** Once a host function is deployed, its name, parameter types, parameter order, and observable behavior for all previously valid inputs are permanently fixed. This includes buffer sizes, since contracts hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a change cannot be made backwards compatibly — for example, a required buffer size grows — a new host function with a different name MUST be introduced instead.
 
 These rules ensure that WASM code compiled and deployed today will continue to execute correctly on future versions of the platform.
 
@@ -427,7 +427,7 @@ This section summarizes the main design decisions in this specification and why 
 - **Caller-allocated memory.** WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
 - **Host functions rather than direct ledger access.** WASM code can only interact with the ledger through an explicitly defined host function interface. This keeps user code sandboxed, bounds what data is visible, and moves expensive operations into native C++ code where they are cheaper and their gas cost can be priced deterministically.
 - **A custom float type (`XFloat`) rather than native WASM floating point.** Native floating point is a source of non-determinism across platforms, so it is disallowed; float arithmetic is instead provided by host functions over an opaque buffer type (see [§5.8](#58-floats) and [FAQ C.5](#c5-why-not-use-native-wasm-floating-point)).
-- **An immutable host-function ABI, with amendment-gated additions.** Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
+- **A backwards-compatible host-function ABI, with amendment-gated additions.** Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed incompatibly once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
 - **UNL-votable execution limits.** The code size limit, computation limit, and gas price are votable parameters rather than hard-coded constants, so they can be tuned without requiring a new amendment for every adjustment (see [§3](#3-execution-limits)).
 
 ## 7. Security
@@ -468,12 +468,12 @@ These constraints prevent denial-of-service attacks and ensure that WASM executi
 
 ### 7.5. Future-Proofing
 
-The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type must never change — there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
+The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type must remain backwards compatible forever — there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
 
 - **Adding a new host function.** Existing extensions are unaffected; new extensions opt in by importing the new name only after the amendment is enabled.
 - **Adjusting the gas cost of an existing host function.** The function's signature and behavior are unchanged; only the metered cost moves.
 
-Changes to a host function's observable behavior are not on this list — per [§5.11](#511-host-function-versioning-rules) rule 3, any such change requires introducing a new host function with a new name; the amendment gates adoption of the new function, not a change to the old one.
+Backwards-incompatible changes to a host function's observable behavior are not on this list — per [§5.11](#511-host-function-versioning-rules) rule 3, any such change requires introducing a new host function with a new name; the amendment gates adoption of the new function, not a change to the old one.
 
 Updates to the `wasmi` package may also need to be gated by an amendment - every update will need to be tested for the potential of breaking changes.
 
