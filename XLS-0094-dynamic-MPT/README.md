@@ -22,23 +22,23 @@ This proposal introduces:
 
 - Transaction update for `MPTokenIssuanceCreate`:
   - A new optional field:
-    - `sfImmutableFlags` - permanently makes specific fields or flags immutable.
+    - `ImmutableFlags` - permanently makes specific fields or flags immutable.
 
 - Ledger object update in `MPTokenIssuance`:
   - A new optional field:
-    - `sfImmutableFlags` - records which fields or flags are immutable.
+    - `ImmutableFlags` - records which fields or flags are immutable.
 
 - Transaction update for `MPTokenIssuanceSet`:
   - New optional fields:
-    - `sfMPTokenMetadata` - updates `MPTokenMetadata`
-    - `sfTransferFee` - updates `TransferFee`
-    - `sfImmutableFlags` - permanently makes specific fields or flags immutable
-  - A set of new values under `sfFlags` to set MPT issuance flags.
+    - `MPTokenMetadata` - updates the metadata.
+    - `TransferFee` - updates the transfer fee.
+    - `ImmutableFlags` - permanently makes specific fields or flags immutable.
+  - A set of new values under `Flags` to set MPT issuance flags.
 
 - The target flags or fields to be set or updated for the ledger object `MPTokenIssuance`:
-  - Field: `sfMPTokenMetadata`
-  - Field: `sfTransferFee`
-  - Bits of `sfFlags`:
+  - Field: `MPTokenMetadata`
+  - Field: `TransferFee`
+  - Bits of `Flags`:
     - `lsfMPTCanLock`
     - `lsfMPTRequireAuth`
     - `lsfMPTCanEscrow`
@@ -52,14 +52,14 @@ Setting `lsfMPTCanHoldConfidentialBalance` also requires the `ConfidentialTransf
 
 ## 3. Transaction: `MPTokenIssuanceCreate`
 
-By default without declaring `sfImmutableFlags`:
+By default without declaring `ImmutableFlags`:
 
 - `MPTokenMetadata` and `TransferFee` may be freely modified via `MPTokenIssuanceSet`.
 - Each of the MPT issuance flags listed below may be enabled (one-way) via `MPTokenIssuanceSet` after issuance.
 
-Declaring immutability via `sfImmutableFlags`:
+Declaring immutability via `ImmutableFlags`:
 
-- Flags set in `sfImmutableFlags` indicates the corresponding field/flag is immutable. The issuer can not modify the field/flag via `MPTokenIssuanceSet` after issuance.
+- Flags set in `ImmutableFlags` indicates the corresponding field/flag is immutable. The issuer can not modify the field/flag via `MPTokenIssuanceSet` after issuance.
 
 ### 3.1. Fields
 
@@ -139,7 +139,7 @@ Whether it was made immutable at creation through `MPTokenIssuanceCreate` or aft
 
 ### 4.2. Flags
 
-These flags are added to the `sfFlags` field of `MPTokenIssuanceSet` (see the original values in [MPTokenIssuanceSet Flags](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset#mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
+These flags are added to the `Flags` field of `MPTokenIssuanceSet` (see the original values in [MPTokenIssuanceSet Flags](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset#mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
 
 | Flag Name                            |  Hex Value   | Decimal Value | Description                                                                                                                         |
 | ------------------------------------ | :----------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------------------- |
