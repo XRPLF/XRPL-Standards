@@ -182,7 +182,7 @@ Enabling confidentiality is **one-way**. Once `lsfMPTCanHoldConfidentialBalance`
 
 Confidential MPTs are incompatible with non-zero `TransferFee`. An `MPTokenIssuance` MUST NOT have both a non-zero `TransferFee` and `lsfMPTCanHoldConfidentialBalance` enabled.
 
-This restriction is required because XLS-33 transfer fees are percentage-based, while `ConfidentialMPTSend` hides the transferred amount. Enforcing a percentage-based fee would require revealing, trusting, or separately proving the hidden transfer amount, which is outside the scope of this amendment.
+This restriction exists because XLS-33 transfer fees are percentage-based while `ConfidentialMPTSend` hides the transferred amount; see §14.4.
 
 The following cases are invalid:
 
@@ -470,7 +470,7 @@ If the transaction is successful:
 - **Receiver Versioning**: The receiver's `sfConfidentialBalanceVersion` is **not** modified. Incoming transfers land in the inbox and therefore cannot invalidate proofs bound to the receiver's spending balance.
 - **Global Supply**: Plaintext supply fields (`OA` and `COA`) remain unchanged.
 
-**Note on re-randomization:** "Re-randomized" means that, before a ciphertext is credited to the receiver, an encryption of **zero** under the same public key is homomorphically added to it. The randomness for that zero encryption is the first 32 bytes of the `ZKProof` field. Since the added ciphertext encrypts 0, the credited value is unchanged; and since the randomness is read directly from the transaction, every validator derives identical ledger state. Only the three credit-side ciphertexts are treated this way, the ciphertexts subtracted from the sender are applied exactly as submitted. This prevents an attacker from choosing transfer randomness that cancels against a target holder's existing ciphertexts (see §15.8).
+**Note on re-randomization:** "Re-randomized" means that, before a ciphertext is credited to the receiver, an encryption of **zero** under the same public key is homomorphically added to it. The randomness for that zero encryption is the first 32 bytes of the `ZKProof` field. Since the added ciphertext encrypts 0, the credited value is unchanged; and since the randomness is read directly from the transaction, every validator derives identical ledger state. Only the three credit-side ciphertexts are treated this way, the ciphertexts subtracted from the sender are applied exactly as submitted. This prevents an attacker from choosing transfer randomness that cancels against a target holder's existing ciphertexts (see §16.8).
 
 ### 9.6. Example JSON
 
@@ -545,18 +545,7 @@ If the transaction is successful:
 - **Mirrors Untouched:** `sfIssuerEncryptedBalance` and `sfAuditorEncryptedBalance` are not written. They mirror the holder's _total_ confidential balance, and this transaction only moves value between `CB_IN` and `CB_S`, so that total is unchanged.
 - **No-op with encrypted zero:** If either or both of `sfConfidentialBalanceInbox` and `sfConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `sfConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
 
-### 10.6. Rationale & Safety
-
-- No value choice: ledger moves exactly the inbox, no risk of misreporting.
-- No ZKP needed: no proof obligation since the value is known to ledger state.
-- Staleness control: version bump invalidates any in-flight proofs tied to old CB_S.
-- EncZero safety: inbox reset uses deterministic ciphertext of 0 so it remains a valid ElGamal ciphertext.
-- Deterministic across validators (no randomness beacon).
-- Represents an encryption of 0 under the relevant public key.
-- Keeps inbox proofs well-formed.
-- **Public zero visibility:** Because the canonical encrypted zero is fully deterministic, validators can compare any stored ciphertext against the known `EncZero` value for that account. If they match, the balance is publicly known to be exactly 0. This allows validators to verify that a newly initialized spending balance or a reset inbox contains no hidden value, without requiring the holder’s private key. Non-zero ciphertexts remain opaque.
-
-### 10.7. Example JSON
+### 10.6. Example JSON
 
 ```json
 {
@@ -859,19 +848,51 @@ If successful:
 
 This transaction enables the confidential balance feature by setting the `tfMPTSetCanHoldConfidentialBalance` bit flag in the `Flags` field, and simultaneously registers the encryption keys in the same atomic operation. This demonstrates that keys can be set when the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction.
 
-## 14. Operational Considerations
+## 14. Rationale
+
+This section records why the design looks the way it does, which alternatives were considered, and which trade-offs were accepted. The normative rules themselves are in §6 through §13.
+
+### 14.1. Issuer Participation Through a Dedicated Account
+
+Under XLS-33, issuers don't hold MPTokens directly on their issuance object—OutstandingAmount only tracks tokens held by ordinary accounts. Changing OutstandingAmount to include issuer holdings would break accounting for existing MPTs, while tracking issuer holdings separately would destroy the safety check anchoring encrypted supply to plaintext supply. Instead, the issuer simply uses a dedicated holder account (§5.1), allowing its balance to be tracked in OutstandingAmount like any other user's.
+
+### 14.2. Parallel Ciphertexts for the Issuer and Auditor
+
+A confidential balance is stored as parallel ciphertexts of the same value under the holder's key, the issuer's key, and optionally an auditor's key (§5.3). Encrypting only under the holder's key would leave the issuer unable to verify its own supply and would leave no compliance path short of voluntary disclosure by each holder. Compact sigma proofs bind the parallel ciphertexts to a single hidden value, so a holder cannot present different amounts to different readers.
+
+### 14.3. Amounts Are Revealed on Conversion
+
+`ConfidentialMPTConvert` and `ConfidentialMPTConvertBack` disclose their amounts in plaintext, unlike `ConfidentialMPTSend`. Hiding them would require proving in zero knowledge that the public balance change matches the confidential one, and would force `OutstandingAmount` and `ConfidentialOutstandingAmount` to be tracked as ciphertexts. Keeping both totals in plaintext is what makes the supply invariants in §6.6 checkable at all. §11.8 works through the resulting leakage for a low-volume flow.
+
+### 14.4. Incompatibility with Percentage Transfer Fees
+
+XLS-33 transfer fees are based on a percentage of the amount being sent, but ConfidentialMPTSend intentionally hides that amount. To charge the fee correctly, you’d have to either reveal the transfer amount, trust the sender to report it honestly, or add a new zero-knowledge proof to verify the fee math.
+
+Revealing the amount ruins privacy, and adding complex zero-knowledge proofs isn't worth the overhead for a feature issuers can just turn off. Because of this, an issuance cannot use both transfer fees and confidential transfers (§6.4).
+
+### 14.5. A Flat Fee Multiplier
+
+Every confidential transaction pays 10 times the standard base fee. Pricing each transaction type in proportion to its actual verification cost was considered and rejected as unnecessary complexity, with the consequence that `ConfidentialMPTMergeInbox`, which carries no proof at all, pays the same multiplier as `ConfidentialMPTSend`.
+
+### 14.6. Proof System
+
+An earlier version of this design used separate equality and range proofs in each transaction. Those were replaced by a single compact sigma proof per transaction type, which bundles the statements into a fixed-size blob verified in one pass and reduced the `ConfidentialMPTSend` sigma component from roughly 619 bytes to 192 bytes (§A.11). Range proofs use Bulletproofs, aggregated where a transaction must prove more than one range; their verification remains the dominant cost (§17.2).
+
+The scheme is EC-ElGamal over secp256k1 and is not quantum-safe. Migration to a post-quantum construction is an open research area (§A.13).
+
+## 15. Operational Considerations
 
 Issuers must choose between enabling transfer fees and enabling confidential transfers — these two features are mutually exclusive on the same `MPTokenIssuance`. `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `sfTransferFee`.
 
-## 15. Security Considerations
+## 16. Security Considerations
 
 Confidential MPTs introduce cryptographic mechanisms that require careful validation and enforcement. This section summarizes key privacy guarantees, auditability mechanisms, proof requirements, and considerations against potential attack vectors.
 
-### 15.1 Privacy Properties
+### 16.1 Privacy Properties
 
 Confidential MPT transactions are designed to minimize information leakage while preserving verifiability of supply and balances. Validators and external observers see only ciphertexts and ZKPs and never learn the underlying amounts except where amounts are already revealed in XLS-33 semantics.
 
-#### 15.1.1 Publicly Visible Information
+#### 16.1.1 Publicly Visible Information
 
 - Transaction type (ConfidentialMPTConvert, ConfidentialMPTSend, etc.).
 - Involved accounts (Account, Issuer, Destination).
@@ -879,14 +900,15 @@ Confidential MPT transactions are designed to minimize information leakage while
 - Ciphertexts (ElGamal pairs under holder, issuer, optional auditor keys).
 - ZKPs (non-interactive proofs of correctness).
 - For issuer funding (issuer sends public MPT to dedicated account, which then converts): Amount is revealed, consistent with visible mint events in XLS-33.
+- Whether a stored ciphertext is a canonical encrypted zero. Because that value is deterministic, anyone can compare a stored ciphertext against the known encrypted zero for that account; if they match, the balance is known to be exactly 0. This applies to a newly initialized spending balance and to a reset inbox. Non-zero ciphertexts remain opaque.
 
-#### 15.1.2 Hidden Information
+#### 16.1.2 Hidden Information
 
 - Amounts moved in ConfidentialMPTSend, ConfidentialMPTMergeInbox.
 - Holder balances (except their public balance field).
 - Distribution of confidential supply across holders.
 
-#### 15.1.3 Transaction-Type Privacy Notes
+#### 16.1.3 Transaction-Type Privacy Notes
 
 - Convert (holder):
   - Public → Confidential: Amount is revealed once, but only as a conversion event.
@@ -902,7 +924,7 @@ Confidential MPT transactions are designed to minimize information leakage while
   - Amount revealed.
   - OA unchanged, COA ↓.
 
-### 15.2 Auditability & Compliance
+### 16.2 Auditability & Compliance
 
 The Confidential MPT model is designed to provide robust privacy for individual transactions while ensuring both the integrity of the total token supply and a high degree of flexibility for regulatory compliance and auditing.
 
@@ -910,7 +932,7 @@ To achieve this balance, this protocol offers flexible auditability through two 
 
 The technical foundation for both of these models is a multi-ciphertext architecture, where each confidential balance is maintained under several different public keys (e.g., holder, issuer, and optional auditor) to serve these distinct purposes.
 
-#### 15.2.1 Mechanism 1: On-Chain Selective Disclosure (A Trust-Minimized Approach)
+#### 16.2.1 Mechanism 1: On-Chain Selective Disclosure (A Trust-Minimized Approach)
 
 The primary method for compliance is on-chain selective disclosure, which provides cryptographically enforced auditability directly on the ledger.
 
@@ -923,7 +945,7 @@ The primary method for compliance is on-chain selective disclosure, which provid
 
 This powerful re-encryption capability enables targeted, on-demand compliance without ever sharing the issuer's private key or making user balances public.
 
-#### 15.2.2 Mechanism 2: Issuer-Mediated Auditing (A Simple View Key Model)
+#### 16.2.2 Mechanism 2: Issuer-Mediated Auditing (A Simple View Key Model)
 
 As a simpler, trust-based alternative, the protocol also supports an issuer-mediated model using **view keys**.
 
@@ -931,7 +953,7 @@ As a simpler, trust-based alternative, the protocol also supports an issuer-medi
 - **On-Demand Disclosure**: When an audit is required, the issuer can share the relevant view key directly with an auditor or regulator. This key grants the third party **read-only access** to view the necessary confidential information.
 - **Trust Assumption**: This model is operationally simpler but requires the auditor to trust that the issuer is providing the correct and complete set of view keys for the scope of the audit.
 
-#### 15.2.3 Foundational Elements for Public Integrity
+#### 16.2.3 Foundational Elements for Public Integrity
 
 Both compliance models are built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
@@ -940,7 +962,7 @@ Both compliance models are built upon foundational elements that ensure the inte
   - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaximumAmount.
 
-#### 15.2.4 Example Audit Flows
+#### 16.2.4 Example Audit Flows
 
 - Public Supply Audit (No Keys Required)
   1. An observer reads the public ledger fields: OA, COA, and MA.
@@ -955,7 +977,7 @@ Both compliance models are built upon foundational elements that ensure the inte
   2. The issuer provides the regulator with the appropriate view key.
   3. The regulator uses the view key to decrypt the relevant confidential balances and transaction amounts.
 
-### 15.3 Proof Requirements
+### 16.3 Proof Requirements
 
 Every confidential transaction must carry appropriate ZKPs:
 
@@ -965,7 +987,7 @@ Every confidential transaction must carry appropriate ZKPs:
 - Send: compact sigma proof (ciphertext consistency, amount linkage, and balance linkage) and aggregated range proof (transfer amount and remaining balance are non-negative).
 - Optional auditor keys: The auditor ciphertext is covered by the same compact sigma proof; no separate proof is required.
 
-### 15.4 Confidential Balance Consistency
+### 16.4 Confidential Balance Consistency
 
 - Each confidential balance entry maintains parallel ciphertexts:
 - Holder key (spendable balance).
@@ -973,26 +995,26 @@ Every confidential transaction must carry appropriate ZKPs:
 - Auditor key(s), if enabled.
 - Validators require a proof that all ciphertexts encrypt the same plaintext, preventing divergence between views.
 
-### 15.5 Dedicated Account Model
+### 16.5 Dedicated Account Model
 
 - The issuer account cannot hold or convert to confidential balances. Issuers who wish to participate in confidential circulation may optionally use a dedicated holder account (Confidential Vault), which is treated as a standard non-issuer holder of its own MPT issuance.
 - Prevents redefinition of OA semantics and keeps compatibility with XLS-33.
 - Validators enforce that `ConfidentialMPTConvert` from the issuer account is invalid.
 
-### 15.6 Privacy Guarantees
+### 16.6 Privacy Guarantees
 
 - Transaction amounts are hidden in all confidential transfers except:
   - Issuer mint events (already visible in legacy MPTs).
   - Conversion from public → confidential, where only the converted amount is disclosed once.
 - Redistribution among holders (including any issuer-controlled dedicated account) leaks no amounts.
 
-### 15.7 Auditor & Compliance Controls
+### 16.7 Auditor & Compliance Controls
 
 - If auditor is set, ciphertexts under auditor keys are validated by the compact sigma proof alongside holder, issuer, and other recipient ciphertexts.
 - Prevents issuers from selectively encrypting incorrect balances for auditors.
 - Selective disclosure allows compliance without undermining public confidentiality.
 
-### 15.8 Attack Surface & Mitigations
+### 16.8 Attack Surface & Mitigations
 
 - Replay attacks: Transactions bound to unique ledger indices/versions; proofs must include domain separation.
 - Malformed ciphertexts: Validators reject invalid EC points.
@@ -1001,26 +1023,24 @@ Every confidential transaction must carry appropriate ZKPs:
 - Auditor collusion: Auditors see balances only if granted view keys; public supply integrity remains trustless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
-## 16. Analysis of Transaction Cost and Performance
+## 17. Analysis of Transaction Cost and Performance
 
 The efficiency of Confidential MPT transactions is critical to their practical deployment within XRPL’s performance constraints. This section analyzes the cryptographic payload size and verification cost of the ConfidentialMPTSend transaction, which represents the most complex confidential operation in the protocol.
 
 We assume the common configuration where the transfer amount is encrypted under four public keys (sender, receiver, issuer mirror, auditor mirror), hence Nciphers = 4 throughout this section. All estimates assume secp256k1, 32-byte scalars, compressed curve points of 33 bytes, and EC–ElGamal ciphertexts of 66 bytes. The cryptographic payload consists of ElGamal ciphertexts, two Pedersen commitments, a compact sigma proof binding all ciphertexts under a single Fiat-Shamir challenge, and an aggregated Bulletproof enforcing range constraints.
 
-### 16.1 Cryptographic Payload Structure (Nciphers = 4)
+### 17.1 Cryptographic Payload Structure (Nciphers = 4)
 
 Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 bytes per ciphertext and 4 × 66 = 264 bytes in total. Two Pedersen commitments are included, one for the transfer amount m and one for the balance b, contributing 2 × 33 = 66 bytes. The compact sigma proof (`ZKProof` prefix) is a fixed 192 bytes regardless of recipient count, replacing the legacy shared-randomness equality proof. An aggregated Bulletproof proves that both the transfer amount and the post-spend remainder lie in [0, 2^64), though transactors cap accepted amounts at `maxMPTokenAmount` (2^63 − 1); for two aggregated 64-bit values, the proof size is 754 bytes. The `ZKProof` field therefore carries 192 + 754 = 946 bytes total. Combining all components:
 
 Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 946 bytes (ZKProof: 192-byte compact sigma proof + 754 aggregated Bulletproof)
 = 1276 bytes (with auditor). Without auditor (Nciphers = 3): 198 + 66 + 946 = 1210 bytes. Ledger metadata and transaction headers are excluded from this estimate, as the goal is to isolate the cryptographic overhead.
 
-### 16.2 Timing and Computational Complexity
+### 17.2 Timing and Computational Complexity
 
 To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The compact sigma proof introduces only a small additional overhead compared to Bulletproof verification, as it consists of a fixed number of scalar multiplications and curve additions independent of the number of recipients. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
 These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
-
-The reference implementation charges 10x the normal base fee for each Confidential MPT transaction. This multiplier is intended to reflect the additional validation work from ciphertext checks, compact sigma proof verification, and Bulletproof verification while remaining simple for fee calculation and transaction construction.
 
 # Appendix
 
@@ -1066,11 +1086,11 @@ If validators cannot verify a ZKP, the transaction is rejected during consensus,
 
 ### A.10 Why can't the issuer account hold confidential balances of its own MPT Issuance?
 
-The issuer account has a special role on the ledger: its balance is excluded from `OutstandingAmount` to preserve the XLS-33 accounting invariant. Allowing the issuer to hold confidential balances directly would break this invariant, since COA and OA would need to account for the issuer's hidden balance. Instead, an issuer that wishes to participate in confidential circulation uses an optional dedicated holder account (Confidential Vault), which is treated as a standard non-issuer holder. Its confidential balance is included in both OA and COA, keeping all accounting consistent and validators able to enforce `OA ≤ MaximumAmount` without decryption.
+The issuer account has a special role on the ledger: its balance is excluded from `OutstandingAmount` to preserve the XLS-33 accounting invariant. Allowing the issuer to hold confidential balances directly would break this invariant, since COA and OA would need to account for the issuer's hidden balance. Instead, an issuer that wishes to participate in confidential circulation uses an optional dedicated holder account (Confidential Vault), which is treated as a standard non-issuer holder. Its confidential balance is included in both OA and COA, keeping all accounting consistent and validators able to enforce `OA ≤ MaximumAmount` without decryption. (See §14.1 for the full rationale.)
 
 ### A.11 Will proofs be optimized in future versions?
 
-The original design employed separate range and equality proofs for each transaction. This has been superseded by the compact sigma proof construction, which replaces the separate sigma proofs with a single fixed-size proof per transaction type, reducing the `ConfidentialMPTSend` sigma component from ~619 bytes to 192 bytes (a 27% reduction in total transaction size). Further optimizations to range proof aggregation or batched verification may be explored in future versions.
+The original design employed separate range and equality proofs for each transaction. This has been superseded by the compact sigma proof construction, which replaces the separate sigma proofs with a single fixed-size proof per transaction type, reducing the `ConfidentialMPTSend` sigma component from ~619 bytes to 192 bytes (a 27% reduction in total transaction size). Further optimizations to range proof aggregation or batched verification may be explored in future versions. (See §14.6 for the full rationale.)
 
 ### A.12 Can there be more than one auditor?
 
