@@ -704,6 +704,7 @@ This transaction uses the standard transaction fee.
 - If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
 - The transaction must not touch any `Loan`.
 - `LoanBroker.DebtTotal` and `LoanBroker.CoverAvailable` must both be zero when the `LoanBroker` is deleted.
+- The transaction must delete the loan broker specified in the transaction.
 
 #### 3.4.6 Example JSON
 
@@ -1226,6 +1227,7 @@ This transaction uses the standard transaction fee.
 - If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0 && Loan.TotalValueOutstanding = 0`
 - A `Loan` may only be deleted once `Loan.PaymentRemaining`, `Loan.TotalValueOutstanding`, `Loan.PrincipalOutstanding` and `Loan.ManagementFeeOutstanding` are all zero.
 - The transaction must change nothing else: `Vault.AssetsTotal`, `Vault.AssetsAvailable`, `Vault.LossUnrealized`, the Vault pseudo-account balance, `LoanBroker.DebtTotal`, `LoanBroker.CoverAvailable` and the LoanBroker pseudo-account balance all unchanged.
+- The transaction must delete the loan specified in the transaction.
 
 #### 3.9.6 Example JSON
 

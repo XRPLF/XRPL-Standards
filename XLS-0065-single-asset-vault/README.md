@@ -488,6 +488,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 1. Only a `VaultDelete` transaction may delete a `Vault` object; only `VaultDelete` may succeed without an after-state for the vault.
 2. `VaultDelete` must also delete the share `MPTokenIssuance`.
 3. At deletion: `Vault.AssetsTotal == 0`, `Vault.AssetsAvailable == 0`, and `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`.
+4. `VaultDelete` must delete the vault specified in the transaction.
 
 ### 3.5 Transaction: `VaultDeposit`
 
