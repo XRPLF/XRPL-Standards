@@ -289,7 +289,7 @@ XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumbe
 
 **Relationship to On-Ledger Formats:**
 
-The on-ledger wire format of any floating points numbers is unchanged. However, the byte layout is frequently incompatible with XFloat numbers accepted by float-prefixed host functions. For example, a fungible token amount in an `STAmount` field is not an XFloat. In particular:
+The on-ledger wire format of any floating point numbers is unchanged. However, the byte layout is frequently incompatible with XFloat numbers accepted by float-prefixed host functions. For example, a fungible token amount in an `STAmount` field is not an XFloat. In particular:
 
 ```
 [STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
@@ -303,7 +303,7 @@ XRPL Smart Contracts running in WebAssembly need to perform correct decimal arit
 
 Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to xrpld's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
 
-Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions — for example, to work with integer ratios or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
+Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions (for example, to work with integer ratios or basis points) should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
 
 #### 5.8.4. XFloat Example Usage
 
@@ -591,7 +591,7 @@ Yes, though that needs to be tested. This should make it easier for users to est
 
 ### C.5: Why not use native WASM floating point?
 
-WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. One might ask whether those could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical). In practice this would be insufficient for two independent reasons.
+WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. While they could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical), in practice this would be insufficient for two independent reasons:
 
 First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example, the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect by construction.
 
@@ -627,7 +627,7 @@ The 12-byte `XFloat` format is exclusively a host-function buffer convention. Ex
 
 The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a preference.
 
-**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever)but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
+**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever) but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility.
 
 **Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable forever) rather than on contract authors or users. This is a conservative choice appropriate for financial infrastructure.
 
