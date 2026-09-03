@@ -59,7 +59,7 @@ By default without declaring `ImmutableFlags`:
 
 Declaring immutability via `ImmutableFlags`:
 
-- Flags set in `ImmutableFlags` indicates the corresponding field/flag is immutable. The issuer can not modify the field/flag via `MPTokenIssuanceSet` after issuance.
+- Flags set in `ImmutableFlags` indicate the corresponding field/flag is immutable. The issuer cannot modify the field/flag via `MPTokenIssuanceSet` after issuance.
 
 ### 3.1. Fields
 
@@ -96,7 +96,7 @@ For both `MPTokenIssuanceCreate` and `MPTokenIssuanceSet`.
 ### 3.3. State Changes
 
 1. If the transaction succeeds, the created `MPTokenIssuance` object's `ImmutableFlags` field is set to the value provided in the transaction. The corresponding flags or fields are now immutable.
-2. If `ImmutableFlags` is omitted, the object's `ImmutableFlags` field is absent, then the flags default to being able to be enabled once, but can never be disabled; And the metadata and transfer fee fields are mutable.
+2. If `ImmutableFlags` is omitted and the object's `ImmutableFlags` field is absent, then MPT issuance flags default to being able to be enabled once (and never disabled), and the metadata and transfer fee fields are mutable.
 
 ### 3.4. Example JSON
 
@@ -118,7 +118,7 @@ The base transaction fee for this transaction follows the standard XRP Ledger fe
 
 ## 4. Transaction: `MPTokenIssuanceSet`
 
-This proposal extends the functionality of the `MPTokenIssuanceSet` transaction, allowing the issuer to modify `MPTokenMetadata` and `TransferFee`, enable MPT issuance flags, and permanently make any of these immutable via `ImmutableFlags`. The `ImmutableFlags` provided in this transaction adds those bit to the current ledger object's `ImmutableFlags`, it is not a complete replacement.
+This proposal extends the functionality of the `MPTokenIssuanceSet` transaction, allowing the issuer to modify `MPTokenMetadata` and `TransferFee`, enable MPT issuance flags, and permanently make any of these immutable via `ImmutableFlags`. The `ImmutableFlags` provided in this transaction are added to (bitwise ORed into) the current ledger object's `ImmutableFlags`; it is not a complete replacement.
 
 For details on the original `MPTokenIssuanceSet` transaction see: [**The MPTokenIssuanceSet Transaction**](https://github.com/XRPLF/XRPL-Standards/blob/master/XLS-0033-multi-purpose-tokens/README.md#33-the-mptokenissuanceset-transaction)
 
