@@ -193,13 +193,27 @@ The following cases are invalid:
 
 `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `TransferFee`.
 
-### 6.5. Invariants
+### 6.5. Deletion
 
-- `ConfidentialOutstandingAmount` >= 0
-- `ConfidentialOutstandingAmount` <= `OutstandingAmount`
-- Any change to `ConfidentialOutstandingAmount` during a `Convert` or `ConvertBack` transaction must be exactly offset by an inverse change to the corresponding `MPTAmount` (i.e., `ΔCOA = -ΔMPTAmount`).
+**Deletion Transactions:** `MPTokenIssuanceDestroy`.
 
-### 6.6. Example JSON
+**Deletion Conditions:**
+
+- All XLS-33 conditions continue to apply unchanged, in particular `OutstandingAmount == 0`.
+- The issuance can only be destroyed while `ConfidentialOutstandingAmount` is 0, but this requires no confidential-specific condition on `MPTokenIssuanceDestroy`. Because `ConfidentialOutstandingAmount <= OutstandingAmount` holds at all times (§6.6), the existing XLS-33 requirement already implies it.
+- Registered encryption keys (`IssuerEncryptionKey`, `AuditorEncryptionKey`) do not block destruction; they are removed with the issuance.
+
+**Account Deletion Blocker:** Yes. This is unchanged from XLS-33: an `MPTokenIssuance` must be deleted before its issuer account can be deleted, and this amendment adds no new exemption.
+
+### 6.6. Invariants
+
+In the rules below, `ΔCOA` and `ΔOA` denote a transaction's net change to this issuance's `ConfidentialOutstandingAmount` and `OutstandingAmount`, and `ΔMPTAmount` denotes its net change to `MPTAmount` summed over _every_ `MPToken` of this issuance rather than that of any single holder.
+
+- `ConfidentialOutstandingAmount` <= `OutstandingAmount`. Since `ConfidentialOutstandingAmount` is an unsigned 64-bit field, this also catches any underflow: a subtraction below zero wraps to a value that necessarily exceeds `OutstandingAmount`.
+- Whenever `ΔCOA != 0`, the identity `ΔMPTAmount + ΔCOA = ΔOA` MUST hold.
+- Whenever `ΔCOA = 0` and the transaction is one of the five confidential MPT transaction types, both `ΔMPTAmount = 0` and `ΔOA = 0` MUST hold. Besides `ConfidentialMPTSend` and `ConfidentialMPTMergeInbox`, this case also covers a zero-amount `ConfidentialMPTConvert` submitted purely to register a `HolderEncryptionKey`.
+
+### 6.7. Example JSON
 
 ```json
 {
@@ -232,13 +246,27 @@ To support confidential MPTs, the existing `MPToken` ledger object is extended w
 | `IssuerEncryptedBalance`      |           | `string`  | `Blob`        | A 66-byte ElGamal ciphertext encrypting the holder's **total** confidential balance (`CB_S` + `CB_IN`) under the issuance's `IssuerEncryptionKey`. The issuer's mirror, used for supply reconciliation and as the basis for clawback (§12). |
 | `AuditorEncryptedBalance`     |           | `string`  | `Blob`        | A 66-byte ElGamal ciphertext encrypting the same total balance under the issuance's `AuditorEncryptionKey`. Present only when the issuance has an auditor configured.                                                                       |
 
-### 7.2. Invariants
+### 7.2. Deletion
+
+**Deletion Transactions:** `MPTokenAuthorize` (with `tfMPTUnauthorize`), and implicitly by transactions that reclaim an empty holding on the holder's behalf — `VaultDelete`, `VaultWithdraw`, `VaultClawback`, and `LoanBrokerDelete`.
+
+**Deletion Conditions:**
+
+- All XLS-33 conditions continue to apply unchanged, including a zero public `MPTAmount`.
+- **Holder-initiated deletion:** An `MPToken` that carries confidential balance fields cannot be deleted while the issuance's `ConfidentialOutstandingAmount` is non-zero, because the ledger cannot tell from the ciphertexts alone whether that particular holder's balance is zero. The attempt fails with `tecHAS_OBLIGATIONS`. Once `ConfidentialOutstandingAmount` reaches 0, every holder's confidential balance is necessarily zero and the `MPToken` may be deleted normally, even if the confidential fields are still present on it.
+- **Implicit deletion:** Deletion performed implicitly by one of the vault or loan-broker transactions above is blocked whenever the `MPToken` still carries any confidential balance field (`ConfidentialBalanceSpending`, `ConfidentialBalanceInbox`, `IssuerEncryptedBalance`, or `AuditorEncryptedBalance`), irrespective of `ConfidentialOutstandingAmount`, and fails with `tecHAS_OBLIGATIONS`. This is deliberately stricter than the holder-initiated rule, as defense in depth: objects reachable through those paths cannot acquire confidential fields in the first place — vault share issuances are created without `lsfMPTCanHoldConfidentialBalance`, and a vault or loan-broker pseudo-account cannot submit the `ConfidentialMPTConvert` that would register the fields — so the two rules never disagree on a state the protocol can actually produce.
+
+**Account Deletion Blocker:** This is unchanged from XLS-33: an `MPToken` must be deleted before its owner account can be deleted, and this amendment adds no new exemption.
+
+### 7.3. Invariants
 
 - `ConfidentialBalanceSpending`, `ConfidentialBalanceInbox`, and `IssuerEncryptedBalance` are all present or all absent. A single `ConfidentialMPTConvert` creates all three at once.
 - `AuditorEncryptedBalance` may be present only if the three core fields are present.
-- The mirrors track the holder's total confidential balance, so `ConfidentialMPTMergeInbox`, which only moves value between `CB_IN` and `CB_S`, leaves `IssuerEncryptedBalance` and `AuditorEncryptedBalance` unchanged.
+- If a transaction creates or modifies any of `ConfidentialBalanceSpending`, `ConfidentialBalanceInbox`, `IssuerEncryptedBalance`, or `AuditorEncryptedBalance`, then the corresponding `MPTokenIssuance` MUST have the `lsfMPTCanHoldConfidentialBalance` flag enabled. The converse is deliberately not required: these fields may remain on an `MPToken` after all confidential balances have returned to zero, so merely carrying them is not constrained — only changing them is.
+- If a transaction changes the value of `ConfidentialBalanceSpending` on an existing `MPToken`, then `ConfidentialBalanceVersion` MUST also change. Initial creation of `ConfidentialBalanceSpending` by the holder's first `ConfidentialMPTConvert` is exempt, since there is no prior value to invalidate.
+- While the issuance's `ConfidentialOutstandingAmount` is greater than 0, no `MPToken` may be removed from the ledger if, immediately before removal, it had a non-zero `MPTAmount` or carried any of `ConfidentialBalanceSpending`, `ConfidentialBalanceInbox`, `IssuerEncryptedBalance`, or `AuditorEncryptedBalance`. This holds regardless of which transaction attempts the removal (§7.2).
 
-### 7.3. Example JSON
+### 7.4. Example JSON
 
 ```json
 {
@@ -322,16 +350,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 9. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 10. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
 
-### 8.4. Invariants
-
-- **Deletion Blocker:** A holder's `MPToken` that carries confidential balance fields cannot be deleted while the issuance's `sfConfidentialOutstandingAmount` is non-zero, because the ledger cannot tell from the ciphertexts alone whether that particular holder's balance is zero. An attempt to delete it, for example via `MPTokenAuthorize` with `tfMPTUnauthorize`, fails with `tecHAS_OBLIGATIONS`. Once `sfConfidentialOutstandingAmount` reaches 0, every holder's confidential balance is necessarily zero and the `MPToken` may be deleted normally.
-- **Implicit Deletion Paths:** Deletion of a holder's `MPToken` performed implicitly by another transaction — for example vault or loan-broker teardown reclaiming an empty holding — is blocked whenever the `MPToken` still carries any confidential balance field (`sfConfidentialBalanceSpending`, `sfConfidentialBalanceInbox`, `sfIssuerEncryptedBalance`, or `sfAuditorEncryptedBalance`), irrespective of `sfConfidentialOutstandingAmount`, and fails with `tecHAS_OBLIGATIONS`. This is deliberately stricter than the holder-initiated rule above, as defense in depth: objects reachable through those paths cannot acquire confidential fields in the first place — vault share issuances are created without `lsfMPTCanHoldConfidentialBalance`, and a vault or loan-broker pseudo-account cannot submit the `ConfidentialMPTConvert` that would register the fields — so the two rules never disagree on a state the protocol can actually produce.
-- **Issuance Deletion:** The `MPTokenIssuance` object can likewise only be deleted while `sfConfidentialOutstandingAmount` is 0, but this requires no confidential-specific condition on `MPTokenIssuanceDestroy`. That transaction continues to require `sfOutstandingAmount == 0` exactly as specified by XLS-33, and because `sfConfidentialOutstandingAmount <= sfOutstandingAmount` holds at all times (§6.5), the existing XLS-33 requirement already implies `sfConfidentialOutstandingAmount == 0`. Implementations therefore need not — and the reference implementation does not — add a separate check on `sfConfidentialOutstandingAmount` to `MPTokenIssuanceDestroy`.
-- **Confidential Balance Flag Consistency:** If an `MPToken` contains any encrypted balance fields, then its corresponding `MPTokenIssuance` must have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
-- **Encrypted Field Consistency:** If an `MPToken` contains `sfConfidentialBalanceSpending` or `sfConfidentialBalanceInbox`, then it must also contain `sfIssuerEncryptedBalance` (and vice versa).
-- **Version Modification:** If an `MPToken` update changes `sfConfidentialBalanceSpending` (its value before the transaction differs from its value after), then `sfConfidentialBalanceVersion` must also change.
-
-### 8.5. State Changes
+### 8.4. State Changes
 
 If the transaction is successful:
 
@@ -342,7 +361,7 @@ If the transaction is successful:
 5. If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), **`sfAuditorEncryptedBalance`** is likewise updated by homomorphically adding `AuditorEncryptedAmount`.
 6. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
 
-### 8.6 Example JSON
+### 8.5 Example JSON
 
 ```json
 {
@@ -505,6 +524,7 @@ If the transaction is successful:
 - **Update Spending Balance:** The current `sfConfidentialBalanceInbox` is homomorphically **added** to `sfConfidentialBalanceSpending`.
 - **Reset Inbox:** The `sfConfidentialBalanceInbox` is reset to a canonical **encrypted zero**. This ensures the account is ready to receive new transfers without arithmetic errors.
 - **Increment Version:** The `sfConfidentialBalanceVersion` is incremented by 1. If the version reaches the maximum 32-bit integer value, it wraps around to 0.
+- **Mirrors Untouched:** `sfIssuerEncryptedBalance` and `sfAuditorEncryptedBalance` are not written. They mirror the holder's _total_ confidential balance, and this transaction only moves value between `CB_IN` and `CB_S`, so that total is unchanged.
 - **No-op with encrypted zero:** If either or both of `sfConfidentialBalanceInbox` and `sfConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `sfConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
 
 ### 10.5. Rationale & Safety
