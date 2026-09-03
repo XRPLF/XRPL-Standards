@@ -131,6 +131,8 @@ Any sponsored object is still owned by the original owner, and the sponsor is no
 
 ### 4.3. Invariant Checks
 
+_NOTE: "Invariant Checks" sections in this spec (here and in [5.7](#57-invariants), [6.3](#63-invariants), [7.2](#72-invariants)) mix two kinds of rules: true runtime invariants, enforced on every transaction as a last line of defense (see [section 19](#19-invariants)), and ordinary transactor preconditions, enforced only by the specific transaction type that could violate them. Both are stated together here for readability, but they are checked by different code paths._
+
 #### 4.3.1. Allowed Ledger Entry Types
 
 For v1, the `Sponsor` field **may** appear only on the following, explicitly-scoped ledger entry types:
@@ -207,19 +209,19 @@ This ensures that there can be at most one `Sponsorship` object per sponsor-spon
 
 ### 5.2. Fields
 
-| Field Name            | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                           |
-| --------------------- | --------- | --------- | ------------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`     | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `"Sponsorship"` (JSON) or `0x0090` (internal) indicates this is a `Sponsorship` ledger object.                              |
-| `Flags`               |           |           | `0`           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object.                                                                                   |
-| `Owner`               | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                 |
-| `Sponsee`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                        |
-| `FeeAmount`           |           |           |               | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                          |
-| `MaxFee`              |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.        |
-| `RemainingOwnerCount` |           |           | `0`           | `number`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                             |
-| `OwnerNode`           | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages. |
-| `SponseeNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages. |
-| `PreviousTxnID`       |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                       |
-| `PreviousTxnLgrSeq`   |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                               |
+| Field Name            | Constant? | Required? | Default Value | JSON Type | Internal Type | Description                                                                                                                                                                   |
+| --------------------- | --------- | --------- | ------------- | --------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`     | ✔️        | ✔️        | N/A           | `string`  | `UInt16`      | The value `"Sponsorship"` (JSON) or `0x0090` (internal) indicates this is a `Sponsorship` ledger object.                                                                      |
+| `Flags`               |           | ✔️        | `0`           | `number`  | `UInt32`      | A bit-map of boolean flags enabled for this object. Always present, per the common-fields rule in [section 4.1](#41-fields); its value defaults to `0` when no flags are set. |
+| `Owner`               | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsor associated with this relationship. This account also pays for the reserve of this object.                                                                         |
+| `Sponsee`             | ✔️        | ✔️        | N/A           | `string`  | `AccountID`   | The sponsee associated with this relationship.                                                                                                                                |
+| `FeeAmount`           |           |           |               | `string`  | `Amount`      | The (remaining) amount of XRP that the sponsor has provided for the sponsee to use for fees.                                                                                  |
+| `MaxFee`              |           |           | N/A           | `string`  | `Amount`      | The maximum fee per transaction that will be sponsored. This is to prevent abuse/excessive draining of the sponsored fee pool.                                                |
+| `RemainingOwnerCount` |           |           | `0`           | `number`  | `UInt32`      | The (remaining) number of `OwnerCount` that the sponsor has provided for the sponsee to use for reserves.                                                                     |
+| `OwnerNode`           | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsor's owner directory links to this object, in case the directory consists of multiple pages.                                         |
+| `SponseeNode`         | ✔️        | ✔️        | N/A           | `string`  | `UInt64`      | A hint indicating which page of the sponsee's owner directory links to this object, in case the directory consists of multiple pages.                                         |
+| `PreviousTxnID`       |           | ✔️        | N/A           | `string`  | `Hash256`     | The identifying hash of the transaction that most recently modified this entry.                                                                                               |
+| `PreviousTxnLgrSeq`   |           | ✔️        | N/A           | `number`  | `UInt32`      | The ledger index that contains the transaction that most recently modified this object.                                                                                       |
 
 ### 5.3. Flags
 
@@ -251,7 +253,7 @@ The reserve is charged to the sponsor's account (the `Owner` field).
 Either the sponsor or the sponsee may delete the `Sponsorship` object via the `SponsorshipSet` transaction (creating and updating the object is restricted to the sponsor).
 
 - The `tfDeleteObject` flag must be enabled.
-- No other fields (`FeeAmountDelta`, `MaxFee`, `RemainingOwnerCountDelta`, or flag-setting fields) may be specified in the deletion transaction.
+- Exactly one of `CounterpartySponsor` or `Sponsee` must still be specified, so that the target `Sponsorship` object can be identified (per the standard `SponsorshipSet` rules in [section 9.4](#94-failure-conditions), items 1 and 2). The budget/limit fields — `FeeAmountDelta`, `MaxFee`, `RemainingOwnerCountDelta` — and the require-sign flag fields must **not** be included on a deletion transaction.
 - **Note:** Non-zero `FeeAmount` and `RemainingOwnerCount` values **are** permitted at deletion time. Any remaining XRP in `FeeAmount` is returned to the sponsor's account upon deletion.
 
 #### 5.6.3. Account Deletion Blocker
@@ -356,7 +358,7 @@ The following invariants must hold for `AccountRoot` objects with sponsorship fi
 Across all accounts in the ledger:
 $$\sum_{accounts} SponsoredOwnerCount = \sum_{accounts} SponsoringOwnerCount$$
 
-This ensures that every sponsored object is properly accounted for on both the sponsee and sponsor sides.
+This ensures that every sponsored object is properly accounted for on both the sponsee and sponsor sides. In practice this is enforced as a **per-transaction delta equality** — no node computes a ledger-wide sum directly; the equality holds inductively from genesis because each transaction's `SponsoredOwnerCount` delta is checked against its `SponsoringOwnerCount` delta (see [section 19.2](#192-balancing-sponsoredownercount-and-sponsoringownercount)).
 
 ### 6.4. Example JSON
 
@@ -490,8 +492,8 @@ The total fee calculation for signatures will now be $( 1+|tx.Signers| + |tx.Spo
 1. `SponsorSignature.SigningPubKey` is invalid — the public key doesn't match the account's master key or regular key, or the public key is otherwise invalid (`tefBAD_AUTH` or `temBAD_SIGNATURE`).
 1. The `Sponsor` doesn't exist on the ledger (`terNO_ACCOUNT`).
 1. An invalid sponsorship flag is used (`temINVALID_FLAG`).
-1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included, or other incorrect combinations of signing fields (`temMALFORMED`).
-1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) (`temMALFORMED`).
+1. `SponsorSignature.SigningPubKey`, `SponsorSignature.TxnSignature`, and `SponsorSignature.Signers` are all included, or other incorrect combinations of signing fields — this is not a dedicated check; it is caught by the same signature-validity logic used elsewhere ("cannot both single- and multi-sign"), so it surfaces as `temINVALID`, not a distinct malformed error.
+1. `Sponsor`, `SponsorFlags`, or `SponsorSignature` is included in a transaction that does not support sponsorship (see section [8.3.4](#834-transactions-that-cannot-be-sponsored)) (`temINVALID_FLAG`).
 1. Exactly one of `Sponsor` and `SponsorFlags` is included (they must either both be included, if the transaction is sponsored, or neither, if it is not) (`temINVALID_FLAG`).
 1. `SponsorSignature` is included but `Sponsor` or `SponsorFlags` is missing (`temMALFORMED`).
 1. `SponsorFlags` includes invalid flags — currently, the only two valid flags are `spfSponsorFee` and `spfSponsorReserve` (`temINVALID_FLAG`).
@@ -537,7 +539,9 @@ All transactions (other than pseudo-transactions) may use the `spfSponsorFee` fl
 
 `spfSponsorReserve`, however, is only supported on a hard-coded, explicitly-scoped **allow-list** of transaction types for v1, rather than being available on every transaction that creates a reserve-bearing object. The allow-list is:
 
-`AccountSet`, `CheckCancel`, `CheckCash`, `CheckCreate`, `Clawback`, `CredentialAccept`, `CredentialCreate`, `CredentialDelete`, `DelegateSet`, `DepositPreauth`, `EscrowCancel`, `EscrowCreate`, `EscrowFinish`, `MPTokenAuthorize`, `MPTokenIssuanceCreate`, `MPTokenIssuanceDestroy`, `MPTokenIssuanceSet`, `Payment` (account creation only, see [section 11](#11-transaction-payment)), `PaymentChannelClaim`, `PaymentChannelCreate`, `PaymentChannelFund`, `SetRegularKey`, `SignerListSet`, `SponsorshipTransfer`, and `TrustSet`.
+`AccountSet`, `CheckCancel`, `CheckCash`, `CheckCreate`, `Clawback`, `CredentialAccept`, `CredentialCreate`, `CredentialDelete`, `DelegateSet`, `DepositPreauth`, `EscrowCancel`, `EscrowCreate`, `EscrowFinish`, `MPTokenAuthorize`, `MPTokenIssuanceCreate`, `MPTokenIssuanceDestroy`, `MPTokenIssuanceSet`, `Payment`, `PaymentChannelClaim`, `PaymentChannelCreate`, `PaymentChannelFund`, `SetRegularKey`, `SignerListSet`, `SponsorshipTransfer`, and `TrustSet`.
+
+`Payment` is allow-listed, but with an important carve-out: `spfSponsorReserve` on a `Payment` **never** sponsors the newly created account. Account creation is controlled entirely by the `tfSponsorCreatedAccount` flag (see [section 11](#11-transaction-payment)), which always sponsors the new account from `tx.Account`, never from `tx.Sponsor`. `spfSponsorReserve` on a `Payment` does still apply to any non-account ledger entry that the payment auto-creates on `tx.Account`'s side (for example, an `MPToken` auto-created for the sender when receiving an MPT), consistent with the general rule in [section 8.4.2](#842-reserve-sponsorship-state-changes) that a reserve sponsor only covers objects owned by `tx.Account`.
 
 Several of these (`CheckCancel`, `CheckCash`, `EscrowCancel`, `EscrowFinish`, `PaymentChannelClaim`, `PaymentChannelFund`) do not themselves create a sponsorable object in the common case, but are allow-listed because they can create or re-create one (e.g. an `EscrowFinish` or `CheckCash` that establishes a trust line for the destination). `SponsorshipTransfer` is allow-listed because `spfSponsorReserve` is how it names the incoming sponsor on the `tfSponsorshipCreate`/`tfSponsorshipReassign` paths (see [section 10.1.2](#1012-sponsor)).
 
@@ -564,7 +568,7 @@ If a `Sponsorship` object does not exist, the `tx.Fee` value is decremented from
 
 #### 8.4.2. Reserve Sponsorship State Changes
 
-1. Any account/object that is created as a part of the transaction will have a `Sponsor` field.
+1. Any non-account ledger entry created as part of the transaction whose owner is `tx.Account` will have a `Sponsor` field pointing at `tx.Sponsor`. **Account** creation is a separate mechanism: a new `AccountRoot` is only sponsored when the creating `Payment` sets `tfSponsorCreatedAccount` (see [section 11.2](#112-flags)), and its `Sponsor` is unconditionally `tx.Account`, not `tx.Sponsor`. There is no third-party `spfSponsorReserve` path for account creation; `spfSponsorReserve` on a `Payment` only affects objects created for `tx.Account` (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)).
 1. A reserve sponsor only ever covers objects owned by `tx.Account`. If an allow-listed transaction creates a ledger object whose owner is some other account (e.g. `Clawback` touching the holder's trust line), that object is simply created **unsponsored** and its own owner bears the reserve — this is not an error, and the transaction still succeeds. The same is true for objects owned by a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts); see [section 17.3](#173-pseudo-accounts).
 1. The sponsor's `SponsoringOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction, and the `SponsoringAccountCount` field will be incremented by the number of new accounts that are sponsored as a part of the transaction.
 1. The sponsee's `SponsoredOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction.
@@ -610,23 +614,23 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 ### 9.4. Failure Conditions
 
-1. `tx.Account` is not equal to either `tx.CounterpartySponsor` or `tx.Sponsee` (`temMALFORMED`)
-2. Both `CounterpartySponsor` and `Sponsee` are specified (`temMALFORMED`)
-3. Neither `CounterpartySponsor` nor `Sponsee` is specified (`temMALFORMED`)
-4. Both `tfSponsorshipSetRequireSignForFee` and `tfSponsorshipClearRequireSignForFee` are enabled (`temINVALID_FLAG`)
-5. Both `tfSponsorshipSetRequireSignForReserve` and `tfSponsorshipClearRequireSignForReserve` are enabled (`temINVALID_FLAG`)
-6. `CounterpartySponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the counterparty sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
-7. `MaxFee` is not denominated in XRP, or is negative (`temBAD_AMOUNT`)
-8. `FeeAmountDelta` is not denominated in XRP, or is zero (`temBAD_AMOUNT`)
-9. `CounterpartySponsor` or `Sponsee` does not exist on the ledger (`tecNO_DST`)
-10. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
-11. `CounterpartySponsor` does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecUNFUNDED`)
-12. `CounterpartySponsor` does not have sufficient XRP to cover the `FeeAmountDelta` being committed (`tecUNFUNDED`)
-13. `Sponsee` **or** `CounterpartySponsor` is a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tecPSEUDO_ACCOUNT` — see [section 17.3](#173-pseudo-accounts))
+1. Both `CounterpartySponsor` and `Sponsee` are specified (`temMALFORMED`)
+2. Neither `CounterpartySponsor` nor `Sponsee` is specified (`temMALFORMED`)
+3. Both `tfSponsorshipSetRequireSignForFee` and `tfSponsorshipClearRequireSignForFee` are enabled (`temINVALID_FLAG`)
+4. Both `tfSponsorshipSetRequireSignForReserve` and `tfSponsorshipClearRequireSignForReserve` are enabled (`temINVALID_FLAG`)
+5. `CounterpartySponsor` is specified (which means that the `Sponsee` is submitting the transaction) and `tfDeleteObject` is not enabled, as only the counterparty sponsor can create/update the `Sponsorship` object (`temMALFORMED`)
+6. `MaxFee` is not denominated in XRP, or is negative (`temBAD_AMOUNT`)
+7. `FeeAmountDelta` is not denominated in XRP, or is zero (`temBAD_AMOUNT`)
+8. `CounterpartySponsor` or `Sponsee` does not exist on the ledger (`tecNO_DST`)
+9. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
+10. `CounterpartySponsor` does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecUNFUNDED`)
+11. `CounterpartySponsor` does not have sufficient XRP to cover the `FeeAmountDelta` being committed (`tecUNFUNDED`)
+12. `Sponsee` **or** `CounterpartySponsor` is a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tecPSEUDO_ACCOUNT` — see [section 17.3](#173-pseudo-accounts))
+13. On creation, `FeeAmountDelta` is present and not positive, or `RemainingOwnerCountDelta` is present and not positive — each is checked independently, so a negative value on either field fails even if the other field would establish a valid budget (`tecNO_PERMISSION`)
 14. The resulting `Sponsorship` object would have no budget at all — neither a positive `FeeAmount` nor a positive `RemainingOwnerCount` once `FeeAmountDelta`/`RemainingOwnerCountDelta` (or, for omitted fields, a delta of `0`) are applied to the object's existing stored values (`tecNO_PERMISSION`)
 15. `RemainingOwnerCountDelta` is zero (`temINVALID`)
 16. Applying `RemainingOwnerCountDelta` to the object's current `RemainingOwnerCount` would overflow past the maximum `UInt32` value (`tecLIMIT_EXCEEDED`)
-17. No modification is requested at all — none of `FeeAmountDelta`, `MaxFee`, or `RemainingOwnerCountDelta` is present, and no flags are set (`temREDUNDANT`)
+17. No modification is requested at all — none of `FeeAmountDelta`, `MaxFee`, or `RemainingOwnerCountDelta` is present, and no `SponsorshipSet`-specific flags are set (`temREDUNDANT`). "No flags set" here refers only to the flags defined in [section 9.2](#92-flags); universal flags such as `tfFullyCanonicalSig` are ignored for this check.
 18. If `tfDeleteObject` is enabled:
     1. `FeeAmountDelta` is specified (`temMALFORMED`)
     2. `MaxFee` is specified (`temMALFORMED`)
@@ -641,7 +645,8 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 
 If creating a new `Sponsorship` object:
 
-- Create the `Sponsorship` ledger entry. Since the object has no prior `FeeAmount`/`RemainingOwnerCount`, `FeeAmountDelta` and `RemainingOwnerCountDelta` are applied against a starting value of `0`: `FeeAmountDelta` must be positive to result in a stored `FeeAmount` (a negative value here fails the budget check below, since it can never establish a positive balance from `0`); `RemainingOwnerCountDelta` is stored as-is on `RemainingOwnerCount` only if positive (a non-positive value simply results in the field being omitted).
+- Create the `Sponsorship` ledger entry. Since the object has no prior `FeeAmount`/`RemainingOwnerCount`, `FeeAmountDelta` and `RemainingOwnerCountDelta` are each checked independently against `0`: if present, `FeeAmountDelta` must be positive, and if present, `RemainingOwnerCountDelta` must be positive — a non-positive value on _either_ field fails the transaction outright (see [section 9.4](#94-failure-conditions), item 13), even if the other field would establish a valid budget. Omitting a field (rather than setting it non-positive) is what results in it being left absent from the new object.
+- `MaxFee` is stored on the new object only if positive; a value of `0` (or an absent field) results in `MaxFee` being omitted, meaning the sponsorship is uncapped.
 - Increment the counterparty sponsor's `OwnerCount` by 1
 - Add the object to both the counterparty sponsor's and sponsee's owner directories
 - Deduct the object reserve from the counterparty sponsor's available XRP
@@ -801,7 +806,7 @@ Additional failure conditions specific to `SponsorshipTransfer`:
 4. `ObjectID` is specified but does not have a `Sponsor` field (object is not sponsored) (`tecNO_PERMISSION`)
 5. `ObjectID` is not specified and the `tx.Account` does not have a `Sponsor` field (account is not sponsored) (`tecNO_PERMISSION`)
 6. `tx.Account` is neither the current sponsor nor the owner (sponsee) of the object/account specified by `ObjectID` (`tecNO_PERMISSION`)
-7. `ObjectID` refers to a ledger entry type that is not supported by `SponsorshipTransfer` (`tecNO_PERMISSION`). The supported types are the sponsorable types listed in [section 4.3.1](#431-allowed-ledger-entry-types) **except** for `Sponsorship` objects themselves: the reserve of a `Sponsorship` object cannot be transferred via `SponsorshipTransfer` — to change the holder of that reserve, delete the `Sponsorship` object via `SponsorshipSet` and create a new one. (Other unsupported types, such as `Ticket`, `DID`, `NFTokenPage`, `Vault`, and `Loan`/`LoanBroker` objects, also fail with this code.)
+7. `ObjectID` refers to a ledger entry type that is not supported by `SponsorshipTransfer` (`tecNO_PERMISSION`). The supported types are the sponsorable non-`AccountRoot` types listed in [section 4.3.1](#431-allowed-ledger-entry-types); account-level sponsorship transfers instead omit `ObjectID` entirely, per [section 10.1.1](#1011-objectid). `Sponsorship` objects (which are not in the [section 4.3.1](#431-allowed-ledger-entry-types) list) are also not transferable — to change the holder of a `Sponsorship` object's reserve, delete it via `SponsorshipSet` and create a new one. Other unsupported types (e.g. `Ticket`, `DID`, `NFTokenPage`, `Vault`, `Loan`/`LoanBroker`) fail with the same code.
 8. If creating a new sponsorship (unsponsored to sponsored):
    1. The transaction is not submitted by the sponsee (`tecNO_PERMISSION`)
    2. The `Sponsor` field or the `SponsorFlags` field is missing (`temMALFORMED`)
@@ -817,6 +822,7 @@ Additional failure conditions specific to `SponsorshipTransfer`:
    5. The new sponsor does not have enough XRP to cover the reserve for this object/account (`tecINSUFFICIENT_RESERVE`)
    6. The new sponsor is the same as the object/account's current sponsor (reassigning to the currently-assigned sponsor is disallowed, since it would double-count against that sponsor's budget) (`tecNO_PERMISSION`)
    7. `ObjectID` is not specified (account-level) and `SponsorSignature` is not included (`temMALFORMED`)
+10. If ending sponsorship (`tfSponsorshipEnd`): the sponsee does not have enough XRP to cover the reserve on its own once sponsorship ends (`tecINSUFFICIENT_RESERVE`). For account-level sponsorships this check is unconditional; for object-level sponsorships it only applies once the `fixCleanup3_4_0` amendment is also enabled (see [section 22.5](#225-amendment-activation)).
 
 ### 10.6. State Changes
 
@@ -824,7 +830,7 @@ The state change applied to the `Sponsor` field is driven purely by the transact
 
 1. `tfSponsorshipEnd`: the `Sponsor` field on the object specified by `ObjectID` (or on the sponsored `AccountRoot`) is unconditionally removed.
 1. `tfSponsorshipCreate` / `tfSponsorshipReassign`: the `Sponsor` field is unconditionally set to `tx.Sponsor`.
-1. The old sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented, and the new sponsor (if applicable) has it incremented. For account-level transfers this delta is always 1. For object-level transfers, the delta is the object's owner-count contribution (usually 1, but e.g. 2 for a legacy `SignerList` or `Vault`, and type-dependent for `Oracle`).
+1. The old sponsor (if applicable) has its `SponsoringOwnerCount`/`SponsoringAccountCount` decremented, and the new sponsor (if applicable) has it incremented. For account-level transfers this delta is always 1. For object-level transfers, the delta is the object's owner-count contribution (usually 1, but `2 + len(SignerEntries)` for a legacy, pre-`MultiSignReserve` `SignerList`).
 1. If there is no new sponsor, then the owner's `SponsoredOwnerCount` will be decremented by the same delta.
 1. On the `tfSponsorshipCreate`/`tfSponsorshipReassign` paths, if a `Sponsorship` object exists between the new sponsor and the sponsee, its `RemainingOwnerCount` is checked and decremented by the same delta. Consistent with [section 8.4.2](#842-reserve-sponsorship-state-changes), the old sponsor's `RemainingOwnerCount` is **not** credited back on a reassignment.
 
@@ -999,12 +1005,12 @@ State changes for `Batch` are the sum of the state changes of its inner transact
   "RawTransactions": [
     {
       "RawTransaction": {
-        "TransactionType": "Payment",
+        "TransactionType": "CheckCreate",
         "Account": "rwBYyfufTVATCbpTS9bcSpvXtq6QYUB1AK",
         "Destination": "rfkDkFai4jUfCvAJiZ5Vm7XvvWjYvDqeYo",
-        "Amount": "1000000",
+        "SendMax": "1000000",
         "Sponsor": "rN7n7otQDd6FczFgLdlqtyMVrn3HMfXpf",
-        "SponsorFlags": 2, // spfSponsorReserve
+        "SponsorFlags": 2, // spfSponsorReserve — sponsors the reserve for the new Check object
         "SponsorSignature": {}, // empty placeholder; the sponsor's authorization is provided via BatchSigners below
         "Sequence": 0,
         "Fee": "0",
@@ -1030,10 +1036,10 @@ _NOTE: An earlier revision of this spec proposed dedicated `SponsorFee`/`Sponsor
 
 ### 14.1. Description
 
-A transaction's sponsor is authorized through exactly one of two mechanisms, checked in this order:
+A transaction's sponsor is authorized through exactly one of two mechanisms:
 
-1. **Direct co-signature.** If the transaction includes a populated `SponsorSignature` (`SigningPubKey`+`TxnSignature`, or `Signers`), that signature is verified and no further permission check is required.
-2. **Pre-funded `Sponsorship` object.** If `SponsorSignature` is not populated, a `Sponsorship` object keyed by `(Sponsor, tx.Account)` (or the transaction's initiator, if delegated) must exist. Whether a signature is still required depends on that object's `lsfSponsorshipRequireSignForFee`/`lsfSponsorshipRequireSignForReserve` flags (section [5.3](#53-flags)): if the relevant flag is unset, the object's existence alone is sufficient authorization; if set, a populated `SponsorSignature` is still required, per case 1.
+1. **Direct co-signature.** If the transaction includes a populated `SponsorSignature` (`SigningPubKey`+`TxnSignature`, or `Signers`), that signature is verified and it is sufficient authorization on its own. If a `Sponsorship` object also exists for this sponsor/sponsee pair, the co-signature makes that object's `lsfSponsorshipRequireSignFor*` flags moot — but the object's **budget** still governs, per rule 1 of [section 3.6](#36-sponsorship-resolution-rules) (`FeeAmount`, `MaxFee`, and `RemainingOwnerCount` are still checked and consumed; a co-signature never falls back to the sponsor's `AccountRoot.Balance`).
+2. **Pre-funded `Sponsorship` object without a co-signature.** If `SponsorSignature` is not populated, a `Sponsorship` object keyed by `(Sponsor, tx.Account)` (or the transaction's initiator, if delegated) must exist, and the relevant `lsfSponsorshipRequireSignFor*` flag on that object must be unset. If the flag is set but no signature was provided, the transaction fails with `terNO_PERMISSION`.
 
 If neither condition is satisfied, the transaction fails with `terNO_PERMISSION` (no `Sponsorship` object) or `terNO_PERMISSION` (signature required by the object's flags but missing) — see [section 8.3.2](#832-fee-sponsorship-failures) and [section 8.3.3](#833-reserve-sponsorship-failures).
 
@@ -1154,16 +1160,16 @@ _[NOTE: This API will not be implemented in rippled, but will instead be impleme
 
 The response fields are nearly identical to `account_objects`.
 
-| Field Name             | Always Present? | JSON Type | Description                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `account`              | ✔️              | `string`  | The account this request corresponds to.                                                                                                                                                                                                                                                                                                                                              |
-| `sponsored_objects`    | ✔️              | `array`   | Array of ledger entries in this account's owner directory. This includes entries that are owned by this account and entries that are linked to this account but owned by someone else, such as escrows where this account is the destination. Each member is a ledger entry in its raw ledger format. This may contain fewer entries than the maximum specified in the `limit` field. |
-| `ledger_hash`          |                 | `string`  | The identifying hash of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                           |
-| `ledger_index`         |                 | `number`  | The ledger index of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                               |
-| `ledger_current_index` |                 | `number`  | The ledger index of the open ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                          |
-| `limit`                |                 | `number`  | The limit that was used in this request, if any.                                                                                                                                                                                                                                                                                                                                      |
-| `marker`               |                 | `any`     | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. Omitted when there are no additional pages after this one.                                                                                                                                                                                                  |
-| `validated`            |                 | `boolean` | If `true`, the information in this response comes from a validated ledger version. Otherwise, the information is subject to change.                                                                                                                                                                                                                                                   |
+| Field Name             | Always Present? | JSON Type | Description                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `account`              | ✔️              | `string`  | The account this request corresponds to.                                                                                                                                                                                                                                                                                                                                                                                 |
+| `sponsored_objects`    | ✔️              | `array`   | Array of ledger entries for which the queried `account` is the reserve sponsor — i.e. entries whose `Sponsor` field (or `HighSponsor`/`LowSponsor`, for `RippleState`) equals the given account — plus sponsored `AccountRoot`s and `Sponsorship` objects owned by this account. Each member is a ledger entry in its raw ledger format. This may contain fewer entries than the maximum specified in the `limit` field. |
+| `ledger_hash`          |                 | `string`  | The identifying hash of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                                                              |
+| `ledger_index`         |                 | `number`  | The ledger index of the ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                                                                  |
+| `ledger_current_index` |                 | `number`  | The ledger index of the open ledger that was used to generate this response.                                                                                                                                                                                                                                                                                                                                             |
+| `limit`                |                 | `number`  | The limit that was used in this request, if any.                                                                                                                                                                                                                                                                                                                                                                         |
+| `marker`               |                 | `any`     | Server-defined value indicating the response is paginated. Pass this to the next call to resume where this call left off. Omitted when there are no additional pages after this one.                                                                                                                                                                                                                                     |
+| `validated`            |                 | `boolean` | If `true`, the information in this response comes from a validated ledger version. Otherwise, the information is subject to change.                                                                                                                                                                                                                                                                                      |
 
 ### 16.3. Failure Conditions
 
@@ -1262,7 +1268,7 @@ Sponsorship and [permissioned delegation](../XLS-0075-permission-delegation/READ
 The base protocol grants several reserve carve-outs to ordinary accounts — for example, the first two trust lines are free (`OwnerCount < 2`), and certain transactions skip the reserve check entirely. These carve-outs interact with sponsorship as follows:
 
 - **Carve-outs do not transfer to the sponsor.** Carve-outs are properties of the sponsee's own reserve obligation. When a sponsor exists, the sponsor pays the full object reserve — the sponsee's "first two free" allowance does not reduce what the sponsor owes. The sponsor's `SponsoringOwnerCount` is incremented in all cases.
-- **Reserve check timing is inconsistent.** Most XRPL transactions check the reserve **before** the fee is deducted; sponsored reserve checks happen **after** the fee is taken. This produces a small (~12 drop) rounding difference, depending on the transaction type. This is acknowledged as a known issue and is deferred to a future amendment.
+- **Reserve check timing is inconsistent, and not uniformly "after the fee."** Most XRPL transactions check the reserve **before** the fee is deducted. `SponsorshipTransfer`'s End-path reserve check (see [section 10.5](#105-failure-conditions), item 10) follows the same pre-fee convention when the sponsee is `tx.Account` itself; when the sponsee is a third party, it simply reads that account's current balance, which this transaction's own fee never touches. Other sponsorship-related reserve checks may use post-fee balances instead, producing a small (~12 drop) rounding difference depending on the transaction type. This inconsistency is acknowledged as a known issue and is deferred to a future amendment.
 
 The per-transaction sections (§11+) document the specific reserve behavior for each transaction type.
 
@@ -1288,7 +1294,7 @@ _Open question: the full set of pseudo-account interactions for lending and vaul
 
 Both the sponsee _and_ the sponsor must agree to enter into a sponsor relationship. The sponsee must actively consent to the sponsor handling the reserve, and the sponsor must be willing to take on that reserve. A signature from both parties ensures that this is the case.
 
-A sponsor will never be stuck sponsoring an sponsee's account or object it no longer wants to support, because it can submit a `SponsorshipTransfer` transaction at any point.
+A sponsor that no longer wants to support a sponsee's account or object can submit a `SponsorshipTransfer` transaction to end the relationship at any point. This is not, however, guaranteed to succeed immediately: ending a sponsorship requires the sponsee to be able to carry the reserve on its own, so the transaction fails with `tecINSUFFICIENT_RESERVE` if the sponsee cannot. See [A.7](#a7-what-happens-if-the-sponsor-tries-to-sponsorshiptransfer-but-the-sponsee-doesnt-have-enough-funds-to-cover-the-reserve) for how a sponsor can work around this.
 
 The sponsor's signature must _always_ include the `Account` and `Sequence` fields, to prevent signature replay attacks (where the sponsor's signature can be reused to sponsor an object or account that they did not want to sponsor).
 
@@ -1320,7 +1326,7 @@ The equivalent also should happen with `SponsoringAccountCount`.
 
 $$ \sum*{accounts} Account.SponsoredOwnerCount = \sum*{accounts} Account.SponsoringOwnerCount $$
 
-In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to the sum of all accounts' `SponsoringOwnerCount`s. This ensures that every sponsored object is logged as being sponsored and also has a sponsor.
+In other words, the sum of all accounts' `SponsoredOwnerCount`s must be equal to the sum of all accounts' `SponsoringOwnerCount`s. This ensures that every sponsored object is logged as being sponsored and also has a sponsor. This holds inductively rather than being checked directly: the invariant checker verifies it per-transaction (each transaction's `SponsoredOwnerCount` delta must equal its `SponsoringOwnerCount` delta), not as a full ledger scan.
 
 ### 19.3. Per-Object Owner-Count Cross-Check
 
@@ -1369,7 +1375,7 @@ The transaction-level delta of `SponsoringAccountCount` (summed across all accou
   SponsorFlags: 1,
   SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
-    Signature: "3045022100C15AFB7C0C4F5EDFEC4667B292DAB165B96DAF3FFA6C7BBB3361E9EE19E04BC70220106C04B90185B67DB2C67864EB0A11AE6FB62280588954C6E4D9C1EF3710904D"
+    TxnSignature: "3045022100C15AFB7C0C4F5EDFEC4667B292DAB165B96DAF3FFA6C7BBB3361E9EE19E04BC70220106C04B90185B67DB2C67864EB0A11AE6FB62280588954C6E4D9C1EF3710904D"
   },
   SigningPubKey: "03A8D0093B0CD730F25E978BF414CA93084B3A2CBB290D5E0E312021ED2D2C1C8B", // rAccount's public key
   TxnSignature: "3045022100F2AAF90D8F9BB6C94C0C95BA31E320FC601C7BAFFF536CC07076A2833CB4C7FF02203F3C76EB34ABAD61A71CEBD42307169CDA65D9B3CA0EEE871210BEAB824E524B"
@@ -1380,7 +1386,7 @@ The transaction-level delta of `SponsoringAccountCount` (summed across all accou
 
 ### 20.2. Account Sponsorship
 
-The only way an account can be created is via a `Payment` transaction. So the sponsor relationship must be initiated on the `Payment` transaction.
+The only way an account can be created is via a `Payment` transaction. Account reserve sponsorship is a special case: it is controlled entirely by the `tfSponsorCreatedAccount` flag ([section 11.2](#112-flags)), and the created account is always sponsored by `tx.Account` itself — there is no third-party `Sponsor`/`SponsorFlags.spfSponsorReserve` mechanism for it (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)). A third party (Spencer) _can_ still sponsor the transaction **fee** of an account-creating `Payment`, via the standard `Sponsor`/`spfSponsorFee` mechanism, independent of who is sponsoring the new account's reserve. The example below shows both together: Spencer sponsors the fee, while the new account's reserve is sponsored by `tx.Account` via `tfSponsorCreatedAccount`.
 
 #### 20.2.1. The Unsigned Transaction
 
@@ -1394,9 +1400,9 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Amount: "20000000",
   Sequence: 3,
   Fee: "10",
-  Flags: 0x00080000, // tfSponsorCreatedAccount
+  Flags: 0x00080000, // tfSponsorCreatedAccount (reserve sponsored by tx.Account)
   Sponsor: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
-  SponsorFlags: 2,
+  SponsorFlags: 1, // spfSponsorFee — Spencer sponsors only the transaction fee
 }
 ```
 
@@ -1414,12 +1420,12 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   Amount: "20000000",
   Sequence: 3,
   Fee: "10",
-  Flags: 0x00080000, // tfSponsorCreatedAccount
+  Flags: 0x00080000, // tfSponsorCreatedAccount (reserve sponsored by tx.Account)
   Sponsor: "rSponsor1VktvzBz8JF2oJC6qaww6RZ7Lw",
-  SponsorFlags: 2,
+  SponsorFlags: 1, // spfSponsorFee — Spencer sponsors only the transaction fee
   SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
-    Signature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
+    TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
   },
   SigningPubKey: "03BC74CA0B765281E31E342017D97B3F6743A05FBA23D2114B98FC8AD26D92856C", // rAccount's public key
   TxnSignature: "30440220245217F931FDA0C5E68B935ABB4920211D5B6182878583124DE4663B19F00BEC022070BE036264760551CF40E9DAFC8B84036FA70E7EE7257BB7E39AEB7354B2EB86"
@@ -1465,7 +1471,7 @@ The only way an account can be created is via a `Payment` transaction. So the sp
   SponsorFlags: 2,
   SponsorSignature: {
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94", // rSponsor's public key
-    Signature: "30450221009878F3A321250341886FE344E0B50700C8020ABAA25301925BD84DDB5421D432022002A3C72C54BACB5E7DAEC48E2A1D75DCBB8BA3B2212C7FC22F070CCABAF76EC1"
+    TxnSignature: "30450221009878F3A321250341886FE344E0B50700C8020ABAA25301925BD84DDB5421D432022002A3C72C54BACB5E7DAEC48E2A1D75DCBB8BA3B2212C7FC22F070CCABAF76EC1"
   },
   SigningPubKey: "03BC74CA0B765281E31E342017D97B3F6743A05FBA23D2114B98FC8AD26D92856C", // rAccount's public key
   TxnSignature: "3044022047CB72DA297B067C0E69045B7828AD660F8198A6FA03982E31CB6D27F0946DDE022055844EB63E3BFF7D9ABFB26645AA4D2502E143F4ABEE2DE57EB87A1E5426E010"
@@ -1581,6 +1587,8 @@ The `Sponsor` amendment must be enabled via the standard amendment process. Once
 
 Before activation, transactions attempting to use these features will be rejected.
 
+Some behaviors within this feature are additionally gated on separate fix amendments, rather than on `Sponsor` alone. For example, the object-level reserve check on the `tfSponsorshipEnd` path of `SponsorshipTransfer` (see [section 10.5](#105-failure-conditions), item 10) requires `fixCleanup3_4_0` to also be enabled; until then, ending an object's sponsorship does not check whether the sponsee can carry the reserve on its own.
+
 ## 23. Test Plan
 
 This section outlines the testing strategy for the sponsored fees and reserves feature. A comprehensive test plan is essential to ensure the correctness and security of this amendment.
@@ -1631,8 +1639,8 @@ This section outlines the testing strategy for the sponsored fees and reserves f
 
 - Creating sponsored accounts using `tfSponsorCreatedAccount` flag
 - Fee sponsorship via `Sponsor` field with `spfSponsorFee` flag
-- Reserve sponsorship for new accounts via `Sponsor` field with `spfSponsorReserve` flag
-- Combined fee and reserve sponsorship
+- Reserve sponsorship for new accounts via the `tfSponsorCreatedAccount` flag (which always sponsors from `tx.Account`, not from `tx.Sponsor`)
+- Combined fee sponsorship (via `Sponsor` + `spfSponsorFee`) and account-reserve sponsorship (via `tfSponsorCreatedAccount`) on the same account-creating `Payment`
 - Failure conditions: invalid sponsor signatures, insufficient sponsor funds
 
 **`AccountDelete` Transaction Tests:**
@@ -1658,7 +1666,7 @@ This section outlines the testing strategy for the sponsored fees and reserves f
 
 - Verify that object creation increments either `OwnerCount` or both `SponsoringOwnerCount` and `SponsoredOwnerCount`
 - Verify that object deletion decrements the appropriate counters
-- Test the global invariant: `Σ SponsoredOwnerCount = Σ SponsoringOwnerCount`
+- Test the per-transaction delta invariant that inductively establishes `Σ SponsoredOwnerCount = Σ SponsoringOwnerCount` across a sequence of transactions (there is no direct, full-ledger-scan check of the global sum)
 
 **Account Count Balancing:**
 
@@ -1771,7 +1779,7 @@ No. If a sponsor no longer wants to support an object, they can always use the `
 
 ### A.6: What if a sponsee refuses to delete their account when a sponsor wants to stop supporting their account?
 
-The sponsor will have the standard problem of trying to get ahold of a debtor to make them pay. They may use the `SponsorshipTransfer` transaction to put the onus on the sponsee. If the sponsee does not have enough XRP to cover the reserve for those objects, they will not be able to create any more objects until they do so.
+The sponsor will have the standard problem of trying to get ahold of a debtor to make them pay. They may use the `SponsorshipTransfer` transaction to put the onus on the sponsee — but this is not guaranteed to succeed on its own. Ending a sponsorship requires the sponsee to be able to carry the reserve themselves; if they cannot, the `SponsorshipTransfer` fails with `tecINSUFFICIENT_RESERVE` (see [section 10.5](#105-failure-conditions), item 10). For account-level sponsorships this check is unconditional; for object-level sponsorships it is gated on the `fixCleanup3_4_0` amendment. See [A.7](#a7-what-happens-if-the-sponsor-tries-to-sponsorshiptransfer-but-the-sponsee-doesnt-have-enough-funds-to-cover-the-reserve) for how a sponsor can work around this by topping up the sponsee and transferring atomically via a `Batch`.
 
 ### A.7: What happens if the sponsor tries to `SponsorshipTransfer` but the sponsee doesn't have enough funds to cover the reserve?
 
