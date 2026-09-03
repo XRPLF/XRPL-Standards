@@ -223,17 +223,17 @@ The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1
 
 | Function Signature                                                                                                                                                                                                         | Description                                                             | Gas Cost |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- | :------- |
-| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in rippled format from a 64-bit unsigned integer.        | 130      |
+| `float_from_uint(`<br/>&emsp;`in_uint_ptr: i32,`<br/>&emsp;`in_uint_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                | Create a float in xrpld format from a 64-bit unsigned integer.          | 130      |
 | `float_from_iou_value(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32`<br />`)`                                                                                      | Load a float from the 8-byte IOU amount field of a serialized STAmount. | 150      |
-| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in rippled format from an exponent and a mantissa.       | 100      |
+| `float_from_mant_exp(`<br/>&emsp;`mantissa: i64,`<br/>&emsp;`exponent: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                                  | Create a float in xrpld format from an exponent and a mantissa.         | 100      |
 | `float_to_mant_exp(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`mantissa_out_buf: i32,`<br/>&emsp;`mantissa_out_len: i32,`<br/>&emsp;`exponent_out_buf: i32,`<br/>&emsp;`exponent_out_len: i32`<br />`)` | Extract the mantissa (i64) and exponent (i32) from a float.             | 130      |
-| `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in rippled format.                                   | 80       |
-| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in rippled format.                                       | 160      |
-| `float_sub(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Subtract two floats in rippled format.                                  | 160      |
-| `float_mul(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Multiply two floats in rippled format.                                  | 300      |
-| `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Divide two floats in rippled format.                                    | 300      |
-| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in rippled format.                     | 5500     |
-| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in rippled format.                      | 5500     |
+| `float_cmp(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32`<br />`)`                                                                                               | Compare two floats in xrpld format.                                     | 80       |
+| `float_add(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Add two floats in xrpld format.                                         | 160      |
+| `float_sub(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Subtract two floats in xrpld format.                                    | 160      |
+| `float_mul(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Multiply two floats in xrpld format.                                    | 300      |
+| `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Divide two floats in xrpld format.                                      | 300      |
+| `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in xrpld format.                       | 5500     |
+| `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in xrpld format.                        | 5500     |
 
 #### 5.8.1. The XFloat Type
 
@@ -259,13 +259,13 @@ This approach uses only stable primitive types (`i32`, `i64`) and is completely 
 
 #### 5.8.2. XFloat Serialization Format
 
-This section documents the XFloat encoding for **rippled implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
+This section documents the XFloat encoding for **xrpld implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
 
 XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization:
 
 - **Layout:** 12 bytes total — 8-byte big-endian signed mantissa followed by a 4-byte big-endian signed exponent.
 - **No type prefix:** The buffer contains only the 12 payload bytes
-- **Consensus-compatible:** Produced and consumed exclusively by rippled's host function implementations
+- **Consensus-compatible:** Produced and consumed exclusively by xrpld's host function implementations
 
 **Serialization Layout (96 bits / 12 bytes):**
 
@@ -276,13 +276,13 @@ XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumbe
 **Field Descriptions:**
 
 - **Mantissa** (bytes 0–7): Signed 64-bit integer (`i64`), big-endian. Represents the significant digits of the value.
-  When normalized: 10^18 ≤ |mantissa| < 10^19 (i.e., 1,000,000,000,000,000,000 to 9,999,999,999,999,999,999), except for zero. This reflects the **large-scale** normalization range used by rippled's `Number` class, which is the default when the `SingleAssetVault` or `LendingProtocol` amendments are enabled. A legacy **small-scale** range (10^15 ≤ |mantissa| < 10^16) applies only when both amendments are disabled for backward compatibility with the `STAmount` IOU format. Note: because the large-scale mantissa can exceed `i64` max, rippled's `mantissa()` accessor divides the internal value by 10 and increments the exponent by 1 before returning it, so the `i64` value returned to WASM callers always fits in a signed 64-bit integer but may be one decimal digit shorter than the internal representation.
+  When normalized: 10^18 ≤ |mantissa| < 10^19 (i.e., 1,000,000,000,000,000,000 to 9,999,999,999,999,999,999), except for zero. This reflects the **large-scale** normalization range used by xrpld's `Number` class, which is the default when the `SingleAssetVault` or `LendingProtocol` amendments are enabled. A legacy **small-scale** range (10^15 ≤ |mantissa| < 10^16) applies only when both amendments are disabled for backward compatibility with the `STAmount` IOU format. Note: because the large-scale mantissa can exceed `i64` max, xrpld's `mantissa()` accessor divides the internal value by 10 and increments the exponent by 1 before returning it, so the `i64` value returned to WASM callers always fits in a signed 64-bit integer but may be one decimal digit shorter than the internal representation.
 - **Exponent** (bytes 8-11): Signed 32-bit integer (`i32`), big-endian. Represents the power of 10 applied to the mantissa.
 
 **Special Values** (for implementers; contracts must not rely on these byte patterns):
 
 - **Zero:** Exponent and mantissa both `0` — all 12 bytes are `0x00`.
-- **Null / uninitialized:** A distinct state used internally by rippled; contracts must not rely on specific byte patterns for this state.
+- **Null / uninitialized:** A distinct state used internally by xrpld; contracts must not rely on specific byte patterns for this state.
 
 **Relationship to On-Ledger Formats:**
 
@@ -298,7 +298,7 @@ The 12-byte XFloat format is strictly an in-memory buffer convention for passing
 
 XRPL Smart Contracts running in WebAssembly need to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
 
-Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to rippled's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
+Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to xrpld's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
 
 Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions — for example, to work with integer ratios or basis points — should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
 
@@ -357,7 +357,7 @@ let exponent:i32 = i32::from_be_bytes(exponent_result);
 
 #### 5.8.5. XFloat Binary Format Reference
 
-> **For implementers and tooling authors only.** Contracts must never decode or construct `XFloat` bytes directly. This section exists to support rippled development, debuggers, explorers, and spec verification — not contract authors.
+> **For implementers and tooling authors only.** Contracts must never decode or construct `XFloat` bytes directly. This section exists to support xrpld development, debuggers, explorers, and spec verification — not contract authors.
 
 **XFloat layout (12 bytes):**
 
