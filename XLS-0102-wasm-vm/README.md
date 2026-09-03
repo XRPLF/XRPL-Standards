@@ -591,7 +591,7 @@ Yes, though that needs to be tested. This should make it easier for users to est
 
 ### C.5: Why not use native WASM floating point?
 
-WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. One might ask whether those could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical). In practice this would be insufficient for two independent reasons.
+WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. While they could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical), in practice this would be insufficient for two independent reasons:
 
 First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example, the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect by construction.
 
