@@ -1,5 +1,5 @@
 <pre>
-  xls: ??
+  xls: 99
   title: ElGamal Key Rotation for Confidential MPTs
   description: Defines ElGamal key rotation for issuer, auditor, and holder roles in the Confidential MPT protocol, with key loss recovery mechanisms.
   author: Aanchal Malhotra <amalhotra@ripple.com>, Yinyi Qian <yqian@ripple.com>
