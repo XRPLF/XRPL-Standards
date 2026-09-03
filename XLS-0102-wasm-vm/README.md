@@ -215,7 +215,7 @@ Miscellaneous utility functions.
 
 ### 5.8. Floats
 
-Helper functions for performing floating point arithmetic via rippled. These are used for any calculation requiring XRPL's decimal floating point format — including IOU amounts, lending protocol math, fee calculations, or arbitrary numeric operations within a smart contract.
+Helper functions for performing floating point arithmetic via xrpld. These are used for any calculation requiring XRPL's decimal floating point format, including IOU amounts, lending protocol math, fee calculations, or arbitrary numeric operations within a smart contract.
 
 All float buffers are exactly **12 bytes**. Contracts SHOULD treat these buffers as opaque and should not decode or construct them directly. Instead, all operations on float types SHOULD go through these host functions.
 
