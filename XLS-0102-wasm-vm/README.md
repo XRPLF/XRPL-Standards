@@ -616,7 +616,7 @@ The host function design ensures that **all contracts always use exactly the ari
 
 ### C.6: Why not provide a Rust implementation of Number arithmetic in `xrpl-wasm-stdlib`?
 
-For reasons related to C.5, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem defined in C.5: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place.
+For reasons related to C.5, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem defined in C.5: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place. It is also cheaper: a single host call executes the operation in native C++ at a fixed gas cost, whereas the same arithmetic implemented in WASM would be interpreted instruction by instruction and metered accordingly, costing far more gas for the same result.
 
 ### C.7: Why the 12-byte encoding for XFloat?
 
