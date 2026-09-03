@@ -110,6 +110,12 @@ For both `MPTokenIssuanceCreate` and `MPTokenIssuanceSet`.
 }
 ```
 
+### 3.5. Transaction Fee
+
+**Fee Structure:** Standard
+
+The base transaction fee for this transaction follows the standard XRP Ledger fee model (reference base fee of 10 drops, subject to standard load scaling). No additional fee multipliers or special fee structures apply.
+
 ## 4. Transaction: `MPTokenIssuanceSet`
 
 This proposal extends the functionality of the `MPTokenIssuanceSet` transaction, allowing the issuer to modify `MPTokenMetadata` and `TransferFee`, enable MPT issuance flags, and permanently make any of these immutable via `ImmutableFlags`. The `ImmutableFlags` provided in this transaction adds those bit to the current ledger object's `ImmutableFlags`, it is not a complete replacement.
@@ -219,6 +225,12 @@ If the transaction succeeds:
   "TransferFee": 200
 }
 ```
+
+### 4.7. Transaction Fee
+
+**Fee Structure:** Standard
+
+The base transaction fee for this transaction follows the standard XRP Ledger fee model (reference base fee of 10 drops, subject to standard load scaling). No additional fee multipliers or special fee structures apply.
 
 ## 5. Ledger Entry: `MPTokenIssuance`
 
