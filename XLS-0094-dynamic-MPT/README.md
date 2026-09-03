@@ -4,10 +4,10 @@
   description: This amendment enables selected fields and flags of MPTokenIssuance to be updated after creation.
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/289
   author: Yinyi Qian <yqian@ripple.com>, Mayukha Vadari <mvadari@ripple.com>
-  status: Draft
+  status: Final
   category: Amendment
   created: 2025-06-09
-  updated: 2026-08-13
+  updated: 2026-09-03
 </pre>
 
 # Dynamic Multi-Purpose Tokens
@@ -71,11 +71,10 @@ This is a new field added to MPTokenIssuanceCreate transaction, the other fields
 
 #### 3.1.1. `ImmutableFlags`
 
-Transaction-level bits are prefixed `tif` (`Transaction Immutable Flag`). The corresponding on-ledger bits (prefixed `lsif` for `Ledger-Specific Immutable Flag`) share the same numeric values. (See [Section 5.1.1.](#511-immutableflags) for the on-ledger bits.)
+Transaction-level bits are prefixed `tif` (`Transaction Immutable Flag`). The corresponding on-ledger bits (prefixed `lsif` for `Ledger-Specific Immutable Flag`) share the same numeric values. (See [Section 5.1.1.](#511-immutableflags) for the on-ledger bits.) The value starts at `0x00000002` and `0x00000001` is reserved for consistency purposes.
 
 | Flag Name                          |  Hex Value   | Decimal Value | Description                                                                       |
 | ---------------------------------- | :----------: | :-----------: | --------------------------------------------------------------------------------- |
-| [Reserved]                         | `0x00000001` |       1       | Reserved.                                                                         |
 | `tifMPTCanLock`                    | `0x00000002` |       2       | Make flag `lsfMPTCanLock` immutable.                                              |
 | `tifMPTRequireAuth`                | `0x00000004` |       4       | Make flag `lsfMPTRequireAuth` immutable.                                          |
 | `tifMPTCanEscrow`                  | `0x00000008` |       8       | Make flag `lsfMPTCanEscrow` immutable.                                            |
@@ -236,11 +235,10 @@ Being absent is equivalent to being 0.
 
 #### 5.1.1. ImmutableFlags
 
-On-ledger bits are prefixed `lsif`, and share the same numeric values as the corresponding `tif` bits. (See [Section 3.1.1.](#311-immutableflags) for the transaction bits.)
+On-ledger bits are prefixed `lsif`, and share the same numeric values as the corresponding `tif` bits. (See [Section 3.1.1.](#311-immutableflags) for the transaction bits.) The value starts at `0x00000002` and `0x00000001` is reserved for consistency purposes.
 
 | Flag Name                           |  Hex Value   | Decimal Value | Description                                                                           |
 | ----------------------------------- | :----------: | :-----------: | ------------------------------------------------------------------------------------- |
-| [Reserved]                          | `0x00000001` |       1       | Reserved.                                                                             |
 | `lsifMPTCanLock`                    | `0x00000002` |       2       | Indicate flag `lsfMPTCanLock` immutable.                                              |
 | `lsifMPTRequireAuth`                | `0x00000004` |       4       | Indicate flag `lsfMPTRequireAuth` immutable.                                          |
 | `lsifMPTCanEscrow`                  | `0x00000008` |       8       | Indicate flag `lsfMPTCanEscrow` immutable.                                            |
