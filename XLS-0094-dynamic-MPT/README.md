@@ -464,7 +464,7 @@ Making fields or flags immutable via `ImmutableFlags` is available both at creat
 
 MPT issuance flag mutability remains intentionally one-way: once enabled via `MPTokenIssuanceSet`, a flag cannot be disabled. This preserves the issuer's ability to opt into additional issuance behavior without ever retracting behavior that holders, integrations, or compliance workflows may have relied on. Making a flag immutable via `ImmutableFlags` (whether before or after it is enabled) makes that one-way guarantee permanent and auditable on-ledger.
 
-## 8. Security
+## 8. Security Considerations
 
 Only the issuer of the `MPTokenIssuance` can use `MPTokenIssuanceSet` to modify `MPTokenMetadata` or `TransferFee`, enable MPT issuance flags, or set `ImmutableFlags`.
 
