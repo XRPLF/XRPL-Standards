@@ -299,7 +299,7 @@ The 12-byte XFloat format is strictly an in-memory buffer convention for passing
 
 #### 5.8.3. XFloat Motivation
 
-XRPL Smart Contracts running in WebAssembly need to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
+WASM code running on the XRPL — whether in a Smart Escrow, a Smart Contract, or any other Smart Feature — needs to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
 
 Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to xrpld's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
 
@@ -417,7 +417,7 @@ The following rules govern the lifecycle of all host functions in this specifica
 2. **Host functions MAY be deprecated** with appropriate notice, but deprecated functions MUST remain callable for backward compatibility. Deployed contracts may rely on any host function that was available at deployment time. Deprecation does not remove or change the function — it signals to new contract authors that a function is discouraged, so documentation and tooling (e.g. `xrpl-wasm-stdlib`) can steer new development away from it even though it remains available for existing contracts.
 3. **Host functions MUST NOT ever be changed.** Once a host function is deployed — its name, parameter types, parameter order, and observable behavior are permanently immutable. This includes buffer sizes, since contracts hardcode allocation sizes (e.g., 20 bytes for an account ID, 12 bytes for an `XFloat`). If a buffer size changes, a new host function with a different name MUST be introduced.
 
-These rules ensure that smart contracts compiled and deployed today will continue to execute correctly on future versions of the platform.
+These rules ensure that WASM code compiled and deployed today will continue to execute correctly on future versions of the platform.
 
 ## 6. Rationale
 
