@@ -483,7 +483,7 @@ These constraints prevent denial-of-service attacks and ensure that WASM executi
 
 ### 7.5. Future-Proofing
 
-The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type must remain backwards compatible forever — there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
+The host functions defined by this spec form a **stable ABI**. Once a host function is shipped under an amendment, its name, semantics, parameter list, and return type *must remain backwards compatible forever*, as there may always be a deployed Smart Escrow (or other extension) that depends on it. The following kinds of changes _are_ permitted, but must be gated by amendments:
 
 - **Adding a new host function.** Existing extensions are unaffected; new extensions opt in by importing the new name only after the amendment is enabled.
 - **Adjusting the gas cost of an existing host function.** The function's signature and behavior are unchanged; only the metered cost moves.
