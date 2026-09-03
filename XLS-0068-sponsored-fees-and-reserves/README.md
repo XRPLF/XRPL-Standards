@@ -1810,9 +1810,9 @@ That will not be supported by this proposal. If you have a need for this, please
 
 This is something that good tooling can solve. It could work similarly to how multisigning is supported in various tools.
 
-### A.14: Why not instead do [insert some other design]?
+### A.14: Why not use a different design instead?
 
-See Appendix B for the alternate designs that were considered and why this one was preferred. If you have another one in mind, please describe it in the comments and we can discuss.
+See [section 21.3](#213-other-designs-considered) for the alternate designs that were considered and why this one was preferred.
 
 ### A.15: How is this account sponsorship model different from/better than [XLS-23, Lite Accounts](../XLS-0023-lite-accounts/README.md)?
 
