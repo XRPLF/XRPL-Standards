@@ -235,7 +235,7 @@ The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1
 | `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in xrpld format.                                          | 5500     |
 | `float_root(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`root: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                        | Compute the nth root of a float in xrpld format.                                           | 5500     |
 
-The little-endian encoding above applies only to the raw-integer buffers of `float_from_uint` and `float_to_mant_exp`. It does not apply to the `XFloat` buffer itself (the `in_buf`/`out_buf` arguments on every other function above), which is always big-endian per [§5.8.2](#582-xfloat-serialization-format), nor to `float_from_iou_value`'s `in_buf`, which carries the on-ledger `STAmount` IOU value encoding (also big-endian, unchanged from the existing ledger format). The `mantissa`/`exponent` arguments of `float_from_mant_exp` and the `pow`/`root` arguments of `float_pow`/`float_root` are passed directly as WASM `i64`/`i32` values rather than through a memory buffer, so no byte order applies to them.
+The little-endian encoding above applies only to the raw-integer buffers of `float_from_uint` and `float_to_mant_exp`. It does not apply to the `XFloat` buffer itself (the `in_buf`/`out_buf` arguments on every other function above), which is always big-endian per [§5.8.3](#583-xfloat-serialization-format), nor to `float_from_iou_value`'s `in_buf`, which carries the on-ledger `STAmount` IOU value encoding (also big-endian, unchanged from the existing ledger format). The `mantissa`/`exponent` arguments of `float_from_mant_exp` and the `pow`/`root` arguments of `float_pow`/`float_root` are passed directly as WASM `i64`/`i32` values rather than through a memory buffer, so no byte order applies to them.
 
 #### 5.8.1. The XFloat Type
 
@@ -260,7 +260,15 @@ let mut f = [0u8; 12]; float_from_mant_exp(mantissa, exponent, f.as_mut_ptr(), 1
 
 This approach uses only stable primitive types (`i32`, `i64`) and is completely independent of any future changes to the XFloat binary layout.
 
-#### 5.8.2. XFloat Serialization Format
+#### 5.8.2. XFloat Motivation
+
+WASM code running on the XRPL — whether in a Smart Escrow, a Smart Contract, or any other Smart Feature — needs to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
+
+Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to xrpld's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
+
+Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions (for example, to work with integer ratios or basis points) should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
+
+#### 5.8.3. XFloat Serialization Format
 
 This section documents the XFloat encoding for **xrpld implementers and tooling authors**.
 
@@ -296,14 +304,6 @@ The on-ledger wire format of any floating point numbers is unchanged. However, t
 ```
 
 The 12-byte XFloat format is strictly an in-memory buffer convention for passing values to and from WASM host functions. Values stored in ledger objects continue to use their existing serialization formats; the host function `float_from_iou_value` bridges the IOU amount format to WASM floating point numbers. `STNumber` values are decoded in Rust by `xrpl-wasm-stdlib` — for the IOU-precision case, the decoded 8-byte value is layout-identical to an `IouNumber` and is passed to `float_from_iou_value` directly, without a dedicated host function.
-
-#### 5.8.3. XFloat Motivation
-
-WASM code running on the XRPL — whether in a Smart Escrow, a Smart Contract, or any other Smart Feature — needs to perform correct decimal arithmetic. This need arises in many contexts: computing with fungible token amounts (IOUs), implementing lending protocols with interest and collateral ratios, calculating fees, and more.
-
-Implementing xrpld floating-point arithmetic correctly is genuinely hard. Correct rounding, normalization, overflow handling, and edge-case behavior require a carefully engineered implementation. Implementing this correctly in WASM from scratch is not a reasonable expectation for contract developers, and cannot be practically verified or guaranteed. By delegating all arithmetic to xrpld's `Number` class via host functions, contracts get a battle-tested implementation that is known to be correct for XRPL's numeric domain, even across amendment changes.
-
-Note that the XRPL WASM VM does not enable the WASM floating-point instruction set (i.e., `f32`/`f64` ops are unavailable to contracts). This means native IEEE 754 arithmetic is not an option regardless of determinism concerns. Contracts that need fixed-point arithmetic independent of the `XFloat` host functions (for example, to work with integer ratios or basis points) should consider crates like the [`fixed`](https://crates.io/crates/fixed) Rust crate, which performs fixed-point math entirely in integer instructions and is fully compatible with the `no_std`, `wasm32v1-none` build target.
 
 #### 5.8.4. XFloat Example Usage
 
@@ -633,7 +633,7 @@ The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a 
 
 ### C.10: Can an XFloat be negative?
 
-Yes. Unlike XRP drop amounts, the `XFloat` mantissa is a signed 8-byte (`i64`) integer ([§5.8.2](#582-xfloat-serialization-format)), so an `XFloat` can represent negative values directly — a negative value is encoded with a negative mantissa and the same exponent that would be used for the equivalent positive value.
+Yes. Unlike XRP drop amounts, the `XFloat` mantissa is a signed 8-byte (`i64`) integer ([§5.8.3](#583-xfloat-serialization-format)), so an `XFloat` can represent negative values directly — a negative value is encoded with a negative mantissa and the same exponent that would be used for the equivalent positive value.
 
 **Note:** `xrpl-wasm-stdlib` will provide an idiomatic Rust `XFloat` type with normal negative-number semantics (comparisons, sign checks, etc.), so most contract developers won't need to reason about mantissa signs directly.
 
