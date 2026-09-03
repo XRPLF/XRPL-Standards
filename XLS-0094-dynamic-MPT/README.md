@@ -67,7 +67,7 @@ Declaring immutability via `sfImmutableFlags`:
 | ---------------- | :-------: | :-------: | :-----------: | ------------------------------------------------------------------ |
 | `ImmutableFlags` |           | `number`  |   `UInt32`    | Indicates specific fields or flags that are permanently immutable. |
 
-This is a new field added to MPTokenIssuanceCreate transaction, the other fields remain the same (see [XLS-33: MPTokenIssuanceCreate fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3111-transaction-specific-fields)).
+This is a new field added to MPTokenIssuanceCreate transaction, the other fields remain the same (see [MPTokenIssuanceCreate fields](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate#mptokenissuancecreate-fields)).
 
 #### 3.1.1. `ImmutableFlags`
 
@@ -125,7 +125,7 @@ For details on the original `MPTokenIssuanceSet` transaction see: [**The MPToken
 ### 4.1. Fields
 
 The following are the new fields added to `MPTokenIssuanceSet` transaction. The original fields remain the same (see
-[XLS-33: MPTokenIssuanceSet fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#331-mptokenissuanceset)).
+[MPTokenIssuanceSet fields](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset#mptokenissuanceset-fields)).
 
 | Field Name        | Required? | JSON Type | Internal Type | Description                                                                                                                                                                               |
 | ----------------- | :-------: | :-------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -139,7 +139,7 @@ Whether it was made immutable at creation through `MPTokenIssuanceCreate` or aft
 
 ### 4.2. Flags
 
-These flags are added to the `sfFlags` field of `MPTokenIssuanceSet` (see the original values in [XLS-33: MPTokenIssuanceSet Flags](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#3311-mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
+These flags are added to the `sfFlags` field of `MPTokenIssuanceSet` (see the original values in [MPTokenIssuanceSet Flags](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset#mptokenissuanceset-flags)). This proposal adds the following new `Flags` values to set MPT issuance flags. These flags are one-way: once set, they cannot be unset by `MPTokenIssuanceSet`.
 
 | Flag Name                            |  Hex Value   | Decimal Value | Description                                                                                                                         |
 | ------------------------------------ | :----------: | :-----------: | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -234,7 +234,7 @@ The base transaction fee for this transaction follows the standard XRP Ledger fe
 
 ## 5. Ledger Entry: `MPTokenIssuance`
 
-This proposal adds a new optional field, `ImmutableFlags` to the `MPTokenIssuance` ledger object. The other fields remain the same (see [XLS-33: MPTokenIssuance fields](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033-multi-purpose-tokens#2112-fields)).
+This proposal adds a new optional field, `ImmutableFlags` to the `MPTokenIssuance` ledger object. The other fields remain the same (see [MPTokenIssuance fields](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/mptokenissuance#mptokenissuance-fields)).
 
 ### 5.1. Fields
 
