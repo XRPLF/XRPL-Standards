@@ -421,8 +421,6 @@ These rules ensure that WASM code compiled and deployed today will continue to e
 
 ## 6. Rationale
 
-This section summarizes the main design decisions in this specification and why they were made. The appendices contain the full analysis of the alternatives that were considered.
-
 - **Interpreted Wasmi runtime.** Different WASM runtimes meter gas differently, so the same code can produce different gas costs across implementations — a consensus hazard. Fixing the runtime (Wasmi), its version, and an interpreted compile mode guarantees identical, deterministic gas costs on every validator. Interpretation also avoids the larger attack surface and platform-dependent behavior of JIT/AOT compilation. See [Appendix A](#appendix-a-other-wasm-vms-considered) for the full comparison of runtimes and compilation modes.
 - **Caller-allocated memory.** WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
 - **Host functions rather than direct ledger access.** WASM code can only interact with the ledger through an explicitly defined host function interface. This keeps user code sandboxed, bounds what data is visible, and moves expensive operations into native C++ code where they are cheaper and their gas cost can be priced deterministically.
