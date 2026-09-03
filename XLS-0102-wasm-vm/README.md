@@ -217,7 +217,7 @@ Miscellaneous utility functions.
 
 Helper functions for performing floating point arithmetic via xrpld. These are used for any calculation requiring XRPL's decimal floating point format, including IOU amounts, lending protocol math, fee calculations, or arbitrary numeric operations within a smart contract.
 
-All float buffers are exactly **12 bytes**. Contracts SHOULD treat these buffers as opaque and should not decode or construct them directly. Instead, all operations on float types SHOULD go through these host functions.
+All float buffers are exactly **12 bytes** and are opaque to contracts (see [§5.8.1](#581-the-xfloat-type)).
 
 The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1` (toward zero), `2` (downward, floor), `3` (upward, ceiling).
 
@@ -262,7 +262,7 @@ This approach uses only stable primitive types (`i32`, `i64`) and is completely 
 
 #### 5.8.2. XFloat Serialization Format
 
-This section documents the XFloat encoding for **xrpld implementers and tooling authors**. Contracts must not use this information to construct or decode buffers — they must use the host functions in [§5.8](#58-floats) exclusively.
+This section documents the XFloat encoding for **xrpld implementers and tooling authors**.
 
 XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumber` serialization:
 
@@ -282,10 +282,10 @@ XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumbe
   The mantissa written here is the value returned by xrpld's `Number::mantissa()` accessor, i.e. the **external** view of the number, not the internal representation. Internally, xrpld's `Number` normalizes its unsigned mantissa to 10^18 ≤ |m| < 10^19 in the default **large-scale** mode (active when the `SingleAssetVault` or `LendingProtocol` amendment is enabled), or to 10^15 ≤ |m| < 10^16 in the legacy **small-scale** mode. When the internal mantissa exceeds `i64::MAX` (2^63−1), and only then, the accessor divides it by 10 and increments the exponent by 1; the dropped digit is always zero, so the conversion is lossless. As a result, the on-wire magnitude |mantissa| of a normalized non-zero large-scale value satisfies either 10^18 ≤ |mantissa| ≤ 2^63−1 (no digit dropped) or 922,337,203,685,477,581 ≤ |mantissa| < 10^18 (one zero digit dropped). Tooling must not assume a fixed number of significant digits.
 - **Exponent** (bytes 8-11): Signed 32-bit integer (`i32`), big-endian. Represents the power of 10 applied to the mantissa.
 
-**Special Values** (for implementers; contracts must not rely on these byte patterns):
+**Special Values:**
 
 - **Zero:** Exponent and mantissa both `0` — all 12 bytes are `0x00`.
-- **Null / uninitialized:** A distinct state used internally by xrpld; contracts must not rely on specific byte patterns for this state.
+- **Null / uninitialized:** A distinct state used internally by xrpld with no defined byte pattern.
 
 **Relationship to On-Ledger Formats:**
 
@@ -360,7 +360,7 @@ let exponent:i32 = i32::from_le_bytes(exponent_result);
 
 #### 5.8.5. XFloat Binary Format Reference
 
-> **For implementers and tooling authors only.** Contracts must never decode or construct `XFloat` bytes directly. This section exists to support xrpld development, debuggers, explorers, and spec verification — not contract authors.
+This reference is intended for xrpld implementers and tooling authors (debuggers, explorers, spec verification).
 
 **XFloat layout (12 bytes):**
 
