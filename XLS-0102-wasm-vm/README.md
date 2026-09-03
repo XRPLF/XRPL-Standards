@@ -289,7 +289,7 @@ XFloats use a binary encoding inspired by, but not identical to, XRPL's `STNumbe
 
 **Relationship to On-Ledger Formats:**
 
-The on-ledger wire format of any floating points numbers is unchanged. However, the byte layout is frequently incompatible with XFloat numbers accepted by float-prefixed host functions. For example, a fungible token amount in an `STAmount` field is not an XFloat. In particular:
+The on-ledger wire format of any floating point numbers is unchanged. However, the byte layout is frequently incompatible with XFloat numbers accepted by float-prefixed host functions. For example, a fungible token amount in an `STAmount` field is not an XFloat. In particular:
 
 ```
 [STAmount amount field: 8 bytes][Currency: 20 bytes][Issuer: 20 bytes] = 48 bytes total
