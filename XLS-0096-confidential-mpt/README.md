@@ -324,9 +324,15 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 - This transaction performs **self-conversion only**; there is no `Receiver` field.
 - Issuers introduce supply via existing XLS-33 public issuance. An issuer-controlled dedicated account executes this transaction as a regular holder.
 
-### 8.3. Failure Conditions
+### 8.3. Transaction Fee
 
-#### 8.3.1. Data Verification
+**Fee Structure:** Custom
+
+This transaction requires 10 times the standard base fee because zero-knowledge proof verification costs validators significantly more than processing a public MPT transaction.
+
+### 8.4. Failure Conditions
+
+#### 8.4.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled on the ledger. (`temDISABLED`)
 2. `sfAccount` is the Issuer. (`temMALFORMED`)
@@ -337,7 +343,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 7. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 8. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
 
-#### 8.3.2. Protocol-Level Failures
+#### 8.4.2. Protocol-Level Failures
 
 1. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
@@ -350,7 +356,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 9. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 10. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
 
-### 8.4. State Changes
+### 8.5. State Changes
 
 If the transaction is successful:
 
@@ -361,7 +367,7 @@ If the transaction is successful:
 5. If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), **`sfAuditorEncryptedBalance`** is likewise updated by homomorphically adding `AuditorEncryptedAmount`.
 6. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
 
-### 8.5 Example JSON
+### 8.6 Example JSON
 
 ```json
 {
@@ -409,9 +415,15 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 | `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                                                                                                                                                               |
 | `CredentialIDs`              | No        | `array`   | `Vector256`   | N/A           | Credential(s) to attach to the transaction for authorization purposes (XLS-70).                                                                                                                                                                                                                                                                |
 
-### 9.3. Failure Conditions
+### 9.3. Transaction Fee
 
-#### 9.3.1. Data Verification
+**Fee Structure:** Custom
+
+This transaction requires 10 times the standard base fee because zero-knowledge proof verification costs validators significantly more than processing a public MPT transaction.
+
+### 9.4. Failure Conditions
+
+#### 9.4.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled on the ledger. (`temDISABLED`)
 2. The sender is the issuer of the MPT. (`temMALFORMED`)
@@ -422,7 +434,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 7. Any required encrypted amount (`SenderEncryptedAmount`, `DestinationEncryptedAmount`, or `IssuerEncryptedAmount`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 8. The `AuditorEncryptedAmount` (if present) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 
-#### 9.3.2. Protocol-Level Failures
+#### 9.4.2. Protocol-Level Failures
 
 1. The destination account does not exist. (`tecNO_TARGET`)
 2. The destination account has `lsfRequireDestTag` set, but the transaction does not include a `DestinationTag`. (`tecDST_TAG_NEEDED`)
@@ -446,7 +458,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
    - If deposit-preauth otherwise passes and doApply runs, cleanupExpiredCredentials deletes it and returns `tecEXPIRED`.
    - If deposit-preauth fails first because the credential issuer/type is not authorized, preclaim returns `tecNO_PERMISSION`, and cleanup does not run.
 
-### 9.4. State Changes
+### 9.5. State Changes
 
 If the transaction is successful:
 
@@ -460,7 +472,7 @@ If the transaction is successful:
 
 **Note on re-randomization:** "Re-randomized" means that, before a ciphertext is credited to the receiver, an encryption of **zero** under the same public key is homomorphically added to it. The randomness for that zero encryption is the first 32 bytes of the `ZKProof` field. Since the added ciphertext encrypts 0, the credited value is unchanged; and since the randomness is read directly from the transaction, every validator derives identical ledger state. Only the three credit-side ciphertexts are treated this way, the ciphertexts subtracted from the sender are applied exactly as submitted. This prevents an attacker from choosing transfer randomness that cancels against a target holder's existing ciphertexts (see §15.8).
 
-### 9.5. Example JSON
+### 9.6. Example JSON
 
 ```javascript
 {
@@ -500,14 +512,20 @@ This transaction respects **authorization** and **lock** constraints, ensuring t
 | `Account`           | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account performing the merge.                                          |
 | `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                |
 
-### 10.3. Failure Conditions
+### 10.3. Transaction Fee
 
-#### 10.3.1. Data Verification
+**Fee Structure:** Custom
+
+This transaction requires 10 times the standard base fee because it performs homomorphic operations on the holder's, issuer's, and auditor's ciphertext balances. It carries no zero-knowledge proof, but pays the same fee as the other confidential MPT transactions.
+
+### 10.4. Failure Conditions
+
+#### 10.4.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled. (`temDISABLED`)
 2. The account submitting the transaction is the **Issuer**. (`temMALFORMED`)
 
-#### 10.3.2. Protocol-Level Failures
+#### 10.4.2. Protocol-Level Failures
 
 1. The `MPTokenIssuance` or the user's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
@@ -517,7 +535,7 @@ This transaction respects **authorization** and **lock** constraints, ensuring t
 6. The entire token issuance is **locked** (the `lsfMPTLocked` flag is set on the `MPTokenIssuance`). (`tecLOCKED`)
 7. A system invariant failure where the issuer attempts to merge. (`tefINTERNAL`)
 
-### 10.4. State Changes
+### 10.5. State Changes
 
 If the transaction is successful:
 
@@ -527,7 +545,7 @@ If the transaction is successful:
 - **Mirrors Untouched:** `sfIssuerEncryptedBalance` and `sfAuditorEncryptedBalance` are not written. They mirror the holder's _total_ confidential balance, and this transaction only moves value between `CB_IN` and `CB_S`, so that total is unchanged.
 - **No-op with encrypted zero:** If either or both of `sfConfidentialBalanceInbox` and `sfConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `sfConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
 
-### 10.5. Rationale & Safety
+### 10.6. Rationale & Safety
 
 - No value choice: ledger moves exactly the inbox, no risk of misreporting.
 - No ZKP needed: no proof obligation since the value is known to ledger state.
@@ -538,7 +556,7 @@ If the transaction is successful:
 - Keeps inbox proofs well-formed.
 - **Public zero visibility:** Because the canonical encrypted zero is fully deterministic, validators can compare any stored ciphertext against the known `EncZero` value for that account. If they match, the balance is publicly known to be exactly 0. This allows validators to verify that a newly initialized spending balance or a reset inbox contains no hidden value, without requiring the holder’s private key. Non-zero ciphertexts remain opaque.
 
-### 10.6. Example JSON
+### 10.7. Example JSON
 
 ```json
 {
@@ -577,9 +595,15 @@ If the transaction is successful:
 | `BalanceCommitment`      | Yes       | `string`  | `BLOB`        | N/A           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                                                                                                            |
 | `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | An 816-byte bundle containing a **compact sigma proof** (128 bytes, proving balance ownership and key linkage) and a **single Bulletproof range proof** (688 bytes, proving the remaining balance is non-negative).        |
 
-### 11.4. Failure Conditions
+### 11.4. Transaction Fee
 
-#### 11.4.1. Data Verification
+**Fee Structure:** Custom
+
+This transaction requires 10 times the standard base fee because zero-knowledge proof verification costs validators significantly more than processing a public MPT transaction.
+
+### 11.5. Failure Conditions
+
+#### 11.5.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled. (`temDISABLED`)
 2. The account submitting the transaction is the Issuer. (`temMALFORMED`)
@@ -588,7 +612,7 @@ If the transaction is successful:
 5. The `BalanceCommitment` is not a valid 33-byte compressed elliptic curve point. (`temMALFORMED`)
 6. The `ZKProof` is not exactly 816 bytes. (`temMALFORMED`)
 
-#### 11.4.2. Protocol-Level Failures
+#### 11.5.2. Protocol-Level Failures
 
 1. The `MPToken` or `MPTokenIssuance` does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
@@ -601,7 +625,7 @@ If the transaction is successful:
 9. The `ZKProof` fails the **compact sigma proof** check. (`tecBAD_PROOF`)
 10. The `ZKProof` fails the **Bulletproof range proof** check. (`tecBAD_PROOF`)
 
-### 11.5. State Changes
+### 11.6. State Changes
 
 If the transaction is successful:
 
@@ -612,7 +636,7 @@ If the transaction is successful:
 - **Auditor Mirror:** If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the `sfAuditorEncryptedBalance` is updated via **homomorphic subtraction** of `AuditorEncryptedAmount`.
 - **Version:** The `sfConfidentialBalanceVersion` is incremented by 1.
 
-### 11.6. Example JSON
+### 11.7. Example JSON
 
 ```json
 {
@@ -629,7 +653,7 @@ If the transaction is successful:
 }
 ```
 
-### 11.7. Edge Case Analysis (Low-Volume Transaction Flow):
+### 11.8. Edge Case Analysis (Low-Volume Transaction Flow):
 
 \*\* Alice, the issuer, funds her dedicated account with 50 ConfidentialMPT publicly, the dedicated account converts to confidential, performs a single confidential send of 20 to Bob (a holder), and then executes a ConvertBack of 30\.
 
@@ -651,12 +675,12 @@ Step 3. _ConvertBack_ (Alice’s dedicated account, 30\)
 - Ledger effect: OA unchanged, COA ↓ 30, IPB ↑ 30
 - Alice’s confidential balance is now 0, but outsiders cannot know this since ElGamal ciphertexts for 0 look indistinguishable from nonzero.
 
-### 11.7.1 What Outsiders can Infer:
+### 11.8.1 What Outsiders can Infer:
 
 - Net change in the confidential pool is 50  −  30  = 20\. So, 20 CMPT remain somewhere in confidential circulation.
 - But they cannot know whether Bob got 20, 15, 5, or even 0 — because Alice’s dedicated account may still hold some of the 20\.
 
-### 11.7.2 Why no exact leakage:
+### 11.8.2 Why no exact leakage:
 
 - ElGamal ciphertexts are randomized: encrypting 0 produces a different-looking ciphertext each time.
 - Outsiders cannot look at the dedicated account’s balance ciphertext and say it is zero.
@@ -696,9 +720,15 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 
 This single transaction securely and verifiably burns the holder's confidential balance, removing the tokens from circulation without crediting them to any account, while ensuring the integrity of the ledger's public accounting is perfectly maintained.
 
-### 12.3. Failure Conditions
+### 12.3. Transaction Fee
 
-#### 12.3.1. Data Verification
+**Fee Structure:** Custom
+
+This transaction requires 10 times the standard base fee because zero-knowledge proof verification costs validators significantly more than processing a public MPT transaction.
+
+### 12.4. Failure Conditions
+
+#### 12.4.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled. (`temDISABLED`)
 2. The `Account` is not the issuer of the `MPTokenIssuanceID`. (`temMALFORMED`)
@@ -706,7 +736,7 @@ This single transaction securely and verifiably burns the holder's confidential 
 4. The `ZKProof` is not exactly 64 bytes. (`temMALFORMED`)
 5. `MPTAmount` is zero or exceeds the maximum limits. (`temBAD_AMOUNT`)
 
-#### 12.3.2. Protocol-Level Failures
+#### 12.4.2. Protocol-Level Failures
 
 1. The `Holder` account does not exist. (`tecNO_TARGET`)
 2. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
@@ -718,7 +748,7 @@ This single transaction securely and verifiably burns the holder's confidential 
 8. The `MPTAmount` exceeds the global `sfConfidentialOutstandingAmount`, or exceeds the global `sfOutstandingAmount`. (`tecINSUFFICIENT_FUNDS`)
 9. The ZKP fails to prove that the `sfIssuerEncryptedBalance` (the mirror balance) encrypts the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 
-### 12.4. State Changes
+### 12.5. State Changes
 
 If the transaction is successful, the holder's confidential state is reset, and the tokens are removed from the total supply:
 
@@ -732,7 +762,7 @@ If the transaction is successful, the holder's confidential state is reset, and 
   - The global `sfConfidentialOutstandingAmount` (COA) is decreased by `MPTAmount`.
   - The global `sfOutstandingAmount` (OA) is decreased by `MPTAmount`.
 
-### 12.5. Example JSON
+### 12.6. Example JSON
 
 ```json
 {
@@ -967,7 +997,7 @@ Every confidential transaction must carry appropriate ZKPs:
 - Replay attacks: Transactions bound to unique ledger indices/versions; proofs must include domain separation.
 - Malformed ciphertexts: Validators reject invalid EC points.
 - Balance underflow: Range proofs prevent spending more than available.
-- Ciphertext cancellation: Homomorphic addition adds the ciphertexts' randomness, so ciphertexts with randomness `r` and `−r` sum to the point at infinity, which is not representable and makes the update fail. Because the canonical encrypted zero is deterministic, its randomness is publicly computable, so an attacker free to choose the transfer randomness could cancel it against a target holder's existing ciphertexts and permanently break their `ConfidentialMPTMergeInbox` or auditor-balance update. Any holder of the issuance can attempt this with an unsolicited, arbitrarily small transfer, since incoming confidential transfers cannot be refused. Mitigated by re-randomizing the credit-side ciphertexts (§9.4) with the proof's Fiat–Shamir challenge, which the attacker cannot steer.
+- Ciphertext cancellation: Homomorphic addition adds the ciphertexts' randomness, so ciphertexts with randomness `r` and `−r` sum to the point at infinity, which is not representable and makes the update fail. Because the canonical encrypted zero is deterministic, its randomness is publicly computable, so an attacker free to choose the transfer randomness could cancel it against a target holder's existing ciphertexts and permanently break their `ConfidentialMPTMergeInbox` or auditor-balance update. Any holder of the issuance can attempt this with an unsolicited, arbitrarily small transfer, since incoming confidential transfers cannot be refused. Mitigated by re-randomizing the credit-side ciphertexts (§9.5) with the proof's Fiat–Shamir challenge, which the attacker cannot steer.
 - Auditor collusion: Auditors see balances only if granted view keys; public supply integrity remains trustless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
