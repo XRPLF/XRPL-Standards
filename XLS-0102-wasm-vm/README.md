@@ -421,12 +421,29 @@ These rules ensure that WASM code compiled and deployed today will continue to e
 
 ## 6. Rationale
 
-- **Interpreted Wasmi runtime.** Different WASM runtimes meter gas differently, so the same code can produce different gas costs across implementations — a consensus hazard. Fixing the runtime (Wasmi), its version, and an interpreted compile mode guarantees identical, deterministic gas costs on every validator. Interpretation also avoids the larger attack surface and platform-dependent behavior of JIT/AOT compilation. See [Appendix A](#appendix-a-other-wasm-vms-considered) for the full comparison of runtimes and compilation modes.
-- **Caller-allocated memory.** WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
-- **Host functions rather than direct ledger access.** WASM code can only interact with the ledger through an explicitly defined host function interface. This keeps user code sandboxed, bounds what data is visible, and moves expensive operations into native C++ code where they are cheaper and their gas cost can be priced deterministically.
-- **A custom float type (`XFloat`) rather than native WASM floating point.** Native floating point is a source of non-determinism across platforms, so it is disallowed; float arithmetic is instead provided by host functions over an opaque buffer type (see [§5.8](#58-floats) and [FAQ C.5](#c5-why-not-use-native-wasm-floating-point)).
-- **A backwards-compatible host-function ABI, with amendment-gated additions.** Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed incompatibly once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
-- **UNL-votable execution limits.** The code size limit, computation limit, and gas price are votable parameters rather than hard-coded constants, so they can be tuned without requiring a new amendment for every adjustment (see [§3](#3-execution-limits)).
+### 6.1. Interpreted Wasmi Runtime
+
+Different WASM runtimes meter gas differently, so the same code can produce different gas costs across implementations — a consensus hazard. Fixing the runtime (Wasmi), its version, and an interpreted compile mode guarantees identical, deterministic gas costs on every validator. Interpretation also avoids the larger attack surface and platform-dependent behavior of JIT/AOT compilation. See [Appendix A](#appendix-a-other-wasm-vms-considered) for the full comparison of runtimes and compilation modes.
+
+### 6.2. Caller-Allocated Memory
+
+WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
+
+### 6.3. Host Functions Rather Than Direct Ledger Access
+
+WASM code can only interact with the ledger through an explicitly defined host function interface. This keeps user code sandboxed, bounds what data is visible, and moves expensive operations into native C++ code where they are cheaper and their gas cost can be priced deterministically.
+
+### 6.4. A Custom Float Type (`XFloat`) Rather Than Native WASM Floating Point
+
+Native floating point is a source of non-determinism across platforms, so it is disallowed; float arithmetic is instead provided by host functions over an opaque buffer type (see [§5.8](#58-floats) and [FAQ C.5](#c5-why-not-use-native-wasm-floating-point)).
+
+### 6.5. A Backwards-Compatible Host-Function ABI, With Amendment-Gated Additions
+
+Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed incompatibly once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
+
+### 6.6. UNL-Votable Execution Limits
+
+The code size limit, computation limit, and gas price are votable parameters rather than hard-coded constants, so they can be tuned without requiring a new amendment for every adjustment (see [§3](#3-execution-limits)).
 
 ## 7. Security
 
