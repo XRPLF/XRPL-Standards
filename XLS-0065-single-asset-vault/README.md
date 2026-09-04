@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-09-04
 </pre>
 
 # Single Asset Vault
@@ -68,6 +68,10 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 ### 2.7. Connecting to the Vault
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
+
+### 2.8. Amendments
+
+- `LendingProtocolV1_1` (not yet live) adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes, as described in [XLS-65.1](./65.1/README.md).
 
 ## 3. Specification
 
@@ -458,12 +462,15 @@ The `VaultDelete` transaction deletes an existing vault object.
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `60`      |         Transaction type.          |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault to be deleted. |
+| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | An opaque reason for the deletion, 1–256 bytes when present. Requires the `LendingProtocolV1_1` amendment. |
 
 #### 3.4.2 Failure Conditions
 
 ##### 3.4.2.1 Data Verification
 
 1. The `VaultID` field is zero. (`temMALFORMED`)
+2. The `MemoData` field is present and the `LendingProtocolV1_1` amendment is not enabled. (`temDISABLED`)
+3. The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
 
 ##### 3.4.2.2 Protocol-Level Failures
 
@@ -1157,3 +1164,7 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+- XLS-65.1: Optional `VaultDelete.MemoData` under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
