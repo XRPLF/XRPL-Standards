@@ -24,7 +24,7 @@ This specification formalizes and standardizes the requirements for an `AccountR
 
 ### Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-64.1](./64.1/README.md)): Freeze handling for pseudo-accounts (`checkDepositFreeze` / `checkWithdrawFreeze`). This PR merges into XLS-64.1, not a new patch number.
+- `fixCleanup3_4_0` (not yet live, [XLS-64.1](./64.1/README.md)): Freeze handling for pseudo-accounts (`checkDepositFreeze` / `checkWithdrawFreeze`).
 
 ### Specification
 
@@ -156,6 +156,4 @@ The design of pseudo-accounts includes several critical security features:
 
 ## Appendix C: Changelog
 
-This spec PR merges into the `fixCleanup3_4_0` patch (XLS-64.1), not a new XLS-64.N:
-
-- XLS-64.1: `fixCleanup3_4_0` (not yet live) — freeze handling for pseudo-accounts. See [64.1](./64.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-64.1: Pseudo-account freeze checks under `fixCleanup3_4_0`, not yet live — [XLS-64.1](./64.1/README.md)
