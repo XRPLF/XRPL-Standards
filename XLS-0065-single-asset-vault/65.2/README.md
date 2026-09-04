@@ -1,7 +1,7 @@
 <pre>
   xls: 65.2
-  title: Vault Loss and Cap Invariants
-  description: Allows one unit of rounding slack in the unrealised loss invariant for non-integral assets and restricts VaultSet cap enforcement to transactions that change the cap
+  title: Single Asset Vault under fixCleanup3_4_0
+  description: Records the changes the fixCleanup3_4_0 amendment makes to XLS-65
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
@@ -11,17 +11,19 @@
   updated: 2026-09-04
 </pre>
 
-# Vault Loss and Cap Invariants
+# Single Asset Vault under `fixCleanup3_4_0`
 
 ## 1. Abstract
 
-This patch of [XLS-65](../README.md) records the changes the `fixCleanup3_4_0` amendment makes to the invariants of the `Vault` ledger entry. When the Vault asset is not integral — that is, an `IOU` — `LossUnrealized` may exceed the unavailable assets of the Vault by at most one unit at the scale of `AssetsTotal`; for `XRP` and `MPT` the comparison stays strict. `LossUnrealized` must also not be negative, for every asset type. Separately, `VaultSet` no longer fails the cap check when the cap is left alone, so a Vault whose total has grown past its cap through interest can still be updated.
+This patch of [XLS-65](../README.md) records the changes the `fixCleanup3_4_0` amendment makes to the Single Asset Vault. The amendment is not yet live. The consolidated specification is the top-level [README.md](../README.md).
 
-The consolidated specification is the top-level [README.md](../README.md).
+The amendment makes the following changes to XLS-65:
+
+- **Vault Loss and Cap Invariants** — When the Vault asset is not integral — that is, an `IOU` — `LossUnrealized` may exceed the unavailable assets of the Vault by at most one unit at the scale of `AssetsTotal`; for `XRP` and `MPT` the comparison stays strict. `LossUnrealized` must also not be negative, for every asset type. Separately, `VaultSet` no longer fails the cap check when the cap is left alone, so a Vault whose total has grown past its cap through interest can still be updated.
 
 ## 2. Motivation
 
-Both changes come from the same source: the invariants as written are stricter than the arithmetic of the Vault can honour.
+**Vault Loss and Cap Invariants.** Both changes come from the same source: the invariants as written are stricter than the arithmetic of the Vault can honour.
 
 `LossUnrealized`, `AssetsTotal` and `AssetsAvailable` are each quantised independently when the Vault asset is an `IOU`, because they are written through `STAmount` and land on a decimal grid whose step depends on the magnitude of the value. Comparing `LossUnrealized` to `AssetsTotal - AssetsAvailable` with a strict inequality fails when the three values round in opposite directions, which is a quantisation artefact and not a solvency problem. The invariant needs a tolerance of exactly one unit at the coarsest of those grids, which is the one `AssetsTotal` sits on.
 
@@ -33,13 +35,15 @@ The cap check fails for a legitimate state. `AssetsTotal` grows with interest, a
 
 ## 3. Specification
 
-### 3.1 Ledger Entry: `Vault`
+### 3.1 Vault Loss and Cap Invariants
 
-#### 3.1.1 Fields
+#### 3.1.1 Ledger Entry: `Vault`
+
+##### 3.1.1.1 Fields
 
 No fields are added or removed by this patch.
 
-#### 3.1.2 Invariants
+##### 3.1.1.2 Invariants
 
 The unrealised loss invariant becomes:
 
@@ -57,7 +61,7 @@ Cap enforcement becomes:
 
 Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
 
-#### 3.1.3 Example JSON
+##### 3.1.1.3 Example JSON
 
 ```json
 {
@@ -72,7 +76,7 @@ Before the amendment, the loss inequality is strict for every asset type and adm
 
 ## 4. Rationale
 
-The tolerance is one unit at the scale of the Vault asset rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy, whereas one unit at the asset scale is the smallest representable difference and cannot hide anything.
+**Vault Loss and Cap Invariants.** The tolerance is one unit at the scale of the Vault asset rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy, whereas one unit at the asset scale is the smallest representable difference and cannot hide anything.
 
 Restricting the tolerance to non-integral assets, rather than granting it uniformly, was deliberate. The alternative of keying the tolerance off the sign of the scale would have been wrong: an `IOU` amount at or above `1e15` has a non-negative exponent yet still quantises, so it needs the tolerance, while a drop of `XRP` has scale zero and must not get it. Integrality of the asset is the property that actually distinguishes the two cases.
 
@@ -82,6 +86,6 @@ Enforcing the cap on the `VaultSet` that changes it, rather than on every `Vault
 
 ## 5. Security Considerations
 
-Relaxing an invariant weakens a check that exists to catch implementation errors. Both relaxations are bounded so that they cannot mask a loss: the loss tolerance is one unit at the asset scale and applies only to assets that quantise, and the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that changes it.
+**Vault Loss and Cap Invariants.** Relaxing an invariant weakens a check that exists to catch implementation errors. Both relaxations are bounded so that they cannot mask a loss: the loss tolerance is one unit at the asset scale and applies only to assets that quantise, and the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that changes it.
 
 Adding `LossUnrealized >= 0` closes a gap in the original invariant. A negative unrealised loss would otherwise pass the inequality and inflate the assets of the Vault relative to its shares.

@@ -71,8 +71,10 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live) moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set, as described in [XLS-65.1](./65.1/README.md).
-- `fixCleanup3_4_0` (not yet live) admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap, as described in [XLS-65.2](./65.2/README.md).
+- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
+  - moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set
+- `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
+  - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap
 
 ## 3. Specification
 
@@ -1179,5 +1181,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Unmodifiable `Vault` fields under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
-- XLS-65.2: `Vault` loss and cap invariants under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
+- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.2: Single Asset Vault under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
