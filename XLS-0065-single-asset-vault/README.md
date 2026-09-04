@@ -69,7 +69,7 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
-## Amendments
+### 2.8. Amendments
 
 - [`fixCleanup3_4_0`](./65.2/README.md) rejects pseudo-account holders and corrects rounding, unrealized-loss, precision, and overflow handling for `VaultClawback`.
 
