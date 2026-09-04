@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-09-04
 </pre>
 
 # Single Asset Vault
@@ -71,8 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Permits one asset-scale ULP of `LossUnrealized` slack, rejects negative `LossUnrealized`, and refines `VaultSet` cap enforcement when excess is interest. See [§3.1.10](#3110-invariants).
-- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Adds immutable `VaultKind`, `SubscriptionDate`, `RedemptionDate`, and `LEVersion` fields. See [§3.1.10](#3110-invariants).
+- `LendingProtocolV1_1` (not yet live) moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set, as described in [XLS-65.1](./65.1/README.md).
+- `fixCleanup3_4_0` (not yet live) admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap, as described in [XLS-65.2](./65.2/README.md).
 
 ## 3. Specification
 
@@ -200,7 +200,7 @@ Exchange Algorithm refers to the logic that is used to exchange assets into shar
 
 ##### 3.1.7.1 Unrealized Loss
 
-A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, we introduce a concept of "paper loss," captured by the `Vault` object's `LossUnrealized` attribute. The "paper loss" captures a potential loss the vault may experience and thus temporarily decreases the vault value. Only a protocol connected to the `Vault` may increase or decrease the `LossUnrealized` attribute.
+A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, we introduce a concept of "paper loss," captured by the `Vault` object's `LossUnrealized` attribute. The "paper loss" captures a potential loss the vault may experience and thus temporarily decreases the vault value. Only a protocol connected to the `Vault` may increase or decrease the `LossUnrealized` attribute; for the [Lending Protocol](../XLS-0066-lending-protocol/README.md) that means `LoanManage` and `LoanPay` alone.
 
 The "paper loss" temporarily decreases the vault value. A malicious depositor may take advantage of this to deposit assets at a lowered price and withdraw them once the price increases.
 
@@ -328,14 +328,17 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 2. `Vault.AssetsTotal >= 0`.
 3. `Vault.AssetsMaximum >= 0`.
 4. `Vault.AssetsAvailable <= Vault.AssetsTotal`.
-5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`. Before `fixCleanup3_4_0` the inequality is strict (no slack). After `fixCleanup3_4_0`, one unit of slack is allowed at the vault asset scale (`lessOrEqualPlusOneUnit`), and `Vault.LossUnrealized` must also be `>= 0`.
-6. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
-7. `Vault.AssetsTotal` is not required to be `<= Vault.AssetsMaximum` at all times: the total may exceed the cap when the excess is interest. After `fixCleanup3_4_0`, `VaultSet` fails the cap invariant only when the transaction supplies `AssetsMaximum` or otherwise changes the cap to a nonzero value still below `AssetsTotal`.
-8. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (the _pseudo-account_ is the issuer of vault shares).
-9. `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` field points to this vault.
-10. `Vault.Asset`, `Vault.Account`, and `Vault.ShareMPTID` are immutable once set. After `LendingProtocolV1_1`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, and `Vault.LEVersion` are also immutable (`NoModifiedUnmodifiableFields`). Before `LendingProtocolV1_1` those extra fields are absent, so their immutability is N/A.
-11. `Vault.LossUnrealized` can only be modified by lending protocol transactions.
-12. A `Vault` object is modified only by vault transaction types, and at most one `Vault` is modified per transaction.
+5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`. Under `fixCleanup3_4_0` the comparison admits one unit of slack at the scale of `Vault.AssetsTotal`, but only when `Vault.Asset` is not integral, i.e. an `IOU`. For `XRP` and `MPT` the comparison remains strict `<=` both before and after the amendment, because those assets have no sub-unit rounding for the slack to absorb.
+6. `Vault.LossUnrealized >= 0`. This is only enforced once `fixCleanup3_4_0` is enabled, and then for every asset type.
+7. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
+8. There is no invariant requiring `Vault.AssetsTotal <= Vault.AssetsMaximum` to hold on every modification of the entry, because `Vault.AssetsTotal` grows with accrued interest and interest is not a deposit. The cap is instead enforced per transaction:
+   1. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. This holds both before and after `fixCleanup3_4_0`.
+   2. `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it. Under `fixCleanup3_4_0` this failure applies only when the transaction supplies `AssetsMaximum` or the cap otherwise changes, so a cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
+9. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (the _pseudo-account_ is the issuer of vault shares).
+10. `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` field points to this vault.
+11. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of the amendment.
+12. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
+13. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction.
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -445,8 +448,7 @@ _TBD_
 1. `Vault` object with the specified `VaultID` does not exist on the ledger.
 2. The submitting account is not the `Owner` of the vault.
 3. The `Data` field is larger than 256 bytes.
-4. If `Vault.AssetsMaximum` > `0` AND `tx.AssetsMaximum` > 0 AND:
-   1. The `tx.AssetsMaximum` < `Vault.AssetsTotal` (new `tx.AssetsMaximum` cannot be lower than the current `AssetsTotal`).
+4. The `tx.AssetsMaximum` is provided AND is non-zero AND is less than `Vault.AssetsTotal` (a new cap cannot be lower than the current `AssetsTotal`; a cap of `0` removes the cap and is always accepted).
 5. The `sfVaultPrivate` flag is not set and the `DomainID` is provided (Vault Owner is attempting to set a PermissionedDomain to a public Vault).
 6. The `PermissionedDomain` object does not exist with the provided `DomainID`.
 7. The transaction is attempting to modify an immutable field.
@@ -521,7 +523,7 @@ _None._
 1. `Vault` object with the `VaultID` does not exist on the ledger.
 2. The asset type of the vault does not match the asset type the depositor is depositing.
 3. The depositor does not have sufficient funds to make a deposit.
-4. Adding the `Amount` to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`.
+4. `Vault.AssetsMaximum` is non-zero and adding the `Amount` to `Vault.AssetsTotal` would exceed it.
 5. The `Vault` `lsfVaultPrivate` flag is set and the `Account` depositing the assets is not a member of the `MPTokenIssuance(Vault.ShareMPTID).DomainID` permissioned domain.
 
 6. If the `Vault.Asset` is `MPT`:
@@ -1151,5 +1153,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Immutable Vault lifecycle fields under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
-- XLS-65.2: Vault loss and cap invariants under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
+- XLS-65.1: Unmodifiable `Vault` fields under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.2: `Vault` loss and cap invariants under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
