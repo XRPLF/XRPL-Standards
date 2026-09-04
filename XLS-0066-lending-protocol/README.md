@@ -116,6 +116,10 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
+## Amendments
+
+- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Does not remove `CoverRateLiquidation`; First-Loss Capital stays the two-rate develop formula. This PR merges into XLS-66.1, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1. Ledger Entry: `LoanBroker`
@@ -155,6 +159,7 @@ The `LoanBroker` object has the following fields:
 | `DebtMaximum`          |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
 | `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
 | `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
+| `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
 #### 3.1.3 Ownership
 
@@ -323,12 +328,13 @@ Lending Protocol:
 
 #### 3.1.11 First-Loss Capital
 
-The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default. It provides a protective capital buffer for a loan broker by maintaining a reserve that absorbs losses when loans default. The system tracks three key values: the total outstanding debt across all loans, a required coverage ratio (e.g., 10%), and the amount of first-loss capital currently available in the loan broker. When a loan defaults, the system reduces the total debt by the defaulted amount and liquidates a proportional share of the first-loss capital calculated as the defaulted amount multiplied by the coverage ratio. This ensures that each default draws coverage proportional to its size, bounded by both the coverage ratio requirement and the actual capital available in the pool, providing predictable loss protection while maintaining system solvency. For further details see [the appendix](#8-first-loss-capital-default-coverage).
-
-The following parameters control the First-Loss Capital:
+The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default by absorbing some of the loss. The following parameters control this mechanism:
 
 - `CoverAvailable` - the total amount of cover deposited by the Lending Protocol Owner.
-- `CoverRateMinimum` - the percentage of `DebtTotal` that determines the minimum required cover (i.e., `minimum cover = DebtTotal × CoverRateMinimum`).
+- `CoverRateMinimum` - the percentage of `DebtTotal` that must be covered by the `CoverAvailable`.
+- `CoverRateLiquidation` - the maximum percentage of the minimum required cover ($DebtTotal \times CoverRateMinimum$) that will be liquidated to cover a Loan Default.
+
+> Note: `CoverRateMinimum` and `CoverRateLiquidation` are stored on the ledger as `UINT32` values in 1/10th basis points, where 1 is 0.001% and 100000 is 100%. The formulas and examples in this section use the equivalent fraction, i.e. $CoverRateMinimum / 100000$; a stored value of 10000 is therefore 0.1 (10%).
 
 Whenever the available cover falls below the minimum cover required, two consequences occur:
 
@@ -351,41 +357,42 @@ Lending Protocol:
 
 - DebtTotal = 1,090 Tokens
 - CoverRateMinimum = 0.1 (10%)
+- CoverRateLiquidation = 0.1 (10%)
 - CoverAvailable = 1,000 Tokens
 
 Loan:
 
-- PrincipleOutstanding = 1,000 Tokens
+- PrincipalOutstanding = 1,000 Tokens
 - InterestOutstanding = 90 Tokens
 
 _First-Loss Capital liquidation_
 
-- DefaultAmount = PrincipleOutstanding + InterestOutstanding
+- DefaultAmount = PrincipalOutstanding + InterestOutstanding
   = 1,000 + 90 = 1,090 Tokens
-- DefaultCovered = min(DefaultAmount × CoverRateMinimum, CoverAvailable)
-  = min(1,090 × 0.1, 1,000) = min(109, 1,000) = **109 Tokens**
+- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)
+  = min((1,090 × 0.1) × 0.1, 1,090, 1,000) = min(10.9, 1,090, 1,000) = **10.9 Tokens**
 - Loss = DefaultAmount − DefaultCovered
-  = 1,090 − 109 = **981 Tokens**
-- FundsReturned = DefaultCovered = **109 Tokens**
+  = 1,090 − 10.9 = **1,079.1 Tokens**
+- FundsReturned = DefaultCovered = **10.9 Tokens**
 
-> Note: Loss + FundsReturned must equal PrincipleOutstanding + InterestOutstanding.
+> Note: Loss + FundsReturned must equal PrincipalOutstanding + InterestOutstanding.
 
 _State Changes_
 
 Vault:
 
 - AssetsTotal = AssetsTotal − Loss
-  = 100,090 − 981 = **99,109 Tokens**
+  = 100,090 − 1,079.1 = **99,010.9 Tokens**
 - AssetsAvailable = AssetsAvailable + FundsReturned
-  = 99,000 + 109 = **99,109 Tokens**
+  = 99,000 + 10.9 = **99,010.9 Tokens**
 - SharesTotal = (UNCHANGED)
 
 Lending Protocol:
 
-- DebtTotal = DebtTotal − (PrincipleOutstanding + InterestOutstanding)
+- DebtTotal = DebtTotal − (PrincipalOutstanding + InterestOutstanding)
   = 1,090 − (1,000 + 90) = **0 Tokens**
 - CoverAvailable = CoverAvailable − DefaultCovered
-  = 1,000 − 109 = **891 Tokens**
+  = 1,000 − 10.9 = **989.1 Tokens**
 
 ### 3.2. Ledger Entry: `Loan`
 
@@ -560,6 +567,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `ManagementFeeRate`    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
 | `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
 #### 3.3.2 Transaction Fee
 
@@ -573,9 +581,11 @@ This transaction uses the standard transaction fee.
 2. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
 3. `ManagementFeeRate` is outside valid range (0 to 10000). (`temINVALID`)
 4. `CoverRateMinimum` is outside valid range (0 to 100000). (`temINVALID`)
-5. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
-6. `LoanBrokerID` is specified and is zero. (`temINVALID`)
-7. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`). (`temINVALID`)
+5. `CoverRateLiquidation` is outside valid range (0 to 100000). (`temINVALID`)
+6. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
+7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
+8. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+9. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
 
 ##### 3.3.3.2 Protocol-Level Failures
 
@@ -641,6 +651,7 @@ This transaction uses the standard transaction fee.
   "ManagementFeeRate": 0,
   "DebtMaximum": "0",
   "CoverRateMinimum": 0,
+  "CoverRateLiquidation": 0,
   "Fee": "1",
   "Sequence": 3964022
 }
@@ -1252,7 +1263,8 @@ This transaction uses the standard transaction fee.
 
 1. If the `tfLoanDefault` flag is specified:
    - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
-   - Compute `DefaultCovered = min(DefaultAmount × LoanBroker.CoverRateMinimum, LoanBroker.CoverAvailable)`.
+   - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
+   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`.
    - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
    - Update `Vault` object:
      - Decrease `Vault.AssetsTotal` by `VaultLoss`.
@@ -1920,7 +1932,7 @@ DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34
 $$
 
 $$
-DefaultCovered = \min(DefaultAmount \times CoverRateMinimum, CoverAvailable) \quad \text{(35)}
+DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount, CoverAvailable) \quad \text{(35)}
 $$
 
 $$
@@ -1935,12 +1947,16 @@ $$
 
 - `PrincipalOutstanding` = Outstanding principal balance (`Loan.PrincipalOutstanding`)
 - $InterestOutstanding_{net}$ = Remaining net interest excluding management fee (formula 33 applied to ledger values)
-- `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
+- `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
+- `CoverRateMinimum` = Required coverage rate (`LoanBroker.CoverRateMinimum`), as a fraction, i.e. the ledger value divided by 100000
+- `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`), as a fraction, i.e. the ledger value divided by 100000
 - `CoverAvailable` = Total amount of cover deposited by the Lending Protocol Owner (`LoanBroker.CoverAvailable`)
+
+> Note: Both rate multiplications round **up**. The minimum cover $DebtTotal \times CoverRateMinimum$ is rounded up, and its product with `CoverRateLiquidation` is rounded up to the loan asset's scale before being capped by `DefaultAmount` and `CoverAvailable`.
 
 **Process:**
 
-1. Calculate coverage: `DefaultCovered = min(DefaultAmount × CoverRateMinimum, CoverAvailable)` using formula (35)
+1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)` using formula (35)
 2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
@@ -2661,3 +2677,10 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalFeePaid            # The total fee
     )
 ```
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
+
+- XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md). Commit SHA recorded when this patch is merged.
