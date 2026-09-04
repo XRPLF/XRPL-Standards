@@ -154,7 +154,7 @@ The `LoanBroker` object has the following fields:
 | `DebtTotal`            |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
 | `DebtMaximum`          |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
 | `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
-| `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
+| `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. Minimum cover is `DebtTotal × CoverRateMinimum`; a default then liquidates at most that cover times `CoverRateLiquidation`, capped by `DefaultAmount`. |
 | `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
 
 #### 3.1.3 Ownership
@@ -327,8 +327,8 @@ Lending Protocol:
 The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default by absorbing some of the loss. The following parameters control this mechanism:
 
 - `CoverAvailable` - the total amount of cover deposited by the Lending Protocol Owner.
-- `CoverRateMinimum` - the percentage of `DebtTotal` that must be covered by the `CoverAvailable`.
-- `CoverRateLiquidation` - the maximum percentage of the minimum required cover ($DebtTotal \times CoverRateMinimum$) that will be liquidated to cover a Loan Default.
+- `CoverRateMinimum` - the rate applied to `DebtTotal` to compute the minimum required cover (`minimumCover = DebtTotal × CoverRateMinimum`). It is not applied to `DefaultAmount`.
+- `CoverRateLiquidation` - the maximum fraction of that minimum cover that is liquidated on a default: `DefaultCovered = min(minimumCover × CoverRateLiquidation, DefaultAmount, CoverAvailable)`.
 
 > Note: `CoverRateMinimum` and `CoverRateLiquidation` are stored on the ledger as `UINT32` values in 1/10th basis points, where 1 is 0.001% and 100000 is 100%. The formulas and examples in this section use the equivalent fraction, i.e. $CoverRateMinimum / 100000$; a stored value of 10000 is therefore 0.1 (10%).
 
@@ -562,7 +562,7 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `Data`                 |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                               |
 | `ManagementFeeRate`    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol Owner. Valid values are between 0 and 10000 inclusive (1% - 10%).                       |
 | `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
-| `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
+| `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                     |
 | `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
 #### 3.3.2 Transaction Fee
