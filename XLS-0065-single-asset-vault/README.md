@@ -71,7 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- [`LendingProtocolV1_1`](./65.1/README.md) assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`).
+- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
+  - assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`).
 
 ## 3. Specification
 
@@ -1204,4 +1205,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Closed-ended Vault lifecycle under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
