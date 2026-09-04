@@ -69,6 +69,11 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
+## Amendments
+
+- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Permits one asset-scale ULP of `LossUnrealized` slack, rejects negative `LossUnrealized`, and refines `VaultSet` cap enforcement when excess is interest. See [§3.1.10](#3110-invariants). This PR's invariant cap/loss rules merge into XLS-65.2.
+- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Adds immutable `VaultKind`, `SubscriptionDate`, `RedemptionDate`, and `LEVersion` fields. See [§3.1.10](#3110-invariants). This PR's immutability rules merge into XLS-65.1.
+
 ## 3. Specification
 
 ### 3.1 Ledger Entry: `Vault`
@@ -323,12 +328,12 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 2. `Vault.AssetsTotal >= 0`.
 3. `Vault.AssetsMaximum >= 0`.
 4. `Vault.AssetsAvailable <= Vault.AssetsTotal`.
-5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`.
+5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`. Before `fixCleanup3_4_0` the inequality is strict (no slack). After `fixCleanup3_4_0`, one unit of slack is allowed at the vault asset scale (`lessOrEqualPlusOneUnit`), and `Vault.LossUnrealized` must also be `>= 0`.
 6. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
-7. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
+7. `Vault.AssetsTotal` is not required to be `<= Vault.AssetsMaximum` at all times: the total may exceed the cap when the excess is interest. After `fixCleanup3_4_0`, `VaultSet` fails the cap invariant only when the transaction supplies `AssetsMaximum` or otherwise changes the cap to a nonzero value still below `AssetsTotal`.
 8. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (the _pseudo-account_ is the issuer of vault shares).
 9. `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` field points to this vault.
-10. `Vault.Asset`, `Vault.Account`, and `Vault.ShareMPTID` are immutable once set.
+10. `Vault.Asset`, `Vault.Account`, and `Vault.ShareMPTID` are immutable once set. After `LendingProtocolV1_1`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, and `Vault.LEVersion` are also immutable (`NoModifiedUnmodifiableFields`). Before `LendingProtocolV1_1` those extra fields are absent, so their immutability is N/A.
 11. `Vault.LossUnrealized` can only be modified by lending protocol transactions.
 12. A `Vault` object is modified only by vault transaction types, and at most one `Vault` is modified per transaction.
 
@@ -1143,3 +1148,10 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
+
+- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
