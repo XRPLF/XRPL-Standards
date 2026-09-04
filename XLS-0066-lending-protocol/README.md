@@ -116,6 +116,10 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
+## Amendments
+
+- `fixCleanup3_4_0` (not yet live, [XLS-66.2](./66.2/README.md)): prevents impairing a loan before it is late and stops impairment/unimpairment from rewriting `NextPaymentDueDate`. See [impairment](#3210-impairment), [LoanManage failure conditions](#3104-failure-conditions), and [state changes](#3105-state-changes). This PR merges into XLS-66.2, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1. Ledger Entry: `LoanBroker`
@@ -543,7 +547,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-Once a payment becomes overdue, impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Impairment does not modify the Loan's `NextPaymentDueDate` and has no effect on default timing, which is determined solely by `NextPaymentDueDate` and `GracePeriod`. However, if the Borrower makes a payment, the impairment status is automatically cleared.
+Once a payment becomes overdue, impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Under the `fixCleanup3_4_0` amendment, impairment does not modify the Loan's `NextPaymentDueDate` and has no effect on default timing, which is determined solely by `NextPaymentDueDate` and `GracePeriod`. Without `fixCleanup3_4_0`, impairing a loan that is not yet late moves `NextPaymentDueDate` to the current ledger time, and unimpairing may rewrite `NextPaymentDueDate` (restoring the original interval due date if still in the future, otherwise `now + PaymentInterval`). If the Borrower makes a payment, the impairment status is automatically cleared.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
@@ -1250,7 +1254,7 @@ This transaction uses the standard transaction fee.
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
 6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
-7. `tfLoanImpair` flag is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
+7. `fixCleanup3_4_0` is enabled, `tfLoanImpair` flag is specified, and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
 8. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 9. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
@@ -1292,12 +1296,14 @@ This transaction uses the standard transaction fee.
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
      - Set `lsfLoanImpaired` flag.
+     - If `fixCleanup3_4_0` is **not** enabled and the payment is not yet late: set `Loan.NextPaymentDueDate` to the current ledger close time.
 3. If the `tfLoanUnimpair` flag is specified:
    - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
    - Update `Vault` object:
      - Decrease `Vault.LossUnrealized` by `LossReversed`.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
+     - If `fixCleanup3_4_0` is **not** enabled: rewrite `Loan.NextPaymentDueDate` to `max(PreviousPaymentDueDate, StartDate) + PaymentInterval` when that timestamp is still in the future; otherwise to current ledger close time plus `PaymentInterval`.
 
 #### 3.10.6 Invariants
 
@@ -2662,3 +2668,10 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalFeePaid            # The total fee
     )
 ```
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
+
+- XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md). Commit SHA recorded when this patch is merged.
