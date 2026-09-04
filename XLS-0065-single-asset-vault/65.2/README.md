@@ -1,7 +1,7 @@
 <pre>
   xls: 65.2
-  title: VaultClawback Failure Conditions
-  description: Corrects holder validation, conversion, precision, and overflow handling in VaultClawback
+  title: Single Asset Vault under fixCleanup3_4_0
+  description: Records the changes the fixCleanup3_4_0 amendment makes to XLS-65
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
@@ -11,25 +11,29 @@
   updated: 2026-09-04
 </pre>
 
-# VaultClawback Failure Conditions
+# Single Asset Vault under `fixCleanup3_4_0`
 
 ## 1. Abstract
 
-This patch of [XLS-65](../README.md) records the changes the `fixCleanup3_4_0` amendment makes to the `VaultClawback` transaction. It rejects a pseudo-account `Holder`, corrects share conversion for explicit amounts and sole shareholders, aligns recovered assets with the stored total's scale, and rejects precision loss instead of allowing a share burn with no corresponding asset change.
+This patch of [XLS-65](../README.md) records the changes the `fixCleanup3_4_0` amendment makes to the Single Asset Vault. The amendment is not yet live. The consolidated specification is the top-level [README.md](../README.md).
 
-The consolidated specification is the top-level [README.md](../README.md).
+The amendment makes the following changes to XLS-65:
+
+- **VaultClawback Failure Conditions** — It rejects a pseudo-account `Holder`, corrects share conversion for explicit amounts and sole shareholders, aligns recovered assets with the stored total's scale, and rejects precision loss instead of allowing a share burn with no corresponding asset change.
 
 ## 2. Motivation
 
-A pseudo-account holds shares on behalf of a protocol, not on behalf of a person, and it has no key that can act for it. Clawing shares back from one removes the backing of whatever the protocol accounted for, and leaves an entry that the protocol did not write and cannot reconcile. The transaction has no correct outcome in that case, so it should not be applied.
+**VaultClawback Failure Conditions.** A pseudo-account holds shares on behalf of a protocol, not on behalf of a person, and it has no key that can act for it. Clawing shares back from one removes the backing of whatever the protocol accounted for, and leaves an entry that the protocol did not write and cannot reconcile. The transaction has no correct outcome in that case, so it should not be applied.
 
 The precision case is a silent no-op. `AssetsTotal` is stored at the scale of the Vault asset, so a clawback smaller than one unit at that scale burns shares while leaving the stored total unchanged, which moves value between the remaining holders. Reporting it as a precision failure tells the submitter that the amount was too small, rather than reporting success for a transaction that did nothing it was asked to do.
 
 ## 3. Specification
 
-### 3.1 Transaction: `VaultClawback`
+### 3.2 VaultClawback Failure Conditions
 
-#### 3.1.1 Fields
+#### 3.2.1 Transaction: `VaultClawback`
+
+##### 3.2.1.1 Fields
 
 No fields are added or removed. The existing fields relevant to this patch are:
 
@@ -41,9 +45,9 @@ No fields are added or removed. The existing fields relevant to this patch are:
 
 If `Amount` is omitted, the implementation constructs a zero-valued `STAmount` denominated in the Vault share MPT when the submitter is `Vault.Owner`, and in `Vault.Asset` otherwise. The zero amount means all value represented by the `Holder`'s shares. If the Vault Owner is also the issuer of a non-XRP `Vault.Asset`, `Amount` must be explicit to select between a share burn and an asset clawback.
 
-#### 3.1.2 Failure Conditions
+##### 3.2.1.2 Failure Conditions
 
-##### 3.1.2.1 Protocol-Level Failures
+###### 3.2.1.2.1 Protocol-Level Failures
 
 After data verification, failures are evaluated in these phases and in this order:
 
@@ -69,7 +73,7 @@ After data verification, failures are evaluated in these phases and in this orde
 
 Before the amendment, a pseudo-account `Holder` is accepted, and a dust clawback succeeds without changing the stored assets of the Vault.
 
-#### 3.1.3 State Changes
+##### 3.2.1.3 State Changes
 
 The ledger objects changed by a successful transaction are unchanged, but `fixCleanup3_4_0` changes how a successful asset clawback computes the shares destroyed and assets recovered:
 
@@ -79,7 +83,7 @@ The ledger objects changed by a successful transaction are unchanged, but `fixCl
 
 After those calculations, the transaction destroys `sharesDestroyed` shares, decreases `OutstandingAmount` by the same amount, decreases `AssetsTotal` and `AssetsAvailable` by `assetsRecovered`, and transfers `assetsRecovered` from the Vault pseudo-account to the asset issuer. A stranded-share burn by the Vault Owner destroys shares without changing or transferring Vault assets.
 
-#### 3.1.4 Example JSON
+##### 3.2.1.4 Example JSON
 
 ```json
 {
@@ -99,7 +103,7 @@ After those calculations, the transaction destroys `sharesDestroyed` shares, dec
 
 ## 4. Rationale
 
-`tecPSEUDO_ACCOUNT` is used rather than `tecNO_PERMISSION` because the reason for the failure is what the account is, not who submitted the transaction. The submitter cannot obtain permission by any means, and the code says so.
+**VaultClawback Failure Conditions.** `tecPSEUDO_ACCOUNT` is used rather than `tecNO_PERMISSION` because the reason for the failure is what the account is, not who submitted the transaction. The submitter cannot obtain permission by any means, and the code says so.
 
 The dust condition is reported as `tecPRECISION_LOSS` rather than silently rounded up to one unit. Rounding up would take more from the Holder than the transaction asked for; rounding down is the no-op the amendment is removing.
 
@@ -107,7 +111,7 @@ Overflow is reported as `tecPATH_DRY` for consistency with the other arithmetic 
 
 ## 5. Security Considerations
 
-The dust check closes a path by which repeated small clawbacks burn shares without reducing the assets of the Vault, which raises the exchange rate for the remaining holders at the expense of the Holder being clawed back.
+**VaultClawback Failure Conditions.** The dust check closes a path by which repeated small clawbacks burn shares without reducing the assets of the Vault, which raises the exchange rate for the remaining holders at the expense of the Holder being clawed back.
 
 Rejecting a pseudo-account `Holder` protects an invariant of the protocol that owns the pseudo-account: its accounting assumes that shares it holds are removed only by transactions it issues.
 

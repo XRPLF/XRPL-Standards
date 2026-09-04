@@ -71,7 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- [`fixCleanup3_4_0`](./65.2/README.md) rejects pseudo-account holders and corrects rounding, unrealized-loss, precision, and overflow handling for `VaultClawback`.
+- `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
+  - rejects pseudo-account holders and corrects rounding, unrealized-loss, precision, and overflow handling for `VaultClawback`.
 
 ## 3. Specification
 
@@ -1194,4 +1195,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.2: `VaultClawback` failure conditions under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
+- XLS-65.2: Single Asset Vault under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
