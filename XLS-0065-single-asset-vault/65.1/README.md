@@ -39,7 +39,7 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 
 `LEVersion` selects the accounting model of the Vault:
 
-- `LEVersion` absent (accrual basis): `AssetsTotal` includes the interest accrued over the life of the connected Loans. This is the pre-amendment behaviour and continues to apply to every Vault created before the amendment was enabled.
+- `LEVersion` absent (treated as `0`, accrual basis): `AssetsTotal` includes the interest accrued over the life of the connected Loans. This is the pre-amendment behaviour and continues to apply to every Vault created before the amendment was enabled.
 - `LEVersion = 1` (cash basis): `AssetsTotal` is principal-only and increases only as interest is collected in cash.
 
 The field is immutable. A Vault created while the amendment is enabled is always cash-basis, and a Vault created before it is always accrual-basis; neither can be converted to the other.
