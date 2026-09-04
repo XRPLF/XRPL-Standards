@@ -7,14 +7,14 @@ status: Draft
 category: Amendment
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
-updated: 2026-06-22
+updated: 2026-09-04
 </pre>
 
 ### Abstract
 
 This document proposes a standard for a _pseudo-account_, an `AccountRoot` ledger entry that can be associated with one or more other ledger entries. A pseudo-account is designed to hold and/or issue assets on behalf of its associated entries, enabling protocol-level functionality that requires an on-ledger entity to manage funds.
 
-### Motivation
+### Introduction
 
 The XRP Ledger is an account-based system where assets (XRP, IOUs, etc.) can only be held by an `AccountRoot` entry. However, several advanced protocols, such as Automated Market Makers (AMMs), lending pools, and vaults, require a ledger _object_ itself to hold and manage assets.
 
@@ -22,9 +22,9 @@ The [XLS-30 (AMM)](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0030-
 
 This specification formalizes and standardizes the requirements for an `AccountRoot` when it functions as a pseudo-account, ensuring a consistent and secure implementation across different protocols. It defines mandatory flags, a naming convention for linking fields, and the core invariants that any protocol using a pseudo-account must enforce.
 
-### Amendments
+## Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-64.1](./64.1/README.md)): Freeze handling for pseudo-accounts (`checkDepositFreeze` / `checkWithdrawFreeze`).
+- [`fixCleanup3_3_0`](./64.1/README.md) standardizes the freeze and lock checks for assets transferred into or out of pseudo-accounts.
 
 ### Specification
 
@@ -97,7 +97,7 @@ A pseudo-account must be deleted together with the associated object.
 
 Freeze semantics for pseudo-accounts differ from those of regular accounts, therefore protocols using a pseudo-account must enforce the following rules for any transaction that moves assets into or out of the pseudo-account.
 
-Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. For an MPT that is a Vault Share, being _locally frozen_ also covers the Vault Share condition in the tables below: the underlying asset of the share must not be frozen or locked for the Vault pseudo-account or for the account itself (`isVaultPseudoAccountFrozen`). An implementation that performs the global and the local check separately, rather than through a single combined freeze check, must therefore still perform the Vault pseudo-account check for MPT shares. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies.
+Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. The checks operate on the asset transferred into or out of the pseudo-account; for a Vault deposit or withdrawal, this is the Vault's underlying asset, not its Vault Share.
 
 **Deposits (external account → pseudo-account)**
 
@@ -106,7 +106,6 @@ A deposit must be rejected if any of the following conditions hold:
 | Condition                                                                               | Code                      |
 | :-------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                            | `tecFROZEN` / `tecLOCKED` |
-| If the asset is a Vault Share, the underlying asset of the share is frozen / locked     | `tecLOCKED`               |
 | The depositor is locally frozen for the asset, unless the depositor is the asset issuer | `tecFROZEN` / `tecLOCKED` |
 | The pseudo-account is locally frozen for the asset                                      | `tecFROZEN` / `tecLOCKED` |
 
@@ -119,18 +118,17 @@ A withdrawal must be rejected if any of the following conditions hold, evaluated
 | Condition                                                                                  | Code                      |
 | :----------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                               | `tecFROZEN` / `tecLOCKED` |
-| If the asset is a Vault Share, the underlying asset of the share is frozen / locked        | `tecLOCKED`               |
 | The pseudo-account (source) is locally frozen for the asset                                | `tecFROZEN` / `tecLOCKED` |
 | The submitter is locally frozen for the asset **and** the submitter is not the destination | `tecFROZEN` / `tecLOCKED` |
 | The destination is deep frozen for the asset                                               | `tecFROZEN` / `tecLOCKED` |
 
-Rule 4 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
+Rule 3 intentionally skips the submitter freeze check when the submitter and the destination are the same account (self-withdrawal). A regular freeze on the submitter must not block them from recovering their own funds from the pool.
 
-Rule 5 uses deep freeze for the destination rather than a regular freeze, because a regular freeze on the destination does not prevent the destination from receiving; only deep freeze does.
+Rule 4 uses deep freeze for the destination rather than a regular freeze, because a regular freeze on the destination does not prevent the destination from receiving; only deep freeze does.
 
 **MPT-specific rules**
 
-For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 4: for IOUs a regular local freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
+For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 3: for IOUs a regular local freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
 
 The issuer exemption applies to MPTs in the same way as IOUs — a withdrawal to the asset issuer bypasses all lock checks.
 
@@ -145,6 +143,10 @@ The following invariants must hold true for any `AccountRoot` entry functioning 
   - AMM pseudo-accounts created under old rules will have a sequence number set to the index of the ledger they were created in. They still must never change.
 - A `RegularKey` must not be set.
 
+### Rationale
+
+Centralizing these conditions in deposit and withdrawal helpers gives every protocol that transfers an asset through a pseudo-account the same freeze behavior while preserving the distinct issuer and self-withdrawal exemptions.
+
 ### Security Considerations
 
 The design of pseudo-accounts includes several critical security features:
@@ -156,4 +158,4 @@ The design of pseudo-accounts includes several critical security features:
 
 ## Appendix C: Changelog
 
-- XLS-64.1: Pseudo-account freeze checks under `fixCleanup3_4_0`, not yet live — [XLS-64.1](./64.1/README.md)
+- XLS-64.1: Pseudo-account freeze checks under `fixCleanup3_3_0`, not yet live — [XLS-64.1](./64.1/README.md)

@@ -15,7 +15,7 @@
 
 ## 1. Abstract
 
-This patch of [XLS-64](../README.md) records the changes the `fixCleanup3_4_0` amendment makes to the freeze handling of a pseudo-account. It states the conditions a deposit into a pseudo-account and a withdrawal out of one must evaluate, distinguishes a global freeze from a local freeze, and defines where the exemption for the issuer of an asset applies.
+This patch of [XLS-64](../README.md) records the changes the `fixCleanup3_3_0` amendment makes to the freeze handling of a pseudo-account. It states the conditions a deposit into a pseudo-account and a withdrawal out of one must evaluate, distinguishes a global freeze from a local freeze, and defines where the exemption for the issuer of an asset applies.
 
 The consolidated specification is the top-level [README.md](../README.md).
 
@@ -23,13 +23,13 @@ The consolidated specification is the top-level [README.md](../README.md).
 
 A pseudo-account holds assets on behalf of an object rather than a person, so it sits between the two parties of a transfer: a deposit is a transfer from the submitter to the pseudo-account, and a withdrawal is a transfer from the pseudo-account to a destination. A freeze check written for a single transfer does not say which of the three accounts it applies to.
 
-The consequences of getting that wrong run in both directions. Omitting the pseudo-account from the checks lets assets move into or out of a frozen holding. Applying a local freeze on the submitter to a self-withdrawal blocks a depositor from recovering their own funds, which a regular freeze is not meant to do. Two further cases need stating: a Vault share carries the freeze state of its underlying asset, and the issuer of an asset can always receive it back.
+The consequences of getting that wrong run in both directions. Omitting the pseudo-account from the checks lets assets move into or out of a frozen holding. Applying a local freeze on the submitter to a self-withdrawal blocks a depositor from recovering their own funds, which a regular freeze is not meant to do. The issuer exemption also needs to be explicit because an issuer can always receive its own asset back.
 
 ## 3. Specification
 
 Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the `MPToken` of the holder is equivalent to deep-frozen semantics.
 
-For an MPT that is a Vault Share, _locally frozen_ also covers the Vault Share condition below: the underlying asset of the share must not be frozen or locked for the Vault pseudo-account or for the account itself. An implementation that performs the global and the local check separately, rather than through one combined freeze check, must still perform the Vault pseudo-account check for MPT shares.
+`checkDepositFreeze` and `checkWithdrawFreeze` operate on the asset transferred into or out of the pseudo-account. For `VaultDeposit` and `VaultWithdraw`, callers pass the Vault's underlying asset; the helpers do not perform a separate Vault Share check on their successful path.
 
 ### 3.1 Deposit Failure Conditions
 
@@ -38,7 +38,6 @@ A deposit into a pseudo-account must be rejected if any of the following holds, 
 | Condition                                                                               | Code                      |
 | :-------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                            | `tecFROZEN` / `tecLOCKED` |
-| If the asset is a Vault Share, the underlying asset of the share is frozen or locked     | `tecLOCKED`               |
 | The depositor is locally frozen for the asset, unless the depositor is the asset issuer  | `tecFROZEN` / `tecLOCKED` |
 | The pseudo-account is locally frozen for the asset                                      | `tecFROZEN` / `tecLOCKED` |
 
@@ -51,7 +50,6 @@ Otherwise, a withdrawal must be rejected if any of the following holds, evaluate
 | Condition                                                                                  | Code                      |
 | :----------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                               | `tecFROZEN` / `tecLOCKED` |
-| If the asset is a Vault Share, the underlying asset of the share is frozen or locked        | `tecLOCKED`               |
 | The pseudo-account, as the source, is locally frozen for the asset                         | `tecFROZEN` / `tecLOCKED` |
 | The submitter is locally frozen for the asset **and** the submitter is not the destination  | `tecFROZEN` / `tecLOCKED` |
 | The destination is deep frozen for the asset                                               | `tecFROZEN` / `tecLOCKED` |
