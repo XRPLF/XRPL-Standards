@@ -69,6 +69,10 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
+## Amendments
+
+- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`). See [Vault fields](#312-fields), [VaultCreate fields](#321-fields), [failure conditions](#325-failure-conditions), and [state changes](#326-state-changes). This PR merges into XLS-65.1, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1 Ledger Entry: `Vault`
@@ -107,6 +111,10 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Protocol-written vault schema version. Absent or `0` is legacy. Set to `1` (`CashBasis`) on create when `LendingProtocolV1_1` is enabled. Not a `VaultCreate` field. |
+| `VaultKind`         |    No    |    No    |      `number`      |    `UINT8`    |    absent     | Vault kind. Absent means `OpenEnded` (`0`). `ClosedEnded` is `1`.                                                                                      |
+| `SubscriptionDate`  |    No    |    No    |      `number`      |   `UINT32`    |     None      | Closed-ended vault: start of the investment window (ledger time). Omitted on open-ended vaults.                                                        |
+| `RedemptionDate`    |    No    |    No    |      `number`      |   `UINT32`    |     None      | Closed-ended vault: start of the redemption window (ledger time). Omitted on open-ended vaults.                                                        |
 
 ##### 3.1.2.1 Flags
 
@@ -337,7 +345,12 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `MPTokenMetadata`  |    No    |      `string`      |    `BLOB`     |                         | Arbitrary metadata about the share `MPT`, in hex format, limited to 1024 bytes.                                                                        |
 | `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `"FirstComeFirstServe"` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `DomainID`         |    No    |      `string`      |   `HASH256`   |                         | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
-| `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. Ignored (fixed at `0`) when `Asset` is `XRP` or `MPT`; not stored on the `Vault` object in those cases. |
+| `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. Must not be provided when `Asset` is `XRP` or `MPT`, where the scale is fixed at `0`; doing so is rejected with `temMALFORMED`. Only written to the `Vault` object when non-zero. |
+| `VaultKind`        |    No    |      `number`      |    `UINT8`    |         absent          | Vault kind: `0` (`OpenEnded`) or `1` (`ClosedEnded`). Absent is `OpenEnded`.                                                                            |
+| `SubscriptionDate` |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault subscription time (ledger time).                                                                                                    |
+| `RedemptionDate`   |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault redemption time (ledger time).                                                                                                      |
+
+`VaultKind`, `SubscriptionDate`, and `RedemptionDate` are disabled unless `LendingProtocolV1_1` is enabled. If any of these fields is present without that amendment, `checkExtraFeatures` returns false and preflight rejects the transaction with `temDISABLED`.
 
 #### 3.2.2 Flags
 
@@ -370,6 +383,11 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 6. The `MPTokenMetadata` field, if provided, is empty or exceeds 1024 bytes. (`temMALFORMED`)
 7. The `Scale` field is provided when the `Asset` is `XRP` or `MPT`. (`temMALFORMED`)
 8. The `Scale` field is provided, the `Asset` is an `IOU`, and `Scale` exceeds 18. (`temMALFORMED`)
+9. The `VaultKind` field is present and is not `0` (`OpenEnded`) or `1` (`ClosedEnded`). (`temMALFORMED`)
+10. The vault is open-ended (`VaultKind` absent or `0`) and `SubscriptionDate` or `RedemptionDate` is present. (`temMALFORMED`)
+11. The vault is closed-ended (`VaultKind` is `1`):
+    1. `SubscriptionDate` or `RedemptionDate` is missing. (`temMALFORMED`)
+    2. The gap does not satisfy `RedemptionDate >= SubscriptionDate + 180` and `RedemptionDate < SubscriptionDate + kMaxInvestmentPeriod` (30 Gregorian years in seconds). (`temMALFORMED`)
 
 ##### 3.2.5.2 Protocol-Level Failures
 
@@ -391,11 +409,15 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 5. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
 6. The computed _pseudo-account_ address for the new `Vault` collides with an existing account. (`terADDRESS_COLLISION`)
-7. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve. (`tecINSUFFICIENT_RESERVE`)
+7. `SubscriptionDate` or `RedemptionDate` has expired relative to ledger time. (`tecEXPIRED`) Preflight already enforces `RedemptionDate >= SubscriptionDate + 180` for closed-ended vaults, so a past `RedemptionDate` implies a past `SubscriptionDate`.
+8. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve. (`tecINSUFFICIENT_RESERVE`)
 
 #### 3.2.6 State Changes
 
-1. Create a new `Vault` ledger object, linked into the `Vault.Owner`'s `DirectoryNode`. Increment the Vault Owner's `OwnerCount` by 2 (for the `Vault` object and the _pseudo-account_).
+1. Create a new `Vault` ledger object, linked into the `Vault.Owner`'s `DirectoryNode`. Increment the Vault Owner's `OwnerCount` by 2 (for the `Vault` object and the _pseudo-account_). When `LendingProtocolV1_1` is enabled:
+   1. Set `Vault.LEVersion` to `1` (`CashBasis`).
+   2. Set `Vault.VaultKind` from the transaction (default `OpenEnded` if `VaultKind` is absent).
+   3. If the kind is `ClosedEnded`, write `Vault.SubscriptionDate` and `Vault.RedemptionDate` from the transaction.
 2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
    1. If `tfVaultShareNonTransferable` is not set: set `lsfMPTCanEscrow`, `lsfMPTCanTrade`, and `lsfMPTCanTransfer` on the `MPTokenIssuance`.
    2. If `tfVaultPrivate` is set: set `lsfMPTRequireAuth` on the `MPTokenIssuance`.
@@ -1153,3 +1175,10 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
+
+- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
