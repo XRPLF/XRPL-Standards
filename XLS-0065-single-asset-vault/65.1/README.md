@@ -15,7 +15,7 @@
 
 ## 1. Abstract
 
-This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_1` amendment makes to the `Vault` ledger entry. The amendment adds a `LEVersion` field that selects the accounting model a Vault applies to `AssetsTotal`. Vaults created while the amendment is enabled use cash-basis accounting, in which `AssetsTotal` tracks principal only and grows only as interest is collected in cash. Vaults created before the amendment keep accrual-basis accounting, in which `AssetsTotal` includes interest as it accrues.
+This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_1` amendment makes to the `Vault` ledger entry. The amendment adds a `LEVersion` field that selects the accounting model a Vault applies to `AssetsTotal`. Vaults created while the amendment is enabled use cash-basis accounting, in which `AssetsTotal` excludes uncollected interest and grows only as interest is collected in cash. Vaults created before the amendment keep accrual-basis accounting, in which `AssetsTotal` includes interest as it accrues.
 
 The consolidated specification is the top-level [README.md](../README.md).
 
@@ -40,7 +40,7 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 `LEVersion` selects the accounting model of the Vault:
 
 - `LEVersion` absent (treated as `0`, accrual basis): `AssetsTotal` includes the interest accrued over the life of the connected Loans. This is the pre-amendment behaviour and continues to apply to every Vault created before the amendment was enabled.
-- `LEVersion = 1` (cash basis): `AssetsTotal` is principal-only and increases only as interest is collected in cash.
+- `LEVersion = 1` (cash basis): `AssetsTotal` excludes uncollected interest and increases only as interest is collected in cash.
 
 The field is immutable. A Vault created while the amendment is enabled is always cash-basis, and a Vault created before it is always accrual-basis; neither can be converted to the other.
 

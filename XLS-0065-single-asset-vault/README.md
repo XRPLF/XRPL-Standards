@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-07-21
+  updated: 2026-09-04
 </pre>
 
 # Single Asset Vault
@@ -71,7 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Introduces `LEVersion = 1` for cash-basis Vault accounting. See [§3.1.2.2](#3122-leversion-lendingprotocolv1_1) and [§3.2.6.1](#3261-state-changes-lendingprotocolv1_1).
+- [`LendingProtocolV1_1`](./65.1/README.md) introduces `LEVersion = 1` for cash-basis Vault accounting.
 
 ## 3. Specification
 
@@ -111,7 +111,7 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
-| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    | absent (`0`)  | Introduced by the `LendingProtocolV1_1` amendment. Absent is treated as `0` (legacy / accrual-basis). See [3.1.2.2](#3122-leversion-lendingprotocolv1_1). |
+| `LEVersion`         |   Yes    |    No    |      `number`      |    `UINT8`    | absent (`0`)  | Immutable protocol-selected ledger entry version. Absent is treated as `0` (legacy / accrual-basis). See [3.1.2.2](#3122-leversion-lendingprotocolv1_1). |
 
 ##### 3.1.2.1 Flags
 
@@ -130,7 +130,7 @@ The `Vault` object supports the following flags:
 For the `Vault` object, `LEVersion` distinguishes the share-valuation and accounting behavior applied to the vault:
 
 - **Absent (default value `0`)**: The Vault was created before the `LendingProtocolV1_1` amendment was enabled, or otherwise predates ledger entry versioning. It uses the legacy, accrual-basis accounting described throughout this document and in [XLS-66](../XLS-0066-lending-protocol/README.md) — `AssetsTotal` includes accrued interest.
-- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` is principal-only (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
+- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` excludes uncollected interest and increases when interest is paid (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
 
 Any Vault created once `LendingProtocolV1_1` is enabled is always assigned `LEVersion = 1` — cash-basis accounting is not optional or user-selectable at creation time. A future revision of the `Vault` ledger entry would increment `LEVersion` to `2`, and so on.
 
@@ -334,7 +334,7 @@ The exchange rate algorithms in [3.1.7.2](#3172-exchange-rate-algorithms) above 
 Under the `LendingProtocolV1_1` amendment, `Vault.LEVersion` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)) determines which of the two accounting models a Vault's `AssetsTotal` follows:
 
 - `LEVersion` absent (`0`, legacy/accrual-basis): `AssetsTotal` includes interest upfront, as accrued over the life of connected Loans. This is the pre-amendment behavior and continues unchanged for Vaults created before `LendingProtocolV1_1` was enabled.
-- `LEVersion = 1` (cash-basis): `AssetsTotal` is principal-only and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
+- `LEVersion = 1` (cash-basis): `AssetsTotal` excludes uncollected interest and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
 
 See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
 
