@@ -71,7 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Introduces `LEVersion = 1` for cash-basis Vault accounting. See [§3.1.2.2](#3122-leversion-lendingprotocolv1_1) and [§3.2.6.1](#3261-state-changes-lendingprotocolv1_1). This PR merges into XLS-65.1, not a new patch number.
+- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Introduces `LEVersion = 1` for cash-basis Vault accounting. See [§3.1.2.2](#3122-leversion-lendingprotocolv1_1) and [§3.2.6.1](#3261-state-changes-lendingprotocolv1_1).
 
 ## 3. Specification
 
@@ -1170,7 +1170,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
-
-- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.1: Cash-basis Vault accounting under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)

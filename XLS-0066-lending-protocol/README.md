@@ -118,7 +118,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ## Amendments
 
-- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Makes `Vault.AssetsTotal` and `LoanBroker.DebtTotal` principal-only for Vaults with `LEVersion = 1` and requires newly attached lending Vaults to be closed-ended. See [§3.3.3.2](#3332-protocol-level-failures), [§3.8.6.1](#3861-state-changes-lendingprotocolv1_1), [§3.10.5.1](#31051-state-changes-lendingprotocolv1_1), and [§3.11.5.1](#31151-state-changes-lendingprotocolv1_1). This PR merges into XLS-66.1, not a new patch number.
+- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Makes `Vault.AssetsTotal` and `LoanBroker.DebtTotal` principal-only for Vaults with `LEVersion = 1` and requires newly attached lending Vaults to be closed-ended. See [§3.3.3.2](#3332-protocol-level-failures), [§3.8.6.1](#3861-state-changes-lendingprotocolv1_1), [§3.10.5.1](#31051-state-changes-lendingprotocolv1_1), and [§3.11.5.1](#31151-state-changes-lendingprotocolv1_1).
 
 ## 3. Specification
 
@@ -2799,7 +2799,4 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
-
-- XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md). Commit SHA recorded when this patch is merged.
+- XLS-66.1: Principal-only debt accounting under `LendingProtocolV1_1`, not yet live — [XLS-66.1](./66.1/README.md)
