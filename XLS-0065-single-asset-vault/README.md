@@ -71,7 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live) adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes, as described in [XLS-65.1](./65.1/README.md).
+- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
+  - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
 
 ## 3. Specification
 
@@ -1167,4 +1168,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Optional `VaultDelete.MemoData` under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
