@@ -1,12 +1,12 @@
 <pre>
   title: WASM VM
-  description: WebAssembly VM integration into rippled
+  description: WebAssembly VM integration into xrpld
   author: Mayukha Vadari (@mvadari), Peng Wang (@pwang200), Oleksandr Pidskopnyi (@oleks_rip), David Fuelling (@sappenin)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/303
   status: Draft
   category: Amendment
   created: 2025-08-08
-  updated: 2026-07-24
+  updated: 2026-09-03
 </pre>
 
 # WASM VM Configuration
@@ -17,7 +17,7 @@ This document describes the integration of WebAssembly (WASM) into the XRP Ledge
 
 ## 1. Overview
 
-This document addresses several parts of the WASM integration into rippled:
+This document addresses several parts of the WASM integration into xrpld:
 
 - The implementation chosen
 - The gas model
@@ -26,7 +26,7 @@ This document addresses several parts of the WASM integration into rippled:
 
 This feature does not (directly) involve any new transactions, ledger objects, or RPCs. It will be gated by the `SmartEscrow` amendment. Any modification to the details in this spec will require an amendment, as it will affect transaction processing (e.g. success/failure of an `EscrowFinish` transaction for a Smart Escrow).
 
-### 1.1. How the WASM Engine Integrates into `rippled`
+### 1.1. How the WASM Engine Integrates into `xrpld`
 
 <img width="1020" height="495" alt="image" src="https://github.com/user-attachments/assets/8d8e90f4-cda6-4747-9438-e648bc89378b" />
 
@@ -45,13 +45,13 @@ In other words, it’s basically an API call that fetches/interacts with data or
 
 ### 1.3. Background: WASM Native Types
 
-There are only 4 native types in the [WASM spec](https://webassembly.github.io/spec/core/syntax/types.html): `i32` (a signed 32-bit integer), `i64` (a signed 64-bit integer), `f32` (a 32-bit floating point number), and `f64` (a 64-bit floating point number). However, the floating point numbers use a different encoding from what `rippled` uses.
+There are only 4 native types in the [WASM spec](https://webassembly.github.io/spec/core/syntax/types.html): `i32` (a signed 32-bit integer), `i64` (a signed 64-bit integer), `f32` (a 32-bit floating point number), and `f64` (a 64-bit floating point number). However, the floating point numbers use a different encoding from what `xrpld` uses.
 
 So essentially, we only have `i32` and `i64` in terms of useful types. **Every parameter and return type must be represented as these two types.** This is manifested as [pointers](https://en.wikipedia.org/wiki/Pointer_%28computer_programming%29) and lengths. _Note that any language that has full support for XRPL extensions will have helper functions to abstract away most of the complexity (especially involving pointers and lengths)._
 
 ## 2. VM Runtime Choice
 
-While WebAssembly has a [core specification](https://webassembly.github.io/spec/), different runtimes have flexibility in how they implement certain features that are not a part of the formal specification. For example, not all WASM runtimes can easily be embedded in a C++ project (such as `rippled`).
+While WebAssembly has a [core specification](https://webassembly.github.io/spec/), different runtimes have flexibility in how they implement certain features that are not a part of the formal specification. For example, not all WASM runtimes can easily be embedded in a C++ project (such as `xrpld`).
 
 The most relevant part for the purpose of consensus is the gas cost for any operation or function. Different implementations may have different gas costs for executing a given function, due to implementation differences - e.g. some calculate gas costs by inserting additional instructions, while others have a counter in the VM logic. For instance, one basic Smart Escrow function cost 110 gas to run with [WasmEdge](https://wasmedge.org/), while it only cost 5 gas with [Wasmi](https://github.com/wasmi-labs/wasmi). This would cause consensus issues if the computation limit was set at 100, for example - one runtime would succeed, while the other would fail.
 
@@ -83,7 +83,7 @@ All of these parameters will be UNL-votable, so that they do not need a separate
 
 WebAssembly 1.0 (which is the WASM profile that the XRPL will support) does not include built-in memory management - there is no garbage collector or automatic heap allocation. Instead, memory is a contiguous linear buffer that can only grow (in fixed 64 KiB pages) and never shrink. That means WASM code must allocate and manage its own memory, typically via a custom allocator or language runtime, and explicitly track when memory is no longer needed. While there is [progress](https://developer.chrome.com/blog/wasmgc) on this front with WasmGC, it does not have full-fledged tooling support yet, and is currently only really useful for browser applications of WASM.
 
-This is a bit of a problem for host functions, since data has to go back and forth between the caller (WASM dev) and the engine (`rippled`). Some data (e.g. parameters) may be generated on the WASM side, while some data (e.g. the return data) may be generated on the rippled side.
+This is a bit of a problem for host functions, since data has to go back and forth between the caller (WASM dev) and the engine (`xrpld`). Some data (e.g. parameters) may be generated on the WASM side, while some data (e.g. the return data) may be generated on the xrpld side.
 
 Therefore, in this design, the caller is responsible for allocating memory in advance, and must reuse or deallocate memory manually. See Appendix B for alternative designs that were considered and rejected.
 
@@ -91,7 +91,7 @@ Therefore, in this design, the caller is responsible for allocating memory in ad
 
 There are:
 
-- 1 MiB limit, per host function call, on total data transfer across the WASM boundary (between `rippled` and WASM code)
+- 1 MiB limit, per host function call, on total data transfer across the WASM boundary (between `xrpld` and WASM code)
 - 1 KiB limit on the amount of data that can be read from or written to the ledger in a single host function call
 
 ## 5. Extension Host Functions
@@ -387,17 +387,17 @@ FF FF FF F1   <- exponent: -15 (i32 big-endian: 0xFFFFFFF1)
 
 ### 5.9. Trace
 
-Output debug info to the `rippled` debug log (if trace logging is enabled). The maximum size of data that can be passed into these functions is 1024 bytes (attempting to pass in more will trigger an error).
+Output debug info to the `xrpld` debug log (if trace logging is enabled). The maximum size of data that can be passed into these functions is 1024 bytes (attempting to pass in more will trigger an error).
 
 Each of these host functions will return `0` on success and a negative value on failure.
 
-| Function Signature                                                                                                                                  | Description                                             | Gas Cost |
-| :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------ | :------- |
-| `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)` | A logging helper function.                              | 500      |
-| `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                  | A logging helper function for numbers.                  | 500      |
-| `trace_xfloat(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`xfloat_ptr: i32,`<br/>&emsp;`xfloat_len: i32`<br />`)`               | A logging helper function for floats in rippled format. | 500      |
-| `trace_acct(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32`<br />`)`               | A logging helper function for accounts.                 | 500      |
-| `trace_amt(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`amount_ptr: i32,`<br/>&emsp;`amount_len: i32`<br />`)`                  | A logging helper function for amounts.                  | 500      |
+| Function Signature                                                                                                                                  | Description                                           | Gas Cost |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------- | :------- |
+| `trace(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`data_ptr: i32,`<br/>&emsp;`data_len: i32,`<br/>&emsp;`as_hex: i32`<br />`)` | A logging helper function.                            | 500      |
+| `trace_num(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`number:  i64`<br />`)`                                                  | A logging helper function for numbers.                | 500      |
+| `trace_xfloat(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`xfloat_ptr: i32,`<br/>&emsp;`xfloat_len: i32`<br />`)`               | A logging helper function for floats in xrpld format. | 500      |
+| `trace_acct(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`account_ptr: i32,`<br/>&emsp;`account_len: i32`<br />`)`               | A logging helper function for accounts.               | 500      |
+| `trace_amt(`<br/>&emsp;`msg_ptr: i32,`<br/>&emsp;`msg_len: i32,`<br/>&emsp;`amount_ptr: i32,`<br/>&emsp;`amount_len: i32`<br />`)`                  | A logging helper function for amounts.                | 500      |
 
 ### 5.10. Updating Fields
 
@@ -427,7 +427,7 @@ Different WASM runtimes meter gas differently, so the same code can produce diff
 
 ### 6.2. Caller-Allocated Memory
 
-WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `rippled` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
+WebAssembly 1.0 has no built-in memory management, and data must cross the boundary between WASM code and `xrpld` in both directions. Making the caller responsible for allocating buffers in advance keeps the host interface simple and avoids the pitfalls of the host-managed and callback-based designs described in [Appendix B](#appendix-b-memory-management-strategies-considered).
 
 ### 6.3. Host Functions Rather Than Direct Ledger Access
 
@@ -439,7 +439,7 @@ Native floating point is a source of non-determinism across platforms, so it is 
 
 ### 6.5. A Backwards-Compatible Host-Function ABI, With Amendment-Gated Additions
 
-Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `rippled`. Host functions are therefore never changed incompatibly once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
+Deployed contract binaries cannot be updated, so a contract compiled today must run correctly on every future version of `xrpld`. Host functions are therefore never changed incompatibly once shipped — new behavior arrives as new functions gated by amendments (see [§5.11](#511-host-function-versioning-rules) and [§7.5](#75-future-proofing)).
 
 ### 6.6. UNL-Votable Execution Limits
 
@@ -479,7 +479,7 @@ As discussed above, there is a strict gas limit and exceeding it will result in 
 
 Additionally, memory and stack usage are tightly constrained - the linear memory size is bounded to a fixed number of pages, and stack depth is capped to prevent runaway recursion or stack overflows.
 
-These constraints prevent denial-of-service attacks and ensure that WASM execution remains fast and predictable, without any WASM-related transaction taking more than its share of `rippled` resources.
+These constraints prevent denial-of-service attacks and ensure that WASM execution remains fast and predictable, without any WASM-related transaction taking more than its share of `xrpld` resources.
 
 ### 7.5. Future-Proofing
 
@@ -517,7 +517,7 @@ AOT compiles WASM straight to native machine code ahead of time. If we were to u
 
 **This isn’t useful for our needs**, as the compiled AOT code will be architecture-specific.
 
-Can we figure out a way to support AOT? Possibly, but likely not without restricting rippled hardware to certain CPU architectures, and even then likely only one. Alternatively, to support AOT we would need to force WASM developers to supply variants that can run on any native architectures supported by rippled. Even if we imagine limiting rippled to 3 architectures, that would mean every smart contract developer would need to supply 3 different versions of their WASM, which would be wasteful from a space perspective. Last but not least, limiting rippled to 3 architectures seems counterproductive to decentralization.
+Can we figure out a way to support AOT? Possibly, but likely not without restricting xrpld hardware to certain CPU architectures, and even then likely only one. Alternatively, to support AOT we would need to force WASM developers to supply variants that can run on any native architectures supported by xrpld. Even if we imagine limiting xrpld to 3 architectures, that would mean every smart contract developer would need to supply 3 different versions of their WASM, which would be wasteful from a space perspective. Last but not least, limiting xrpld to 3 architectures seems counterproductive to decentralization.
 
 #### A.1.2. JIT (Just-In-Time)
 
@@ -563,7 +563,7 @@ Options:
 
 1. Caller-Allocated: The contract developer (on the WASM side) allocates fixed size arrays for returning data. The user knows the pointer and the length.
    - This is really easy to implement, but means that the WASM dev needs to do their own memory allocation.
-2. Host-Allocated: The host (rippled) allocates WASM memory in host functions and passes the pointer and the length to the WASM program.
+2. Host-Allocated: The host (xrpld) allocates WASM memory in host functions and passes the pointer and the length to the WASM program.
    - This is super easy to use for devs, as they don’t need to worry about allocation. However, more research is needed to determine how possible it is, because currently the only way that we know how to do this involves allocating a new page every time (to ensure the host isn’t overwriting addresses in use).
 3. Static Allocation: There is a static 4KB array in wasm that holds all output data. The pointer and length are fixed.
    - Pros
@@ -608,15 +608,15 @@ Yes, though that needs to be tested. This should make it easier for users to est
 
 WebAssembly's native `f32` and `f64` types are IEEE 754 binary floating-point. While they could be used directly for numeric operations in smart contracts, perhaps with NaN canonicalization to address the one known source of non-determinism in the WASM spec (NaN bit-payload variation when inputs are non-canonical), in practice this would be insufficient for two independent reasons:
 
-First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example, the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal arithmetic using native WASM floats could produce results that diverge from rippled, making those contracts incorrect by construction.
+First, XRPL uses a custom **decimal** (base-10) floating-point format, not IEEE 754 **binary** (base-2). While both formats have a mantissa and exponent, IEEE 754 cannot exactly represent many common decimal values — for example, the decimal value 0.1 becomes a repeating fraction when converted to binary. Any contract that performed decimal arithmetic using native WASM floats could produce results that diverge from xrpld, making those contracts incorrect by construction.
 
-Second, and more fundamentally, XRPL's `Number` arithmetic is itself **complex, carefully specified, and subject to change via ledger amendment.** The rippled implementation encodes years of decisions about rounding, normalization, overflow handling, and edge cases for decimal calculations. There is no Rust equivalent in this library, and there should not be: porting that logic correctly would be a significant maintenance burden, and any divergence — even a single rounding edge case — would produce a contract that computes results differently from rippled. Worse, if the `Number` arithmetic is ever changed by a ledger amendment, contracts that embedded their own copy of the logic would silently continue using the old behavior while the rest of the ledger moved to the new one.
+Second, and more fundamentally, XRPL's `Number` arithmetic is itself **complex, carefully specified, and subject to change via ledger amendment.** The xrpld implementation encodes years of decisions about rounding, normalization, overflow handling, and edge cases for decimal calculations. There is no Rust equivalent in this library, and there should not be: porting that logic correctly would be a significant maintenance burden, and any divergence — even a single rounding edge case — would produce a contract that computes results differently from xrpld. Worse, if the `Number` arithmetic is ever changed by a ledger amendment, contracts that embedded their own copy of the logic would silently continue using the old behavior while the rest of the ledger moved to the new one.
 
-The host function design ensures that **all contracts always use exactly the arithmetic rippled uses at execution time.** No porting, no maintenance, no drift.
+The host function design ensures that **all contracts always use exactly the arithmetic xrpld uses at execution time.** No porting, no maintenance, no drift.
 
 ### C.6: Why not provide a Rust implementation of Number arithmetic in `xrpl-wasm-stdlib`?
 
-For reasons related to C.5, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem defined in C.5: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into rippled, rippled's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place. It is also cheaper: a single host call executes the operation in native C++ at a fixed gas cost, whereas the same arithmetic implemented in WASM would be interpreted instruction by instruction and metered accordingly, costing far more gas for the same result.
+For reasons related to C.5, `xrpl-wasm-stdlib` deliberately does not ship a Rust implementation of `Number` arithmetic. Such an implementation would face the same amendment-drift problem defined in C.5: it would be frozen at the version of the logic that existed when it was written. The correct abstraction boundary is the host function interface — contracts call into xrpld, xrpld's `Number` class does the math, and the contract receives the result as an opaque 12-byte buffer. This keeps the arithmetic logic in exactly one place. It is also cheaper: a single host call executes the operation in native C++ at a fixed gas cost, whereas the same arithmetic implemented in WASM would be interpreted instruction by instruction and metered accordingly, costing far more gas for the same result.
 
 ### C.7: Why the 12-byte encoding for XFloat?
 
@@ -640,11 +640,11 @@ The 12-byte `XFloat` format is exclusively a host-function buffer convention. Ex
 
 ### C.9: Why is host function immutability required?
 
-The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue to work correctly on every future version of rippled. This makes host function immutability a hard requirement, not a preference.
+The versioning rules in [§5.11](#511-host-function-versioning-rules) reflect a fundamental constraint of the WASM smart contract platform: deployed contract binaries cannot be updated. A contract compiled against a given set of host function signatures must continue to work correctly on every future version of xrpld. This makes host function immutability a hard requirement, not a preference.
 
-**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for rippled maintainers (no need to maintain old implementations forever) but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility, though it could be reconsidered in the future.
+**Alternative considered — let contracts break:** One option is to simply allow host functions to change, and let old contracts stop working. This is simpler for xrpld maintainers (no need to maintain old implementations forever) but risky for a financial network: users deploy contracts expecting them to work, and funds could be locked in contracts that suddenly break. This approach was rejected in favor of maintaining backward compatibility, though it could be reconsidered in the future.
 
-**Tradeoff:** The current design puts the maintenance burden on rippled (keeping deprecated functions callable forever) rather than on contract authors or users. This is a conservative choice appropriate for financial infrastructure.
+**Tradeoff:** The current design puts the maintenance burden on xrpld (keeping deprecated functions callable forever) rather than on contract authors or users. This is a conservative choice appropriate for financial infrastructure.
 
 ### C.10: Can an XFloat be negative?
 
