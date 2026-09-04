@@ -116,6 +116,10 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
+## Amendments
+
+- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Intended merge bucket for optional `VaultID` on `LoanBrokerSet` modify. Amendment vs `temINVALID`/`tecNO_PERMISSION` is still open. This PR merges into XLS-66.1, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1. Ledger Entry: `LoanBroker`
@@ -2675,3 +2679,10 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalFeePaid            # The total fee
     )
 ```
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
+
+- XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md). Commit SHA recorded when this patch is merged.
