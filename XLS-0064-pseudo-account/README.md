@@ -22,7 +22,7 @@ The [XLS-30 (AMM)](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0030-
 
 This specification formalizes and standardizes the requirements for an `AccountRoot` when it functions as a pseudo-account, ensuring a consistent and secure implementation across different protocols. It defines mandatory flags, a naming convention for linking fields, and the core invariants that any protocol using a pseudo-account must enforce.
 
-## Amendments
+### Amendments
 
 - [`fixCleanup3_3_0`](./64.1/README.md) standardizes the freeze and lock checks for assets transferred into or out of pseudo-accounts.
 
