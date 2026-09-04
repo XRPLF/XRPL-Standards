@@ -24,7 +24,6 @@ A Single Asset Vault is a new on-chain primitive for aggregating assets from one
   - [**1.2. Terminology**](#12-terminology)
   - [**1.3. Actors**](#13-actors)
   - [**1.4 Connecting to the Vault**](#14-connecting-to-the-vault)
-- [**Amendments**](#amendments)
 - [**2. Ledger Entries**](#2-ledger-entries)
   - [**2.1. `Vault` Ledger Entry**](#21-vault-ledger-entry)
     - [**2.1.1. Object Identifier**](#211-object-identifier)
@@ -100,10 +99,6 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
 [**Return to Index**](#index)
-
-## Amendments
-
-- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): VaultSet DomainID-zero wording folds into XLS-65.2 with other vault clarifications, not a new patch number.
 
 ## 2. Ledger Entries
 
@@ -956,10 +951,3 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A-1.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
-
-## Appendix C: Changelog
-
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
-
-- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
