@@ -898,3 +898,282 @@ footer {
   visibility: visible;
   opacity: 1;
 }
+
+/* Print styles - optimized for paper output, does not affect screen view */
+@media print {
+  /* Light, ink-friendly theme */
+  :root {
+    --bg-color: #fff;
+    --bg-color-raised: #fff;
+    --text-color: #000;
+    --text-color-secondary: #333;
+    --border-color: #999;
+    --link-color: #000;
+    --link-hover-color: #000;
+  }
+
+  @page {
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+
+  .document-content,
+  .contribute-content {
+    line-height: 1.35;
+  }
+
+  /* Hide site chrome and navigation */
+  header,
+  footer,
+  .document-nav,
+  .category-nav,
+  .tooltip .tooltip-text,
+  .headerlink {
+    display: none !important;
+  }
+
+  /* Screen-only affordances: sort arrows and tooltip markers */
+  .standards-table th::after,
+  .tooltip::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Drop container/page framing and padding */
+  .container,
+  main {
+    max-width: none;
+    min-height: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .xls-document,
+  .standards-table-container {
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0;
+    margin: 0 !important;
+    background: none !important;
+    overflow: visible !important;
+  }
+
+  .xls-meta {
+    padding-bottom: 6pt;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10pt;
+  }
+
+  .xls-number-large {
+    color: #000 !important;
+    font-size: 14pt;
+  }
+
+  .xls-status-badge {
+    padding: 2pt 6pt;
+    border: 1px solid #000 !important;
+    background: none !important;
+    color: #000 !important;
+    font-size: 8pt;
+  }
+
+  a {
+    color: #000 !important;
+    background: none !important;
+    text-decoration: none;
+  }
+
+  /* Headings: smaller, and keep them with the text that follows */
+  .document-content h1,
+  .document-content .toctitle {
+    padding-bottom: 4pt;
+    font-size: 15pt;
+  }
+  .document-content h2 {
+    padding-bottom: 3pt;
+    font-size: 13pt;
+  }
+  .document-content h3 {
+    font-size: 11.5pt;
+  }
+  .document-content h4,
+  .document-content h5,
+  .document-content h6 {
+    font-size: 10pt;
+  }
+
+  .document-content h1,
+  .document-content h2,
+  .document-content h3,
+  .document-content h4,
+  .document-content h5,
+  .document-content h6,
+  .document-content .toctitle {
+    margin-top: 12pt;
+    margin-bottom: 5pt;
+    color: #000 !important;
+    break-after: avoid;
+    page-break-after: avoid;
+    break-inside: avoid;
+  }
+
+  .document-content p,
+  .contribute-content p {
+    margin-bottom: 6pt;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .document-content ul,
+  .document-content ol,
+  .contribute-content ul,
+  .contribute-content ol {
+    margin: 4pt 0 6pt 1.25rem;
+  }
+
+  .document-content li,
+  .contribute-content li {
+    margin-bottom: 2pt;
+  }
+
+  /* Inline code: no border/background, black text */
+  .document-content code,
+  .contribute-content code {
+    padding: 0;
+    border: none !important;
+    background: none !important;
+    color: #000 !important;
+    font-size: 0.9em;
+  }
+
+  /* Code blocks: wrap instead of running off the page, stay on one page */
+  .document-content pre,
+  .contribute-content pre {
+    padding: 4pt 6pt;
+    border: 1px solid var(--border-color) !important;
+    margin: 6pt 0;
+    background: none !important;
+    font-size: 8.5pt;
+    line-height: 1.3;
+    overflow: visible !important;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .document-content pre code,
+  .contribute-content pre code {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .document-content blockquote,
+  .contribute-content blockquote {
+    padding: 2pt 8pt;
+    border-left: 2px solid #000;
+    margin: 6pt 0;
+    background: none !important;
+    color: #000 !important;
+  }
+
+  /* Tables: tight padding, visible borders, zebra striping, no overflow */
+  .document-content,
+  .document-content table,
+  .contribute-content table,
+  .standards-table {
+    overflow: visible !important;
+  }
+
+  .document-content table,
+  .contribute-content table,
+  .standards-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-radius: 0;
+    margin: 6pt 0;
+    background: none !important;
+    border-collapse: collapse;
+    font-size: 8pt;
+  }
+
+  .document-content th,
+  .document-content td,
+  .contribute-content th,
+  .contribute-content td,
+  .standards-table th,
+  .standards-table td {
+    padding: 2pt 3pt !important;
+    border: 1px solid #666 !important;
+    color: #000 !important;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: break-word;
+  }
+
+  .document-content th,
+  .contribute-content th,
+  .standards-table th {
+    background: #e5e5e5 !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .document-content tbody tr:nth-child(even),
+  .contribute-content tbody tr:nth-child(even),
+  .standards-table tbody tr:nth-child(even) {
+    background: #f2f2f2 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .document-content table code,
+  .contribute-content table code,
+  .standards-table code {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  tr,
+  img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Index page badges */
+  .status-badge,
+  .category-badge {
+    min-width: 0;
+    padding: 1pt 3pt;
+    border: 1px solid #666 !important;
+    background: none !important;
+    color: #000 !important;
+    font-size: 7pt;
+  }
+
+  .intro {
+    padding: 0 0 10pt;
+    margin-bottom: 10pt;
+  }
+  .intro h2 {
+    font-size: 18pt;
+  }
+  .intro p {
+    color: #000 !important;
+    font-size: 10pt;
+  }
+}
