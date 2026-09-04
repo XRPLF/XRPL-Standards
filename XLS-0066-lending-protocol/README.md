@@ -118,7 +118,8 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ### 2.7 Amendments
 
-- [`LendingProtocolV1_1`](./66.1/README.md) introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
+- `LendingProtocolV1_1` (not yet live), as described in [XLS-66.1](./66.1/README.md):
+  - introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
 
 ## 3. Specification
 
@@ -2797,4 +2798,4 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## Appendix C: Changelog
 
-- XLS-66.1: Principal-only debt accounting under `LendingProtocolV1_1`, not yet live — [XLS-66.1](./66.1/README.md)
+- XLS-66.1: Lending Protocol under `LendingProtocolV1_1`, not yet live — [XLS-66.1](./66.1/README.md)
