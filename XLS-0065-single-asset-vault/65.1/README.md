@@ -33,7 +33,7 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 
 | Field Name  | Constant | Required | Internal Type | Default Value | Description                                                              |
 | ----------- | :------: | :------: | :-----------: | :-----------: | ------------------------------------------------------------------------ |
-| `LEVersion` |   Yes    |    No    |    `UINT8`    |    absent     | The accounting model the Vault applies to `AssetsTotal`. Immutable once set. |
+| `LEVersion` |   Yes    |    No    |    `UINT8`    | absent (`0`)  | The accounting model the Vault applies to `AssetsTotal`. Absent is treated as `0` (accrual basis). Immutable once set. |
 
 #### 3.1.2 `LEVersion`
 

@@ -63,11 +63,10 @@ Unchanged.
 
 #### 3.2.1 Failure Conditions
 
-For a Vault with `LEVersion == 1`, the checks that compare expected interest against the Vault and Broker caps are evaluated against principal instead:
+For a Vault with `LEVersion == 1`, origination no longer credits `InterestDue` into `Vault.AssetsTotal`, so the `AssetsMaximum` origination check does not apply. The Broker cap checks are evaluated against principal instead:
 
-1. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal > Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
-2. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested`. (`tecLIMIT_EXCEEDED`)
-3. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
+1. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested`. (`tecLIMIT_EXCEEDED`)
+2. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
 
 For a Vault with `LEVersion` absent, the corresponding accrual-basis checks apply unchanged.
 

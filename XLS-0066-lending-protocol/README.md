@@ -118,7 +118,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ## Amendments
 
-- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Makes `Vault.AssetsTotal` and `LoanBroker.DebtTotal` principal-only for Vaults with `LEVersion = 1` and requires newly attached lending Vaults to be closed-ended. See [§3.3.3.2](#3332-protocol-level-failures), [§3.8.6.1](#3861-state-changes-lendingprotocolv1_1), [§3.10.5.1](#31051-state-changes-lendingprotocolv1_1), and [§3.11.5.1](#31151-state-changes-lendingprotocolv1_1).
+- `LendingProtocolV1_1` (not yet live, [XLS-66.1](./66.1/README.md)): Makes `Vault.AssetsTotal` and `LoanBroker.DebtTotal` principal-only for Vaults with `LEVersion = 1` and requires newly attached lending Vaults to be closed-ended. See [§3.3.3.3](#3333-protocol-level-failures-lendingprotocolv1_1), [§3.8.5.3](#3853-protocol-level-failures-lendingprotocolv1_1), [§3.8.6.1](#3861-state-changes-lendingprotocolv1_1), [§3.10.5.1](#31051-state-changes-lendingprotocolv1_1), and [§3.11.5.1](#31151-state-changes-lendingprotocolv1_1).
 
 ## 3. Specification
 
@@ -591,21 +591,26 @@ This transaction uses the standard transaction fee.
 
 1. `Vault` object with the specified `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The submitter `AccountRoot.Account != Vault(VaultID).Owner`. (`tecNO_PERMISSION`)
-3. When `LendingProtocolV1_1` is enabled, the Vault must be closed-ended (`Vault.VaultKind == ClosedEnded`, or equivalent: `VaultKind` present and equal to 1). Open-ended vaults (kind absent or 0) fail with `tecNO_PERMISSION`. (`tecNO_PERMISSION`)
-4. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
-5. The Vault _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-6. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves). (`tecINSUFFICIENT_RESERVE`)
+3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
+4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves). (`tecINSUFFICIENT_RESERVE`)
 
 **If `LoanBrokerID` is specified (modifying existing):**
 
-7. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
-8. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
-9. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
-10. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
+6. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+7. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+8. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
+9. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
 
 **Precision Validation:**
 
-11. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+
+##### 3.3.3.3 Protocol-Level Failures (`LendingProtocolV1_1`)
+
+When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following check is added after [3.3.3.2](#3332-protocol-level-failures) item 2. Modifying an existing `LoanBroker` does not re-evaluate it.
+
+1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
 
 #### 3.3.4 State Changes
 
@@ -1096,11 +1101,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.8.5.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. Checks 14, 19, and 20 of [3.8.5.2](#3852-protocol-level-failures) are replaced by the following (all other checks are unchanged); for a legacy (`LEVersion` absent) `Vault`, checks 14, 19, and 20 of [3.8.5.2](#3852-protocol-level-failures) continue to apply unchanged:
-
-14. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal > Vault.AssetsMaximum` (expected interest would exceed vault assets cap). (`tecLIMIT_EXCEEDED`)
-
-Since `LoanBroker.DebtTotal` likewise excludes interest:
+Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), `Vault.AssetsTotal` and `LoanBroker.DebtTotal` become principal-only. Check 14 of [3.8.5.2](#3852-protocol-level-failures) does not apply: origination no longer credits `InterestDue` into `AssetsTotal`, so it cannot push the Vault past `AssetsMaximum`. Checks 19 and 20 are replaced by the following (all other checks are unchanged). For a legacy (`LEVersion` absent) `Vault`, checks 14, 19, and 20 of [3.8.5.2](#3852-protocol-level-failures) continue to apply unchanged:
 
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)

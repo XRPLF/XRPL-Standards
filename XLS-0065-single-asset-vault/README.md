@@ -111,7 +111,7 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
-| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    |       0       | Introduced by the `LendingProtocolV1_1` amendment. See [3.1.2.2](#3122-leversion-lendingprotocolv1_1).                                                 |
+| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    | absent (`0`)  | Introduced by the `LendingProtocolV1_1` amendment. Absent is treated as `0` (legacy / accrual-basis). See [3.1.2.2](#3122-leversion-lendingprotocolv1_1). |
 
 ##### 3.1.2.1 Flags
 
