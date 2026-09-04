@@ -527,14 +527,18 @@ _Note: if a transaction doesn't charge a fee (such as an account's first `SetReg
 
 #### 8.3.3. Reserve Sponsorship Failures
 
-1. The sponsor does not have enough XRP to cover the reserve (`tecINSUFFICIENT_RESERVE`, or the transaction-type-specific variant when applicable — e.g. `tecINSUF_RESERVE_LINE` for `TrustSet` and for other transactions that can establish a trust line as a side effect, such as `EscrowFinish` or `CheckCash`).
+1. The sponsor does not have enough XRP to cover the reserve. The specific `tec` code depends on the path:
+   - `tecINSUFFICIENT_RESERVE` — the default (e.g. MPT authorizations, generic object creation).
+   - `tecINSUF_RESERVE_LINE` — `TrustSet` paths that set the low/high reserve on an already-existing trust line.
+   - `tecNO_LINE_INSUF_RESERVE` — paths that create a new trust line for the recipient as a side effect: `TrustSet` line-creation, `CheckCash` (IOU), and `EscrowFinish` / `EscrowCancel` (IOU).
+   - `tecUNFUNDED` — `SponsorshipSet` (documented separately in [section 9.4](#94-failure-conditions), items 10 and 11).
 2. The transaction does not support reserve sponsorship — see [section 8.3.4](#834-transactions-that-cannot-be-sponsored) (`temINVALID_FLAG`).
 3. The transaction includes an `sfDelegate` field and `spfSponsorReserve` is enabled (reserve sponsorship combined with permissioned delegation is disallowed, see [section 17.1](#171-permissioned-delegation)) (`temINVALID`).
 
 If a `Sponsorship` object exists (it is [always used if it exists](#36-sponsorship-resolution-rules)):
 
 1. The `lsfSponsorshipRequireSignForReserve` flag is enabled and there is no sponsor signature included (`terNO_PERMISSION`).
-2. There is not enough remaining count in the `RemainingOwnerCount` to pay for the transaction (`tecINSUFFICIENT_RESERVE`, or the transaction-type-specific variant per item 1), even if the sponsor co-signed the transaction.
+2. There is not enough remaining count in the `RemainingOwnerCount` to pay for the transaction (same code as item 1, i.e. the path-specific `tec` variant), even if the sponsor co-signed the transaction.
 
 If a `Sponsorship` object does not exist:
 
@@ -764,7 +768,7 @@ This scenario ends the sponsorship for a sponsored ledger object or account. The
 The following fields are used in this scenario:
 
 - `ObjectID` must be included (if ending sponsorship of an object)
-- `Sponsee` is only used for **account-level** ends where the **sponsor** is submitting the transaction against another account; in that case, `Sponsee` names the target account. If the **sponsee** is ending their own account sponsorship, `Sponsee` must be omitted and the target is `tx.Account`. For **object-level** ends, `Sponsee` must be omitted regardless of who is submitting: `ObjectID` alone identifies both the object and (via its `Owner` field) the sponsee.
+- `Sponsee` must be included if the **sponsor** is submitting the transaction against a target (account or object) owned by another account — this rule applies to **both** account- and object-level ends. It names the account whose sponsorship is being ended; for object-level ends, that account is verified to be the object's owner (via `isLedgerEntryOwner`), and `tecNO_PERMISSION` is returned otherwise. If the **sponsee** is ending their own sponsorship, `Sponsee` must be omitted and the target defaults to `tx.Account`. If provided, `Sponsee` must not equal `tx.Account`.
 - `Sponsor` must be excluded
 - `SponsorFlags.spfSponsorReserve` must be excluded
 - The object specified by `ObjectID` (or the account specified by `Sponsee` / `tx.Account`) must have a `Sponsor` field
