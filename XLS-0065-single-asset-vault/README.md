@@ -69,6 +69,10 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
+## Amendments
+
+- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Introduces `LEVersion = 1` for cash-basis Vault accounting. See [§3.1.2.2](#3122-leversion-lendingprotocolv1_1) and [§3.2.6.1](#3261-state-changes-lendingprotocolv1_1). This PR merges into XLS-65.1, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1 Ledger Entry: `Vault`
@@ -330,7 +334,7 @@ The exchange rate algorithms in [3.1.7.2](#3172-exchange-rate-algorithms) above 
 Under the `LendingProtocolV1_1` amendment, `Vault.LEVersion` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)) determines which of the two accounting models a Vault's `AssetsTotal` follows:
 
 - `LEVersion` absent (`0`, legacy/accrual-basis): `AssetsTotal` includes interest upfront, as accrued over the life of connected Loans. This is the pre-amendment behavior and continues unchanged for Vaults created before `LendingProtocolV1_1` was enabled.
-- `LEVersion = 2` (cash-basis): `AssetsTotal` is principal-only and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
+- `LEVersion = 1` (cash-basis): `AssetsTotal` is principal-only and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
 
 See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
 
@@ -1163,3 +1167,10 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
+
+- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
