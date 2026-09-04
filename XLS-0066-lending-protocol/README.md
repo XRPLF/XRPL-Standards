@@ -116,7 +116,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
-## Amendments
+### 2.7 Amendments
 
 - [`LendingProtocolV1_1`](./66.1/README.md) introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
 
