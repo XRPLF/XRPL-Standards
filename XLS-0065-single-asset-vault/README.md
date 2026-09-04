@@ -71,7 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Rejects pseudo-account clawback holders and adds precision/overflow safeguards for `VaultClawback`. See [§3.7.2.2](#3722-protocol-level-failures). This PR merges into XLS-65.2, not a new patch number.
+- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Rejects pseudo-account clawback holders and adds precision/overflow safeguards for `VaultClawback`. See [§3.7.2.2](#3722-protocol-level-failures).
 
 ## 3. Specification
 
@@ -1156,7 +1156,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
-
-- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.2: `VaultClawback` failure conditions under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
