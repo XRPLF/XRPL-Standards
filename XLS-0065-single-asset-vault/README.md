@@ -71,8 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Permits one asset-scale ULP of `LossUnrealized` slack, rejects negative `LossUnrealized`, and refines `VaultSet` cap enforcement when excess is interest. See [§3.1.10](#3110-invariants). This PR's invariant cap/loss rules merge into XLS-65.2.
-- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Adds immutable `VaultKind`, `SubscriptionDate`, `RedemptionDate`, and `LEVersion` fields. See [§3.1.10](#3110-invariants). This PR's immutability rules merge into XLS-65.1.
+- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Permits one asset-scale ULP of `LossUnrealized` slack, rejects negative `LossUnrealized`, and refines `VaultSet` cap enforcement when excess is interest. See [§3.1.10](#3110-invariants).
+- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Adds immutable `VaultKind`, `SubscriptionDate`, `RedemptionDate`, and `LEVersion` fields. See [§3.1.10](#3110-invariants).
 
 ## 3. Specification
 
@@ -1151,7 +1151,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
-
-- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.1: Immutable Vault lifecycle fields under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.2: Vault loss and cap invariants under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
