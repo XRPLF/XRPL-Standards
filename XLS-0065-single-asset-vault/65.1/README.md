@@ -76,16 +76,17 @@ All three fields require the amendment. If any of them is present while the amen
 
 ##### 3.2.2.1 Data Verification
 
-1. `VaultKind` is present and is neither `0` nor `1`. (`temMALFORMED`)
-2. The Vault is open-ended, that is `VaultKind` is absent or `0`, and `SubscriptionDate` or `RedemptionDate` is present. (`temMALFORMED`)
-3. The Vault is closed-ended and `SubscriptionDate` or `RedemptionDate` is missing. (`temMALFORMED`)
-4. The Vault is closed-ended and the window does not satisfy `RedemptionDate >= SubscriptionDate + 180` and `RedemptionDate < SubscriptionDate + kMaxInvestmentPeriod`, where `kMaxInvestmentPeriod` is thirty Gregorian years in seconds. (`temMALFORMED`)
+1. Any of `VaultKind`, `SubscriptionDate`, or `RedemptionDate` is present while `LendingProtocolV1_1` is disabled. (`temDISABLED`)
+2. `VaultKind` is present and is neither `0` nor `1`. (`temMALFORMED`)
+3. The Vault is open-ended, that is `VaultKind` is absent or `0`, and `SubscriptionDate` or `RedemptionDate` is present. (`temMALFORMED`)
+4. The Vault is closed-ended and `SubscriptionDate` or `RedemptionDate` is missing. (`temMALFORMED`)
+5. The Vault is closed-ended and the window does not satisfy `RedemptionDate >= SubscriptionDate + 180` and `RedemptionDate < SubscriptionDate + kMaxInvestmentPeriod`, where `kMaxInvestmentPeriod` is thirty Gregorian years in seconds. (`temMALFORMED`)
 
 ##### 3.2.2.2 Protocol-Level Failures
 
-1. `SubscriptionDate` or `RedemptionDate` has already passed relative to the time of the parent ledger. (`tecEXPIRED`)
+1. `parentCloseTime >= SubscriptionDate` or `parentCloseTime >= RedemptionDate`. The comparison is inclusive: the date has expired at the parent ledger close time, not only after it. (`tecEXPIRED`)
 
-Data verification already requires `RedemptionDate >= SubscriptionDate + 180` for a closed-ended Vault, so a `RedemptionDate` in the past implies a `SubscriptionDate` in the past.
+Data verification already requires `RedemptionDate >= SubscriptionDate + 180` for a closed-ended Vault, so an expired `RedemptionDate` implies an expired `SubscriptionDate`.
 
 #### 3.2.3 State Changes
 
@@ -120,6 +121,6 @@ Rejecting the lifecycle fields on an open-ended Vault, rather than ignoring them
 
 ## 5. Security Considerations
 
-`tecEXPIRED` is evaluated against the time of the parent ledger. A submitter who sets a `SubscriptionDate` close to the present should expect the transaction to fail if it is not applied promptly, and should not treat the check as a guarantee that the window is still open when the Vault is created.
+`tecEXPIRED` is evaluated against the parent ledger close time and is inclusive: the transaction fails when `parentCloseTime >= SubscriptionDate` or `parentCloseTime >= RedemptionDate`. A submitter who sets a `SubscriptionDate` equal to the current parent close time should expect `tecEXPIRED`, and should not treat the check as a guarantee that the window is still open when the Vault is created.
 
 Because the lifecycle fields are immutable, an Owner cannot rescue a Vault created with the wrong dates. The remedy is to delete the Vault and create a new one, which is only possible while the Vault holds no assets.

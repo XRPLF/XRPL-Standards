@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-09-04
 </pre>
 
 # Single Asset Vault
@@ -71,7 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## Amendments
 
-- `LendingProtocolV1_1` (not yet live, [XLS-65.1](./65.1/README.md)): Assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`). See [Vault fields](#312-fields), [VaultCreate fields](#321-fields), [failure conditions](#325-failure-conditions), and [state changes](#326-state-changes).
+- [`LendingProtocolV1_1`](./65.1/README.md) assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`).
 
 ## 3. Specification
 
@@ -111,10 +111,10 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
-| `LEVersion`         |    No    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Protocol-written vault schema version. Absent or `0` is legacy. Set to `1` (`CashBasis`) on create when `LendingProtocolV1_1` is enabled. Not a `VaultCreate` field. |
-| `VaultKind`         |    No    |    No    |      `number`      |    `UINT8`    |    absent     | Vault kind. Absent means `OpenEnded` (`0`). `ClosedEnded` is `1`.                                                                                      |
-| `SubscriptionDate`  |    No    |    No    |      `number`      |   `UINT32`    |     None      | Closed-ended vault: start of the investment window (ledger time). Omitted on open-ended vaults.                                                        |
-| `RedemptionDate`    |    No    |    No    |      `number`      |   `UINT32`    |     None      | Closed-ended vault: start of the redemption window (ledger time). Omitted on open-ended vaults.                                                        |
+| `LEVersion`         |   Yes    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Protocol-written vault schema version. Immutable. Absent or `0` is legacy. Set to `1` (`CashBasis`) on create when `LendingProtocolV1_1` is enabled. Not a `VaultCreate` field. |
+| `VaultKind`         |   Yes    |    No    |      `number`      |    `UINT8`    |    absent     | Vault kind. Immutable. Absent means `OpenEnded` (`0`). `ClosedEnded` is `1`.                                                                          |
+| `SubscriptionDate`  |   Yes    |    No    |      `number`      |   `UINT32`    |    absent     | Closed-ended vault: start of the investment window (ledger time). Immutable. Omitted on open-ended vaults.                                              |
+| `RedemptionDate`    |   Yes    |    No    |      `number`      |   `UINT32`    |    absent     | Closed-ended vault: start of the redemption window (ledger time). Immutable. Omitted on open-ended vaults.                                              |
 
 ##### 3.1.2.1 Flags
 
@@ -375,17 +375,18 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 ##### 3.2.5.1 Data Verification
 
-1. The `Data` field, if provided, exceeds 256 bytes. (`temMALFORMED`)
-2. The `WithdrawalPolicy` field, if provided, is not `vaultStrategyFirstComeFirstServe` (0x0001). (`temMALFORMED`)
-3. The `DomainID` field, if provided, is zero. (`temMALFORMED`)
-4. The `DomainID` field is provided without the `tfVaultPrivate` flag set. (`temMALFORMED`)
-5. The `AssetsMaximum` field, if provided, is negative. (`temMALFORMED`)
-6. The `MPTokenMetadata` field, if provided, is empty or exceeds 1024 bytes. (`temMALFORMED`)
-7. The `Scale` field is provided when the `Asset` is `XRP` or `MPT`. (`temMALFORMED`)
-8. The `Scale` field is provided, the `Asset` is an `IOU`, and `Scale` exceeds 18. (`temMALFORMED`)
-9. The `VaultKind` field is present and is not `0` (`OpenEnded`) or `1` (`ClosedEnded`). (`temMALFORMED`)
-10. The vault is open-ended (`VaultKind` absent or `0`) and `SubscriptionDate` or `RedemptionDate` is present. (`temMALFORMED`)
-11. The vault is closed-ended (`VaultKind` is `1`):
+1. Any of `VaultKind`, `SubscriptionDate`, or `RedemptionDate` is present while `LendingProtocolV1_1` is disabled. (`temDISABLED`)
+2. The `Data` field, if provided, exceeds 256 bytes. (`temMALFORMED`)
+3. The `WithdrawalPolicy` field, if provided, is not `vaultStrategyFirstComeFirstServe` (0x0001). (`temMALFORMED`)
+4. The `DomainID` field, if provided, is zero. (`temMALFORMED`)
+5. The `DomainID` field is provided without the `tfVaultPrivate` flag set. (`temMALFORMED`)
+6. The `AssetsMaximum` field, if provided, is negative. (`temMALFORMED`)
+7. The `MPTokenMetadata` field, if provided, is empty or exceeds 1024 bytes. (`temMALFORMED`)
+8. The `Scale` field is provided when the `Asset` is `XRP` or `MPT`. (`temMALFORMED`)
+9. The `Scale` field is provided, the `Asset` is an `IOU`, and `Scale` exceeds 18. (`temMALFORMED`)
+10. The `VaultKind` field is present and is not `0` (`OpenEnded`) or `1` (`ClosedEnded`). (`temMALFORMED`)
+11. The vault is open-ended (`VaultKind` absent or `0`) and `SubscriptionDate` or `RedemptionDate` is present. (`temMALFORMED`)
+12. The vault is closed-ended (`VaultKind` is `1`):
     1. `SubscriptionDate` or `RedemptionDate` is missing. (`temMALFORMED`)
     2. The gap does not satisfy `RedemptionDate >= SubscriptionDate + 180` and `RedemptionDate < SubscriptionDate + kMaxInvestmentPeriod` (30 Gregorian years in seconds). (`temMALFORMED`)
 
@@ -409,7 +410,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 5. The `PermissionedDomain` object does not exist with the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
 6. The computed _pseudo-account_ address for the new `Vault` collides with an existing account. (`terADDRESS_COLLISION`)
-7. `SubscriptionDate` or `RedemptionDate` has expired relative to ledger time. (`tecEXPIRED`) Preflight already enforces `RedemptionDate >= SubscriptionDate + 180` for closed-ended vaults, so a past `RedemptionDate` implies a past `SubscriptionDate`.
+7. `parentCloseTime >= SubscriptionDate` or `parentCloseTime >= RedemptionDate`. The comparison is inclusive: the date has expired at the parent ledger close time, not only after it. (`tecEXPIRED`) Preflight already enforces `RedemptionDate >= SubscriptionDate + 180` for closed-ended vaults, so an expired `RedemptionDate` implies an expired `SubscriptionDate`.
 8. The account submitting the transaction has insufficient `AccountRoot.Balance` for the Owner Reserve. (`tecINSUFFICIENT_RESERVE`)
 
 #### 3.2.6 State Changes
