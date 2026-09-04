@@ -46,12 +46,84 @@ def _convert_math_delimiters(html: str) -> str:
     return "".join(parts)
 
 
+_LIST_ITEM_RE = re.compile(r"^(?P<indent> *)(?P<marker>[-*+]|\d{1,9}[.)])(?P<space> +)")
+_FENCE_RE = re.compile(r"^ *(?P<fence>```+|~~~+)")
+
+
+def _shift(line: str, amount: int) -> str:
+    """Add (or, for a negative amount, remove) leading spaces from a line."""
+    if amount >= 0:
+        return " " * amount + line
+    return line[min(-amount, len(line) - len(line.lstrip(" "))) :]
+
+
+def normalize_list_indentation(content: str) -> str:
+    """Re-indent nested lists to 4 spaces per level.
+
+    GitHub (CommonMark) nests a list item whenever it is indented to the
+    parent item's content column, so `- ` parents accept 2-space children and
+    `1. ` parents accept 3-space children. Python-Markdown instead requires a
+    full tab stop (4 spaces) per level and renders anything shallower as a
+    sibling. This rewrites the indentation so both renderers agree.
+    """
+    # Each stack entry describes an open list item we are currently inside:
+    # the column its marker starts at, the column its content starts at, and
+    # its nesting depth (one tab stop per level in the rewritten output).
+    stack: list[tuple[int, int, int]] = []
+    fence: str | None = None
+    out = []
+
+    for line in content.split("\n"):
+        fence_match = _FENCE_RE.match(line)
+        if fence is not None:
+            # Inside a fenced code block: pass lines through untouched and only
+            # look for the closing fence.
+            if fence_match and fence_match.group("fence").startswith(fence):
+                fence = None
+            out.append(line)
+            continue
+
+        if fence_match:
+            # Fenced blocks are left exactly as they are: Python-Markdown only
+            # recognizes fences indented by less than a tab stop, so moving one
+            # can only ever break it.
+            fence = fence_match.group("fence")
+            out.append(line)
+            continue
+
+        if not line.strip():
+            out.append(line)
+            continue
+
+        indent = len(line) - len(line.lstrip(" "))
+        item_match = _LIST_ITEM_RE.match(line)
+
+        if item_match:
+            # Close every item whose content column this marker sits outside of.
+            while stack and indent < stack[-1][1]:
+                stack.pop()
+            depth = len(stack)
+            stack.append((indent, item_match.end(), depth))
+            out.append(_shift(line, 4 * depth - indent))
+            continue
+
+        # A continuation line (paragraph, table, code block, ...) belongs to the
+        # innermost open item whose content column it reaches.
+        while stack and indent < stack[-1][1]:
+            stack.pop()
+        shift = 4 * (stack[-1][2] + 1) - stack[-1][1] if stack else 0
+        out.append(_shift(line, shift))
+
+    return "\n".join(out)
+
+
 def convert_markdown_to_html(content: str) -> str:
     """Convert markdown content to HTML."""
     # Insert a TOC marker after the first metadata block, unless one already exists.
     if "[TOC]" not in content:
         content = re.sub(r"</pre>", "</pre>\n\n[TOC]\n\n", content, count=1)
     content = re.sub(r"\.\./(XLS-[0-9A-Za-z-]+)/README\.md", r"./\1.html", content)
+    content = normalize_list_indentation(content)
 
     md = markdown.Markdown(
         extensions=["extra", "codehilite", "toc", "tables"],
