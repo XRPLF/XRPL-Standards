@@ -69,7 +69,7 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
-## Amendments
+### 2.8. Amendments
 
 - `LendingProtocolV1_1` (not yet live) moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set, as described in [XLS-65.1](./65.1/README.md).
 - `fixCleanup3_4_0` (not yet live) admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap, as described in [XLS-65.2](./65.2/README.md).
