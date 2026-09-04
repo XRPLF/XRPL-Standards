@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-09-04
 </pre>
 
 # Single Asset Vault
@@ -68,6 +68,13 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 ### 2.7. Connecting to the Vault
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
+
+### 2.8. Amendments
+
+- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
+  - moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set
+- `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
+  - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap
 
 ## 3. Specification
 
@@ -195,7 +202,7 @@ Exchange Algorithm refers to the logic that is used to exchange assets into shar
 
 ##### 3.1.7.1 Unrealized Loss
 
-A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, we introduce a concept of "paper loss," captured by the `Vault` object's `LossUnrealized` attribute. The "paper loss" captures a potential loss the vault may experience and thus temporarily decreases the vault value. Only a protocol connected to the `Vault` may increase or decrease the `LossUnrealized` attribute.
+A well-informed depositor may learn of an incoming loss and redeem their shares early, causing the remaining depositors to bear the full loss. To discourage such behaviour, we introduce a concept of "paper loss," captured by the `Vault` object's `LossUnrealized` attribute. The "paper loss" captures a potential loss the vault may experience and thus temporarily decreases the vault value. Only a protocol connected to the `Vault` may increase or decrease the `LossUnrealized` attribute; for the [Lending Protocol](../XLS-0066-lending-protocol/README.md) that means `LoanManage` and `LoanPay` alone.
 
 The "paper loss" temporarily decreases the vault value. A malicious depositor may take advantage of this to deposit assets at a lowered price and withdraw them once the price increases.
 
@@ -319,7 +326,21 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 
 #### 3.1.10 Invariants
 
-**TBD**
+1. `Vault.AssetsAvailable >= 0`.
+2. `Vault.AssetsTotal >= 0`.
+3. `Vault.AssetsMaximum >= 0`.
+4. `Vault.AssetsAvailable <= Vault.AssetsTotal`.
+5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`. Under `fixCleanup3_4_0` the comparison admits one unit of slack at the scale of `Vault.AssetsTotal`, but only when `Vault.Asset` is not integral, i.e. an `IOU`. For `XRP` and `MPT` the comparison remains strict `<=` both before and after the amendment, because those assets have no sub-unit rounding for the slack to absorb.
+6. `Vault.LossUnrealized >= 0`. This is only enforced once `fixCleanup3_4_0` is enabled, and then for every asset type.
+7. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
+8. There is no invariant requiring `Vault.AssetsTotal <= Vault.AssetsMaximum` to hold on every modification of the entry, because `Vault.AssetsTotal` grows with accrued interest and interest is not a deposit. The cap is instead enforced per transaction:
+   1. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. This holds both before and after `fixCleanup3_4_0`.
+   2. `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it. Under `fixCleanup3_4_0` this failure applies only when the transaction supplies `AssetsMaximum` or the cap otherwise changes, so a cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
+9. `MPTokenIssuance(Vault.ShareMPTID).Issuer == Vault.Account` (the _pseudo-account_ is the issuer of vault shares).
+10. `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` field points to this vault.
+11. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of the amendment.
+12. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
+13. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction.
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -534,7 +555,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
 11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
 12. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
-13. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
+13. `Vault.AssetsMaximum` is non-zero and adding the deposited amount to `Vault.AssetsTotal` would exceed it. (`tecLIMIT_EXCEEDED`)
 
 #### 3.5.3 State Changes
 
@@ -1157,3 +1178,8 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- XLS-65.2: Single Asset Vault under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
