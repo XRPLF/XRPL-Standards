@@ -69,6 +69,10 @@ Shares represent the ownership of a portion of the vault's assets. On-chain shar
 
 A protocol connecting to a Vault must track its debt. Furthermore, the updates to the Vault state when funds are removed or added back must be handled in the transactors of the protocol. For an example, please refer to the [Lending Protocol](../XLS-0066-lending-protocol/README.md) specification.
 
+## Amendments
+
+- `fixCleanup3_4_0` (not yet live, [XLS-65.2](./65.2/README.md)): Rejects pseudo-account clawback holders and adds precision/overflow safeguards for `VaultClawback`. See [§3.7.2.2](#3722-protocol-level-failures). This PR merges into XLS-65.2, not a new patch number.
+
 ## 3. Specification
 
 ### 3.1 Ledger Entry: `Vault`
@@ -656,12 +660,16 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 
-2. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — the vault owner is burning stranded shares:
+2. If `fixCleanup3_4_0` is enabled: the `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
+
+3. `Vault.Asset` is not `XRP`, the issuer of `Vault.Asset` is the vault owner, and no `Amount` is specified (ambiguous clawback target). (`tecWRONG_ASSET`)
+
+4. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — the vault owner is burning stranded shares:
    1. The submitter is not the vault owner. (`tecNO_PERMISSION`)
    2. There are no outstanding shares (`OutstandingAmount == 0`), or the vault still holds assets (`AssetsTotal > 0` or `AssetsAvailable > 0`). (`tecNO_PERMISSION`)
    3. The `Amount` is non-zero and does not equal the total shares held by `Holder`. (`tecLIMIT_EXCEEDED`)
 
-3. If the `Amount` asset is `Vault.Asset` — the asset issuer is clawing back deposited funds:
+5. If the `Amount` asset is `Vault.Asset` — the asset issuer is clawing back deposited funds:
    1. `Vault.Asset` is `XRP` (XRP cannot be clawed back). (`tecNO_PERMISSION`)
    2. The submitter is not the issuer of `Vault.Asset`. (`tecNO_PERMISSION`)
    3. The `Holder` is the same account as the submitter (cannot clawback from yourself). (`tecNO_PERMISSION`)
@@ -669,11 +677,13 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
    5. If `Vault.Asset` is an `MPT`: `lsfMPTCanClawback` is not set on the `MPTokenIssuance`. (`tecNO_PERMISSION`)
    6. If `Vault.Asset` is an `IOU`: `lsfAllowTrustLineClawback` is not set on the issuer account, or `lsfNoFreeze` is set on the issuer account. (`tecNO_PERMISSION`)
 
-4. `Vault.Asset` is not `XRP`, the issuer of `Vault.Asset` is the vault owner, and no `Amount` is specified (ambiguous clawback target). (`tecWRONG_ASSET`)
+6. The unit of `Amount` is not the vault share (`Vault.ShareMPTID`) or `Vault.Asset`. (`tecWRONG_ASSET`)
 
-5. The computed asset or share amount to clawback is zero. (`tecPRECISION_LOSS`)
+7. The computed share amount to clawback is zero (`sharesDestroyed == 0`). (`tecPRECISION_LOSS`)
 
-6. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
+8. If `fixCleanup3_4_0` is enabled: the clawback amount is non-zero dust that would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+
+9. If `fixCleanup3_4_0` is enabled: arithmetic overflow during that check. (`tecPATH_DRY`)
 
 #### 3.7.3 State Changes
 
@@ -681,10 +691,10 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
 3. If the `Holder` is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
 
-4. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — share burn (see 3.7.2.2 item 2; the vault owner is always the submitter here, and 3.7.2.2 item 4 rejects the ambiguous case where the vault owner is also the asset `Issuer` and no `Amount` is specified):
+4. If the `Amount` asset is the vault share (`Vault.ShareMPTID`) — share burn (see 3.7.2.2 item 4; the vault owner is always the submitter here, and 3.7.2.2 item 3 rejects the ambiguous case where the vault owner is also the asset `Issuer` and no `Amount` is specified):
    1. `Vault.AssetsTotal` and `Vault.AssetsAvailable` remain unchanged (no asset transfer occurs).
 
-5. If the `Amount` asset is `Vault.Asset` — asset clawback (see 3.7.2.2 item 3; the asset `Issuer` is always the submitter here):
+5. If the `Amount` asset is `Vault.Asset` — asset clawback (see 3.7.2.2 item 5; the asset `Issuer` is always the submitter here):
    1. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{asset}$.
    2. If `Vault.Asset` is an `IOU`:
       1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
@@ -1143,3 +1153,10 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 ### A.5 Do `VaultDeposit` or `VaultWithdraw` transactions charge transfer fees?
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
+
+## Appendix C: Changelog
+
+Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-65.N:
+
+- XLS-65.1: `LendingProtocolV1_1` (not yet live) — `LEVersion`, closed-ended vault lifecycle, and `VaultDelete.MemoData`. See [65.1](./65.1/README.md). Commit SHA recorded when this patch is merged.
+- XLS-65.2: `fixCleanup3_4_0` (not yet live) — VaultClawback checks, vault invariants, and VaultSet DomainID-zero wording. See [65.2](./65.2/README.md). Commit SHA recorded when this patch is merged.
