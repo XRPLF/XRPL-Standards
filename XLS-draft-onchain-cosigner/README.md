@@ -1,9 +1,10 @@
 <pre>
   title: On-Chain Cosigner
   description: Native on-ledger proposal and multi-signature collection for XRPL transactions.
-  author: Shawn Xie, Zhiyuan Wang, Chenna Keshava B S, Mayukha Vadari
+  author: Shawn Xie <shawnxie@ripple.com>, Zhiyuan Wang (@Kassaking7), Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
   category: Amendment
   status: Draft
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/589
   created: 2026-07-14
 </pre>
 
@@ -50,7 +51,7 @@ Multi-sign is inherently signature-heavy, and this feature is designed to compos
 - **Proposal**: A `TransactionProposal` ledger object. It holds a single unsigned **proposed transaction** (the payload) and the set of signatures collected for it so far.
 - **Proposed transaction**: The transaction that will be executed on behalf of the **target account** once enough signatures are collected. It is stored, immutable, inside the proposal. (This is a distinct concept from a Batch "inner transaction".)
 - **Target account**: The account on whose behalf the proposed transaction executes — i.e. the `Account` of the proposed transaction. Its `SignerList` configuration governs the quorum.
-- **Proposer**: The account that submits `TransactionProposalCreate`. It owns the proposal object and pays its reserve. The proposer need not be a signer or the target account.
+- **Proposer**: The account that submits `TransactionProposalCreate`. It owns the proposal object and pays its reserve. The proposer must be either the **target account** — or the proposed transaction's `Delegate`, when one is present — or a member of that account's applicable `SignerList` (§5.1.1).
 - **Signer**: An account ID on the target account's applicable `SignerList` that can append its signature to the proposal, contributing its weight toward quorum. For multi-signing, this may be an unfunded AccountID derived from a public key, matching existing XRPL multi-sign behavior.
 - **Quorum**: The `SignerQuorum` value of the target account's applicable `SignerList`. Weights and quorum are **inherited unchanged** from the account's existing multi-sign configuration; this feature does not define its own quorum mechanics.
 - **Complete**: A proposal is complete when the collected signatures satisfy all of the proposed transaction's signing requirements — the target account's quorum, plus any auxiliary co-signature the transaction requires (the `Counterparty` of a `LoanSet`, the `Sponsor` of a sponsored transaction; §6.1) — or, for a `Batch`, the outer account's quorum plus a satisfied authorization for every participant account. Its `ProposedTransaction` field is then a valid signed transaction that anyone can copy and submit.
@@ -195,7 +196,11 @@ This removes only the leftover object. Signatures already copied off-ledger stay
 - Every entry in `ProposedTransaction.Signers` is a signature that was cryptographically valid over the proposed transaction (excluding its `Signers` field) at the time it was added.
 - Only the proposed transaction's signature fields change over the life of the proposal — its top-level `SigningPubKey`/`TxnSignature` (empty at creation; filled only when the target account signs with its own key, §6.1.2), `Signers`, `CounterpartySignature`, `SponsorSignature`, and `BatchSigners`. Every non-signature field is fixed at creation.
 
-### 4.7. Example JSON
+### 4.7. RPC Name
+
+**RPC Type Name:** `transaction_proposal`
+
+### 4.8. Example JSON
 
 ```json
 {
@@ -244,10 +249,10 @@ Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signin
 
 #### 5.1.1. Creation authorization
 
-Only a signer on the applicable `SignerList` may create a proposal. The `Account` submitting `TransactionProposalCreate` must be a member of:
+Only the target account, or one of its signers, may create a proposal — and when `ProposedTransaction.Delegate` is present, the `Delegate` and its signers stand in for the target account. The `Account` submitting `TransactionProposalCreate` must therefore be either:
 
-- the target account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is absent; or
-- the `Delegate` account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is present.
+- the target account itself, or a member of the target account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is absent; or
+- the `Delegate` account itself, or a member of the `Delegate`'s applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is present.
 
 Creation authorization is checked against the current ledger when the `TransactionProposalCreate` transaction is applied. It does not add a signature to `ProposedTransaction`; the proposal begins unsigned and still requires the normal signature collection and submission-time authorization checks.
 
@@ -282,7 +287,7 @@ Except for missing required fields, Data Verification failures return a `tem`-le
 5. The target account is a pseudo-account (e.g. an AMM, Vault, or LoanBroker pseudo-account) and therefore cannot authorize a transaction through a `SignerList` (`tecNO_PERMISSION`).
 6. A `TransactionProposal` with the same `ProposalID` already exists — i.e. a live proposal (owned by anyone) already targets the same account with the same `TicketSequence` (`tecDUPLICATE`, §4.1).
 7. The proposed transaction's `TicketSequence` is not a valid `Ticket` of the target account (`tefNO_TICKET`).
-8. The proposer is not a member of the applicable `SignerList` for the proposed transaction's initiator — the target account when no `Delegate` is present, or the `Delegate` when one is present (`tecNO_PERMISSION`).
+8. The proposer is neither the target account — or the `Delegate`, when one is present — nor a member of that account's applicable `SignerList` (`tecNO_PERMISSION`).
 
 ### 5.4. State Changes
 
@@ -800,25 +805,29 @@ The target account can cancel at any point in the lifecycle — even after the p
 
 Cancellation is only fully effective before a proposal is complete. If a quorum-weight of valid signatures has already been collected, an observer may have copied them and can still submit the completed transaction even after the proposal object is gone; see §13.4.
 
-### 7.3. Failure Conditions
+### 7.3. Transaction Fee
 
-#### 7.3.1. Data Verification
+**Fee Structure:** Standard. This transaction uses the standard transaction fee (currently 10 drops, subject to Fee Voting changes).
+
+### 7.4. Failure Conditions
+
+#### 7.4.1. Data Verification
 
 1. `ProposalID` is missing or malformed (`temMALFORMED`).
 
-#### 7.3.2. Protocol-Level Failures
+#### 7.4.2. Protocol-Level Failures
 
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
 2. The proposal is not terminal and `Account` is neither the `Owner` nor the target account (`tecNO_PERMISSION`).
 
-### 7.4. State Changes
+### 7.5. State Changes
 
 **On Success (`tesSUCCESS`):**
 
 - Deletes the `TransactionProposal` object.
 - Decrements the proposer's `OwnerCount` (releasing the reserve).
 
-### 7.5. Example JSON
+### 7.6. Example JSON
 
 ```json
 {
@@ -859,7 +868,7 @@ The response returns the raw ledger object plus **computed convenience fields** 
 | `proposal_id`     | string | The ID of the `TransactionProposal`.                                                                                                                                                                                                     |
 | `proposal`        | object | The raw `TransactionProposal` ledger object.                                                                                                                                                                                             |
 | `proposal_status` | string | Where the proposal is in its lifecycle: `"pending"`, `"complete"`, or `"expired"` (see below).                                                                                                                                           |
-| `signing_status`  | array  | One entry per required authorization (§8.1.3.1), in a stable order: the initiator first, then auxiliary co-signers, then batch participants.                                                                                             |
+| `signing_status`  | array  | One entry per required authorization (§8.1.3.1), in a stable order: the `account` row first, then auxiliary co-signers, then batch participants.                                                                                         |
 | `tx_blob`         | string | Present only when `proposal_status` is `"complete"`: the stored `ProposedTransaction` serialized in submit-ready binary form, so a client does not have to reassemble and re-serialize it. Providing it implies nothing beyond §8.1.3.4. |
 
 > The field is named `proposal_status`, not `status`, because `status` is already the RPC envelope's success/error indicator and the two would collide in the same JSON object.
@@ -908,12 +917,12 @@ The server derives the set of required authorizations from the stored `ProposedT
 
 | Role                | Required when                                                                                                                                                                                                                                                    | Signature slot                                                        |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `account`           | Always: the transaction's initiator — its `Account`, or its `Delegate` when present.                                                                                                                                                                             | Top-level `SigningPubKey`/`TxnSignature`, or `Signers`                |
+| `account`           | Always: the target account — or the transaction's `Delegate`, when present.                                                                                                                                                                                      | Top-level `SigningPubKey`/`TxnSignature`, or `Signers`                |
 | `counterparty`      | The transaction carries a `Counterparty`; or it is a `LoanSet` (XLS-0066) without one, in which case the required co-signer is the owner of the `LoanBroker` it names.                                                                                           | `CounterpartySignature`                                               |
 | `sponsor`           | The transaction carries a `Sponsor` (XLS-0068).                                                                                                                                                                                                                  | `SponsorSignature`, or exemption via a `Sponsorship` entry (§8.1.3.2) |
-| `batch_participant` | The transaction is a `Batch` (XLS-0056): one row per distinct inner-transaction initiator other than the outer account. Inner counterparties and inner co-signing sponsors (other than the outer account) are likewise required, reported under their own roles. | That account's `BatchSigners` entry                                   |
+| `batch_participant` | The transaction is a `Batch` (XLS-0056): one row per distinct inner-transaction `Account` other than the outer account. Inner counterparties and inner co-signing sponsors (other than the outer account) are likewise required, reported under their own roles. | That account's `BatchSigners` entry                                   |
 
-An inner transaction initiated by the outer account adds no row: the outer account authorizes all of its inners by signing the batch itself.
+An inner transaction whose `Account` is the outer account adds no row: the outer account authorizes all of its inners by signing the batch itself.
 
 ##### 8.1.3.2. Authorization, Not Cryptography
 
@@ -922,7 +931,7 @@ Each signature was cryptographically verified when `TransactionProposalSign` app
 - A single signature must be by the account's current regular key, or by its master key while the master key is enabled.
 - A collected `Signers` array is validated against the account's **live** `SignerList`, and it fails **as a whole** if _any_ collected entry is not currently authorized: an entry absent from the list, one whose master key has since been disabled, one whose regular key has since rotated, or a non-phantom entry whose account no longer exists each void the entire set at submission (`tefBAD_SIGNATURE` / `tefMASTER_DISABLED`). Otherwise the set's weight must meet the live `SignerQuorum`. Because signatures only ever accumulate on a proposal, a voided set cannot be repaired by further signing — the practical remedy is `TransactionProposalCancel` and a fresh proposal.
 - A `BatchSigners` entry for an account that does not exist yet is authorized only by that account's own master key (an earlier inner transaction may create the account).
-- A sponsor row is satisfied by a valid `SponsorSignature`, or — only while no `SponsorSignature` field has been collected at all — by an on-ledger `Sponsorship` entry between the sponsor and the initiator whose flags do not require a co-signature for what this transaction sponsors. A collected-but-no-longer-authorizing `SponsorSignature` is **not** rescued by the exemption, because submission validates a present `SponsorSignature` unconditionally.
+- A sponsor row is satisfied by a valid `SponsorSignature`, or — only while no `SponsorSignature` field has been collected at all — by an on-ledger `Sponsorship` entry between the sponsor and the target account (or the `Delegate`, when present) whose flags do not require a co-signature for what this transaction sponsors. A collected-but-no-longer-authorizing `SponsorSignature` is **not** rescued by the exemption, because submission validates a present `SponsorSignature` unconditionally.
 
 Consequently a signature that counted yesterday may not count today (disabled master key, rotated regular key, replaced `SignerList`), and `signed_weight` can even meet `quorum` while `signed` is `false` (`invalid_signer_set`). Clients must treat `signed` as authoritative and the numbers as progress detail.
 
@@ -989,7 +998,7 @@ An ordinary (non-batch) proposal mid-collection — the target multi-signs, two 
       "account": "rTARGET..........................",
       "role": "account",
       "signed": false,
-      "reason": "below_quorum",
+      "reason": "inadequate_signatures",
       "signed_weight": 2,
       "quorum": 6,
       "signers": [
@@ -1033,13 +1042,13 @@ A proposed `Batch` — the motivating case for this design. The outer account ha
       "account": "rLENDER..........................",
       "role": "counterparty",
       "signed": false,
-      "reason": "no_signature"
+      "reason": "inadequate_signatures"
     },
     {
       "account": "rPARTICIPANT.....................",
       "role": "batch_participant",
       "signed": false,
-      "reason": "below_quorum",
+      "reason": "inadequate_signatures",
       "signed_weight": 1,
       "quorum": 2,
       "signers": [
@@ -1134,7 +1143,7 @@ The proposed transaction's fee is paid by the target account when the completed 
 
 ### A.1: Who can create a proposal?
 
-Only a member of the applicable `SignerList` may create a proposal. When `ProposedTransaction.Delegate` is absent, the proposer must be a signer on the target account's applicable `SignerList` for the proposed transaction type. When `Delegate` is present, the proposer must instead be a signer on the delegate's applicable `SignerList`. The proposer owns the object and pays its reserve.
+The target account, or any of its signers — when `ProposedTransaction.Delegate` is present, the `Delegate` and its signers stand in for the target account. Either that account itself or a member of its applicable `SignerList` for the proposed transaction type may create the proposal (§5.1.1). The proposer owns the object and pays its reserve.
 
 ### A.2: Can the target account be different from the proposer?
 
