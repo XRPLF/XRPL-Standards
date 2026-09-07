@@ -84,7 +84,10 @@ Before the amendment the four lifecycle and version fields are never written, so
   "VaultKind": 1,
   "SubscriptionDate": 800000000,
   "RedemptionDate": 830000000,
-  "Asset": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" },
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+  },
   "Account": "rHXuEaRYnnJHbDeuBH5w8yPh5uwNVh5zAg",
   "ShareMPTID": "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
 }

@@ -78,7 +78,10 @@ Before the amendment, the loss inequality is strict for every asset type and adm
 ```json
 {
   "LedgerEntryType": "Vault",
-  "Asset": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" },
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+  },
   "AssetsTotal": "1010",
   "AssetsAvailable": "10",
   "AssetsMaximum": "1000",
