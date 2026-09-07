@@ -1613,7 +1613,7 @@ First, the system determines the final destination of all funds.
 
 The `Loan` object is updated to reflect the payment.
 
-3. If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#31115-state-changes) for details).
+3. If the loan was impaired (`lsfLoanImpaired` flag was set), the loan is unimpaired before the payment is processed (see [LoanManage tfLoanUnimpair](#3115-state-changes) for details).
 4. **For a Full Repayment**:
    - All outstanding balance fields (`PrincipalOutstanding`, `TotalValueOutstanding`, `ManagementFeeOutstanding`) are set to `0`.
    - `PaymentRemaining` is set to `0`.
