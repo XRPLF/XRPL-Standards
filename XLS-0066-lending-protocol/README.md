@@ -120,6 +120,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 - `LendingProtocolV1_1` (not yet live), as described in [XLS-66.1](./66.1/README.md):
   - introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
+  - requires a new `LoanBroker` to attach to a closed-ended Vault.
 
 ## 3. Specification
 
@@ -606,6 +607,12 @@ This transaction uses the standard transaction fee.
 **Precision Validation:**
 
 10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+
+##### 3.3.3.3 Protocol-Level Failures (`LendingProtocolV1_1`)
+
+When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following check is added after item 2 of [3.3.3.2](#3332-protocol-level-failures). Modifying an existing `LoanBroker` does not re-evaluate it.
+
+1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
 
 #### 3.3.4 State Changes
 

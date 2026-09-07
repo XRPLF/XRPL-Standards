@@ -6,7 +6,7 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
   status: Draft
   category: Amendment
-  requires: [XLS-66](../README.md)
+  requires: [XLS-66](../README.md), [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)
   created: 2026-09-04
   updated: 2026-09-04
 </pre>
@@ -20,33 +20,46 @@ This patch of [XLS-66](../README.md) records the changes the `LendingProtocolV1_
 The amendment makes the following changes to XLS-66:
 
 - **Principal-Only Debt Accounting** — For a Vault with `LEVersion == 1` (cash basis, see [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)), `LoanBroker.DebtTotal` tracks loan principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
+- **Closed-Ended Lending Vaults** — A new `LoanBroker` can only attach to a closed-ended Vault.
 
 ## 2. Motivation
 
 **Principal-Only Debt Accounting.** Under accrual accounting, issuing a Loan immediately increases `Vault.AssetsTotal` by the expected interest and `LoanBroker.DebtTotal` by the principal plus expected interest. The `AssetsMaximum` and `DebtMaximum` caps are therefore consumed by interest that has not been paid, and the first-loss capital requirement, which is a rate applied to `DebtTotal`, is sized against expected interest as well as principal.
 
+**Closed-Ended Lending Vaults.** An open-ended Vault allows redemptions while its assets are committed to Loans. Requiring a closed-ended Vault gives the lending protocol defined subscription, investment, and redemption phases.
+
 ## 3. Specification
 
-### 3.1 Principal-Only Debt Accounting
+### 3.1 Closed-Ended Lending Vaults
 
-#### 3.1.1 Transaction: `LoanSet`
+#### 3.1.1 Transaction: `LoanBrokerSet`
 
 ##### 3.1.1.1 Failure Conditions
 
+When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following protocol-level failure is added after item 2 of the parent specification. Modifying an existing `LoanBroker` does not re-evaluate it.
+
+1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
+
+### 3.2 Principal-Only Debt Accounting
+
+#### 3.2.1 Transaction: `LoanSet`
+
+##### 3.2.1.1 Failure Conditions
+
 For a Vault with `LEVersion == 1`, checks 6 and 14 of the parent specification do not apply, and the Broker cap checks 19 and 20 are replaced by principal-only checks:
 
-1. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested`. (`tecLIMIT_EXCEEDED`)
-2. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
+19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested`. (`tecLIMIT_EXCEEDED`)
+20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
 
 For a Vault with `LEVersion` absent, parent checks 6, 14, 19, and 20 apply unchanged.
 
-##### 3.1.1.2 State Changes
+##### 3.2.1.2 State Changes
 
 For a Vault with `LEVersion == 1`, issuing a Loan leaves `Vault.AssetsTotal` unchanged and increases `LoanBroker.DebtTotal` by `PrincipalRequested`. For a Vault with `LEVersion` absent, issuing a Loan increases `Vault.AssetsTotal` by `InterestDue` and increases `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
 
-#### 3.1.2 Transaction: `LoanPay`
+#### 3.2.2 Transaction: `LoanPay`
 
-##### 3.1.2.1 State Changes
+##### 3.2.2.1 State Changes
 
 For a Vault with `LEVersion == 1`, a payment splits into principal and interest:
 
@@ -58,15 +71,31 @@ Principal repayment does not reduce `Vault.AssetsTotal`. Because the cash-basis 
 
 For a Vault with `LEVersion` absent, the parent accrual-basis state changes apply unchanged.
 
-#### 3.1.3 Transaction: `LoanManage`
+#### 3.2.3 Transaction: `LoanManage`
 
-##### 3.1.3.1 State Changes
+##### 3.2.3.1 Failure Conditions
 
-For a Vault with `LEVersion == 1`, a default writes off principal only, because uncollected interest was never recognised. For a Vault with `LEVersion` absent, the write-off covers principal and accrued interest.
+For a Vault with `LEVersion == 1`, parent check 8 is replaced by the following principal-only impairment check:
+
+8. `tfLoanImpair` is specified and `Vault.LossUnrealized + Loan.PrincipalOutstanding > Vault.AssetsTotal - Vault.AssetsAvailable`. (`tecLIMIT_EXCEEDED`)
+
+For a Vault with `LEVersion` absent, parent check 8 applies unchanged.
+
+##### 3.2.3.2 State Changes
+
+For a Vault with `LEVersion == 1`, the parent `LoanManage` state changes use the following principal-only amounts:
+
+- For `tfLoanDefault`, `DefaultAmount = Loan.PrincipalOutstanding`.
+- For `tfLoanImpair`, `LossUnrealized = Loan.PrincipalOutstanding`.
+- For `tfLoanUnimpair`, `LossReversed = Loan.PrincipalOutstanding`.
+
+All downstream default calculations and state changes use `DefaultAmount` unchanged. For a Vault with `LEVersion` absent, the parent accrual-basis state changes apply unchanged.
 
 ## 4. Rationale
 
 **Principal-Only Debt Accounting.** Interest could have been recognised on a schedule, one payment period at a time, rather than on receipt. That was rejected because it reintroduces the original problem in a smaller form: the Vault would still credit itself with interest for a period in which the Borrower ends up not paying.
+
+**Closed-Ended Lending Vaults.** The restriction is enforced when the `LoanBroker` is created rather than for every `LoanSet`, because that is when the Vault is attached to the lending protocol.
 
 ## 5. Security Considerations
 
