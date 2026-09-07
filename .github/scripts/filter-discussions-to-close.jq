@@ -3,7 +3,7 @@
 # 1. It has a warning comment containing the unique marker
 # 2. That warning comment was posted by the bot
 # 3. That warning comment is older than WARNING_DAYS
-# 4. The discussion hasn't been updated since the warning (or updates are also old)
+# 4. There are no comments from non-bot users after the warning
 #
 # Input: GraphQL response with discussions data
 # Arguments:
@@ -39,8 +39,20 @@
 # Only proceed if the warning comment is old enough
 | select($warningComment.createdAt <= $warningCutoff)
 
-# Only proceed if the discussion hasn't been updated since the warning
-| select($discussion.updatedAt < $warningComment.createdAt)
+# Check if there are any comments from non-bot users after the warning
+# Note: We can't rely on updatedAt because the bot's warning comment itself
+# updates the discussion's updatedAt timestamp
+| (
+    (.comments.nodes // [])
+    | map(
+        select(.createdAt > $warningComment.createdAt)
+        | select(.author.login != $botLogin)
+      )
+    | length
+  ) as $nonBotCommentsAfterWarning
+
+# Only proceed if there are no comments from non-bot users after the warning
+| select($nonBotCommentsAfterWarning == 0)
 
 # Output as JSON
 | @json
