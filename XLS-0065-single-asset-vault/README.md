@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Single Asset Vault
@@ -669,7 +669,7 @@ The `VaultClawback` transaction performs a clawback from the Vault by destroying
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                                                             |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `63`      | Transaction type.                                                                                                       |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `70`      | Transaction type.                                                                                                       |
 | `VaultID`         |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                                    |
 | `Holder`          |   Yes    |       `string`       |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                                       |
 | `Amount`          |    No    | `string` or `object` |  `STAmount`   | Implicit zero | The Vault asset or Vault share amount to claw back. A zero amount means all value represented by the `Holder`'s shares. |
@@ -736,7 +736,7 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
       1. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{asset}$.
    3. If `Vault.Asset` is an `MPT`:
       1. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
-      2. Increase the `MPToken.MPTAmount` of the `Issuer` `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
+      2. Decrease the `OutstandingAmount` of the `MPTokenIssuance` for `Vault.Asset` by $\Delta_{asset}$.
 
 6. For a successful asset clawback with `fixCleanup3_4_0` enabled, the conversion that determines $\Delta_{share}$ and $\Delta_{asset}$ changes as follows:
    1. For an explicit non-zero `Amount`, converting the requested assets to shares uses `TruncateShares::Yes`, truncating the integral share count so the assets recovered by converting those shares back do not exceed the requested amount.
