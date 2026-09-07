@@ -20,6 +20,7 @@ This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_
 The amendment makes the following changes to XLS-65:
 
 - **Unmodifiable Vault Fields** — Moves the immutability check out of the Vault-specific invariant and into the generic unmodifiable-fields invariant, and in doing so widens the set from `Asset`, `Account` and `ShareMPTID` to also cover `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale`, `LEVersion`, `VaultKind`, `SubscriptionDate` and `RedemptionDate`.
+- **Closed-Ended Vault Phases** — Adds creation and transaction-phase invariants for closed-ended Vaults: their subscription and redemption dates must define a valid investment period, deposits are limited to subscription, withdrawals are blocked during investment, and loans may be originated only during investment.
 
 ## 2. Motivation
 
@@ -29,17 +30,19 @@ The identity and configuration fields are in the same position. `Sequence` and `
 
 Stating this as a ledger invariant rather than as a rule of `VaultSet` means it holds for every transaction that touches the entry, including transactions added later.
 
+**Closed-Ended Vault Phases.** Closed-ended Vaults need enforceable boundaries between accepting deposits, investing the pooled assets and allowing redemption. Applying the phase rules as invariants prevents any transactor from bypassing those boundaries.
+
 ## 3. Specification
 
-### 3.2 Unmodifiable Vault Fields
+### 3.1 Unmodifiable Vault Fields
 
-#### 3.2.1 Ledger Entry: `Vault`
+#### 3.1.1 Ledger Entry: `Vault`
 
-##### 3.2.1.1 Fields
+##### 3.1.1.1 Fields
 
 No fields are added or removed by this patch.
 
-##### 3.2.1.2 Invariants
+##### 3.1.1.2 Invariants
 
 Before the amendment, the unmodifiable set of the `Vault` entry is `Asset`, `Account` and `ShareMPTID`, enforced by the Vault-specific invariant. When the amendment is enabled the check is performed by the generic unmodifiable-fields invariant and the set is:
 
@@ -67,7 +70,7 @@ The rule applied to each field of that set is:
 
 Before the amendment the four lifecycle and version fields are never written, so their immutability has no effect on entries created earlier. The remaining fields were already written at creation and never changed by any transactor, so extending the set records an existing property rather than restricting behaviour that was previously permitted.
 
-##### 3.2.1.3 Example JSON
+##### 3.1.1.3 Example JSON
 
 ```json
 {
@@ -87,14 +90,32 @@ Before the amendment the four lifecycle and version fields are never written, so
 }
 ```
 
+### 3.2 Closed-Ended Vault Phases
+
+#### 3.2.1 Ledger Entry: `Vault`
+
+##### 3.2.1.1 Invariants
+
+When `LendingProtocolV1_1` is enabled:
+
+- A newly created closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and `RedemptionDate - SubscriptionDate` is within the protocol's valid investment-period range.
+- `VaultDeposit` may succeed only in the `Subscription` phase for a closed-ended Vault.
+- `VaultWithdraw` may not succeed in the `Investment` phase for a closed-ended Vault.
+- `LoanSet` for a closed-ended Vault may succeed only in the `Investment` phase.
+- Open-ended Vaults have `NoPhase` and are unaffected by these phase restrictions.
+
 ## 4. Rationale
 
 **Unmodifiable Vault Fields.** Enforcing immutability in an invariant check, rather than only in the transactors that write the entry, is the conservative choice: a transactor can be added or changed without the guarantee being revisited, and an invariant failure is reported rather than silently accepted.
 
 Treating the fields as immutable rather than mutable-with-conditions was chosen over allowing, for instance, a `RedemptionDate` to be brought forward. Any conditional rule needs a notion of consent from depositors, which the Vault has no way to express.
 
+**Closed-Ended Vault Phases.** Enforcing the same phase boundaries in the invariant layer provides a backstop for both the current transactors and future transaction types that may interact with a Vault.
+
 ## 5. Security Considerations
 
 **Unmodifiable Vault Fields.** The invariant is what allows a reader to cache the kind, the dates, the version and the denomination of a Vault. Without it, every consumer would have to re-read the entry before valuing shares.
 
 An implementation that adds a field to the `Vault` entry should decide explicitly whether it belongs in the unmodifiable set. A field that is left out is mutable by default, which is the less safe of the two outcomes.
+
+**Closed-Ended Vault Phases.** A transaction that bypassed the phase rules could accept capital after investment began, let assets leave while committed to loans, or originate a loan outside the period depositors accepted. The invariants cause such a transaction to fail.
