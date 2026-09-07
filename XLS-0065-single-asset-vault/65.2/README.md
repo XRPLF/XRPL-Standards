@@ -19,35 +19,35 @@ This patch of [XLS-65](../README.md) records the changes the `fixCleanup3_4_0` a
 
 The amendment makes the following changes to XLS-65:
 
-- **VaultClawback Failure Conditions** — It rejects a pseudo-account `Holder`, corrects share conversion for explicit amounts and sole shareholders, aligns recovered assets with the stored total's scale, and rejects precision loss instead of allowing a share burn with no corresponding asset change.
+- **VaultClawback Failure Conditions** — It rejects a pseudo-account `Holder`, corrects share conversion for explicit amounts and sole shareholders, aligns recovered assets with the stored total's scale, and reports precision loss before an inconsistent tentative state reaches invariant checking.
 
 ## 2. Motivation
 
 **VaultClawback Failure Conditions.** A pseudo-account holds shares on behalf of a protocol, not on behalf of a person, and it has no key that can act for it. Clawing shares back from one removes the backing of whatever the protocol accounted for, and leaves an entry that the protocol did not write and cannot reconcile. The transaction has no correct outcome in that case, so it should not be applied.
 
-The precision case is a silent no-op. `AssetsTotal` is stored at the scale of the Vault asset, so a clawback smaller than one unit at that scale burns shares while leaving the stored total unchanged, which moves value between the remaining holders. Reporting it as a precision failure tells the submitter that the amount was too small, rather than reporting success for a transaction that did nothing it was asked to do.
+`AssetsTotal` is stored at the scale of the Vault asset, so a clawback smaller than one unit at that scale can tentatively burn shares while leaving the stored total unchanged. Before the amendment, the Vault invariant rejects that inconsistent state with `tecINVARIANT_FAILED` and rolls it back. Reporting it earlier as `tecPRECISION_LOSS` gives the submitter the specific cause and avoids relying on invariant checking for expected input-dependent failure.
 
 ## 3. Specification
 
-### 3.2 VaultClawback Failure Conditions
+### 3.1 VaultClawback Failure Conditions
 
-#### 3.2.1 Transaction: `VaultClawback`
+#### 3.1.1 Transaction: `VaultClawback`
 
-##### 3.2.1.1 Fields
+##### 3.1.1.1 Fields
 
 No fields are added or removed. The existing fields relevant to this patch are:
 
-| Field Name | Required | JSON Type | Internal Type | Default Value | Description |
-| ---------- | :------: | :-------: | :-----------: | :-----------: | ----------- |
-| `VaultID` | Yes | `string` | `HASH256` | `N/A` | The ID of the Vault. |
-| `Holder` | Yes | `string` | `AccountID` | `N/A` | The account whose Vault shares are destroyed. |
-| `Amount` | No | `string` or `object` | `STAmount` | Implicit zero | The Vault asset or Vault share amount to claw back. |
+| Field Name | Required |      JSON Type       | Internal Type | Default Value | Description                                         |
+| ---------- | :------: | :------------------: | :-----------: | :-----------: | --------------------------------------------------- |
+| `VaultID`  |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the Vault.                                |
+| `Holder`   |   Yes    |       `string`       |  `AccountID`  |     `N/A`     | The account whose Vault shares are destroyed.       |
+| `Amount`   |    No    | `string` or `object` |  `STAmount`   | Implicit zero | The Vault asset or Vault share amount to claw back. |
 
 If `Amount` is omitted, the implementation constructs a zero-valued `STAmount` denominated in the Vault share MPT when the submitter is `Vault.Owner`, and in `Vault.Asset` otherwise. The zero amount means all value represented by the `Holder`'s shares. If the Vault Owner is also the issuer of a non-XRP `Vault.Asset`, `Amount` must be explicit to select between a share burn and an asset clawback.
 
-##### 3.2.1.2 Failure Conditions
+##### 3.1.1.2 Failure Conditions
 
-###### 3.2.1.2.1 Protocol-Level Failures
+###### 3.1.1.2.1 Protocol-Level Failures
 
 After data verification, failures are evaluated in these phases and in this order:
 
@@ -66,24 +66,25 @@ After data verification, failures are evaluated in these phases and in this orde
    5. For an MPT asset, `lsfMPTCanClawback` is not set. (`tecNO_PERMISSION`)
    6. For an IOU asset, `lsfAllowTrustLineClawback` is not set or `lsfNoFreeze` is set on the issuer. (`tecNO_PERMISSION`)
 6. The unit of `Amount` is neither the Vault share MPT nor `Vault.Asset`. (`tecWRONG_ASSET`)
-7. During an asset clawback, arithmetic overflows while `assetsToClawback` computes `assetsRecovered` and `sharesDestroyed`. This check is not gated on `fixCleanup3_4_0`. (`tecPATH_DRY`)
-8. The computed `sharesDestroyed` is zero. This check is not gated on `fixCleanup3_4_0`. (`tecPRECISION_LOSS`)
-9. During an asset clawback with `fixCleanup3_4_0` enabled, the computed non-zero `assetsRecovered` would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
-10. During an asset clawback with `fixCleanup3_4_0` enabled, arithmetic overflows while evaluating the preceding non-zero-dust condition. (`tecPATH_DRY`)
+7. During an asset clawback, arithmetic overflows in `assetsToClawback`. The overflow handler is not gated on `fixCleanup3_4_0`, although the amendment-gated scale clamp adds another possible source of overflow. (`tecPATH_DRY`)
+8. During an asset clawback with `fixCleanup3_4_0` enabled, `clampToAssetsTotalScale` rounds a computed non-zero `assetsRecovered` down to zero at the posterior `AssetsTotal` scale. (`tecPRECISION_LOSS`)
+9. The computed `sharesDestroyed` is zero. This check is not gated on `fixCleanup3_4_0`. (`tecPRECISION_LOSS`)
+10. During an asset clawback with `fixCleanup3_4_0` enabled, the computed non-zero `assetsRecovered` would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+11. During an asset clawback with `fixCleanup3_4_0` enabled, arithmetic overflows while evaluating the preceding non-zero-dust condition. (`tecPATH_DRY`)
 
-Before the amendment, a pseudo-account `Holder` is accepted, and a dust clawback succeeds without changing the stored assets of the Vault.
+Before the amendment, a pseudo-account `Holder` is not rejected in `preclaim`: an implicit amount reaches `tecPRECISION_LOSS`, while an explicit amount reaches `tecINVARIANT_FAILED`. A dust debit similarly reaches `tecINVARIANT_FAILED` instead of returning a specific precision error. These failures do not change the validated ledger.
 
-##### 3.2.1.3 State Changes
+##### 3.1.1.3 State Changes
 
 The ledger objects changed by a successful transaction are unchanged, but `fixCleanup3_4_0` changes how a successful asset clawback computes the shares destroyed and assets recovered:
 
 1. For an explicit non-zero `Amount`, `assetsToSharesWithdraw` uses `TruncateShares::Yes`. Because shares are integral, truncation ensures that converting the resulting shares back to assets does not recover more than the requested amount.
 2. If `Holder` owns the entire outstanding share supply, both conversion directions use `WaiveUnrealizedLoss::Yes`. The exchange-rate numerator is therefore `AssetsTotal`, not `AssetsTotal - LossUnrealized`; for an implicit zero amount, `sharesDestroyed` is read directly from `OutstandingAmount`.
-3. If the computed `assetsRecovered` is non-zero, it is passed to `clampToAssetsTotalScale` as a negative Vault delta. Integral assets pass through unchanged. For a non-integral asset, the helper determines the scale of the posterior `AssetsTotal` using nearest rounding and rounds the recovery magnitude downward to that scale. It does not recompute `sharesDestroyed`, so any trimmed sub-unit residue stays in the Vault for the remaining shareholders.
+3. If the computed `assetsRecovered` is non-zero, it is passed to `clampToAssetsTotalScale` as a negative Vault delta. Integral assets pass through unchanged. For a non-integral asset, the helper determines the scale of the posterior `AssetsTotal` using nearest rounding and rounds the recovery magnitude downward to that scale. If the rounded recovery is zero, the transaction fails with `tecPRECISION_LOSS`. Otherwise, it does not recompute `sharesDestroyed`, so any trimmed sub-unit residue stays in the Vault for the remaining shareholders.
 
 After those calculations, the transaction destroys `sharesDestroyed` shares, decreases `OutstandingAmount` by the same amount, decreases `AssetsTotal` and `AssetsAvailable` by `assetsRecovered`, and transfers `assetsRecovered` from the Vault pseudo-account to the asset issuer. A stranded-share burn by the Vault Owner destroys shares without changing or transferring Vault assets.
 
-##### 3.2.1.4 Example JSON
+##### 3.1.1.4 Example JSON
 
 ```json
 {
@@ -111,7 +112,7 @@ Overflow is reported as `tecPATH_DRY` for consistency with the other arithmetic 
 
 ## 5. Security Considerations
 
-**VaultClawback Failure Conditions.** The dust check closes a path by which repeated small clawbacks burn shares without reducing the assets of the Vault, which raises the exchange rate for the remaining holders at the expense of the Holder being clawed back.
+**VaultClawback Failure Conditions.** The dust check rejects an inconsistent tentative state before invariant checking. The invariant already prevented such a state from being committed; the amendment makes the expected failure explicit as `tecPRECISION_LOSS`.
 
 Rejecting a pseudo-account `Holder` protects an invariant of the protocol that owns the pseudo-account: its accounting assumes that shares it holds are removed only by transactions it issues.
 

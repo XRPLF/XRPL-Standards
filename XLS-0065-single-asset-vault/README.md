@@ -667,11 +667,11 @@ The `VaultClawback` transaction performs a clawback from the Vault by destroying
 
 #### 3.7.1 Fields
 
-| Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                                                    |
-| ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
-| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
-| `Holder`          |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
+| Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                                                                                             |
+| ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------- |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `63`      | Transaction type.                                                                                                       |
+| `VaultID`         |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                                    |
+| `Holder`          |   Yes    |       `string`       |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                                       |
 | `Amount`          |    No    | `string` or `object` |  `STAmount`   | Implicit zero | The Vault asset or Vault share amount to claw back. A zero amount means all value represented by the `Holder`'s shares. |
 
 #### 3.7.1.1 `Amount`
@@ -711,13 +711,15 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 6. The unit of `Amount` is not the vault share (`Vault.ShareMPTID`) or `Vault.Asset`. (`tecWRONG_ASSET`)
 
-7. While computing `assetsRecovered` and `sharesDestroyed` for an asset clawback, arithmetic overflows in `assetsToClawback`. This check is not gated on `fixCleanup3_4_0`. (`tecPATH_DRY`)
+7. While computing an asset clawback, arithmetic overflows in `assetsToClawback`. The overflow handler is not gated on `fixCleanup3_4_0`, although the amendment-gated scale clamp adds another possible source of overflow. (`tecPATH_DRY`)
 
-8. The computed share amount to claw back is zero (`sharesDestroyed == 0`). This check is not gated on `fixCleanup3_4_0`. (`tecPRECISION_LOSS`)
+8. For an asset clawback, if `fixCleanup3_4_0` is enabled: `clampToAssetsTotalScale` rounds a computed non-zero `assetsRecovered` down to zero at the posterior `AssetsTotal` scale. (`tecPRECISION_LOSS`)
 
-9. For an asset clawback, if `fixCleanup3_4_0` is enabled: the computed non-zero `assetsRecovered` is too small to change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+9. The computed share amount to claw back is zero (`sharesDestroyed == 0`). This check is not gated on `fixCleanup3_4_0`. (`tecPRECISION_LOSS`)
 
-10. For an asset clawback, if `fixCleanup3_4_0` is enabled: arithmetic overflows while evaluating the preceding non-zero-dust condition. (`tecPATH_DRY`)
+10. For an asset clawback, if `fixCleanup3_4_0` is enabled: the computed non-zero `assetsRecovered` is too small to change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+
+11. For an asset clawback, if `fixCleanup3_4_0` is enabled: arithmetic overflows while evaluating the preceding non-zero-dust condition. (`tecPATH_DRY`)
 
 #### 3.7.3 State Changes
 
@@ -739,7 +741,7 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 6. For a successful asset clawback with `fixCleanup3_4_0` enabled, the conversion that determines $\Delta_{share}$ and $\Delta_{asset}$ changes as follows:
    1. For an explicit non-zero `Amount`, converting the requested assets to shares uses `TruncateShares::Yes`, truncating the integral share count so the assets recovered by converting those shares back do not exceed the requested amount.
    2. If `Holder` is the sole shareholder, both asset-to-share and share-to-asset conversions use `WaiveUnrealizedLoss::Yes`; their exchange-rate numerator is `AssetsTotal` rather than `AssetsTotal - LossUnrealized`. For an implicit zero amount, `sharesDestroyed` is taken directly from `OutstandingAmount`.
-   3. If the computed `assetsRecovered` is non-zero, `clampToAssetsTotalScale` receives it as a negative Vault delta. Integral assets are unchanged. For non-integral assets, the helper computes the scale of the posterior total (`AssetsTotal - assetsRecovered`) using nearest rounding, then rounds the recovery magnitude downward to that scale. The share amount is not recomputed after this clamp, so any trimmed sub-unit residue remains in the Vault for the remaining shareholders.
+   3. If the computed `assetsRecovered` is non-zero, `clampToAssetsTotalScale` receives it as a negative Vault delta. Integral assets are unchanged. For non-integral assets, the helper computes the scale of the posterior total (`AssetsTotal - assetsRecovered`) using nearest rounding, then rounds the recovery magnitude downward to that scale. If the rounded recovery is zero, the transaction fails with `tecPRECISION_LOSS`. Otherwise, the share amount is not recomputed after this clamp, so any trimmed sub-unit residue remains in the Vault for the remaining shareholders.
 
 #### 3.7.4 Invariants
 
