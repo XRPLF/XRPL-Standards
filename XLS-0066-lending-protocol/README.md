@@ -614,9 +614,9 @@ This transaction uses the standard transaction fee.
    2. `DomainID` is provided, and the `tfLoanBrokerPrivate` flag is not set. (`temINVALID`)
 
 10. If `LoanBrokerID` is specified (modifying existing):
-   1. `LoanBrokerID` is empty. (`temINVALID`)
-   2. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
-   3. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
+11. `LoanBrokerID` is empty. (`temINVALID`)
+12. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
+13. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
 
 ##### 3.3.4.2 Protocol-Level Failures
 
