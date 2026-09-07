@@ -19,7 +19,7 @@ This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_
 
 The amendment makes the following changes to XLS-65:
 
-- **Closed-Ended Vault Lifecycle** — Adds an optional kind to a Vault, with subscription and redemption times that bound the commitment of a closed-ended Vault, and records the accounting model of the Vault in `LEVersion`.
+- **Closed-Ended Vault Lifecycle** — Adds an optional kind to a Vault, with subscription and redemption times that bound the commitment of a closed-ended Vault, restricts `VaultDeposit` and `VaultWithdraw` to the phases those times define, and records the accounting model of the Vault in `LEVersion`.
 
 ## 2. Motivation
 
@@ -38,18 +38,27 @@ The kind and its dates have to be immutable, because a depositor subscribes on t
 | Field Name         | Constant | Required | Internal Type | Default Value | Description                                                                                          |
 | ------------------ | :------: | :------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------------------- |
 | `LEVersion`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Protocol-written schema version of the Vault. Absent or `0` is legacy; `1` is cash-basis accounting. |
-| `VaultKind`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Kind of the Vault. Absent means `OpenEnded` (`0`); new Vaults store `0` or `1` (`ClosedEnded`).      |
+| `VaultKind`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Kind of the Vault. Absent means `OpenEnded` (`0`); only a closed-ended Vault stores `1`.             |
 | `SubscriptionDate` |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the investment window, in ledger time.                             |
 | `RedemptionDate`   |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the redemption window, in ledger time.                             |
 
-`LEVersion` is written by the protocol and is not a transaction field. New open-ended Vaults store `VaultKind = 0`; `SubscriptionDate` and `RedemptionDate` are absent.
+`LEVersion` is written by the protocol and is not a transaction field. `VaultKind` is a default-valued field: a new open-ended Vault is written with the kind `OpenEnded` (`0`), which is the default, so the field is absent from the ledger entry, as are `SubscriptionDate` and `RedemptionDate`.
 
-##### 3.1.1.2 Invariants
+##### 3.1.1.2 Phases
+
+A Vault is in one of the following lifecycle phases, derived from `VaultKind`, `SubscriptionDate`, `RedemptionDate` and the parent ledger close time:
+
+- **No phase** — the Vault is open-ended (`VaultKind` absent or `0`).
+- **Subscription** — closed-ended and `parentCloseTime <= SubscriptionDate`.
+- **Investment** — closed-ended and `SubscriptionDate < parentCloseTime < RedemptionDate`.
+- **Redemption** — closed-ended and `parentCloseTime >= RedemptionDate`.
+
+##### 3.1.1.3 Invariants
 
 - `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate` and `Vault.LEVersion` are immutable once set.
-- `Vault.SubscriptionDate` and `Vault.RedemptionDate` are present if and only if `Vault.VaultKind == 1`.
+- If `Vault.VaultKind == 1`, then `Vault.SubscriptionDate` and `Vault.RedemptionDate` are present and satisfy the window bounds of [3.1.2.2.1](#31221-data-verification). The converse — that an open-ended Vault carries neither date — is enforced in preflight only, as described in [3.1.2.2.1](#31221-data-verification).
 
-##### 3.1.1.3 Example JSON
+##### 3.1.1.4 Example JSON
 
 ```json
 {
@@ -100,7 +109,7 @@ Data verification already requires `RedemptionDate >= SubscriptionDate + 180` fo
 When the amendment is enabled, creating a Vault additionally:
 
 1. Sets `Vault.LEVersion` to `1`.
-2. Sets `Vault.VaultKind` from the transaction, defaulting to `OpenEnded` when the field is absent.
+2. Sets `Vault.VaultKind` from the transaction, defaulting to `OpenEnded` when the field is absent. The field is default-valued, so an `OpenEnded` kind leaves no `VaultKind` field on the ledger entry.
 3. Writes `Vault.SubscriptionDate` and `Vault.RedemptionDate` from the transaction when the kind is `ClosedEnded`.
 
 ##### 3.1.2.4 Example JSON
@@ -121,6 +130,30 @@ When the amendment is enabled, creating a Vault additionally:
 }
 ```
 
+#### 3.1.3 Transaction: `VaultDeposit`
+
+The amendment adds no fields to `VaultDeposit` and does not change its state changes.
+
+##### 3.1.3.1 Failure Conditions
+
+###### 3.1.3.1.1 Protocol-Level Failures
+
+1. The Vault is in the Investment or the Redemption phase. (`tecEXPIRED`)
+
+The check is evaluated in preclaim, immediately after the `tecNO_ENTRY` check that reads the Vault, and only when the amendment is enabled. A deposit into an open-ended Vault, or into a closed-ended Vault in the Subscription phase, is unaffected.
+
+#### 3.1.4 Transaction: `VaultWithdraw`
+
+The amendment adds no fields to `VaultWithdraw` and does not change its state changes.
+
+##### 3.1.4.1 Failure Conditions
+
+###### 3.1.4.1.1 Protocol-Level Failures
+
+1. The Vault is in the Investment phase. (`tecTOO_SOON`)
+
+The check is evaluated in preclaim, immediately after the `tecNO_ENTRY` check that reads the Vault, and only when the amendment is enabled. A withdrawal from an open-ended Vault, or from a closed-ended Vault in the Subscription or the Redemption phase, is unaffected.
+
 ## 4. Rationale
 
 **Closed-Ended Vault Lifecycle.** The kind is a numeric field rather than a flag so that a further lifecycle can be added without consuming another flag bit and without a combination of flags that has no meaning.
@@ -128,6 +161,8 @@ When the amendment is enabled, creating a Vault additionally:
 The minimum window of 180 seconds is a guard against a degenerate Vault whose subscription and redemption windows are effectively the same instant, not an economically meaningful term. The maximum of thirty years bounds the field to a range that ledger time can express without wrapping.
 
 Rejecting the lifecycle fields on an open-ended Vault, rather than ignoring them, keeps the ledger entry unambiguous: a reader never has to decide whether a date on an open-ended Vault means anything.
+
+The phase restrictions use two different codes because the two failures are not the same. A deposit after `SubscriptionDate` is late and can never succeed for that Vault, which is what `tecEXPIRED` says. A withdrawal during the Investment phase is early and succeeds once `RedemptionDate` is reached, which is what `tecTOO_SOON` says.
 
 ## 5. Security Considerations
 

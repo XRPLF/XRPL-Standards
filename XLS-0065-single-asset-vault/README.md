@@ -72,7 +72,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 ### 2.8. Amendments
 
 - `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
-  - assigns `LEVersion = 1` to new Vaults and introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`).
+  - assigns `LEVersion = 1` to new Vaults, introduces closed-ended Vault lifecycle fields (`VaultKind`, `SubscriptionDate`, `RedemptionDate`), and restricts `VaultDeposit` and `VaultWithdraw` by the lifecycle phase of the Vault.
 - `fixCleanup3_2_0`:
   - records the Vault _pseudo-account_'s IOU or MPT asset holding in the share `MPTokenIssuance.ReferenceHolding` field.
 
@@ -115,9 +115,16 @@ A vault has the following fields:
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                                            |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares.                          |
 | `LEVersion`         |   Yes    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Protocol-written vault schema version. Immutable. Absent or `0` is legacy. Set to `1` (`CashBasis`) on create when `LendingProtocolV1_1` is enabled. Not a `VaultCreate` field. |
-| `VaultKind`         |   Yes    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Vault kind. Immutable. Absent means `OpenEnded` (`0`). New Vaults created with `LendingProtocolV1_1` enabled store `0` or `1` (`ClosedEnded`).                                  |
+| `VaultKind`         |   Yes    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Vault kind. Immutable. Default-valued: an open-ended Vault stores nothing and absence means `OpenEnded` (`0`); only a closed-ended Vault stores a value, `1` (`ClosedEnded`).   |
 | `SubscriptionDate`  |   Yes    |    No    |      `number`      |   `UINT32`    |    absent     | Closed-ended vault: start of the investment window (ledger time). Immutable. Omitted on open-ended vaults.                                                                      |
 | `RedemptionDate`    |   Yes    |    No    |      `number`      |   `UINT32`    |    absent     | Closed-ended vault: start of the redemption window (ledger time). Immutable. Omitted on open-ended vaults.                                                                      |
+
+When `LendingProtocolV1_1` is enabled, a vault is in one of the following lifecycle phases, derived from `VaultKind`, `SubscriptionDate`, `RedemptionDate` and the parent ledger close time:
+
+- **No phase** — the vault is open-ended (`VaultKind` absent or `0`). No phase restriction applies to `VaultDeposit` or `VaultWithdraw`.
+- **Subscription** — closed-ended and `parentCloseTime <= SubscriptionDate`. Both `VaultDeposit` and `VaultWithdraw` are permitted.
+- **Investment** — closed-ended and `SubscriptionDate < parentCloseTime < RedemptionDate`. `VaultDeposit` fails with `tecEXPIRED` and `VaultWithdraw` fails with `tecTOO_SOON`.
+- **Redemption** — closed-ended and `parentCloseTime >= RedemptionDate`. `VaultDeposit` fails with `tecEXPIRED`; `VaultWithdraw` is permitted.
 
 ##### 3.1.2.1 Flags
 
@@ -341,7 +348,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 | Field Name         | Required |     JSON Type      | Internal Type |      Default Value      | Description                                                                                                                                                                                                                                                                                                                              |
 | ------------------ | :------: | :----------------: | :-----------: | :---------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `58`           | The transaction type.                                                                                                                                                                                                                                                                                                                    |
+| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `65`           | The transaction type.                                                                                                                                                                                                                                                                                                                    |
 | `Flags`            |   Yes    |      `number`      |   `UINT32`    |            0            | Specifies the flags for the Vault.                                                                                                                                                                                                                                                                                                       |
 | `Data`             |    No    |      `string`      |    `BLOB`     |                         | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                                                                                                                                                                                                          |
 | `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`          | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                                                                                                                                                                                                          |
@@ -351,8 +358,8 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `DomainID`         |    No    |      `string`      |   `HASH256`   |                         | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                                                                                                                                                                                                             |
 | `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. Must not be provided when `Asset` is `XRP` or `MPT`, where the scale is fixed at `0`; doing so is rejected with `temMALFORMED`. Only written to the `Vault` object when non-zero. |
 | `VaultKind`        |    No    |      `number`      |    `UINT8`    |         absent          | Vault kind: `0` (`OpenEnded`) or `1` (`ClosedEnded`). Absent is `OpenEnded`.                                                                                                                                                                                                                                                             |
-| `SubscriptionDate` |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault subscription time (ledger time).                                                                                                                                                                                                                                                                                      |
-| `RedemptionDate`   |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault redemption time (ledger time).                                                                                                                                                                                                                                                                                        |
+| `SubscriptionDate` |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault: start of the investment window (ledger time).                                                                                                                                                                                                                                                                        |
+| `RedemptionDate`   |    No    |      `number`      |   `UINT32`    |                         | Closed-ended vault: start of the redemption window (ledger time).                                                                                                                                                                                                                                                                        |
 
 `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are disabled unless `LendingProtocolV1_1` is enabled. If any of these fields is present without that amendment, `checkExtraFeatures` returns false and preflight rejects the transaction with `temDISABLED`.
 
@@ -421,7 +428,7 @@ The transaction creates an `AccountRoot` object for the `_pseudo-account_`. Ther
 
 1. Create a new `Vault` ledger object, linked into the `Vault.Owner`'s `DirectoryNode`. Increment the Vault Owner's `OwnerCount` by 2 (for the `Vault` object and the _pseudo-account_). When `LendingProtocolV1_1` is enabled:
    1. Set `Vault.LEVersion` to `1` (`CashBasis`).
-   2. Set `Vault.VaultKind` from the transaction (default `OpenEnded` if `VaultKind` is absent).
+   2. Set `Vault.VaultKind` from the transaction (default `OpenEnded` if `VaultKind` is absent). The field is default-valued, so an `OpenEnded` kind leaves no `VaultKind` field on the ledger entry.
    3. If the kind is `ClosedEnded`, write `Vault.SubscriptionDate` and `Vault.RedemptionDate` from the transaction.
 2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
    1. If `tfVaultShareNonTransferable` is not set: set `lsfMPTCanEscrow`, `lsfMPTCanTrade`, and `lsfMPTCanTransfer` on the `MPTokenIssuance`.
@@ -561,28 +568,29 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 > The order below reflects the evaluation order in `VaultDeposit.cpp` (preclaim, then doApply).
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
-2. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
+2. If `LendingProtocolV1_1` is enabled: the vault is in the Investment or the Redemption phase. (`tecEXPIRED`)
+3. The `Amount` asset does not match `Vault.Asset`. (`tecWRONG_ASSET`)
 
-3. If `Vault.Asset` is an `MPT`:
+4. If `Vault.Asset` is an `MPT`:
    1. The `lsfMPTCanTransfer` flag is not set in the `MPTokenIssuance` object (the asset is not transferable). (`tecNO_AUTH`)
    2. The asset is globally or individually locked for the depositor. (`tecLOCKED`)
 
-4. If `Vault.Asset` is an `IOU`:
+5. If `Vault.Asset` is an `IOU`:
    1. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
 
-5. The vault shares are locked for the depositor. (`tecLOCKED`)
+6. The vault shares are locked for the depositor. (`tecLOCKED`)
 
-6. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
+7. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
    1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
    2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
 
-7. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
-8. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
-9. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
-10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
-11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
-12. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
-13. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
+8. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
+9. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
+10. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
+11. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
+12. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
+13. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
+14. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
 
 #### 3.5.3 State Changes
 
@@ -650,27 +658,28 @@ In sections below assume the following variables:
 ##### 3.6.2.2 Protocol-Level Failures
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
-2. The `Amount` asset is neither `Vault.Asset` nor the vault share (`Vault.ShareMPTID`). (`tecWRONG_ASSET`)
-3. If `Vault.Asset` is an `IOU`:
+2. If `LendingProtocolV1_1` is enabled: the vault is in the Investment phase. (`tecTOO_SOON`)
+3. The `Amount` asset is neither `Vault.Asset` nor the vault share (`Vault.ShareMPTID`). (`tecWRONG_ASSET`)
+4. If `Vault.Asset` is an `IOU`:
    1. The asset is globally frozen, or the destination account's trust line is frozen. (`tecFROZEN`)
 
-4. If `Vault.Asset` is an `MPT`:
+5. If `Vault.Asset` is an `MPT`:
    1. The asset is globally or individually locked for the destination account. (`tecLOCKED`)
 
-5. The vault shares are frozen or locked for the submitting account. (`tecFROZEN` / `tecLOCKED`)
-6. The destination account does not have a required authorized holding for the vault asset. (`tecNO_AUTH`)
-7. The `Destination` account, if specified, does not exist on the ledger. (`tecNO_DST`)
-8. The `Destination` account, if specified, requires a destination tag but none is provided. (`tecDST_TAG_NEEDED`)
-9. The `Destination` account, if specified, requires deposit authorization and the sender is not authorized. (`tecNO_PERMISSION`)
+6. The vault shares are frozen or locked for the submitting account. (`tecFROZEN` / `tecLOCKED`)
+7. The destination account does not have a required authorized holding for the vault asset. (`tecNO_AUTH`)
+8. The `Destination` account, if specified, does not exist on the ledger. (`tecNO_DST`)
+9. The `Destination` account, if specified, requires a destination tag but none is provided. (`tecDST_TAG_NEEDED`)
+10. The `Destination` account, if specified, requires deposit authorization and the sender is not authorized. (`tecNO_PERMISSION`)
 
-10. There is insufficient liquidity to fill the request:
+11. There is insufficient liquidity to fill the request:
     1. If `Amount` is shares: the submitter holds fewer shares than `Amount`. (`tecINSUFFICIENT_FUNDS`)
     2. If `Amount` is shares: `Vault.AssetsAvailable` is less than the computed $\Delta_{asset}$. (`tecINSUFFICIENT_FUNDS`)
     3. If `Amount` is the vault asset: the submitter holds insufficient shares to cover the withdrawal. (`tecINSUFFICIENT_FUNDS`)
     4. If `Amount` is the vault asset: `Vault.AssetsAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
 
-11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
-12. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
+12. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
+13. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
 
 #### 3.6.3 State Changes
 
