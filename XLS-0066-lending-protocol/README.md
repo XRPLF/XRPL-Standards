@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-80, XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-02-26
+  updated: 2026-09-07
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -221,14 +221,15 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
 
 #### 3.1.9 Invariants
 
-_TBD_
+1. If `<LoanBroker>.lsfLoanBrokerPrivate` is set, `<LoanBroker>'.lsfLoanBrokerPrivate` must be set.
+2. If `<LoanBroker>'.DomainID` is present, `<LoanBroker>'.lsfLoanBrokerPrivate` must be set.
 
 #### 3.1.10 Example JSON
 
 ```json
 {
   "LedgerEntryType": "LoanBroker",
-  "Flags": 0,
+  "Flags": 65536,
   "PreviousTxnID": "6FCDB5135BBEA61BC2A2B07013CB9EB3015684D4536195A85D847370DECF8D0A",
   "PreviousTxnLgrSeq": 3964034,
   "Sequence": 3964022,
@@ -405,6 +406,8 @@ A Loan Issuer may want to ensure that all Borrowers meet certain legal obligatio
 The presence or absence of a Permissioned Domain does not affect the signature requirements for the `LoanSet` transaction. Both the LoanBroker Owner and the Borrower must sign the `LoanSet` transaction, ensuring that even if an account is included in the Permissioned Domain, both parties must explicitly authorise the transaction.
 
 The LoanBroker Owner can clear or change the associated Permissioned Domain. If a private LoanBroker does not have a Permissioned Domain attached, loans cannot be issued until one is configured. Removing or changing the Permissioned Domain does not affect the `LoanPay` transaction for existing or new loans. Borrowers can always make loan payments. **Note**, the LoanBroker Owner does not need credentials in the Permissioned Domain to issue a loan to a Borrower. However, if the Owner wishes to take out a loan from their own LoanBroker, they must hold the required credentials.
+
+Credential validation uses the current ledger state when a `LoanSet` transaction is applied. If the Borrower's credential is later revoked or expires, or the associated `PermissionedDomain` object is deleted, existing Loans are unaffected and remain payable. Subsequent `LoanSet` transactions are refused until the Borrower satisfies a valid Permissioned Domain configured on the LoanBroker.
 
 ### 3.2. Ledger Entry: `Loan`
 
@@ -604,11 +607,13 @@ This transaction uses the standard transaction fee.
 6. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
 7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
 
-8. If `LoanBrokerID` is **not** specified (creating new):
+8. The `LendingPermissionedDomain` amendment is not enabled and either `DomainID` is provided or the `tfLoanBrokerPrivate` flag is set. (`temDISABLED`)
+
+9. If `LoanBrokerID` is **not** specified (creating new):
    1. `DomainID` is provided and is zero. (`temMALFORMED`)
    2. `DomainID` is provided, and the `tfLoanBrokerPrivate` flag is not set. (`temINVALID`)
 
-9. If `LoanBrokerID` is specified (modifying existing):
+10. If `LoanBrokerID` is specified (modifying existing):
    1. `LoanBrokerID` is empty. (`temINVALID`)
    2. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
    3. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
@@ -630,7 +635,7 @@ This transaction uses the standard transaction fee.
 2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
 3. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
 4. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
-5. `DomainID` is provided, is non-zero and `LoanBroker.lsfLoanBrokerPrivate` flag is not set. (`tecNO_PERMISSION`)
+5. `DomainID` is provided in any form (including zero) and `LoanBroker.lsfLoanBrokerPrivate` flag is not set. (`tecNO_PERMISSION`)
 6. `DomainID` is provided, is non-zero, and the `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
 
 **Precision Validation:**
@@ -1139,7 +1144,8 @@ The account specified in the `Account` field pays the transaction fee.
 
 25. `LoanBroker.lsfLoanBrokerPrivate` flag is set:
     1. `LoanBroker.DomainID` is not set (LoanBroker is private, but domain is not configured). (`tecNO_AUTH`)
-    2. `Borrower` does not have credentials in the LoanBroker's `PermissionedDomain`. (`tecNO_AUTH` / `tecEXPIRED`)
+    2. The `PermissionedDomain` object referenced by `LoanBroker.DomainID` does not exist. (`tecOBJECT_NOT_FOUND`)
+    3. `Borrower` does not have credentials in the LoanBroker's `PermissionedDomain`. (`tecNO_AUTH` / `tecEXPIRED`)
 
 #### 3.8.6 State Changes
 
@@ -1564,6 +1570,8 @@ The management fee is calculated as a percentage of interest earned rather than 
 ## 5. Security Considerations
 
 The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due diligence and necessary off-chain checks.
+
+Private LoanBrokers additionally rely on the accepted credential issuers and the LoanBroker Owner's Permissioned Domain configuration. Credential checks provide point-in-time authorization for new Loans; revocation, expiration, or Domain deletion does not unwind an outstanding Loan or prevent repayment. LoanBroker Owners must account for that non-retroactive behavior when using credentials for compliance controls.
 
 # Appendix
 
