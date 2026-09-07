@@ -42,12 +42,12 @@ This proposal adds the optional `DomainID` field to the existing `MPTokenIssuanc
 
 | Field Name          | Constant | Required | Internal Type | Default Value | Description                                                               |
 | ------------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | `UINT16`      | `0x007e`      | Identifies this as an `MPTokenIssuance` object.                            |
+| `LedgerEntryType`   | Yes      | Yes      | `UINT16`      | `0x007e`      | Identifies this as an `MPTokenIssuance` object.                           |
 | `Flags`             | No       | Yes      | `UINT32`      | `0`           | A set of flags controlling the issuance.                                  |
 | `Issuer`            | No       | Yes      | `ACCOUNT`     | N/A           | The account that issued the MPT.                                          |
 | `Sequence`          | No       | Yes      | `UINT32`      | N/A           | The issuer sequence used to derive the issuance ID.                       |
 | `OwnerNode`         | No       | Yes      | `UINT64`      | N/A           | A hint to the issuance's page in the issuer's owner directory.            |
-| `OutstandingAmount` | No       | Yes      | `UINT64`      | `0`           | The total amount of this MPT currently held by non-issuer accounts.        |
+| `OutstandingAmount` | No       | Yes      | `UINT64`      | `0`           | The total amount of this MPT currently held by non-issuer accounts.       |
 | `PreviousTxnID`     | No       | Yes      | `HASH256`     | N/A           | The transaction that most recently modified this entry.                   |
 | `PreviousTxnLgrSeq` | No       | Yes      | `UINT32`      | N/A           | The ledger index of the most recent transaction that modified this entry. |
 | `DomainID`          | No       | No       | `HASH256`     | N/A           | The associated `PermissionedDomain` object ID.                            |
@@ -90,7 +90,7 @@ This proposal adds `DomainID` to the existing transaction. Other fields shown ar
 | ----------------- | --------- | --------- | ------------- | ----------------------- | --------------------------------------------------------- |
 | `TransactionType` | Yes       | `string`  | `UINT16`      | `MPTokenIssuanceCreate` | Identifies the transaction.                               |
 | `Account`         | Yes       | `string`  | `ACCOUNT`     | N/A                     | The MPT issuer.                                           |
-| `Flags`           | No        | `number`  | `UINT32`      | `0`                     | Must include `tfMPTRequireAuth` when `DomainID` is set.    |
+| `Flags`           | No        | `number`  | `UINT32`      | `0`                     | Must include `tfMPTRequireAuth` when `DomainID` is set.   |
 | `Fee`             | No        | `string`  | `AMOUNT`      | N/A                     | The transaction fee in drops.                             |
 | `DomainID`        | No        | `string`  | `HASH256`     | N/A                     | The ID of the permissioned domain used for authorization. |
 
@@ -132,13 +132,13 @@ This proposal adds no protocol-level failure conditions to `MPTokenIssuanceCreat
 
 This proposal adds `DomainID` to the existing transaction. Other fields shown are used by the example.
 
-| Field Name            | Required? | JSON Type | Internal Type | Default Value         | Description                                                                |
-| --------------------- | --------- | --------- | ------------- | --------------------- | -------------------------------------------------------------------------- |
-| `TransactionType`     | Yes       | `string`  | `UINT16`      | `MPTokenIssuanceSet`  | Identifies the transaction.                                                |
-| `Account`             | Yes       | `string`  | `ACCOUNT`     | N/A                   | The MPT issuer.                                                            |
-| `MPTokenIssuanceID`   | Yes       | `string`  | `UINT192`     | N/A                   | Identifies the issuance to modify.                                         |
-| `Fee`                 | No        | `string`  | `AMOUNT`      | N/A                   | The transaction fee in drops.                                              |
-| `DomainID`            | No        | `string`  | `HASH256`     | N/A                   | A domain ID to set, or all zeroes to remove the current `DomainID` field.   |
+| Field Name          | Required? | JSON Type | Internal Type | Default Value        | Description                                                               |
+| ------------------- | --------- | --------- | ------------- | -------------------- | ------------------------------------------------------------------------- |
+| `TransactionType`   | Yes       | `string`  | `UINT16`      | `MPTokenIssuanceSet` | Identifies the transaction.                                               |
+| `Account`           | Yes       | `string`  | `ACCOUNT`     | N/A                  | The MPT issuer.                                                           |
+| `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A                  | Identifies the issuance to modify.                                        |
+| `Fee`               | No        | `string`  | `AMOUNT`      | N/A                  | The transaction fee in drops.                                             |
+| `DomainID`          | No        | `string`  | `HASH256`     | N/A                  | A domain ID to set, or all zeroes to remove the current `DomainID` field. |
 
 ### 3.3.2. Failure Conditions
 
@@ -179,13 +179,13 @@ This proposal adds `DomainID` to the existing transaction. Other fields shown ar
 
 This proposal adds no fields to `Payment`. The relevant existing fields are shown for the example.
 
-| Field Name        | Required? | JSON Type | Internal Type | Default Value | Description                         |
-| ----------------- | --------- | --------- | ------------- | ------------- | ----------------------------------- |
-| `TransactionType` | Yes       | `string`  | `UINT16`      | `Payment`     | Identifies the transaction.         |
-| `Account`         | Yes       | `string`  | `ACCOUNT`     | N/A           | The sending account.                |
-| `Destination`     | Yes       | `string`  | `ACCOUNT`     | N/A           | The receiving account.              |
-| `Amount`          | Yes       | `object`  | `AMOUNT`      | N/A           | The MPT amount to deliver.           |
-| `Fee`             | No        | `string`  | `AMOUNT`      | N/A           | The transaction fee in drops.       |
+| Field Name        | Required? | JSON Type | Internal Type | Default Value | Description                   |
+| ----------------- | --------- | --------- | ------------- | ------------- | ----------------------------- |
+| `TransactionType` | Yes       | `string`  | `UINT16`      | `Payment`     | Identifies the transaction.   |
+| `Account`         | Yes       | `string`  | `ACCOUNT`     | N/A           | The sending account.          |
+| `Destination`     | Yes       | `string`  | `ACCOUNT`     | N/A           | The receiving account.        |
+| `Amount`          | Yes       | `object`  | `AMOUNT`      | N/A           | The MPT amount to deliver.    |
+| `Fee`             | No        | `string`  | `AMOUNT`      | N/A           | The transaction fee in drops. |
 
 ### 3.4.2. Failure Conditions
 
