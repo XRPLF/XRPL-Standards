@@ -2,13 +2,14 @@
   xls: 64.1
   title: Pseudo-Account under fixCleanup3_3_0
   description: Records the changes the fixCleanup3_3_0 amendment makes to XLS-64
+  implementation: https://github.com/XRPLF/rippled/pull/7382
   author: Vito Tumas (@Tapanito)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
   status: Draft
   category: Amendment
   requires: [XLS-64](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Pseudo-Account under `fixCleanup3_3_0`
@@ -42,7 +43,7 @@ A deposit into a pseudo-account must be rejected if any of the following holds, 
 | Condition                                                                               | Code                      |
 | :-------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                            | `tecFROZEN` / `tecLOCKED` |
-| The depositor is locally frozen for the asset, unless the depositor is the asset issuer  | `tecFROZEN` / `tecLOCKED` |
+| The depositor is locally frozen for the asset, unless the depositor is the asset issuer | `tecFROZEN` / `tecLOCKED` |
 | The pseudo-account is locally frozen for the asset                                      | `tecFROZEN` / `tecLOCKED` |
 
 #### 3.1.2 Withdrawal Failure Conditions
@@ -55,7 +56,7 @@ Otherwise, a withdrawal must be rejected if any of the following holds, evaluate
 | :----------------------------------------------------------------------------------------- | :------------------------ |
 | The asset is globally frozen                                                               | `tecFROZEN` / `tecLOCKED` |
 | The pseudo-account, as the source, is locally frozen for the asset                         | `tecFROZEN` / `tecLOCKED` |
-| The submitter is locally frozen for the asset **and** the submitter is not the destination  | `tecFROZEN` / `tecLOCKED` |
+| The submitter is locally frozen for the asset **and** the submitter is not the destination | `tecFROZEN` / `tecLOCKED` |
 | The destination is deep frozen for the asset                                               | `tecFROZEN` / `tecLOCKED` |
 
 The submitter check is skipped when the submitter and the destination are the same account, that is on a self-withdrawal, because a regular freeze must not stop an account from recovering its own funds from a pool. For an MPT this exemption has no practical effect: a locked holder is always blocked, because locked and deep frozen are the same state.
@@ -68,7 +69,15 @@ The destination is checked for a deep freeze rather than a regular freeze, becau
 
 Naming the two cases where a check is skipped — the issuer as destination, and the submitter as their own destination — was preferred to expressing them as additional freeze conditions. Both are exemptions from an otherwise general rule, and writing them as such keeps the general rule short.
 
-## 5. Security Considerations
+## 6. Test Plan
+
+The reference implementation tests IOU and MPT deposits and withdrawals for AMMs, Vaults, and Loan Brokers with `fixCleanup3_3_0` both enabled and disabled. The cases cover global freeze, regular and deep local freeze, MPT locks, pseudo-account freeze, the issuer-destination exemption, and self-withdrawal.
+
+## 7. Reference Implementation
+
+[XRPLF/rippled#7382](https://github.com/XRPLF/rippled/pull/7382)
+
+## 8. Security Considerations
 
 **Pseudo-Account Freeze Checks.** The pseudo-account must be checked on both paths. Omitting it lets a deposit add to, or a withdrawal draw from, a holding that an issuer has frozen, which defeats the freeze on assets that a protocol holds on behalf of its participants.
 

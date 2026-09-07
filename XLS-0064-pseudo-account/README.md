@@ -7,7 +7,7 @@ status: Draft
 category: Amendment
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
-updated: 2026-09-04
+updated: 2026-09-07
 </pre>
 
 ### Abstract
@@ -96,7 +96,7 @@ A pseudo-account must be deleted together with the associated object.
 
 ###### **Freeze Handling**
 
-Freeze semantics for pseudo-accounts differ from those of regular accounts, therefore protocols using a pseudo-account must enforce the following rules for any transaction that moves assets into or out of the pseudo-account.
+When `fixCleanup3_3_0` is enabled, freeze semantics for pseudo-accounts differ from those of regular accounts. Protocols using a pseudo-account must enforce the following rules for any transaction that moves assets into or out of the pseudo-account.
 
 Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. The checks operate on the asset transferred into or out of the pseudo-account; for a Vault deposit or withdrawal, this is the Vault's underlying asset, not its Vault Share.
 
