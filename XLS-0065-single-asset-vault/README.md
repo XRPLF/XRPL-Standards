@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Single Asset Vault
@@ -461,9 +461,9 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value |            Description             |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `60`      |         Transaction type.          |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |         Transaction type.          |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault to be deleted. |
-| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | An opaque reason for the deletion, 1–256 bytes when present. Requires the `LendingProtocolV1_1` amendment. |
+| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires the `LendingProtocolV1_1` amendment. |
 
 #### 3.4.2 Failure Conditions
 

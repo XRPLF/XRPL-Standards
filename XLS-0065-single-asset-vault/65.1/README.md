@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Single Asset Vault under `LendingProtocolV1_1`
@@ -35,7 +35,7 @@ The amendment makes the following changes to XLS-65:
 
 | Field Name | Required? | JSON Type | Internal Type | Default Value | Description                                                                                       |
 | ---------- | :-------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------ |
-| `MemoData` |    No     | `string`  |    `BLOB`     |     `N/A`     | Optional opaque deletion reason. If present, must be 1–256 bytes. Omitted is valid; empty is not. |
+| `MemoData` |    No     | `string`  |    `BLOB`     |     `N/A`     | Optional opaque deletion reason, encoded as hexadecimal. If present, the decoded value must be 1–256 bytes. Omitted is valid; empty is not. |
 
 The field is not interpreted by the protocol and is not written to any ledger entry; the Vault it describes ceases to exist in the same transaction.
 
@@ -53,7 +53,7 @@ Unchanged.
 
 #### 3.4.3 State Changes
 
-Unchanged. `MemoData` appears in the transaction and its metadata only.
+Unchanged. `MemoData` remains in the transaction record and is not written to a ledger entry or copied into transaction metadata.
 
 #### 3.4.4 Example JSON
 
@@ -70,9 +70,11 @@ Unchanged. `MemoData` appears in the transaction and its metadata only.
 
 ## 4. Rationale
 
-**Vault Deletion Memo.** The field is named `MemoData` to match the existing `Memos` field of a transaction, whose contents are likewise opaque to the protocol. A structured field, such as an enumerated reason code, was rejected: the protocol cannot verify any such code, and an enumeration fixed now would not survive contact with reasons nobody has thought of yet.
+**Vault Deletion Memo.** The standard transaction-level `Memos` array can already carry an opaque deletion reason. A dedicated top-level `MemoData` field was chosen to give this reason one predictable location and one value with a deletion-specific 256-byte bound, without requiring applications to agree on a `MemoType` convention. It reuses the existing `MemoData` serialized field rather than introducing a new field name.
 
-The 256-byte limit matches the limit on comparable arbitrary-data fields and keeps the cost of the field bounded, since it is charged at the standard transaction fee. Present empty is rejected: if `MemoData` is included, it must contain 1–256 bytes.
+A structured field, such as an enumerated reason code, was rejected: the protocol cannot verify any such code, and an enumeration fixed now would not survive contact with reasons nobody has thought of yet.
+
+The 256-byte limit is the protocol's common maximum data-payload length and keeps the serialized transaction size bounded. Present empty is rejected: if `MemoData` is included, its decoded value must contain 1–256 bytes.
 
 ## 5. Security Considerations
 
