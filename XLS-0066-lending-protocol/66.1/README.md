@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-66](../README.md), [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Lending Protocol under `LendingProtocolV1_1`
@@ -46,7 +46,13 @@ When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the followin
 
 ##### 3.2.1.1 Failure Conditions
 
-For a Vault with `LEVersion == 1`, checks 6 and 14 of the parent specification do not apply, and the Broker cap checks 19 and 20 are replaced by principal-only checks:
+The following checks are added after parent check 5 and before parent check 6. They apply to every closed-ended Vault, regardless of `LEVersion`; an open-ended Vault has no phase and skips these checks:
+
+1. The Vault is in the Subscription phase. (`tecTOO_SOON`)
+2. The Vault is in the Redemption phase. (`tecEXPIRED`)
+3. The Vault is in the Investment phase, but the final scheduled payment at `StartDate + (PaymentInterval × PaymentTotal)` leaves fewer than 60 seconds before `Vault.RedemptionDate`. (`tecNO_PERMISSION`)
+
+After these phase and schedule checks, for a Vault with `LEVersion == 1`, parent checks 6 and 14 do not apply, and the Broker cap checks 19 and 20 are replaced by principal-only checks:
 
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested`. (`tecLIMIT_EXCEEDED`)
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)

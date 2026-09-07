@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-04
+  updated: 2026-09-07
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -1103,7 +1103,13 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.8.5.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), checks 6 and 14 of [3.8.5.2](#3852-protocol-level-failures) do not apply, and checks 19 and 20 are replaced by the following; all other checks are unchanged:
+Under the `LendingProtocolV1_1` amendment, the following checks are added after check 5 and before check 6 of [3.8.5.2](#3852-protocol-level-failures). They apply to every closed-ended Vault, regardless of `LEVersion`; an open-ended Vault has no phase and skips these checks:
+
+1. The Vault is in the Subscription phase. (`tecTOO_SOON`)
+2. The Vault is in the Redemption phase. (`tecEXPIRED`)
+3. The Vault is in the Investment phase, but the final scheduled payment at `StartDate + (PaymentInterval × PaymentTotal)` leaves fewer than 60 seconds before `Vault.RedemptionDate`. (`tecNO_PERMISSION`)
+
+After these phase and schedule checks, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), checks 6 and 14 of [3.8.5.2](#3852-protocol-level-failures) do not apply, and checks 19 and 20 are replaced by the following; all other parent checks are unchanged:
 
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
@@ -2177,7 +2183,7 @@ The `valueChange` is a critical accounting mechanism that represents the change 
 
 This `valueChange` is always split between the Vault (as a change in its net interest) and the Loan Broker (as a change in the `managementFee`).
 
-**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis)**, `valueChange` has no remaining purpose. For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be computed and used exactly as described above, even while this amendment is enabled. In the pseudo-code in [A-3.3](#a-33-pseudo-code) below, `valueChange` is never used to derive the `Loan` object's own state — `loan.totalValueOutstanding`, `loan.principalOutstanding`, `loan.managementFeeOutstanding`, and `loan.roundedState`/`loan.periodicPayment` are all computed independently, directly from the amortization/re-amortization formulas (see `compute_late_payment_interest`, `compute_full_payment`, and `try_overpayment`). `valueChange` is *only* ever returned so that [`LoanPay`](#3115-state-changes) can reconcile `Vault.AssetsTotal` and `LoanBroker.DebtTotal` against it. Since the amendment removes that reconciliation entirely (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)), `valueChange` becomes dead output under the amendment — an implementation only supporting `LendingProtocolV1_1` need not compute it at all. `principalPaid`, `interestPaid`, and `feePaid` are unaffected and continue to be computed and used exactly as described here.
+**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis)**, `valueChange` has no remaining purpose. For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be computed and used exactly as described above, even while this amendment is enabled. In the pseudo-code in [A-3.3](#a-33-pseudo-code) below, `valueChange` is never used to derive the `Loan` object's own state — `loan.totalValueOutstanding`, `loan.principalOutstanding`, `loan.managementFeeOutstanding`, and `loan.roundedState`/`loan.periodicPayment` are all computed independently, directly from the amortization/re-amortization formulas (see `compute_late_payment_interest`, `compute_full_payment`, and `try_overpayment`). `valueChange` is _only_ ever returned so that [`LoanPay`](#3115-state-changes) can reconcile `Vault.AssetsTotal` and `LoanBroker.DebtTotal` against it. Since the amendment removes that reconciliation entirely (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)), `valueChange` becomes dead output under the amendment — an implementation only supporting `LendingProtocolV1_1` need not compute it at all. `principalPaid`, `interestPaid`, and `feePaid` are unaffected and continue to be computed and used exactly as described here.
 
 #### A-3.2.1 Regular Payment
 

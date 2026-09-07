@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Single Asset Vault under `LendingProtocolV1_1`
@@ -35,8 +35,8 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 
 ##### 3.3.1.1 Fields
 
-| Field Name  | Constant | Required | Internal Type | Default Value | Description                                                              |
-| ----------- | :------: | :------: | :-----------: | :-----------: | ------------------------------------------------------------------------ |
+| Field Name  | Constant | Required | Internal Type | Default Value | Description                                                                                                            |
+| ----------- | :------: | :------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------------------------------------- |
 | `LEVersion` |   Yes    |    No    |    `UINT8`    | absent (`0`)  | The accounting model the Vault applies to `AssetsTotal`. Absent is treated as `0` (accrual basis). Immutable once set. |
 
 ##### 3.3.1.2 `LEVersion`
@@ -46,12 +46,13 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 - `LEVersion` absent (treated as `0`, accrual basis): `AssetsTotal` includes the interest accrued over the life of the connected Loans. This is the pre-amendment behaviour and continues to apply to every Vault created before the amendment was enabled.
 - `LEVersion = 1` (cash basis): `AssetsTotal` excludes uncollected interest and increases only as interest is collected in cash.
 
-The field is immutable. A Vault created while the amendment is enabled is always cash-basis, and a Vault created before it is always accrual-basis; neither can be converted to the other.
+The field is written once by `VaultCreate` and is immutable after creation. A Vault created while the amendment is enabled is always cash-basis, and a Vault created before it is always accrual-basis; neither can be converted to the other.
 
 ##### 3.3.1.3 Invariants
 
 - `Vault.LEVersion` is immutable once set.
-- `Vault.LEVersion` is either absent or `1`.
+
+Because `VaultCreate` is the only transaction that writes `LEVersion`, newly created Vaults have either an absent `LEVersion` or `LEVersion = 1`.
 
 ##### 3.3.1.4 Example JSON
 
@@ -59,10 +60,12 @@ The field is immutable. A Vault created while the amendment is enabled is always
 {
   "LedgerEntryType": "Vault",
   "LEVersion": 1,
-  "Asset": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" },
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+  },
   "AssetsTotal": "1000",
-  "AssetsAvailable": "1000",
-  "SharesTotal": "1000"
+  "AssetsAvailable": "1000"
 }
 ```
 
