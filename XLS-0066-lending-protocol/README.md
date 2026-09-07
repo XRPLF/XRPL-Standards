@@ -1269,15 +1269,15 @@ This transaction uses the standard transaction fee.
      - If `Vault.LEVersion = 1`, use `Loan.PrincipalOutstanding`.
      - Otherwise, use `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + net interest owed to the Vault).
    - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
-   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`. Both rate multiplications round upward. The result of capping the liquidation amount by `DefaultAmount` is rounded upward to `Loan.LoanScale`, then capped by `LoanBroker.CoverAvailable`.
+   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`. Both rate multiplications round upward. The result of capping the liquidation amount by `DefaultAmount` is rounded upward to `Loan.LoanScale`, then capped by `LoanBroker.CoverAvailable`. Rounding upward after the `DefaultAmount` cap cannot raise `DefaultCovered` above `DefaultAmount`, because `DefaultAmount` is computed from `Loan` fields that are already stored at `Loan.LoanScale`.
    - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
    - Update `Vault` object:
      - Decrease `Vault.AssetsTotal` by `VaultLoss`, rounded downward to the Vault asset's scale.
      - Increase `Vault.AssetsAvailable` by `DefaultCovered`.
      - If `Loan.Flags` has `lsfLoanImpaired` set:
-       - Decrease `Vault.LossUnrealized` by `DefaultAmount`, rounded to the Vault asset's scale.
+       - Decrease `Vault.LossUnrealized` by `DefaultAmount`. The resulting value, not the decrement, is rounded to the nearest value representable at the Vault asset's scale, ties to even, and clamped at zero.
    - Update `LoanBroker` object:
-     - Decrease `LoanBroker.DebtTotal` by `DefaultAmount`, rounded to the Vault asset's scale.
+     - Decrease `LoanBroker.DebtTotal` by `DefaultAmount`. The resulting value, not the decrement, is rounded to the nearest value representable at the Vault asset's scale, ties to even, and clamped at zero.
      - Decrease `LoanBroker.CoverAvailable` by `DefaultCovered`.
    - Update `Loan` object:
      - Set `lsfLoanDefault` flag.
@@ -1966,7 +1966,7 @@ $$
 
 > Note: Both rate multiplications round **up**. The liquidation amount is first capped by `DefaultAmount`, then rounded up to the loan asset's scale, and finally capped by `CoverAvailable`.
 
-After calculating coverage, `Vault.AssetsTotal` is reduced by `DefaultAmount - DefaultCovered` rounded downward to the Vault asset's scale. Adjustments to `Vault.LossUnrealized` and `LoanBroker.DebtTotal` are rounded to the Vault asset's scale and clamped at zero.
+After calculating coverage, `Vault.AssetsTotal` is reduced by `DefaultAmount - DefaultCovered` rounded downward to the Vault asset's scale. For `Vault.LossUnrealized` and `LoanBroker.DebtTotal`, the resulting value is rounded to the nearest value representable at the Vault asset's scale, ties to even, and clamped at zero.
 
 **Process:**
 
