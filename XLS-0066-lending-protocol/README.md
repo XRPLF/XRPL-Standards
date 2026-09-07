@@ -984,9 +984,9 @@ The transaction creates a new `Loan` object.
 | `LoanBrokerID`            |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                       | The Loan Broker ID associated with the loan.                                                                                                  |
 | `Flags`                   |    No    | `number`  |   `UINT32`    |       0       |                       | Specifies the flags for the Loan.                                                                                                             |
 | `Data`                    |    No    | `string`  |    `BLOB`     |     None      |                       | Arbitrary metadata in hex format. The field is limited to 256 bytes.                                                                          |
-| `Borrower`                |    No    | `string`  |  `ACCOUNTID`  |     `N/A`     | `LendingProtocolV1_1` | The address of the Borrower. Used in the two-step loan creation flow. Only the `LoanBroker.Owner` may set this field.                         |
+| `Borrower`                | Conditional | `string`  |  `ACCOUNTID`  |     `N/A`     | `LendingProtocolV1_1` | The address of the Borrower. Required in the two-step loan creation flow. Only the `LoanBroker.Owner` may set this field.                     |
 | `Counterparty`            |    No    | `string`  |  `ACCOUNTID`  |     `N/A`     |                       | The address of the counterparty of the Loan.                                                                                                  |
-| `CounterpartySignature`   |   Yes    | `string`  |  `STOBJECT`   |     `N/A`     |                       | The signature of the counterparty over the transaction.                                                                                       |
+| `CounterpartySignature`   | Conditional | `string`  |  `STOBJECT`   |     `N/A`     |                       | The signature of the counterparty over the transaction. Required for a non-Batch single-transaction flow.                                    |
 | `LoanOriginationFee`      |    No    | `string`  |   `NUMBER`    |       0       |                       | A nominal funds amount paid to the `LoanBroker.Owner` when the Loan is created.                                                               |
 | `LoanServiceFee`          |    No    | `string`  |   `NUMBER`    |       0       |                       | A nominal amount paid to the `LoanBroker.Owner` with every Loan payment.                                                                      |
 | `LatePaymentFee`          |    No    | `string`  |   `NUMBER`    |       0       |                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
@@ -1000,6 +1000,7 @@ The transaction creates a new `Loan` object.
 | `PaymentTotal`            |    No    | `number`  |   `UINT32`    |       1       |                       | The total number of payments to be made against the Loan.                                                                                     |
 | `PaymentInterval`         |    No    | `number`  |   `UINT32`    |      60       |                       | Number of seconds between Loan payments.                                                                                                      |
 | `GracePeriod`             |    No    | `number`  |   `UINT32`    |      60       |                       | The number of seconds after the Loan's Payment Due Date can be Defaulted.                                                                     |
+| `StartDate`               | Conditional | `number`  |   `UINT32`    |     `N/A`     | `LendingProtocolV1_1` | The timestamp when the Loan starts. Required in the two-step flow, where the Loan proposal expires at this timestamp.                         |
 
 ##### 3.8.1.1 `CounterpartySignature`
 
@@ -1030,7 +1031,14 @@ This field is not a signing field (it will not be included in transaction signat
 
 #### 3.8.3 Signing
 
-There are two flows for creating a Loan: the **single-transaction flow** using `CounterpartySignature`, and the **two-step flow** introduced by `LendingProtocolV1_1`. The LoanBroker Owner can choose either `Counterparty` and `CounterpartySignature` (single-transaction), or `Borrower` (two-step). Both fields must not be specified simultaneously.
+There are two flows for creating a Loan: the **single-transaction flow** using `CounterpartySignature`, and the **two-step flow** introduced by `LendingProtocolV1_1`. The LoanBroker Owner can choose either `Counterparty` and `CounterpartySignature` (single-transaction), or `Borrower` and `StartDate` (two-step). The two alternatives are mutually exclusive.
+
+A `LoanSet` transaction is a two-step proposal if and only if all of the following hold:
+
+1. The `Counterparty` field is not specified, and
+2. The `CounterpartySignature` field is not specified, and
+3. The `Borrower` field is specified, and
+4. The `StartDate` field is specified.
 
 ##### 3.8.3.1 Single-Transaction Flow (CounterpartySignature)
 
@@ -1063,10 +1071,10 @@ Either of the parties (Borrower or Loan Issuer) may initiate the transaction. Th
 The two-step flow eliminates the need for custom multi-party signing. Instead, loan creation is split into two independent, standard-signature transactions.
 
 - **Step 1 — Proposal** (Loan Broker):
-  1. The `LoanBroker.Owner` creates a `LoanSet` transaction, setting the loan terms and the `Borrower` field to the Borrower's account ID.
+  1. The `LoanBroker.Owner` creates a `LoanSet` transaction, setting the loan terms, the `Borrower` field to the Borrower's account ID, and the `StartDate` field to the timestamp by which the proposal must be accepted.
   2. The `LoanBroker.Owner` signs and submits the transaction.
   3. A `Loan` object is created in a **pending** state (`lsfLoanPending` flag is set). Funds are not transferred; instead, `Vault.AssetsAvailable` is decremented and `Vault.AssetsReserved` is incremented by `PrincipalRequested`.
-  4. The Loan must be accepted before the `StartDate`. If `Loan` is not accepted by the `StartDate`, the proposal expires. `LoanDelete` must be submitted to reclaim `Vault.AssetsReserved`.
+  4. The Loan must be accepted before the `StartDate`. If `Loan` is not accepted by the `StartDate`, the proposal expires. The pending `Loan` object is not removed automatically; `LoanDelete` must be submitted to delete it and reclaim `Vault.AssetsReserved`.
 
 - **Step 2 — Acceptance** (Borrower):
   1. The `Borrower` creates a `LoanAccept` transaction with the `LoanID` field pointing to the pending `Loan` object.
@@ -1081,6 +1089,8 @@ The account specified in the `Account` field pays the transaction fee.
 #### 3.8.5 Failure Conditions
 
 ##### 3.8.5.1 Data Verification
+
+If `LendingProtocolV1_1` is not enabled, specifying `Borrower` or `StartDate` fails with `temDISABLED`.
 
 1. `LoanBrokerID` is specified and is zero. (`temINVALID`)
 2. `CounterpartySignature` is not present and the transaction is not part of a `Batch` inner transaction and the `Borrower` field is not specified. (`temBAD_SIGNER`)
@@ -1100,6 +1110,8 @@ The account specified in the `Account` field pays the transaction fee.
 16. `PaymentTotal <= 0`. (`temINVALID`)
 17. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
 18. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
+19. `StartDate` is specified and either the `Counterparty` or the `CounterpartySignature` field is specified. (`temINVALID`)
+20. `Borrower` is specified and `StartDate` is not specified. (`temINVALID`)
 
 ##### 3.8.5.2 Protocol-Level Failures
 
@@ -1134,8 +1146,9 @@ The following additional failure conditions apply when the `Borrower` field is s
 
 1. The `Account` submitting the transaction is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 2. The `LoanBroker.Owner` does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
-3. All Data Validation checks from [3.8.5.1](#3851-data-verification) apply.
-4. All Protocol-Level checks from [3.8.5.2](#3852-protocol-level-failures) apply, except check 21 (Borrower reserve — the Loan Broker covers the reserve at proposal time).
+3. The current ledger timestamp is greater than or equal to the `StartDate` (the proposal would be created already expired). (`tecEXPIRED`)
+4. All Data Validation checks from [3.8.5.1](#3851-data-verification) apply.
+5. All Protocol-Level checks from [3.8.5.2](#3852-protocol-level-failures) apply, except check 21 (Borrower reserve — the Loan Broker covers the reserve at proposal time).
 
 #### 3.8.6 State Changes
 
@@ -1180,9 +1193,9 @@ The following state changes apply when the `Borrower` field is set (loan proposa
 3. Update `Vault` object:
    - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
    - Increase `Vault.AssetsReserved` by `PrincipalRequested`.
-   - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
+   - For an accrual-basis Vault, increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee). For a cash-basis Vault, do not change `Vault.AssetsTotal`.
 4. Update `LoanBroker` object:
-   - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
+   - For an accrual-basis Vault, increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`. For a cash-basis Vault, increase it by `PrincipalRequested`.
    - Increment `LoanBroker.OwnerCount` by `1`.
    - Increment `LoanBroker.LoanSequence` by `1`.
 5. Directory linking:
@@ -1262,7 +1275,7 @@ The transaction accepts a pending `Loan` object created by the Loan Broker in th
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                    |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `84`      | The transaction type.                          |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `83`      | The transaction type.                          |
 | `LoanID`          |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the pending `Loan` object to accept. |
 
 #### 3.9.2 Transaction Fee
@@ -1270,6 +1283,8 @@ The transaction accepts a pending `Loan` object created by the Loan Broker in th
 This transaction uses the standard transaction fee.
 
 #### 3.9.3 Failure Conditions
+
+If `LendingProtocolV1_1` is not enabled, this transaction fails with `temDISABLED`.
 
 ##### 3.9.3.1 Data Verification
 
@@ -1281,7 +1296,8 @@ This transaction uses the standard transaction fee.
 2. The `Loan` object does not have the `lsfLoanPending` flag set. (`tecNO_PERMISSION`)
 3. The `Account` submitting the transaction is not the `Loan.Borrower`. (`tecNO_PERMISSION`)
 4. The current ledger timestamp is greater than or equal to `Loan.StartDate` (the proposal has expired). (`tecEXPIRED`)
-   - The `Loan Broker` or the `Borrower` must submit `LoanDelete` transaction to restore the reserved assets.
+   - The pending `Loan` object is **not** deleted and none of its fields are modified.
+   - The `Loan Broker` or the `Borrower` must submit an explicit `LoanDelete` transaction to delete the pending `Loan` and restore the reserved assets.
 5. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
 6. The Vault _pseudo-account_ is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 7. The LoanBroker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
@@ -1386,9 +1402,9 @@ The following state changes apply when deleting a pending Loan (`lsfLoanPending`
 3. Update `Vault` object:
    - Increase `Vault.AssetsAvailable` by `Loan.PrincipalOutstanding`.
    - Decrease `Vault.AssetsReserved` by `Loan.PrincipalOutstanding`.
-   - Decrease `Vault.AssetsTotal` by `InterestDue` (reverses the interest that was added at proposal time).
+   - For an accrual-basis Vault, decrease `Vault.AssetsTotal` by `InterestDue` (reverses the interest added at proposal time). For a cash-basis Vault, do not change `Vault.AssetsTotal`.
 4. Update `LoanBroker` object:
-   - Decrease `LoanBroker.DebtTotal` by `Loan.PrincipalOutstanding + InterestDue`.
+   - For an accrual-basis Vault, decrease `LoanBroker.DebtTotal` by `Loan.PrincipalOutstanding + InterestDue`. For a cash-basis Vault, decrease it by `Loan.PrincipalOutstanding`.
    - Decrement `LoanBroker.OwnerCount` by `1`.
 5. Release the reserve from the Loan Broker: Decrement `AccountRoot(LoanBroker.Owner).OwnerCount` by `1`.
 
@@ -1528,7 +1544,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                               |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `83`      | The transaction type.                     |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `84`      | The transaction type.                     |
 | `LoanID`          |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
 | `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
 | `Flags`           |    No    |       `number`       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
