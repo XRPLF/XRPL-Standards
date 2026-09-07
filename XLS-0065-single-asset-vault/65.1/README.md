@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-07
 </pre>
 
 # Single Asset Vault under `LendingProtocolV1_1`
@@ -35,14 +35,14 @@ The kind and its dates have to be immutable, because a depositor subscribes on t
 
 ##### 3.1.1.1 Fields
 
-| Field Name         | Constant | Required | Internal Type | Default Value | Description                                                                                             |
-| ------------------ | :------: | :------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------- |
-| `LEVersion`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Protocol-written schema version of the Vault. Absent or `0` is legacy; `1` is cash-basis accounting.     |
-| `VaultKind`        |   Yes    |    No    |    `UINT8`    |    absent     | Kind of the Vault. Absent means `OpenEnded` (`0`); `ClosedEnded` is `1`.                                 |
-| `SubscriptionDate` |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the investment window, in ledger time.                                 |
-| `RedemptionDate`   |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the redemption window, in ledger time.                                 |
+| Field Name         | Constant | Required | Internal Type | Default Value | Description                                                                                          |
+| ------------------ | :------: | :------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------------------- |
+| `LEVersion`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Protocol-written schema version of the Vault. Absent or `0` is legacy; `1` is cash-basis accounting. |
+| `VaultKind`        |   Yes    |    No    |    `UINT8`    | absent (`0`)  | Kind of the Vault. Absent means `OpenEnded` (`0`); new Vaults store `0` or `1` (`ClosedEnded`).      |
+| `SubscriptionDate` |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the investment window, in ledger time.                             |
+| `RedemptionDate`   |   Yes    |    No    |   `UINT32`    |    absent     | Closed-ended Vault only: start of the redemption window, in ledger time.                             |
 
-`LEVersion` is written by the protocol and is not a transaction field. The three lifecycle fields are absent on an open-ended Vault.
+`LEVersion` is written by the protocol and is not a transaction field. New open-ended Vaults store `VaultKind = 0`; `SubscriptionDate` and `RedemptionDate` are absent.
 
 ##### 3.1.1.2 Invariants
 
@@ -58,7 +58,10 @@ The kind and its dates have to be immutable, because a depositor subscribes on t
   "VaultKind": 1,
   "SubscriptionDate": 800000000,
   "RedemptionDate": 830000000,
-  "Asset": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" },
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+  },
   "AssetsTotal": "1000",
   "AssetsAvailable": "1000"
 }
@@ -70,7 +73,7 @@ The kind and its dates have to be immutable, because a depositor subscribes on t
 
 | Field Name         | Required? | JSON Type | Internal Type | Default Value | Description                                                             |
 | ------------------ | :-------: | :-------: | :-----------: | :-----------: | ----------------------------------------------------------------------- |
-| `VaultKind`        |    No     | `number`  |    `UINT8`    |    absent     | Kind of the Vault: `0` (`OpenEnded`) or `1` (`ClosedEnded`).             |
+| `VaultKind`        |    No     | `number`  |    `UINT8`    |    absent     | Kind of the Vault: `0` (`OpenEnded`) or `1` (`ClosedEnded`).            |
 | `SubscriptionDate` |    No     | `number`  |   `UINT32`    |    absent     | Start of the investment window of a closed-ended Vault, in ledger time. |
 | `RedemptionDate`   |    No     | `number`  |   `UINT32`    |    absent     | Start of the redemption window of a closed-ended Vault, in ledger time. |
 
@@ -108,7 +111,10 @@ When the amendment is enabled, creating a Vault additionally:
   "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
   "Fee": "10",
   "Sequence": 12345,
-  "Asset": { "currency": "USD", "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" },
+  "Asset": {
+    "currency": "USD",
+    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
+  },
   "VaultKind": 1,
   "SubscriptionDate": 800000000,
   "RedemptionDate": 830000000
