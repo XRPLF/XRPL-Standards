@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-01-14
+  updated: 2026-09-07
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -118,7 +118,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ## Amendments
 
-- `fixCleanup3_4_0` (not yet live, [XLS-66.2](./66.2/README.md)): prevents impairing a loan before it is late and stops impairment/unimpairment from rewriting `NextPaymentDueDate`. See [impairment](#3210-impairment), [LoanManage failure conditions](#3104-failure-conditions), and [state changes](#3105-state-changes). This PR merges into XLS-66.2, not a new patch number.
+- `fixCleanup3_4_0` (not yet live, [XLS-66.2](./66.2/README.md)): prevents impairing a loan before it is late, stops impairment/unimpairment from rewriting `NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive. See [impairment](#3210-impairment), [LoanManage failure conditions](#3104-failure-conditions), [LoanManage state changes](#3105-state-changes), and [LoanPay failure conditions](#3114-failure-conditions).
 
 ## 3. Specification
 
@@ -547,7 +547,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-Once a payment becomes overdue, impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Under the `fixCleanup3_4_0` amendment, impairment does not modify the Loan's `NextPaymentDueDate` and has no effect on default timing, which is determined solely by `NextPaymentDueDate` and `GracePeriod`. Without `fixCleanup3_4_0`, impairing a loan that is not yet late moves `NextPaymentDueDate` to the current ledger time, and unimpairing may rewrite `NextPaymentDueDate` (restoring the original interval due date if still in the future, otherwise `now + PaymentInterval`). If the Borrower makes a payment, the impairment status is automatically cleared.
+Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment becomes overdue, and impairment does not modify the Loan's `NextPaymentDueDate`. Without `fixCleanup3_4_0`, a Loan can be impaired before its payment is overdue; doing so moves `NextPaymentDueDate` to the current ledger close time, and unimpairing may rewrite `NextPaymentDueDate` (restoring the original interval due date if it is still in the future, otherwise using the current ledger close time plus `PaymentInterval`). If the Borrower makes a payment, the impairment status is automatically cleared.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
@@ -1253,7 +1253,9 @@ This transaction uses the standard transaction fee.
 3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan). (`tecNO_PERMISSION`)
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
-6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
+6. `tfLoanDefault` is specified and either:
+   - `fixCleanup3_4_0` is enabled and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`; or
+   - `fixCleanup3_4_0` is not enabled and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`. (`tecTOO_SOON`)
 7. `fixCleanup3_4_0` is enabled, `tfLoanImpair` flag is specified, and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
 8. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 9. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
@@ -1369,7 +1371,7 @@ This transaction uses the standard transaction fee.
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
 10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-11. The payment is late (`currentTime > Loan.NextPaymentDueDate`) and the `tfLoanLatePayment` flag is not specified in the transaction. (`tecEXPIRED`)
+11. The `tfLoanLatePayment` flag is not specified and the payment is late: `currentTime > Loan.NextPaymentDueDate` when `fixCleanup3_4_0` is enabled, or `currentTime >= Loan.NextPaymentDueDate` when it is not enabled. (`tecEXPIRED`)
 12. The payment is late and the `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`). (`tecINSUFFICIENT_PAYMENT`)
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
@@ -2525,15 +2527,20 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         newLoanProperties
     )
 
+function is_payment_late(currentTime):
+    if is_enabled(fixCleanup3_4_0):
+        return loan.nextPaymentDueDate < currentTime
+    return loan.nextPaymentDueDate <= currentTime
+
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
 
-    if loan.nextPaymentDueDate < currentTime and not is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and not is_set(tfLoanLatePayment):
         return "loan payment is late" error
 
     # ======== STEP 1: Process Late Payment ======== #
-    if loan.nextPaymentDueDate < currentTime and is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and is_set(tfLoanLatePayment):
         let (principal, interest, managementFee) = compute_payment_due(amount)
         let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
 
@@ -2670,7 +2677,4 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
-
-- XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md). Commit SHA recorded when this patch is merged.
-- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md). Commit SHA recorded when this patch is merged.
+- XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment, no impairment/unimpairment rewrite of `NextPaymentDueDate`, and exclusive due-date and grace-period boundaries. See [XLS-66.2](./66.2/README.md).
