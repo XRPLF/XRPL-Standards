@@ -33,8 +33,8 @@ The amendment makes the following changes to XLS-65:
 
 #### 3.4.1 Fields
 
-| Field Name | Required? | JSON Type | Internal Type | Default Value | Description                                                                                       |
-| ---------- | :-------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------ |
+| Field Name | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                                 |
+| ---------- | :-------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------ |
 | `MemoData` |    No     | `string`  |    `BLOB`     |     `N/A`     | Optional opaque deletion reason, encoded as hexadecimal. If present, the decoded value must be 1–256 bytes. Omitted is valid; empty is not. |
 
 The field is not interpreted by the protocol and is not written to any ledger entry; the Vault it describes ceases to exist in the same transaction.

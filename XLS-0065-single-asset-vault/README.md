@@ -459,10 +459,10 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 #### 3.4.1 Fields
 
-| Field Name        | Required | JSON Type | Internal Type | Default Value |            Description             |
-| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |         Transaction type.          |
-| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault to be deleted. |
+| Field Name        | Required | JSON Type | Internal Type | Default Value |                                                                       Description                                                                        |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                                                    Transaction type.                                                                     |
+| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                            The ID of the vault to be deleted.                                                            |
 | `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires the `LendingProtocolV1_1` amendment. |
 
 #### 3.4.2 Failure Conditions
