@@ -322,12 +322,6 @@ printf '%s\n' "$jq_output" | while IFS= read -r discussion; do
         echo ""
         continue
       fi
-
-      # Step 3: Lock the discussion to prevent further comments
-      echo "  Locking discussion..."
-      if ! gh api graphql -f query='mutation($discussionId: ID!) { lockLockable(input: {lockableId: $discussionId}) { lockedRecord { locked } } }' -f discussionId="$DISCUSSION_ID"; then
-        echo "  Warning: Failed to lock discussion #$DISCUSSION_NUMBER after closing it. Discussion remains closed but unlocked."
-      fi
     fi
 
     echo ""
