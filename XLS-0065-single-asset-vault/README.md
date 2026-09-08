@@ -1166,6 +1166,6 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
 
-## Appendix C: Changelog
+## Appendix B: Changelog
 
 - XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
