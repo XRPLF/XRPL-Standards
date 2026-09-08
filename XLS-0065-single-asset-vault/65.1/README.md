@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-07
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault under `LendingProtocolV1_1`

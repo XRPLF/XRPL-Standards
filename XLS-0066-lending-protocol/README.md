@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-07
+  updated: 2026-09-08
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -613,6 +613,8 @@ This transaction uses the standard transaction fee.
 When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following check is added after item 2 of [3.3.3.2](#3332-protocol-level-failures). Modifying an existing `LoanBroker` does not re-evaluate it.
 
 1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
+
+`Vault.VaultKind` and the closed-ended Vault lifecycle are defined in [XLS-65.1](../XLS-0065-single-asset-vault/65.1/README.md); this specification consumes the field and does not define it.
 
 #### 3.3.4 State Changes
 
@@ -2183,7 +2185,9 @@ The `valueChange` is a critical accounting mechanism that represents the change 
 
 This `valueChange` is always split between the Vault (as a change in its net interest) and the Loan Broker (as a change in the `managementFee`).
 
-**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis)**, `valueChange` has no remaining purpose. For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be computed and used exactly as described above, even while this amendment is enabled. In the pseudo-code in [A-3.3](#a-33-pseudo-code) below, `valueChange` is never used to derive the `Loan` object's own state — `loan.totalValueOutstanding`, `loan.principalOutstanding`, `loan.managementFeeOutstanding`, and `loan.roundedState`/`loan.periodicPayment` are all computed independently, directly from the amortization/re-amortization formulas (see `compute_late_payment_interest`, `compute_full_payment`, and `try_overpayment`). `valueChange` is _only_ ever returned so that [`LoanPay`](#3115-state-changes) can reconcile `Vault.AssetsTotal` and `LoanBroker.DebtTotal` against it. Since the amendment removes that reconciliation entirely (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)), `valueChange` becomes dead output under the amendment — an implementation only supporting `LendingProtocolV1_1` need not compute it at all. `principalPaid`, `interestPaid`, and `feePaid` are unaffected and continue to be computed and used exactly as described here.
+**Under the `LendingProtocolV1_1` amendment, for a `Vault` with `LEVersion == 1` (cash-basis)**, `valueChange` is not used for `Vault` and `LoanBroker` accounting: `Vault.AssetsTotal` is increased by `interestPaid` and `LoanBroker.DebtTotal` is decreased by `principalPaid`, so neither is reconciled against `valueChange` (see [3.11.5.1 State Changes (`LendingProtocolV1_1`)](#31151-state-changes-lendingprotocolv1_1)). For a legacy (`LEVersion` absent) `Vault`, `valueChange` continues to be applied to `Vault.AssetsTotal` and `LoanBroker.DebtTotal` exactly as described above, even while this amendment is enabled.
+
+`valueChange` is still computed under the amendment, because it is also part of the `Loan` object's own state transition, which this amendment does not change. [`LoanPay`](#3115-state-changes) adjusts `Loan.TotalValueOutstanding` by the re-amortization `valueChange` after an overpayment (step 5 of [3.11.5](#3115-state-changes)), and `try_overpayment` rejects an overpayment that would increase the value of the Loan, that is when `valueChange > 0` (see the pseudo-code in [A-3.3](#a-33-pseudo-code)). Both behaviours are unchanged from the pre-amendment specification and from the reference implementation in `LoanPay.cpp`. `principalPaid`, `interestPaid`, and `feePaid` are likewise unaffected and continue to be computed and used exactly as described here.
 
 #### A-3.2.1 Regular Payment
 

@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-66](../README.md), [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)
   created: 2026-09-04
-  updated: 2026-09-07
+  updated: 2026-09-08
 </pre>
 
 # Lending Protocol under `LendingProtocolV1_1`
@@ -39,6 +39,8 @@ The amendment makes the following changes to XLS-66:
 When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following protocol-level failure is added after item 2 of the parent specification. Modifying an existing `LoanBroker` does not re-evaluate it.
 
 1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
+
+`Vault.VaultKind` and the closed-ended Vault lifecycle are defined in [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md); this patch consumes the field and does not define it.
 
 ### 3.2 Principal-Only Debt Accounting
 
