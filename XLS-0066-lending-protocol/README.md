@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-80, XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-07
+  updated: 2026-09-08
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -401,13 +401,13 @@ Lending Protocol:
 
 #### 3.1.13 Access Control
 
-A Loan Issuer may want to ensure that all Borrowers meet certain legal obligations, such as KYC. This can be done by attaching a [Permissioned Domain](../XLS-0080-permissioned-domains/README.md), which restricts Loans to accounts with specific credentials. Only accounts with the required credentials can take out loans from a private LoanBroker. To configure a LoanBroker as private, set the `lsfLoanBrokerPrivate` flag when creating the `LoanBroker` object. If this flag is enabled, the LoanBroker is private. If the flag is not set, the LoanBroker is public, and any account may take out a loan.
+A Loan Issuer may want to ensure that all Borrowers meet certain legal obligations, such as KYC. This can be done by attaching a [Permissioned Domain](../XLS-0080-permissioned-domains/README.md), which restricts Loans to accounts with specific credentials. Only accounts with the required credentials can take out loans from a private LoanBroker. To configure a LoanBroker as private, set the `tfLoanBrokerPrivate` transaction flag when creating the `LoanBroker` object. This sets the `lsfLoanBrokerPrivate` flag on the resulting `LoanBroker` ledger entry. If the ledger flag is set, the LoanBroker is private. If the flag is not set, the LoanBroker is public, and any account may take out a loan.
 
 The presence or absence of a Permissioned Domain does not affect the signature requirements for the `LoanSet` transaction. Both the LoanBroker Owner and the Borrower must sign the `LoanSet` transaction, ensuring that even if an account is included in the Permissioned Domain, both parties must explicitly authorise the transaction.
 
-The LoanBroker Owner can clear or change the associated Permissioned Domain. If a private LoanBroker does not have a Permissioned Domain attached, loans cannot be issued until one is configured. Removing or changing the Permissioned Domain does not affect the `LoanPay` transaction for existing or new loans. Borrowers can always make loan payments. **Note**, the LoanBroker Owner does not need credentials in the Permissioned Domain to issue a loan to a Borrower. However, if the Owner wishes to take out a loan from their own LoanBroker, they must hold the required credentials.
+The LoanBroker Owner can clear or change the associated Permissioned Domain. If a private LoanBroker does not have a Permissioned Domain attached, loans cannot be issued until one is configured. Removing or changing the Permissioned Domain does not add a domain credential check to `LoanPay`; repayment remains subject to the other `LoanPay` failure conditions. **Note**, the LoanBroker Owner does not need credentials in the Permissioned Domain to issue a loan to a Borrower. However, if the Owner wishes to take out a loan from their own LoanBroker, they must hold the required credentials.
 
-Credential validation uses the current ledger state when a `LoanSet` transaction is applied. If the Borrower's credential is later revoked or expires, or the associated `PermissionedDomain` object is deleted, existing Loans are unaffected and remain payable. Subsequent `LoanSet` transactions are refused until the Borrower satisfies a valid Permissioned Domain configured on the LoanBroker.
+Credential validation uses the current ledger state when a `LoanSet` transaction is applied. If the Borrower's credential is later revoked or expires, or the associated `PermissionedDomain` object is deleted, existing Loans are unaffected and `LoanPay` applies no domain credential check; repayment remains subject to the other `LoanPay` failure conditions. Subsequent `LoanSet` transactions are refused until the Borrower satisfies a valid Permissioned Domain configured on the LoanBroker.
 
 ### 3.2. Ledger Entry: `Loan`
 
@@ -614,9 +614,9 @@ This transaction uses the standard transaction fee.
    2. `DomainID` is provided, and the `tfLoanBrokerPrivate` flag is not set. (`temINVALID`)
 
 10. If `LoanBrokerID` is specified (modifying existing):
-11. `LoanBrokerID` is empty. (`temINVALID`)
-12. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
-13. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
+    1. `LoanBrokerID` is empty. (`temINVALID`)
+    2. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
+    3. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
 
 ##### 3.3.4.2 Protocol-Level Failures
 
@@ -1145,7 +1145,8 @@ The account specified in the `Account` field pays the transaction fee.
 25. `LoanBroker.lsfLoanBrokerPrivate` flag is set:
     1. `LoanBroker.DomainID` is not set (LoanBroker is private, but domain is not configured). (`tecNO_AUTH`)
     2. The `PermissionedDomain` object referenced by `LoanBroker.DomainID` does not exist. (`tecOBJECT_NOT_FOUND`)
-    3. `Borrower` does not have credentials in the LoanBroker's `PermissionedDomain`. (`tecNO_AUTH` / `tecEXPIRED`)
+    3. The `Borrower` has no valid accepted credential in the LoanBroker's `PermissionedDomain`, and no matching credential is expired. (`tecNO_AUTH`)
+    4. The `Borrower` has one or more matching expired credentials and no valid accepted credential in the LoanBroker's `PermissionedDomain`. (`tecEXPIRED`)
 
 #### 3.8.6 State Changes
 
@@ -1571,7 +1572,7 @@ The management fee is calculated as a percentage of interest earned rather than 
 
 The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due diligence and necessary off-chain checks.
 
-Private LoanBrokers additionally rely on the accepted credential issuers and the LoanBroker Owner's Permissioned Domain configuration. Credential checks provide point-in-time authorization for new Loans; revocation, expiration, or Domain deletion does not unwind an outstanding Loan or prevent repayment. LoanBroker Owners must account for that non-retroactive behavior when using credentials for compliance controls.
+Private LoanBrokers additionally rely on the accepted credential issuers and the owner of the referenced Permissioned Domain. The domain owner may change its `AcceptedCredentials` or delete the domain, even when the domain owner and LoanBroker Owner are different accounts. Credential checks provide point-in-time authorization for new Loans; revocation, expiration, or Domain deletion does not unwind an outstanding Loan or add a domain credential check to repayment. LoanBroker Owners must account for that control and non-retroactive behavior when using credentials for compliance controls.
 
 # Appendix
 
