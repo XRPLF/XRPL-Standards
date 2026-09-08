@@ -9,7 +9,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-07
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault
@@ -72,7 +72,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## 3. Specification
 
-The deposit-blocking flags and behavior described below are enabled by the `LendingProtocolV1_1` amendment. Before that amendment is active, `tfVaultOwnerCanBlockDeposit`, `tfVaultDepositBlock`, and `tfVaultDepositUnblock` are invalid transaction flags.
+The deposit-blocking flags and behavior described below are enabled by the `LendingProtocolV1_1` amendment, whose canonical amendment name is declared with `XRPL_FEATURE` in rippled's [`features.macro`](https://github.com/XRPLF/rippled/blob/3e4bdf2782d7e076bb71c88091b81159c1dbdaec/include/xrpl/protocol/detail/features.macro#L23). Before that amendment is active, `tfVaultOwnerCanBlockDeposit`, `tfVaultDepositBlock`, and `tfVaultDepositUnblock` are invalid transaction flags.
 
 ### 3.1 Ledger Entry: `Vault`
 
@@ -422,7 +422,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `59`      | The transaction type.                                                                                                                   |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
-| `Flags`           |    No    | `number`  |   `UINT32`    |       0       | Specifies whether to block or unblock deposits into the Vault.                                                                          |
+| `Flags`           |    No    | `number`  |   `UINT32`    |       0       | Transaction flags, including flags that block or unblock deposits into the Vault.                                                        |
 | `Data`            |    No    | `string`  |    `BLOB`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
 | `AssetsMaximum`   |    No    | `number`  |   `NUMBER`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
 | `DomainID`        |    No    | `string`  |   `HASH256`   |               | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                            |
@@ -441,7 +441,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 1. The `VaultID` field is zero. (`temMALFORMED`)
 2. The `Data` field, if provided, is empty or exceeds 256 bytes. (`temMALFORMED`)
 3. The `AssetsMaximum` field, if provided, is negative. (`temMALFORMED`)
-4. None of `Data`, `AssetsMaximum`, `DomainID`, `tfVaultDepositBlock`, or `tfVaultDepositUnblock` are provided (nothing to update). (`temMALFORMED`)
+4. None of the `Data`, `AssetsMaximum`, or `DomainID` fields are provided, and neither `tfVaultDepositBlock` nor `tfVaultDepositUnblock` is set in `Flags` (nothing to update). (`temMALFORMED`)
 5. Both `tfVaultDepositBlock` and `tfVaultDepositUnblock` are set. (`temINVALID_FLAG`)
 
 ##### 3.3.3.2 Protocol-Level Failures
