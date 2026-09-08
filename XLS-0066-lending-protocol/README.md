@@ -370,8 +370,10 @@ Loan:
 
 _First-Loss Capital liquidation_
 
-- DefaultAmount = PrincipalOutstanding + InterestOutstanding
+- DefaultAmount = TotalValueOutstanding − ManagementFeeOutstanding
+  = PrincipalOutstanding + InterestOutstanding
   = 1,000 + 90 = 1,090 Tokens
+  (`ManagementFeeOutstanding` is 0 in this example.)
 - DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)
   = min((1,090 × 0.1) × 0.1, 1,090, 1,000) = min(10.9, 1,090, 1,000) = **10.9 Tokens**
 - Loss = DefaultAmount − DefaultCovered
@@ -2696,7 +2698,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## Appendix C: Changelog
 
-Spec PRs merge into one of these two patches (`LendingProtocolV1_1` or `fixCleanup3_4_0`), not as their own XLS-66.N:
+Later documentation PRs fold into these existing patches rather than opening a new `XLS-66.N`:
 
 - XLS-66.1: `LendingProtocolV1_1` (not yet live) — principal-only `AssetsTotal`/`DebtTotal`, closed-ended LoanBroker attachment, and related LoanBrokerSet field rules. See [66.1](./66.1/README.md).
 - XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment and no `NextPaymentDueDate` rewrite. See [66.2](./66.2/README.md).
