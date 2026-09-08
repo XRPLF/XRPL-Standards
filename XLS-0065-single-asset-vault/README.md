@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-07
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault
@@ -334,7 +334,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 | Field Name         | Required |     JSON Type      | Internal Type |      Default Value      | Description                                                                                                                                            |
 | ------------------ | :------: | :----------------: | :-----------: | :---------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `58`           | The transaction type.                                                                                                                                  |
+| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `65`           | The transaction type (`ttVAULT_CREATE`).                                                                                                               |
 | `Flags`            |   Yes    |      `number`      |   `UINT32`    |            0            | Specifies the flags for the Vault.                                                                                                                     |
 | `Data`             |    No    |      `string`      |    `BLOB`     |                         | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
 | `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`          | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
@@ -417,7 +417,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                             |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `59`      | The transaction type.                                                                                                                   |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `66`      | The transaction type (`ttVAULT_SET`).                                                                                                   |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
 | `Data`            |    No    | `string`  |    `BLOB`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
 | `AssetsMaximum`   |    No    | `number`  |   `NUMBER`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
@@ -461,7 +461,7 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value |                                                                       Description                                                                        |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                                                    Transaction type.                                                                     |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                                 Transaction type (`ttVAULT_DELETE` in rippled).                                                          |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                            The ID of the vault to be deleted.                                                            |
 | `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires the `LendingProtocolV1_1` amendment. |
 
@@ -505,7 +505,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                            |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :----------------------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `61`      | Transaction type.                                      |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `68`      | Transaction type (`ttVAULT_DEPOSIT`).                  |
 | `VaultID`         |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
 | `Amount`          |   Yes    | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
 
@@ -582,7 +582,7 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                 |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `69`      | Transaction type (`ttVAULT_WITHDRAW`).                                      |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
 | `Amount`          |   Yes    | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
 | `Destination`     |    No    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
@@ -672,7 +672,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                                                    |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `70`      | Transaction type (`ttVAULT_CLAWBACK`).                                                                         |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
 | `Holder`          |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
 | `Amount`          |    No    | `number`  |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
