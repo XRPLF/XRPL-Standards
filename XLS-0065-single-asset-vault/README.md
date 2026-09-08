@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-04
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault
@@ -343,7 +343,7 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 14. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of this amendment.
 15. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
 16. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction. `LoanManage` has `MayModifyVault` and may succeed without modifying one; each other listed transaction has `MustModifyVault` and must create, modify or delete one.
-17. Under `LendingProtocolV1_1`, a newly created closed-ended Vault must have `SubscriptionDate` and `RedemptionDate` separated by the protocol's valid investment-period range. `VaultDeposit` may succeed only in the `Subscription` phase (or `NoPhase` for an open-ended Vault), `VaultWithdraw` may not succeed in the `Investment` phase, and `LoanSet` for a closed-ended Vault may succeed only in the `Investment` phase.
+17. Under `LendingProtocolV1_1`, a newly created closed-ended Vault must have `SubscriptionDate` and `RedemptionDate` with `180 <= RedemptionDate - SubscriptionDate < 946708560` (thirty Gregorian years in seconds). Phase uses the parent ledger close time: open-ended Vaults are `NoPhase`; closed-ended Vaults are `Subscription` while `parentCloseTime <= SubscriptionDate`, `Investment` while `SubscriptionDate < parentCloseTime < RedemptionDate`, and `Redemption` once `parentCloseTime >= RedemptionDate`. `VaultDeposit` may succeed only in `Subscription` or `NoPhase`, `VaultWithdraw` may not succeed in `Investment`, and `LoanSet` for a closed-ended Vault may succeed only in `Investment`.
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -429,7 +429,7 @@ _TBD_
 1. A newly created vault has zero `AssetsTotal`, `AssetsAvailable`, `LossUnrealized` and outstanding shares.
 2. The share `MPTokenIssuance.Issuer` equals `Vault.Account`, and that account is a _pseudo-account_ whose `VaultID` points to the new vault.
 3. Only `VaultCreate` may create a `Vault`; it must create rather than update one.
-4. Under `LendingProtocolV1_1`, a closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and `RedemptionDate - SubscriptionDate` is within the protocol's valid investment-period range.
+4. Under `LendingProtocolV1_1`, a closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and `180 <= RedemptionDate - SubscriptionDate < 946708560`.
 
 ### 3.3 Transaction: `VaultSet`
 

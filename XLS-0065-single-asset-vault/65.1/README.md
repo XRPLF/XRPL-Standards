@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault under `LendingProtocolV1_1`
@@ -40,7 +40,7 @@ Stating this as a ledger invariant rather than as a rule of `VaultSet` means it 
 
 ##### 3.1.1.1 Fields
 
-No fields are added or removed by this patch.
+This patch does not add or remove `Vault` fields. `LEVersion`, `VaultKind`, `SubscriptionDate` and `RedemptionDate` are introduced by the `LendingProtocolV1_1` lifecycle patch of XLS-65.1 ([XRPL-Standards #549](https://github.com/XRPLF/XRPL-Standards/pull/549)); they are absent on entries created before that amendment. This document records only the invariant checks that apply once those fields exist. Their JSON/internal types, requiredness, and `VaultCreate` encoding are specified there, not here.
 
 ##### 3.1.1.2 Invariants
 
@@ -99,13 +99,22 @@ Before the amendment the four lifecycle and version fields are never written, so
 
 ##### 3.2.1.1 Invariants
 
-When `LendingProtocolV1_1` is enabled:
+When `LendingProtocolV1_1` is enabled, phase is derived from `VaultKind`, `SubscriptionDate`, `RedemptionDate` and the parent ledger close time (`getVaultPhase` in `src/libxrpl/ledger/helpers/VaultHelpers.cpp`). A Vault is closed-ended iff `VaultKind` is present and equal to `ClosedEnded` (`1`); otherwise it is open-ended and its phase is `NoPhase`.
 
-- A newly created closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and `RedemptionDate - SubscriptionDate` is within the protocol's valid investment-period range.
-- `VaultDeposit` may succeed only in the `Subscription` phase for a closed-ended Vault.
-- `VaultWithdraw` may not succeed in the `Investment` phase for a closed-ended Vault.
-- `LoanSet` for a closed-ended Vault may succeed only in the `Investment` phase.
-- Open-ended Vaults have `NoPhase` and are unaffected by these phase restrictions.
+For a closed-ended Vault:
+
+- **Subscription** — `parentCloseTime <= SubscriptionDate` (the `SubscriptionDate` boundary is inclusive; time strictly before that date is still Subscription).
+- **Investment** — `SubscriptionDate < parentCloseTime < RedemptionDate` (both bounds exclusive).
+- **Redemption** — `parentCloseTime >= RedemptionDate` (the `RedemptionDate` boundary is inclusive).
+
+The valid investment-period range is `kMinInvestmentPeriod <= RedemptionDate - SubscriptionDate < kMaxInvestmentPeriod`, with `kMinInvestmentPeriod = 180` seconds and `kMaxInvestmentPeriod` equal to thirty Gregorian years in seconds (`946708560`). The subtraction is performed in signed 64-bit so a `SubscriptionDate` near `UINT32_MAX` does not wrap (`isValidClosedEndedGap` in `VaultHelpers.cpp`; constants in `include/xrpl/protocol/Protocol.h`).
+
+Then:
+
+- A newly created closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and the gap is within that range.
+- `VaultDeposit` may succeed only in `Subscription` or `NoPhase`.
+- `VaultWithdraw` may not succeed in `Investment`.
+- `LoanSet` for a closed-ended Vault may succeed only in `Investment`. Open-ended Vaults (`NoPhase`) are not restricted by this check.
 
 ## 4. Rationale
 

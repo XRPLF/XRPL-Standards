@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-04
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault under `fixCleanup3_4_0`
@@ -57,8 +57,10 @@ The single unit of slack is a tolerance for quantisation at the asset scale, not
 
 The accounting-delta invariants become:
 
-- For an `IOU`, comparisons between the vault asset balance delta and the corresponding depositor or destination balance delta, and between the vault asset balance delta and the changes in `Vault.AssetsTotal` and `Vault.AssetsAvailable`, admit an absolute difference of at most one unit at the scale used for that comparison.
-- For `XRP` and `MPT`, those comparisons remain exact.
+- For an `IOU`, comparisons between the vault asset balance delta and the corresponding depositor or destination balance delta, and between the vault asset balance delta and the changes in `Vault.AssetsTotal` and `Vault.AssetsAvailable`, admit an absolute difference of at most one unit. The unit is one step of the STAmount grid at exponent `scale`, i.e. `10^scale` in Number space (`agreesWithinOneUnit` in `src/libxrpl/tx/invariants/VaultInvariant.cpp`). `scale` is the exponent already passed into that helper for each comparison, not a separately chosen tolerance:
+  - Versus Δ`AssetsTotal` or Δ`AssetsAvailable`: `scale` is the STAmount exponent of the posterior `Vault.AssetsTotal` (`computeVaultMinScale` once `fixCleanup3_2_0` is enabled).
+  - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
+- For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
 - Before the amendment, those comparisons are exact for every asset type.
 
 These rules apply to the relevant comparisons in `VaultDeposit`, `VaultWithdraw` and `VaultClawback`.
@@ -91,7 +93,7 @@ Before the amendment, the loss inequality is strict for every asset type and adm
 
 ## 4. Rationale
 
-**Vault Accounting and Cap Invariants.** Each tolerance is one unit at the comparison scale rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy, whereas one unit at the comparison scale is the smallest representable difference and cannot hide anything.
+**Vault Accounting and Cap Invariants.** Each tolerance is one unit at the comparison scale rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy. One unit at the comparison scale is the smallest representable difference on that grid; it can still mask a genuine one-unit accounting error, which is the bounded trade-off stated in Security Considerations. The numeric rule is unchanged: the comparison still admits at most that single unit.
 
 Restricting the tolerance to non-integral assets, rather than granting it uniformly, was deliberate. The alternative of keying the tolerance off the sign of the scale would have been wrong: an `IOU` amount at or above `1e15` has a non-negative exponent yet still quantises, so it needs the tolerance, while a drop of `XRP` has scale zero and must not get it. Integrality of the asset is the property that actually distinguishes the two cases.
 
