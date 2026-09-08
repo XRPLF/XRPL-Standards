@@ -92,6 +92,13 @@ At a high level this looks like:
    - Base your document on [XLS_TEMPLATE.md](./templates/XLS_TEMPLATE.md).
 3. **Fill out the required sections.**
    - Follow [XLS-1 §4.3: Format: Drafts and Onward](./XLS-0001-xls-process/README.md#43-format-drafts-and-onward), especially the required preamble and sections.
+   - Before you open the PR, check your draft against the templates. Run the validator, and use the `xls-template-conformity` skill if your editor supports Agent Skills (see [§8](#8-ai-agents-and-review-bots)):
+
+     ```bash
+     pip install -r scripts/requirements.txt
+     python scripts/validate_xls_template.py XLS-draft-<short-title>/README.md
+     ```
+
 4. **Open a pull request.**
    - Link the associated Discussion in the PR description.
    - Make it clear which `category` you are targeting and that this is intended to be a `Draft`.
@@ -135,3 +142,39 @@ The roles and responsibilities around XLS authorship and editing are defined in 
   - Do **not** decide which technical direction is “correct” when there are competing proposals; their role is editorial and administrative.
 
 If you are unsure how to proceed at any step, open a Discussion or PR and explicitly ask for help from the XLS Editors; they will guide you according to XLS-1.
+
+## 8. AI agents and review bots
+
+This repository ships shared instructions and [Agent Skills](https://agentskills.io) so that AI assistants help with XLS work in a consistent way. Using them is optional; contributions are judged on the spec, not on the tooling that produced it.
+
+### 8.1. Automated review
+
+Two bots may comment on your PR:
+
+- **GitHub Copilot code review**, which reads [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) and [`.github/skills/code-review/SKILL.md`](./.github/skills/code-review/SKILL.md).
+- **Ripple's `@ai-review` bot** (internal; triggered by an `@ai-review` or `/ai-review` comment), which reads the same guidance through [`.ai-review/instructions.md`](./.ai-review/instructions.md).
+
+Both are advisory. A human XLS Editor still reviews and merges. If a bot is wrong, say so on the thread and move on — and if it is wrong in a way that will recur, fix the guidance rather than arguing with it case by case.
+
+### 8.2. Skills
+
+Two skills live under `.agents/skills/`:
+
+| Skill                     | What it does                                                                                               |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `xls-template-conformity` | Checks an XLS against `templates/` and the validation scripts, and reports what needs fixing.              |
+| `spec-from-rippled`       | Updates a spec to match a rippled PR, commit, or local branch, citing the implementation for every change. |
+
+Cursor, Codex CLI, Gemini CLI, and Augment discover `.agents/skills/` directly. Claude Code reads them through symlinks in `.claude/skills/`.
+
+### 8.3. Keep the guidance in sync
+
+Agent instructions are duplicated across paths because each tool looks in a different place. **If your PR changes one of these files, check the others in the same PR** — a stale copy teaches a reviewer the wrong rule, which is worse than no copy at all.
+
+[`.github/copilot-instructions.md` § Maintaining the AI instruction surface](./.github/copilot-instructions.md#maintaining-the-ai-instruction-surface) lists every file, which tool reads it, and which ones are symlinks. Start there. In short:
+
+- Add a skill under `.agents/skills/<name>/`, and add the matching `.claude/skills/<name>` symlink.
+- Put review rules in the Review Guidelines section, not scattered across skills.
+- Skills read `templates/` and run `scripts/validate_xls_template.py` at run time rather than restating them, so that changing a template does not require changing a skill. Keep it that way.
+
+The same applies in reverse: a PR that changes `templates/`, the validation scripts, or the XLS process should check whether the AI guidance still describes them correctly.
