@@ -2528,9 +2528,11 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
     )
 
 function is_payment_late(currentTime):
+    # Matches isPaymentLate / hasExpired in LendingHelpers.cpp.
+    # fixCleanup3_4_0: Exclusive (currentTime > due). Otherwise Inclusive (currentTime >= due).
     if is_enabled(fixCleanup3_4_0):
-        return loan.nextPaymentDueDate < currentTime
-    return loan.nextPaymentDueDate <= currentTime
+        return currentTime > loan.nextPaymentDueDate
+    return currentTime >= loan.nextPaymentDueDate
 
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
