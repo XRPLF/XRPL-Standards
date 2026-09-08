@@ -337,7 +337,7 @@ The First-Loss Capital is an optional mechanism to protect the Vault depositors 
 
 > Note: `CoverRateMinimum` and `CoverRateLiquidation` are stored on the ledger as `UINT32` values in 1/10th basis points, where 1 is 0.001% and 100000 is 100%. The formulas and examples in this section use the equivalent fractions, i.e. $CoverRateMinimum / 100000$ and $CoverRateLiquidation / 100000$; a stored value of 10000 is therefore 0.1 (10%).
 
-The accounting model determines the default amount, but not the cover formula. For a Vault with `LEVersion = 1`, `DefaultAmount` is `Loan.PrincipalOutstanding`. For a legacy Vault (where `LEVersion` is absent or 0), `DefaultAmount` is `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`, equivalent to outstanding principal plus net interest. The example below uses the legacy accounting model.
+The accounting model determines the default amount, but not the cover formula. For a Vault with `LEVersion = 1` (`LendingProtocolV1_1`; see [XLS-66.1](./66.1/README.md) for principal-only `AssetsTotal`/`DebtTotal`), `DefaultAmount` is `Loan.PrincipalOutstanding`. For a legacy Vault (where `LEVersion` is absent or 0), `DefaultAmount` is `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`, equivalent to outstanding principal plus net interest. The example below uses the legacy accounting model.
 
 Whenever the available cover falls below the minimum cover required, two consequences occur:
 
@@ -1268,7 +1268,7 @@ This transaction uses the standard transaction fee.
 
 1. If the `tfLoanDefault` flag is specified:
    - Compute `DefaultAmount` according to the associated Vault's accounting model:
-     - If `Vault.LEVersion = 1`, use `Loan.PrincipalOutstanding`.
+     - If `Vault.LEVersion = 1` (`LendingProtocolV1_1`; principal-only Vault/`LoanBroker` totals are in [XLS-66.1](./66.1/README.md)), use `Loan.PrincipalOutstanding`.
      - Otherwise, use `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + net interest owed to the Vault).
    - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`, using $CoverRateMinimum / 100000$ as the fraction.
    - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`, using $CoverRateLiquidation / 100000$ as the fraction. Both rate multiplications round upward. The result of capping the liquidation amount by `DefaultAmount` is rounded upward to `Loan.LoanScale`, then capped by `LoanBroker.CoverAvailable`. Rounding upward after the `DefaultAmount` cap cannot raise `DefaultCovered` above `DefaultAmount`, because `DefaultAmount` is computed from `Loan` fields that are already stored at `Loan.LoanScale`.
@@ -1791,7 +1791,7 @@ $$
 
 The pseudo-code in [Appendix A-3.3](#a-33-pseudo-code) handles re-amortization by preserving historical rounding errors while applying the overpayment to reduce the principal. The process follows these logical steps:
 
-**1. Calculate the "true" pre-overpayment state** (using formulas 10, 31-34):
+**1. Calculate the "true" pre-overpayment state** (using formulas 10 and 30–33):
 
 The system first determines what the loan state should be based on pure mathematical formulas, without rounding:
 
@@ -1968,7 +1968,7 @@ $$
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`), as a fraction, i.e. the ledger value divided by 100000
 - `CoverAvailable` = Total amount of cover deposited by the Lending Protocol Owner (`LoanBroker.CoverAvailable`)
 
-> Note: Both rate multiplications round **up**. The liquidation amount is first capped by `DefaultAmount`, then rounded up to the loan asset's scale, and finally capped by `CoverAvailable`.
+> Note: Both rate multiplications round **up**. The liquidation amount is first capped by `DefaultAmount`, then rounded up to `Loan.LoanScale`, and finally capped by `CoverAvailable`.
 
 After calculating coverage, `Vault.AssetsTotal` is reduced by `DefaultAmount - DefaultCovered` rounded downward to the Vault asset's scale. For `Vault.LossUnrealized` and `LoanBroker.DebtTotal`, the resulting value is rounded to the nearest value representable at the Vault asset's scale, ties to even, and clamped at zero.
 
