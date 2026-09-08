@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-04-27
+  updated: 2026-09-08
 </pre>
 
 # Single Asset Vault
@@ -89,9 +89,9 @@ A vault has the following fields:
 
 | Field Name          | Constant | Required |     JSON Type      | Internal Type | Default Value | Amendment             | Description                                                                                                                                            |
 | ------------------- | :------: | :------: | :----------------: | :-----------: | :-----------: | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   |    No    |   Yes    |      `string`      |   `UINT16`    |   `0x0084`    |                       | Ledger object type.                                                                                                                                    |
-| `LedgerIndex`       |    No    |   Yes    |      `string`      |   `UINT16`    |     `N/A`     |                       | Ledger object identifier.                                                                                                                              |
-| `Flags`             |   Yes    |   Yes    |      `string`      |   `UINT32`    |       0       |                       | Ledger object flags.                                                                                                                                   |
+| `LedgerEntryType`   |   Yes    |   Yes    |      `string`      |   `UINT16`    |   `0x0084`    |                       | Ledger object type.                                                                                                                                    |
+| `LedgerIndex`       |   Yes    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     |                       | Ledger object identifier.                                                                                                                              |
+| `Flags`             |    No    |   Yes    |      `number`      |   `UINT32`    |       0       |                       | Ledger object flags.                                                                                                                                   |
 | `PreviousTxnID`     |    No    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     |                       | Identifies the transaction ID that most recently modified this object.                                                                                 |
 | `PreviousTxnLgrSeq` |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     |                       | The sequence of the ledger that contains the transaction that most recently modified this object.                                                      |
 | `Sequence`          |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     |                       | The transaction sequence number that created the vault.                                                                                                |

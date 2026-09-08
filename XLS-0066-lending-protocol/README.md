@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-01-14
+  updated: 2026-09-08
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -407,7 +407,7 @@ The `LoanID` is calculated as follows:
 | Field Name                 | Constant |  Required   | JSON Type | Internal Type |                                   Default Value                                   | Description                                                                                                                                                                   |
 | -------------------------- | :------: | :---------: | :-------: | :-----------: | :-------------------------------------------------------------------------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `LedgerEntryType`          |   Yes    |     Yes     | `string`  |   `UINT16`    |                                     `0x0089`                                      | Ledger object type.                                                                                                                                                           |
-| `LedgerIndex`              |   Yes    |     Yes     | `string`  |   `UINT16`    |                                       `N/A`                                       | Ledger object identifier.                                                                                                                                                     |
+| `LedgerIndex`              |   Yes    |     Yes     | `string`  |   `HASH256`   |                                       `N/A`                                       | Ledger object identifier.                                                                                                                                                     |
 | `Flags`                    |    No    |     No      | `number`  |   `UINT32`    |                                         0                                         | Ledger object flags.                                                                                                                                                          |
 | `PreviousTxnID`            |    No    |     Yes     | `string`  |   `HASH256`   |                                       `N/A`                                       | The ID of the transaction that last modified this object.                                                                                                                     |
 | `PreviousTxnLgrSeq`        |    No    |     Yes     | `number`  |   `UINT32`    |                                       `N/A`                                       | The ledger sequence containing the transaction that last modified this object.                                                                                                |
@@ -992,8 +992,8 @@ The transaction creates a new `Loan` object.
 | `LatePaymentFee`          |     No      | `string`  |   `NUMBER`    |       0       |                       | A nominal funds amount paid to the `LoanBroker.Owner` when a payment is late.                                                                 |
 | `ClosePaymentFee`         |     No      | `string`  |   `NUMBER`    |       0       |                       | A nominal funds amount paid to the `LoanBroker.Owner` when an early full repayment is made.                                                   |
 | `OverpaymentFee`          |     No      | `number`  |   `UINT32`    |       0       |                       | A fee charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                             |
-| `InterestRate`            |     No      | `number`  |   `UINT32`    |       0       |                       | Annualized interest rate of the Loan in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                   |
-| `LateInterestRate`        |     No      | `number`  |   `UINT32`    |       0       |                       | A premium added to the interest rate for late payments in in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%) |
+| `InterestRate`            |     No      | `number`  |   `UINT32`    |       0       |                       | Annualized interest rate of the Loan in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                      |
+| `LateInterestRate`        |     No      | `number`  |   `UINT32`    |       0       |                       | A premium added to the interest rate for late payments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)    |
 | `CloseInterestRate`       |     No      | `number`  |   `UINT32`    |       0       |                       | A Fee Rate charged for repaying the Loan early in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)            |
 | `OverpaymentInterestRate` |     No      | `number`  |   `UINT32`    |       0       |                       | An interest rate charged on overpayments in 1/10th basis points. Valid values are between 0 and 100000 inclusive. (0 - 100%)                  |
 | `PrincipalRequested`      |     Yes     | `string`  |   `NUMBER`    |     `N/A`     |                       | The principal amount requested by the Borrower.                                                                                               |
@@ -1078,7 +1078,7 @@ The two-step flow eliminates the need for custom multi-party signing. Instead, l
 
 - **Step 2 — Acceptance** (Borrower):
   1. The `Borrower` creates a `LoanAccept` transaction with the `LoanID` field pointing to the pending `Loan` object.
-  2. The `Borrower` signs and submits the transaction.
+  2. The `Borrower` signs and submits the transaction. No other transaction-specific fields are permitted.
   3. Permission validation is performed again. If it fails, the pending `Loan` is **not** deleted — the Borrower may rectify the issue and retry until the `StartDate` expires.
   4. On success, the `lsfLoanPending` flag is cleared, funds are transferred to the Borrower, and the Loan becomes active.
 
