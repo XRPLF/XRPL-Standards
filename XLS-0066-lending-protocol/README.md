@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-07
+  updated: 2026-09-08
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -335,7 +335,7 @@ The First-Loss Capital is an optional mechanism to protect the Vault depositors 
 - `CoverRateMinimum` - the percentage of `DebtTotal` that must be covered by the `CoverAvailable`.
 - `CoverRateLiquidation` - the maximum percentage of the minimum required cover ($DebtTotal \times CoverRateMinimum$) that will be liquidated to cover a Loan Default.
 
-> Note: `CoverRateMinimum` and `CoverRateLiquidation` are stored on the ledger as `UINT32` values in 1/10th basis points, where 1 is 0.001% and 100000 is 100%. The formulas and examples in this section use the equivalent fraction, i.e. $CoverRateMinimum / 100000$; a stored value of 10000 is therefore 0.1 (10%).
+> Note: `CoverRateMinimum` and `CoverRateLiquidation` are stored on the ledger as `UINT32` values in 1/10th basis points, where 1 is 0.001% and 100000 is 100%. The formulas and examples in this section use the equivalent fractions, i.e. $CoverRateMinimum / 100000$ and $CoverRateLiquidation / 100000$; a stored value of 10000 is therefore 0.1 (10%).
 
 The accounting model determines the default amount, but not the cover formula. For a Vault with `LEVersion = 1`, `DefaultAmount` is `Loan.PrincipalOutstanding`. For a legacy Vault (where `LEVersion` is absent or 0), `DefaultAmount` is `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`, equivalent to outstanding principal plus net interest. The example below uses the legacy accounting model.
 
@@ -1268,8 +1268,8 @@ This transaction uses the standard transaction fee.
    - Compute `DefaultAmount` according to the associated Vault's accounting model:
      - If `Vault.LEVersion = 1`, use `Loan.PrincipalOutstanding`.
      - Otherwise, use `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + net interest owed to the Vault).
-   - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
-   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`. Both rate multiplications round upward. The result of capping the liquidation amount by `DefaultAmount` is rounded upward to `Loan.LoanScale`, then capped by `LoanBroker.CoverAvailable`. Rounding upward after the `DefaultAmount` cap cannot raise `DefaultCovered` above `DefaultAmount`, because `DefaultAmount` is computed from `Loan` fields that are already stored at `Loan.LoanScale`.
+   - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`, using $CoverRateMinimum / 100000$ as the fraction.
+   - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`, using $CoverRateLiquidation / 100000$ as the fraction. Both rate multiplications round upward. The result of capping the liquidation amount by `DefaultAmount` is rounded upward to `Loan.LoanScale`, then capped by `LoanBroker.CoverAvailable`. Rounding upward after the `DefaultAmount` cap cannot raise `DefaultCovered` above `DefaultAmount`, because `DefaultAmount` is computed from `Loan` fields that are already stored at `Loan.LoanScale`.
    - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
    - Update `Vault` object:
      - Decrease `Vault.AssetsTotal` by `VaultLoss`, rounded downward to the Vault asset's scale.
@@ -1946,6 +1946,8 @@ $$
 $$
 DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount, CoverAvailable) \quad \text{(35)}
 $$
+
+In (35), $CoverRateMinimum$ and $CoverRateLiquidation$ are fractions, i.e. the ledger `UINT32` values divided by 100000.
 
 $$
 Loss = DefaultAmount - DefaultCovered \quad \text{(36)}
