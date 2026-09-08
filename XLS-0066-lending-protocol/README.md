@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-07
+  updated: 2026-09-08
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -116,7 +116,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
-## Amendments
+### 2.7 Amendments
 
 - `fixCleanup3_4_0` (not yet live, [XLS-66.2](./66.2/README.md)): prevents impairing a loan before it is late, stops impairment/unimpairment from rewriting `NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive. See [impairment](#3210-impairment), [LoanManage failure conditions](#3104-failure-conditions), [LoanManage state changes](#3105-state-changes), and [LoanPay failure conditions](#3114-failure-conditions).
 
@@ -547,7 +547,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment becomes overdue, and impairment does not modify the Loan's `NextPaymentDueDate`. Without `fixCleanup3_4_0`, a Loan can be impaired before its payment is overdue; doing so moves `NextPaymentDueDate` to the current ledger close time, and unimpairing may rewrite `NextPaymentDueDate` (restoring the original interval due date if it is still in the future, otherwise using the current ledger close time plus `PaymentInterval`). If the Borrower makes a payment, the impairment status is automatically cleared.
+Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only when the current ledger close time is greater than `Loan.NextPaymentDueDate`; equality is not late, and impairment does not modify the Loan's `NextPaymentDueDate`. Without `fixCleanup3_4_0`, a Loan can be impaired before its payment is overdue; doing so moves `NextPaymentDueDate` to the current ledger close time, and unimpairing may rewrite `NextPaymentDueDate` (restoring the original interval due date if it is still in the future, otherwise using the current ledger close time plus `PaymentInterval`). If the Borrower makes a payment, the impairment status is automatically cleared.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
@@ -1298,7 +1298,7 @@ This transaction uses the standard transaction fee.
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
      - Set `lsfLoanImpaired` flag.
-     - If `fixCleanup3_4_0` is **not** enabled and the payment is not yet late: set `Loan.NextPaymentDueDate` to the current ledger close time.
+     - If `fixCleanup3_4_0` is **not** enabled and the current ledger close time is less than `Loan.NextPaymentDueDate`: set `Loan.NextPaymentDueDate` to the current ledger close time.
 3. If the `tfLoanUnimpair` flag is specified:
    - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
    - Update `Vault` object:
@@ -2675,6 +2675,6 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     )
 ```
 
-## Appendix C: Changelog
+## A-4 Changelog
 
 - XLS-66.2: `fixCleanup3_4_0` (not yet live) — late-only impairment, no impairment/unimpairment rewrite of `NextPaymentDueDate`, and exclusive due-date and grace-period boundaries. See [XLS-66.2](./66.2/README.md).
