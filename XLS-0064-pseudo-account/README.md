@@ -7,7 +7,7 @@ status: Draft
 category: Amendment
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
-updated: 2026-09-07
+updated: 2026-09-08
 </pre>
 
 ### Abstract
@@ -100,6 +100,8 @@ When `fixCleanup3_3_0` is enabled, freeze semantics for pseudo-accounts differ f
 
 Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. The checks operate on the asset transferred into or out of the pseudo-account; for a Vault deposit or withdrawal, this is the Vault's underlying asset, not its Vault Share.
 
+These are the common helper-level freeze and lock rules. While `fixCleanup3_3_0` is enabled, they take precedence over conflicting freeze or lock rules in a transaction specification that uses the helpers, including XLS-30, XLS-65, and XLS-66. Transaction-specific checks outside the helpers continue to apply, so a helper's successful result does not guarantee that the complete transaction succeeds. The reference implementation defines the common behavior in [`checkDepositFreeze` and `checkWithdrawFreeze`](https://github.com/XRPLF/rippled/blob/09e6aa1aa6bf9ac84fd58c0f7cfa9860a60a1997/src/libxrpl/ledger/helpers/TokenHelpers.cpp#L161-L242) and gates each caller on the amendment, as detailed in [XLS-64.1](./64.1/README.md#31-pseudo-account-freeze-checks).
+
 **Deposits (external account → pseudo-account)**
 
 A deposit must be rejected if any of the following conditions hold:
@@ -132,6 +134,10 @@ Rule 4 uses deep freeze for the destination rather than a regular freeze, becaus
 For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 3: for IOUs a regular local freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
 
 The issuer exemption applies to MPTs in the same way as IOUs — a withdrawal to the asset issuer bypasses all lock checks.
+
+**Pre-activation behavior**
+
+Before `fixCleanup3_3_0` is enabled, the common helpers do not govern these transactions. AMM, Vault, and Loan Broker transactions retain their transaction-specific legacy freeze checks. Those legacy rules, rather than the rules above, govern pre-activation ledgers and are enumerated with implementation citations in [XLS-64.1](./64.1/README.md#32-pre-activation-behavior).
 
 ###### **Invariants**
 
