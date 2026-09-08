@@ -85,7 +85,7 @@ See [Appendix A-3](#a-3-loanpay-implementation-reference) for detailed formulas 
 
 ### 2.4 Fees
 
-The lending protocol charges a number of fees that the Loan Broker can configure. The protocol will not charge the fees if the Loan Broker has not deposited enough First-Loss Capital.
+The lending protocol charges a number of fees that the Loan Broker can configure. When First-Loss Capital is below the required minimum, those fees are redirected to the cover pool rather than paid to the Loan Broker. See [4.6 Fee Redirection When Cover is Insufficient](#46-fee-redirection-when-cover-is-insufficient).
 
 - **`Management Fee`**: This is a fee charged by the Loan Broker, calculated as a percentage of the interest earned on loans. It's deducted from the interest that would otherwise go to the Vault depositors. Essentially, borrowers pay the full interest, but before that interest reaches depositors, the Loan Broker takes their cut.
 - **`Loan Origination Fee`**: A nominal fee paid to the Loan Broker taken from the principal lent.
@@ -363,8 +363,8 @@ _First-Loss Capital liquidation_
 
 - DefaultAmount = PrincipleOutstanding + InterestOutstanding
   = 1,000 + 90 = 1,090 Tokens
-- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)
-  = min((1,090 × 0.1) × 0.1, 1,090) = min(10.9, 1,090) = **10.9 Tokens**
+- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)
+ = min((1,090 × 0.1) × 0.1, 1,090, 1,000) = min(10.9, 1,090, 1,000) = **10.9 Tokens**
 - Loss = DefaultAmount − DefaultCovered
   = 1,090 − 10.9 = **1,079.1 Tokens**
 - FundsReturned = DefaultCovered = **10.9 Tokens**
@@ -1925,7 +1925,7 @@ DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34
 $$
 
 $$
-DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount) \quad \text{(35)}
+DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount, CoverAvailable) \quad \text{(35)}
 $$
 
 $$
@@ -1943,10 +1943,11 @@ $$
 - `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
 - `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
+- `CoverAvailable` = First-loss capital currently deposited (`LoanBroker.CoverAvailable`)
 
 **Process:**
 
-1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)` using formula (35)
+1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)` using formula (35)
 2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
