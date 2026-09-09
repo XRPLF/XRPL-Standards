@@ -18,7 +18,7 @@ Under the `LendingProtocolV1_1` amendment, a Single Asset Vault accounts for the
 
 ## 2. Motivation
 
-**Vault Cash-Basis Accounting.** Accrual-basis accounting credits a Vault with interest that a Borrower has not paid yet, so the share exchange rate reflects income the Vault has not received. A depositor can redeem shares at a rate inflated by interest that later defaults, and the loss falls on the depositors who remain. Cash-basis accounting removes that mismatch by recognising interest only when it is paid.
+Accrual-basis accounting credits a Vault with interest that a Borrower has not paid yet, so the share exchange rate reflects income the Vault has not received. A depositor can redeem shares at a rate inflated by interest that later defaults, and the loss falls on the depositors who remain. Cash-basis accounting removes that mismatch by recognising interest only when it is paid.
 
 Existing Vaults cannot switch accounting models without changing the value of shares already issued, so the model has to be recorded per Vault rather than derived from the amendment state at the time of the transaction.
 
@@ -74,12 +74,12 @@ No failure conditions related to cash-basis accounting are added or removed. `LE
 
 ## 4. Rationale
 
-**Vault Cash-Basis Accounting.** The alternative to a per-entry version field is to derive the accounting model from the amendment state at the time each Loan transaction executes. That was rejected because it would silently change the share exchange rate of every existing Vault on the ledger at the moment the amendment activates.
+The alternative to a per-entry version field is to derive the accounting model from the amendment state at the time each Loan transaction executes. That was rejected because it would silently change the share exchange rate of every existing Vault on the ledger at the moment the amendment activates.
 
 `LEVersion` is a version number rather than a boolean flag so that a later accounting change can be expressed as a further version without another field.
 
 ## 5. Security Considerations
 
-**Vault Cash-Basis Accounting.** Cash-basis accounting reduces, but does not remove, the exposure of a depositor to an unpaid Loan: the Vault still carries the principal at face value until the Loan defaults or is impaired. `LossUnrealized` remains the mechanism for reporting an expected shortfall.
+Cash-basis accounting reduces, but does not remove, the exposure of a depositor to an unpaid Loan: the Vault still carries the principal at face value until the Loan defaults or is impaired. `LossUnrealized` remains the mechanism for reporting an expected shortfall.
 
 Because `LEVersion` is immutable, an implementation must read it from the `Vault` ledger entry rather than from the amendment state when computing the interest accounting of a Loan. Reading the amendment state instead would apply cash-basis rules to accrual-basis Vaults and misprice their shares.
