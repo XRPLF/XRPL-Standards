@@ -30,17 +30,18 @@ Under the `fixCleanup3_4_0` amendment, `VaultClawback` rejects a `Holder` that i
 
 ##### 3.1.1.1 Protocol-Level Failures
 
-2.  - Before the amendment: the check does not apply. A `Holder` that is a pseudo-account is not rejected for that reason.
-    - When the amendment is enabled: `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
-
-3.  - Before the amendment: a computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` is not reported here; an inconsistent tentative state fails later as `tecINVARIANT_FAILED`.
-    - When the amendment is enabled: for an asset clawback, a computed non-zero recovered asset amount rounds down to zero at the scale of the resulting `AssetsTotal`. (`tecPRECISION_LOSS`)
-
-4.  - Before the amendment: a computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
-    - When the amendment is enabled: for an asset clawback, the computed non-zero recovered asset amount would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
-
-5.  - Before the amendment: the check does not apply.
-    - When the amendment is enabled: for an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
+- Parent check 2:
+  - Before the amendment: the check does not apply. A `Holder` that is a pseudo-account is not rejected for that reason.
+  - When the amendment is enabled: `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
+- Parent check 8:
+  - Before the amendment: a computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` is not reported here; an inconsistent tentative state fails later as `tecINVARIANT_FAILED`.
+  - When the amendment is enabled: for an asset clawback, a computed non-zero recovered asset amount rounds down to zero at the scale of the resulting `AssetsTotal`. (`tecPRECISION_LOSS`)
+- Parent check 10:
+  - Before the amendment: a computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
+  - When the amendment is enabled: for an asset clawback, the computed non-zero recovered asset amount would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+- Parent check 11:
+  - Before the amendment: the check does not apply.
+  - When the amendment is enabled: for an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
 
 Parent checks 1, 3–7, and 9 are unchanged.
 
