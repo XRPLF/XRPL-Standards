@@ -118,7 +118,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ### 2.7 Amendments
 
-The parent protocol is `LendingProtocol`. In failure conditions and state changes, a `` `LendingProtocol` `` bullet is the behaviour when `fixCleanup3_4_0` is not enabled; a `` `fixCleanup3_4_0` `` bullet is the behaviour when it is.
+The parent protocol is `LendingProtocol`. In failure conditions and state changes, a `LendingProtocol` bullet is the behaviour when `fixCleanup3_4_0` is not enabled; a `fixCleanup3_4_0` bullet is the behaviour when it is.
 
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.

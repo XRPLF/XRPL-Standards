@@ -14,7 +14,7 @@
 
 ## 1. Abstract
 
-Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment is already overdue, impair and unimpair leave `Loan.NextPaymentDueDate` unchanged, and the payment due-date and default grace-period boundaries are exclusive: a payment is late only when the current ledger close time is greater than `NextPaymentDueDate`, and default is allowed only when it is greater than `NextPaymentDueDate + GracePeriod`. Equality at either boundary is not expired.
+Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment is already overdue, impair and unimpair leave `Loan.NextPaymentDueDate` unchanged, and the payment due-date and default grace-period boundaries are exclusive: a payment is late only when the current ledger close time is greater than `Loan.NextPaymentDueDate`, and default is allowed only when it is greater than `Loan.NextPaymentDueDate + Loan.GracePeriod`. Equality at either boundary is not expired.
 
 ## 2. Motivation
 
