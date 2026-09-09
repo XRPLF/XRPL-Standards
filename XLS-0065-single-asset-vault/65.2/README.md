@@ -92,10 +92,10 @@ Restricting the tolerance to non-integral assets, rather than granting it unifor
 
 For the cap, the alternative was to exclude recognised interest from `AssetsTotal` so that the original invariant could stand. That was rejected because `AssetsTotal` is the basis of the share exchange rate; excluding interest from it would understate the value of a share.
 
-Enforcing the cap on the `VaultSet` that changes it, rather than on every `VaultSet`, puts the failure where the submitter can act on it. The `VaultDeposit` check is left alone because a deposit is exactly the event the cap exists to bound.
+Enforcing the cap on a `VaultSet` that supplies `AssetsMaximum` or otherwise changes the cap, rather than on every `VaultSet`, puts the failure where the submitter can act on it. Resubmitting the existing cap still runs the check. The `VaultDeposit` check is left alone because a deposit is exactly the event the cap exists to bound.
 
 ## 5. Security Considerations
 
-**Vault Accounting and Cap Invariants.** Relaxing an invariant weakens a check that exists to catch implementation errors. The rounding tolerances are bounded to one unit at the applicable comparison scale and apply only to assets that quantise, while the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that changes it.
+**Vault Accounting and Cap Invariants.** Relaxing an invariant weakens a check that exists to catch implementation errors. The rounding tolerances are bounded to one unit at the applicable comparison scale and apply only to assets that quantise, while the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that supplies `AssetsMaximum` or otherwise changes the cap.
 
 Adding `LossUnrealized >= 0` closes a gap in the original invariant. A negative unrealised loss would otherwise pass the inequality and inflate the assets of the Vault relative to its shares.

@@ -1210,7 +1210,7 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
 
-## Appendix C: Changelog
+## Appendix B: Changelog
 
 - [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.
 - [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
