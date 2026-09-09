@@ -35,12 +35,14 @@ When the amendment is not enabled, parent check 6 uses `currentTime < Loan.NextP
 
 #### 3.1.2 State Changes
 
-When the amendment is enabled, the `Loan.NextPaymentDueDate` rewrites in steps 2 and 3 of [3.10.5 State Changes](../README.md#3105-state-changes) do not apply; all other steps are unchanged. When the amendment is not enabled, those rewrites apply unchanged:
+When the amendment is enabled, the `Loan.NextPaymentDueDate` rewrites in steps 2 and 3 of [3.10.5 State Changes](../README.md#3105-state-changes) do not apply; all other steps are unchanged. Those two steps become:
 
 2. If the `tfLoanImpair` flag is specified:
    - `Loan.NextPaymentDueDate` is unchanged.
 3. If the `tfLoanUnimpair` flag is specified:
    - `Loan.NextPaymentDueDate` is unchanged.
+
+When the amendment is not enabled, the parent rewrites in those steps apply unchanged.
 
 ### 3.2 Transaction: `LoanPay`
 
