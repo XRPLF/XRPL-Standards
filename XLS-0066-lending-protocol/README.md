@@ -2044,6 +2044,7 @@ $$
 
 - `PrincipalOutstanding` = Outstanding principal balance (`Loan.PrincipalOutstanding`)
 - $InterestOutstanding_{net}$ = Remaining net interest excluding management fee (formula 33 applied to ledger values)
+- For a cash-basis Vault (`Vault.LEVersion = 1`), formula (34) is principal only; unpaid interest is not charged to the Vault.
 - `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
 - `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
