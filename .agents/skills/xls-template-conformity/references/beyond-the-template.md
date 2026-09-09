@@ -11,6 +11,12 @@ Nothing here duplicates a template section list. If a check below ever becomes e
 - **Internal type vs. JSON type.** A `UINT64` rendered in JSON as a string, an `AMOUNT` as an object or string, an `ACCOUNT` as an r-address — the pair has to be coherent.
 - **Failure conditions vs. fields.** Every conditionally-required field has a failure condition covering its absence, and every failure condition names a field or state that exists in the spec.
 - **State changes vs. ledger entries.** Everything §3.5 says the transaction creates, modifies, or deletes is a ledger entry the spec defines, or an existing one it names.
+- **Formulas vs. procedures and examples.** Every normative formula uses the same inputs, caps, rounding, and amendment gate as the prose procedure and worked examples that apply it.
+- **Failure conditions vs. state changes and invariants.** A transaction must not promise a state change that its checks reject, and its reachable post-state must satisfy the stated invariants.
+- **Parent specification vs. amendment patch.** Read a nested amendment patch as a delta to its parent. Verify that every replacement identifies exactly what changes while leaving the parent's unrelated checks and state changes intact.
+- **All references to changed behavior.** When a PR changes one normative behavior, locate every representation of that behavior in the affected documents before reporting: summary prose, tables, checks, state changes, invariants, formulas, examples, RPC responses, appendices, and changelog.
+
+Complete all applicable comparisons before reporting any finding. Build one deduplicated finding set after the full pass rather than reporting issues as each comparison discovers them.
 
 ## Values that have to be checked against reality
 
