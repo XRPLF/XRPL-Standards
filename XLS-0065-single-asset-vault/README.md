@@ -71,8 +71,6 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live):
-  - assigns `LEVersion = 1` to new Vaults.
 - `fixCleanup3_2_0`:
   - records the Vault _pseudo-account_'s IOU or MPT asset holding in the share `MPTokenIssuance.ReferenceHolding` field.
 
@@ -114,7 +112,6 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                                             |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                                            |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares.                          |
-| `LEVersion`         |   Yes    |    No    |      `number`      |    `UINT8`    |  absent/`0`   | Protocol-written vault schema version. Immutable. Absent or `0` is legacy. Set to `1` (`CashBasis`) on create when `LendingProtocolV1_1` is enabled. Not a `VaultCreate` field. |
 
 ##### 3.1.2.1 Flags
 
@@ -382,8 +379,6 @@ The transaction creates both the `Vault` object and its owned _pseudo-account_, 
 
 ##### 3.2.5.2 Protocol-Level Failures
 
-> The order below reflects the evaluation order in `VaultCreate.cpp` (preclaim, then doApply).
-
 1. If the `Asset` is an `IOU`:
    1. The issuer account does not exist on the ledger. (`terNO_ACCOUNT`)
    2. The issuer account does not have `lsfDefaultRipple` set. (`terNO_RIPPLE`)
@@ -404,8 +399,7 @@ The transaction creates both the `Vault` object and its owned _pseudo-account_, 
 
 #### 3.2.6 State Changes
 
-1. Create a new `Vault` ledger object, linked into the `Vault.Owner`'s `DirectoryNode`. Increment the Vault Owner's `OwnerCount` by 2 (for the `Vault` object and the _pseudo-account_). When `LendingProtocolV1_1` is enabled:
-   1. Set `Vault.LEVersion` to `1` (`CashBasis`).
+1. Create a new `Vault` ledger object, linked into the `Vault.Owner`'s `DirectoryNode`. Increment the Vault Owner's `OwnerCount` by 2 (for the `Vault` object and the _pseudo-account_).
 2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
    1. If `tfVaultShareNonTransferable` is not set: set `lsfMPTCanEscrow`, `lsfMPTCanTrade`, and `lsfMPTCanTransfer` on the `MPTokenIssuance`.
    2. If `tfVaultPrivate` is set: set `lsfMPTRequireAuth` on the `MPTokenIssuance`.
