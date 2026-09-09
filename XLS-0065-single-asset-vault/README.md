@@ -71,6 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
+- `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - rejects a pseudo-account `Holder` on `VaultClawback` and reports a recovery too small to change `AssetsTotal` as `tecPRECISION_LOSS`
 

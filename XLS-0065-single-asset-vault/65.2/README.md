@@ -18,7 +18,7 @@ Under the `fixCleanup3_4_0` amendment, `VaultClawback` rejects a `Holder` that i
 
 ## 2. Motivation
 
-**VaultClawback Failure Conditions.** A pseudo-account holds shares on behalf of a protocol, not on behalf of a person, and it has no key that can act for it. Clawing shares back from one removes the backing of whatever the protocol accounted for, and leaves an entry that the protocol did not write and cannot reconcile. The transaction has no correct outcome in that case, so it should not be applied.
+A pseudo-account holds shares on behalf of a protocol, not on behalf of a person, and it has no key that can act for it. Clawing shares back from one removes the backing of whatever the protocol accounted for, and leaves an entry that the protocol did not write and cannot reconcile. The transaction has no correct outcome in that case, so it should not be applied.
 
 `AssetsTotal` is stored at the scale of the Vault asset, so a clawback smaller than one unit at that scale can tentatively burn shares while leaving the stored total unchanged. Before the amendment that inconsistent state is rejected as `tecINVARIANT_FAILED`. Reporting it as `tecPRECISION_LOSS` gives the submitter the specific cause.
 
@@ -47,7 +47,7 @@ Parent checks 1, 3–7, and 9 are unchanged.
 
 ## 4. Rationale
 
-**VaultClawback Failure Conditions.** `tecPSEUDO_ACCOUNT` is used rather than `tecNO_PERMISSION` because the reason for the failure is what the account is, not who submitted the transaction. The submitter cannot obtain permission by any means.
+`tecPSEUDO_ACCOUNT` is used rather than `tecNO_PERMISSION` because the reason for the failure is what the account is, not who submitted the transaction. The submitter cannot obtain permission by any means.
 
 The dust condition is reported as `tecPRECISION_LOSS` rather than silently rounded up to one unit. Rounding up would take more from the Holder than the transaction asked for; rounding down is the no-op the amendment is removing.
 
@@ -55,6 +55,6 @@ Overflow is reported as `tecPATH_DRY` for consistency with the other arithmetic 
 
 ## 5. Security Considerations
 
-**VaultClawback Failure Conditions.** Rejecting a pseudo-account `Holder` protects an invariant of the protocol that owns the pseudo-account: its accounting assumes that shares it holds are removed only by transactions it issues.
+Rejecting a pseudo-account `Holder` protects an invariant of the protocol that owns the pseudo-account: its accounting assumes that shares it holds are removed only by transactions it issues.
 
 The dust check makes an expected input-dependent failure explicit as `tecPRECISION_LOSS`. The same tentative state was already uncommittable; only the error reported to the submitter changes.
