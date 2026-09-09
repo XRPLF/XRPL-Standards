@@ -1,25 +1,20 @@
 <pre>
   xls: 66.1
-  title: Lending Protocol under LendingProtocolV1_1
-  description: Records the changes the LendingProtocolV1_1 amendment makes to XLS-66
-  author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
+  title: Lending Protocol Cash-Basis Accounting
+  description: Introduces Cash-Basis accounting for the Lending Protocol
+  author: Vytautas Vito Tumas <vtumas@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
   status: Draft
   category: Amendment
-  requires: [XLS-66](../README.md), [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)
   created: 2026-09-04
   updated: 2026-09-08
 </pre>
 
-# Lending Protocol under `LendingProtocolV1_1`
+# Lending Protocol Cash-Basis Accounting
 
 ## 1. Abstract
 
-This patch of [XLS-66](../README.md) records the changes the `LendingProtocolV1_1` amendment makes to the Lending Protocol. The amendment is not yet live. The consolidated specification is the top-level [README.md](../README.md).
-
-The amendment makes the following changes to XLS-66:
-
-- **Principal-Only Debt Accounting** — For a Vault with `LEVersion == 1` (cash basis, see [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)), `LoanBroker.DebtTotal` tracks loan principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
+Under the `LendingProtocolV1_1` amendment, for a Vault with `LEVersion == 1` (cash basis, see [XLS-65.1](../../XLS-0065-single-asset-vault/65.1/README.md)), `LoanBroker.DebtTotal` tracks loan principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
 
 ## 2. Motivation
 
@@ -27,11 +22,9 @@ The amendment makes the following changes to XLS-66:
 
 ## 3. Specification
 
-### 3.1 Principal-Only Debt Accounting
+### 3.1 Transaction: `LoanSet`
 
-#### 3.1.1 Transaction: `LoanSet`
-
-##### 3.1.1.1 Failure Conditions
+#### 3.1.1 Failure Conditions
 
 For a Vault with `LEVersion == 1`, parent checks 6 and 14 do not apply, and the Broker cap checks 19 and 20 are replaced by principal-only checks:
 
@@ -40,27 +33,36 @@ For a Vault with `LEVersion == 1`, parent checks 6 and 14 do not apply, and the 
 
 For a Vault with `LEVersion` absent, parent checks 6, 14, 19, and 20 apply unchanged.
 
-##### 3.1.1.2 State Changes
+#### 3.1.2 State Changes
 
-For a Vault with `LEVersion == 1`, issuing a Loan leaves `Vault.AssetsTotal` unchanged and increases `LoanBroker.DebtTotal` by `PrincipalRequested`. For a Vault with `LEVersion` absent, issuing a Loan increases `Vault.AssetsTotal` by `InterestDue` and increases `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
+For a Vault with `LEVersion == 1`, steps 6 and 7 of [3.8.6 State Changes](../README.md#386-state-changes) are replaced by the following; all other steps are unchanged. For a Vault with `LEVersion` absent, steps 6 and 7 apply unchanged:
 
-#### 3.1.2 Transaction: `LoanPay`
+6. Update `Vault` object:
+   - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
+   - `Vault.AssetsTotal` is unchanged; `InterestDue` is not recognised at origination.
+7. Update `LoanBroker` object:
+   - Increase `LoanBroker.DebtTotal` by `PrincipalRequested` only; `InterestDue` is excluded.
+   - Increment `LoanBroker.OwnerCount` by `1`.
+   - Increment `LoanBroker.LoanSequence` by `1`.
 
-##### 3.1.2.1 State Changes
+### 3.2 Transaction: `LoanPay`
 
-For a Vault with `LEVersion == 1`, a payment splits into principal and interest:
+#### 3.2.1 State Changes
 
-- `Vault.AssetsTotal` increases by `interestPaid`.
-- `LoanBroker.DebtTotal` decreases by `principalPaid`.
-- `Vault.AssetsAvailable` increases by `totalToVault`, which is `principalPaid + interestPaid` rounded to the Vault's asset scale.
+For a Vault with `LEVersion == 1`, steps 6 and 7 of [3.11.5 State Changes](../README.md#3115-state-changes) are replaced by the following; all other steps, including the asset transfers, are unchanged. For a Vault with `LEVersion` absent, steps 6 and 7 apply unchanged:
+
+6. **`LoanBroker` Updates**:
+   - `LoanBroker.DebtTotal` is decreased by `principalPaid` only; `valueChange` does not apply.
+   - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
+7. **`Vault` Updates**:
+   - `Vault.AssetsAvailable` increases by `totalToVault`, which is `principalPaid + interestPaid` rounded to the Vault's asset scale.
+   - `Vault.AssetsTotal` is increased by `interestPaid` only; `valueChange` does not apply.
 
 Principal repayment does not reduce `Vault.AssetsTotal`. Because the cash-basis origination checks do not enforce `AssetsMaximum`, an interest receipt may increase `Vault.AssetsTotal` above `Vault.AssetsMaximum`; the cap restricts deposits, not interest receipts.
 
-For a Vault with `LEVersion` absent, the parent accrual-basis state changes apply unchanged.
+### 3.3 Transaction: `LoanManage`
 
-#### 3.1.3 Transaction: `LoanManage`
-
-##### 3.1.3.1 Failure Conditions
+#### 3.3.1 Failure Conditions
 
 For a Vault with `LEVersion == 1`, parent check 8 is replaced by the following principal-only impairment check:
 
@@ -68,15 +70,16 @@ For a Vault with `LEVersion == 1`, parent check 8 is replaced by the following p
 
 For a Vault with `LEVersion` absent, parent check 8 applies unchanged.
 
-##### 3.1.3.2 State Changes
+#### 3.3.2 State Changes
 
-For a Vault with `LEVersion == 1`, the parent `LoanManage` state changes use the following principal-only amounts:
+For a Vault with `LEVersion == 1`, items 1 to 3 of [3.10.5 State Changes](../README.md#3105-state-changes) are replaced by the following; all other steps are unchanged. For a Vault with `LEVersion` absent, items 1 to 3 apply unchanged:
 
-- For `tfLoanDefault`, `DefaultAmount = Loan.PrincipalOutstanding`.
-- For `tfLoanImpair`, `LossUnrealized = Loan.PrincipalOutstanding`.
-- For `tfLoanUnimpair`, `LossReversed = Loan.PrincipalOutstanding`.
-
-All downstream default calculations and state changes use `DefaultAmount` unchanged. For a Vault with `LEVersion` absent, the parent accrual-basis state changes apply unchanged.
+1. If the `tfLoanDefault` flag is specified:
+   - Compute `DefaultAmount = Loan.PrincipalOutstanding`, replacing `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`. All downstream calculations use `DefaultAmount` unchanged.
+2. If the `tfLoanImpair` flag is specified:
+   - Compute `LossUnrealized = Loan.PrincipalOutstanding`, replacing `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+3. If the `tfLoanUnimpair` flag is specified:
+   - Compute `LossReversed = Loan.PrincipalOutstanding`, replacing `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
 
 ## 4. Rationale
 

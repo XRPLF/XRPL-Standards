@@ -71,7 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
+- `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - introduces `LEVersion = 1` for cash-basis Vault accounting.
 
 ## 3. Specification
@@ -131,7 +131,7 @@ The `Vault` object supports the following flags:
 For the `Vault` object, `LEVersion` distinguishes the share-valuation and accounting behavior applied to the vault:
 
 - **Absent (default value `0`)**: The Vault was created before the `LendingProtocolV1_1` amendment was enabled, or otherwise predates ledger entry versioning. It uses the legacy, accrual-basis accounting described throughout this document and in [XLS-66](../XLS-0066-lending-protocol/README.md) — `AssetsTotal` includes accrued interest.
-- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` excludes uncollected interest and increases when interest is paid (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` subsections of [XLS-66](../XLS-0066-lending-protocol/README.md)).
+- **`1`**: The Vault was created while the `LendingProtocolV1_1` amendment was enabled. It exclusively uses the cash-basis accounting introduced by that amendment — `AssetsTotal` excludes uncollected interest and increases when interest is paid (see [3.1.7.4](#3174-cash-basis-vs-accrual-basis-accounting-lendingprotocolv1_1) and the `LendingProtocolV1_1` entries in [XLS-66](../XLS-0066-lending-protocol/README.md)).
 
 Any Vault created once `LendingProtocolV1_1` is enabled is always assigned `LEVersion = 1` — cash-basis accounting is not optional or user-selectable at creation time. A future revision of the `Vault` ledger entry would increment `LEVersion` to `2`, and so on.
 
@@ -337,7 +337,7 @@ Under the `LendingProtocolV1_1` amendment, `Vault.LEVersion` (see [3.1.2.2](#312
 - `LEVersion` absent (`0`, legacy/accrual-basis): `AssetsTotal` includes interest upfront, as accrued over the life of connected Loans. This is the pre-amendment behavior and continues unchanged for Vaults created before `LendingProtocolV1_1` was enabled.
 - `LEVersion = 1` (cash-basis): `AssetsTotal` excludes uncollected interest and increases only as interest is actually collected in cash. This is the exclusive behavior for Vaults created once `LendingProtocolV1_1` is enabled.
 
-See the `LendingProtocolV1_1` subsections of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
+See the `LendingProtocolV1_1` entries in the failure conditions and state changes of [XLS-66 §3.8](../XLS-0066-lending-protocol/README.md#38-transaction-loanset), [§3.10](../XLS-0066-lending-protocol/README.md#310-transaction-loanmanage), and [§3.11](../XLS-0066-lending-protocol/README.md#311-transaction-loanpay) for the precise accounting differences, all of which are gated on `Vault.LEVersion == 1`.
 
 #### 3.1.8 Frozen Assets
 
@@ -417,7 +417,9 @@ _TBD_
 
 #### 3.2.6 State Changes
 
-1. Create a new `Vault` ledger object.
+1.
+   - `SingleAssetVault`: Create a new `Vault` ledger object.
+   - `LendingProtocolV1_1`: Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
 2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
    1. If the `DomainID` is provided:
       1. `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
@@ -429,12 +431,6 @@ _TBD_
 
 5. If `Vault.Asset` is an `MPT`:
    1. Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
-
-##### 3.2.6.1 State Changes (`LendingProtocolV1_1`)
-
-Under the `LendingProtocolV1_1` amendment, step 1 of [3.2.6](#326-state-changes) is amended; all other steps are unchanged:
-
-1. Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
 
 #### 3.2.7 Invariants
 
@@ -1196,4 +1192,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- [XLS-65.1](./65.1/README.md): Introduces cash-basis Vault accounting, recorded in `LEVersion`, so `AssetsTotal` counts interest only when a Borrower pays it.

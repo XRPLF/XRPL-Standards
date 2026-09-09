@@ -1,25 +1,20 @@
 <pre>
   xls: 65.1
-  title: Single Asset Vault under LendingProtocolV1_1
-  description: Records the changes the LendingProtocolV1_1 amendment makes to XLS-65
-  author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
+  title: Single Asset Vault Cash-Basis Accounting
+  description: Introduces Cash-Basis accounting for the Single Asset Vault
+  author: Vytautas Vito Tumas <vtumas@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
   category: Amendment
-  requires: [XLS-65](../README.md)
   created: 2026-09-04
   updated: 2026-09-08
 </pre>
 
-# Single Asset Vault under `LendingProtocolV1_1`
+# Single Asset Vault Cash-Basis Accounting
 
 ## 1. Abstract
 
-This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_1` amendment makes to the Single Asset Vault. The amendment is not yet live. The consolidated specification is the top-level [README.md](../README.md).
-
-The amendment makes the following changes to XLS-65:
-
-- **Vault Cash-Basis Accounting** — Adds a `LEVersion` field that selects the accounting model a Vault applies to `AssetsTotal`: Vaults created while the amendment is enabled use cash-basis accounting, in which `AssetsTotal` excludes uncollected interest and grows only as interest is collected in cash, and Vaults created before the amendment keep accrual-basis accounting, in which `AssetsTotal` includes interest as it accrues.
+Under the `LendingProtocolV1_1` amendment, a Single Asset Vault accounts for the interest earned by its Loans on a cash basis. `AssetsTotal` counts interest only once a Borrower has paid it, rather than counting the interest a Loan is expected to earn from the moment the Loan is issued. The share exchange rate of the Vault therefore tracks the assets the Vault holds instead of the income it is owed, and a Borrower who stops paying costs the Vault only the principal it lent out. A Vault created before the amendment keeps accrual-basis accounting, in which `AssetsTotal` includes interest as it accrues, because changing the accounting model of an existing Vault would change the value of the shares it has already issued. Which model a Vault uses is recorded in its `LEVersion` field and fixed when the Vault is created.
 
 ## 2. Motivation
 
@@ -29,17 +24,15 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 
 ## 3. Specification
 
-### 3.3 Vault Cash-Basis Accounting
+### 3.1 Ledger Entry: `Vault`
 
-#### 3.3.1 Ledger Entry: `Vault`
-
-##### 3.3.1.1 Fields
+#### 3.1.1 Fields
 
 | Field Name  | Constant | Required | Internal Type | Default Value | Description                                                                                                            |
 | ----------- | :------: | :------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------------------------------------- |
 | `LEVersion` |   Yes    |    No    |    `UINT8`    | absent (`0`)  | The accounting model the Vault applies to `AssetsTotal`. Absent is treated as `0` (accrual basis). Immutable once set. |
 
-##### 3.3.1.2 `LEVersion`
+#### 3.1.2 `LEVersion`
 
 `LEVersion` selects the accounting model of the Vault:
 
@@ -48,13 +41,11 @@ Existing Vaults cannot switch accounting models without changing the value of sh
 
 The field is written once by `VaultCreate` and is immutable after creation. A Vault created while the amendment is enabled is always cash-basis, and a Vault created before it is always accrual-basis; neither can be converted to the other.
 
-##### 3.3.1.3 Invariants
+#### 3.1.3 Invariants
 
-- `Vault.LEVersion` is immutable once set.
+- `Vault.LEVersion == Vault'.LEVersion`
 
-Because `VaultCreate` is the only transaction that writes `LEVersion`, newly created Vaults have either an absent `LEVersion` or `LEVersion = 1`.
-
-##### 3.3.1.4 Example JSON
+#### 3.1.4 Example JSON
 
 ```json
 {
@@ -69,15 +60,15 @@ Because `VaultCreate` is the only transaction that writes `LEVersion`, newly cre
 }
 ```
 
-#### 3.3.2 Transaction: `VaultCreate`
+### 3.2 Transaction: `VaultCreate`
 
-##### 3.3.2.1 Failure Conditions
+#### 3.2.1 Failure Conditions
 
 No failure conditions are added or removed. `LEVersion` is not a transaction field and cannot be supplied by the submitter.
 
-##### 3.3.2.2 State Changes
+#### 3.2.2 State Changes
 
-When the amendment is enabled, the created `Vault` ledger entry has `LEVersion = 1`. When it is not enabled, the field is not written and the Vault is accrual-basis.
+1. Create a new `Vault` ledger object, setting `Vault.LEVersion = 1`.
 
 ## 4. Rationale
 
