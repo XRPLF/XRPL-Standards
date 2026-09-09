@@ -72,7 +72,7 @@ For a Vault with `LEVersion` absent, parent check 8 applies unchanged.
 
 #### 3.3.2 State Changes
 
-For a Vault with `LEVersion == 1`, items 1 to 3 of [3.10.5 State Changes](../README.md#3105-state-changes) are replaced by the following; all other steps are unchanged. For a Vault with `LEVersion` absent, items 1 to 3 apply unchanged:
+For a Vault with `LEVersion == 1`, the amount computations in items 1 to 3 of [3.10.5 State Changes](../README.md#3105-state-changes) are replaced by the following; nested substeps (flags, transfers, `DebtTotal`, and field clears) are unchanged except that they use these amounts. For a Vault with `LEVersion` absent, the parent amount computations in items 1 to 3 apply unchanged:
 
 1. If the `tfLoanDefault` flag is specified:
    - Compute `DefaultAmount = Loan.PrincipalOutstanding`, replacing `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`. All downstream calculations use `DefaultAmount` unchanged.

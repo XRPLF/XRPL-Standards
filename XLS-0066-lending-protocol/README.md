@@ -2020,7 +2020,12 @@ Applied when a loan defaults.
 #### 8.1 Default Amounts
 
 $$
-DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34)}
+DefaultAmount =
+\begin{cases}
+PrincipalOutstanding & \text{if } Vault.LEVersion = 1 \\
+PrincipalOutstanding + InterestOutstanding_{net} & \text{otherwise}
+\end{cases}
+\quad \text{(34)}
 $$
 
 $$
