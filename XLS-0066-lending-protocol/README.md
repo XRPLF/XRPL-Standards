@@ -120,6 +120,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 - `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
   - introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
+  - Closed-ended Vault phase checks on `LoanSet` and the closed-ended requirement on `LoanBrokerSet` are specified in [PR #587](https://github.com/XRPLF/XRPL-Standards/pull/587), not in this patch.
 
 ## 3. Specification
 

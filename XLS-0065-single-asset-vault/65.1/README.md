@@ -66,7 +66,7 @@ The following excerpt shows the accounting fields introduced or affected by this
 
 #### 3.2.1 Failure Conditions
 
-No failure conditions are added or removed. `LEVersion` is not a transaction field and cannot be supplied by the submitter.
+No failure conditions related to cash-basis accounting are added or removed. `LEVersion` is not a transaction field and cannot be supplied by the submitter.
 
 #### 3.2.2 State Changes
 

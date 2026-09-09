@@ -73,6 +73,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - introduces `LEVersion = 1` for cash-basis Vault accounting.
+  - Closed-ended Vault checks also gated by this amendment (`VaultKind`, `SubscriptionDate`, `RedemptionDate`, and the phase checks on `VaultDeposit` / `VaultWithdraw`) are specified in [PR #587](https://github.com/XRPLF/XRPL-Standards/pull/587), not in this patch.
 
 ## 3. Specification
 
