@@ -1,7 +1,7 @@
 <pre>
   xls: 66.2
   title: Lending Protocol Impairment Timing
-  description: Introduces late-only impairment, exclusive due-date boundaries, and leaves NextPaymentDueDate unchanged on impair and unimpair
+  description: Introduces late-only impairment, exclusive due-date boundaries, and leaves Loan.NextPaymentDueDate unchanged on impair and unimpair
   author: Vytautas Vito Tumas <vtumas@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
   status: Draft
@@ -14,7 +14,7 @@
 
 ## 1. Abstract
 
-Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment is already overdue, impair and unimpair leave `Loan.NextPaymentDueDate` unchanged, and the payment due-date and default grace-period boundaries are exclusive: a payment is late only when the current ledger close time is greater than `Loan.NextPaymentDueDate`, and default is allowed only when it is greater than `Loan.NextPaymentDueDate + Loan.GracePeriod`. Equality at either boundary is not expired.
+Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its payment is already overdue; impairing and unimpairing leave `Loan.NextPaymentDueDate` unchanged, and the payment due-date and default grace-period boundaries are exclusive: a payment is late only when the current ledger close time is greater than `Loan.NextPaymentDueDate`, and default is allowed only when it is greater than `Loan.NextPaymentDueDate + Loan.GracePeriod`. Equality at either boundary is not expired.
 
 ## 2. Motivation
 
