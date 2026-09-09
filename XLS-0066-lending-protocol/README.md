@@ -552,7 +552,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. If the Borrower makes a payment, the impairment status is automatically cleared.
 
-- `LendingProtocol`: A Loan can be impaired before its payment is overdue. Impairing while the due date is still in the future moves `NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that timestamp is still in the future, otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+- `LendingProtocol`: A Loan can be impaired before its payment is overdue. Impairing while `Loan.NextPaymentDueDate` is still greater than the current ledger close time moves `Loan.NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time, otherwise to the current ledger close time plus `Loan.PaymentInterval`.
 - `fixCleanup3_4_0`: A Loan can be impaired only when the current ledger close time is greater than `Loan.NextPaymentDueDate`; equality is not late. Impair and unimpair do not modify `Loan.NextPaymentDueDate`.
 
 ### 3.3. Transaction: `LoanBrokerSet`
@@ -1316,7 +1316,7 @@ This transaction uses the standard transaction fee.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
      - `NextPaymentDueDate`:
-       - `LendingProtocol`: Rewrite `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that timestamp is still in the future; otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+       - `LendingProtocol`: Rewrite `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time; otherwise to the current ledger close time plus `Loan.PaymentInterval`.
        - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 
 #### 3.10.6 Invariants

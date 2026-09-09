@@ -18,7 +18,7 @@ Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its pay
 
 ## 2. Motivation
 
-**Impairment Timing.** Pre-amendment impairment can fire before a payment is overdue and then pull `NextPaymentDueDate` forward so the Loan can be defaulted on a shortened clock. Unimpairing rewrites that date again. Treating equality with the due date or the grace-period end as already expired also defaults or late-pays a Loan on the exact boundary. The amendment keeps the payment schedule intact and treats the boundary as not yet late.
+**Impairment Timing.** Pre-amendment impairment can fire before a payment is overdue and then pull `Loan.NextPaymentDueDate` forward so the Loan can be defaulted on a shortened clock. Unimpairing rewrites that date again. Treating equality with the due date or the grace-period end as already expired also defaults or late-pays a Loan on the exact boundary. The amendment keeps the payment schedule intact and treats the boundary as not yet late.
 
 ## 3. Specification
 
@@ -35,7 +35,7 @@ When the amendment is not enabled, parent check 6 uses `currentTime < Loan.NextP
 
 #### 3.1.2 State Changes
 
-When the amendment is enabled, the `NextPaymentDueDate` rewrites in steps 2 and 3 of [3.10.5 State Changes](../README.md#3105-state-changes) do not apply; all other steps are unchanged. When the amendment is not enabled, those rewrites apply unchanged:
+When the amendment is enabled, the `Loan.NextPaymentDueDate` rewrites in steps 2 and 3 of [3.10.5 State Changes](../README.md#3105-state-changes) do not apply; all other steps are unchanged. When the amendment is not enabled, those rewrites apply unchanged:
 
 2. If the `tfLoanImpair` flag is specified:
    - `Loan.NextPaymentDueDate` is unchanged.
@@ -54,7 +54,7 @@ When the amendment is not enabled, parent check 11 uses `currentTime >= Loan.Nex
 
 ## 4. Rationale
 
-**Impairment Timing.** Pulling the due date forward on impair was a way to accelerate default after the Broker had already booked a paper loss. That couples a reporting action to the payment calendar. Leaving `NextPaymentDueDate` alone keeps impairment as a Vault accounting mark, and the exclusive boundary avoids treating the due instant itself as already late.
+**Impairment Timing.** Pulling the due date forward on impair was a way to accelerate default after the Broker had already booked a paper loss. That couples a reporting action to the payment calendar. Leaving `Loan.NextPaymentDueDate` alone keeps impairment as a Vault accounting mark, and the exclusive boundary avoids treating the due instant itself as already late.
 
 ## 5. Security Considerations
 
