@@ -362,7 +362,7 @@ The type indicates the withdrawal strategy supported by the vault. The following
 
 #### 3.2.4 Transaction Fees
 
-The transaction creates both the `Vault` object and its owned _pseudo-account_, increasing the Vault Owner's `OwnerCount` by 2. Therefore, the transaction increases the owner's required XRP reserve by [two increments](../XLS-0064-pseudo-account/README.md): one for the `Vault` object and one for the _pseudo-account_. The transaction fee is the standard network fee.
+The transaction creates the `Vault` object, its owned _pseudo-account_, and a share `MPToken` for the Vault Owner. It increases the Vault Owner's `OwnerCount` by 3: one for the `Vault`, one for the _pseudo-account_ ([XLS-64](../XLS-0064-pseudo-account/README.md)), and one for the owner's share `MPToken` ([XLS-33](../XLS-0033-multi-purpose-tokens/README.md)). Therefore the owner's required XRP reserve increases by three increments. The share `MPTokenIssuance` is issued by the _pseudo-account_, not the Vault Owner. The transaction fee is the standard network fee.
 
 #### 3.2.5 Failure Conditions
 
@@ -404,8 +404,8 @@ The transaction creates both the `Vault` object and its owned _pseudo-account_, 
    1. If `tfVaultShareNonTransferable` is not set: set `lsfMPTCanEscrow`, `lsfMPTCanTrade`, and `lsfMPTCanTransfer` on the `MPTokenIssuance`.
    2. If `tfVaultPrivate` is set: set `lsfMPTRequireAuth` on the `MPTokenIssuance`.
    3. If `DomainID` is provided: set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID`.
-   4. Create an `MPToken` object for the Vault Owner to hold Vault Shares, with `MPTAmount == 0` (no shares are issued at creation). Flags as in [3.1.6.3](#3163-mptoken): `lsfMPTAuthorized` when the vault is private or the shares are non-transferable.
-   5. If `tfVaultPrivate` is set: create an authorized `MPToken` object for the _pseudo-account_ to hold Vault Shares, also with `MPTAmount == 0`.
+   4. Create an `MPToken` object for the Vault Owner to hold Vault Shares, with `MPTAmount == 0` (no shares are issued at creation). Increase the Vault Owner's `OwnerCount` by 1 for that `MPToken`. Flags as in [3.1.6.3](#3163-mptoken): `lsfMPTAuthorized` when the vault is private or the shares are non-transferable.
+   5. If `tfVaultPrivate` is set: create an authorized `MPToken` object for the _pseudo-account_ to hold Vault Shares, also with `MPTAmount == 0`. That holding is owned by the _pseudo-account_, not the Vault Owner.
 3. Create a new `AccountRoot` [_pseudo-account_](../XLS-0064-pseudo-account/README.md) object with `VaultID` set to the new Vault's ID.
 4. If `Vault.Asset` is `XRP`:
    1. No holding object is created; deposited XRP is held in the _pseudo-account_'s `AccountRoot.Balance`.
