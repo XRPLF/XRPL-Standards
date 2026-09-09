@@ -95,7 +95,7 @@ A vault has the following fields:
 | Field Name          | Constant | Required |     JSON Type      | Internal Type | Default Value | Description                                                                                                                                                                     |
 | ------------------- | :------: | :------: | :----------------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `LedgerEntryType`   |    No    |   Yes    |      `string`      |   `UINT16`    |   `0x0084`    | Ledger object type.                                                                                                                                                             |
-| `LedgerIndex`       |    No    |   Yes    |      `string`      |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                       |
+| `LedgerIndex`       |    No    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     | Ledger object identifier.                                                                                                                                                       |
 | `Flags`             |   Yes    |   Yes    |      `string`      |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                            |
 | `PreviousTxnID`     |    No    |   Yes    |      `string`      |   `HASH256`   |     `N/A`     | Identifies the transaction ID that most recently modified this object.                                                                                                          |
 | `PreviousTxnLgrSeq` |    No    |   Yes    |      `number`      |   `UINT32`    |     `N/A`     | The sequence of the ledger that contains the transaction that most recently modified this object.                                                                               |
@@ -110,8 +110,8 @@ A vault has the following fields:
 | `LossUnrealized`    |    No    |   Yes    |      `number`      |   `NUMBER`    |       0       | The potential loss amount that is not yet realized expressed as the vaults asset.                                                                                               |
 | `AssetsMaximum`     |   Yes    |    No    |      `number`      |   `NUMBER`    |       0       | The maximum asset amount that can be held in the vault. Zero value `0` indicates there is no cap.                                                                               |
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                                             |
-| `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                                            |
-| `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares.                          |
+| `WithdrawalPolicy`  |    No    |   Yes    |      `number`      |    `UINT8`    |       1       | Indicates the withdrawal strategy used by the Vault. `1` is `vaultStrategyFirstComeFirstServe`.                                                                                 |
+| `Scale`             |    No    |    No    |      `number`      |    `UINT8`    |       6       | Power of 10 used to convert asset amounts into integer shares. Absent or `0` for `XRP` and `MPT` (fixed scale `0`). For an `IOU`, written when non-zero; default `6` at create. |
 
 ##### 3.1.2.1 Flags
 
@@ -416,11 +416,11 @@ The transaction creates both the `Vault` object and its owned _pseudo-account_, 
 
 ##### 3.2.6.1 After `fixCleanup3_2_0`
 
-When the `fixCleanup3_2_0` amendment is enabled, the share `MPTokenIssuance` (created in step 2 above) additionally has its `sfReferenceHolding` field set to the key of the _pseudo-account_'s asset holding object:
+When the `fixCleanup3_2_0` amendment is enabled, the share `MPTokenIssuance` (created in step 2 above) additionally has its `ReferenceHolding` field set to the key of the _pseudo-account_'s asset holding object:
 
-- If `Vault.Asset` is an `IOU`: `sfReferenceHolding` points to the `RippleState` object between the _pseudo-account_ and the issuer.
-- If `Vault.Asset` is an `MPT`: `sfReferenceHolding` points to the `MPToken` object of the _pseudo-account_ for the `Asset.MPTokenIssuance`.
-- If `Vault.Asset` is `XRP`: `sfReferenceHolding` is not set (XRP has no holding object).
+- If `Vault.Asset` is an `IOU`: `ReferenceHolding` points to the `RippleState` object between the _pseudo-account_ and the issuer.
+- If `Vault.Asset` is an `MPT`: `ReferenceHolding` points to the `MPToken` object of the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+- If `Vault.Asset` is `XRP`: `ReferenceHolding` is not set (XRP has no holding object).
 
 #### 3.2.7 Invariants
 
