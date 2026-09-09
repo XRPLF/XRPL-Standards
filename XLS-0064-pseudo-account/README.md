@@ -152,10 +152,6 @@ The following invariants must hold true for any `AccountRoot` entry functioning 
   - AMM pseudo-accounts created under old rules will have a sequence number set to the index of the ledger they were created in. They still must never change.
 - A `RegularKey` must not be set.
 
-### Rationale
-
-Centralizing these conditions in deposit and withdrawal helpers gives every protocol that transfers an asset through a pseudo-account the same freeze behavior while preserving the distinct issuer and self-withdrawal exemptions.
-
 ### Security Considerations
 
 The design of pseudo-accounts includes several critical security features:
