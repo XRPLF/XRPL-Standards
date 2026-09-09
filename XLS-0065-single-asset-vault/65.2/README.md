@@ -63,7 +63,7 @@ For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal
 Cap enforcement becomes:
 
 - `Vault.AssetsTotal` is not required to be less than or equal to `Vault.AssetsMaximum` on every modification of the entry, and no invariant imposes that, because the excess may be interest that the Vault has recognised.
-- `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. The amendment does not change this.
+- `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. A successful deposit also leaves that inequality as an invariant. The amendment does not change this.
 - `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap is no longer failed by this check.
 
 Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
