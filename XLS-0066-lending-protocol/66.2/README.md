@@ -18,7 +18,7 @@ Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its pay
 
 ## 2. Motivation
 
-**Impairment Timing.** Pre-amendment impairment can fire before a payment is overdue and then pull `Loan.NextPaymentDueDate` forward so the Loan can be defaulted on a shortened clock. Unimpairing rewrites that date again. Treating equality with the due date or the grace-period end as already expired also defaults or late-pays a Loan on the exact boundary. The amendment keeps the payment schedule intact and treats the boundary as not yet late.
+Pre-amendment impairment can fire before a payment is overdue and then pull `Loan.NextPaymentDueDate` forward so the Loan can be defaulted on a shortened clock. Unimpairing rewrites that date again. Treating equality with the due date or the grace-period end as already expired also defaults or late-pays a Loan on the exact boundary. The amendment keeps the payment schedule intact and treats the boundary as not yet late.
 
 ## 3. Specification
 
@@ -54,8 +54,8 @@ When the amendment is not enabled, parent check 11 uses `currentTime >= Loan.Nex
 
 ## 4. Rationale
 
-**Impairment Timing.** Pulling the due date forward on impair was a way to accelerate default after the Broker had already booked a paper loss. That couples a reporting action to the payment calendar. Leaving `Loan.NextPaymentDueDate` alone keeps impairment as a Vault accounting mark, and the exclusive boundary avoids treating the due instant itself as already late.
+Pulling the due date forward on impair was a way to accelerate default after the Broker had already booked a paper loss. That couples a reporting action to the payment calendar. Leaving `Loan.NextPaymentDueDate` alone keeps impairment as a Vault accounting mark, and the exclusive boundary avoids treating the due instant itself as already late.
 
 ## 5. Security Considerations
 
-**Impairment Timing.** After the amendment, a Broker cannot impair a current Loan in order to default it before the original grace period ends. Implementations must use the exclusive comparison in every late-payment and default check; mixing inclusive and exclusive comparisons lets a payment on the due instant succeed in one path and fail in another.
+After the amendment, a Broker cannot impair a current Loan in order to default it before the original grace period ends. Implementations must use the exclusive comparison in every late-payment and default check; mixing inclusive and exclusive comparisons lets a payment on the due instant succeed in one path and fail in another.
