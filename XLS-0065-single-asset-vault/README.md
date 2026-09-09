@@ -74,7 +74,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
-  - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap
+  - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
 
 ## 3. Specification
 
@@ -344,7 +344,7 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 12. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it.
 13.
     - `SingleAssetVault`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it.
-    - `fixCleanup3_4_0`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction supplies `AssetsMaximum` or the cap otherwise changes. A cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
+    - `fixCleanup3_4_0`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction supplies `AssetsMaximum` or the cap otherwise changes. A cap already exceeded by accrued interest no longer blocks a `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap.
 14.
     - `SingleAssetVault`: `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set.
     - `LendingProtocolV1_1`: `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. If `Vault.LEVersion` is absent, it remains absent, except when the transaction creates the entry.
@@ -1210,4 +1210,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 ## Appendix C: Changelog
 
 - [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.
-- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement.
+- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.

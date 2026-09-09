@@ -14,7 +14,7 @@
 
 ## 1. Abstract
 
-Under the `fixCleanup3_4_0` amendment, when the Vault asset is not integral — that is, an `IOU` — the `LossUnrealized` bound and the accounting-delta comparisons made by `VaultDeposit`, `VaultWithdraw` and `VaultClawback` admit one unit of rounding tolerance at their comparison scale; for `XRP` and `MPT` the comparisons stay strict. `LossUnrealized` must also not be negative, for every asset type, and a fully impaired fixed-share withdrawal may redeem shares for zero assets. Separately, `VaultSet` no longer fails the cap check when the cap is left alone, so a Vault whose total has grown past its cap through interest can still be updated.
+Under the `fixCleanup3_4_0` amendment, when the Vault asset is not integral — that is, an `IOU` — the `LossUnrealized` bound and the accounting-delta comparisons made by `VaultDeposit`, `VaultWithdraw` and `VaultClawback` admit one unit of rounding tolerance at their comparison scale; for `XRP` and `MPT` the comparisons stay strict. `LossUnrealized` must also not be negative, for every asset type, and a fully impaired fixed-share withdrawal may redeem shares for zero assets. Separately, `VaultSet` no longer fails the cap check when the transaction omits `AssetsMaximum` and does not otherwise change the cap, so a Vault whose total has grown past its cap through interest can still be updated.
 
 ## 2. Motivation
 
@@ -64,7 +64,7 @@ Cap enforcement becomes:
 
 - `Vault.AssetsTotal` is not required to be less than or equal to `Vault.AssetsMaximum` on every modification of the entry, and no invariant imposes that, because the excess may be interest that the Vault has recognised.
 - `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. The amendment does not change this.
-- `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that leaves the cap alone is no longer failed by this check.
+- `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap is no longer failed by this check.
 
 Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
 
