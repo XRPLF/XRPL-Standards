@@ -71,8 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
-  - rejects pseudo-account holders and corrects rounding, unrealized-loss, precision, and overflow handling for `VaultClawback`.
+- `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
+  - rejects a pseudo-account `Holder` on `VaultClawback` and reports a recovery too small to change `AssetsTotal` as `tecPRECISION_LOSS`
 
 ## 3. Specification
 
@@ -692,7 +692,9 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 
-2. If `fixCleanup3_4_0` is enabled: the `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
+2.
+   - `SingleAssetVault`: The check does not apply. A `Holder` that is a pseudo-account is not rejected for that reason.
+   - `fixCleanup3_4_0`: The `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
 
 3. `Vault.Asset` is not `XRP`, the issuer of `Vault.Asset` is the vault owner, and no `Amount` is specified (ambiguous clawback target). (`tecWRONG_ASSET`)
 
@@ -711,15 +713,21 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 6. The unit of `Amount` is not the vault share (`Vault.ShareMPTID`) or `Vault.Asset`. (`tecWRONG_ASSET`)
 
-7. While computing an asset clawback, arithmetic overflows in `assetsToClawback`. The overflow handler is not gated on `fixCleanup3_4_0`, although the amendment-gated scale clamp adds another possible source of overflow. (`tecPATH_DRY`)
+7. While computing an asset clawback, arithmetic overflows. (`tecPATH_DRY`)
 
-8. For an asset clawback, if `fixCleanup3_4_0` is enabled: `clampToAssetsTotalScale` rounds a computed non-zero `assetsRecovered` down to zero at the posterior `AssetsTotal` scale. (`tecPRECISION_LOSS`)
+8.
+   - `SingleAssetVault`: The check does not apply. A computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` fails later as `tecINVARIANT_FAILED`.
+   - `fixCleanup3_4_0`: For an asset clawback, a computed non-zero recovered asset amount rounds down to zero at the scale of the resulting `AssetsTotal`. (`tecPRECISION_LOSS`)
 
-9. The computed share amount to claw back is zero (`sharesDestroyed == 0`). This check is not gated on `fixCleanup3_4_0`. (`tecPRECISION_LOSS`)
+9. The computed share amount to claw back is zero. (`tecPRECISION_LOSS`)
 
-10. For an asset clawback, if `fixCleanup3_4_0` is enabled: the computed non-zero `assetsRecovered` is too small to change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
+10.
+    - `SingleAssetVault`: A computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
+    - `fixCleanup3_4_0`: For an asset clawback, the computed non-zero recovered asset amount would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
 
-11. For an asset clawback, if `fixCleanup3_4_0` is enabled: arithmetic overflows while evaluating the preceding non-zero-dust condition. (`tecPATH_DRY`)
+11.
+    - `SingleAssetVault`: The check does not apply.
+    - `fixCleanup3_4_0`: For an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
 
 #### 3.7.3 State Changes
 
@@ -1197,4 +1205,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.2: Single Asset Vault under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
+- [XLS-65.2](./65.2/README.md): Rejects a pseudo-account `Holder` on `VaultClawback` and reports a recovery too small to change `AssetsTotal` as `tecPRECISION_LOSS`.
