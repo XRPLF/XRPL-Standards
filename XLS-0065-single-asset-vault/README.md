@@ -71,8 +71,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
-  - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
+- `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
+  - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.
 
 ## 3. Specification
 
@@ -463,15 +463,18 @@ The `VaultDelete` transaction deletes an existing vault object.
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                                 Transaction type (`ttVAULT_DELETE` in rippled).                                                          |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                            The ID of the vault to be deleted.                                                            |
-| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires the `LendingProtocolV1_1` amendment. |
+| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires `LendingProtocolV1_1`.               |
 
 #### 3.4.2 Failure Conditions
 
 ##### 3.4.2.1 Data Verification
 
 1. The `VaultID` field is zero. (`temMALFORMED`)
-2. The `MemoData` field is present and the `LendingProtocolV1_1` amendment is not enabled. (`temDISABLED`)
-3. The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
+2.
+   - `SingleAssetVault`: The `MemoData` field is present. (`temDISABLED`)
+   - `LendingProtocolV1_1`: The check does not apply.
+3.
+   - `LendingProtocolV1_1`: The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
 
 ##### 3.4.2.2 Protocol-Level Failures
 
@@ -1166,6 +1169,6 @@ XRP Ledger is an account based blockchain. That means that assets (XRP, IOU and 
 
 No, neither of the transactions charge transfer fees when depositing or withdrawing assets to and from the Vault.
 
-## Appendix B: Changelog
+## Appendix C: Changelog
 
-- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
+- [XLS-65.1](./65.1/README.md): Adds an optional `MemoData` field to `VaultDelete` so the Owner can record why a Vault was deleted.

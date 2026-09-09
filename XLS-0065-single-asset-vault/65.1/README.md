@@ -1,25 +1,20 @@
 <pre>
   xls: 65.1
-  title: Single Asset Vault under LendingProtocolV1_1
-  description: Records the changes the LendingProtocolV1_1 amendment makes to XLS-65
-  author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
+  title: Vault Deletion Memo
+  description: Introduces an optional MemoData field on VaultDelete for recording why a Vault was deleted
+  author: Vytautas Vito Tumas <vtumas@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
   category: Amendment
-  requires: [XLS-65](../README.md)
   created: 2026-09-04
-  updated: 2026-09-07
+  updated: 2026-09-09
 </pre>
 
-# Single Asset Vault under `LendingProtocolV1_1`
+# Vault Deletion Memo
 
 ## 1. Abstract
 
-This patch of [XLS-65](../README.md) records the changes the `LendingProtocolV1_1` amendment makes to the Single Asset Vault. The amendment is not yet live. The consolidated specification is the top-level [README.md](../README.md).
-
-The amendment makes the following changes to XLS-65:
-
-- **Vault Deletion Memo** — Adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes, in which the Owner of the Vault can record a reason for the deletion.
+Under the `LendingProtocolV1_1` amendment, `VaultDelete` accepts an optional `MemoData` field in which the Owner of the Vault can record why the Vault was deleted. When present, the decoded value must be 1 to 256 bytes; omitting the field is valid, and including it empty is not. The field is opaque to the protocol and is not written to any ledger entry, because the Vault it describes ceases to exist in the same transaction.
 
 ## 2. Motivation
 
@@ -29,33 +24,38 @@ The amendment makes the following changes to XLS-65:
 
 ## 3. Specification
 
-### 3.4 Vault Deletion Memo
+### 3.1 Transaction: `VaultDelete`
 
-#### 3.4.1 Fields
+#### 3.1.1 Fields
+
+`VaultDelete` accepts one additional field:
 
 | Field Name | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                                 |
 | ---------- | :-------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------ |
 | `MemoData` |    No     | `string`  |    `BLOB`     |     `N/A`     | Optional opaque deletion reason, encoded as hexadecimal. If present, the decoded value must be 1–256 bytes. Omitted is valid; empty is not. |
 
-The field is not interpreted by the protocol and is not written to any ledger entry; the Vault it describes ceases to exist in the same transaction.
+The field is not interpreted by the protocol and is not written to any ledger entry.
 
-#### 3.4.2 Failure Conditions
+#### 3.1.2 Failure Conditions
 
-##### 3.4.2.1 Data Verification
+##### 3.1.2.1 Data Verification
 
-1. `MemoData` is present and the `LendingProtocolV1_1` amendment is not enabled. (`temDISABLED`)
+Parent check 1 is unchanged. The following checks are added:
+
 2. `MemoData` is present and empty. (`temMALFORMED`)
 3. `MemoData` is longer than 256 bytes. (`temMALFORMED`)
 
-##### 3.4.2.2 Protocol-Level Failures
+When the amendment is not enabled, `MemoData` is not accepted on `VaultDelete` and its presence fails with `temDISABLED`.
+
+##### 3.1.2.2 Protocol-Level Failures
 
 Unchanged.
 
-#### 3.4.3 State Changes
+#### 3.1.3 State Changes
 
 Unchanged. `MemoData` remains in the transaction record and is not written to a ledger entry or copied into transaction metadata.
 
-#### 3.4.4 Example JSON
+#### 3.1.4 Example JSON
 
 ```json
 {
