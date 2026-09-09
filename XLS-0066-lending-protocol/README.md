@@ -1075,8 +1075,7 @@ The account specified in the `Account` field pays the transaction fee.
 3. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
 4. Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 5. The `Borrower` `AccountRoot` object does not exist. (`terNO_ACCOUNT`)
-6.
-   - `LendingProtocol`: `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity). (`tecLIMIT_EXCEEDED`)
+6. - `LendingProtocol`: `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity). (`tecLIMIT_EXCEEDED`)
    - `LendingProtocolV1_1`: The check does not apply if `Vault.LEVersion == 1`.
 7. Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss. (`tecPRECISION_LOSS`)
 8. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
@@ -1085,18 +1084,15 @@ The account specified in the `Account` field pays the transaction fee.
 11. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 12. The `LoanBroker.Owner` is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 13. `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault). (`tecINSUFFICIENT_FUNDS`)
-14.
-    - `LendingProtocol`: `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap). (`tecLIMIT_EXCEEDED`)
+14. - `LendingProtocol`: `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap). (`tecLIMIT_EXCEEDED`)
     - `LendingProtocolV1_1`: The check does not apply if `Vault.LEVersion == 1`.
 15. The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. (`tecPRECISION_LOSS`)
 16. The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. (`tecPRECISION_LOSS`)
 17. The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision. (`tecPRECISION_LOSS`)
 18. The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan differs from the specified `PaymentTotal`. (`tecPRECISION_LOSS`)
-19.
-    - `LendingProtocol`: `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
+19. - `LendingProtocol`: `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
     - `LendingProtocolV1_1`: If `Vault.LEVersion == 1`, `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
-20.
-    - `LendingProtocol`: `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
+20. - `LendingProtocol`: `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
     - `LendingProtocolV1_1`: If `Vault.LEVersion == 1`, `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
 21. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
 22. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
@@ -1126,15 +1122,13 @@ The account specified in the `Account` field pays the transaction fee.
      - Decrease the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `PrincipalRequested`.
      - Increase the `MPToken.MPTAmount` of the `Borrower` `MPToken` object by `PrincipalRequested - LoanOriginationFee`.
      - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `LoanOriginationFee`.
-6.
-   - `LendingProtocol`: Update `Vault` object:
+6. - `LendingProtocol`: Update `Vault` object:
      - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
      - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
    - `LendingProtocolV1_1`: If `Vault.LEVersion == 1`, update `Vault` object:
      - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
      - `Vault.AssetsTotal` is unchanged; `InterestDue` is not recognised at origination.
-7.
-   - `LendingProtocol`: Update `LoanBroker` object:
+7. - `LendingProtocol`: Update `LoanBroker` object:
      - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
      - Increment `LoanBroker.OwnerCount` by `1`.
      - Increment `LoanBroker.LoanSequence` by `1`.
@@ -1274,8 +1268,7 @@ This transaction uses the standard transaction fee.
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
 6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
 7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
-8.
-   - `LendingProtocol`: `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
+8. - `LendingProtocol`: `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
    - `LendingProtocolV1_1`: If `Vault.LEVersion == 1`, `tfLoanImpair` flag is specified and `Vault.LossUnrealized + Loan.PrincipalOutstanding > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
 
 #### 3.10.5 State Changes

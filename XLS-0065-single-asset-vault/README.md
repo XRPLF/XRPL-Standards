@@ -418,20 +418,19 @@ _TBD_
 
 #### 3.2.6 State Changes
 
-1.
-   - `SingleAssetVault`: Create a new `Vault` ledger object.
-   - `LendingProtocolV1_1`: Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
-2. Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
-   1. If the `DomainID` is provided:
-      1. `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
-   2. Create an `MPToken` object for the Vault Owner to hold Vault Shares.
-3. Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
+1.  - `SingleAssetVault`: Create a new `Vault` ledger object.
+    - `LendingProtocolV1_1`: Create a new `Vault` ledger object, setting `Vault.LEVersion = 1` (see [3.1.2.2](#3122-leversion-lendingprotocolv1_1)). `LEVersion` is not a transaction field and is not settable by the Vault Owner — every Vault created while this amendment is enabled is unconditionally assigned cash-basis accounting.
+2.  Create a new `MPTokenIssuance` ledger object for the vault shares, and assign its MPTID to `Vault.ShareMPTID`.
+    1.  If the `DomainID` is provided:
+        1. `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID` (Set the Permissioned Domain ID).
+    2.  Create an `MPToken` object for the Vault Owner to hold Vault Shares.
+3.  Create a new `AccountRoot`[_pseudo-account_](../XLS-0064-pseudo-account/README.md) object setting the `PseudoOwner` to `VaultID`.
 
-4. If `Vault.Asset` is an `IOU`:
-   1. Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.
+4.  If `Vault.Asset` is an `IOU`:
+    1.  Create a `RippleState` object between the _pseudo-account_ `AccountRoot` and `Issuer` `AccountRoot`.
 
-5. If `Vault.Asset` is an `MPT`:
-   1. Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
+5.  If `Vault.Asset` is an `MPT`:
+    1.  Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
 
 #### 3.2.7 Invariants
 
