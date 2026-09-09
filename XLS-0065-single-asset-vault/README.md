@@ -602,7 +602,6 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 5.
    - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by the vault's asset balance increase.
    - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
-6. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.6 Transaction: `VaultWithdraw`
 

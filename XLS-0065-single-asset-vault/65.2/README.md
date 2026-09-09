@@ -54,7 +54,7 @@ The accounting-delta invariants become:
   - Versus Δ`AssetsTotal` or Δ`AssetsAvailable`: `scale` is the STAmount exponent of the posterior `Vault.AssetsTotal` (`computeVaultMinScale` once `fixCleanup3_2_0` is enabled).
   - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
 - For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
-- Before the amendment, those comparisons are exact for every asset type.
+- Before the amendment, those comparisons are exact for every asset type, except the existing `SingleAssetVault` `VaultWithdraw` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
 These rules apply to the relevant comparisons in `VaultDeposit`, `VaultWithdraw` and `VaultClawback`.
 
