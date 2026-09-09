@@ -28,8 +28,8 @@ Under the `fixCleanup3_4_0` amendment, a Loan can be impaired only after its pay
 
 When the amendment is enabled, parent check 6 uses an exclusive grace-period boundary, and parent checks 7 and 8 keep their numbers. A new overdue-only impair check is added as parent check 9:
 
-6. `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`. (`tecTOO_SOON`)
-7. `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
+- Parent check 6: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`. (`tecTOO_SOON`)
+- Parent check 9: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
 
 When the amendment is not enabled, parent check 6 uses `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`, and check 9 does not apply.
 
