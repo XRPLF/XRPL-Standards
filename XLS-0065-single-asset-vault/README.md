@@ -71,6 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
+- `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `fixCleanup3_2_0`:
   - records the Vault _pseudo-account_'s IOU or MPT asset holding in the share `MPTokenIssuance.ReferenceHolding` field.
 
