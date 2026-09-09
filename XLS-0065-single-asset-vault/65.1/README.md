@@ -43,9 +43,11 @@ The field is written once by `VaultCreate` and is immutable after creation. A Va
 
 #### 3.1.3 Invariants
 
-- `Vault.LEVersion == Vault'.LEVersion`
+- On an update to an existing Vault: `Vault.LEVersion == Vault'.LEVersion`.
 
-#### 3.1.4 Example JSON
+#### 3.1.4 Partial Ledger Entry Example
+
+The following excerpt shows the accounting fields introduced or affected by this patch; it is not a complete serialized `Vault` ledger entry:
 
 ```json
 {
