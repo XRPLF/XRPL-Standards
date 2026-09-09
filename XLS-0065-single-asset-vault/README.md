@@ -828,6 +828,7 @@ This RPC retrieves the Vault ledger entry and the IDs associated with it.
 | `vault.shares.index`             |       Yes       | `string`  | Unique index of the shares ledger entry.                                                                                                               |
 | `vault.shares.mpt_issuance_id`   |       No        | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
 | `vault.Scale`                    |       Yes       | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `vault.LEVersion`                |       No        | `number`  | Accounting model. Absent or `0` is accrual-basis; `1` is cash-basis under `LendingProtocolV1_1`. Clients use this to interpret `AssetsTotal`.          |
 
 #### 3.9.3 Failure Conditions
 
@@ -883,6 +884,7 @@ Vault holding an `IOU`:
     "mpt_issuance_id" : "00000001C752C42A1EBD6BF2403134F7CFD2F1D835AFD26E"
    },
    "Scale": 6,
+   "LEVersion": 1
   }
 }
 ```

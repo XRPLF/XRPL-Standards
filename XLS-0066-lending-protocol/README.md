@@ -1396,8 +1396,8 @@ _Post-amendment (`LendingProtocolV1_1`):_
 
 **Observations**
 
-- In both trajectories, `LoanBroker.DebtTotal` and `Loan.PrincipalOutstanding`/`ManagementFeeOutstanding` fully clear to (or independent of) `0` at default, and `Vault.AssetsTotal ≈ Vault.AssetsAvailable` post-default (the Vault's books balance, up to the small rounding difference below) — the default mechanics are structurally unchanged.
-- The only real difference is that the pre-amendment `DefaultAmount`, `MinimumCover`, and `DefaultCovered` are all computed on figures that still include the (now-collected or now-forgiven) interest, while the post-amendment figures are computed on principal alone. This scales every downstream quantity (`MinimumCover`, `DefaultCovered`, `VaultLoss`, `CoverAvailable` drawn down) down proportionally by the amount of interest excluded — it does not change the _shape_ of the `CoverRateMinimum`/`CoverRateLiquidation` mechanics, only the base they are applied to.
+- In both trajectories, `LoanBroker.DebtTotal` and `Loan.PrincipalOutstanding`/`ManagementFeeOutstanding` fully clear to (or independent of) `0` at default, and `Vault.AssetsTotal` equals `Vault.AssetsAvailable` after default in each trajectory — the default mechanics are structurally unchanged.
+- The only real difference is that the pre-amendment `DefaultAmount`, `MinimumCover`, and `DefaultCovered` are all computed on figures that still include the (now-collected or now-forgiven) interest, while the post-amendment figures are computed on principal alone. In this example `CoverAvailable` is not binding, so those quantities scale with the interest excluded. That is not general: a `min` capped by `CoverAvailable` can leave the cover drawdown unchanged, and an aggregate broker `DebtTotal` can produce another ratio. The `CoverRateMinimum`/`CoverRateLiquidation` shape is unchanged.
 - The `99,550.45` vs `99,550` difference in the final `Vault.AssetsTotal`/`AssetsAvailable` is exactly the `0.45` difference in `DefaultCovered` (`5.45` vs `5`), itself a consequence of `MinimumCover` being computed against a larger, interest-inclusive `DebtTotal` (`545`) pre-amendment vs. a principal-only `DebtTotal` (`500`) post-amendment. This `0.45` is cover calculated from uncollected interest under accrual-basis accounting; cash-basis accounting never recognises that unpaid interest.
 - `Loan.ManagementFeeOutstanding` (`5`) is unaffected by the amendment in either trajectory: it was already excluded from `DefaultAmount` before the amendment (via the `- Loan.ManagementFeeOutstanding` term), and remains excluded after the amendment (since the amended `DefaultAmount` formula never references it).
 
@@ -2030,7 +2030,7 @@ PrincipalOutstanding + InterestOutstanding_{net} & \text{otherwise}
 $$
 
 $$
-DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount) \quad \text{(35)}
+DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount, CoverAvailable) \quad \text{(35)}
 $$
 
 $$
@@ -2049,10 +2049,11 @@ $$
 - `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
 - `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
+- `CoverAvailable` = First-loss capital available (`LoanBroker.CoverAvailable`)
 
 **Process:**
 
-1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)` using formula (35)
+1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)` using formula (35)
 2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
