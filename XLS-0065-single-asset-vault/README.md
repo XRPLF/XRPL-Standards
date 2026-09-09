@@ -692,8 +692,7 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 1. The `Vault` object with the `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 
-2.
-   - `SingleAssetVault`: The check does not apply. A `Holder` that is a pseudo-account is not rejected for that reason.
+2. - `SingleAssetVault`: The check does not apply. A `Holder` that is a pseudo-account is not rejected for that reason.
    - `fixCleanup3_4_0`: The `Holder` is a pseudo-account. (`tecPSEUDO_ACCOUNT`)
 
 3. `Vault.Asset` is not `XRP`, the issuer of `Vault.Asset` is the vault owner, and no `Amount` is specified (ambiguous clawback target). (`tecWRONG_ASSET`)
@@ -715,18 +714,15 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 7. While computing an asset clawback, arithmetic overflows. (`tecPATH_DRY`)
 
-8.
-   - `SingleAssetVault`: The check does not apply. A computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` fails later as `tecINVARIANT_FAILED`.
+8. - `SingleAssetVault`: The check does not apply. A computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` fails later as `tecINVARIANT_FAILED`.
    - `fixCleanup3_4_0`: For an asset clawback, a computed non-zero recovered asset amount rounds down to zero at the scale of the resulting `AssetsTotal`. (`tecPRECISION_LOSS`)
 
 9. The computed share amount to claw back is zero. (`tecPRECISION_LOSS`)
 
-10.
-    - `SingleAssetVault`: A computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
+10. - `SingleAssetVault`: A computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
     - `fixCleanup3_4_0`: For an asset clawback, the computed non-zero recovered asset amount would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
 
-11.
-    - `SingleAssetVault`: The check does not apply.
+11. - `SingleAssetVault`: The check does not apply.
     - `fixCleanup3_4_0`: For an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
 
 #### 3.7.3 State Changes
