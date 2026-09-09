@@ -18,7 +18,7 @@ Under the `LendingProtocolV1_1` amendment, `VaultDelete` accepts an optional `Me
 
 ## 2. Motivation
 
-**Vault Deletion Memo.** Deleting a Vault removes the ledger entry, so nothing survives on the ledger to say why it was deleted. A depositor or an auditor reconstructing the history of a Vault can see that it ended, but not whether it was wound down as planned, closed because it never attracted deposits, or retired in favour of a replacement.
+Deleting a Vault removes the ledger entry, so nothing survives on the ledger to say why it was deleted. A depositor or an auditor reconstructing the history of a Vault can see that it ended, but not whether it was wound down as planned, closed because it never attracted deposits, or retired in favour of a replacement.
 
 `MemoData` gives that statement a defined place in the transaction that deletes the Vault, so it is discoverable from the transaction history of the Vault rather than from an out-of-band announcement.
 
@@ -70,7 +70,7 @@ Unchanged. `MemoData` remains in the transaction record and is not written to a 
 
 ## 4. Rationale
 
-**Vault Deletion Memo.** The standard transaction-level `Memos` array can already carry an opaque deletion reason. A dedicated top-level `MemoData` field was chosen to give this reason one predictable location and one value with a deletion-specific 256-byte bound, without requiring applications to agree on a `MemoType` convention. It reuses the existing `MemoData` serialized field rather than introducing a new field name.
+The standard transaction-level `Memos` array can already carry an opaque deletion reason. A dedicated top-level `MemoData` field was chosen to give this reason one predictable location and one value with a deletion-specific 256-byte bound, without requiring applications to agree on a `MemoType` convention. It reuses the existing `MemoData` serialized field rather than introducing a new field name.
 
 A structured field, such as an enumerated reason code, was rejected: the protocol cannot verify any such code, and an enumeration fixed now would not survive contact with reasons nobody has thought of yet.
 
@@ -78,6 +78,6 @@ The 256-byte limit is the protocol's common maximum data-payload length and keep
 
 ## 5. Security Considerations
 
-**Vault Deletion Memo.** `MemoData` is unauthenticated free text written by the Owner of the Vault. It is a claim about the deletion, not evidence of one, and a consumer should not treat it as a statement that any party other than the Owner endorses.
+`MemoData` is unauthenticated free text written by the Owner of the Vault. It is a claim about the deletion, not evidence of one, and a consumer should not treat it as a statement that any party other than the Owner endorses.
 
 The contents are public and permanent. An Owner should not put anything in the field that they would not publish, and in particular should not use it for information about depositors.

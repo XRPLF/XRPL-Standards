@@ -71,6 +71,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
+- `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.
 
@@ -459,22 +460,20 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 #### 3.4.1 Fields
 
-| Field Name        | Required | JSON Type | Internal Type | Default Value |                                                                       Description                                                                        |
-| ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                                 Transaction type (`ttVAULT_DELETE` in rippled).                                                          |
-| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                            The ID of the vault to be deleted.                                                            |
-| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires `LendingProtocolV1_1`.               |
+| Field Name        | Required | JSON Type | Internal Type | Default Value |                                                                Description                                                                 |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------: |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                              Transaction type (`ttVAULT_DELETE` in rippled).                                               |
+| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                     The ID of the vault to be deleted.                                                     |
+| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires `LendingProtocolV1_1`. |
 
 #### 3.4.2 Failure Conditions
 
 ##### 3.4.2.1 Data Verification
 
 1. The `VaultID` field is zero. (`temMALFORMED`)
-2.
-   - `SingleAssetVault`: The `MemoData` field is present. (`temDISABLED`)
+2. - `SingleAssetVault`: The `MemoData` field is present. (`temDISABLED`)
    - `LendingProtocolV1_1`: The check does not apply.
-3.
-   - `LendingProtocolV1_1`: The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
+3. - `LendingProtocolV1_1`: The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
 
 ##### 3.4.2.2 Protocol-Level Failures
 
