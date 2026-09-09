@@ -21,7 +21,7 @@ Stating the checks this way names each of the three accounts involved in a trans
 
 ## 2. Motivation
 
-**Pseudo-Account Freeze Checks.** A pseudo-account holds assets on behalf of an object rather than a person, so it sits between the two parties of a transfer: a deposit is a transfer from the submitter to the pseudo-account, and a withdrawal is a transfer from the pseudo-account to a destination. A freeze check written for a single transfer does not say which of the three accounts it applies to.
+A pseudo-account holds assets on behalf of an object rather than a person, so it sits between the two parties of a transfer: a deposit is a transfer from the submitter to the pseudo-account, and a withdrawal is a transfer from the pseudo-account to a destination. A freeze check written for a single transfer does not say which of the three accounts it applies to.
 
 The consequences of getting that wrong run in both directions. Omitting the pseudo-account from the checks lets assets move into or out of a frozen holding. Applying a local freeze on the submitter to a self-withdrawal blocks a depositor from recovering their own funds, which a regular freeze is not meant to do. The issuer exemption also needs to be explicit because an issuer can always receive its own asset back.
 
@@ -62,7 +62,7 @@ The destination is checked for a deep freeze rather than a regular freeze, becau
 
 ## 4. Rationale
 
-**Pseudo-Account Freeze Checks.** The checks are stated as an ordered list of conditions rather than as a single predicate so that each account involved is named exactly once, and so that the code returned for each case is unambiguous.
+The checks are stated as an ordered list of conditions rather than as a single predicate so that each account involved is named exactly once, and so that the code returned for each case is unambiguous.
 
 Naming the two cases where a check is skipped — the issuer as destination, and the submitter as their own destination — was preferred to expressing them as additional freeze conditions. Both are exemptions from an otherwise general rule, and writing them as such keeps the general rule short.
 
@@ -80,6 +80,6 @@ The reference implementation tests IOU and MPT deposits and withdrawals for AMMs
 
 ## 8. Security Considerations
 
-**Pseudo-Account Freeze Checks.** The pseudo-account must be checked on both paths. Omitting it lets a deposit add to, or a withdrawal draw from, a holding that an issuer has frozen, which defeats the freeze on assets that a protocol holds on behalf of its participants.
+The pseudo-account must be checked on both paths. Omitting it lets a deposit add to, or a withdrawal draw from, a holding that an issuer has frozen, which defeats the freeze on assets that a protocol holds on behalf of its participants.
 
 The self-withdrawal exemption is deliberately limited to a regular freeze. A deep freeze, and the equivalent lock on an MPT, continue to block a self-withdrawal; an implementation that widened the exemption to cover deep freeze would let a deep-frozen holder exit through a pool.
