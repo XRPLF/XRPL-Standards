@@ -18,7 +18,7 @@ Under the `fixCleanup3_4_0` amendment, when the Vault asset is not integral — 
 
 ## 2. Motivation
 
-**Vault Accounting and Cap Invariants.** These changes come from the same source: the invariants as written are stricter than the arithmetic of the Vault can honour.
+These changes come from the same source: the invariants as written are stricter than the arithmetic of the Vault can honour.
 
 `LossUnrealized`, `AssetsTotal` and `AssetsAvailable` are each quantised independently when the Vault asset is an `IOU`, because they are written through `STAmount` and land on a decimal grid whose step depends on the magnitude of the value. Comparing `LossUnrealized` to `AssetsTotal - AssetsAvailable` with a strict inequality fails when the three values round in opposite directions, which is a quantisation artefact and not a solvency problem. The invariant needs a tolerance of exactly one unit at the coarsest of those grids, which is the one `AssetsTotal` sits on.
 
@@ -86,7 +86,7 @@ Before the amendment, the loss inequality is strict for every asset type and adm
 
 ## 4. Rationale
 
-**Vault Accounting and Cap Invariants.** Each tolerance is one unit at the comparison scale rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy. One unit at the comparison scale is the smallest representable difference on that grid; it can still mask a genuine one-unit accounting error, which is the bounded trade-off stated in Security Considerations. The numeric rule is unchanged: the comparison still admits at most that single unit.
+Each tolerance is one unit at the comparison scale rather than a relative epsilon. A relative tolerance would grow with the size of the Vault and would eventually be large enough to hide a real discrepancy. One unit at the comparison scale is the smallest representable difference on that grid; it can still mask a genuine one-unit accounting error, which is the bounded trade-off stated in Security Considerations. The numeric rule is unchanged: the comparison still admits at most that single unit.
 
 Restricting the tolerance to non-integral assets, rather than granting it uniformly, was deliberate. The alternative of keying the tolerance off the sign of the scale would have been wrong: an `IOU` amount at or above `1e15` has a non-negative exponent yet still quantises, so it needs the tolerance, while a drop of `XRP` has scale zero and must not get it. Integrality of the asset is the property that actually distinguishes the two cases.
 
@@ -96,6 +96,6 @@ Enforcing the cap on a `VaultSet` that supplies `AssetsMaximum` or otherwise cha
 
 ## 5. Security Considerations
 
-**Vault Accounting and Cap Invariants.** Relaxing an invariant weakens a check that exists to catch implementation errors. The rounding tolerances are bounded to one unit at the applicable comparison scale and apply only to assets that quantise, while the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that supplies `AssetsMaximum` or otherwise changes the cap.
+Relaxing an invariant weakens a check that exists to catch implementation errors. The rounding tolerances are bounded to one unit at the applicable comparison scale and apply only to assets that quantise, while the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that supplies `AssetsMaximum` or otherwise changes the cap.
 
 Adding `LossUnrealized >= 0` closes a gap in the original invariant. A negative unrealised loss would otherwise pass the inequality and inflate the assets of the Vault relative to its shares.

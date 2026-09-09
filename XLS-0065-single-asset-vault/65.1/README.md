@@ -18,7 +18,7 @@ Under the `LendingProtocolV1_1` amendment, `Sequence`, `OwnerNode`, `Owner`, `Wi
 
 ## 2. Motivation
 
-**Unmodifiable Vault Fields.** The version field determines how the Vault values its shares. Changing `LEVersion` after creation would reprice every share in issue.
+The version field determines how the Vault values its shares. Changing `LEVersion` after creation would reprice every share in issue.
 
 The identity and configuration fields are in the same position. `Sequence` and `OwnerNode` locate the entry and its directory page, `Owner` names the account that controls it, and `WithdrawalPolicy` and `Scale` fix how shares are redeemed and how finely the asset is denominated. None of them has a legitimate reason to change after creation.
 
@@ -56,10 +56,10 @@ When the amendment is enabled: `Vault.Sequence == Vault'.Sequence`, `Vault.Owner
 
 ## 4. Rationale
 
-**Unmodifiable Vault Fields.** Treating these fields as immutable rather than mutable-with-conditions avoids introducing transaction-specific exceptions into a ledger-wide invariant.
+Treating these fields as immutable rather than mutable-with-conditions avoids introducing transaction-specific exceptions into a ledger-wide invariant.
 
 ## 5. Security Considerations
 
-**Unmodifiable Vault Fields.** The invariant is what allows a reader to cache the version and denomination of a Vault. Without it, every consumer would have to re-read the entry before valuing shares.
+The invariant is what allows a reader to cache the version and denomination of a Vault. Without it, every consumer would have to re-read the entry before valuing shares.
 
 A field added to the `Vault` later is mutable unless it is included in this set.
