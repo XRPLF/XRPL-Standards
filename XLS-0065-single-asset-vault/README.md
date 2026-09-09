@@ -73,7 +73,6 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 - `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
   - moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set
-  - adds closed-ended Vault lifecycle and transaction-phase invariants
 - `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap
 
@@ -340,10 +339,9 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 11. There is no invariant requiring `Vault.AssetsTotal <= Vault.AssetsMaximum` to hold on every modification of the entry, because `Vault.AssetsTotal` grows with accrued interest and interest is not a deposit. The cap is instead enforced per transaction:
 12. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. This holds both before and after `fixCleanup3_4_0`.
 13. `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it. Under `fixCleanup3_4_0` this failure applies only when the transaction supplies `AssetsMaximum` or the cap otherwise changes, so a cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
-14. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of this amendment.
+14. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of this amendment.
 15. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
 16. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction. `LoanManage` has `MayModifyVault` and may succeed without modifying one; each other listed transaction has `MustModifyVault` and must create, modify or delete one.
-17. Under `LendingProtocolV1_1`, a newly created closed-ended Vault must have `SubscriptionDate` and `RedemptionDate` with `180 <= RedemptionDate - SubscriptionDate < 946708560` (thirty Gregorian years in seconds). Phase uses the parent ledger close time: open-ended Vaults are `NoPhase`; closed-ended Vaults are `Subscription` while `parentCloseTime <= SubscriptionDate`, `Investment` while `SubscriptionDate < parentCloseTime < RedemptionDate`, and `Redemption` once `parentCloseTime >= RedemptionDate`. `VaultDeposit` may succeed only in `Subscription` or `NoPhase`, `VaultWithdraw` may not succeed in `Investment`, and `LoanSet` for a closed-ended Vault may succeed only in `Investment`.
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -429,7 +427,6 @@ _TBD_
 1. A newly created vault has zero `AssetsTotal`, `AssetsAvailable`, `LossUnrealized` and outstanding shares.
 2. The share `MPTokenIssuance.Issuer` equals `Vault.Account`, and that account is a _pseudo-account_ whose `VaultID` points to the new vault.
 3. Only `VaultCreate` may create a `Vault`; it must create rather than update one.
-4. Under `LendingProtocolV1_1`, a closed-ended Vault has both `SubscriptionDate` and `RedemptionDate`, and `180 <= RedemptionDate - SubscriptionDate < 946708560`.
 
 ### 3.3 Transaction: `VaultSet`
 
@@ -592,7 +589,6 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 4. The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
 5. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by the vault's asset balance increase. Under `fixCleanup3_4_0`, each comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
 6. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
-7. Under `LendingProtocolV1_1`, a deposit may succeed only while a closed-ended Vault is in the `Subscription` phase. Open-ended Vaults are unaffected.
 
 ### 3.6 Transaction: `VaultWithdraw`
 
@@ -683,7 +679,6 @@ In sections below assume the following variables:
 4. The submitter's share `MPToken.MPTAmount` must decrease by a positive amount.
 5. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
 6. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease. Under `fixCleanup3_4_0`, each comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
-7. Under `LendingProtocolV1_1`, a withdrawal may not succeed while a closed-ended Vault is in the `Investment` phase. Open-ended Vaults are unaffected.
 
 ### 3.7 Transaction: `VaultClawback`
 
