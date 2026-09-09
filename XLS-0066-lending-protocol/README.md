@@ -118,6 +118,8 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ### 2.7 Amendments
 
+The parent protocol is `LendingProtocol`. In failure conditions and state changes, a `` `LendingProtocol` `` bullet is the behaviour when `fixCleanup3_4_0` is not enabled; a `` `fixCleanup3_4_0` `` bullet is the behaviour when it is.
+
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
 
@@ -550,7 +552,7 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. If the Borrower makes a payment, the impairment status is automatically cleared.
 
-- `LendingProtocol`: A Loan can be impaired before its payment is overdue. Impairing while the due date is still in the future moves `NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `NextPaymentDueDate` to `max(PreviousPaymentDueDate, StartDate) + PaymentInterval` when that timestamp is still in the future, otherwise to the current ledger close time plus `PaymentInterval`.
+- `LendingProtocol`: A Loan can be impaired before its payment is overdue. Impairing while the due date is still in the future moves `NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that timestamp is still in the future, otherwise to the current ledger close time plus `Loan.PaymentInterval`.
 - `fixCleanup3_4_0`: A Loan can be impaired only when the current ledger close time is greater than `Loan.NextPaymentDueDate`; equality is not late. Impair and unimpair do not modify `Loan.NextPaymentDueDate`.
 
 ### 3.3. Transaction: `LoanBrokerSet`
