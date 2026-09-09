@@ -120,7 +120,6 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 - `LendingProtocolV1_1` (not yet live), as described in [XLS-66.1](./66.1/README.md):
   - introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
-  - requires a new `LoanBroker` to attach to a closed-ended Vault.
 
 ## 3. Specification
 
@@ -607,14 +606,6 @@ This transaction uses the standard transaction fee.
 **Precision Validation:**
 
 10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
-
-##### 3.3.3.3 Protocol-Level Failures (`LendingProtocolV1_1`)
-
-When creating a new `LoanBroker` (`LoanBrokerID` is not specified), the following check is added after item 2 of [3.3.3.2](#3332-protocol-level-failures). Modifying an existing `LoanBroker` does not re-evaluate it.
-
-1. The `Vault` identified by `VaultID` is not closed-ended (`Vault.VaultKind` is absent or not equal to `1`). (`tecNO_PERMISSION`)
-
-`Vault.VaultKind` and the closed-ended Vault lifecycle are defined in [XLS-65.1](../XLS-0065-single-asset-vault/65.1/README.md); this specification consumes the field and does not define it.
 
 #### 3.3.4 State Changes
 
@@ -1105,13 +1096,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 ##### 3.8.5.3 Protocol-Level Failures (`LendingProtocolV1_1`)
 
-Under the `LendingProtocolV1_1` amendment, the following checks are added after check 5 and before check 6 of [3.8.5.2](#3852-protocol-level-failures). They apply to every closed-ended Vault, regardless of `LEVersion`; an open-ended Vault has no phase and skips these checks:
-
-1. The Vault is in the Subscription phase. (`tecTOO_SOON`)
-2. The Vault is in the Redemption phase. (`tecEXPIRED`)
-3. The Vault is in the Investment phase, but the final scheduled payment at `StartDate + (PaymentInterval × PaymentTotal)` leaves fewer than 60 seconds before `Vault.RedemptionDate`. (`tecNO_PERMISSION`)
-
-After these phase and schedule checks, for a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), checks 6 and 14 of [3.8.5.2](#3852-protocol-level-failures) do not apply, and checks 19 and 20 are replaced by the following; all other parent checks are unchanged:
+For a `Vault` with `LEVersion == 1` (cash-basis, see [XLS-65 §3.1.2.2](../XLS-0065-single-asset-vault/README.md#3122-leversion-lendingprotocolv1_1)), checks 6 and 14 of [3.8.5.2](#3852-protocol-level-failures) do not apply, and checks 19 and 20 are replaced by the following; all other parent checks are unchanged:
 
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
