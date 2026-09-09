@@ -98,7 +98,7 @@ A pseudo-account must be deleted together with the associated object.
 
 Freeze semantics for pseudo-accounts differ from those of regular accounts. Protocols using a pseudo-account must enforce the following rules for any transaction that moves assets into or out of the pseudo-account.
 
-Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, `lsfMPTLocked` on the `MPTokenIssuance` is a global freeze/lock of the issuance, and `lsfMPTLocked` on the holder's `MPToken` satisfies both a local-freeze check and a deep-freeze check for that holder, so the “locally frozen” rows include a locked MPT holder and return `tecLOCKED`. The checks operate on the asset transferred into or out of the pseudo-account; for a Vault deposit or withdrawal, this is the Vault's underlying asset, not its Vault Share.
+Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, `lsfMPTLocked` on the `MPTokenIssuance` is a global freeze/lock of the issuance, and `lsfMPTLocked` on the holder's `MPToken` satisfies both a local-freeze check and a deep-freeze check for that holder, so the “locally frozen” rows include a locked MPT holder and return `tecLOCKED`. The common freeze table in this section applies to the asset transferred into or out of the pseudo-account. For a Vault deposit or withdrawal that is the Vault's underlying asset. `VaultDeposit` and `VaultWithdraw` still apply their own Vault Share freeze and lock checks from XLS-65.
 
 **Deposits (external account → pseudo-account)**
 
@@ -151,6 +151,10 @@ The following invariants must hold true for any `AccountRoot` entry functioning 
 - The `Sequence` number must always be `0`, and must never change.
   - AMM pseudo-accounts created under old rules will have a sequence number set to the index of the ledger they were created in. They still must never change.
 - A `RegularKey` must not be set.
+
+### Rationale
+
+AMMs first used an `AccountRoot` that no person controls. Vaults and lending need the same pattern. This specification is the single definition of that account: how it is addressed, which flags it must carry, how it is linked to its object, how it is reserved and deleted, and which invariants it must keep. Protocols then add only what is specific to them.
 
 ### Security Considerations
 

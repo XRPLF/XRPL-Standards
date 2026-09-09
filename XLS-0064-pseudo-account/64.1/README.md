@@ -29,7 +29,7 @@ The consequences of getting that wrong run in both directions. Omitting the pseu
 
 Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, `lsfMPTLocked` on the `MPTokenIssuance` is a global freeze/lock of the issuance. `lsfMPTLocked` on the holder's `MPToken` satisfies both a local-freeze check and a deep-freeze check for that holder, so the “locally frozen” rows in the tables below include a locked MPT holder and return `tecLOCKED`.
 
-The checks operate on the asset transferred into or out of the pseudo-account. For `VaultDeposit` and `VaultWithdraw`, that asset is the Vault's underlying asset; no separate Vault Share check is performed on the successful path.
+The checks operate on the asset transferred into or out of the pseudo-account. For `VaultDeposit` and `VaultWithdraw`, that asset is the Vault's underlying asset. Those transactions still apply their own Vault Share freeze and lock checks from XLS-65.
 
 When the amendment is enabled, these rules take precedence over conflicting freeze or lock rules in a transaction specification that moves an asset into or out of a pseudo-account, including XLS-30, XLS-65, and XLS-66. Transaction-specific checks continue to apply and can reject a transaction before or after these checks pass; an “allowed” result in this section therefore means that these checks pass, not that the complete transaction must succeed. When the amendment is not enabled, the pre-amendment, transaction-specific checks recorded in the parent specification continue to apply.
 
