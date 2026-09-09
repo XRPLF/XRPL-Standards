@@ -174,7 +174,7 @@ The `MPTokenIssuance` object represents the share on the ledger. It is created a
 | `AssetScale`       | Represents orders of magnitude between the standard and the MPT unit. For IOUs it is set to `Vault.Scale`, otherwise it is `0`. | `Vault.Scale`        |
 | `ReferenceHolding` | Under `fixCleanup3_2_0`, the ID of the _pseudo-account_'s IOU or MPT holding for `Vault.Asset`. Omitted for XRP.                | Holding object ID    |
 
-###### Flags
+###### 3.1.6.2.2 Flags
 
 The following flags are set based on whether the shares are transferable and if the vault is public or private.
 
@@ -363,7 +363,9 @@ The type indicates the withdrawal strategy supported by the vault. The following
 
 #### 3.2.4 Transaction Fees
 
-The transaction creates the `Vault` object, its owned _pseudo-account_, and a share `MPToken` for the Vault Owner. It increases the Vault Owner's `OwnerCount` by 3: one for the `Vault`, one for the _pseudo-account_ ([XLS-64](../XLS-0064-pseudo-account/README.md)), and one for the owner's share `MPToken` ([XLS-33](../XLS-0033-multi-purpose-tokens/README.md)). Therefore the owner's required XRP reserve increases by three increments. The share `MPTokenIssuance` is issued by the _pseudo-account_, not the Vault Owner. The transaction fee is the standard network fee.
+The transaction fee is the standard network fee.
+
+The transaction creates the `Vault` object, its owned _pseudo-account_, and a share `MPToken` for the Vault Owner. It increases the Vault Owner's `OwnerCount` by 3 (increasing the owner's required XRP reserve by 3 increments): one for the `Vault`, one for the _pseudo-account_ ([XLS-64](../XLS-0064-pseudo-account/README.md)), and one for the owner's share `MPToken` ([XLS-33](../XLS-0033-multi-purpose-tokens/README.md)). The share `MPTokenIssuance` is issued by the _pseudo-account_, not the Vault Owner.
 
 #### 3.2.5 Failure Conditions
 
