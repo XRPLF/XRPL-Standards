@@ -71,9 +71,9 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ### 2.8. Amendments
 
-- `LendingProtocolV1_1` (not yet live), as described in [XLS-65.1](./65.1/README.md):
-  - moves the `Vault` immutability check into the generic unmodifiable-fields invariant and extends the unmodifiable field set
-- `fixCleanup3_4_0` (not yet live), as described in [XLS-65.2](./65.2/README.md):
+- `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
+  - makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
+- `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that change the cap
 
 ## 3. Specification
@@ -330,16 +330,24 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 2. `Vault.AssetsTotal >= 0`.
 3. `Vault.AssetsMaximum >= 0`.
 4. `Vault.AssetsAvailable <= Vault.AssetsTotal`.
-5. `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`. Under `fixCleanup3_4_0` the comparison admits one unit of slack at the scale of `Vault.AssetsTotal`, but only when `Vault.Asset` is not integral, i.e. an `IOU`. For `XRP` and `MPT` the comparison remains strict `<=` both before and after the amendment, because those assets have no sub-unit rounding for the slack to absorb.
-6. `Vault.LossUnrealized >= 0`. This is only enforced once `fixCleanup3_4_0` is enabled, and then for every asset type.
+5.
+   - `SingleAssetVault`: `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable)`.
+   - `fixCleanup3_4_0`: If `Vault.Asset` is an `IOU`, `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable) + 1 unit` at the scale of `Vault.AssetsTotal`. For `XRP` and `MPT` the comparison remains strict `<=`.
+6.
+   - `SingleAssetVault`: The check does not apply.
+   - `fixCleanup3_4_0`: `Vault.LossUnrealized >= 0`, for every asset type.
 7. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
 8. The `MPTokenIssuance` identified by `Vault.ShareMPTID` must exist, and its `OutstandingAmount` must not exceed its `MaximumAmount` (or the protocol maximum when `MaximumAmount` is absent).
 9. On creation, `Vault.AssetsTotal`, `Vault.AssetsAvailable`, `Vault.LossUnrealized` and the share `MPTokenIssuance.OutstandingAmount` are all zero. The share issuance has `Issuer == Vault.Account`, and `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` points to the new vault. Only `VaultCreate` may create a `Vault`.
 10. Only `VaultDelete` may delete a `Vault`. It must also delete the share `MPTokenIssuance`, and the deleted vault must have `AssetsTotal == 0`, `AssetsAvailable == 0` and no outstanding shares.
 11. There is no invariant requiring `Vault.AssetsTotal <= Vault.AssetsMaximum` to hold on every modification of the entry, because `Vault.AssetsTotal` grows with accrued interest and interest is not a deposit. The cap is instead enforced per transaction:
-12. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it. This holds both before and after `fixCleanup3_4_0`.
-13. `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it. Under `fixCleanup3_4_0` this failure applies only when the transaction supplies `AssetsMaximum` or the cap otherwise changes, so a cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
-14. Before `LendingProtocolV1_1`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. From `LendingProtocolV1_1` the check moves to the generic unmodifiable-fields invariant and the set becomes `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID`. `LedgerEntryType` and `LedgerIndex` are unmodifiable for every ledger entry type and are checked independently of this amendment.
+12. `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` exceeds it.
+13.
+    - `SingleAssetVault`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero and `Vault.AssetsTotal` exceeds it.
+    - `fixCleanup3_4_0`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction supplies `AssetsMaximum` or the cap otherwise changes. A cap already exceeded by accrued interest no longer blocks a `VaultSet` that leaves the cap alone.
+14.
+    - `SingleAssetVault`: `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set.
+    - `LendingProtocolV1_1`: `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. If `Vault.LEVersion` is absent, it remains absent, except when the transaction creates the entry.
 15. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
 16. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction. `LoanManage` has `MayModifyVault` and may succeed without modifying one; each other listed transaction has `MustModifyVault` and must create, modify or delete one.
 
@@ -470,7 +478,9 @@ The `VaultSet` updates an existing `Vault` ledger object.
 1. `VaultSet` must not change the vault pseudo-account's asset balance.
 2. `VaultSet` must not change `Vault.AssetsTotal` or `Vault.AssetsAvailable`.
 3. `VaultSet` must not change `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount`.
-4. Before `fixCleanup3_4_0`, if `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`. Under `fixCleanup3_4_0`, this is checked only if the transaction supplies `AssetsMaximum` or otherwise changes the cap.
+4.
+   - `SingleAssetVault`: If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
+   - `fixCleanup3_4_0`: This is checked only if the transaction supplies `AssetsMaximum` or otherwise changes the cap.
 
 ### 3.4 Transaction: `VaultDelete`
 
@@ -584,10 +594,14 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 #### 3.5.4 Invariants
 
 1. The vault pseudo-account's asset balance must increase by a positive amount not exceeding the transaction `Amount`.
-2. Unless the depositor is the asset issuer, the depositor's asset balance must decrease by the same amount as the vault increases. Under `fixCleanup3_4_0`, the comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
+2.
+   - `SingleAssetVault`: Unless the depositor is the asset issuer, the depositor's asset balance must decrease by the same amount as the vault increases.
+   - `fixCleanup3_4_0`: For an `IOU`, the comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 3. The depositor's share `MPToken.MPTAmount` must increase by a positive amount.
 4. The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
-5. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by the vault's asset balance increase. Under `fixCleanup3_4_0`, each comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
+5.
+   - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by the vault's asset balance increase.
+   - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 6. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
 
 ### 3.6 Transaction: `VaultWithdraw`
@@ -673,12 +687,18 @@ In sections below assume the following variables:
 
 #### 3.6.4 Invariants
 
-1. The vault pseudo-account's asset balance must decrease by a positive amount. Under `fixCleanup3_4_0`, a fixed-share withdrawal may instead move zero assets when the pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized`.
+1.
+   - `SingleAssetVault`: The vault pseudo-account's asset balance must decrease by a positive amount.
+   - `fixCleanup3_4_0`: A fixed-share withdrawal may instead move zero assets when the pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized`.
 2. Unless the destination is the asset issuer, the destination's asset balance must increase (within sub-ULP precision tolerance for IOU assets at a coarser trust line scale). The zero-asset exception in invariant 1 may leave the destination balance unchanged.
-3. The vault outflow and destination inflow must match in magnitude, except for an unrepresentable sub-ULP IOU remainder at the destination scale. Under `fixCleanup3_4_0`, the comparison also admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
+3.
+   - `SingleAssetVault`: The vault outflow and destination inflow must match in magnitude, except for an unrepresentable sub-ULP IOU remainder at the destination scale.
+   - `fixCleanup3_4_0`: For an `IOU`, the comparison also admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 4. The submitter's share `MPToken.MPTAmount` must decrease by a positive amount.
 5. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
-6. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease. Under `fixCleanup3_4_0`, each comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
+6.
+   - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease.
+   - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 
 ### 3.7 Transaction: `VaultClawback`
 
@@ -737,7 +757,9 @@ _None._
 #### 3.7.4 Invariants
 
 1. The vault pseudo-account's asset balance must decrease, unless the Vault was already empty.
-2. `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease. Under `fixCleanup3_4_0`, each comparison admits one unit at the comparison scale for an `IOU`; it remains exact before the amendment and for `XRP` and `MPT`.
+2.
+   - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease.
+   - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 3. The holder's share `MPToken.MPTAmount` must decrease by a positive amount.
 4. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the holder's share balance.
 5. The transaction must be submitted by the asset issuer, except that the Vault Owner may burn outstanding shares from an empty Vault.
@@ -1188,5 +1210,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix C: Changelog
 
-- XLS-65.1: Single Asset Vault under `LendingProtocolV1_1`, not yet live — [XLS-65.1](./65.1/README.md)
-- XLS-65.2: Single Asset Vault under `fixCleanup3_4_0`, not yet live — [XLS-65.2](./65.2/README.md)
+- [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.
+- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement.
