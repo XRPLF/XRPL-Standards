@@ -1259,14 +1259,14 @@ This transaction uses the standard transaction fee.
 3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan). (`tecNO_PERMISSION`)
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
-6.
-   - `LendingProtocol`: `tfLoanDefault` is specified and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`. (`tecTOO_SOON`)
-   - `fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`. (`tecTOO_SOON`)
+6. Default too soon (`tecTOO_SOON`):
+   - `LendingProtocol`: `tfLoanDefault` is specified and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`.
+   - `fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`.
 7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
-9.
+9. Impair too soon (`tecTOO_SOON`):
    - `LendingProtocol`: The check does not apply.
-   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). (`tecTOO_SOON`)
+   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue).
 
 #### 3.10.5 State Changes
 
@@ -1316,7 +1316,7 @@ This transaction uses the standard transaction fee.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
      - `NextPaymentDueDate`:
-       - `LendingProtocol`: Rewrite `Loan.NextPaymentDueDate` to `max(PreviousPaymentDueDate, StartDate) + PaymentInterval` when that timestamp is still in the future; otherwise to the current ledger close time plus `PaymentInterval`.
+       - `LendingProtocol`: Rewrite `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that timestamp is still in the future; otherwise to the current ledger close time plus `Loan.PaymentInterval`.
        - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 
 #### 3.10.6 Invariants
@@ -1383,9 +1383,9 @@ This transaction uses the standard transaction fee.
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
 10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-11.
-    - `LendingProtocol`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`. (`tecEXPIRED`)
-    - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`. (`tecEXPIRED`)
+11. Late payment without `tfLoanLatePayment` (`tecEXPIRED`):
+    - `LendingProtocol`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`.
+    - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`.
 12. The payment is late and the `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`). (`tecINSUFFICIENT_PAYMENT`)
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
