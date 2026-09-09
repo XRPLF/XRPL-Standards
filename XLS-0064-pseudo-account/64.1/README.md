@@ -27,7 +27,7 @@ The consequences of getting that wrong run in both directions. Omitting the pseu
 
 ## 3. Specification
 
-Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the `MPToken` of the holder is equivalent to deep-frozen semantics.
+Throughout this section, an asset is _globally frozen_ when its issuance is frozen or locked, and an account is _locally frozen_ for an asset when it is individually frozen for that asset. A local freeze is a regular freeze; deep freeze is called out explicitly where it applies. For a Multi-Purpose Token, `lsfMPTLocked` on the `MPTokenIssuance` is a global freeze/lock of the issuance. `lsfMPTLocked` on the holder's `MPToken` satisfies both a local-freeze check and a deep-freeze check for that holder, so the “locally frozen” rows in the tables below include a locked MPT holder and return `tecLOCKED`.
 
 The checks operate on the asset transferred into or out of the pseudo-account. For `VaultDeposit` and `VaultWithdraw`, that asset is the Vault's underlying asset; no separate Vault Share check is performed on the successful path.
 
@@ -65,6 +65,10 @@ The destination is checked for a deep freeze rather than a regular freeze, becau
 **Pseudo-Account Freeze Checks.** The checks are stated as an ordered list of conditions rather than as a single predicate so that each account involved is named exactly once, and so that the code returned for each case is unambiguous.
 
 Naming the two cases where a check is skipped — the issuer as destination, and the submitter as their own destination — was preferred to expressing them as additional freeze conditions. Both are exemptions from an otherwise general rule, and writing them as such keeps the general rule short.
+
+## 5. Backwards Compatibility
+
+When the amendment is not enabled, the transaction-specific freeze and lock checks in the parent specification continue to apply. In particular, a regularly frozen Loan Broker _pseudo-account_ still accepts cover deposits. After activation, the common deposit rule rejects that transfer because the pseudo-account is locally frozen. Implementations that replay pre-activation ledgers, or that run on a network without the amendment, must use the parent checks.
 
 ## 6. Test Plan
 
