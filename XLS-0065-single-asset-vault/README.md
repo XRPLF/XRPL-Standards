@@ -596,7 +596,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 1. The vault pseudo-account's asset balance must increase by a positive amount not exceeding the transaction `Amount`.
 2.
    - `SingleAssetVault`: Unless the depositor is the asset issuer, the depositor's asset balance must decrease by the same amount as the vault increases.
-   - `fixCleanup3_4_0`: For an `IOU`, the comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
+   - `fixCleanup3_4_0`: Unless the depositor is the asset issuer, for an `IOU` the comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact. The issuer exemption is unchanged.
 3. The depositor's share `MPToken.MPTAmount` must increase by a positive amount.
 4. The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
 5.
@@ -761,7 +761,7 @@ _None._
    - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 3. The holder's share `MPToken.MPTAmount` must decrease by a positive amount.
 4. The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the holder's share balance.
-5. The transaction must be submitted by the asset issuer, except that the Vault Owner may burn outstanding shares from an empty Vault.
+5. The transaction must be submitted by the asset issuer.
 
 ### 3.8 Transaction: `Payment`
 
