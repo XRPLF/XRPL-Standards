@@ -805,7 +805,7 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 
 #### 13.4.1. Data Verification
 
-1. The `featureConfidentialTransfer` is not enabled and the transaction supplies `IssuerEncryptionKey` or `AuditorEncryptionKey`, sets `tfMPTSetCanHoldConfidentialBalance`, or sets `lsifMPTCanHoldConfidentialBalance` in `ImmutableFlags`. (`temDISABLED`)
+1. The `ConfidentialTransfer` feature is not enabled and the transaction supplies `IssuerEncryptionKey` or `AuditorEncryptionKey`, sets `tfMPTSetCanHoldConfidentialBalance`, or sets `lsifMPTCanHoldConfidentialBalance` in `ImmutableFlags`. (`temDISABLED`)
 2. The provided Public Key is not a valid 33-byte (`ecPubKeyLength`) compressed elliptic curve point. (`temMALFORMED`)
 3. The transaction attempts to mutate confidential amount fields while also acting as a Holder, that is, it includes `Holder` together with `IssuerEncryptionKey`, `AuditorEncryptionKey`, or `tfMPTSetCanHoldConfidentialBalance`. (`temMALFORMED`)
 4. The transaction contains `AuditorEncryptionKey` but does **not** contain `IssuerEncryptionKey`. (`temMALFORMED`)
