@@ -111,6 +111,12 @@ These host functions will be accessible from extensions and smart contracts.
 
 Note: all these functions return an `i32`, unless otherwise noted (or there is no buffer parameter). If the value is positive, it's a length. If it's negative, it's an error code.
 
+Byte order: every fixed-width integer that crosses the host boundary through a memory buffer, in either direction, is encoded little-endian, matching WebAssembly's native memory order. This covers `u32` results such as `ldgr_index`, `parent_ldgr_time`, `base_fee`, `nft_taxon` and `nft_serial`; the raw `u64`/`i64`/`i32` buffers of `float_from_uint` and `float_to_mant_exp`; and integer inputs supplied through a pointer/length pair, such as the `sequence` argument of the ledger entry ID functions. A guest reads these with a plain little-endian load (`u32::from_le_bytes` in Rust) and writes them with the matching store.
+
+This rule does not apply to XRPL serialized objects. A buffer that carries an on-ledger encoding keeps that encoding unchanged: `STAmount`, `XFloat`, `STNumber`, `NFTokenID` and the MPT issuance ID are laid out exactly as they appear in the ledger, so their integer fields are big-endian. Hashes and ledger entry IDs are opaque 32-byte arrays copied as-is. The distinction is between a bare integer, which is little-endian, and a serialized XRPL type, which follows the ledger format.
+
+Integers passed directly as WASM `i32`/`i64` parameters or return values (for example `nft_flags`, `nft_xfer_fee`, and the `mantissa`, `exponent` and `pow` arguments of the float functions) are not bytes in memory, so no byte order applies to them.
+
 ### 5.1. General Ledger Data
 
 This section includes ledger header data, amendments, and fees.
@@ -122,6 +128,8 @@ This section includes ledger header data, amendments, and fees.
 | `parent_ldgr_hash(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`    | Get the hash of the last ledger.                  | 60       |
 | `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)` | Check if a given amendment is enabled.            | 100      |
 | `base_fee(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`            | Get the current transaction base fee.             | 60       |
+
+`ldgr_index`, `parent_ldgr_time` and `base_fee` each write a 4-byte little-endian `u32` to the output buffer. `parent_ldgr_hash` writes the 32-byte hash as-is.
 
 ### 5.2. Current Ledger Object data
 
@@ -203,6 +211,8 @@ Fetch information about NFTs.
 | `nft_flags(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                     | Extract the NFT flags from the NFT ID.        | 60       |
 | `nft_xfer_fee(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32`<br />`)`                                                                                                                  | Extract the NFT transfer fee from the NFT ID. | 60       |
 | `nft_serial(`<br/>&emsp;`nft_id_ptr: i32,`<br/>&emsp;`nft_id_len: i32,`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`                                                      | Extract the NFT serial from the NFT ID.       | 60       |
+
+`nft_taxon` and `nft_serial` each write a 4-byte little-endian `u32` to the output buffer. `nft_flags` and `nft_xfer_fee` return their value directly as the `i32` result.
 
 ### 5.7. Utils
 
