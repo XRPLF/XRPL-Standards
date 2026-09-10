@@ -934,7 +934,7 @@ On-chain selective disclosure provides cryptographically enforced auditability d
 
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
-- Adding or Replacing an Auditor After Issuance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): If a new auditor or regulatory body requires access after the token has been issued, the issuer can (re)register `AuditorEncryptionKey` via `MPTokenIssuanceSet` and migrate existing holders by submitting `ConfidentialMPTMirrorUpdate` transactions that establish each holder’s `AuditorEncryptedBalance` under the new key, creating it where the holder has no auditor mirror yet or re-encrypting it where one already exists, with a ZK equality proof anchored to the on-ledger `IssuerEncryptedBalance`.
+- Adding or Replacing an Auditor After Issuance: This is not possible with this amendment. [XLS-99 Confidential MPT Key Rotation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0099-confidential-mpt-key-rotation) addresses this.
 
 #### 16.2.2 Foundational Elements for Public Integrity
 
