@@ -150,7 +150,7 @@ Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that 
 | `lsfMPTCanHoldConfidentialBalance`  | `Flags`          | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
 | `lsifMPTCanHoldConfidentialBalance` | `ImmutableFlags` | `0x00000080` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
 
-**Note**: `ImmutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
+**Note**: `ImmutableFlags` is introduced in the amendment [`DynamicMPT`](../XLS-0094-dynamic-MPT/README.md). To use this field, the `DynamicMPT` amendment must be enabled.
 
 ### 6.3. Managing Confidentiality Settings
 
@@ -935,7 +935,7 @@ On-chain selective disclosure provides cryptographically enforced auditability d
 
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
-- Adding or Replacing an Auditor After Issuance: This is not possible with this amendment. [XLS-99 Confidential MPT Key Rotation](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0099-confidential-mpt-key-rotation) addresses this.
+- Adding or Replacing an Auditor After Issuance: This is not possible with this amendment. [XLS-99 Confidential MPT Key Rotation](../XLS-0099-confidential-mpt-key-rotation/README.md) addresses this.
 
 #### 16.2.2 Foundational Elements for Public Integrity
 
