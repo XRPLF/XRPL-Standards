@@ -21,7 +21,7 @@ The design provides the following properties:
 - **Confidentiality:** Individual balances and transfer amounts are encrypted and are not revealed to validators or external observers.
 - **Public auditability:** Issuance limits remain publicly enforceable through the existing invariant
   `OutstandingAmount ≤ MaximumAmount`, without requiring decryption of confidential balances.
-- **Selective disclosure:** The protocol supports a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, and can be extended to a newly authorized auditor over time via re-encryption under the `ConfidentialMPTKeyRotation` amendment (XLS-99).
+- **Selective disclosure:** The protocol supports a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs.
 - **Compatibility:** Public and confidential balances may coexist for the same token. The issuer account itself cannot hold confidential balances; issuers who wish to participate in confidential circulation must use a separate dedicated holder account, which is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback that burns the clawed-back funds.
 
@@ -103,7 +103,7 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`IssuerEncryptedBalance`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
-- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance; this requires the `ConfidentialMPTKeyRotation` amendment (XLS-99).
+- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure.
 
 ### 5.4. Proof System
 
@@ -934,17 +934,13 @@ On-chain selective disclosure provides cryptographically enforced auditability d
 
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
-- Dynamic, Forward-Looking Compliance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can (re)register `AuditorEncryptionKey` via `MPTokenIssuanceSet` and migrate existing holders by submitting `ConfidentialMPTMirrorUpdate` transactions that re-encrypt each holder’s `AuditorEncryptedBalance` under the new key and include a ZK equality proof anchored to the on-ledger `IssuerEncryptedBalance`.
-
-This powerful re-encryption capability enables targeted, on-demand compliance without ever sharing the issuer's private key or making user balances public.
+- Adding or Replacing an Auditor After Issuance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): If a new auditor or regulatory body requires access after the token has been issued, the issuer can (re)register `AuditorEncryptionKey` via `MPTokenIssuanceSet` and migrate existing holders by submitting `ConfidentialMPTMirrorUpdate` transactions that establish each holder’s `AuditorEncryptedBalance` under the new key, creating it where the holder has no auditor mirror yet or re-encrypting it where one already exists, with a ZK equality proof anchored to the on-ledger `IssuerEncryptedBalance`.
 
 #### 16.2.2 Foundational Elements for Public Integrity
 
 This model is built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
-- Issuer Ciphertexts (`IssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
-  - It acts as the "master copy" that enables the issuer to perform the re-encryption required for dynamic selective disclosure.
-  - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
+- Issuer Ciphertexts (`IssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaximumAmount.
 
 #### 16.2.3 Example Audit Flows
