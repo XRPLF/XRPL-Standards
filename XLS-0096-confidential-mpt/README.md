@@ -21,9 +21,7 @@ The design provides the following properties:
 - **Confidentiality:** Individual balances and transfer amounts are encrypted and are not revealed to validators or external observers.
 - **Public auditability:** Issuance limits remain publicly enforceable through the existing invariant
   `OutstandingAmount ≤ MaximumAmount`, without requiring decryption of confidential balances.
-- **Selective disclosure / view keys:** The protocol supports flexible auditability through two models:
-  (i) a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption; and
-  (ii) a simpler, trust-based alternative using issuer-controlled view keys for on-demand disclosure.
+- **Selective disclosure:** The protocol supports a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption under the `ConfidentialMPTKeyRotation` amendment (XLS-99).
 - **Compatibility:** Public and confidential balances may coexist for the same token. The issuer account itself cannot hold confidential balances; issuers who wish to participate in confidential circulation must use a separate dedicated holder account, which is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback that burns the clawed-back funds.
 
@@ -39,7 +37,7 @@ The design maintains the standard definition of OutstandingAmount (OA) as the su
 
 - Confidentiality: Hides individual balances and transfer amounts using EC-ElGamal encryption and ZKPs.
 - Auditability: Public auditability is preserved via XLS-33’s existing OA semantics.
-- Flexible Compliance: Enables selective disclosure through multiple mechanisms, including a trust-minimized on-chain model and a simpler issuer-controlled view key model.
+- Flexible Compliance: Enables selective disclosure through a trust-minimized on-chain auditor model.
 - Compatibility: Maintains backward compatibility with XLS-33. The issuer account cannot hold confidential balances; any issuer-controlled dedicated holder account is treated as a standard holder.
 - Enhanced Issuer Control: Provides optional Freeze and a Clawback transaction, giving issuers the tools needed to manage assets and enforce compliance. Clawback burns the holder’s confidential balance.
 
@@ -105,7 +103,7 @@ A single confidential balance is represented by multiple parallel ciphertexts, e
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
 - **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`sfIssuerEncryptedBalance`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
-- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance.
+- **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance; this requires the `ConfidentialMPTKeyRotation` amendment (XLS-99).
 
 ### 5.4. Proof System
 
@@ -902,6 +900,8 @@ Confidential MPT transactions are designed to minimize information leakage while
 - For issuer funding (issuer sends public MPT to dedicated account, which then converts): Amount is revealed, consistent with visible mint events in XLS-33.
 - Whether a stored ciphertext is a canonical encrypted zero. Because that value is deterministic, anyone can compare a stored ciphertext against the known encrypted zero for that account; if they match, the balance is known to be exactly 0. This applies to a newly initialized spending balance and to a reset inbox. Non-zero ciphertexts remain opaque.
 
+Note: `tecBAD_PROOF` and the other `tec` codes named in this specification are applied to the ledger: the fee is charged and the transaction is recorded in full, ciphertexts included, even though no balance changed. A submitter that does not want a failed confidential transaction recorded can set `fail_hard` when submitting it, which makes the receiving node discard a `tec` result instead of applying it and stops that node from relaying or queuing the transaction.
+
 #### 16.1.2 Hidden Information
 
 - Amounts moved in ConfidentialMPTSend, ConfidentialMPTMergeInbox.
@@ -928,41 +928,29 @@ Confidential MPT transactions are designed to minimize information leakage while
 
 The Confidential MPT model is designed to provide robust privacy for individual transactions while ensuring both the integrity of the total token supply and a high degree of flexibility for regulatory compliance and auditing.
 
-To achieve this balance, this protocol offers flexible auditability through two distinct mechanisms. The primary method is on-chain selective disclosure, where each confidential balance is dually encrypted under a designated auditor's public key, allowing for independent, trust-minimized verification. This model is also designed for dynamic, forward-looking compliance; if a new auditor or party requires access later, the issuer can re-encrypt existing balances under the new key and provide cryptographic equality proofs to grant them access without disrupting the system or sharing existing keys. As a simpler, trust-based alternative, the protocol also supports an issuer-mediated model using view keys. In this approach, the issuer controls a separate set of keys that provide read-only access and can be shared directly with auditors on an as-needed basis.
+#### 16.2.1 On-Chain Selective Disclosure
 
-The technical foundation for both of these models is a multi-ciphertext architecture, where each confidential balance is maintained under several different public keys (e.g., holder, issuer, and optional auditor) to serve these distinct purposes.
-
-#### 16.2.1 Mechanism 1: On-Chain Selective Disclosure (A Trust-Minimized Approach)
-
-The primary method for compliance is on-chain selective disclosure, which provides cryptographically enforced auditability directly on the ledger.
+On-chain selective disclosure provides cryptographically enforced auditability directly on the ledger.
 
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
-- Dynamic, Forward-Looking Compliance: This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can facilitate this without disrupting the system. The process is as follows:
+- Dynamic, Forward-Looking Compliance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can facilitate this without disrupting the system. The process is as follows:
   1. The issuer uses its private key to decrypt its own on-ledger copy of a holder's balance (`sfIssuerEncryptedBalance`).
   2. The issuer then re-encrypts this balance under the new auditor’s public key.
   3. Finally, the issuer provides the new ciphertext to the auditor along with a ZK equality proof that cryptographically proves that the new ciphertext matches the official on-ledger version.
 
 This powerful re-encryption capability enables targeted, on-demand compliance without ever sharing the issuer's private key or making user balances public.
 
-#### 16.2.2 Mechanism 2: Issuer-Mediated Auditing (A Simple View Key Model)
+#### 16.2.2 Foundational Elements for Public Integrity
 
-As a simpler, trust-based alternative, the protocol also supports an issuer-mediated model using **view keys**.
-
-- **Issuer-Controlled Keys**: In this approach, the issuer controls a separate set of "view keys." All confidential balances and transaction amounts are also encrypted under these keys.
-- **On-Demand Disclosure**: When an audit is required, the issuer can share the relevant view key directly with an auditor or regulator. This key grants the third party **read-only access** to view the necessary confidential information.
-- **Trust Assumption**: This model is operationally simpler but requires the auditor to trust that the issuer is providing the correct and complete set of view keys for the scope of the audit.
-
-#### 16.2.3 Foundational Elements for Public Integrity
-
-Both compliance models are built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
+This model is built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
 - Issuer Ciphertexts (`sfIssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
   - It acts as the "master copy" that enables the issuer to perform the re-encryption required for dynamic selective disclosure.
   - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaximumAmount.
 
-#### 16.2.4 Example Audit Flows
+#### 16.2.3 Example Audit Flows
 
 - Public Supply Audit (No Keys Required)
   1. An observer reads the public ledger fields: OA, COA, and MA.
@@ -972,10 +960,6 @@ Both compliance models are built upon foundational elements that ensure the inte
   1. A regulator is designated as an auditor under the on-chain policy.
   2. The auditor fetches a holder’s ledger object and uses their own private key to decrypt the `sfAuditorEncryptedBalance` field, revealing the holder's confidential balance.
   3. This balance can be cross-checked against the global COA for consistency.
-- View Key Audit (Issuer Provides Key)
-  1. A regulator requests access to a user's transaction history.
-  2. The issuer provides the regulator with the appropriate view key.
-  3. The regulator uses the view key to decrypt the relevant confidential balances and transaction amounts.
 
 ### 16.3 Proof Requirements
 
@@ -1020,7 +1004,7 @@ Every confidential transaction must carry appropriate ZKPs:
 - Malformed ciphertexts: Validators reject invalid EC points.
 - Balance underflow: Range proofs prevent spending more than available.
 - Ciphertext cancellation: Homomorphic addition adds the ciphertexts' randomness, so ciphertexts with randomness `r` and `−r` sum to the point at infinity, which is not representable and makes the update fail. Because the canonical encrypted zero is deterministic, its randomness is publicly computable, so an attacker free to choose the transfer randomness could cancel it against a target holder's existing ciphertexts and permanently break their `ConfidentialMPTMergeInbox` or auditor-balance update. Any holder of the issuance can attempt this with an unsolicited, arbitrarily small transfer, since incoming confidential transfers cannot be refused. Mitigated by re-randomizing the credit-side ciphertexts (§9.5) with the proof's Fiat–Shamir challenge, which the attacker cannot steer.
-- Auditor collusion: Auditors see balances only if granted view keys; public supply integrity remains trustless.
+- Auditor collusion: An auditor sees balances only if the issuer has registered that auditor's public key as `sfAuditorEncryptionKey`, and only by decrypting `sfAuditorEncryptedBalance` with the auditor's own private key; public supply integrity remains trustless regardless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
 ## 17. Analysis of Transaction Cost and Performance
@@ -1036,11 +1020,11 @@ Each EC–ElGamal ciphertext contains two compressed curve points, giving 66 byt
 Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 946 bytes (ZKProof: 192-byte compact sigma proof + 754 aggregated Bulletproof)
 = 1276 bytes (with auditor). Without auditor (Nciphers = 3): 198 + 66 + 946 = 1210 bytes. Ledger metadata and transaction headers are excluded from this estimate, as the goal is to isolate the cryptographic overhead.
 
-### 17.2 Timing and Computational Complexity
+### 17.2 Computational Complexity
 
-To provide an empirical reference point, we include benchmark results from the reference implementation using aggregated Bulletproofs with two 64-bit values (m = 2). The measured proof size is 754 bytes. On a laptop-class CPU, aggregated Bulletproof proving time was approximately 44.8 ms, while single verification required about 22.6 ms. Averaged across five runs, verification time was approximately 19.6 ms. These measurements include transcript generation, inner-product argument processing, and multi-scalar multiplication steps. The compact sigma proof introduces only a small additional overhead compared to Bulletproof verification, as it consists of a fixed number of scalar multiplications and curve additions independent of the number of recipients. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
+For `ConfidentialMPTSend`, the dominant cost is verification of the aggregated Bulletproof, whose work grows linearly with the total bit length being proved: the verifier derives a scalar per bit and folds the generator vectors, both proportional to that length. `ConfidentialMPTConvertBack` carries a single Bulletproof over a smaller range and behaves the same way. The remaining transaction types carry no range proof, and `ConfidentialMPTMergeInbox` carries no proof at all.
 
-These timings are provided as implementation reference values rather than protocol guarantees. Actual performance depends on hardware, software optimization, and batching strategies. The dominant computational cost remains aggregated Bulletproof verification, which scales logarithmically with the bit length of the proved range.
+The compact sigma proof adds only a small overhead compared to Bulletproof verification: its size is fixed regardless of recipient count, and its verification is constant work apart from a few point operations per recipient ciphertext, of which there are three or four. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
 # Appendix
 
