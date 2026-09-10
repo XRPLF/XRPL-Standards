@@ -8,6 +8,7 @@
     category: Amendment
     requires: XLS-33
     created: 2026-01-15
+    updated: 2026-09-10
 </pre>
 
 # Confidential Transfers for Multi-Purpose Tokens
@@ -339,7 +340,7 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 5. The length of `HolderEncryptionKey` is not exactly 33 bytes. (`temMALFORMED`)
 6. The length of `ZKProof` is not exactly 64 bytes. (`temMALFORMED`)
 7. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-8. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
+8. `MPTAmount` exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
 
 #### 8.4.2. Protocol-Level Failures
 
@@ -1015,7 +1016,7 @@ Total crypto size = 264 bytes (ciphertexts) + 66 bytes (Pedersen commitments) + 
 
 ### 17.2 Computational Complexity
 
-For `ConfidentialMPTSend`, the dominant cost is verification of the aggregated Bulletproof, whose work grows linearly with the total bit length being proved: the verifier derives a scalar per bit and folds the generator vectors, both proportional to that length. `ConfidentialMPTConvertBack` carries a single Bulletproof over a smaller range and behaves the same way. The remaining transaction types carry no range proof, and `ConfidentialMPTMergeInbox` carries no proof at all.
+For `ConfidentialMPTSend`, the dominant cost is verification of the aggregated Bulletproof, whose work grows linearly with the total bit length being proved: the verifier derives a scalar per bit and folds the generator vectors, both proportional to that length. `ConfidentialMPTConvertBack` carries a single Bulletproof over one 64-bit value rather than two, and behaves the same way. The remaining transaction types carry no range proof, and `ConfidentialMPTMergeInbox` carries no proof at all.
 
 The compact sigma proof adds only a small overhead compared to Bulletproof verification: its size is fixed regardless of recipient count, and its verification is constant work apart from a few point operations per recipient ciphertext, of which there are three or four. Ledger execution following proof validation performs deterministic homomorphic ciphertext updates and version checks, which add negligible computational overhead relative to proof verification.
 
