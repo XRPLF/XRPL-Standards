@@ -900,7 +900,7 @@ Confidential MPT transactions are designed to minimize information leakage while
 - For issuer funding (issuer sends public MPT to dedicated account, which then converts): Amount is revealed, consistent with visible mint events in XLS-33.
 - Whether a stored ciphertext is a canonical encrypted zero. Because that value is deterministic, anyone can compare a stored ciphertext against the known encrypted zero for that account; if they match, the balance is known to be exactly 0. This applies to a newly initialized spending balance and to a reset inbox. Non-zero ciphertexts remain opaque.
 
-Note: `tecBAD_PROOF` and the other `tec` codes named in this specification are applied to the ledger: the fee is charged and the transaction is recorded in full, ciphertexts included, even though no balance changed. A submitter that does not want a failed confidential transaction recorded can set `fail_hard` when submitting it, which makes the receiving node discard a `tec` result instead of applying it and stops that node from relaying or queuing the transaction.
+Note: `tecBAD_PROOF` and the other `tec` codes named in this specification are applied to the ledger: the fee is charged and the transaction is recorded in full, ciphertexts included, even though no confidential balance changed. A submitter that does not want a failed confidential transaction recorded can set `fail_hard` when submitting it, which makes the receiving node discard a `tec` result instead of applying it and stops that node from relaying or queuing the transaction. This only takes effect when the transaction already fails at that node, so it does not cover a proof that verifies on submission and fails later against changed ledger state.
 
 #### 16.1.2 Hidden Information
 
@@ -934,10 +934,7 @@ On-chain selective disclosure provides cryptographically enforced auditability d
 
 - Auditor-Specific Encryption: When an auditor is set, each confidential balance is dually encrypted under the designated auditor's public key and stored in the AuditorEncryptedBalance field on the ledger.
 - Independent Verification: This allows the auditor to use their own private key to independently decrypt and verify any holder's balance at any time, without needing cooperation from the issuer or the holder.
-- Dynamic, Forward-Looking Compliance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can facilitate this without disrupting the system. The process is as follows:
-  1. The issuer uses its private key to decrypt its own on-ledger copy of a holder's balance (`sfIssuerEncryptedBalance`).
-  2. The issuer then re-encrypts this balance under the new auditor’s public key.
-  3. Finally, the issuer provides the new ciphertext to the auditor along with a ZK equality proof that cryptographically proves that the new ciphertext matches the official on-ledger version.
+- Dynamic, Forward-Looking Compliance (requires the `ConfidentialMPTKeyRotation` amendment, XLS-99): This model is designed for flexibility. If a new auditor or regulatory body requires access after the token has been issued, the issuer can (re)register `AuditorEncryptionKey` via `MPTokenIssuanceSet` and migrate existing holders by submitting `ConfidentialMPTMirrorUpdate` transactions that re-encrypt each holder’s `AuditorEncryptedBalance` under the new key and include a ZK equality proof anchored to the on-ledger `IssuerEncryptedBalance`.
 
 This powerful re-encryption capability enables targeted, on-demand compliance without ever sharing the issuer's private key or making user balances public.
 
