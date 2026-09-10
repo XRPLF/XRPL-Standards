@@ -21,7 +21,7 @@ The design provides the following properties:
 - **Confidentiality:** Individual balances and transfer amounts are encrypted and are not revealed to validators or external observers.
 - **Public auditability:** Issuance limits remain publicly enforceable through the existing invariant
   `OutstandingAmount ≤ MaximumAmount`, without requiring decryption of confidential balances.
-- **Selective disclosure:** The protocol supports a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, which is extensible to additional auditors via re-encryption under the `ConfidentialMPTKeyRotation` amendment (XLS-99).
+- **Selective disclosure:** The protocol supports a trust-minimized, on-chain auditor model based on encrypted balance mirroring and zero-knowledge consistency proofs, and can be extended to a newly authorized auditor over time via re-encryption under the `ConfidentialMPTKeyRotation` amendment (XLS-99).
 - **Compatibility:** Public and confidential balances may coexist for the same token. The issuer account itself cannot hold confidential balances; issuers who wish to participate in confidential circulation must use a separate dedicated holder account, which is treated identically to other non-issuer holders, preserving XLS-33 issuance semantics.
 - **Issuer control:** Existing issuer controls are preserved and extended to confidential balances, including issuer-initiated freezing and clawback that burns the clawed-back funds.
 
