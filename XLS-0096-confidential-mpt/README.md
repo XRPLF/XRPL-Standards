@@ -102,7 +102,7 @@ To prevent stale-proof failures—where an incoming transfer could invalidate a 
 A single confidential balance is represented by multiple parallel ciphertexts, each serving a distinct purpose. Compact sigma proofs ensure that all ciphertexts correspond to the same hidden amount.
 
 - **Holder encryption:** The primary balance is encrypted under the holder’s public key, granting exclusive spending authority.
-- **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`sfIssuerEncryptedBalance`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
+- **Issuer encryption:** The same balance is also encrypted under the issuer’s public key (`IssuerEncryptedBalance`). This encrypted mirror supports supply consistency checks and issuer-level auditing without granting spending capability.
 - **Optional auditor encryption:** If an auditor is set, balances are additionally encrypted under an auditor’s public key (`AuditorEncryptedBalance`), enabling on-chain selective disclosure. The issuer may also re-encrypt balances for newly authorized auditors using its encrypted mirror, supporting forward-looking compliance; this requires the `ConfidentialMPTKeyRotation` amendment (XLS-99).
 
 ### 5.4. Proof System
@@ -142,14 +142,14 @@ To support confidential MPTs, the existing `MPTokenIssuance` ledger object is ex
 
 ### 6.2. Flags
 
-Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanHoldConfidentialBalance`** is stored in the standard `sfFlags` field, while **`lsifMPTCanHoldConfidentialBalance`** is stored in the `sfImmutableFlags` field.
+Two new flags are introduced for the `MPTokenIssuance` ledger object. Note that **`lsfMPTCanHoldConfidentialBalance`** is stored in the standard `Flags` field, while **`lsifMPTCanHoldConfidentialBalance`** is stored in the `ImmutableFlags` field.
 
-| Flag Name                           | Field              | Hex Value    | Description                                                                                         |
-| :---------------------------------- | :----------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
-| `lsfMPTCanHoldConfidentialBalance`  | `sfFlags`          | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
-| `lsifMPTCanHoldConfidentialBalance` | `sfImmutableFlags` | `0x00000080` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
+| Flag Name                           | Field            | Hex Value    | Description                                                                                         |
+| :---------------------------------- | :--------------- | :----------- | :-------------------------------------------------------------------------------------------------- |
+| `lsfMPTCanHoldConfidentialBalance`  | `Flags`          | `0x00000080` | Indicates that confidential transfers are enabled for this token issuance.                          |
+| `lsifMPTCanHoldConfidentialBalance` | `ImmutableFlags` | `0x00000080` | If set, the `lsfMPTCanHoldConfidentialBalance` flag can never be changed after the token is issued. |
 
-**Note**: `sfImmutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
+**Note**: `ImmutableFlags` is introduced in the amendment [`DynamicMPT`](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0094-dynamic-MPT). To use this field,the `DynamicMPT` amendment must be enabled.
 
 ### 6.3. Managing Confidentiality Settings
 
@@ -159,8 +159,8 @@ The `lsfMPTCanHoldConfidentialBalance` flag enables the use of confidential tran
 
 > **Note on Terminology:**
 
-- `sfFlags`: The prefix `lsf` refers to ledger state flags, while `tf` refers to the transaction flags.
-- `sfImmutableFlags`: The prefix `lsif` refers to the immutable ledger state flags.
+- `Flags`: The prefix `lsf` refers to ledger state flags, while `tf` refers to the transaction flags.
+- `ImmutableFlags`: The prefix `lsif` refers to the immutable ledger state flags.
 
 - **Default Behavior (Mutable):** By default, without setting `tifMPTCanHoldConfidentialBalance`, the issuer retains the ability to enable the confidential balance setting (`lsfMPTCanHoldConfidentialBalance`) via [`MPTokenIssuanceSet`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuanceset) transactions. Enabling is one-way; the flag cannot be cleared once set.
 - **Permanent Lock (Immutable):** If the issuer sets the immutable flag `tifMPTCanHoldConfidentialBalance` through [`MPTokenIssuanceCreate`](https://xrpl.org/docs/references/protocol/transactions/types/mptokenissuancecreate) transaction, the `lsfMPTCanHoldConfidentialBalance` can never be changed after issuance.
@@ -313,7 +313,7 @@ This transaction is a **self-conversion only**. The issuer account itself **cann
 | `HolderEncryptionKey`    | No        | `string`  | `BLOB`        | N/A           | The holder's ElGamal public key ($inline$pk_A$inline$). **Required** if initializing (no key registered). **Forbidden** if key already registered.                                                                         |
 | `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the holder's $inline$CB\_{IN}$inline$.                                                                                                                                            |
 | `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal ciphertext credited to the issuer's mirror balance.                                                                                                                                                      |
-| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                         |
+| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ElGamal Ciphertext for the auditor. **Required** if `AuditorEncryptionKey` is present on the issuance.                                                                                                           |
 | `BlindingFactor`         | Yes       | `string`  | `UINT256`     | N/A           | The scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. Its length is fixed at 32 bytes by the `UINT256` encoding, so no separate length check applies. |
 | `ZKProof`                | No        | `string`  | `BLOB`        | N/A           | A Schnorr Proof of Knowledge (PoK). **Required** only when `HolderEncryptionKey` is present. **MUST** be absent when `HolderEncryptionKey` is absent.                                                                      |
 
@@ -333,23 +333,23 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 #### 8.4.1. Data Verification
 
 1. The `ConfidentialTransfer` feature is not enabled on the ledger. (`temDISABLED`)
-2. `sfAccount` is the Issuer. (`temMALFORMED`)
-3. `sfHolderEncryptionKey` is present but `sfZKProof` is missing. (`temMALFORMED`)
-4. `sfHolderEncryptionKey` is absent but `sfZKProof` is present. (`temMALFORMED`)
-5. The length of `sfHolderEncryptionKey` is not exactly 33 bytes. (`temMALFORMED`)
-6. The length of `sfZKProof` is not exactly 64 bytes. (`temMALFORMED`)
+2. `Account` is the Issuer. (`temMALFORMED`)
+3. `HolderEncryptionKey` is present but `ZKProof` is missing. (`temMALFORMED`)
+4. `HolderEncryptionKey` is absent but `ZKProof` is present. (`temMALFORMED`)
+5. The length of `HolderEncryptionKey` is not exactly 33 bytes. (`temMALFORMED`)
+6. The length of `ZKProof` is not exactly 64 bytes. (`temMALFORMED`)
 7. Any provided ciphertext (`Holder`, `Issuer`, or `Auditor`) has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 8. `MPTAmount` is less than zero or exceeds the maximum allowable MPT amount. (`temBAD_AMOUNT`)
 
 #### 8.4.2. Protocol-Level Failures
 
 1. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
-2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
-3. The issuance has `sfAuditorEncryptionKey` set but the transaction does not include `sfAuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
+2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `IssuerEncryptionKey`. (`tecNO_PERMISSION`)
+3. The issuance has `AuditorEncryptionKey` set but the transaction does not include `AuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `AuditorEncryptedAmount`. (`tecNO_PERMISSION`)
 4. The holder's `MPToken` is locked, or the entire issuance is locked. (`tecLOCKED`)
 5. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
 6. The holder does not have sufficient public MPT balance to cover the `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
-7. No `HolderEncryptionKey` is provided in the transaction and the account does not have a registered `sfHolderEncryptionKey` on ledger. (`tecNO_PERMISSION`)
+7. No `HolderEncryptionKey` is provided in the transaction and the account does not have a registered `HolderEncryptionKey` on ledger. (`tecNO_PERMISSION`)
 8. A public key is provided in the transaction, but the account already has a registered key. (`tecDUPLICATE`)
 9. The `BlindingFactor` fails to reconstruct the provided ciphertexts given the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 10. The Schnorr `ZKProof` fails to verify the holder's knowledge of the secret key. (`tecBAD_PROOF`)
@@ -358,12 +358,12 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 
 If the transaction is successful:
 
-1. The holder's public **`sfMPTAmount`** is decreased by the converted amount.
-2. The **`sfConfidentialOutstandingAmount`** on the `MPTokenIssuance` object is increased by the converted amount.
-3. The holder's **`sfHolderEncryptionKey`** is registered on their `MPToken` object if it was not already present.
-4. The **`sfConfidentialBalanceInbox`** and **`sfIssuerEncryptedBalance`** are updated by homomorphically adding the provided ciphertexts.
-5. If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), **`sfAuditorEncryptedBalance`** is likewise updated by homomorphically adding `AuditorEncryptedAmount`.
-6. If initializing confidential state for the first time, **`sfConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
+1. The holder's public **`MPTAmount`** is decreased by the converted amount.
+2. The **`ConfidentialOutstandingAmount`** on the `MPTokenIssuance` object is increased by the converted amount.
+3. The holder's **`HolderEncryptionKey`** is registered on their `MPToken` object if it was not already present.
+4. The **`ConfidentialBalanceInbox`** and **`IssuerEncryptedBalance`** are updated by homomorphically adding the provided ciphertexts.
+5. If the issuance has an auditor configured (`AuditorEncryptionKey` present), **`AuditorEncryptedBalance`** is likewise updated by homomorphically adding `AuditorEncryptedAmount`.
+6. If initializing confidential state for the first time, **`ConfidentialBalanceSpending`** is initialized with an encrypted zero and the version counter is set to 0.
 
 ### 8.6 Example JSON
 
@@ -410,7 +410,7 @@ This transaction honors **Deposit Authorization** and **Credentials** (XLS-70), 
 | `ZKProof`                    | Yes       | `string`  | `BLOB`        | N/A           | A 946-byte bundle containing a **compact sigma proof** (192 bytes, proving ciphertext consistency across all recipients, amount linkage to `AmountCommitment`, and balance linkage to `BalanceCommitment`) and an **aggregated Bulletproof range proof** (754 bytes, proving both the transfer amount and remaining balance are non-negative). |
 | `BalanceCommitment`          | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the user's confidential spending balance.                                                                                                                                                                                                                                                                        |
 | `AmountCommitment`           | Yes       | `string`  | `BLOB`        | N/A           | A cryptographic commitment to the amount being transferred.                                                                                                                                                                                                                                                                                    |
-| `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                                                                                                                                                               |
+| `AuditorEncryptedAmount`     | No        | `string`  | `BLOB`        | N/A           | Ciphertext for the auditor. **Required** if `AuditorEncryptionKey` is present on the issuance.                                                                                                                                                                                                                                                 |
 | `CredentialIDs`              | No        | `array`   | `Vector256`   | N/A           | Credential(s) to attach to the transaction for authorization purposes (XLS-70).                                                                                                                                                                                                                                                                |
 
 ### 9.3. Transaction Fee
@@ -439,10 +439,10 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 3. The `MPTokenIssuance`, or the sender's or destination's `MPToken` object, does not exist. (`tecOBJECT_NOT_FOUND`)
 4. The issuance does not have the `lsfMPTCanTransfer` flag set. (`tecNO_AUTH`)
 5. The issuance does not support confidential balance (`lsfMPTCanHoldConfidentialBalance` is not set). (`tecNO_PERMISSION`)
-6. The issuance has a non-zero `sfTransferFee`. (`tecNO_PERMISSION`)
-7. The issuance has no registered `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
-8. The issuance has `sfAuditorEncryptionKey` set but the transaction does not include `sfAuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
-9. One of the participating accounts lacks a registered ElGamal public key or the confidential fields required for its role: the sender needs `sfHolderEncryptionKey`, `sfConfidentialBalanceSpending`, and `sfIssuerEncryptedBalance`; the destination needs `sfHolderEncryptionKey`, `sfConfidentialBalanceInbox`, and `sfIssuerEncryptedBalance`. (`tecNO_PERMISSION`)
+6. The issuance has a non-zero `TransferFee`. (`tecNO_PERMISSION`)
+7. The issuance has no registered `IssuerEncryptionKey`. (`tecNO_PERMISSION`)
+8. The issuance has `AuditorEncryptionKey` set but the transaction does not include `AuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `AuditorEncryptedAmount`. (`tecNO_PERMISSION`)
+9. One of the participating accounts lacks a registered ElGamal public key or the confidential fields required for its role: the sender needs `HolderEncryptionKey`, `ConfidentialBalanceSpending`, and `IssuerEncryptedBalance`; the destination needs `HolderEncryptionKey`, `ConfidentialBalanceInbox`, and `IssuerEncryptedBalance`. (`tecNO_PERMISSION`)
 10. Either the sender's or receiver's balance is currently locked. (`tecLOCKED`)
 11. The issuance requires authorization (`lsfMPTRequireAuth`) and either the sender's or the destination's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
 12. The provided Zero-Knowledge Proof fails to verify equality or range constraints. (`tecBAD_PROOF`)
@@ -460,12 +460,12 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 
 If the transaction is successful:
 
-- **Sender Balance**: The sender's `sfConfidentialBalanceSpending` is homomorphically decremented by `SenderEncryptedAmount`.
-- **Sender Versioning**: The sender's `sfConfidentialBalanceVersion` is incremented by 1 to prevent stale-proof replay.
-- **Receiver Balance**: The receiver's `sfConfidentialBalanceInbox` is homomorphically incremented by the **re-randomized** `DestinationEncryptedAmount`.
-- **Issuer Mirrors**: The sender's `sfIssuerEncryptedBalance` is homomorphically decremented by `IssuerEncryptedAmount`, and the receiver's `sfIssuerEncryptedBalance` is homomorphically incremented by the **re-randomized** `IssuerEncryptedAmount`.
-- **Auditor Mirrors**: If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the sender's `sfAuditorEncryptedBalance` is homomorphically decremented by `AuditorEncryptedAmount`, and the receiver's `sfAuditorEncryptedBalance` is homomorphically incremented by the **re-randomized** `AuditorEncryptedAmount`.
-- **Receiver Versioning**: The receiver's `sfConfidentialBalanceVersion` is **not** modified. Incoming transfers land in the inbox and therefore cannot invalidate proofs bound to the receiver's spending balance.
+- **Sender Balance**: The sender's `ConfidentialBalanceSpending` is homomorphically decremented by `SenderEncryptedAmount`.
+- **Sender Versioning**: The sender's `ConfidentialBalanceVersion` is incremented by 1 to prevent stale-proof replay.
+- **Receiver Balance**: The receiver's `ConfidentialBalanceInbox` is homomorphically incremented by the **re-randomized** `DestinationEncryptedAmount`.
+- **Issuer Mirrors**: The sender's `IssuerEncryptedBalance` is homomorphically decremented by `IssuerEncryptedAmount`, and the receiver's `IssuerEncryptedBalance` is homomorphically incremented by the **re-randomized** `IssuerEncryptedAmount`.
+- **Auditor Mirrors**: If the issuance has an auditor configured (`AuditorEncryptionKey` present), the sender's `AuditorEncryptedBalance` is homomorphically decremented by `AuditorEncryptedAmount`, and the receiver's `AuditorEncryptedBalance` is homomorphically incremented by the **re-randomized** `AuditorEncryptedAmount`.
+- **Receiver Versioning**: The receiver's `ConfidentialBalanceVersion` is **not** modified. Incoming transfers land in the inbox and therefore cannot invalidate proofs bound to the receiver's spending balance.
 - **Global Supply**: Plaintext supply fields (`OA` and `COA`) remain unchanged.
 
 **Note on re-randomization:** "Re-randomized" means that, before a ciphertext is credited to the receiver, an encryption of **zero** under the same public key is homomorphically added to it. The randomness for that zero encryption is the first 32 bytes of the `ZKProof` field. Since the added ciphertext encrypts 0, the credited value is unchanged; and since the randomness is read directly from the transaction, every validator derives identical ledger state. Only the three credit-side ciphertexts are treated this way, the ciphertexts subtracted from the sender are applied exactly as submitted. This prevents an attacker from choosing transfer randomness that cancels against a target holder's existing ciphertexts (see §16.8).
@@ -527,7 +527,7 @@ This transaction requires 10 times the standard base fee because it performs hom
 
 1. The `MPTokenIssuance` or the user's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
-3. The user's `MPToken` object has not been initialized (missing `sfConfidentialBalanceInbox`, `sfConfidentialBalanceSpending`, or `sfHolderEncryptionKey`). (`tecNO_PERMISSION`)
+3. The user's `MPToken` object has not been initialized (missing `ConfidentialBalanceInbox`, `ConfidentialBalanceSpending`, or `HolderEncryptionKey`). (`tecNO_PERMISSION`)
 4. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
 5. The holder's `MPToken` is **locked** at the individual level (the `lsfMPTLocked` flag is set on the `MPToken`). (`tecLOCKED`)
 6. The entire token issuance is **locked** (the `lsfMPTLocked` flag is set on the `MPTokenIssuance`). (`tecLOCKED`)
@@ -537,11 +537,11 @@ This transaction requires 10 times the standard base fee because it performs hom
 
 If the transaction is successful:
 
-- **Update Spending Balance:** The current `sfConfidentialBalanceInbox` is homomorphically **added** to `sfConfidentialBalanceSpending`.
-- **Reset Inbox:** The `sfConfidentialBalanceInbox` is reset to a canonical **encrypted zero**. This ensures the account is ready to receive new transfers without arithmetic errors.
-- **Increment Version:** The `sfConfidentialBalanceVersion` is incremented by 1. If the version reaches the maximum 32-bit integer value, it wraps around to 0.
-- **Mirrors Untouched:** `sfIssuerEncryptedBalance` and `sfAuditorEncryptedBalance` are not written. They mirror the holder's _total_ confidential balance, and this transaction only moves value between `CB_IN` and `CB_S`, so that total is unchanged.
-- **No-op with encrypted zero:** If either or both of `sfConfidentialBalanceInbox` and `sfConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `sfConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
+- **Update Spending Balance:** The current `ConfidentialBalanceInbox` is homomorphically **added** to `ConfidentialBalanceSpending`.
+- **Reset Inbox:** The `ConfidentialBalanceInbox` is reset to a canonical **encrypted zero**. This ensures the account is ready to receive new transfers without arithmetic errors.
+- **Increment Version:** The `ConfidentialBalanceVersion` is incremented by 1. If the version reaches the maximum 32-bit integer value, it wraps around to 0.
+- **Mirrors Untouched:** `IssuerEncryptedBalance` and `AuditorEncryptedBalance` are not written. They mirror the holder's _total_ confidential balance, and this transaction only moves value between `CB_IN` and `CB_S`, so that total is unchanged.
+- **No-op with encrypted zero:** If either or both of `ConfidentialBalanceInbox` and `ConfidentialBalanceSpending` already contain an encrypted zero at the time of the merge, the transaction is still valid and succeeds. The inbox (EncZero) is homomorphically added to the spending balance (leaving it unchanged), the inbox is reset to EncZero, and `ConfidentialBalanceVersion` is still incremented. This is a valid no-op: no value moves, but the version bump still occurs, allowing holders to advance their proof version without any pending inbound funds.
 
 ### 10.6. Example JSON
 
@@ -575,10 +575,10 @@ If the transaction is successful:
 | `Account`                | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account performing the conversion.                                                                                                                                                                                     |
 | `MPTokenIssuanceID`      | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                                                                                                                |
 | `MPTAmount`              | Yes       | `number`  | `UINT64`      | N/A           | The plaintext amount to credit to the public balance.                                                                                                                                                                      |
-| `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the holder's `sfConfidentialBalanceSpending`.                                                                                                                                   |
+| `HolderEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the holder's `ConfidentialBalanceSpending`.                                                                                                                                     |
 | `IssuerEncryptedAmount`  | Yes       | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext to be subtracted from the issuer's mirror balance.                                                                                                                                                    |
 | `BlindingFactor`         | Yes       | `string`  | `UINT256`     | N/A           | The scalar value used to encrypt the amount. Used by validators to verify the ciphertexts match the plaintext `MPTAmount`. Its length is fixed at 32 bytes by the `UINT256` encoding, so no separate length check applies. |
-| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext for the auditor. **Required** if `sfAuditorEncryptionKey` is present on the issuance.                                                                                                                 |
+| `AuditorEncryptedAmount` | No        | `string`  | `BLOB`        | N/A           | A 66-byte ciphertext for the auditor. **Required** if `AuditorEncryptionKey` is present on the issuance.                                                                                                                   |
 | `BalanceCommitment`      | Yes       | `string`  | `BLOB`        | N/A           | A 33-byte cryptographic commitment to the user's confidential spending balance.                                                                                                                                            |
 | `ZKProof`                | Yes       | `string`  | `BLOB`        | N/A           | An 816-byte bundle containing a **compact sigma proof** (128 bytes, proving balance ownership and key linkage) and a **single Bulletproof range proof** (688 bytes, proving the remaining balance is non-negative).        |
 
@@ -602,10 +602,10 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 #### 11.5.2. Protocol-Level Failures
 
 1. The `MPToken` or `MPTokenIssuance` does not exist. (`tecOBJECT_NOT_FOUND`)
-2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
-3. The user's `MPToken` is missing the `sfConfidentialBalanceSpending`, `sfHolderEncryptionKey`, or `sfIssuerEncryptedBalance` fields. (`tecNO_PERMISSION`)
-4. The issuance has `sfAuditorEncryptionKey` set but the transaction does not include `sfAuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `sfAuditorEncryptedAmount`. (`tecNO_PERMISSION`)
-5. The global `sfConfidentialOutstandingAmount` is less than the requested `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
+2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set, or has no registered `IssuerEncryptionKey`. (`tecNO_PERMISSION`)
+3. The user's `MPToken` is missing the `ConfidentialBalanceSpending`, `HolderEncryptionKey`, or `IssuerEncryptedBalance` fields. (`tecNO_PERMISSION`)
+4. The issuance has `AuditorEncryptionKey` set but the transaction does not include `AuditorEncryptedAmount`, or the issuance has no auditor key but the transaction includes `AuditorEncryptedAmount`. (`tecNO_PERMISSION`)
+5. The global `ConfidentialOutstandingAmount` is less than the requested `MPTAmount`. (`tecINSUFFICIENT_FUNDS`)
 6. The holder's `MPToken` is locked, or the entire issuance is locked. (`tecLOCKED`)
 7. The issuance requires authorization (`lsfMPTRequireAuth`) and the holder's `MPToken` is not authorized (`lsfMPTAuthorized` is not set). (`tecNO_AUTH`)
 8. The `BlindingFactor` fails to verify the integrity of the ciphertexts. (`tecBAD_PROOF`)
@@ -616,12 +616,12 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 
 If the transaction is successful:
 
-- **Public Balance:** The user's `sfMPTAmount` is increased by `MPTAmount`.
-- **Global Supply:** The `sfConfidentialOutstandingAmount` on the issuance is decreased by `MPTAmount`.
-- **Spending Balance:** The `sfConfidentialBalanceSpending` is updated via **homomorphic subtraction** of `HolderEncryptedAmount`.
-- **Issuer Mirror:** The `sfIssuerEncryptedBalance` is updated via **homomorphic subtraction** of `IssuerEncryptedAmount`.
-- **Auditor Mirror:** If the issuance has an auditor configured (`sfAuditorEncryptionKey` present), the `sfAuditorEncryptedBalance` is updated via **homomorphic subtraction** of `AuditorEncryptedAmount`.
-- **Version:** The `sfConfidentialBalanceVersion` is incremented by 1.
+- **Public Balance:** The user's `MPTAmount` is increased by `MPTAmount`.
+- **Global Supply:** The `ConfidentialOutstandingAmount` on the issuance is decreased by `MPTAmount`.
+- **Spending Balance:** The `ConfidentialBalanceSpending` is updated via **homomorphic subtraction** of `HolderEncryptedAmount`.
+- **Issuer Mirror:** The `IssuerEncryptedBalance` is updated via **homomorphic subtraction** of `IssuerEncryptedAmount`.
+- **Auditor Mirror:** If the issuance has an auditor configured (`AuditorEncryptionKey` present), the `AuditorEncryptedBalance` is updated via **homomorphic subtraction** of `AuditorEncryptedAmount`.
+- **Version:** The `ConfidentialBalanceVersion` is incremented by 1.
 
 ### 11.7. Example JSON
 
@@ -683,7 +683,7 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 
 ### 12.1 How the Clawback Process Works
 
-1. Issuer Decrypts and Prepares: The issuer takes the `sfIssuerEncryptedBalance` ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
+1. Issuer Decrypts and Prepares: The issuer takes the `IssuerEncryptedBalance` ciphertext from the HolderToClawback's MPToken object and uses its own private key to decrypt it, revealing the holder's total confidential balance, m.
 2. Issuer Submits Transaction: The issuer creates and signs a ConfidentialMPTClawback transaction, setting the `MPTAmount` field to m. It also generates and includes a compact Clawback sigma proof.
 3. Validator Verification and Execution: Validators receive the transaction and perform a series of checks and state changes as a single:
    - Verification: They first confirm the transaction was signed by the token Issuer and that the ZKProof is valid. The proof provides cryptographic certainty that `MPTAmount` is the true value hidden in the holder's on-ledger ciphertext.
@@ -696,14 +696,14 @@ This issuer-only transaction is designed to forcibly burn a holder's entire conf
 
 ### 12.2. Fields
 
-| Field Name          | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                             |
-| :------------------ | :-------- | :-------- | :------------ | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`   | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTClawback` transaction, which is 89.                                                                |
-| `Account`           | Yes       | `string`  | `ACCOUNTID`   | N/A           | The **Issuer** account sending the transaction.                                                                                         |
-| `Holder`            | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account from which funds are being clawed back.                                                                                     |
-| `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                             |
-| `MPTAmount`         | Yes       | `number`  | `UINT64`      | N/A           | The plaintext total amount being removed.                                                                                               |
-| `ZKProof`           | Yes       | `string`  | `BLOB`        | N/A           | A 64-byte **AND-composed compact Clawback sigma proof** proving that the `sfIssuerEncryptedBalance` encrypts the plaintext `MPTAmount`. |
+| Field Name          | Required? | JSON Type | Internal Type | Default Value | Description                                                                                                                           |
+| :------------------ | :-------- | :-------- | :------------ | :------------ | :------------------------------------------------------------------------------------------------------------------------------------ |
+| `TransactionType`   | Yes       | `string`  | `UINT16`      | N/A           | Identifies this as a `ConfidentialMPTClawback` transaction, which is 89.                                                              |
+| `Account`           | Yes       | `string`  | `ACCOUNTID`   | N/A           | The **Issuer** account sending the transaction.                                                                                       |
+| `Holder`            | Yes       | `string`  | `ACCOUNTID`   | N/A           | The account from which funds are being clawed back.                                                                                   |
+| `MPTokenIssuanceID` | Yes       | `string`  | `UINT192`     | N/A           | The unique identifier for the MPT issuance.                                                                                           |
+| `MPTAmount`         | Yes       | `number`  | `UINT64`      | N/A           | The plaintext total amount being removed.                                                                                             |
+| `ZKProof`           | Yes       | `string`  | `BLOB`        | N/A           | A 64-byte **AND-composed compact Clawback sigma proof** proving that the `IssuerEncryptedBalance` encrypts the plaintext `MPTAmount`. |
 
 This single transaction securely and verifiably burns the holder's confidential balance, removing the tokens from circulation without crediting them to any account, while ensuring the integrity of the ledger's public accounting is perfectly maintained.
 
@@ -728,26 +728,26 @@ This transaction requires 10 times the standard base fee because zero-knowledge 
 1. The `Holder` account does not exist. (`tecNO_TARGET`)
 2. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 3. The issuance does not have the `lsfMPTCanClawback` flag set. (`tecNO_PERMISSION`)
-4. The issuance is missing the `sfIssuerEncryptionKey`. (`tecNO_PERMISSION`)
+4. The issuance is missing the `IssuerEncryptionKey`. (`tecNO_PERMISSION`)
 5. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
-6. The holder's `MPToken` is missing the `sfIssuerEncryptedBalance`. (`tecNO_PERMISSION`)
-7. The holder's `MPToken` is missing the `sfHolderEncryptionKey`. (`tecNO_PERMISSION`)
-8. The `MPTAmount` exceeds the global `sfConfidentialOutstandingAmount`, or exceeds the global `sfOutstandingAmount`. (`tecINSUFFICIENT_FUNDS`)
-9. The ZKP fails to prove that the `sfIssuerEncryptedBalance` (the mirror balance) encrypts the plaintext `MPTAmount`. (`tecBAD_PROOF`)
+6. The holder's `MPToken` is missing the `IssuerEncryptedBalance`. (`tecNO_PERMISSION`)
+7. The holder's `MPToken` is missing the `HolderEncryptionKey`. (`tecNO_PERMISSION`)
+8. The `MPTAmount` exceeds the global `ConfidentialOutstandingAmount`, or exceeds the global `OutstandingAmount`. (`tecINSUFFICIENT_FUNDS`)
+9. The ZKP fails to prove that the `IssuerEncryptedBalance` (the mirror balance) encrypts the plaintext `MPTAmount`. (`tecBAD_PROOF`)
 
 ### 12.5. State Changes
 
 If the transaction is successful, the holder's confidential state is reset, and the tokens are removed from the total supply:
 
 - **Holder State Reset:**
-  - `sfConfidentialBalanceInbox` is set to **Encrypted Zero**.
-  - `sfConfidentialBalanceSpending` is set to **Encrypted Zero**.
-  - `sfIssuerEncryptedBalance` is set to **Encrypted Zero**.
-  - `sfAuditorEncryptedBalance` (if present) is set to **Encrypted Zero** (using the Auditor's public key).
-  - `sfConfidentialBalanceVersion` is **incremented by 1**.
+  - `ConfidentialBalanceInbox` is set to **Encrypted Zero**.
+  - `ConfidentialBalanceSpending` is set to **Encrypted Zero**.
+  - `IssuerEncryptedBalance` is set to **Encrypted Zero**.
+  - `AuditorEncryptedBalance` (if present) is set to **Encrypted Zero** (using the Auditor's public key).
+  - `ConfidentialBalanceVersion` is **incremented by 1**.
 - **Supply Reduction:**
-  - The global `sfConfidentialOutstandingAmount` (COA) is decreased by `MPTAmount`.
-  - The global `sfOutstandingAmount` (OA) is decreased by `MPTAmount`.
+  - The global `ConfidentialOutstandingAmount` (COA) is decreased by `MPTAmount`.
+  - The global `OutstandingAmount` (OA) is decreased by `MPTAmount`.
 
 ### 12.6. Example JSON
 
@@ -797,7 +797,7 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 
 **Usage Notes:**
 
-- These flags can only be used if the `lsifMPTCanHoldConfidentialBalance` flag was **not** set under `sfImmutableFlags` during `MPTokenIssuanceCreate`.
+- These flags can only be used if the `lsifMPTCanHoldConfidentialBalance` flag was **not** set under `ImmutableFlags` during `MPTokenIssuanceCreate`.
 - Setting `tfMPTSetCanHoldConfidentialBalance` enables confidential transfers for the token.
 - Enabling confidential transfers is one-way: there is no flag to clear `lsfMPTCanHoldConfidentialBalance` once it has been set.
 
@@ -805,20 +805,20 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 
 #### 13.4.1. Data Verification
 
-1. The `featureConfidentialTransfer` is not enabled and the transaction supplies `sfIssuerEncryptionKey` or `sfAuditorEncryptionKey`, sets `tfMPTSetCanHoldConfidentialBalance`, or sets `lsifMPTCanHoldConfidentialBalance` in `sfImmutableFlags`. (`temDISABLED`)
+1. The `featureConfidentialTransfer` is not enabled and the transaction supplies `IssuerEncryptionKey` or `AuditorEncryptionKey`, sets `tfMPTSetCanHoldConfidentialBalance`, or sets `lsifMPTCanHoldConfidentialBalance` in `ImmutableFlags`. (`temDISABLED`)
 2. The provided Public Key is not a valid 33-byte (`ecPubKeyLength`) compressed elliptic curve point. (`temMALFORMED`)
-3. The transaction attempts to mutate confidential amount fields while also acting as a Holder, that is, it includes `Holder` together with `sfIssuerEncryptionKey`, `sfAuditorEncryptionKey`, or `tfMPTSetCanHoldConfidentialBalance`. (`temMALFORMED`)
-4. The transaction contains `sfAuditorEncryptionKey` but does **not** contain `sfIssuerEncryptionKey`. (`temMALFORMED`)
+3. The transaction attempts to mutate confidential amount fields while also acting as a Holder, that is, it includes `Holder` together with `IssuerEncryptionKey`, `AuditorEncryptionKey`, or `tfMPTSetCanHoldConfidentialBalance`. (`temMALFORMED`)
+4. The transaction contains `AuditorEncryptionKey` but does **not** contain `IssuerEncryptionKey`. (`temMALFORMED`)
 5. The transaction sets `tfMPTSetCanHoldConfidentialBalance` or `lsifMPTCanHoldConfidentialBalance` while the `DynamicMPT` amendment is not enabled. (`temDISABLED`)
 6. The transaction sets a non-zero `TransferFee` and `tfMPTSetCanHoldConfidentialBalance` in the same transaction (see §6.4). (`temBAD_TRANSFER_FEE`)
 
 #### 13.4.2. Protocol-Level Failures
 
-1. The transaction attempts to use `tfMPTSetCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in `sfImmutableFlags`. (`tecNO_PERMISSION`)
-2. The transaction provides a `sfIssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
-3. The transaction provides a `sfIssuerEncryptionKey` or `sfAuditorEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
+1. The transaction attempts to use `tfMPTSetCanHoldConfidentialBalance`, but the `lsifMPTCanHoldConfidentialBalance` flag is set in `ImmutableFlags`. (`tecNO_PERMISSION`)
+2. The transaction provides a `IssuerEncryptionKey` (or Auditor Key), but the issuance object **already** has one. (`tecNO_PERMISSION`)
+3. The transaction provides a `IssuerEncryptionKey` or `AuditorEncryptionKey`, but the issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag enabled.
    - **Exception:** Keys can be set if the `lsfMPTCanHoldConfidentialBalance` flag is being enabled in the same transaction via `tfMPTSetCanHoldConfidentialBalance`. (`tecNO_PERMISSION`)
-4. The transaction attempts to upload keys or set `tfMPTSetCanHoldConfidentialBalance`, but `sfConfidentialOutstandingAmount` is greater than zero (tokens are already in confidential circulation). (`tecNO_PERMISSION`)
+4. The transaction attempts to upload keys or set `tfMPTSetCanHoldConfidentialBalance`, but `ConfidentialOutstandingAmount` is greater than zero (tokens are already in confidential circulation). (`tecNO_PERMISSION`)
 5. The `MPTokenIssuance` does not exist. (`tecOBJECT_NOT_FOUND`)
 6. The transaction sets a non-zero `TransferFee` while the issuance already has `lsfMPTCanHoldConfidentialBalance`, or sets `tfMPTSetCanHoldConfidentialBalance` while the issuance already has a non-zero `TransferFee` (see §6.4). (`tecNO_PERMISSION`)
 
@@ -827,7 +827,7 @@ The following bit flag is added to the `Flags` field to enable the confidential 
 If successful:
 
 - **Flags:** The `lsfMPTCanHoldConfidentialBalance` flag is updated (if mutable).
-- **Keys:** The `sfIssuerEncryptionKey` and/or `sfAuditorEncryptionKey` are stored on the `MPTokenIssuance` ledger entry.
+- **Keys:** The `IssuerEncryptionKey` and/or `AuditorEncryptionKey` are stored on the `MPTokenIssuance` ledger entry.
 
 ### 13.6. Example JSON
 
@@ -880,7 +880,7 @@ The scheme is EC-ElGamal over secp256k1 and is not quantum-safe. Migration to a 
 
 ## 15. Operational Considerations
 
-Issuers must choose between enabling transfer fees and enabling confidential transfers — these two features are mutually exclusive on the same `MPTokenIssuance`. `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `sfTransferFee`.
+Issuers must choose between enabling transfer fees and enabling confidential transfers — these two features are mutually exclusive on the same `MPTokenIssuance`. `ConfidentialMPTSend` will fail with `tecNO_PERMISSION` if the issuance has a non-zero `TransferFee`.
 
 ## 16. Security Considerations
 
@@ -942,7 +942,7 @@ This powerful re-encryption capability enables targeted, on-demand compliance wi
 
 This model is built upon foundational elements that ensure the integrity of the total token supply remains publicly verifiable at all times.
 
-- Issuer Ciphertexts (`sfIssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
+- Issuer Ciphertexts (`IssuerEncryptedBalance`): Every confidential balance is dually encrypted under the issuer's public key. This serves two critical functions:
   - It acts as the "master copy" that enables the issuer to perform the re-encryption required for dynamic selective disclosure.
   - It allows the issuer to monitor aggregate confidential circulation and reconcile it with public issuance.
 - Confidential Outstanding Amount (COA): This plaintext field on the ledger tracks the aggregate total of all non-issuer confidential balances. It provides a global, public view of the confidential supply, allowing any observer to validate the system's most important invariant: OutstandingAmount ≤ MaximumAmount.
@@ -955,7 +955,7 @@ This model is built upon foundational elements that ensure the integrity of the 
   3. They can conclude that the total supply is within its defined limits without seeing any individual balances.
 - Selective Disclosure Audit (Auditor Uses Own Key)
   1. A regulator is designated as an auditor under the on-chain policy.
-  2. The auditor fetches a holder’s ledger object and uses their own private key to decrypt the `sfAuditorEncryptedBalance` field, revealing the holder's confidential balance.
+  2. The auditor fetches a holder’s ledger object and uses their own private key to decrypt the `AuditorEncryptedBalance` field, revealing the holder's confidential balance.
   3. This balance can be cross-checked against the global COA for consistency.
 
 ### 16.3 Proof Requirements
@@ -1001,7 +1001,7 @@ Every confidential transaction must carry appropriate ZKPs:
 - Malformed ciphertexts: Validators reject invalid EC points.
 - Balance underflow: Range proofs prevent spending more than available.
 - Ciphertext cancellation: Homomorphic addition adds the ciphertexts' randomness, so ciphertexts with randomness `r` and `−r` sum to the point at infinity, which is not representable and makes the update fail. Because the canonical encrypted zero is deterministic, its randomness is publicly computable, so an attacker free to choose the transfer randomness could cancel it against a target holder's existing ciphertexts and permanently break their `ConfidentialMPTMergeInbox` or auditor-balance update. Any holder of the issuance can attempt this with an unsolicited, arbitrarily small transfer, since incoming confidential transfers cannot be refused. Mitigated by re-randomizing the credit-side ciphertexts (§9.5) with the proof's Fiat–Shamir challenge, which the attacker cannot steer.
-- Auditor collusion: An auditor sees balances only if the issuer has registered that auditor's public key as `sfAuditorEncryptionKey`, and only by decrypting `sfAuditorEncryptedBalance` with the auditor's own private key; public supply integrity remains trustless regardless.
+- Auditor collusion: An auditor sees balances only if the issuer has registered that auditor's public key as `AuditorEncryptionKey` field, and only by decrypting `AuditorEncryptedBalance` with the auditor's own private key; public supply integrity remains trustless regardless.
 - Issuer misbehavior: Enforced by supply invariants and public COA/OA/MA checks.
 
 ## 17. Analysis of Transaction Cost and Performance
@@ -1047,7 +1047,7 @@ No, this version of confidential MPT extensions focuses solely on regular confid
 
 ### A.5 How does compliance fit in?
 
-Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (`sfIssuerEncryptedBalance`), and an optional auditor’s key (`sfAuditorEncryptedBalance`) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
+Compliance is supported by storing each confidential balance as parallel ciphertexts under the holder’s key (CB_S/CB_IN), the issuer’s key (`IssuerEncryptedBalance`), and an optional auditor’s key (`AuditorEncryptedBalance`) if enabled, with ZKPs ensuring all ciphertexts encrypt the same value, allowing the public to verify supply limits via issuer ciphertexts and auditors to decrypt balances if permitted.
 
 ### A.6 What happens if a holder loses their ElGamal private key?
 
