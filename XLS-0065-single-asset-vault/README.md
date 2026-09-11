@@ -2,6 +2,7 @@
   xls: 65
   title: Single Asset Tokenized Vault
   description: On-chain primitive for aggregating assets from depositors using Multi-Purpose-Tokens for ownership shares
+  implementation: https://github.com/XRPLF/rippled/pull/6361
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
@@ -77,6 +78,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 ## 3. Specification
 
+The deposit-blocking flags and behavior described below are enabled by the `LendingProtocolV1_1` amendment, whose canonical amendment name is declared with `XRPL_FEATURE` in rippled's [`features.macro`](https://github.com/XRPLF/rippled/blob/3e4bdf2782d7e076bb71c88091b81159c1dbdaec/include/xrpl/protocol/detail/features.macro#L23). Before that amendment is active, `tfVaultOwnerCanBlockDeposit`, `tfVaultDepositBlock`, and `tfVaultDepositUnblock` are invalid transaction flags.
+
 ### 3.1 Ledger Entry: `Vault`
 
 The **`Vault`** ledger entry describes the state of the tokenized vault.
@@ -118,9 +121,11 @@ A vault has the following fields:
 
 The `Vault` object supports the following flags:
 
-| Flag Name         |  Flag Value  | Modifiable? |                 Description                  |
-| ----------------- | :----------: | :---------: | :------------------------------------------: |
-| `lsfVaultPrivate` | `0x00010000` |     No      | If set, indicates that the vault is private. |
+| Flag Name                      |  Flag Value  | Modifiable? | Description                                                            |
+| ------------------------------ | :----------: | :---------: | :--------------------------------------------------------------------- |
+| `lsfVaultPrivate`              | `0x00010000` |     No      | If set, indicates that the vault is private.                           |
+| `lsfVaultDepositBlocked`       | `0x00020000` |     Yes     | If set, deposits into the vault are blocked.                           |
+| `lsfVaultOwnerCanBlockDeposit` | `0x00040000` |     No      | If set, the Vault Owner can block and unblock deposits after creation. |
 
 #### 3.1.3 Pseudo-Account
 
@@ -351,6 +356,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | ----------------------------- | :----------: | :--------------------------------------------------------------------------------------- |
 | `tfVaultPrivate`              | `0x00010000` | Indicates that the vault is private. It can only be set during Vault creation.           |
 | `tfVaultShareNonTransferable` | `0x00020000` | Indicates the vault share is non-transferable. It can only be set during Vault creation. |
+| `tfVaultOwnerCanBlockDeposit` | `0x00040000` | Allows the Vault Owner to block and unblock deposits after creation.                     |
 
 ##### 3.2.3 WithdrawalPolicy
 
@@ -406,6 +412,8 @@ _TBD_
 5. If `Vault.Asset` is an `MPT`:
    1. Create `MPToken` object for the _pseudo-account_ for the `Asset.MPTokenIssuance`.
 
+6. If `tfVaultOwnerCanBlockDeposit` is set, set `lsfVaultOwnerCanBlockDeposit` on the new `Vault` object.
+
 #### 3.2.7 Invariants
 
 **TBD**
@@ -420,34 +428,48 @@ The `VaultSet` updates an existing `Vault` ledger object.
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `66`      | The transaction type (`ttVAULT_SET`).                                                                                                   |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
+| `Flags`           |    No    | `number`  |   `UINT32`    |       0       | Transaction flags, including flags that block or unblock deposits into the Vault.                                                        |
 | `Data`            |    No    | `string`  |    `BLOB`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
 | `AssetsMaximum`   |    No    | `number`  |   `NUMBER`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
 | `DomainID`        |    No    | `string`  |   `HASH256`   |               | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                            |
 
-#### 3.3.2 Failure Conditions
+#### 3.3.2 Flags
 
-##### 3.3.2.1 Data Verification
+| Flag Name               |  Flag Value  | Description                      |
+| ----------------------- | :----------: | :------------------------------- |
+| `tfVaultDepositBlock`   | `0x00010000` | Block deposits into the vault.   |
+| `tfVaultDepositUnblock` | `0x00020000` | Unblock deposits into the vault. |
+
+#### 3.3.3 Failure Conditions
+
+##### 3.3.3.1 Data Verification
 
 1. The `VaultID` field is zero. (`temMALFORMED`)
 2. The `Data` field, if provided, is empty or exceeds 256 bytes. (`temMALFORMED`)
 3. The `AssetsMaximum` field, if provided, is negative. (`temMALFORMED`)
-4. None of `Data`, `AssetsMaximum`, or `DomainID` are provided (nothing to update). (`temMALFORMED`)
+4. None of the `Data`, `AssetsMaximum`, or `DomainID` fields are provided, and neither `tfVaultDepositBlock` nor `tfVaultDepositUnblock` is set in `Flags` (nothing to update). (`temMALFORMED`)
+5. Both `tfVaultDepositBlock` and `tfVaultDepositUnblock` are set. (`temINVALID_FLAG`)
 
-##### 3.3.2.2 Protocol-Level Failures
+##### 3.3.3.2 Protocol-Level Failures
 
 1. The `Vault` object with the specified `VaultID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
 3. The `DomainID` field is provided and the vault does not have `lsfVaultPrivate` set. (`tecNO_PERMISSION`)
 4. The `DomainID` field is provided, is non-zero, and the referenced `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
 5. The `AssetsMaximum` field is non-zero and is less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
+6. `tfVaultDepositBlock` or `tfVaultDepositUnblock` is set, but the vault does not have `lsfVaultOwnerCanBlockDeposit` set. (`tecNO_PERMISSION`)
+7. `tfVaultDepositBlock` is set, but the vault already has `lsfVaultDepositBlocked` set. (`tecNO_PERMISSION`)
+8. `tfVaultDepositUnblock` is set, but the vault does not have `lsfVaultDepositBlocked` set. (`tecNO_PERMISSION`)
 
-#### 3.3.3 State Changes
+#### 3.3.4 State Changes
 
 1. Update the mutable fields `Data` and `AssetsMaximum` in the `Vault` ledger object, if provided.
 2. If `DomainID` is provided and non-zero: set `MPTokenIssuance(Vault.ShareMPTID).DomainID = DomainID`.
 3. If `DomainID` is provided and is zero: remove `DomainID` from `MPTokenIssuance(Vault.ShareMPTID)`.
+4. If `tfVaultDepositBlock` is set: set `lsfVaultDepositBlocked` on the `Vault` object.
+5. If `tfVaultDepositUnblock` is set: clear `lsfVaultDepositBlocked` from the `Vault` object.
 
-#### 3.3.4 Invariants
+#### 3.3.5 Invariants
 
 1. `VaultSet` must not change the vault pseudo-account's asset balance.
 2. `VaultSet` must not change `Vault.AssetsTotal` or `Vault.AssetsAvailable`.
@@ -530,21 +552,24 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
    2. The asset is globally or individually locked for the depositor. (`tecLOCKED`)
 
 4. If `Vault.Asset` is an `IOU`:
-   1. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
+   1. The `lsfHighNoRipple` or `lsfLowNoRipple` flag is set on the Asset `Issuer` side of both the `RippleState` object between the Asset `Issuer` and the depositor, and the `RippleState` object between the Asset `Issuer` and the _pseudo-account_ (rippling is not permitted). Where a `RippleState` object does not yet exist, the absence of the `lsfDefaultRipple` flag on the Asset `Issuer` is used in its place. (`terNO_RIPPLE`)
+   2. The asset is globally frozen, or the depositor's trust line is frozen. (`tecFROZEN`)
 
 5. The vault shares are locked for the depositor. (`tecLOCKED`)
 
-6. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
+6. The vault has `lsfVaultDepositBlocked` set. (`tecNO_PERMISSION`)
+
+7. If the vault has `lsfVaultPrivate` set and the depositor is not the vault owner:
    1. No `PermissionedDomain` is configured on `MPTokenIssuance(Vault.ShareMPTID)`. (`tecNO_AUTH`)
    2. The depositor is not a valid member of the permissioned domain. (`tecNO_AUTH`)
 
-7. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
-8. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
-9. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
-10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
-11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
-12. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
-13. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
+8. The depositor does not have a required authorized holding for the vault asset (e.g., missing `MPToken` for a restricted `MPT`). (`tecNO_AUTH`)
+9. The `Amount` rounds to zero at the vault's precision scale. (`tecPRECISION_LOSS`)
+10. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
+11. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
+12. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
+13. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
+14. Adding the deposited amount to `Vault.AssetsTotal` would exceed `Vault.AssetsMaximum`. (`tecLIMIT_EXCEEDED`)
 
 #### 3.5.3 State Changes
 
@@ -1134,11 +1159,11 @@ The matching strategy depends on the asset type:
 
 ## 4. Rationale
 
-_TBD_
+Deposit blocking is an opt-in Vault capability rather than an unconditional Vault Owner power. The immutable `lsfVaultOwnerCanBlockDeposit` flag records at creation time whether the owner may later pause deposits, so prospective depositors can inspect that authority before participating. When enabled, blocking applies to every depositor, including the Vault Owner.
 
 ## 5. Security Considerations
 
-_TBD_
+A Vault Owner with the `lsfVaultOwnerCanBlockDeposit` capability can unilaterally stop and resume deposits. Clients should disclose both that immutable capability and the current `lsfVaultDepositBlocked` state. Deposit blocking does not block `VaultWithdraw`, so it cannot by itself prevent existing shareholders from redeeming their shares.
 
 # Appendix
 
