@@ -169,8 +169,8 @@ Creates a new subscription or updates an existing one.
    - Destination doesn't exist (`tecNO_DST`)
    - Destination requires tag but none provided (`tecDST_TAG_NEEDED`)
    - Amount ≤ 0 or invalid (`temBAD_AMOUNT`)
-   - StartTime < current time (`temMALFORMED`)
-   - Expiration < current time or < initial NextClaimTime (`temBAD_EXPIRATION`)
+   - StartTime < current time (`tecNO_PERMISSION`)
+   - Expiration < current time or < initial NextClaimTime (`tecEXPIRED`)
    - Insufficient reserve (`tecINSUFFICIENT_RESERVE`)
    - Owner directory full (`tecDIR_FULL`)
 
@@ -211,7 +211,7 @@ Creates a new subscription or updates an existing one.
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not owner (`tecNO_PERMISSION`)
    - Invalid Amount (`temBAD_AMOUNT`)
-   - Expiration in past, nonzero (`temBAD_EXPIRATION`)
+   - Expiration in past, nonzero (`tecEXPIRED`)
    - Asset type differs from original (`tecWRONG_ASSET`)
 
 None of the token-eligibility checks (trustline/MPToken existence, authorization, freeze/lock, spendable balance) apply when the subscription is denominated in XRP.
@@ -331,7 +331,7 @@ Claims a payment from an active subscription. Only the subscription's destinatio
    - SubscriptionID doesn't exist (`tecNO_ENTRY`)
    - Account not destination (`tecNO_PERMISSION`)
    - Wrong asset type (`tecWRONG_ASSET`)
-   - Amount > subscription Amount (`temBAD_AMOUNT`)
+   - Amount > subscription Amount (`tecLIMIT_EXCEEDED`)
    - Amount > available Balance for the effective period (`tecINSUFFICIENT_FUNDS`)
    - Current time < NextClaimTime (`tecTOO_SOON`)
    - Subscription has expired (`tecEXPIRED`) — expired subscriptions cannot be claimed and must be cancelled
