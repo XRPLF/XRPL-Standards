@@ -137,7 +137,7 @@ Rule 4 uses deep freeze for the destination rather than a regular freeze, becaus
 
 **MPT-specific rules**
 
-For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 3: for IOUs a regular local freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
+For Multi-Purpose Tokens (MPTs), the `lsfMPTLocked` flag on either the `MPTokenIssuance` or the holder's `MPToken` is equivalent to deep-frozen semantics. This affects Rule 4: for IOUs a regular local freeze does not block self-withdrawal, but for MPTs a locked holder is always blocked from self-withdrawal because locked and deep-frozen are the same state.
 
 The issuer exemption applies to MPTs in the same way as IOUs — a withdrawal to the asset issuer bypasses all lock checks.
 
