@@ -726,13 +726,15 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 8. - `SingleAssetVault`: The check does not apply. A computed non-zero recovery that rounds to zero at the scale of `AssetsTotal` fails later as `tecINVARIANT_FAILED`.
    - `fixCleanup3_4_0`: For an asset clawback, a computed non-zero recovered asset amount rounds down to zero at the scale of the resulting `AssetsTotal`. (`tecPRECISION_LOSS`)
 
-9. The computed share amount to claw back is zero. (`tecPRECISION_LOSS`)
+9. The computed share amount to claw back is zero. A `Holder` with no share `MPToken` object reads as a zero share balance, so a zero `Amount` in either branch, which derives the share amount from that balance, fails here. (`tecPRECISION_LOSS`)
 
 10. - `SingleAssetVault`: A computed non-zero recovery that does not change stored `AssetsTotal` fails as `tecINVARIANT_FAILED`.
     - `fixCleanup3_4_0`: For an asset clawback, the computed non-zero recovered asset amount would not change stored `AssetsTotal`. (`tecPRECISION_LOSS`)
 
 11. - `SingleAssetVault`: The check does not apply.
     - `fixCleanup3_4_0`: For an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
+
+12. The `Holder`'s share `MPToken` object does not exist while the computed share amount is non-zero, so the shares cannot be transferred to the vault. This arises for an asset clawback with a non-zero `Amount`, because that conversion derives the share amount from the requested assets rather than from the `Holder`'s balance. (`tecNO_AUTH`)
 
 #### 3.7.3 State Changes
 
