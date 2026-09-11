@@ -575,6 +575,8 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 
 ##### 3.3.1.1 `VaultID`
 
+Exactly one of `VaultID` and `LoanBrokerID` must be present.
+
 `VaultID` is **required** when `LoanBrokerID` is absent (i.e., the transaction is creating a new `LoanBroker`). It identifies the `Vault` that will back the lending protocol instance, and is stored permanently on the resulting `LoanBroker` object.
 
 `VaultID` must **not** be present when `LoanBrokerID` is present (i.e., the transaction is modifying an existing `LoanBroker`). The `Vault` association is fixed at creation time and cannot be changed.
@@ -617,7 +619,7 @@ This transaction uses the standard transaction fee.
 
 **Precision Validation:**
 
-10. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+9. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
 
 #### 3.3.4 State Changes
 
