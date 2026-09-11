@@ -103,15 +103,29 @@ def normalize_list_indentation(content: str) -> str:
             while stack and indent < stack[-1][1]:
                 stack.pop()
             depth = len(stack)
+            # Target the tab stop for this depth, but never outdent below the
+            # parent's content column: CommonMark requires child items to be
+            # indented at least to the parent's content column, so shifting
+            # further left would break GitHub rendering.
+            parent_content_col = stack[-1][1] if stack else 0
+            new_indent = max(4 * depth, parent_content_col)
             stack.append((indent, item_match.end(), depth))
-            out.append(_shift(line, 4 * depth - indent))
+            out.append(_shift(line, new_indent - indent))
             continue
 
         # A continuation line (paragraph, table, code block, ...) belongs to the
         # innermost open item whose content column it reaches.
         while stack and indent < stack[-1][1]:
             stack.pop()
-        shift = 4 * (stack[-1][2] + 1) - stack[-1][1] if stack else 0
+        if stack:
+            parent_content_col = stack[-1][1]
+            shift = 4 * (stack[-1][2] + 1) - parent_content_col
+            # Clamp: never move the continuation below the parent's content
+            # column, so wide ordered markers (e.g. `100. `) keep their
+            # continuations nested in both CommonMark and Python-Markdown.
+            shift = max(shift, parent_content_col - indent)
+        else:
+            shift = 0
         out.append(_shift(line, shift))
 
     return "\n".join(out)
