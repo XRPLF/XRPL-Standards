@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-11
+  updated: 2026-09-12
 </pre>
 
 # Single Asset Vault
@@ -75,7 +75,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.
 - `fixCleanup3_1_3`: a later amendment on the `SingleAssetVault` parent. `VaultClawback` conversion under this amendment is specified in [§3.7.3](#373-state-changes):
-  - if $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. Before this amendment, a zero `Amount` bypasses that availability cap.
+  - if `Amount` is non-zero or this amendment is enabled, and $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. Before this amendment, a zero `Amount` bypasses that availability cap.
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - rejects a pseudo-account `Holder` on `VaultClawback` and reports a recovery too small to change `AssetsTotal` as `tecPRECISION_LOSS`
 
@@ -744,7 +744,7 @@ For an asset clawback, calculate $\Delta_{share}$ and $\Delta_{asset}$ before ap
 
 - If `Amount` is zero, whether explicit or supplied implicitly, set $\Delta_{share}$ to all shares held by `Holder`, then convert those shares to $\Delta_{asset}$ using the [Redeem formula](#31722-redeem).
 - If `Amount` is non-zero, convert the requested asset amount to $\Delta_{share}$ using the [Withdraw formula](#31723-withdraw), then convert $\Delta_{share}$ back to $\Delta_{asset}$ using the Redeem formula. Before `fixCleanup3_4_0`, the initial asset-to-share conversion rounds to the nearest whole share.
-- With `fixCleanup3_1_3` enabled, if $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. This final recomputation ensures $\Delta_{asset}$ does not exceed `Vault.AssetsAvailable`. Before `fixCleanup3_1_3`, a zero `Amount` bypasses this availability cap.
+- If `Amount` is non-zero or `fixCleanup3_1_3` is enabled, and $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. This final recomputation ensures $\Delta_{asset}$ does not exceed `Vault.AssetsAvailable`. Before `fixCleanup3_1_3`, a zero `Amount` bypasses this availability cap.
 
 1. Decrease the `MPToken.MPTAmount` of the `Holder`'s share `MPToken` by $\Delta_{share}$.
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
