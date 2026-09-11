@@ -168,13 +168,15 @@ The `MPTokenIssuance` object represents the share on the ledger. It is created a
 
 ###### 3.1.6.2.1 `MPTokenIssuance` Values
 
-| **Field**         | **Description**                                                                                                                 | **Value**            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `Issuer`          | The AccountID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID  |
-| `MaximumAmount`   | No limit to the number of shares that can be issued.                                                                            | `0xFFFFFFFFFFFFFFFF` |
-| `TransferFee`     | The fee paid to transfer the shares.                                                                                            | 0                    |
-| `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format.                                                                          | -                    |
-| `AssetScale`      | Represents orders of magnitude between the standard and the MPT unit. For IOUs it is set to `Vault.Scale`, otherwise it is `0`. | `Vault.Scale`        |
+| **Field**         | **Description**                                                                                                                 | **Value**           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `Issuer`          | The AccountID of the Vault's _pseudo-account_.                                                                                  | _pseudo-account_ ID |
+| `MaximumAmount`   | Not set, so the number of shares that can be issued is bounded only by the protocol maximum.                                    | _absent_            |
+| `TransferFee`     | The fee paid to transfer the shares.                                                                                            | 0                   |
+| `MPTokenMetadata` | Arbitrary metadata about the share MPT, in hex format.                                                                          | -                   |
+| `AssetScale`      | Represents orders of magnitude between the standard and the MPT unit. For IOUs it is set to `Vault.Scale`, otherwise it is `0`. | `Vault.Scale`       |
+
+`VaultCreate` omits `MaximumAmount` on the share issuance rather than storing an explicit cap. The number of shares in issue is therefore bounded by the protocol maximum for an `MPTokenIssuance`, `0x7FFFFFFFFFFFFFFF`, as defined in [XLS-33 §2.1.1.2.5](../XLS-0033-multi-purpose-tokens/README.md#21125-maximumamount).
 
 ###### Flags
 
@@ -337,7 +339,7 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
 6. - `SingleAssetVault`: The check does not apply.
    - `fixCleanup3_4_0`: `Vault.LossUnrealized >= 0`, for every asset type.
 7. If `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount == 0`: `Vault.AssetsTotal == 0` and `Vault.AssetsAvailable == 0`.
-8. The `MPTokenIssuance` identified by `Vault.ShareMPTID` must exist, and its `OutstandingAmount` must not exceed its `MaximumAmount` (or the protocol maximum when `MaximumAmount` is absent).
+8. The `MPTokenIssuance` identified by `Vault.ShareMPTID` must exist, and its `OutstandingAmount` must not exceed its `MaximumAmount`. `VaultCreate` leaves `MaximumAmount` absent (§3.1.6.2.1), in which case the bound is the protocol maximum `0x7FFFFFFFFFFFFFFF`.
 9. On creation, `Vault.AssetsTotal`, `Vault.AssetsAvailable`, `Vault.LossUnrealized` and the share `MPTokenIssuance.OutstandingAmount` are all zero. The share issuance has `Issuer == Vault.Account`, and `AccountRoot(Vault.Account)` is a _pseudo-account_ whose `VaultID` points to the new vault. Only `VaultCreate` may create a `Vault`.
 10. Only `VaultDelete` may delete a `Vault`. It must also delete the share `MPTokenIssuance`, and the deleted vault must have `AssetsTotal == 0`, `AssetsAvailable == 0` and no outstanding shares.
 11. There is no invariant requiring `Vault.AssetsTotal <= Vault.AssetsMaximum` to hold on every modification of the entry, because `Vault.AssetsTotal` grows with accrued interest and interest is not a deposit. The cap is instead enforced per transaction:
@@ -463,7 +465,10 @@ The `VaultSet` updates an existing `Vault` ledger object.
 2. The submitting account is not the `Owner` of the vault. (`tecNO_PERMISSION`)
 3. The `DomainID` field is provided and the vault does not have `lsfVaultPrivate` set. (`tecNO_PERMISSION`)
 4. The `DomainID` field is provided, is non-zero, and the referenced `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
-5. The `AssetsMaximum` field is non-zero and is less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
+5. The `AssetsMaximum` field is supplied, is non-zero, and is less than the current `Vault.AssetsTotal`. (`tecLIMIT_EXCEEDED`)
+6. The resulting `Vault.AssetsMaximum` is non-zero and the current `Vault.AssetsTotal` exceeds it. (`tecINVARIANT_FAILED`)
+   - `SingleAssetVault`: This applies to every `VaultSet`, including one that supplies neither `AssetsMaximum` nor any other change to the cap.
+   - `fixCleanup3_4_0`: This applies only when the transaction supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and leaves the cap unchanged succeeds even when accrued interest has pushed `Vault.AssetsTotal` past the cap.
 
 #### 3.3.3 State Changes
 
