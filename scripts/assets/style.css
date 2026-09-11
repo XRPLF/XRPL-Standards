@@ -987,7 +987,7 @@ footer {
   a {
     color: #000 !important;
     background: none !important;
-    text-decoration: none;
+    text-decoration: underline;
   }
 
   /* Headings: smaller, and keep them with the text that follows */
