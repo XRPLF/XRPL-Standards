@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-08
+  updated: 2026-09-11
 </pre>
 
 # Single Asset Vault
@@ -74,8 +74,9 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 - `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
+  - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
-  - admits one unit of rounding slack in the `LossUnrealized` invariant for non-integral assets, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
+  - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
 
 ## 3. Specification
 
@@ -356,7 +357,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 
 | Field Name         | Required |     JSON Type      | Internal Type |      Default Value      | Description                                                                                                                                            |
 | ------------------ | :------: | :----------------: | :-----------: | :---------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `58`           | The transaction type.                                                                                                                                  |
+| `TransactionType`  |   Yes    |      `string`      |   `UINT16`    |          `65`           | The transaction type (`ttVAULT_CREATE`).                                                                                                               |
 | `Flags`            |   Yes    |      `number`      |   `UINT32`    |            0            | Specifies the flags for the Vault.                                                                                                                     |
 | `Data`             |    No    |      `string`      |    `BLOB`     |                         | Arbitrary Vault metadata, limited to 256 bytes.                                                                                                        |
 | `Asset`            |   Yes    | `string or object` |    `ISSUE`    |          `N/A`          | The asset (`XRP`, `IOU` or `MPT`) of the Vault.                                                                                                        |
@@ -441,7 +442,7 @@ The `VaultSet` updates an existing `Vault` ledger object.
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                             |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `59`      | The transaction type.                                                                                                                   |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `66`      | The transaction type (`ttVAULT_SET`).                                                                                                   |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the Vault to be modified. Must be included when updating the Vault.                                                           |
 | `Data`            |    No    | `string`  |    `BLOB`     |               | Arbitrary Vault metadata, limited to 256 bytes.                                                                                         |
 | `AssetsMaximum`   |    No    | `number`  |   `NUMBER`    |               | The maximum asset amount that can be held in a vault. The value cannot be lower than the current `AssetsTotal` unless the value is `0`. |
@@ -484,16 +485,20 @@ The `VaultDelete` transaction deletes an existing vault object.
 
 #### 3.4.1 Fields
 
-| Field Name        | Required | JSON Type | Internal Type | Default Value |            Description             |
-| ----------------- | :------: | :-------: | :-----------: | :-----------: | :--------------------------------: |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `60`      |         Transaction type.          |
-| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault to be deleted. |
+| Field Name        | Required | JSON Type | Internal Type | Default Value |                                                                Description                                                                 |
+| ----------------- | :------: | :-------: | :-----------: | :-----------: | :----------------------------------------------------------------------------------------------------------------------------------------: |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `67`      |                                              Transaction type (`ttVAULT_DELETE` in rippled).                                               |
+| `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     |                                                     The ID of the vault to be deleted.                                                     |
+| `MemoData`        |    No    | `string`  |    `BLOB`     |     `N/A`     | A hexadecimal-encoded opaque reason for the deletion. When present, the decoded value must be 1–256 bytes. Requires `LendingProtocolV1_1`. |
 
 #### 3.4.2 Failure Conditions
 
 ##### 3.4.2.1 Data Verification
 
 1. The `VaultID` field is zero. (`temMALFORMED`)
+2. - `SingleAssetVault`: The `MemoData` field is present. (`temDISABLED`)
+   - `LendingProtocolV1_1`: The check does not apply.
+3. - `LendingProtocolV1_1`: The `MemoData` field is present and is empty or longer than 256 bytes. (`temMALFORMED`)
 
 ##### 3.4.2.2 Protocol-Level Failures
 
@@ -527,7 +532,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                                            |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :----------------------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `61`      | Transaction type.                                      |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `68`      | Transaction type (`ttVAULT_DEPOSIT`).                  |
 | `VaultID`         |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the vault to which the assets are deposited. |
 | `Amount`          |   Yes    | `string` or `object` |  `STAmount`   |     `N/A`     | Asset amount to deposit.                               |
 
@@ -586,6 +591,9 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
    2. Decrease the `MPToken.MPTAmount` of the depositor `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
 
 > **Note:** $\Delta_{asset}$ is the actual asset amount transferred, which may be slightly less than the requested `Amount` due to scale rounding for IOU assets.
+>
+> - `SingleAssetVault`: The vault accounting increases and both asset-balance moves use that same $\Delta_{asset}$.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `XRP` and `MPT` they remain equal.
 
 #### 3.5.4 Invariants
 
@@ -607,7 +615,7 @@ The `VaultWithdraw` transaction withdraws assets in exchange for the vault's sha
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                 |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `62`      | Transaction type.                                                           |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `69`      | Transaction type (`ttVAULT_WITHDRAW`).                                      |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                        |
 | `Amount`          |   Yes    | `number`  |  `STAmount`   |       0       | The exact amount of Vault asset to withdraw.                                |
 | `Destination`     |    No    | `string`  |  `AccountID`  |     Empty     | An account to receive the assets. It must be able to receive the asset.     |
@@ -679,6 +687,9 @@ In sections below assume the following variables:
    3. Increase the `MPToken.MPTAmount` of the destination `MPToken` for `Vault.Asset` by $\Delta_{asset}$.
 
 > **Note:** "destination" is the `Destination` field if provided, otherwise the submitting `Account`.
+>
+> - `SingleAssetVault`: The vault accounting decreases and both asset-balance moves use that same $\Delta_{asset}$, except that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md), in addition to that sub-ULP remainder. For `XRP` and `MPT` they remain equal.
 
 #### 3.6.4 Invariants
 
@@ -700,7 +711,7 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 
 | Field Name        | Required | JSON Type | Internal Type | Default Value | Description                                                                                                    |
 | ----------------- | :------: | :-------: | :-----------: | :-----------: | :------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `63`      | Transaction type.                                                                                              |
+| `TransactionType` |   Yes    | `string`  |   `UINT16`    |     `70`      | Transaction type (`ttVAULT_CLAWBACK`).                                                                         |
 | `VaultID`         |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the vault from which assets are withdrawn.                                                           |
 | `Holder`          |   Yes    | `string`  |  `AccountID`  |     `N/A`     | The account ID from which to clawback the assets.                                                              |
 | `Amount`          |    No    | `number`  |   `NUMBER`    |       0       | The asset amount to clawback. When Amount is `0` clawback all funds, up to the total shares the `Holder` owns. |
@@ -745,6 +756,9 @@ _None._
    1. Decrease the `OutstandingAmount` field of the share `MPTokenIssuance` object by $\Delta_{share}$.
 
 5. Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
+
+> - `SingleAssetVault`: The vault accounting decreases and the vault asset-balance decrease use that same amount.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted vault asset-balance delta may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `MPT` they remain equal.
 
 #### 3.7.4 Invariants
 
@@ -1201,5 +1215,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix B: Changelog
 
-- [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.
-- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
+- [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set, and adds an optional `MemoData` field to `VaultDelete` so the Owner can record why a Vault was deleted.
+- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.

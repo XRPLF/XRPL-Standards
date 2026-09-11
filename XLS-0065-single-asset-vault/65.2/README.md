@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-09-04
-  updated: 2026-09-08
+  updated: 2026-09-11
 </pre>
 
 # Vault Accounting and Cap Invariants
@@ -54,9 +54,8 @@ The accounting-delta invariants become:
   - Versus Δ`AssetsTotal` or Δ`AssetsAvailable`: `scale` is the STAmount exponent of the posterior `Vault.AssetsTotal` (`computeVaultMinScale` once `fixCleanup3_2_0` is enabled).
   - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
 - For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
-- Before the amendment, those comparisons are exact for every asset type, except the existing `SingleAssetVault` `VaultWithdraw` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
-These rules apply to the relevant comparisons in `VaultDeposit`, `VaultWithdraw` and `VaultClawback`.
+These rules apply to the relevant comparisons and to the matching state-change rules in `VaultDeposit`, `VaultWithdraw` and `VaultClawback`. Under `SingleAssetVault`, those transactions apply the same $\Delta_{asset}$ to the vault accounting fields and to both sides of the asset transfer. Under `fixCleanup3_4_0`, for an `IOU` the persisted vault accounting deltas and the persisted asset-balance deltas may differ by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. Before the amendment, those comparisons and state changes are exact for every asset type, except the existing `SingleAssetVault` `VaultWithdraw` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
 For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal == LossUnrealized` may redeem shares while moving zero assets. Before the amendment, the missing vault and destination balance deltas cause the invariant to fail.
 
