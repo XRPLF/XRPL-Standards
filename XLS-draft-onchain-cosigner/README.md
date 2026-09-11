@@ -125,12 +125,12 @@ The trade-off: only **one** live proposal can exist per `(target account, ticket
 
 #### 4.2.1. `ProposedTransaction`
 
-`ProposedTransaction` is the proposed transaction the proposal collects signatures for. Every field of it is **immutable** for the life of the proposal **except its signature fields** — the top-level `SigningPubKey`/`TxnSignature` (filled only when the target account signs with its own key, §6.1.2); `Signers`; the auxiliary co-signature field(s) a type requires (`CounterpartySignature`, `SponsorSignature`); and, for a `Batch`, `BatchSigners` — into which the ledger inserts each validated signature (see §4.2.2). Because the XRPL signing payloads exclude these signature fields, appending a signature never changes what any signer signed over, so previously-collected signatures stay valid and later signers sign the same canonical payload.
+`ProposedTransaction` is the proposed transaction the proposal collects signatures for. Every field of it is **immutable** for the life of the proposal **except its signature fields** — the top-level `SigningPubKey`/`TxnSignature` (filled only when the target account signs with its own key, §6.1.2); `Signers`; the auxiliary co-signature field(s) a type requires (`CounterpartySignature`, `SponsorSignature`); and, for a `Batch`, `BatchSigners` — into which the ledger inserts each validated signature (see §4.2.2). `TxnSignature`, `Signers`, and `BatchSigners` are excluded from the XRPL signing payload, so appending a `Signers`/`BatchSigners` entry or filling `TxnSignature` never changes what any other signer signed over. The top-level `SigningPubKey` is the one exception: it **is** part of the signing payload, so filling it (§6.1.2) changes the data every other slot's signature covers. To keep every previously-collected signature valid, the ledger only accepts a top-level single-sign contribution as the **first** signature recorded on the proposal (§6.1.2, §6.3.2) — once any signature exists, `SigningPubKey` is fixed at empty for the rest of the proposal's life, and the target account (or `Delegate`) can still authorize by contributing a `Signers` entry instead.
 
 The proposed transaction:
 
 - **Must** be submitted unsigned: at creation its `SigningPubKey` field must be an empty string (`""`), and its `TxnSignature`, `Signers`, `CounterpartySignature`, `SponsorSignature`, and (for a `Batch`) `BatchSigners` fields must be omitted. (Fields that _define_ an auxiliary party — e.g. `Counterparty`, or `Sponsor`/`SponsorFlags` — are ordinary payload fields and must be present at creation if used; only the signature containers are collected on-chain.) This is the exact canonical form over which signers produce their signatures; the ledger populates the signature fields as they arrive. If it is a `Batch`, its `RawTransactions` must follow the XLS-56 rules for inner transactions (each unsigned, with the `tfInnerBatchTxn` flag).
-- **Must** specify a `TicketSequence` for its target account and **must not** specify `Sequence`. Requiring a ticket decouples the proposed transaction from the target account's live sequence, so unrelated target-account activity cannot invalidate the proposal while signatures are being collected (see §9.2). While the proposal exists, that ticket is **reserved**: only the proposed transaction may spend it, and any other transaction that tries fails with `terTICKET_RESERVED`. A transaction counts as the proposed transaction when every field except the signature fields matches `ProposedTransaction`, so the verbatim copy from §6.5 qualifies even if the submitter drops surplus signatures. Deleting the proposal (§4.5) lifts the reservation, which is why the code is a retriable `ter`.
+- **Must** specify a `TicketSequence` for its target account and **must not** specify `Sequence`. Requiring a ticket decouples the proposed transaction from the target account's live sequence, so unrelated target-account activity cannot invalidate the proposal while signatures are being collected (see §9.2). While the proposal exists, that ticket is **reserved**: only the proposed transaction may spend it, and any other transaction that tries fails with `terTICKET_RESERVED`. A transaction counts as the proposed transaction when every field except the signature fields matches `ProposedTransaction`, so the verbatim copy from §6.5 qualifies even if the submitter drops surplus signatures. This is distinct from the existing `terPRE_TICKET`, which covers a `TicketSequence` that does not yet exist; here the `Ticket` exists but is temporarily unavailable because a live proposal holds it, so a dedicated code is needed to describe that condition. Deleting the proposal (§4.5) lifts the reservation, which is why the code is a retriable `ter`.
 - **Must** carry a `Fee` big enough for all the signatures the proposal will collect. The payload is immutable, so the fee is fixed before anyone signs, but the minimum fee grows with each signature: `(1 + |Signers|) × base_fee` for a multi-signed transaction, plus `base_fee` per auxiliary signature ([XLS-66 §3.8.1.1](../XLS-0066-lending-protocol/README.md)), and `(n + 2) × base_fee + Σ inner fees` for a `Batch` carrying `n` signatures ([XLS-56 §2.2](../XLS-0056-batch/README.md#22-transaction-fee)). The `Fee` is therefore a **signature budget**: `TransactionProposalSign` rejects any contribution that would push the minimum above it (§6.3.2), which is what keeps a complete proposal submittable verbatim (§6.5). Declare a larger `Fee` to leave room for extra signers. The fee is paid by the transaction's normal fee payer: usually the **target account** (the proposed transaction's `Account`), but the `Delegate` if the transaction is delegated ([XLS-75](../XLS-0075-permission-delegation/README.md)), or the `Sponsor` if its fee is sponsored ([XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)). See §13.7.
 - **Must** be a transaction that can be independently multi-signed and submitted through the ordinary path. In particular it **must not** be:
   - a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel` (no nesting of proposals);
@@ -271,8 +271,8 @@ Except for missing required fields, Data Verification failures return a `tem`-le
 1. If present, `ProposedTransaction` is not a well-formed transaction of a known type (`temMALFORMED`). `ProposedTransaction` is required by the transaction format, so if it is missing, deserialization fails before preflight; submission returns a parse error rather than a transaction result, and no fee is charged.
 2. The proposed transaction fails the **stateless format checks (preflight) for its own transaction type**. These are the same checks it would receive if submitted directly, except for signature-presence and signature-verification checks because the payload is intentionally unsigned (§4.2.1). If any check fails, the proposal returns the `tem` code from that transaction type's preflight. Running these checks at creation is cheap and rejects malformed payloads immediately, instead of letting an invalid proposal gather signatures only to fail later. State-dependent (preclaim) checks are **not** run here; they are evaluated when the completed transaction is submitted.
 3. The proposed transaction is not unsigned. The result depends on the signature field and its contents:
-   - A non-empty `TxnSignature`; a non-empty `SigningPubKey` combined with a `Signers` array; or `Signers` entries carrying real signatures returns `temINVALID`.
-   - A non-empty `SigningPubKey` that is not a valid key type returns `temBAD_SIGNATURE`.
+   - A non-empty `SigningPubKey` returns `temINVALID`. (At creation the payload must carry no signing key at all; the target account's own key is only filled in later, by `TransactionProposalSign`, §6.1.2.)
+   - A non-empty `TxnSignature`, or `Signers` entries carrying real signatures, returns `temINVALID`.
    - A proposed `LoanSet` whose `CounterpartySignature` holds a real signature returns `temINVALID`.
    - A non-empty `SponsorSignature` returns `temINVALID`. (A mismatch with the payload's own `Sponsor`/`SponsorFlags` fields is already caught by its preflight, check 2 above.)
 4. The proposed transaction cannot be independently submitted through the ordinary multi-sign path — it is itself a `TransactionProposalCreate`, `TransactionProposalSign`, or `TransactionProposalCancel`; or a pseudo-transaction (`EnableAmendment`, `SetFee`, `UNLModify`) (`temINVALID`).
@@ -365,6 +365,8 @@ Inside a `Batch` the first case never arises: every participant authorization �
 The transaction does not include a flag that says whether the contribution is a single-signature or a multi-signature share. The ledger determines that from the relationship between `ProposalSignature.Account` and `SigningFor`:
 
 - **`ProposalSignature.Account` == `SigningFor` → single-signature.** The account is signing for itself using its master key or regular key. `ProposalSignature.SigningPubKey` must be a valid key for `SigningFor`. This one signature fully authorizes `SigningFor`. The ledger stores it directly as `SigningPubKey`/`TxnSignature`: at the proposed transaction's **top level** for the main `Account` or `Delegate`, or inside the relevant `Counterparty`, `Sponsor`, or `Batch` participant signature slot.
+
+  A top-level single-signature (for the proposed transaction's own `Account`/`Delegate`) is special: unlike every other signature slot, the top-level `SigningPubKey` **is** part of the XRPL signing payload, so filling it changes the data every other slot's signature covers. To guarantee previously-collected signatures never invalidate, the ledger accepts this contribution **only when it is the very first signature recorded on the proposal** — before any `Signers`, `CounterpartySignature`, `SponsorSignature`, or `BatchSigners` entry exists (§6.3.2). A target account that wants to single-sign must therefore do so before requesting any co-signature; if it signs later, it contributes a `Signers` entry instead (below), which leaves `SigningPubKey` empty and never disturbs the payload.
 - **`ProposalSignature.Account` != `SigningFor` → multi-signature share.** `ProposalSignature.Account` is contributing one multi-signature share for `SigningFor`. It must be in `SigningFor`'s applicable `SignerList`. The ledger stores the contribution as a standard `Signer` entry (`{Account, SigningPubKey, TxnSignature}`) in the relevant `Signers` array: `ProposedTransaction.Signers` for the main account, or the nested `Signers` array inside the `CounterpartySignature`, `SponsorSignature`, or participant `BatchSigner` slot. These entries are kept sorted and deduplicated by `Account`. More shares may be added until `SigningFor`'s quorum is reached.
 
 ### 6.2. Transaction Fee
@@ -377,8 +379,8 @@ The transaction does not include a flag that says whether the contribution is a 
 
 All Data Verification failures return a `tem`-level error.
 
-1. `ProposalID` is missing or malformed (`temMALFORMED`).
-2. `SigningFor`, `ProposalSignature`, `ProposalSignature.Account`, `ProposalSignature.SigningPubKey`, or `ProposalSignature.TxnSignature` is missing (`temMALFORMED`).
+1. `ProposalID`, `SigningFor`, and `ProposalSignature` (with its `Account`, `SigningPubKey`, and `TxnSignature` sub-fields) are required by the transaction format, so if any is missing, deserialization fails before preflight; submission returns a parse error rather than a transaction result, and no fee is charged.
+2. `ProposalID` is present but malformed (`temMALFORMED`).
 3. `ProposalSignature.SigningPubKey` is not a well-formed public key (`temBAD_SIGNATURE`). Only the encoding is checked here. Whether that key is *authorized* for `SigningFor`, and whether `TxnSignature` verifies, both need the ledger — the key has to be matched against a live regular key or `SignerList`, and the data the signature covers is the stored `ProposedTransaction`, which `TransactionProposalSign` does not carry.
 
 #### 6.3.2. Protocol-Level Failures
@@ -390,8 +392,9 @@ All Data Verification failures return a `tem`-level error.
 5. `ProposalSignature.TxnSignature` is not valid over any signing payload `SigningFor` owes for the stored proposed transaction (§6.1.1, §6.1.2) (`tefBAD_SIGNATURE`). This is the stateful half of §6.3.1.3 — the payload is only available once `ProposalID` has been resolved. The contribution is recorded in the slot whose payload it verifies against.
 6. The contribution is already recorded — `ProposalSignature.Account` is already present in that destination, or a single-signature entry for `SigningFor` already exists (`tecDUPLICATE`). (The same `ProposalSignature.Account` may still sign for a different `SigningFor`, or for a different slot of the same `SigningFor` under a different payload.)
 7. The contribution conflicts with the existing authorization mode for `SigningFor` — a multi-signature share when a single-signature entry is already recorded, or vice versa (`tecNO_PERMISSION`).
-8. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
-9. The contribution would leave the proposed transaction's `Fee` below the minimum for the signatures it would then carry (§4.2.1) (`tecINSUFFICIENT_FEE`). Checked on every contribution, so a proposal never collects more signatures than its fee pays for.
+8. The contribution is a top-level single-signature for the proposed transaction's own `Account`/`Delegate` (§6.1.2), and any signature — a `Signers` entry, a `CounterpartySignature`, a `SponsorSignature`, or a `BatchSigners` entry — has already been recorded on the proposal (`tecNO_PERMISSION`). Filling the top-level `SigningPubKey` changes the signing payload every other slot signs over, so this contribution is only accepted as the proposal's first signature; a target account signing later must contribute a `Signers` entry instead.
+9. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
+10. The contribution would leave the proposed transaction's `Fee` below the minimum for the signatures it would then carry (§4.2.1) (`tecINSUFF_FEE`). Checked on every contribution, so a proposal never collects more signatures than its fee pays for.
 
 ### 6.4. State Changes
 
@@ -811,7 +814,7 @@ Deletes a `TransactionProposal` object and releases the owner's reserve.
 - **Non-terminal proposal:** the **owner** (the proposal's `Owner`, i.e. the proposer) or the **target account** (the proposed transaction's `Account` or `Delegate`) may cancel.
 - **Terminal proposal:** **Any** account may cancel, to clean up the object and release the owner's reserve.
 
-The target account can cancel at any point in the lifecycle — even after the proposal is complete — without owning the object. Since anyone can create a proposal against any account, and doing so reserves one of that account's tickets (§5.4), the target account needs a way to refuse; cancelling clears the proposal and frees the ticket.
+The target account can cancel at any point in the lifecycle — even after the proposal is complete — without owning the object. Since any of its signers — or a `Delegate`, when the proposed transaction has one — can create a proposal against it, and doing so reserves one of that account's tickets (§4.2.1), the target account needs a way to refuse; cancelling clears the proposal and frees the ticket.
 
 Cancellation is only fully effective before a proposal is complete. If a quorum-weight of valid signatures has already been collected, an observer may have copied them and can still submit the completed transaction even after the proposal object is gone; see §13.4.
 
@@ -823,12 +826,12 @@ Cancellation is only fully effective before a proposal is complete. If a quorum-
 
 #### 7.4.1. Data Verification
 
-1. `ProposalID` is missing or malformed (`temMALFORMED`).
+1. `ProposalID` is required by the transaction format, so if it is missing, deserialization fails before preflight; submission returns a parse error rather than a transaction result, and no fee is charged. If present but malformed, returns `temMALFORMED`.
 
 #### 7.4.2. Protocol-Level Failures
 
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
-2. The proposal is not terminal and `Account` is neither the `Owner`, the target account, nor its `Delegate` when one is present (`tecNO_PERMISSION`).
+2. The proposal is not terminal and `Account` is neither the `Owner` nor the target account — or its `Delegate`, when the proposed transaction has one — (`tecNO_PERMISSION`).
 
 ### 7.5. State Changes
 
@@ -954,7 +957,7 @@ Consequently a signature that counted yesterday may not count today (disabled ma
 
 ##### 8.1.3.4. `complete` Is an Authorization Verdict
 
-`complete` asserts that every required authorization is satisfied on the queried ledger — no more. It does not re-validate everything submission will: the ticket the proposal is keyed on may never have been created (`tefNO_TICKET`), the target account may since have been deleted, the fixed `Fee` may be unfundable, or an amendment the transaction needs may have been disabled. Clients should treat `complete` as "assemble and submit now, and expect success under normal conditions", not as a guarantee of `tesSUCCESS`.
+`complete` asserts that every required authorization is satisfied on the queried ledger — no more. It does not re-validate everything submission will: the target account may since have been deleted, the fixed `Fee` may no longer meet the minimum required for the signatures actually carried once fee escalation is accounted for, or an amendment the transaction needs may have been disabled. Clients should treat `complete` as "assemble and submit now, and expect success under normal conditions", not as a guarantee of `tesSUCCESS`.
 
 `complete` is also only as fresh as the ledger it was computed against. Signatures are immutable once collected, but the ledger state they are judged against is not, and submission applies gates beyond signature authorization that this RPC does not model. Examples of state changes that can silently invalidate a `complete` verdict:
 
@@ -1194,7 +1197,7 @@ As described in §6.1.1/§6.1.2, plus one Batch-specific wrinkle: an XLS-56 batc
 
 ### A.10: How is a transaction with a second signer — a `LoanSet` counterparty or a sponsor — handled?
 
-As described in §6.1.1/§4.2.2: each required party is named in its own `TransactionProposalSign` via `SigningFor`. Because the auxiliary signature fields are excluded from every party's signing data, the parties can sign in any order, and a transaction needing several (e.g. a sponsored `LoanSet`) collects them independently.
+As described in §6.1.1/§4.2.2: each required party is named in its own `TransactionProposalSign` via `SigningFor`. Because the auxiliary signature fields are excluded from every party's signing data, the parties can sign in any order, and a transaction needing several (e.g. a sponsored `LoanSet`) collects them independently — **provided** the target account authorizes via a `Signers` entry rather than a top-level single-signature. A top-level single-signature does change the signing payload (§4.2.1, §6.1.2), so it must be the first signature collected if the target account chooses that path.
 
 ### A.11: Does this replace off-chain multi-sign?
 
