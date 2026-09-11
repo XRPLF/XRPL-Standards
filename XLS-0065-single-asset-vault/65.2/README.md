@@ -59,6 +59,8 @@ The accounting-delta invariants become:
   - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
 - For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
 
+For `VaultWithdraw`, the existing `SingleAssetVault` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow is an alternative to this one-unit bound, not an addition to it: the comparison is satisfied by either, and this amendment leaves that exception unchanged.
+
 These are checks on persisted state; they do not give an implementation a choice of delta. The parent state transitions in [XLS-65](../README.md) §3.5.3, §3.6.3 and §3.7.3 still apply, and they are not the same for every operation:
 
 - `VaultDeposit` and `VaultWithdraw` each derive a single $\Delta_{asset}$ and apply that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable`, to the vault's asset balance and to the depositor's or destination's asset balance. Where that party is the issuer of a non-`XRP` `Vault.Asset`, it holds no balance of the asset — the transfer creates or destroys the asset at the issuer instead — so the value is applied only to the vault accounting fields and the vault's asset balance, and the comparison against a party delta above does not apply. This is the issuer exception of [XLS-65](../README.md) §3.5.4 item 2 and §3.6.4 item 2, which this amendment leaves unchanged.
