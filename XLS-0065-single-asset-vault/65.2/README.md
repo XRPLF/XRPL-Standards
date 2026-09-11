@@ -61,7 +61,7 @@ The accounting-delta invariants become:
 
 These are checks on persisted state; they do not give an implementation a choice of delta. The parent state transitions in [XLS-65](../README.md) §3.5.3, §3.6.3 and §3.7.3 still apply, and they are not the same for every operation:
 
-- `VaultDeposit` and `VaultWithdraw` each derive a single $\Delta_{asset}$ and apply that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable`, to the vault's asset balance and to the depositor's or destination's asset balance.
+- `VaultDeposit` and `VaultWithdraw` each derive a single $\Delta_{asset}$ and apply that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable`, to the vault's asset balance and to the depositor's or destination's asset balance. Where that party is the issuer of a non-`XRP` `Vault.Asset`, it holds no balance of the asset — the transfer creates or destroys the asset at the issuer instead — so the value is applied only to the vault accounting fields and the vault's asset balance, and the comparison against a party delta above does not apply. This is the issuer exception of [XLS-65](../README.md) §3.5.4 item 2 and §3.6.4 item 2, which this amendment leaves unchanged.
 - `VaultClawback` derives a single $\Delta_{asset}$ and applies that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable` and to the vault's asset balance. The holder change is shares via $\Delta_{share}$ (§3.7.3); there is no holder underlying-asset transfer. When $\Delta_{asset} > 0$, the recovered assets are sent from the vault to the submitter (the asset issuer), not to the holder.
 
 The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both accounting fields and pays out the prior `Vault.AssetsAvailable`, is the one exception to the single-$\Delta_{asset}$ rule for withdraw, and this amendment does not change it.
@@ -72,7 +72,7 @@ The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both
 
 1. Take the posterior scale $s$ — the `STAmount` exponent of `Vault.AssetsTotal` $\pm \Delta_{asset}$ evaluated with round-to-nearest, the same scale the invariant compares at.
 2. Round the magnitude of $\Delta_{asset}$ down at $s$. For a debit (`VaultWithdraw`, `VaultClawback`) that is $\lfloor |\Delta_{asset}| \rfloor_s$, so the vault debit never exceeds the value of the redeemed shares. For a credit (`VaultDeposit`) it is $\lfloor \text{AssetsTotal} + \Delta_{asset} \rfloor_s - \text{AssetsTotal}$, so the vault is never credited more than the depositor paid.
-3. If the rounded delta is zero while shares would still move, fail with `tecPRECISION_LOSS`. The `VaultWithdraw` fixed-share exception below is the only case where shares may move for zero assets.
+3. If the rounded delta is zero while shares would still move, fail with `tecPRECISION_LOSS`. Steps 1 to 3 apply only where $\Delta_{asset}$ is non-zero to begin with, so they do not disturb the two paths on which shares legitimately move for zero assets: the `VaultWithdraw` fixed-share exception below, and a `VaultClawback` against an already-empty vault, which decreases the holder's shares while the vault asset balance stays unchanged ([XLS-65](../README.md) §3.7.4 items 1 and 3). Both remain as they are.
 4. Do not re-derive $\Delta_{share}$ from the rounded delta. The shares are burned or minted at their pre-rounding value and the trimmed sub-unit residue stays in the vault for the remaining shareholders.
 
 For `XRP` and `MPT` the step is a no-op: $\Delta_{asset}$ is already integral.
