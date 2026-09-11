@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-08
+  updated: 2026-09-11
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -122,6 +122,10 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
   - introduces principal-only debt accounting and cash-basis interest recognition for Vaults with `LEVersion = 1`.
   - Closed-ended Vault phase checks on `LoanSet` and the closed-ended requirement on `LoanBrokerSet` are specified in [PR #587](https://github.com/XRPLF/XRPL-Standards/pull/587), not in this patch.
+- `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
+  - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
+
+Throughout this specification, amendment-labelled bullets describe the behaviour when that amendment is enabled.
 
 ## 3. Specification
 
@@ -370,8 +374,8 @@ _First-Loss Capital liquidation_
 
 - DefaultAmount = PrincipleOutstanding + InterestOutstanding
   = 1,000 + 90 = 1,090 Tokens
-- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)
-  = min((1,090 × 0.1) × 0.1, 1,090) = min(10.9, 1,090) = **10.9 Tokens**
+- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)
+  = min((1,090 × 0.1) × 0.1, 1,090, 1,000) = min(10.9, 1,090, 1,000) = **10.9 Tokens**
 - Loss = DefaultAmount − DefaultCovered
   = 1,090 − 10.9 = **1,079.1 Tokens**
 - FundsReturned = DefaultCovered = **10.9 Tokens**
@@ -550,7 +554,10 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-When the Loan Broker discovers that the Borower cannot make an upcoming payment, impairment allows the Loan Broker to register a "paper loss" with the Vault. The impairment mechanism moves the Next Payment Due Date to the time the Loan was impaired, allowing to default the Loan more quickly. However, if the Borrower makes a payment, the impairment status is automatically cleared.
+Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. If the Borrower makes a payment, the impairment status is automatically cleared.
+
+- `LendingProtocol`: A Loan can be impaired before its payment is overdue. Impairing while `Loan.NextPaymentDueDate` is still greater than the current ledger close time moves `Loan.NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time, otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+- `fixCleanup3_4_0`: A Loan can be impaired only when the current ledger close time is greater than `Loan.NextPaymentDueDate`; equality is not late. Impair and unimpair do not modify `Loan.NextPaymentDueDate`.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
@@ -1267,10 +1274,15 @@ This transaction uses the standard transaction fee.
 3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan). (`tecNO_PERMISSION`)
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
-6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
+6. Default too soon (`tecTOO_SOON`):
+   - `LendingProtocol`: `tfLoanDefault` is specified and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`.
+   - `fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`.
 7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 8. - `LendingProtocol`: `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
    - `LendingProtocolV1_1`: If `Vault.LEVersion == 1`, `tfLoanImpair` flag is specified and `Vault.LossUnrealized + Loan.PrincipalOutstanding > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
+9. Impair too soon (`tecTOO_SOON`):
+   - `LendingProtocol`: The check does not apply.
+   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue).
 
 #### 3.10.5 State Changes
 
@@ -1314,8 +1326,9 @@ This transaction uses the standard transaction fee.
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
      - Set `lsfLoanImpaired` flag.
-     - If `Loan.NextPaymentDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = currentTime`.
+     - `NextPaymentDueDate`:
+       - `LendingProtocol`: If the current ledger close time is less than `Loan.NextPaymentDueDate`, set `Loan.NextPaymentDueDate` to the current ledger close time.
+       - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 3. If the `tfLoanUnimpair` flag is specified:
    - Compute `LossReversed`:
      - `LendingProtocol`: `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
@@ -1324,11 +1337,9 @@ This transaction uses the standard transaction fee.
      - Decrease `Vault.LossUnrealized` by `LossReversed`.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
-     - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
-     - If `NormalDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = NormalDueDate`.
-     - Otherwise:
-       - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
+     - `NextPaymentDueDate`:
+       - `LendingProtocol`: Rewrite `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time; otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+       - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 
 ##### 3.10.5.1 Worked Example: Pre- vs Post-`LendingProtocolV1_1` Loan Default
 
@@ -1459,7 +1470,9 @@ This transaction uses the standard transaction fee.
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
 10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-11. The payment is late (`currentTime > Loan.NextPaymentDueDate`) and the `tfLoanLatePayment` flag is not specified in the transaction. (`tecEXPIRED`)
+11. Late payment without `tfLoanLatePayment` (`tecEXPIRED`):
+    - `LendingProtocol`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`.
+    - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`.
 12. The payment is late and the `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`). (`tecINSUFFICIENT_PAYMENT`)
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
@@ -2247,7 +2260,7 @@ $$
 valueChange = latePaymentInterest_{gross} - managementFee_{late}
 $$
 
-This `valueChange` represents the net increase in the loan's value, which must be reflected in `Vault.AssetsTotal`. However, this value change is not reflected in `Loan.TotalValueOutstanding` and `LoanBroker.DebtTotal` fields. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
+For a legacy (`LEVersion` absent) Vault, this `valueChange` represents the net increase in the loan's value and must be reflected in `Vault.AssetsTotal`. For a cash-basis Vault with `LEVersion == 1`, `valueChange` is not applied to `Vault.AssetsTotal`; the Vault instead recognises the `interestPaid` portion of the payment. Under either accounting model, this value change is not reflected in `Loan.TotalValueOutstanding` or `LoanBroker.DebtTotal`. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
 
 #### A-3.2.3 Loan Overpayment
 
@@ -2341,7 +2354,7 @@ The `valueChange` for an early repayment can be either positive or negative, dep
 - If `(accruedInterest + prepaymentPenalty) < interestOutstanding`, the `valueChange` will be negative, reflecting a decrease in the total value of the loan asset because the vault receives less interest than originally scheduled.
 - If `(accruedInterest + prepaymentPenalty) > interestOutstanding`, the `valueChange` will be positive. This can occur if the lender imposes a significant prepayment penalty that exceeds the forgiven future interest.
 
-This change in value must be reflected in `Vault.AssetsTotal` and `LoanBroker.DebtTotal`, accounting for the corresponding change in the `managementFee`.
+For a legacy (`LEVersion` absent) Vault, this change in value must be reflected in `Vault.AssetsTotal` and `LoanBroker.DebtTotal`, accounting for the corresponding change in the `managementFee`. For a cash-basis Vault with `LEVersion == 1`, `valueChange` is not applied to either field; `Vault.AssetsTotal` increases by `interestPaid`, and `LoanBroker.DebtTotal` decreases by `principalPaid`.
 
 ### A-3.3 Pseudo-code
 
@@ -2630,15 +2643,22 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         newLoanProperties
     )
 
+function is_payment_late(currentTime):
+    # Matches isPaymentLate / hasExpired in LendingHelpers.cpp.
+    # fixCleanup3_4_0: Exclusive (currentTime > due). Otherwise Inclusive (currentTime >= due).
+    if is_enabled(fixCleanup3_4_0):
+        return currentTime > loan.nextPaymentDueDate
+    return currentTime >= loan.nextPaymentDueDate
+
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
 
-    if loan.nextPaymentDueDate < currentTime and not is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and not is_set(tfLoanLatePayment):
         return "loan payment is late" error
 
     # ======== STEP 1: Process Late Payment ======== #
-    if loan.nextPaymentDueDate < currentTime and is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and is_set(tfLoanLatePayment):
         let (principal, interest, managementFee) = compute_payment_due(amount)
         let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
 
@@ -2773,6 +2793,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     )
 ```
 
-## Appendix C: Changelog
+## A-4 Changelog
 
 - [XLS-66.1](./66.1/README.md): For a cash-basis Vault, `LoanBroker.DebtTotal` tracks principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
+- [XLS-66.2](./66.2/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.
