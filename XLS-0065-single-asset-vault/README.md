@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-08
+  updated: 2026-09-11
 </pre>
 
 # Single Asset Vault
@@ -74,6 +74,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 - `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
   - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.
+- `fixCleanup3_1_3`: a later amendment on the `SingleAssetVault` parent. `VaultClawback` conversion under this amendment is specified in [§3.7.3](#373-state-changes):
+  - if $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. Before this amendment, a zero `Amount` bypasses that availability cap.
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - rejects a pseudo-account `Holder` on `VaultClawback` and reports a recovery too small to change `AssetsTotal` as `tecPRECISION_LOSS`
 
