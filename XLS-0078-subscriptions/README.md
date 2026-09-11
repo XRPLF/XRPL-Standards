@@ -103,13 +103,24 @@ For MPTs:
 
 ##### 2.1.1.7. Invariants
 
-Before and after any transaction:
+Enforced on every Subscription entry the transaction leaves in the ledger, by
+the `ValidSubscription` invariant:
 
 - `Balance` ≥ 0
-- `Balance` ≤ `Amount` at the start of every period (`Balance` is reset to `Amount` on rollover; lowering `Amount` mid-period via update does not retroactively reduce the current period's `Balance`, but claims are always capped at the current `Amount`)
 - `Balance` and `Amount` are denominated in the same asset
 - `Account` ≠ `Destination`
-- If non-XRP: asset must exist and be valid
+
+The following hold by construction but are not invariants of the stored entry,
+and are not enforced as such:
+
+- `Balance` equals `Amount` at the start of every period, being reset to
+  `Amount` on rollover. It is not bounded by `Amount` between rollovers:
+  lowering `Amount` mid-period via update does not retroactively reduce the
+  current period's `Balance`, so `Balance` > `Amount` is a reachable and valid
+  state. Claims are capped at the current `Amount` regardless.
+- If non-XRP, the asset exists and is valid. This is checked when the
+  subscription is created and on each claim, and is not decidable from the
+  entry alone.
 
 ##### 2.1.1.8. Example JSON
 
