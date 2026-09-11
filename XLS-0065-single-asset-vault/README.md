@@ -734,6 +734,12 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 
 #### 3.7.3 State Changes
 
+For an asset clawback, calculate $\Delta_{share}$ and $\Delta_{asset}$ before applying the state changes:
+
+- If `Amount` is zero, whether explicit or supplied implicitly, set $\Delta_{share}$ to all shares held by `Holder`, then convert those shares to $\Delta_{asset}$ using the [Redeem formula](#31722-redeem).
+- If `Amount` is non-zero, convert the requested asset amount to $\Delta_{share}$ using the [Withdraw formula](#31723-withdraw), then convert $\Delta_{share}$ back to $\Delta_{asset}$ using the Redeem formula. Before `fixCleanup3_4_0`, the initial asset-to-share conversion rounds to the nearest whole share.
+- With `fixCleanup3_1_3` enabled, if $\Delta_{asset}$ exceeds `Vault.AssetsAvailable`, cap it at `Vault.AssetsAvailable`, convert that cap to $\Delta_{share}$ by rounding down, then convert $\Delta_{share}$ back to $\Delta_{asset}$. This final recomputation ensures $\Delta_{asset}$ does not exceed `Vault.AssetsAvailable`. Before `fixCleanup3_1_3`, a zero `Amount` bypasses this availability cap.
+
 1. Decrease the `MPToken.MPTAmount` of the `Holder`'s share `MPToken` by $\Delta_{share}$.
 2. Decrease the `OutstandingAmount` of the share `MPTokenIssuance` by $\Delta_{share}$.
 3. If the `Holder` is not the vault owner and their share `MPToken.MPTAmount` reaches zero, delete the `MPToken` object.
