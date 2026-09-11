@@ -734,7 +734,9 @@ If `Amount` is omitted, the implementation supplies a zero-valued `STAmount`: it
 11. - `SingleAssetVault`: The check does not apply.
     - `fixCleanup3_4_0`: For an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
 
-12. The `Holder`'s share `MPToken` object does not exist while the computed share amount is non-zero, so the shares cannot be transferred to the vault. This arises for an asset clawback with a non-zero `Amount`, because that conversion derives the share amount from the requested assets rather than from the `Holder`'s balance. (`tecNO_AUTH`)
+12. The `Holder`'s share `MPToken` cannot supply the computed non-zero share amount, so the shares cannot be transferred to the vault and `accountSend` fails. Both cases arise for an asset clawback with a non-zero `Amount`, because that conversion derives the share amount from the requested (or capped) assets rather than from the `Holder`'s balance:
+    1. The `Holder`'s share `MPToken` object does not exist. (`tecNO_AUTH`)
+    2. The `Holder`'s share `MPToken.MPTAmount` is less than the computed share amount. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.7.3 State Changes
 

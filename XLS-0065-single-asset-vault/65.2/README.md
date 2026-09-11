@@ -43,7 +43,7 @@ A pseudo-account holds shares on behalf of a protocol, not on behalf of a person
   - Before the amendment: the check does not apply.
   - When the amendment is enabled: for an asset clawback, arithmetic overflows while evaluating the preceding non-zero recovery. (`tecPATH_DRY`)
 
-Parent checks 1, 3–7, and 9 are unchanged.
+Parent checks 1, 3–7, 9, and 12 are unchanged.
 
 ## 4. Rationale
 
