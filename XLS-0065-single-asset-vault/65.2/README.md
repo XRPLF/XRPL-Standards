@@ -40,6 +40,8 @@ No fields are added or removed.
 
 #### 3.1.2 Invariants
 
+##### 3.1.2.1 `LossUnrealized`
+
 The unrealised loss invariant becomes:
 
 - If `Vault.Asset` is not integral, i.e. an `IOU`: `Vault.LossUnrealized <= (Vault.AssetsTotal - Vault.AssetsAvailable) + 1 unit`, where the unit is one step of the grid on which `Vault.AssetsTotal` is quantised.
@@ -48,6 +50,8 @@ The unrealised loss invariant becomes:
 
 The single unit of slack is a tolerance for quantisation at the asset scale, not spare capacity: an implementation must not rely on it to absorb an accounting error.
 
+##### 3.1.2.2 Accounting-delta checks
+
 The accounting-delta invariants become:
 
 - For an `IOU`, comparisons between the vault asset balance delta and the corresponding depositor or destination balance delta, and between the vault asset balance delta and the changes in `Vault.AssetsTotal` and `Vault.AssetsAvailable`, admit an absolute difference of at most one unit. The unit is one step of the STAmount grid at exponent `scale`, i.e. `10^scale` in Number space (`agreesWithinOneUnit` in `src/libxrpl/tx/invariants/VaultInvariant.cpp`). `scale` is the exponent already passed into that helper for each comparison, not a separately chosen tolerance:
@@ -55,25 +59,33 @@ The accounting-delta invariants become:
   - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
 - For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
 
-These are checks on persisted state; they do not give an implementation a choice of delta. The state transition remains the one in [XLS-65](../README.md) §3.5.3, §3.6.3 and §3.7.3: `VaultDeposit`, `VaultWithdraw` and `VaultClawback` each derive a single $\Delta_{asset}$ and apply that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable`, to the vault's asset balance and to the depositor's, destination's or holder's asset balance. The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both accounting fields and pays out the prior `Vault.AssetsAvailable`, is the one exception and this amendment does not change it.
+These are checks on persisted state; they do not give an implementation a choice of delta. The parent state transitions in [XLS-65](../README.md) §3.5.3, §3.6.3 and §3.7.3 still apply, and they are not the same for every operation:
+
+- `VaultDeposit` and `VaultWithdraw` each derive a single $\Delta_{asset}$ and apply that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable`, to the vault's asset balance and to the depositor's or destination's asset balance.
+- `VaultClawback` derives a single $\Delta_{asset}$ and applies that one value to `Vault.AssetsTotal`, to `Vault.AssetsAvailable` and to the vault's asset balance. The holder change is shares via $\Delta_{share}$ (§3.7.3); there is no holder underlying-asset transfer. When $\Delta_{asset} > 0$, the recovered assets are sent from the vault to the submitter (the asset issuer), not to the holder.
+
+The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both accounting fields and pays out the prior `Vault.AssetsAvailable`, is the one exception to the single-$\Delta_{asset}$ rule for withdraw, and this amendment does not change it.
+
+##### 3.1.2.3 Deterministic delta
 
 `fixCleanup3_4_0` adds one deterministic step to that transition, applied before any state change and only to the delta:
 
 1. Take the posterior scale $s$ — the `STAmount` exponent of `Vault.AssetsTotal` $\pm \Delta_{asset}$ evaluated with round-to-nearest, the same scale the invariant compares at.
-2. Round the magnitude of $\Delta_{asset}$ down at $s$. For a debit (`VaultWithdraw`, `VaultClawback`) that is $\lfloor |\Delta_{asset}| \rfloor_s$, so the payout never exceeds the value of the redeemed shares. For a credit (`VaultDeposit`) it is $\lfloor \text{AssetsTotal} + \Delta_{asset} \rfloor_s - \text{AssetsTotal}$, so the vault is never credited more than the depositor paid.
+2. Round the magnitude of $\Delta_{asset}$ down at $s$. For a debit (`VaultWithdraw`, `VaultClawback`) that is $\lfloor |\Delta_{asset}| \rfloor_s$, so the vault debit never exceeds the value of the redeemed shares. For a credit (`VaultDeposit`) it is $\lfloor \text{AssetsTotal} + \Delta_{asset} \rfloor_s - \text{AssetsTotal}$, so the vault is never credited more than the depositor paid.
 3. If the rounded delta is zero while shares would still move, fail with `tecPRECISION_LOSS`. The `VaultWithdraw` fixed-share exception below is the only case where shares may move for zero assets.
 4. Do not re-derive $\Delta_{share}$ from the rounded delta. The shares are burned or minted at their pre-rounding value and the trimmed sub-unit residue stays in the vault for the remaining shareholders.
 
 For `XRP` and `MPT` the step is a no-op: $\Delta_{asset}$ is already integral.
 
-The rounded $\Delta_{asset}$ is then applied to all four values as before. The persisted results may still disagree, because each is written independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and the two asset balances are `STAmount` values on their own grids, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before the amendment, the delta is not rounded at the posterior scale and the comparisons and state changes are exact for every asset type, except the existing `SingleAssetVault` `VaultWithdraw` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
+The rounded $\Delta_{asset}$ is then applied as in the parent transitions above. The persisted results may still disagree, because each written field is quantised independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and each `STAmount` balance sits on its own grid, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before the amendment, the delta is not rounded at the posterior scale and the comparisons and state changes are exact for every asset type, except the existing `SingleAssetVault` `VaultWithdraw` exception that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
 For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal == LossUnrealized` may redeem shares while moving zero assets. Before the amendment, the missing vault and destination balance deltas cause the invariant to fail.
+
+##### 3.1.2.4 Cap enforcement
 
 Cap enforcement becomes:
 
 - `Vault.AssetsTotal` is not required to be less than or equal to `Vault.AssetsMaximum` on every modification of the entry, and no invariant imposes that, because the excess may be interest that the Vault has recognised.
-- `VaultDeposit` fails when `Vault.AssetsMaximum` is non-zero and the post-deposit `Vault.AssetsTotal` would exceed it. After a successful deposit, if the cap is non-zero, `Vault.AssetsTotal <= Vault.AssetsMaximum`. The amendment does not change this.
 - `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap is no longer failed by this check.
 
 Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.

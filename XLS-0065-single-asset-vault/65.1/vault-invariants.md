@@ -14,7 +14,7 @@
 
 ## 1. Abstract
 
-`Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` are immutable on a `Vault` once set, in addition to `Asset`, `Account` and `ShareMPTID`.
+Under the `LendingProtocolV1_1` amendment, `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` are immutable on a `Vault` once set, in addition to `Asset`, `Account` and `ShareMPTID`.
 
 ## 2. Motivation
 
