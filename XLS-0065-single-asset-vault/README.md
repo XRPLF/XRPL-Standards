@@ -73,8 +73,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 
 - `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
 - `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
-  - makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
-  - adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
+  - [Unmodifiable Vault Fields](./65.1/vault-invariants.md): makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
+  - [Vault Deletion Memo](./65.1/vault-memo.md): adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
 
@@ -1215,5 +1215,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix B: Changelog
 
-- [XLS-65.1](./65.1/README.md): Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set, and adds an optional `MemoData` field to `VaultDelete` so the Owner can record why a Vault was deleted.
+- [XLS-65.1](./65.1/README.md): `LendingProtocolV1_1` Vault changes: [unmodifiable fields](./65.1/vault-invariants.md) and [VaultDelete MemoData](./65.1/vault-memo.md).
 - [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
