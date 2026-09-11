@@ -672,7 +672,7 @@ In sections below assume the following variables:
 
 ### 3.7 Transaction: `VaultClawback`
 
-The `VaultClawback` transaction performs a clawback from the Vault by destroying shares held by an account. The issuer of an IOU or MPT Vault asset can recover assets represented by the `Holder`'s shares; if the requested amount exceeds the available liquidity, the transaction performs a partial clawback up to `Vault.AssetsAvailable`. Separately, the Vault Owner can burn all shares held by a `Holder` when outstanding shares remain even though both `Vault.AssetsTotal` and `Vault.AssetsAvailable` are zero.
+The `VaultClawback` transaction performs a clawback from the Vault by destroying shares held by an account. The issuer of an IOU or MPT Vault asset can recover assets represented by the `Holder`'s shares. When `Amount` is non-zero, or when `Amount` is zero and `fixCleanup3_1_3` is enabled, if the computed recovery exceeds the available liquidity, the transaction performs a partial clawback up to `Vault.AssetsAvailable`. Before `fixCleanup3_1_3`, a zero `Amount` (explicit or implicit) does not cap recovery to `Vault.AssetsAvailable`; that path is specified in [§3.7.3](#373-state-changes). Separately, the Vault Owner can burn all shares held by a `Holder` when outstanding shares remain even though both `Vault.AssetsTotal` and `Vault.AssetsAvailable` are zero.
 
 #### 3.7.1 Fields
 
