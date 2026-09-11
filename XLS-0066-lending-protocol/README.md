@@ -125,7 +125,7 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
 
-Throughout this specification, amendment-labelled bullets describe the behaviour when that amendment is enabled.
+Throughout this specification, amendment-labelled bullets describe the behaviour when that amendment is enabled. Because `LendingProtocolV1_1` depends on `LendingProtocol`, both amendments are enabled together. An applicable patch branch replaces the corresponding parent branch; the `LendingProtocol` branch remains the fallback.
 
 ## 3. Specification
 

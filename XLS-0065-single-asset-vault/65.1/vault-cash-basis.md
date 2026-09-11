@@ -14,7 +14,7 @@
 
 ## 1. Abstract
 
-Under the `LendingProtocolV1_1` amendment, a Single Asset Vault accounts for the interest earned by its Loans on a cash basis. `AssetsTotal` counts interest only once a Borrower has paid it, rather than counting the interest a Loan is expected to earn from the moment the Loan is issued. The share exchange rate of the Vault therefore tracks the assets the Vault holds instead of the income it is owed, and a Borrower who stops paying costs the Vault only the principal it lent out. A Vault created before the amendment keeps accrual-basis accounting, in which `AssetsTotal` includes interest as it accrues, because changing the accounting model of an existing Vault would change the value of the shares it has already issued. Which model a Vault uses is recorded in its `LEVersion` field and fixed when the Vault is created.
+Under the `LendingProtocolV1_1` amendment, a Single Asset Vault accounts for the interest earned by its Loans on a cash basis. `AssetsTotal` counts interest only once a Borrower has paid it, rather than counting the interest a Loan is expected to earn from the moment the Loan is issued. The share exchange rate of the Vault therefore tracks the assets the Vault holds instead of the income it is owed, and a Borrower who stops paying costs the Vault only the principal it lent out. A Vault created before the amendment keeps accrual-basis accounting, in which `LoanSet` immediately adds all expected net `InterestDue` to `AssetsTotal` at origination (XLS-66 §3.8.6), because changing the accounting model of an existing Vault would change the value of the shares it has already issued. Which model a Vault uses is recorded in its `LEVersion` field and fixed when the Vault is created.
 
 ## 2. Motivation
 
