@@ -828,7 +828,7 @@ Cancellation is only fully effective before a proposal is complete. If a quorum-
 #### 7.4.2. Protocol-Level Failures
 
 1. No `TransactionProposal` object exists with the given `ProposalID` (`tecNO_ENTRY`).
-2. The proposal is not terminal and `Account` is neither the `Owner` nor the target account (`tecNO_PERMISSION`).
+2. The proposal is not terminal and `Account` is neither the `Owner`, the target account, nor its `Delegate` when one is present (`tecNO_PERMISSION`).
 
 ### 7.5. State Changes
 
