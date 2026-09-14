@@ -75,7 +75,9 @@ The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both
 1. Take the posterior scale $s$ — the `STAmount` exponent of `Vault.AssetsTotal` $\pm \Delta_{asset}$ evaluated with round-to-nearest, the same scale the invariant compares at.
 2. Round the magnitude of $\Delta_{asset}$ down at $s$. For a debit (`VaultWithdraw`, `VaultClawback`) that is $\lfloor |\Delta_{asset}| \rfloor_s$, so the vault debit never exceeds the value of the redeemed shares. For a credit (`VaultDeposit`) it is $\lfloor \text{AssetsTotal} + \Delta_{asset} \rfloor_s - \text{AssetsTotal}$, so the vault is never credited more than the depositor paid.
 3. If the rounded delta is zero while shares would still move, fail with `tecPRECISION_LOSS`. Steps 1 to 3 apply only where $\Delta_{asset}$ is non-zero to begin with, so they do not disturb the two paths on which shares legitimately move for zero assets: the `VaultWithdraw` fixed-share exception below, and a `VaultClawback` against an already-empty vault, which decreases the holder's shares while the vault asset balance stays unchanged ([XLS-65](../README.md) §3.7.4 items 1 and 3). Both remain as they are.
-4. Do not re-derive $\Delta_{share}$ from the rounded delta. The shares are burned or minted at their pre-rounding value and the trimmed sub-unit residue stays in the vault for the remaining shareholders.
+4. Do not re-derive $\Delta_{share}$ from the rounded delta; the shares are burned or minted at their pre-rounding value. Where the trimmed sub-unit ends up depends on the direction:
+   - On a debit (`VaultWithdraw`, `VaultClawback`) it stays in the vault for the remaining shareholders: the shares are burned for their pre-rounding value while the vault pays out the smaller rounded amount.
+   - On a credit (`VaultDeposit`) it stays with the depositor, who is debited the rounded delta but receives shares priced before the rounding. Re-deriving the share count here would mint fewer shares while still charging for the pre-rounding amount.
 
 For `XRP` and `MPT` the step is a no-op: $\Delta_{asset}$ is already integral.
 
@@ -105,5 +107,7 @@ Enforcing the cap on a `VaultSet` that supplies `AssetsMaximum` or otherwise cha
 ## 5. Security Considerations
 
 Relaxing an invariant weakens a check that exists to catch implementation errors. The rounding tolerances are bounded to one unit at the applicable comparison scale and apply only to assets that quantise, while the cap remains enforced on every `VaultDeposit` and on any `VaultSet` that supplies `AssetsMaximum` or otherwise changes the cap.
+
+Rounding the delta without re-deriving the share count moves a sub-unit of value in a direction that depends on the operation. On `VaultWithdraw` and `VaultClawback` it favours the remaining shareholders, since the vault pays out less than the burned shares were worth. On `VaultDeposit` it favours the depositor, who pays the rounded amount but receives shares priced before the rounding, diluting existing shareholders by less than one unit at the posterior `AssetsTotal` scale. The bound is per transaction, so a depositor can repeat it across many deposits; each repetition gains at most that one unit, which is the smallest representable amount at that scale, and costs a transaction fee. The alternative of re-deriving the shares from the rounded delta does not remove the asymmetry, it reverses it, charging the depositor for shares that are never minted.
 
 Adding `LossUnrealized >= 0` closes a gap in the original invariant. A negative unrealised loss would otherwise pass the inequality and inflate the assets of the Vault relative to its shares.
