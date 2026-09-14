@@ -26,7 +26,7 @@ This repository is the canonical home for **XRP Ledger Standards (XLSes)** — s
 ├── .agents/skills/         # Agent Skills, shared across Cursor/Codex/Gemini/Augment/Claude
 │   ├── xls-template-conformity/  # Check an XLS against the templates
 │   └── spec-from-rippled/        # Update a spec from rippled code changes
-├── .claude/skills/         # Symlinks into .agents/skills (Claude Code only scans .claude)
+├── .claude/skills/         # Stubs pointing into .agents/skills (Claude Code only scans .claude)
 ├── .ai-review/
 │   └── instructions.md     # Symlink to .github/copilot-instructions.md (Ripple review bot)
 └── .github/
@@ -214,16 +214,17 @@ Guidance for AI agents is spread across several files because each tool discover
 | `.ai-review/instructions.md`          | Ripple `@ai-review` bot                 | Symlink to the above                            |
 | `.github/skills/code-review/SKILL.md` | Copilot code review                     | Real file (Copilot does not resolve symlinks)   |
 | `.agents/skills/<name>/SKILL.md`      | Cursor, Codex CLI, Gemini CLI, Augment  | Real files — edit here                          |
-| `.claude/skills/<name>`               | Claude Code                             | Symlinks to `.agents/skills/<name>`             |
+| `.claude/skills/<name>/SKILL.md`      | Claude Code                             | Stub — frontmatter plus a pointer to the above  |
 | `.gitignore` (AI section)             | —                                       | Keeps per-developer agent state out of the repo |
 
 Rules of thumb:
 
-- **Adding a skill?** Create it under `.agents/skills/<name>/`, then add the matching symlink in `.claude/skills/`. Without the symlink, Claude Code cannot see it.
-- **Adding a new agent tool to the team's rotation?** Add its discovery path here, symlinked to the existing skill rather than copied.
+- **Adding a skill?** Create it under `.agents/skills/<name>/`, then add a stub `.claude/skills/<name>/SKILL.md` that repeats the `name` and `description` frontmatter and points at the real file. Without the stub, Claude Code cannot see it.
+- **Adding a new agent tool to the team's rotation?** Add its discovery path here, pointing at the existing skill rather than copying it.
+- **Do not use symlinks for skills.** GitHub Copilot code review aborts skill loading when a path under a skills directory links outside it, and drops _every_ skill in the repository — including `.github/skills/code-review/`.
 - **Changing a review rule?** It belongs in the Review Guidelines section above. `.github/skills/code-review/SKILL.md` intentionally repeats the critical completion, suppression, and "never flag" rules because Copilot may not follow the link out of it — keep that short duplication in sync deliberately.
 - **Changing a skill's procedure?** Skills read `templates/` and run `scripts/validate_xls_template.py` at run time on purpose. Keep it that way: a skill that restates the templates will drift from them.
-- Symlinks are committed at git mode `120000`. Some tools render them as one-line files containing a path, or omit them entirely. That is expected — do not "fix" them into copies.
+- `.ai-review/instructions.md` is committed as a symlink at git mode `120000`. Some tools render it as a one-line file containing a path, or omit it entirely. That is expected — do not "fix" it into a copy.
 
 ## Known Gotchas
 
