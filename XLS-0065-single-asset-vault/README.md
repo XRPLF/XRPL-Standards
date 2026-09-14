@@ -76,6 +76,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
   - introduces `LEVersion = 1` for [cash-basis Vault accounting](./65.1/vault-cash-basis.md).
   - adds an optional [`MemoData` field to `VaultDelete`](./65.1/vault-memo.md) that, if present, must be 1–256 bytes.
   - Closed-ended Vault checks also gated by this amendment (`VaultKind`, `SubscriptionDate`, `RedemptionDate`, and the phase checks on `VaultDeposit` / `VaultWithdraw`) are specified in [PR #587](https://github.com/XRPLF/XRPL-Standards/pull/587), not in this patch.
+- `fixCleanup3_4_0`: a later amendment on the `SingleAssetVault` parent. It narrows the `VaultSet` cap invariant in [§3.3.4](#334-invariants), so that a `Vault.AssetsTotal` already above the cap no longer blocks a `VaultSet` that leaves the cap alone. Cash-basis interest receipts are one way the cap is exceeded without a deposit.
 
 ## 3. Specification
 
@@ -480,7 +481,8 @@ The `VaultSet` updates an existing `Vault` ledger object.
 1. `VaultSet` must not change the vault pseudo-account's asset balance.
 2. `VaultSet` must not change `Vault.AssetsTotal` or `Vault.AssetsAvailable`.
 3. `VaultSet` must not change `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount`.
-4. If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
+4. - `SingleAssetVault`: If `Vault.AssetsMaximum > 0`: `Vault.AssetsTotal <= Vault.AssetsMaximum`.
+   - `fixCleanup3_4_0`: This is checked only if the transaction supplies `AssetsMaximum` or otherwise changes the cap.
 
 ### 3.4 Transaction: `VaultDelete`
 
