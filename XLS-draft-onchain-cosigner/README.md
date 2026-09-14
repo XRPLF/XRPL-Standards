@@ -249,8 +249,8 @@ Standard common fields (`Fee`, `Sequence`, `Flags`, `Memos`, `SourceTag`, signin
 
 Only the target account, or one of its signers, may create a proposal — and when `ProposedTransaction.Delegate` is present, the `Delegate` and its signers stand in for the target account. The `Account` submitting `TransactionProposalCreate` must therefore be either:
 
-- the target account itself, or a member of the target account's applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is absent; or
-- the `Delegate` account itself, or a member of the `Delegate`'s applicable `SignerList` for the proposed transaction type, when `ProposedTransaction.Delegate` is present.
+- the target account itself, or a member of the target account's applicable `SignerList`, when `ProposedTransaction.Delegate` is absent; or
+- the `Delegate` account itself, or a member of the `Delegate`'s applicable `SignerList`, when `ProposedTransaction.Delegate` is present.
 
 Creation authorization is checked against the current ledger when the `TransactionProposalCreate` transaction is applied. It does not add a signature to `ProposedTransaction`; the proposal begins unsigned and still requires the normal signature collection and submission-time authorization checks.
 
@@ -1108,7 +1108,7 @@ This proposal is purely additive: it introduces one new ledger entry type and th
 
 - **Reducing the initial construction burden:** Can the initial proposed-transaction construction be simplified further, beyond the ticket-based approach in §9.2?
 - **Revocation:** Should there be a first-class way to revoke a completed proposal's signatures on-ledger (beyond consuming the `TicketSequence`), given that cancellation alone does not prevent submission of already-collected signatures (§13.4)?
-- **Recurring / standing orders:** Use Case 7 (recurring allowances and treasury stipends) suggests a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
+- **Recurring / standing orders:** recurring allowances and treasury stipends suggest a proposal could activate a long-lived standing order rather than a one-shot transaction, potentially composing with a Subscriptions primitive. This is out of scope for this spec but noted as a future extension.
 
 ## 13. Security Considerations
 
@@ -1157,7 +1157,7 @@ That party's own signature is one the proposal must collect (§6.1.1), so nobody
 
 ### A.1: Who can create a proposal?
 
-The target account, or any of its signers — when `ProposedTransaction.Delegate` is present, the `Delegate` and its signers stand in for the target account. Either that account itself or a member of its applicable `SignerList` for the proposed transaction type may create the proposal (§5.1.1). The proposer owns the object and pays its reserve.
+The target account, or any of its signers — when `ProposedTransaction.Delegate` is present, the `Delegate` and its signers stand in for the target account. Either that account itself or a member of its applicable `SignerList` may create the proposal (§5.1.1). The proposer owns the object and pays its reserve.
 
 ### A.2: Can the target account be different from the proposer?
 
