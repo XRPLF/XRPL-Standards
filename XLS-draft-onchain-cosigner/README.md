@@ -1,7 +1,7 @@
 <pre>
   title: On-Chain Cosigner
   description: Native on-ledger proposal and multi-signature collection for XRPL transactions.
-  author: Shawn Xie <shawnxie@ripple.com>, Zhiyuan Wang (@Kassaking7), Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
+  author: Shawn Xie (@shawnxie999), Zhiyuan Wang (@Kassaking7), Chenna Keshava B S (@ckeshava), Mayukha Vadari (@mvadari)
   category: Amendment
   status: Draft
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/589
@@ -27,20 +27,18 @@ This feature will require an amendment, tentatively titled `Cosigner`.
 
 ## 2. Motivation
 
-XRPL multi-sign today has three structural problems, all stemming from the absence of an on-ledger "meeting room" for signers:
+XRPL multi-sign today has two structural problems, both stemming from the absence of an on-ledger "meeting room" for signers:
 
 1. **Manual assembly and latency.** There is no way to "send" a transaction to another signer through the ledger. The transaction blob must be passed around through external channels (email, Slack, custody tooling). Gathering signatures is slow and error-prone, which makes multi-sign unsuitable for time-sensitive operations.
 
-2. **No auto-fill.** For a single-signer transaction, fields like `Sequence` and `LastLedgerSequence` can be auto-filled at submission time. For multi-sign, every field must be fixed before the first signer signs. If the transaction fails to reach a ledger in time (for example because `LastLedgerSequence` was set too low while waiting for signers), the entire round must be restarted from scratch with all signers.
+2. **The centralized-coordinator paradox.** One party must eventually collect, sort, and submit all signatures. That party becomes a new single point of failure: if they go offline, the transaction cannot be submitted even if everyone else has signed (**inaction**); they can present different signers with different blobs (**manipulation**); and if they lose the collected signatures the round must restart (**data loss**).
 
-3. **The centralized-coordinator paradox.** One party must eventually collect, sort, and submit all signatures. That party becomes a new single point of failure: if they go offline, the transaction cannot be submitted even if everyone else has signed (**inaction**); they can present different signers with different blobs (**manipulation**); and if they lose the collected signatures the round must restart (**data loss**).
-
-On-Chain Cosigner solves all three by moving signature collection onto the ledger:
+On-Chain Cosigner solves both problems by moving signature collection onto the ledger:
 
 - The transaction is posted once, on-ledger, with an **immutable payload**. Every signer signs the same object, removing ambiguity.
 - Signatures are **collected on the ledger itself**, not assembled by a coordinator. There is no blob to lose, no blob to swap, and the collected set is always available to everyone.
 - The completed transaction derives its authority **solely from the signatures collected on-ledger**. Because the signatures accumulate into a standard multi-signed transaction, **anyone** can submit it through the normal transaction path — no coordinator can withhold or alter it.
-- A built-in **expiration** prevents abandoned proposals from accumulating and bounds the collection window.
+- A built-in **expiration** prevents abandoned proposals from accumulating and bounds the collection window, and requiring `TicketSequence` instead of `Sequence` (§9.2) decouples the proposal from the target account's live sequence.
 
 Multi-sign is inherently signature-heavy, and this feature is designed to compose with other signature-heavy XRPL features — [Batch (XLS-56)](../XLS-0056-batch/README.md), sponsored fees & reserves, and lending-protocol origination — where multiple parties across custodians or institutions must co-authorize a single ledger action.
 
@@ -49,7 +47,7 @@ Multi-sign is inherently signature-heavy, and this feature is designed to compos
 ### 3.1. Terminology
 
 - **Proposal**: A `TransactionProposal` ledger object. It holds a single unsigned **proposed transaction** (the payload) and the set of signatures collected for it so far.
-- **Proposed transaction**: The transaction that will be executed on behalf of the **target account** once enough signatures are collected. It is stored, immutable, inside the proposal. (This is a distinct concept from a Batch "inner transaction".)
+- **Proposed transaction**: The transaction that will be executed on behalf of the **target account** once enough signatures are collected. It is stored, immutable, inside the proposal, and must identify the target account's spendable authorization via `TicketSequence` rather than `Sequence` (§4.2.1). (This is a distinct concept from a Batch "inner transaction".)
 - **Target account**: The account on whose behalf the proposed transaction executes — i.e. the `Account` of the proposed transaction. Its `SignerList` configuration governs the quorum.
 - **Proposer**: The account that submits `TransactionProposalCreate`. It owns the proposal object and pays its reserve. The proposer must be either the **target account** — or the proposed transaction's `Delegate`, when one is present — or a member of that account's applicable `SignerList` (§5.1.1).
 - **Signer**: An account ID on the target account's applicable `SignerList` that can append its signature to the proposal, contributing its weight toward quorum. For multi-signing, this may be an unfunded AccountID derived from a public key, matching existing XRPL multi-sign behavior.
@@ -85,7 +83,7 @@ A proposal exists as a ledger object only until it is cancelled or cleaned up. I
 - **The ledger is the meeting room, not the executor.** Signatures are collected and validated on-ledger; execution reuses the existing multi-sign submission path. No new execution semantics and no fourth transaction are introduced.
 - **Authority derives from the collected signatures, not from any submitter.** Anyone can submit the completed transaction; the existing multi-sign machinery validates it against the target account's `SignerList`.
 - **Immutable payload.** Once created, the proposed transaction cannot be modified. Signers sign exactly what they see.
-- **No new quorum model.** Quorum and weights are inherited unchanged from the existing multi-sign machinery. "Applicable `SignerList`" means whatever list standard multi-sign resolution uses today — the account's single `SignerList` — and would automatically mean the per-transaction-type list if [XLS-49 (Multiple Signer Lists)](../XLS-0049-multiple-signer-lists/README.md) is later activated; this proposal does not depend on XLS-49 (§10).
+- **No new quorum model.** Quorum, weights, and the "applicable `SignerList`" are inherited unchanged from the existing multi-sign machinery — the account's `SignerList`.
 - **Every collected signature is pre-validated.** The ledger verifies each signature (correct key, valid over the proposed transaction, signer on the `SignerList`) as it is added, so a complete proposal is guaranteed to be a submittable transaction.
 
 ## 4. Ledger Entry: `TransactionProposal`
@@ -120,8 +118,6 @@ The trade-off: only **one** live proposal can exist per `(target account, ticket
 | `OwnerNode`           | Yes      | Yes      | UINT64        | N/A                   | Hint for which page this object appears on in the owner directory.                                                                                                                                                                                   |
 | `PreviousTxnID`       | No       | Yes      | HASH256       | N/A                   | Hash of the previous transaction that modified this object.                                                                                                                                                                                          |
 | `PreviousTxnLgrSeq`   | No       | Yes      | UINT32        | N/A                   | Ledger sequence of the previous transaction that modified this object.                                                                                                                                                                               |
-
-**Field Details:**
 
 #### 4.2.1. `ProposedTransaction`
 
@@ -1092,7 +1088,7 @@ Standard multi-sign forces every field to be fixed before the first signature. I
 
 ### 9.3. How quorum is enforced
 
-Quorum is never evaluated by a bespoke rule in this feature. Each signature is validated against the target account's `SignerList` when it is added (so garbage cannot accumulate), and the completed transaction is validated again by the existing multi-sign machinery when it is finally submitted. Both checks use the account's live `SignerList`, so the executed action always reflects the account's **current** authority model — today, its single account-wide list; automatically its per-transaction-type list, resolved from the proposed transaction's type, if [XLS-49 (Multiple Signer Lists)](../XLS-0049-multiple-signer-lists/README.md) is later activated (§10).
+Quorum is never evaluated by a bespoke rule in this feature. Each signature is validated against the target account's `SignerList` when it is added (so garbage cannot accumulate), and the completed transaction is validated again by the existing multi-sign machinery when it is finally submitted. Both checks use the account's live `SignerList`, so the executed action always reflects the account's **current** authority model.
 
 ### 9.4. Why there is no execution transaction
 
@@ -1103,7 +1099,6 @@ Because signatures are collected directly into the proposed transaction's own `S
 - **Batch (XLS-56):** The proposed transaction may be a `Batch`, enabling multi-account, atomic, multi-signed settlement (e.g. end-of-day repo netting, flash-style capital operations). The outer account is authorized by `SigningFor` = the outer account (into `ProposedTransaction.Signers`); each participant account by `SigningFor` = that participant — single-signature (its own key) or multi-sign (§6.1). A signer authorized on several of the batch's accounts produces one `ProposalSignature` per account, since each signature is bound to its owning account. Once every participant's requirement is met the completed batch executes atomically. This is the primary motivating case for On-Chain Cosigner, since multi-account Batches otherwise require the most off-chain signature coordination.
 - **Lending protocols:** A borrower can post a `LoanSet` (or equivalent) as a proposal; the lender signs on-chain as counterparty (`SigningFor` = the lender, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `CounterpartySignature` field, while the borrower's account is authorized through `ProposedTransaction.Signers`. This turns loan origination into a trustless, asynchronous flow with no synchronous coordination.
 - **Sponsored fees & reserves (XLS-68):** A user posts a transaction carrying `Sponsor`/`SponsorFlags`; the sponsor signs on-chain (`SigningFor` = the sponsor, §6.1) — single-key or multi-signed — which the ledger records in the proposed transaction's own `SponsorSignature` field, co-authorizing the fee/reserve sponsorship. This is the same auxiliary-co-signature mechanism used for a `LoanSet` counterparty, and the two can be collected on the same proposal (e.g. a sponsored `LoanSet`).
-- **Multiple Signer Lists (XLS-49):** [XLS-49](../XLS-0049-multiple-signer-lists/README.md) is not implemented today — `Transactor::checkMultiSign` reads a single account-wide `SignerList` — so throughout this spec "the applicable `SignerList`" currently means that one list. This proposal takes no dependency on XLS-49; every "applicable `SignerList`" reference resolves through whatever multi-sign resolution mechanism is live on the network at the time (today, the single list; automatically the correct per-transaction-type list if XLS-49 is later activated), since both the per-signature check and final submission reuse the standard resolution, whatever it is.
 
 ## 11. Backwards Compatibility
 
