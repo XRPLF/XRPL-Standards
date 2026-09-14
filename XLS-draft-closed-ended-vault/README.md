@@ -54,10 +54,10 @@ The full permission matrix across all transactors and phases is:
 
 This proposal defines three protocol constants. The investment period bounds are enforced at vault creation (see 4.2.1) and the redemption buffer at loan origination (see 7.2.1); the reasoning behind the values is in 12.2 and 12.3.
 
-| Constant                 | Value       | Meaning                                                                                                            |
-| ------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| `MIN_INVESTMENT_PERIOD`  | `180`       | Minimum length, in seconds, of the Investment phase.                                                               |
-| `MAX_INVESTMENT_PERIOD`  | `946708560` | Maximum length, in seconds, of the Investment phase (30 Gregorian years of 365.2425 days).                         |
+| Constant                 | Value       | Meaning                                                                                                             |
+| ------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| `MIN_INVESTMENT_PERIOD`  | `180`       | Minimum length, in seconds, of the Investment phase.                                                                |
+| `MAX_INVESTMENT_PERIOD`  | `946708560` | Maximum length, in seconds, of the Investment phase (30 Gregorian years of 365.2425 days).                          |
 | `LOAN_REDEMPTION_BUFFER` | `60`        | Minimum gap, in seconds, between a loan's final scheduled payment and the `RedemptionDate` of the vault funding it. |
 
 ## 3. Ledger Entry: `Vault` (modified)
@@ -420,7 +420,7 @@ StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER <= Redemp
 
 Without the buffer, a loan's final payment could be scheduled on, or one second before, `RedemptionDate`. Redemption would then open while the last payment was still in flight, and because the vault uses cash-basis accounting (see A.5) the first depositors to withdraw would redeem against a pool that had not yet received it. The buffer reserves a window between the last scheduled payment and the start of Redemption in which that payment can be made and recorded.
 
-The buffer is a floor on the schedule, not a guarantee of settlement: a borrower who pays late can still miss it. Its purpose is to stop a vault owner from *scheduling* a loan that is structurally certain to be unsettled at the phase boundary.
+The buffer is a floor on the schedule, not a guarantee of settlement: a borrower who pays late can still miss it. Its purpose is to stop a vault owner from _scheduling_ a loan that is structurally certain to be unsettled at the phase boundary.
 
 ### 12.3. Why `MIN_INVESTMENT_PERIOD` is 180 seconds
 
