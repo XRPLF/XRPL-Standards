@@ -3,7 +3,7 @@ xls: TBD
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/590
 title: Closed-Ended Single Asset Vault
 description: Adds a fixed-term, phase-based vault kind to the Single Asset Vault so lenders can lock capital for a defined investment period.
-author: Jingchen Wu (@a1q123456), Vita Tumas (@Tapanito), Gregory Tsipenyuk (@gtsipenyuk)
+author: Jingchen Wu (@a1q123456), Vito Tumas (@Tapanito), Gregory Tsipenyuk (@gtsipenyuk)
 status: Draft
 category: Amendment
 created: 2026-07-21
@@ -14,7 +14,7 @@ updated: 2026-07-21
 
 ## 1. Abstract
 
-This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment at `SubscriptionDate` (after which new deposits are rejected and capital is locked), and leaves Investment for Redemption at `RedemptionDate`. Open-ended vaults are behaviourally unaffected.
+This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment at `SubscriptionDate` (after which new deposits are rejected and capital is locked), and leaves Investment for Redemption at `RedemptionDate`. Loans originated against a closed-ended vault must mature a short buffer before `RedemptionDate`, so the Redemption phase cannot begin while a scheduled payment is still outstanding. Open-ended vaults are behaviourally unaffected.
 
 ## 2. Introduction
 
@@ -30,7 +30,7 @@ The move from one stage to the next happens automatically at pre-set dates that 
 
 This proposal extends the [Single Asset Vault](../XLS-0065-single-asset-vault/README.md) (XLS-65) with a new `ClosedEnded` vault kind that enforces this lifecycle on-chain. Existing open-ended vaults are unaffected and continue to behave exactly as before.
 
-### 2.1 Permission Matrix
+### 2.1. Permission Matrix
 
 The full permission matrix across all transactors and phases is:
 
@@ -44,20 +44,27 @@ The full permission matrix across all transactors and phases is:
 | LoanPay       | allowed    | allowed      | allowed    | allowed    |
 | LoanManage    | allowed    | allowed      | allowed    | allowed    |
 | LoanDelete    | allowed    | allowed      | allowed    | allowed    |
+| LoanBrokerSet | rejected   | allowed      | allowed    | allowed    |
 
-\* `LoanSet` (and `LoanAccept`) are permitted only during the `Investment` phase. A closed-ended `LoanSet` is additionally constrained so the loan fully matures before `RedemptionDate` (see 7).
+\* `LoanSet` (and `LoanAccept`) are permitted only during the `Investment` phase. A closed-ended `LoanSet` is additionally constrained so the loan's final scheduled payment falls at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate` (see 7).
 
 `VaultClawback`, `LoanPay`, `LoanManage`, `LoanDelete`, and `VaultDelete` are permitted in all phases and require no changes. `VaultDelete` remains subject to the existing XLS-65 precondition that the vault be empty, which is independent of phase.
 
-### 2.4 Investment Period Bounds
+### 2.2. Protocol Constants
 
-This proposal defines two protocol constants that bound the length of the Investment phase: `MIN_INVESTMENT_PERIOD` (value `60` seconds) and `MAX_INVESTMENT_PERIOD` (value `946080000` seconds, i.e. 30 years). A closed-ended vault MUST satisfy `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD`, so the Investment phase is long enough to deploy capital but cannot lock capital for an unreasonably long term.
+This proposal defines three protocol constants. The investment period bounds are enforced at vault creation (see 4.2.1) and the redemption buffer at loan origination (see 7.2.1); the reasoning behind the values is in 12.2 and 12.3.
+
+| Constant                 | Value       | Meaning                                                                                                            |
+| ------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `MIN_INVESTMENT_PERIOD`  | `180`       | Minimum length, in seconds, of the Investment phase.                                                               |
+| `MAX_INVESTMENT_PERIOD`  | `946708560` | Maximum length, in seconds, of the Investment phase (30 Gregorian years of 365.2425 days).                         |
+| `LOAN_REDEMPTION_BUFFER` | `60`        | Minimum gap, in seconds, between a loan's final scheduled payment and the `RedemptionDate` of the vault funding it. |
 
 ## 3. Ledger Entry: `Vault` (modified)
 
 This proposal modifies the existing XLS-65 `Vault` ledger entry rather than introducing a new one. Its object identifier, ownership, reserve accounting, deletion rules, and RPC name are unchanged; only the fields listed below are added.
 
-### 3.2. Fields
+### 3.1. Fields
 
 | Field Name         | Modifiable? |  Required   | JSON Type | Internal Type | Default Value | Description                                                                              |
 | ------------------ | :---------: | :---------: | :-------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------- |
@@ -65,7 +72,7 @@ This proposal modifies the existing XLS-65 `Vault` ledger entry rather than intr
 | `SubscriptionDate` |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. |
 | `RedemptionDate`   |     No      | Conditional | `number`  |   `UINT32`    |     `N/A`     | Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`.                       |
 
-#### 3.2.1. VaultKind
+#### 3.1.1. VaultKind
 
 `VaultKind` is a `UINT8` enum. The following values are valid; any other value is treated as invalid.
 
@@ -74,7 +81,7 @@ This proposal modifies the existing XLS-65 `Vault` ledger entry rather than intr
 | `OpenEnded`   |  `0`  | Default. An open-ended vault with no phases (`NoPhase`); existing XLS-65 behaviour. Applies when absent. |
 | `ClosedEnded` |  `1`  | A closed-ended vault that moves through the Subscription, Investment, and Redemption phases.             |
 
-### 3.3. Phase Derivation
+### 3.2. Phase Derivation
 
 A vault's phase is derived at run time and never stored. Let `now` be the parent ledger close time (seconds since the Ripple epoch). An open-ended vault has no phases and its phase is `NoPhase`. A closed-ended vault's phase is determined by comparing `now` against its two immutable dates:
 
@@ -87,12 +94,12 @@ A vault's phase is derived at run time and never stored. Let `now` be the parent
 
 The vault kind is resolved from `sfVaultKind`: an absent field means `OpenEnded`; a present and recognised value decodes to that kind; any unrecognised value is treated as invalid.
 
-### 3.4 Invariants
+### 3.3. Invariants
 
 - For a closed-ended vault, `SubscriptionDate + MIN_INVESTMENT_PERIOD <= RedemptionDate < SubscriptionDate + MAX_INVESTMENT_PERIOD` always holds (equivalently `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD`), which implies `SubscriptionDate < RedemptionDate`.
 - `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are immutable: once set at creation they are never added, removed, or changed by any transaction.
 
-### 3.5. Example JSON
+### 3.4. Example JSON
 
 ```json
 {
@@ -155,7 +162,7 @@ On Success (tesSUCCESS):
 
 - For a closed-ended vault, `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD` always holds, which implies `SubscriptionDate < RedemptionDate`.
 
-### 4.5 Example JSON
+### 4.5. Example JSON
 
 ```json
 {
@@ -199,7 +206,7 @@ No changes.
 
 ### 5.5. Example JSON
 
-Not changed
+No changes.
 
 ## 6. Transaction: `VaultWithdraw` (modified)
 
@@ -223,7 +230,7 @@ No changes.
 
 ### 6.5. Example JSON
 
-Not changed
+No changes.
 
 ## 7. Transaction: `LoanSet` (modified)
 
@@ -237,7 +244,7 @@ No changes.
 
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
-3. If `startDate + (paymentInterval × paymentTotal)` is not strictly before `RedemptionDate`, return `tecNO_PERMISSION`.
+3. If the vault is closed-ended and `startDate + (paymentInterval × paymentTotal) + LOAN_REDEMPTION_BUFFER` is greater than `RedemptionDate`, return `tecNO_PERMISSION`. Equivalently, the loan's final scheduled payment MUST fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`.
 
 ### 7.3. State Changes
 
@@ -246,7 +253,7 @@ No changes.
 ### 7.4. Invariants
 
 - No closed-ended `LoanSet` succeeds unless the vault's phase is `Investment`.
-- No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is strictly before `RedemptionDate`.
+- No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`. Because `StartDate` and `PaymentInterval` are immutable once the `Loan` exists and `PaymentRemaining` only decreases, the bound holds for the lifetime of the loan.
 
 ### 7.5. Example JSON
 
@@ -279,15 +286,39 @@ No changes.
 
 Not changed
 
-## 9. RPC: `vault_info` (modified)
+## 9. Transaction: `LoanBrokerSet` (modified)
 
-The `vault_info` method retrieves a `Vault` ledger entry. This proposal does not change its request fields; it only adds the three new `Vault` fields to the response when they are present.
-
-### 9.1. Request Fields
+### 9.1. Fields
 
 No changes.
 
-### 9.2. Response Fields
+### 9.2. Failure Conditions
+
+#### 9.2.1. Protocol-Level Failures
+
+1. If `LoanBrokerID` is not specified (i.e. a new `LoanBroker` is being created) and the vault's `VaultKind` is not `ClosedEnded`, return `tecNO_PERMISSION`.
+
+### 9.3. State Changes
+
+No changes.
+
+### 9.4. Invariants
+
+- No `LoanBroker` is created against a vault whose `VaultKind` is not `ClosedEnded`.
+
+### 9.5. Example JSON
+
+Not changed
+
+## 10. RPC: `vault_info` (modified)
+
+The `vault_info` method retrieves a `Vault` ledger entry. This proposal does not change its request fields; it only adds the three new `Vault` fields to the response when they are present.
+
+### 10.1. Request Fields
+
+No changes.
+
+### 10.2. Response Fields
 
 The following fields are added to the `vault` object in the response. Only the newly introduced fields are listed here; all existing XLS-65 `vault_info` response fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
@@ -297,15 +328,15 @@ The following fields are added to the `vault` object in the response. Only the n
 | `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
 
-### 9.3. Failure Conditions
+### 10.3. Failure Conditions
 
 No changes.
 
-### 9.4. Example Request
+### 10.4. Example Request
 
 No changes.
 
-### 9.5. Example Response
+### 10.5. Example Response
 
 The `vault` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
 
@@ -324,17 +355,17 @@ The `vault` object of a closed-ended vault, showing only the new fields (all exi
 
 An open-ended vault omits `VaultKind`, `SubscriptionDate`, and `RedemptionDate`; its response is identical to the existing XLS-65 `vault_info` response.
 
-## 10. RPC: `ledger_entry` (modified)
+## 11. RPC: `ledger_entry` (modified)
 
 The `ledger_entry` method returns a `Vault` object when queried with a `vault` object ID. This proposal does not change its request fields; it only adds the three new `Vault` fields to the returned object when they are present.
 
-### 10.1. Request Fields
+### 11.1. Request Fields
 
 No changes.
 
-### 10.2. Response Fields
+### 11.2. Response Fields
 
-The same three fields added to `vault_info` (see 9.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
+The same three fields added to `vault_info` (see 10.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
 | Field Name         | Required? | JSON Type | Description                                                                            |
 | ------------------ | --------- | --------- | -------------------------------------------------------------------------------------- |
@@ -342,15 +373,15 @@ The same three fields added to `vault_info` (see 9.2) are added to the `Vault` o
 | `SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
 | `RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
 
-### 10.2.1. Failure Conditions
+### 11.3. Failure Conditions
 
 No changes.
 
-### 10.2.2. Example Request
+### 11.4. Example Request
 
 No changes.
 
-### 10.2.3. Example Response
+### 11.5. Example Response
 
 The `node` object of a closed-ended vault, showing only the new fields (all existing fields are as in XLS-65):
 
@@ -367,9 +398,9 @@ The `node` object of a closed-ended vault, showing only the new fields (all exis
 }
 ```
 
-## 11. Rationale
+## 12. Rationale
 
-### 11.1. Two stored boundaries: date-driven phases
+### 12.1. Two stored boundaries: date-driven phases
 
 This proposal stores two immutable dates on the vault and derives all three phases from them and the parent ledger close time:
 
@@ -379,15 +410,31 @@ This proposal stores two immutable dates on the vault and derives all three phas
 
 Because both boundaries are calendar dates fixed at creation, the vault's lifecycle is fully deterministic and monotonic: it advances from Subscription to Investment to Redemption exactly once and never re-enters an earlier phase. Depositors know the exact subscription window and lock-up term before they commit capital, and the vault needs no knowledge of the loans funded against it to determine its phase.
 
-## 12. Backwards Compatibility
+### 12.2. Why loans must mature a buffer before `RedemptionDate`
+
+`LoanSet` requires a closed-ended loan's final scheduled payment to fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate` (see 7.2.1), rather than merely before it:
+
+```
+StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER <= RedemptionDate
+```
+
+Without the buffer, a loan's final payment could be scheduled on, or one second before, `RedemptionDate`. Redemption would then open while the last payment was still in flight, and because the vault uses cash-basis accounting (see A.5) the first depositors to withdraw would redeem against a pool that had not yet received it. The buffer reserves a window between the last scheduled payment and the start of Redemption in which that payment can be made and recorded.
+
+The buffer is a floor on the schedule, not a guarantee of settlement: a borrower who pays late can still miss it. Its purpose is to stop a vault owner from *scheduling* a loan that is structurally certain to be unsettled at the phase boundary.
+
+### 12.3. Why `MIN_INVESTMENT_PERIOD` is 180 seconds
+
+The floor is chosen so that even a minimum-length Investment phase can accommodate one loan: a `StartDate` strictly after `SubscriptionDate` (`+1` second), a single payment at the XLS-66 minimum `PaymentInterval` of `60` seconds, and `LOAN_REDEMPTION_BUFFER` — that is, `MIN_INVESTMENT_PERIOD >= 1 + MIN_PAYMENT_INTERVAL + LOAN_REDEMPTION_BUFFER`. Were the floor any lower, a vault could be created whose Investment phase admits no valid loan at all. The three constants are otherwise independent; only their sum is constrained, which is why 180 exceeds the 121 seconds strictly required.
+
+## 13. Backwards Compatibility
 
 - The feature is inert unless the amendment is enabled. Ledger entries and transactions are unchanged for nodes that have not activated it.
 - **Open-ended vaults** retain their existing behaviour: their phase is `NoPhase`, so no deposit, withdrawal, or loan restriction is added.
 - All new fields are optional, so existing serialised vaults deserialise unchanged.
 
-## 13. Test Plan
+## 14. Test Plan
 
-### 13.1. VaultCreate
+### 14.1. VaultCreate
 
 - A valid closed-ended creation succeeds.
 - Creation with a missing `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`.
@@ -400,64 +447,66 @@ Because both boundaries are calendar dates fixed at creation, the vault's lifecy
 - Creation of an open-ended vault (or one with an absent kind) that carries a `SubscriptionDate` or `RedemptionDate` returns `temMALFORMED`.
 - Creation with an unknown `VaultKind` returns `temMALFORMED`.
 
-### 13.2. Phase derivation
+### 14.2. Phase derivation
 
 - The vault's phase is `Subscription` on/before `SubscriptionDate`, `Investment` after `SubscriptionDate` and before `RedemptionDate`, and `Redemption` on/after `RedemptionDate`.
 - Open-ended vaults are always `NoPhase`.
 
-### 13.3. VaultDeposit
+### 14.3. VaultDeposit
 
 - A deposit is allowed during Subscription.
 - A deposit is rejected during Investment and Redemption.
 - Deposits into open-ended vaults are unaffected.
 
-### 13.4. VaultWithdraw
+### 14.4. VaultWithdraw
 
 - A withdrawal is allowed during Subscription and Redemption.
 - A withdrawal is rejected during Investment.
 - Withdrawals from open-ended vaults are unaffected.
 - The `AssetsAvailable` cap still applies.
 
-### 13.5. LoanSet
+### 14.5. LoanSet
 
 - `LoanSet` is rejected during Subscription and Redemption.
-- `LoanSet` is permitted during Investment when the loan's final payment is strictly before `RedemptionDate`.
-- `LoanSet` is rejected when the loan's final payment is not strictly before `RedemptionDate`.
+- `LoanSet` is permitted during Investment when the loan's final payment is at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`.
+- `LoanSet` is rejected when the loan's final payment is fewer than `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`, including a final payment exactly on `RedemptionDate` or after it.
+- Boundary: a final payment exactly `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate` is accepted, and one second later is rejected.
+- A vault created with the minimum gap (`RedemptionDate - SubscriptionDate == MIN_INVESTMENT_PERIOD`) can still originate one loan at the minimum `PaymentInterval`.
 
-### 13.6. LoanAccept
+### 14.6. LoanAccept
 
 - `LoanAccept` is rejected during Subscription and Redemption.
 - `LoanAccept` is permitted during Investment.
 
-### 13.7. Pending loans
+### 14.7. Pending loans
 
 - A two-step loan whose start date has passed can no longer be accepted (`LoanAccept` is rejected), both while the vault is still in `Investment` and once it reaches `Redemption`.
 - `LoanDelete` on such an expired pending loan succeeds in the `Investment` phase — freeing its reserved principal back into `AssetsAvailable` even during the lock-up — and likewise succeeds in `Redemption`.
 - `VaultDelete` is blocked while a pending loan still exists and succeeds once that loan is deleted.
 
-### 13.8. RPC surface
+### 14.8. RPC surface
 
 - `vault_info` and `ledger_entry` return `VaultKind`, `SubscriptionDate`, and `RedemptionDate` for a closed-ended vault, and omit all three for an open-ended vault.
 
-### 13.9. Invariant checks
+### 14.9. Invariant checks
 
-- Each per-transaction invariant (3.4, 4.4, 5.4, 6.4, 7.4, 8.4) is asserted directly, so that no transaction can leave the vault in a state that violates it.
+- Each per-transaction invariant (3.3, 4.4, 5.4, 6.4, 7.4, 8.4, 9.4) is asserted directly, so that no transaction can leave the vault in a state that violates it.
 
-### 13.10. End-to-end tests
+### 14.10. End-to-end tests
 
 - An end-to-end lifecycle (subscribe, invest, redeem) with multiple depositors and loans exercises every phase transition and verifies the expected deposit, withdrawal, and lending behaviour in each phase.
 
-## 14. Reference Implementation
+## 15. Reference Implementation
 
 TBD
 
-## 15. Security Considerations
+## 16. Security Considerations
 
 - **Locked capital by design.** During Investment, depositors cannot withdraw. This is the intended contract, but it means depositors' capital is illiquid for the term. The `RedemptionDate` is set at creation and visible to depositors before they subscribe, so the lock-up ceiling cannot be silently extended.
 - **Immutability enforcement.** `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are immutable after creation and cannot be modified by any transaction; otherwise an owner could shorten the subscription window, extend the lock-up, or alter the term after capital is committed.
 - **Fixed subscription window.** The Subscription-to-Investment boundary is the immutable `SubscriptionDate`, so the deposit window and the start of the lock-up are fixed at creation and cannot be shortened or extended after depositors commit capital.
 - **Investment period bounds.** Enforcing `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD` prevents both a degenerate vault whose Investment phase is too short to deploy capital (which could otherwise be used to advertise a fixed-term product that effectively skips the lock-up) and a vault whose lock-up is unreasonably long.
-- **Maturity bound on loans.** Requiring the loan's final payment to fall strictly before `RedemptionDate` prevents the owner from originating loans that would keep capital illiquid past the advertised redemption date.
+- **Maturity bound on loans.** Requiring the loan's final payment to fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate` prevents the owner from originating loans that would keep capital illiquid past the advertised redemption date, and prevents a schedule crafted so that the final payment is still outstanding at the instant Redemption opens.
 - **Reserved/abandoned pending-loan capital.** An un-accepted two-step loan strands its principal outside redeemable `AssetsAvailable`: the capital is reserved against the pending loan and cannot be redeemed by depositors, and the loan's `Loan` object continues to hold a broker owner-count that blocks `LoanBrokerDelete` and therefore `VaultDelete` until it is cleaned up. Once `now >= RedemptionDate` the loan can no longer be accepted (see A.6), so the only resolution is for the broker to delete it; until then the reserved principal remains outside the redeemable pool.
 - **Asset-total changes during Investment.** The Investment-phase lock restricts _depositor_ deposits and withdrawals, not every change to the vault's asset total. A stranded two-step loan — one that can no longer be accepted because its start date has passed while the vault is still in Investment — MUST remain deletable, and deleting it MUST return its reserved principal to `AssetsAvailable`, raising the redeemable total even during the lock-up. Phase enforcement must therefore be scoped to block depositor-initiated withdrawals without preventing this legitimate return of reserved capital.
 - **Time source.** Both phase transitions rely on the ledger close time, which is consensus-derived and not manipulable by a single participant.
@@ -492,4 +541,4 @@ A practical consequence is that the timing of a withdrawal affects how much a de
 
 ### A.6: What happens to a pending two-step loan that is never accepted before Redemption?
 
-Nothing changes on the ledger: the loan simply remains pending, exactly as if it had been created through the one-step flow and never accepted. The broker can still delete it, but it can no longer be accepted. `LoanAccept` is restricted to the Investment window, so once `now >= RedemptionDate` the loan cannot be activated; and because a loan's start date must fall before `RedemptionDate`, a pending loan whose start date has already passed can never be accepted either. In short, an unaccepted two-step loan cannot lock capital past `RedemptionDate` - it is left as a deletable, inert object.
+Nothing changes on the ledger: the loan simply remains pending, exactly as if it had been created through the one-step flow and never accepted. The broker can still delete it, but it can no longer be accepted. `LoanAccept` is restricted to the Investment window, so once `now >= RedemptionDate` the loan cannot be activated; and because a loan's whole payment schedule must complete at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`, a pending loan whose start date has already passed can never be accepted either. In short, an unaccepted two-step loan cannot lock capital past `RedemptionDate` - it is left as a deletable, inert object.
