@@ -259,7 +259,7 @@ No changes.
 
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
-3. If the vault is closed-ended and, using arithmetic wide enough to represent the complete expression without overflow, `StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER` is greater than `RedemptionDate`, where `StartDate` is `now` (XLS-66 sets a new loan's `StartDate` to the ledger close time), return `tecNO_PERMISSION`. Equivalently, the loan's final scheduled payment MUST fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`.
+3. If the vault is closed-ended and `StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER` is greater than `RedemptionDate`, where `StartDate` is `now` (XLS-66 sets a new loan's `StartDate` to the ledger close time), return `tecNO_PERMISSION`. Equivalently, the loan's final scheduled payment MUST fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`. The whole expression MUST be computed in arithmetic wide enough to hold it without overflow.
 
 ### 7.3. State Changes
 
@@ -268,7 +268,7 @@ No changes.
 ### 7.4. Invariants
 
 - No closed-ended `LoanSet` succeeds unless the vault's phase is `Investment`.
-- No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`. Because `StartDate` and `PaymentInterval` are immutable once the `Loan` exists and `PaymentRemaining` only decreases, the bound holds for the lifetime of the loan.
+- No closed-ended `LoanSet` succeeds unless the loan's final scheduled payment is at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`. The bound is checked at origination only. `StartDate` and `PaymentInterval` are immutable, and `LoanPay` moves `NextPaymentDueDate` forward by exactly one `PaymentInterval` per scheduled payment, late or not, so repayment keeps the schedule in place. `LoanManage` is not phase-gated, and this proposal does not re-check the bound if XLS-66 impairment rules move a due date later. The vault is unaffected either way: Redemption still opens on `RedemptionDate`, and a late payment is added when it arrives (see A.5).
 
 ### 7.5. Example JSON
 
@@ -525,7 +525,7 @@ The floor is chosen so that even a minimum-length Investment phase can accommoda
 
 ### 14.12. Invariant checks
 
-- An invariant check asserts each of 4.4, 5.4, 6.4, 7.4, and 8.4, so no transaction can leave the ledger in a state that breaks them.
+- An invariant check asserts each of 4.4, 5.4, 6.4, 7.4, and 8.4, so no transaction can leave the ledger in a state that breaks them. For 7.4 the check runs on loan creation only, and asserts `StartDate + PaymentInterval × PaymentRemaining + LOAN_REDEMPTION_BUFFER <= RedemptionDate`.
 - 3.3 is covered in two parts: the date-presence and period bound are asserted on `VaultCreate` (the same check as 4.4), and the immutability of `VaultKind`, `SubscriptionDate`, and `RedemptionDate` is asserted on every transaction that modifies a `Vault`. A test changes each of the three fields on an existing closed-ended vault and expects the immutability check to fire.
 - 9.4 has no invariant check. It is enforced by the failure condition in 9.2.1 and covered by the tests in 14.10.
 
