@@ -259,7 +259,7 @@ No changes.
 
 1. If the vault is closed-ended and `now <= SubscriptionDate` (`now` is the parent ledger close time), return `tecTOO_SOON`.
 2. If the vault is closed-ended and `now >= RedemptionDate`, return `tecEXPIRED`.
-3. If the vault is closed-ended and `StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER` is greater than `RedemptionDate`, where `StartDate` is `now` (XLS-66 sets a new loan's `StartDate` to the ledger close time), return `tecNO_PERMISSION`. Equivalently, the loan's final scheduled payment MUST fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`.
+3. If the vault is closed-ended and, using arithmetic wide enough to represent the complete expression without overflow, `StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER` is greater than `RedemptionDate`, where `StartDate` is `now` (XLS-66 sets a new loan's `StartDate` to the ledger close time), return `tecNO_PERMISSION`. Equivalently, the loan's final scheduled payment MUST fall at least `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate`.
 
 ### 7.3. State Changes
 
