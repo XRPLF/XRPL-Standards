@@ -33,7 +33,7 @@ Please check [x] relevant options, delete irrelevant ones.
 If this PR changes templates/, the validation scripts, the XLS process, or any
 AI instruction file, confirm the AI guidance still describes them correctly:
 .github/copilot-instructions.md, .github/skills/, and .agents/skills/ (plus the
-.claude/skills symlinks). See CONTRIBUTING.md section 8.3.
+.claude/skills stubs). See CONTRIBUTING.md section 8.3.
 -->
 
 <!--
