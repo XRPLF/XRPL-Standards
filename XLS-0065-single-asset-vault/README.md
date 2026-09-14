@@ -178,7 +178,7 @@ The `MPTokenIssuance` object represents the share on the ledger. It is created a
 
 `VaultCreate` omits `MaximumAmount` on the share issuance rather than storing an explicit cap. The number of shares in issue is therefore bounded by the protocol maximum for an `MPTokenIssuance`, `0x7FFFFFFFFFFFFFFF`, as defined in [XLS-33 §2.1.1.2.5](../XLS-0033-multi-purpose-tokens/README.md#21125-maximumamount).
 
-###### Flags
+###### 3.1.6.2.2 Flags
 
 The following flags are set based on whether the shares are transferable and if the vault is public or private.
 

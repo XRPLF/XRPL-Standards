@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-09-04
-  updated: 2026-09-11
+  updated: 2026-09-14
 </pre>
 
 # Vault Accounting and Cap Invariants
@@ -91,22 +91,6 @@ Cap enforcement becomes:
 - `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap is no longer failed by this check.
 
 Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
-
-#### 3.1.3 Example JSON
-
-```json
-{
-  "LedgerEntryType": "Vault",
-  "Asset": {
-    "currency": "USD",
-    "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
-  },
-  "AssetsTotal": "1010",
-  "AssetsAvailable": "10",
-  "AssetsMaximum": "1000",
-  "LossUnrealized": "1000"
-}
-```
 
 ## 4. Rationale
 
