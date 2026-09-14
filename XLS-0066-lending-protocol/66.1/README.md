@@ -10,11 +10,11 @@
   updated: 2026-09-08
 </pre>
 
-# Lending Protocol Cash-Basis Accounting
+# 66.1 Lending Protocol Cash-Basis Accounting
 
 ## 1. Abstract
 
-Under the `LendingProtocolV1_1` amendment, for a Vault with `LEVersion == 1` (cash basis, see [XLS-65.1 cash-basis accounting](../../XLS-0065-single-asset-vault/65.1/vault-cash-basis.md)), `LoanBroker.DebtTotal` tracks loan principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
+Under the `LendingProtocolV1_1` amendment, for a Vault with `LEVersion == 1` (cash basis, see [XLS-65.1.3](../../XLS-0065-single-asset-vault/65.1/65.1.3-vault-cash-basis.md)), `LoanBroker.DebtTotal` tracks loan principal only and `Vault.AssetsTotal` recognises interest when it is collected rather than when a Loan is issued.
 
 ## 2. Motivation
 
