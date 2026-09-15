@@ -6,6 +6,7 @@
   status: Draft
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/589
   created: 2026-07-14
+  updated: 2026-09-15
 </pre>
 
 # On-Chain Cosigner
