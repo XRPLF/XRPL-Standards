@@ -348,7 +348,9 @@ Whenever the available cover falls below the minimum cover required, two consequ
 - The Lender cannot issue new Loans.
 - The Lender cannot directly receive fees. The fees are instead added to the First-Loss Capital to cover the deficit.
 
-**Examples**
+**Examples (legacy Vault, `LEVersion` absent)**
+
+`DefaultAmount` here is principal plus interest. For a cash-basis Vault (`LEVersion = 1`), `DefaultAmount` is principal only; see [§3.10.5.1](#31051-worked-example-pre--vs-post-lendingprotocolv1_1-loan-default).
 
 **Example 1: Loan Default**
 
