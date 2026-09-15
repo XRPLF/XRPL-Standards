@@ -14,7 +14,7 @@ updated: 2026-09-15
 
 ## 1. Abstract
 
-This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment after `SubscriptionDate` (from which point new deposits are rejected and capital is locked), and leaves Investment for Redemption on `RedemptionDate`. The boundaries are asymmetric: `SubscriptionDate` is the last second of Subscription, while `RedemptionDate` is the first second of Redemption (see 3.2). Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so no payment is scheduled to fall due once Redemption has opened. Open-ended vaults are behaviourally unaffected.
+This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment after `SubscriptionDate` (from which point new deposits are rejected and capital is locked), and leaves Investment for Redemption on `RedemptionDate`. The boundaries are asymmetric: `SubscriptionDate` is the last second of Subscription, while `RedemptionDate` is the first second of Redemption (see 3.2). Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so no payment is scheduled to fall due once Redemption has opened. Open-ended vaults keep their deposit, withdrawal, and loan behaviour, with one exception: once the amendment is enabled, a new `LoanBroker` can no longer be created against one (see 8.2.1).
 
 ## 2. Introduction
 
@@ -28,7 +28,7 @@ A closed-ended vault moves through three stages in order, and never goes backwar
 
 The move from one stage to the next happens automatically at pre-set dates that are chosen when the vault is created and cannot be changed afterwards. Because the schedule is fixed and public, everyone involved knows in advance when the fund-raising window closes, how long their capital is committed, and when they can expect to be repaid.
 
-This proposal extends the [Single Asset Vault](../XLS-0065-single-asset-vault/README.md) (XLS-65) with a new `ClosedEnded` vault kind that enforces this lifecycle on-chain. Existing open-ended vaults are unaffected and continue to behave exactly as before.
+This proposal extends the [Single Asset Vault](../XLS-0065-single-asset-vault/README.md) (XLS-65) with a new `ClosedEnded` vault kind that enforces this lifecycle on-chain. Existing open-ended vaults continue to behave as before, with one exception: once the amendment is enabled, a new `LoanBroker` cannot be created against an open-ended vault (see 8.2.1 and 12). A `LoanBroker` already attached to one keeps working, and loans may still be originated against it.
 
 ### 2.1. Permission Matrix
 
