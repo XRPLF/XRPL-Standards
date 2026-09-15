@@ -420,7 +420,7 @@ The floor is chosen so that even a minimum-length Investment phase can accommoda
 ## 12. Backwards Compatibility
 
 - The feature is inert unless `LendingProtocolV1_1` is enabled (see 2.3). Ledger entries and transactions are unchanged for nodes that have not activated it.
-- **Open-ended vaults** retain their existing behaviour: their phase is `NoPhase`, so no deposit, withdrawal, or loan restriction is added.
+- **Open-ended vaults** retain their existing deposit, withdrawal, and loan-origination behavior: their phase is `NoPhase`, so the `VaultDeposit`, `VaultWithdraw`, and `LoanSet` phase gates do not apply. New `LoanBroker` creation is separately rejected by 8.2.1; existing brokers are grandfathered as described below.
 - All new fields are optional, so existing serialised vaults deserialise unchanged.
 - **`VaultCreate` remains unrestricted.** Open-ended vaults are still legal objects and may still be created after the amendment; the closed-ended requirement binds at broker creation (8.2.1), not at vault creation.
 - **Existing loan brokers are grandfathered.** The 8.2.1 restriction is evaluated only on the branch that creates a new `LoanBroker`. A `LoanBroker` already attached to an open-ended vault is unaffected: it may still be updated by a `LoanBrokerSet` carrying an explicit `LoanBrokerID`, and loans may still be originated against it, since an open-ended vault is `NoPhase` and the 7.2.1 gates therefore never apply to it.
