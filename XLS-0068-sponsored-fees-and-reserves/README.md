@@ -99,7 +99,7 @@ There are two ways in which he could do this:
 This subsection consolidates the rules that determine _which_ sponsorship source is used and _when_ sponsorship is allowed at all, so that the behavior can be reasoned about in one place. Each rule is stated normatively in the section referenced alongside it.
 
 1. **A `Sponsorship` object always governs, and there is no fallback.** If a `Sponsorship` object exists between the sponsor and the sponsee, it is always the authoritative source for that sponsorship: its budgets (`FeeAmount`, `RemainingOwnerCount`) are the ones checked and consumed, and its limits (`MaxFee`) always apply. This holds even when the sponsor also co-signs the transaction; a co-signature never bypasses the object's budget and never falls back to the sponsor's `AccountRoot.Balance`. If the budget is exhausted, the transaction fails rather than charging the sponsor's balance. This keeps the accounting predictable; by creating the object, the sponsor has opted into explicit budgets, and those budgets are the single source of truth for what the sponsee may spend. A sponsor who wants to co-sign directly from their balance again can delete the `Sponsorship` object via `SponsorshipSet`. See [sections 8.3.2](#832-fee-sponsorship-failures), [8.3.3](#833-reserve-sponsorship-failures), and [21.2](#212-pre-funded-vs-co-signed-sponsorship).
-2. **Authorization comes from exactly one of two mechanisms.** Either a populated `SponsorSignature` (co-signature), or an existing `Sponsorship` object whose relevant `lsfSponsorshipRequireSignFor*` flag is unset. There is no third mechanism — in particular, there is no granular delegation permission that authorizes sponsorship. See [section 14](#14-sponsor-authorization-mechanism).
+2. **Authorization comes from exactly one of two mechanisms.** Either a populated `SponsorSignature` (co-signature), or an existing `Sponsorship` object whose relevant `lsfSponsorshipRequireSignFor*` flag is unset. There is no third mechanism — in particular, there is no granular delegation permission that authorizes sponsorship. See [section 14](#14-sponsor-authorization-mechanism). (An inner transaction of a `Batch` is authorized differently still, via the outer transaction's `BatchSigners` array instead of a populated `SponsorSignature`; see [section 13.3](#133-inner-transactions).)
 3. **A co-signed fee may not draw the sponsor below its reserve.** Unlike an ordinary, non-sponsored fee (which may draw the paying account below its reserve), a co-signed sponsored fee is capped at the sponsor's `Balance - accountReserve`. The pre-funded path has no reserve interaction — it spends from `Sponsorship.FeeAmount`, capped by `MaxFee`. In both cases a shortfall is an outright failure rather than a partial charge. See [section 8.3.2](#832-fee-sponsorship-failures).
 4. **Delegation.** If the transaction is submitted by a `Delegate` ([XLS-75](../XLS-0075-permission-delegation/README.md)):
    - **Fee sponsorship** is permitted. The pre-funded relationship that is consulted is the one recorded against the `Delegate` (the transaction's initiator), not against `tx.Account`. Rule 1 still applies to that relationship.
@@ -582,7 +582,7 @@ If a `Sponsorship` object does not exist, the `tx.Fee` value is decremented from
 #### 8.4.2. Reserve Sponsorship State Changes
 
 1. Any non-account ledger entry created as part of the transaction whose owner is `tx.Account` will have a `Sponsor` field pointing at `tx.Sponsor`. **Account** creation is a separate mechanism: a new `AccountRoot` is only sponsored when the creating `Payment` sets `tfSponsorCreatedAccount` (see [section 11.2](#112-flags)), and its `Sponsor` is unconditionally `tx.Account`, not `tx.Sponsor`. There is no third-party `spfSponsorReserve` path for account creation; `spfSponsorReserve` on a `Payment` only affects objects created for `tx.Account` (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)).
-1. A reserve sponsor only ever covers objects owned by `tx.Account`. If an allow-listed transaction creates a ledger object whose owner is some other account (e.g. `Clawback` touching the holder's trust line), that object is simply created **unsponsored** and its own owner bears the reserve — this is not an error, and the transaction still succeeds. The same is true for objects owned by a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts); see [section 17.3](#173-pseudo-accounts).
+1. A reserve sponsor only ever covers objects owned by `tx.Account`. If an allow-listed transaction creates or modifies a ledger object whose owner is some other account (e.g. `Clawback` adjusting the holder's trust line), that object's reserve is simply left **unsponsored** and its own owner continues to bear it — this is not an error, and the transaction still succeeds. The same is true for objects owned by a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts); see [section 17.3](#173-pseudo-accounts).
 1. The sponsor's `SponsoringOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction, and the `SponsoringAccountCount` field will be incremented by the number of new accounts that are sponsored as a part of the transaction.
 1. The sponsee's `SponsoredOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction.
 1. The `SponsoredOwnerCount`, `SponsoringOwnerCount`, and `SponsoringAccountCount` fields will be decremented when those objects/accounts are deleted.
@@ -615,8 +615,8 @@ _Note: This transaction may still be sponsored, via the standard `Sponsor` field
 | ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tfSponsorshipSetRequireSignForFee`       | `0x00010000` | Adds the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.    |
 | `tfSponsorshipClearRequireSignForFee`     | `0x00020000` | Removes the restriction that every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor. |
-| `tfSponsorshipSetRequireSignForReserve`   | `0x00040000` | Adds the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.         |
-| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this counterparty sponsor for sponsoring fees requires a signature from the counterparty sponsor.      |
+| `tfSponsorshipSetRequireSignForReserve`   | `0x00040000` | Adds the restriction every use of this counterparty sponsor for sponsoring reserves requires a signature from the counterparty sponsor.     |
+| `tfSponsorshipClearRequireSignForReserve` | `0x00080000` | Removes the restriction every use of this counterparty sponsor for sponsoring reserves requires a signature from the counterparty sponsor.  |
 | `tfDeleteObject`                          | `0x00100000` | Removes the ledger object.                                                                                                                  |
 
 ### 9.3. Transaction Fee
@@ -635,7 +635,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 6. `MaxFee` is not denominated in XRP, or is negative (`temBAD_AMOUNT`)
 7. `FeeAmountDelta` is not denominated in XRP, or is zero (`temBAD_AMOUNT`)
 8. `CounterpartySponsor` or `Sponsee` does not exist on the ledger (`tecNO_DST`)
-9. `Owner == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
+9. `CounterpartySponsor == Sponsee` (attempting to create self-sponsorship) (`temMALFORMED`)
 10. `CounterpartySponsor` does not have sufficient XRP to cover the reserve for the `Sponsorship` object (`tecUNFUNDED`)
 11. `CounterpartySponsor` does not have sufficient XRP to cover the `FeeAmountDelta` being committed (`tecUNFUNDED`)
 12. `Sponsee` **or** `CounterpartySponsor` is a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (`tecPSEUDO_ACCOUNT` — see [section 17.3](#173-pseudo-accounts))
@@ -682,7 +682,7 @@ If updating an existing `Sponsorship` object:
 * If the net `FeeAmountDelta` (after clamping) is positive, deduct that amount of XRP from the counterparty sponsor's balance.
 * If the net `FeeAmountDelta` (after clamping) is negative, return that amount of XRP to the counterparty sponsor's balance.
 
-_Note: If the outer transaction is itself sponsored (via the standard `Sponsor` / `SponsorSignature` fields, as described in [section 9](#9-transaction-sponsorshipset)), that outer sponsor pays the transaction fee. `spfSponsorReserve` is not supported on `SponsorshipSet` (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)), so the reserve for the newly created `Sponsorship` object is always paid by the `CounterpartySponsor` (`Sponsorship.Owner`), never by the outer sponsor. The outer sponsor and the `CounterpartySponsor` are distinct roles._
+_Note: If the outer transaction is itself sponsored (via the standard `Sponsor` / `SponsorSignature` fields, as described in [section 8](#8-transactions-common-fields)), that outer sponsor pays the transaction fee. `spfSponsorReserve` is not supported on `SponsorshipSet` (see [section 8.3.4](#834-transactions-that-cannot-be-sponsored)), so the reserve for the newly created `Sponsorship` object is always paid by the `CounterpartySponsor` (`Sponsorship.Owner`), never by the outer sponsor. The outer sponsor and the `CounterpartySponsor` are distinct roles._
 
 If deleting the `Sponsorship` object (`tfDeleteObject` flag):
 
@@ -743,7 +743,7 @@ If it is not included, then it refers to the account sending the transaction.
 
 #### 10.1.2. `Sponsor`
 
-The `Sponsor` field is already added in the transaction common fields (see section [6.1.1](#611-sponsor)), but it has some additional rules associated with it on the `SponsorshipTransfer` transaction.
+The `Sponsor` field is already added in the transaction common fields (see section [8.1](#81-fields)), but it has some additional rules associated with it on the `SponsorshipTransfer` transaction.
 
 In this case, if `Sponsor` is included with the `spfSponsorReserve` flag, then the reserve sponsorship for the provided object will be transferred to the `Sponsor` instead of passing back to the ledger object's owner.
 
@@ -1289,7 +1289,7 @@ The per-transaction sections (§11+) document the specific reserve behavior for 
 
 [Pseudo-accounts](https://xrpl.org/docs/concepts/accounts/pseudo-accounts) (AMM, Vault/SAV/LP, Loan, and any future pseudo-account types) interact with sponsorship under two rules:
 
-1. **Pseudo-accounts cannot be sponsored.** A pseudo-account's `AccountRoot` may not carry a `Sponsor` field, and a pseudo-account may not appear as the sponsee in a sponsorship (whether co-signed or via a `Sponsorship` object).
+1. **Pseudo-accounts cannot be sponsored, and cannot act as a `CounterpartySponsor`.** A pseudo-account's `AccountRoot` may not carry a `Sponsor` field, and a pseudo-account may not appear as the sponsee or the `CounterpartySponsor` in a sponsorship (whether co-signed or via a `Sponsorship` object).
 2. **Objects owned by pseudo-accounts cannot be sponsored.** Any ledger entry whose owner is a pseudo-account is excluded from the sponsorable types in [section 4.3.1](#431-allowed-ledger-entry-types), regardless of the entry's type.
 
 **Reserve waiver:** in the rare case where a pseudo-account is the sole owner of an object, the reserve for that object is waived entirely. This is unchanged from existing pseudo-account semantics and is not a sponsorship behavior.
