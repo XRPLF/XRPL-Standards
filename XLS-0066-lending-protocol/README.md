@@ -1522,7 +1522,7 @@ The `Loan` object is updated to reflect the payment.
 
 **3. `LoanBroker` and `Vault` Object State Changes**
 
-The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
+The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. For a legacy Vault (`LEVersion` absent), `valueChange`—the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, with an important distinction for late payments. For a cash-basis Vault (`LEVersion == 1`), `valueChange` is not applied to either field; steps 6 and 7 use `principalPaid` and `interestPaid` instead.
 
 6. **`LoanBroker` Updates**:
    - `LoanBroker.DebtTotal`:
@@ -1837,7 +1837,8 @@ $$
 
 - `valueChange > 0` (always positive for late payments)
 - Not reflected in `Loan.TotalValueOutstanding` (unanticipated value increase)
-- Applied directly to `Vault.AssetsTotal` and `LoanBroker.DebtTotal`
+- Legacy Vault (`LEVersion` absent): applied directly to `Vault.AssetsTotal` and `LoanBroker.DebtTotal`
+- Cash-basis Vault (`LEVersion == 1`): not applied to either field; `Vault.AssetsTotal` increases by `interestPaid` and `LoanBroker.DebtTotal` decreases by `principalPaid`
 
 ### 5. Overpayment Processing
 
