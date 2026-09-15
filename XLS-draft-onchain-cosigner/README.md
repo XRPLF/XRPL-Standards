@@ -144,7 +144,7 @@ Signatures are stored directly in the proposed transaction's own native signatur
 - **`Batch` (XLS-56):** authorization of the **outer account** (the Batch's `Account`) goes into `ProposedTransaction.Signers`; each **other participant account** (an account with inner transactions in `RawTransactions`) is authorized by an entry in `ProposedTransaction.BatchSigners`, which holds at most 24 entries. A single-signature participant's entry carries `SigningPubKey`/`TxnSignature` directly; a multi-signing participant's entry carries a nested `Signers` array. This mirrors [XLS-56 §2.1.3](../XLS-0056-batch/README.md).
 - **Auxiliary co-signature (e.g. [`LoanSet`, XLS-66](../XLS-0066-lending-protocol/README.md); sponsored transactions, [XLS-68](../XLS-0068-sponsored-fees-and-reserves/README.md)):** a transaction that requires a second party to co-authorize carries a dedicated signature field for that party — `CounterpartySignature` for the `Counterparty`, `SponsorSignature` for the `Sponsor`. Each party's signature goes into its own field (`SigningPubKey`/`TxnSignature` for a single-signature party, or a nested `Signers` array for a multi-signing one), while the transaction's own `Account` is authorized through `ProposedTransaction.Signers` as above. A transaction may require more than one. See §6.1.
 
-Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 8 entries (the maximum `SignerList` size). `BatchSigners` is also sorted by `Account` and holds at most 24 entries. **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature from its `SigningFor` account and `ProposalSignature.Account`.
+Every `Signers` array (top-level or nested in a `BatchSigner`) is kept sorted by `Account` and holds at most 32 entries (the maximum `SignerList` size). `BatchSigners` is also sorted by `Account` and holds at most 24 entries. **Weights are not stored**: a signer's weight and the relevant quorum are always read from the applicable account's `SignerList`, both when a signature is added and when the transaction is finally submitted (see §9.3). Clients compute "remaining weight to quorum" by joining the collected signatures against the relevant `SignerList`(s). §6.1 describes how `TransactionProposalSign` routes a signature from its `SigningFor` account and `ProposalSignature.Account`.
 
 ### 4.3. Ownership
 
@@ -163,14 +163,15 @@ Each increment is the standard owner-reserve amount (currently 0.2 XRP, subject 
 
 ### 4.5. Deletion
 
-**Terminal proposal:** A proposal is **terminal** when it stops accepting new signatures and becomes permissionlessly cleanable, i.e. when either of the following is true relative to the parent ledger:
+**Terminal proposal:** A proposal is **terminal** when it stops accepting new signatures and becomes permissionlessly cleanable, i.e. when any of the following is true relative to the parent ledger:
 
 - The parent ledger's close time is at or after `Expiration`; or
-- The proposed transaction includes a `LastLedgerSequence` and the current ledger sequence is greater than it.
+- The proposed transaction includes a `LastLedgerSequence` and the current ledger sequence is greater than it; or
+- The proposed transaction's target account no longer exists, having been removed by `AccountDelete`. `AccountDelete` deletes the target's owned objects outright rather than spending them, so it also removes the reserved `TicketSequence` without any transaction ever specifying that ticket as consumed — the automatic cleanup described below, which keys off a consumed `TicketSequence`, never fires, so this condition is what lets the orphaned proposal be cleaned up instead.
 
 A terminal proposal exists in ledger state only until it is cleaned up.
 
-"Terminal" describes the **proposal object**, not the signatures it holds. `Expiration` belongs to the proposal, not to the proposed transaction, so it is not part of what anyone signed and does not bound submission: a proposal that was already complete when it expired still holds a fully signed transaction anyone can copy and submit (§8.1.2, §13.4). Only the proposed transaction's own `LastLedgerSequence`, or spending its `TicketSequence`, makes it unsubmittable.
+"Terminal" describes the **proposal object**, not the signatures it holds. `Expiration` belongs to the proposal, not to the proposed transaction, so it is not part of what anyone signed and does not bound submission: a proposal that was already complete when it expired still holds a fully signed transaction anyone can copy and submit (§8.1.2, §13.4). Only the proposed transaction's own `LastLedgerSequence`, spending its `TicketSequence`, or deletion of its target account (which removes the `TicketSequence` without spending it), makes it unsubmittable.
 
 **Deletion Transactions:** `TransactionProposalCancel`, `TransactionProposalSign`, and — implicitly — **any transaction of the target account that consumes the proposed transaction's `TicketSequence`** (see below).
 
@@ -189,7 +190,7 @@ This removes only the leftover object. Signatures already copied off-ledger stay
 ### 4.6. Invariants
 
 - `Expiration` is always present and non-zero.
-- Every entry in `ProposedTransaction.Signers` is unique by `Account`, and the array is sorted by `Account` with at most 8 entries.
+- Every entry in `ProposedTransaction.Signers` is unique by `Account`, and the array is sorted by `Account` with at most 32 entries.
 - Every entry in `ProposedTransaction.BatchSigners`, if present, is unique by `Account`, and the array is sorted by `Account` with at most 24 entries.
 - Every entry in `ProposedTransaction.Signers` is a signature that was cryptographically valid over the proposed transaction (excluding its `Signers` field) at the time it was added.
 - Only the proposed transaction's signature fields change over the life of the proposal — its top-level `SigningPubKey`/`TxnSignature` (empty at creation; filled only when the target account signs with its own key, §6.1.2), `Signers`, `CounterpartySignature`, `SponsorSignature`, and `BatchSigners`. Every non-signature field is fixed at creation.
@@ -390,7 +391,7 @@ All Data Verification failures return a `tem`-level error.
 6. The contribution duplicates one already recorded in the **same mode**: it is a multi-signature share and `ProposalSignature.Account` is already present in that destination's `Signers` array, or it is a single-signature and a single-signature entry for `SigningFor` already exists (`tecDUPLICATE`). (The same `ProposalSignature.Account` may still sign for a different `SigningFor`, or for a different slot of the same `SigningFor` under a different payload.)
 7. The contribution conflicts with the existing authorization mode for `SigningFor` — a multi-signature share when a single-signature entry is already recorded, or a single-signature when a `Signers` array already has at least one entry (`tecNO_PERMISSION`). (Every mode mismatch is covered here, not #6, even where a duplicate `Account` is also involved.)
 8. The contribution is a top-level single-signature for the proposed transaction's own `Account`/`Delegate` (§6.1.2), and a `Signers`, `CounterpartySignature`, or `SponsorSignature` entry has already been recorded on the proposal (`tecNO_PERMISSION`). Filling the top-level `SigningPubKey` changes the signing payload those whole-transaction slots sign over, so this contribution is only accepted before any of them exist; a target account signing later must contribute a `Signers` entry instead. `BatchSigners` entries do not trigger this condition (§4.2.1).
-9. Adding the share would exceed the maximum of 8 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
+9. Adding the share would exceed the maximum of 32 entries in the destination `Signers` array, or would add a `BatchSigner` past the 24-entry `BatchSigners` limit (`tecOVERSIZE`).
 10. The contribution would leave the proposed transaction's `Fee` below the minimum for the signatures it would then carry (§4.2.1) (`tecINSUFF_FEE`). Checked on every contribution, so a proposal never collects more signatures than its fee pays for.
 
 ### 6.4. State Changes
