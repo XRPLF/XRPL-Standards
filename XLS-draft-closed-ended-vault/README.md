@@ -14,7 +14,7 @@ updated: 2026-09-15
 
 ## 1. Abstract
 
-This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment at `SubscriptionDate` (after which new deposits are rejected and capital is locked), and leaves Investment for Redemption at `RedemptionDate`. Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so no payment is scheduled to fall due once Redemption has opened. Open-ended vaults are behaviourally unaffected.
+This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment after `SubscriptionDate` (from which point new deposits are rejected and capital is locked), and leaves Investment for Redemption on `RedemptionDate`. The boundaries are asymmetric: `SubscriptionDate` is the last second of Subscription, while `RedemptionDate` is the first second of Redemption (see 3.2). Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so no payment is scheduled to fall due once Redemption has opened. Open-ended vaults are behaviourally unaffected.
 
 ## 2. Introduction
 
@@ -53,13 +53,13 @@ The full permission matrix across all transactors and phases is:
 
 ### 2.2. Protocol Constants
 
-This proposal defines three protocol constants. The investment period bounds are enforced at vault creation (see 4.2.1) and the redemption buffer at loan origination (see 7.2.1); the reasoning behind the values is in 11.2 and 11.3.
+This proposal defines three protocol constants. The investment period bounds, which form the half-open range `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD`, are enforced at vault creation (see 4.2.1) and the redemption buffer at loan origination (see 7.2.1); the reasoning behind the values is in 11.2 and 11.3.
 
-| Constant                 | Value       | Meaning                                                                                                             |
-| ------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------- |
-| `MIN_INVESTMENT_PERIOD`  | `180`       | Minimum length, in seconds, of the Investment phase.                                                                |
-| `MAX_INVESTMENT_PERIOD`  | `946708560` | Maximum length, in seconds, of the Investment phase (30 Gregorian years of 365.2425 days).                          |
-| `LOAN_REDEMPTION_BUFFER` | `60`        | Minimum gap, in seconds, between a loan's final scheduled payment and the `RedemptionDate` of the vault funding it. |
+| Constant                 | Value       | Meaning                                                                                                                                                                  |
+| ------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MIN_INVESTMENT_PERIOD`  | `180`       | Inclusive lower bound, in seconds, on the length of the Investment phase (`RedemptionDate - SubscriptionDate`). A gap of exactly this value is accepted.                 |
+| `MAX_INVESTMENT_PERIOD`  | `946708560` | Exclusive upper bound, in seconds, on the length of the Investment phase (30 Gregorian years of 365.2425 days). The longest accepted gap is `MAX_INVESTMENT_PERIOD - 1`. |
+| `LOAN_REDEMPTION_BUFFER` | `60`        | Minimum gap, in seconds, between a loan's final scheduled payment and the `RedemptionDate` of the vault funding it.                                                      |
 
 11.2 and 11.3 also refer to `MIN_PAYMENT_INTERVAL`: the existing XLS-66 minimum of `60` seconds for `LoanSet.PaymentInterval`. This proposal does not change it.
 
@@ -527,7 +527,7 @@ No. `RedemptionDate` is immutable. To run a different schedule the owner creates
 
 ### A.3: Does originating a loan lock the vault?
 
-No. A vault's phase is driven only by `SubscriptionDate` and `RedemptionDate`, not by whether any loans exist. Deposits remain open throughout Subscription regardless of loan activity, and the vault enters Investment at `SubscriptionDate` whether or not any loan has been originated.
+No. A vault's phase is driven only by `SubscriptionDate` and `RedemptionDate`, not by whether any loans exist. Deposits remain open throughout Subscription regardless of loan activity, and the vault enters Investment once `now` passes `SubscriptionDate` whether or not any loan has been originated.
 
 ### A.4: Why not a maintained `LoanCount`?
 
