@@ -285,7 +285,7 @@ No changes.
 
 #### 8.2.1. Protocol-Level Failures
 
-1. If `LoanBrokerID` is not specified (i.e. a new `LoanBroker` is being created) and the vault's `VaultKind` is not `ClosedEnded`, return `tecNO_PERMISSION`.
+1. When `LendingProtocolV1_1` is enabled, if `LoanBrokerID` is not specified (i.e. a new `LoanBroker` is being created) and the vault's `VaultKind` is not `ClosedEnded`, return `tecNO_PERMISSION`.
 
 ### 8.3. State Changes
 
