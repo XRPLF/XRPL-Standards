@@ -6,7 +6,7 @@
   status: Draft
   category: Amendment
   created: 2025-08-08
-  updated: 2026-09-03
+  updated: 2026-09-14
 </pre>
 
 # WASM VM Configuration
@@ -111,7 +111,7 @@ These host functions will be accessible from extensions and smart contracts.
 
 Note: all these functions return an `i32`, unless otherwise noted (or there is no buffer parameter). If the value is positive, it's a length. If it's negative, it's an error code.
 
-Byte order: every fixed-width integer that crosses the host boundary through a memory buffer, in either direction, is encoded little-endian, matching WebAssembly's native memory order. This covers `u32` results such as `ldgr_index`, `parent_ldgr_time`, `base_fee`, `nft_taxon` and `nft_serial`; the raw `u64`/`i64`/`i32` buffers of `float_from_uint` and `float_to_mant_exp`; and integer inputs supplied through a pointer/length pair, such as the `sequence` argument of the ledger entry ID functions. A guest reads these with a plain little-endian load (`u32::from_le_bytes` in Rust) and writes them with the matching store.
+Byte order: every fixed-width integer that crosses the host boundary through a memory buffer, in either direction, is encoded little-endian, matching WebAssembly's native memory order. This covers `u32` results such as `ldgr_index`, `parent_ldgr_time`, `base_fee`, `nft_taxon` and `nft_serial`; the raw `u64`/`i64`/`i32` buffers of `float_from_uint` and `float_to_mant_exp`; and integer inputs supplied through a pointer/length pair, such as the 4-byte `sequence` argument of the ledger entry ID functions. A guest reads these with a plain little-endian load (`u32::from_le_bytes` in Rust) and writes them with the matching store.
 
 This rule does not apply to buffers carrying XRPL serialized values, which preserve their on-ledger encoding, including the big-endian layouts of `STAmount`, `STNumber`, `NFTokenID` and the MPT issuance ID. `XFloat` is a separate host-buffer format and uses the big-endian layout defined in [§5.8.3](#583-xfloat-serialization-format). Hashes and ledger entry IDs are opaque 32-byte arrays copied as-is. The distinction is between a bare ABI integer, which is little-endian, and a serialized XRPL value, which follows the ledger format.
 
