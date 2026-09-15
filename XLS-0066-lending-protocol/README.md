@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-09
+  updated: 2026-09-15
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -122,6 +122,9 @@ The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Throughout 
 
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
+- `LendingProtocolV1_1` (`featureLendingProtocolV1_1`), as described in the [closed-ended vault proposal](../XLS-draft-closed-ended-vault/README.md):
+  - restricts `LoanSet` on a closed-ended vault to its Investment phase and requires the loan's final scheduled payment to precede the vault's `RedemptionDate` by at least `LOAN_REDEMPTION_BUFFER` seconds; and
+  - rejects a `LoanBrokerSet` that would create a `LoanBroker` against an open-ended vault.
 
 ## 3. Specification
 
