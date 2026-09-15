@@ -14,7 +14,7 @@ updated: 2026-09-15
 
 ## 1. Abstract
 
-This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment after `SubscriptionDate` (from which point new deposits are rejected and capital is locked), and leaves Investment for Redemption on `RedemptionDate`. The boundaries are asymmetric: `SubscriptionDate` is the last second of Subscription, while `RedemptionDate` is the first second of Redemption (see 3.2). Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so no payment is scheduled to fall due once Redemption has opened. Open-ended vaults keep their deposit, withdrawal, and loan behaviour, with one exception: once the amendment is enabled, a new `LoanBroker` can no longer be created against one (see 8.2.1).
+This proposal introduces a new **closed-ended** vault kind that moves through three deterministic phases - **Subscription**, **Investment**, and **Redemption** - and restricts deposits and withdrawals according to the current phase. It adds three fields to the `Vault` ledger entry (`VaultKind`, `SubscriptionDate`, `RedemptionDate`) plus phase enforcement in the vault and lending transactors. Both phase boundaries are _date-driven_ and immutable: a vault leaves Subscription for Investment after `SubscriptionDate` (from which point new deposits are rejected and capital is locked), and leaves Investment for Redemption on `RedemptionDate`. The boundaries are asymmetric: `SubscriptionDate` is the last second of Subscription, while `RedemptionDate` is the first second of Redemption (see 3.2). Loans originated against a closed-ended vault must be scheduled to end a short buffer before `RedemptionDate`, so that no payment falls due once Redemption has opened. The bound is checked at origination only (see 7.4). Open-ended vaults keep their deposit, withdrawal, and loan behaviour, with one exception: once the amendment is enabled, a new `LoanBroker` can no longer be created against one (see 8.2.1).
 
 ## 2. Introduction
 
@@ -76,11 +76,11 @@ This proposal modifies the existing XLS-65 `Vault` ledger entry rather than intr
 
 ### 3.1. Fields
 
-| Field Name         | Constant |  Required   | JSON Type | Internal Type | Default Value | Description                                                                              |
-| ------------------ | :------: | :---------: | :-------: | :-----------: | :-----------: | ---------------------------------------------------------------------------------------- |
-| `VaultKind`        |   Yes    |     No      | `number`  |    `UINT8`    |      `0`      | The vault kind. Absent/`0` means open-ended. Immutable after creation.                   |
-| `SubscriptionDate` |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. |
-| `RedemptionDate`   |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`.                       |
+| Field Name         | Constant |  Required   | JSON Type | Internal Type | Default Value | Description                                                                                                        |
+| ------------------ | :------: | :---------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------ |
+| `VaultKind`        |   Yes    |     No      | `number`  |    `UINT8`    |      `0`      | The vault kind. Absent/`0` means open-ended. Immutable after creation.                                             |
+| `SubscriptionDate` |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | Last second of the Subscription phase; Investment begins the second after. REQUIRED if `VaultKind == ClosedEnded`. |
+| `RedemptionDate`   |   Yes    | Conditional | `number`  |   `UINT32`    |     `N/A`     | First second of the Redemption phase. REQUIRED if `VaultKind == ClosedEnded`.                                      |
 
 `VaultKind` defaults to `0` and is not stored when it holds that default, so an open-ended vault has no `VaultKind` field at all: an absent field and an explicit `OpenEnded` mean the same thing. `SubscriptionDate` and `RedemptionDate` are stored only on closed-ended vaults.
 
@@ -144,11 +144,11 @@ The vault kind is read from `sfVaultKind`: an absent field means `OpenEnded`, an
 
 ### 4.1. Fields
 
-| Field Name         |  Required?  | JSON Type | Internal Type | Default Value | Description                                                                                                                 |
-| ------------------ | :---------: | :-------: | :-----------: | :-----------: | :-------------------------------------------------------------------------------------------------------------------------- |
-| `VaultKind`        |     No      | `number`  |    `UINT8`    |       0       | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                        |
-| `SubscriptionDate` | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** End of Subscription / start of Investment phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation. |
-| `RedemptionDate`   | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** Start of Redemption phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                       |
+| Field Name         |  Required?  | JSON Type | Internal Type | Default Value | Description                                                                                                                                           |
+| ------------------ | :---------: | :-------: | :-----------: | :-----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VaultKind`        |     No      | `number`  |    `UINT8`    |       0       | **New.** The vault kind. `0` = `OpenEnded` (default); `1` = `ClosedEnded`. Immutable after creation.                                                  |
+| `SubscriptionDate` | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** Last second of the Subscription phase; Investment begins the second after. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation. |
+| `RedemptionDate`   | Conditional | `number`  |   `UINT32`    |     `N/A`     | **New.** First second of the Redemption phase. REQUIRED if `VaultKind == ClosedEnded`. Immutable after creation.                                      |
 
 ### 4.2. Failure Conditions
 
@@ -293,7 +293,7 @@ No changes.
 
 ### 8.4. Invariants
 
-- No `LoanBroker` is created against a vault whose `VaultKind` is not `ClosedEnded`.
+- From `LendingProtocolV1_1` onwards, no `LoanBroker` is created against a vault whose `VaultKind` is not `ClosedEnded`.
 
 ### 8.5. Example JSON
 
@@ -311,11 +311,11 @@ No changes.
 
 The following fields are added to the `vault` object in the response. Only the newly introduced fields are listed here; all existing XLS-65 `vault_info` response fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
-| Field Name               | Required? | JSON Type | Description                                                                            |
-| ------------------------ | --------- | --------- | -------------------------------------------------------------------------------------- |
-| `vault.VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
-| `vault.SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
-| `vault.RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
+| Field Name               | Required? | JSON Type | Description                                                                                                      |
+| ------------------------ | --------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `vault.VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                                              |
+| `vault.SubscriptionDate` | `no`      | `number`  | Last second of the Subscription phase; Investment begins the second after. Present only for closed-ended vaults. |
+| `vault.RedemptionDate`   | `no`      | `number`  | First second of the Redemption phase. Present only for closed-ended vaults.                                      |
 
 ### 9.3. Failure Conditions
 
@@ -356,11 +356,11 @@ No changes.
 
 The same three fields added to `vault_info` (see 9.2) are added to the `Vault` object returned by `ledger_entry`. Only the newly introduced fields are listed here; all existing fields are unchanged. These fields are present only for closed-ended vaults; open-ended vaults omit all three, which callers MUST interpret as `VaultKind = OpenEnded`.
 
-| Field Name         | Required? | JSON Type | Description                                                                            |
-| ------------------ | --------- | --------- | -------------------------------------------------------------------------------------- |
-| `VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                    |
-| `SubscriptionDate` | `no`      | `number`  | End of Subscription / start of Investment phase. Present only for closed-ended vaults. |
-| `RedemptionDate`   | `no`      | `number`  | Start of Redemption phase. Present only for closed-ended vaults.                       |
+| Field Name         | Required? | JSON Type | Description                                                                                                      |
+| ------------------ | --------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `VaultKind`        | `no`      | `number`  | The vault kind. Absent means open-ended (`0`); `1` = `ClosedEnded`.                                              |
+| `SubscriptionDate` | `no`      | `number`  | Last second of the Subscription phase; Investment begins the second after. Present only for closed-ended vaults. |
+| `RedemptionDate`   | `no`      | `number`  | First second of the Redemption phase. Present only for closed-ended vaults.                                      |
 
 ### 10.3. Failure Conditions
 
@@ -409,7 +409,7 @@ StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER <= Redemp
 
 Without the buffer, a loan's final payment could be scheduled on, or one second before, `RedemptionDate`. Redemption would then open while the last payment was still in flight, and because the vault uses cash-basis accounting (see A.5) the first depositors to withdraw would redeem against a pool that had not yet received it. The buffer reserves a window between the last scheduled payment and the start of Redemption in which that payment can be made and recorded.
 
-The buffer is a floor on the schedule, not a guarantee of settlement: a borrower who pays late can still miss it. Its purpose is to stop a vault owner from _scheduling_ a loan that is structurally certain to be unsettled at the phase boundary.
+The buffer is a floor on the schedule at origination, not a guarantee of settlement. A borrower who pays late can still miss it, and the schedule itself is not frozen: before `fixCleanup3_4_0`, XLS-66 unimpairment re-bases an already-late loan's remaining due dates, which can carry them past `RedemptionDate` (see 7.4). Its purpose is to stop a vault owner from _scheduling_ a loan that is structurally certain to be unsettled at the phase boundary.
 
 A consequence worth noting for integrators: because the bound is measured against a fixed `RedemptionDate`, the maximum term available to a _new_ loan shrinks as the vault approaches that date, and no new loan can be originated at all once fewer than `MIN_PAYMENT_INTERVAL + LOAN_REDEMPTION_BUFFER` seconds remain.
 
@@ -473,6 +473,7 @@ The floor is chosen so that even a minimum-length Investment phase can accommoda
 - Boundary: a final payment exactly `LOAN_REDEMPTION_BUFFER` seconds before `RedemptionDate` is accepted, and one second later is rejected.
 - A vault created with the minimum gap (`RedemptionDate - SubscriptionDate == MIN_INVESTMENT_PERIOD`) can still originate one loan at the minimum `PaymentInterval` while `now <= SubscriptionDate + MIN_INVESTMENT_PERIOD - MIN_PAYMENT_INTERVAL - LOAN_REDEMPTION_BUFFER` (the first 60 seconds of Investment), and rejects that same schedule once `now` passes that point.
 - Several loans may be open against the same closed-ended vault at once; each is checked against `RedemptionDate` independently at origination.
+- The bound is origination-only. On a pre-`fixCleanup3_4_0` ledger, impairing an already-late closed-ended loan and then unimpairing it re-bases its remaining schedule past `RedemptionDate`, and no failure condition or invariant rejects this. The same sequence on a `fixCleanup3_4_0` ledger leaves `NextPaymentDueDate` unchanged.
 
 ### 13.7. LoanPay
 
@@ -483,6 +484,7 @@ The floor is chosen so that even a minimum-length Investment phase can accommoda
 - Creating a `LoanBroker` against an open-ended vault returns `tecNO_PERMISSION`.
 - Creating a `LoanBroker` against a closed-ended vault succeeds in every phase.
 - Updating an existing `LoanBroker` (explicit `LoanBrokerID`) against an open-ended vault still succeeds.
+- Before `LendingProtocolV1_1`, creating a `LoanBroker` against an open-ended vault still succeeds.
 
 ### 13.9. RPC surface
 
@@ -510,7 +512,7 @@ The floor is chosen so that even a minimum-length Investment phase can accommoda
 - **Immutability enforcement.** `VaultKind`, `SubscriptionDate`, and `RedemptionDate` are immutable after creation and cannot be modified by any transaction; otherwise an owner could shorten the subscription window, extend the lock-up, or alter the term after capital is committed.
 - **Fixed subscription window.** The Subscription-to-Investment boundary is the immutable `SubscriptionDate`, so the deposit window and the start of the lock-up are fixed at creation and cannot be shortened or extended after depositors commit capital.
 - **Investment period bounds.** `MIN_INVESTMENT_PERIOD <= RedemptionDate - SubscriptionDate < MAX_INVESTMENT_PERIOD` only keeps the dates well-formed; it says nothing about whether the term is sensible. A `180`-second floor does not guarantee a meaningful lock-up. Depositors should read `SubscriptionDate` and `RedemptionDate`, which are public before they subscribe, rather than assume a term from the bounds.
-- **Maturity bound on loans.** The check in 7.2.1 limits a loan's _schedule_: an owner cannot create a loan whose final payment falls within `LOAN_REDEMPTION_BUFFER` seconds of `RedemptionDate`. It does not guarantee the borrower pays on time (see 11.2 and A.5).
+- **Maturity bound on loans.** The check in 7.2.1 limits a loan's _schedule_: an owner cannot create a loan whose final payment falls within `LOAN_REDEMPTION_BUFFER` seconds of `RedemptionDate`. It does not guarantee the borrower pays on time (see 11.2 and A.5), and it does not bind after origination: on a pre-`fixCleanup3_4_0` ledger, unimpairing an already-late loan can move its remaining schedule past `RedemptionDate` (see 7.4).
 - **Time source.** Both phase transitions rely on the ledger close time, which is consensus-derived and not manipulable by a single participant.
 
 # Appendix
