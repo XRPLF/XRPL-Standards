@@ -2260,7 +2260,7 @@ $$
 valueChange = latePaymentInterest_{gross} - managementFee_{late}
 $$
 
-For a legacy (`LEVersion` absent) Vault, this `valueChange` represents the net increase in the loan's value and must be reflected in `Vault.AssetsTotal`. For a cash-basis Vault with `LEVersion == 1`, `valueChange` is not applied to `Vault.AssetsTotal`; the Vault instead recognises the `interestPaid` portion of the payment. Under either accounting model, this value change is not reflected in `Loan.TotalValueOutstanding` or `LoanBroker.DebtTotal`. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
+For a legacy (`LEVersion` absent) Vault, this `valueChange` represents the net increase in the loan's value and must be reflected in `Vault.AssetsTotal` and in `LoanBroker.DebtTotal`, which §3.11.5 decreases by `totalToVault - valueChange`. Omitting that adjustment on a late payment would subtract newly paid late interest that was never in the outstanding debt. For a cash-basis Vault with `LEVersion == 1`, `valueChange` is not applied to either field; the Vault recognises the `interestPaid` portion of the payment and `LoanBroker.DebtTotal` decreases by `principalPaid` only. Under either model this `valueChange` is not reflected in `Loan.TotalValueOutstanding`, because late interest was not part of the original loan value. Note that `valueChange > 0` for late payments.
 
 #### A-3.2.3 Loan Overpayment
 

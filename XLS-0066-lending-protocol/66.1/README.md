@@ -6,8 +6,9 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
   status: Draft
   category: Amendment
+  requires: [XLS-65.1.3](../../XLS-0065-single-asset-vault/65.1/65.1.3-vault-cash-basis.md)
   created: 2026-09-04
-  updated: 2026-09-08
+  updated: 2026-09-15
 </pre>
 
 # 66.1 Lending Protocol Cash-Basis Accounting
