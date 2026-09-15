@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-11
+  updated: 2026-09-15
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -251,7 +251,9 @@ _TBD_
 
 The Lending Protocol tracks the funds owed to the associated Vault in the `DebtTotal` attribute. For a legacy Vault, it captures principal and interest due, excluding all fees; for a Vault with `LEVersion = 1`, it captures principal only. The `DebtMaximum` attribute controls the maximum debt a Lending Protocol may incur. When $DebtTotal \geq DebtMaximum$, the Lender cannot issue new loans until some of the debt is cleared. Furthermore, the Lender may not issue a loan that would cause the `DebtTotal` to exceed `DebtMaximum`.
 
-**Examples**
+**Examples (legacy Vault, `LEVersion` absent)**
+
+These examples credit expected interest at origination. For a cash-basis Vault (`LEVersion = 1`) see [§3.10.5.1](#31051-worked-example-pre--vs-post-lendingprotocolv1_1-loan-default).
 
 **Example 1: Issuing a Loan**
 
