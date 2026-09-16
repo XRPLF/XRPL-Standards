@@ -78,6 +78,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
   - [Closed-ended Vault](../XLS-draft-closed-ended-vault/README.md): adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates `VaultDeposit` and `VaultWithdraw` on such vaults
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
+- `LendingProtocolV1_2`, as described in [XLS-65.3](./65.3/README.md):
+  - adds the optional, immutable `EarlyExitFeeRate` to a closed-ended Vault, permitting `VaultWithdraw` during Investment at that fee, which is retained in the Vault rather than paid to any party
 
 ## 3. Specification
 
@@ -117,6 +119,7 @@ A vault has the following fields:
 | `ShareMPTID`        |    No    |   Yes    |      `number`      |   `UINT192`   |       0       | The identifier of the share MPTokenIssuance object.                                                                                                    |
 | `WithdrawalPolicy`  |    No    |   Yes    |      `string`      |    `UINT8`    |     `N/A`     | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `Scale`             |    No    |   Yes    |      `number`      |    `UINT8`    |       6       | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `EarlyExitFeeRate`  |   Yes    |    No    |      `number`      |   `UINT16`    |       0       | `LendingProtocolV1_2`: The early-exit fee in 1/10th basis points charged on a withdrawal made during Investment. Closed-ended Vaults only; immutable.  |
 
 ##### 3.1.2.1 Flags
 
@@ -349,8 +352,10 @@ The Vault does not apply the [Transfer Fee](https://xrpl.org/docs/concepts/token
     - `fixCleanup3_4_0`: `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction supplies `AssetsMaximum` or the cap otherwise changes. A cap already exceeded by accrued interest no longer blocks a `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap.
 14. - `SingleAssetVault`: `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set.
     - `LendingProtocolV1_1`: `Vault.Sequence`, `Vault.OwnerNode`, `Vault.Owner`, `Vault.WithdrawalPolicy`, `Vault.Scale`, `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate`, `Vault.RedemptionDate`, `Vault.Asset`, `Vault.Account` and `Vault.ShareMPTID` are immutable once set. If `Vault.LEVersion`, `Vault.VaultKind`, `Vault.SubscriptionDate` or `Vault.RedemptionDate` is absent, it remains absent, except when the transaction creates the entry.
+    - `LendingProtocolV1_2`: As above, and `Vault.EarlyExitFeeRate` joins the set. If it is absent, it remains absent, except when the transaction creates the entry.
 15. `Vault.LossUnrealized` may only be changed by `LoanManage` and `LoanPay`. Every other transaction that modifies the entry must leave it unchanged.
 16. A `Vault` is modified only by a transaction type that declares a vault privilege — `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanSet`, `LoanPay` and `LoanManage` — and at most one `Vault` is modified per transaction. `LoanManage` has `MayModifyVault` and may succeed without modifying one; each other listed transaction has `MustModifyVault` and must create, modify or delete one.
+17. `LendingProtocolV1_2`: If `Vault.EarlyExitFeeRate` is present, then `Vault.VaultKind == ClosedEnded` and `0 < Vault.EarlyExitFeeRate <= 50000`, as described in [XLS-65.3](./65.3/README.md).
 
 ### 3.2 Transaction: `VaultCreate`
 
@@ -369,6 +374,7 @@ The `VaultCreate` transaction creates a new `Vault` object.
 | `WithdrawalPolicy` |    No    |      `number`      |    `UINT8`    | `"FirstComeFirstServe"` | Indicates the withdrawal strategy used by the Vault.                                                                                                   |
 | `DomainID`         |    No    |      `string`      |   `HASH256`   |                         | The `PermissionedDomain` object ID associated with the shares of this Vault.                                                                           |
 | `Scale`            |    No    |      `number`      |    `UINT8`    |            6            | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `EarlyExitFeeRate` |    No    |      `number`      |   `UINT16`    |            0            | `LendingProtocolV1_2`: The early-exit fee in 1/10th basis points. Permitted only on a closed-ended Vault and capped at `50000`.                        |
 
 #### 3.2.2 Flags
 
@@ -436,6 +442,7 @@ _TBD_
 1. A newly created vault has zero `AssetsTotal`, `AssetsAvailable`, `LossUnrealized` and outstanding shares.
 2. The share `MPTokenIssuance.Issuer` equals `Vault.Account`, and that account is a _pseudo-account_ whose `VaultID` points to the new vault.
 3. Only `VaultCreate` may create a `Vault`; it must create rather than update one.
+4. `LendingProtocolV1_2`: A newly created `Vault` carrying `EarlyExitFeeRate` has `VaultKind == ClosedEnded` and `0 < EarlyExitFeeRate <= 50000`.
 
 ### 3.3 Transaction: `VaultSet`
 
@@ -672,6 +679,10 @@ In sections below assume the following variables:
 11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
 12. `fixCleanup3_4_0`: The withdrawal would move shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2/README.md). A fixed-share withdrawal whose pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized` is exempt and may redeem shares for zero assets. (`tecPRECISION_LOSS`)
 13. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
+14. `LendingProtocolV1_2`: The early-exit fee applies and the post-fee payout is not positive, as described in [XLS-65.3](./65.3/README.md). (`tecPRECISION_LOSS`)
+15. `LendingProtocolV1_2`: The early-exit fee applies and `Vault.AssetsAvailable` is less than the post-fee payout. This supersedes check 10 for a fee-charging withdrawal, because only the post-fee payout leaves the Vault. (`tecINSUFFICIENT_FUNDS`)
+
+> **Note:** The early-exit fee applies when the Vault is closed-ended, its phase is `Investment`, `Vault.EarlyExitFeeRate` is greater than `0`, and the shares burned are fewer than the outstanding supply. Under `LendingProtocolV1_2`, the Investment-phase rejection of check 14 applies only when `Vault.EarlyExitFeeRate` is absent or `0`; a closed-ended Vault with a non-zero rate permits `VaultWithdraw` during Investment and charges the fee. See [XLS-65.3](./65.3/README.md).
 
 #### 3.6.3 State Changes
 
@@ -710,6 +721,7 @@ In sections below assume the following variables:
 5.  The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
 6.  - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease.
     - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
+7.  `LendingProtocolV1_2`: A withdrawal succeeds during `Investment` only when `Vault.EarlyExitFeeRate` is greater than `0`. When the fee is charged, `Vault.AssetsTotal` and `Vault.AssetsAvailable` each decrease by the post-fee payout, which is strictly positive and strictly less than the pre-fee amount; the vault's exchange rate strictly increases; and the outstanding share supply remains greater than zero.
 
 ### 3.7 Transaction: `VaultClawback`
 
@@ -860,6 +872,7 @@ This RPC retrieves the Vault ledger entry and the IDs associated with it.
 | `vault.shares.index`             |       Yes       | `string`  | Unique index of the shares ledger entry.                                                                                                               |
 | `vault.shares.mpt_issuance_id`   |       No        | `string`  | The ID of the `MPTokenIssuance` object. It will always be equal to `vault.ShareMPTID`.                                                                 |
 | `vault.Scale`                    |       Yes       | `number`  | The `Scale` specifies the power of 10 ($10^{\text{scale}}$) to multiply an asset's value by when converting it into an integer-based number of shares. |
+| `vault.EarlyExitFeeRate`         |       No        | `number`  | `LendingProtocolV1_2`: The early-exit fee in 1/10th basis points; present only on a closed-ended Vault created with a non-zero rate.                   |
 
 #### 3.9.3 Failure Conditions
 
@@ -1227,3 +1240,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 - [XLS-65.1](./65.1/README.md): `LendingProtocolV1_1` Vault changes: [65.1.1 Unmodifiable Vault Fields](./65.1/65.1.1-unmodifiable-vault-fields.md) and [65.1.2 Vault Deletion Memo](./65.1/65.1.2-vault-deletion-memo.md).
 - [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
+- [XLS-65.3](./65.3/README.md): `LendingProtocolV1_2` Vault changes: adds the optional, immutable `EarlyExitFeeRate` to closed-ended Vaults, permitting `VaultWithdraw` during Investment at that fee, which is retained in the Vault.
