@@ -19,7 +19,7 @@ Under the `LendingProtocolV1_1` amendment, for a Vault with `LEVersion == 1` (ca
 
 ## 2. Motivation
 
-Under accrual accounting, issuing a Loan immediately increases `Vault.AssetsTotal` by the expected interest and `LoanBroker.DebtTotal` by the principal plus expected interest. The `AssetsMaximum` and `DebtMaximum` caps are therefore consumed by interest that has not been paid, and the first-loss capital requirement, which is a rate applied to `DebtTotal`, is sized against expected interest as well as principal.
+Under instant interest recognition, issuing a Loan immediately increases `Vault.AssetsTotal` by the expected interest and `LoanBroker.DebtTotal` by the principal plus expected interest. The `AssetsMaximum` and `DebtMaximum` caps are therefore consumed by interest that has not been paid, and the first-loss capital requirement, which is a rate applied to `DebtTotal`, is sized against expected interest as well as principal.
 
 ## 3. Specification
 
@@ -88,6 +88,6 @@ Interest could have been recognised on a schedule, one payment period at a time,
 
 ## 5. Security Considerations
 
-Principal-only accounting makes `DebtTotal` a smaller number for the same set of Loans, so a `CoverRateMinimum` that was calibrated under accrual accounting yields less first-loss capital. A Broker migrating to a cash-basis Vault should re-derive the rate rather than reuse it.
+Principal-only accounting makes `DebtTotal` a smaller number for the same set of Loans, so a `CoverRateMinimum` that was calibrated under instant interest recognition yields less first-loss capital. A Broker migrating to a cash-basis Vault should re-derive the rate rather than reuse it.
 
 Both accounting models coexist on the ledger for as long as pre-amendment Vaults exist. An implementation must branch on `Vault.LEVersion` in every place it adjusts `AssetsTotal` or `DebtTotal`; branching in some places and not others corrupts the share exchange rate of the Vault.
