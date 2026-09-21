@@ -679,7 +679,7 @@ In sections below assume the following variables:
 11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
 12. `fixCleanup3_4_0`: The withdrawal would move shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2/README.md). A fixed-share withdrawal whose pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized` is exempt and may redeem shares for zero assets. (`tecPRECISION_LOSS`)
 13. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
-14. `LendingProtocolV1_2`: The early-exit fee applies and `Vault.AssetsAvailable` is less than the post-fee payout. This supersedes check 10 for a fee-charging withdrawal, because only the post-fee payout leaves the Vault. (`tecINSUFFICIENT_FUNDS`)
+14. `LendingProtocolV1_2`: The early-exit fee applies and `Vault.AssetsAvailable` is less than the post-fee payout. This supersedes checks 10.2 and 10.4 for a fee-charging withdrawal, because only the post-fee payout leaves the Vault. Checks 10.1 and 10.3, on the submitter's share balance, are unchanged. (`tecINSUFFICIENT_FUNDS`)
 
 > **Note:** Under `LendingProtocolV1_2`, the Investment-phase rejection applies only when `Vault.EarlyExitFeeRate` is absent; a closed-ended Vault carrying the field permits `VaultWithdraw` during Investment whatever the rate, and a rate of `0` permits it free of charge. The fee itself applies when the Vault is closed-ended, its phase is `Investment`, `Vault.EarlyExitFeeRate` is present and greater than `0`, and the shares burned are fewer than the outstanding supply. A fee-charging withdrawal whose post-fee payout is zero is exempt from check 12 above: it succeeds, burns the shares and transfers nothing. A payout that is non-zero but too small to change the stored `Vault.AssetsTotal` remains subject to check 12. See [XLS-65.3](./65.3/README.md).
 
@@ -713,14 +713,17 @@ In sections below assume the following variables:
 
 1.  - `SingleAssetVault`: The vault pseudo-account's asset balance must decrease by a positive amount.
     - `fixCleanup3_4_0`: A fixed-share withdrawal may instead move zero assets when the pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized`.
+    - `LendingProtocolV1_2`: The balance must not increase. It may be unchanged when the early-exit fee consumes the whole payout, as described in [XLS-65.3](./65.3/README.md).
 2.  Unless the destination is the asset issuer, the destination's asset balance must increase (within sub-ULP precision tolerance for IOU assets at a coarser trust line scale). The zero-asset exception in invariant 1 may leave the destination balance unchanged.
+    - `LendingProtocolV1_2`: The balance must not decrease. It may be unchanged in the same case as invariant 1.
 3.  - `SingleAssetVault`: The vault outflow and destination inflow must match in magnitude, except for an unrepresentable sub-ULP IOU remainder at the destination scale.
     - `fixCleanup3_4_0`: For an `IOU`, the comparison is also satisfied when the two magnitudes agree within one unit at the comparison scale. That tolerance and the sub-ULP remainder are alternatives, not cumulative. For `XRP` and `MPT` it remains exact.
 4.  The submitter's share `MPToken.MPTAmount` must decrease by a positive amount.
 5.  The decrease in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the decrease in the submitter's share balance.
 6.  - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each decrease by the vault's asset balance decrease.
     - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
-7.  `LendingProtocolV1_2`: A withdrawal succeeds during `Investment` only when `Vault.EarlyExitFeeRate` is present. When the fee is charged, `Vault.AssetsTotal` and `Vault.AssetsAvailable` each decrease by the post-fee payout, which is non-negative and strictly less than the pre-fee amount and may be zero; the vault's exchange rate strictly increases; and the outstanding share supply remains greater than zero. When the rate is `0`, the withdrawal satisfies the parent invariants unmodified.
+7.  - `LendingProtocolV1_1`: No `VaultWithdraw` succeeds while a closed-ended vault is in its `Investment` phase.
+    - `LendingProtocolV1_2`: As above, unless `Vault.EarlyExitFeeRate` is present.
 
 ### 3.7 Transaction: `VaultClawback`
 
