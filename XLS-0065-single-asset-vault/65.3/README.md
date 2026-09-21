@@ -3,7 +3,7 @@
   title: Closed-Ended Vault Early-Exit Fee
   description: Adds an optional, immutable early-exit fee that lets a closed-ended Vault permit withdrawals during Investment, with the fee retained in the Vault
   author: Jingchen Wu (@a1q123456)
-  proposal-from: TBD
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/643
   status: Draft
   category: Amendment
   created: 2026-09-15
