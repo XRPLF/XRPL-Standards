@@ -32,8 +32,8 @@ This patch changes the parent [XLS-65](../README.md) sections named below, and t
 
 ### 3.1 Protocol Constants
 
-| Constant                  | Value    | Meaning                                                                                                                                                                        |
-| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Constant                  | Value    | Meaning                                                                                                                                                                                                            |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `MAX_EARLY_EXIT_FEE_RATE` | `100000` | Inclusive upper bound on `EarlyExitFeeRate`, in 1/10th basis points. Equivalent to 100%. A rate of exactly this value is accepted; an early exit at that rate pays out nothing and still burns the shares (3.4.2). |
 
 ### 3.2 Ledger Entry: `Vault`
@@ -112,7 +112,7 @@ Parent 3.2.5.2 is unchanged.
 
 Extend parent 3.2.6 step 1:
 
-1. If `EarlyExitFeeRate` is present, copy it from the transaction to the new `Vault` as submitted. 
+1. If `EarlyExitFeeRate` is present, copy it from the transaction to the new `Vault` as submitted.
 2. If `EarlyExitFeeRate` is not present, leave field absent.
 
 #### 3.3.4 Invariants
@@ -188,8 +188,8 @@ Amend parent 3.6.4 under `LendingProtocolV1_2`:
 
 Add this field to parent 3.9.2. It is present on a closed-ended Vault created with the field, whatever its value, and absent otherwise. Callers MUST NOT interpret its absence as a rate of `0`: absence means no withdrawal is permitted during Investment, whereas `0` means one is permitted free of charge.
 
-| Field Name               | Required? | JSON Type | Description                                                                                                                                              |
-| ------------------------ | :-------: | :-------: | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name               | Required? | JSON Type | Description                                                       |
+| ------------------------ | :-------: | :-------: | ----------------------------------------------------------------- |
 | `vault.EarlyExitFeeRate` |    No     | `number`  | `LendingProtocolV1_2`: The early-exit fee in 1/10th basis points. |
 
 Example response fragment, showing only the fields this patch and [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) add:
