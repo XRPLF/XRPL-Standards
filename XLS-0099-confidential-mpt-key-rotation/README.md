@@ -186,15 +186,13 @@ This section is an informative summary using the states defined in Section 3. Th
 | No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in recovery mode | New-key Schnorr proof succeeds                                | `RecoveryKey` is created; the existing holder key and balances are unchanged                                                                                      | Recovery Pending    | Sections 5.5.4 and 5.5.5 |
 | Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in cancel mode   | Holder authorizes the transaction with their XRPL signing key | `RecoveryKey` is removed; the existing holder key and balances are unchanged                                                                                      | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
 | Recovery Pending    | `ConfidentialMPTRecoverBalance`                   | Issuer mirror is current and the recovery proof succeeds      | `HolderEncryptionKey` is replaced by `RecoveryKey`, the recovered balance is placed in spending, inbox is reset, version increments, and `RecoveryKey` is removed | No Recovery Pending | Section 5.6              |
-| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | The holder key, holder balance ciphertexts, and version are updated; `RecoveryKey` remains unchanged                                                              | Recovery Pending    | Sections 5.5.4 and 5.5.5 |
+| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | The holder key, holder balance ciphertexts, and version are updated; `RecoveryKey` is removed                                                                     | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
 
 ### 4.8. Proof Context Hash
 
-Every proof introduced by this amendment is bound to the transaction carrying it by a context hash, built exactly as in XLS-0096:
+Every proof introduced by this amendment is bound to the transaction carrying it by a context hash:
 
 `SHA-512Half(TransactionType ‖ Account ‖ MPTokenIssuanceID ‖ Sequence ‖ Counterparty ‖ Version)`
-
-`TransactionType` is the 16-bit type code, `Account` and `Counterparty` are 20-byte account identifiers, `MPTokenIssuanceID` is the 24-byte issuance identifier, and `Sequence` and `Version` are 32-bit integers. `Sequence` is the transaction's sequence number, or its ticket sequence when the transaction uses a ticket.
 
 The last two fields carry the transaction-specific part. `Counterparty` is the other account the transaction acts on, and repeats `Account` when the transaction acts only on the submitter's own `MPToken`. `Version` is the holder's `ConfidentialBalanceVersion` when the proof anchors on a ciphertext encrypted under the holder key, and 0 otherwise.
 
@@ -325,7 +323,7 @@ A 33-byte compressed secp256k1 point. It must be a well-formed point and must di
 
 The field is set by `ConfidentialMPTHolderKeyUpdate` in recovery mode (`tfHolderKeyRecovery`), recording the holder's consent to issuer-completed recovery under the new key.
 
-It is cleared by exactly two paths: `ConfidentialMPTRecoverBalance`, when the issuer completes recovery; and `ConfidentialMPTHolderKeyUpdate` with `tfCancelRecovery`, when the holder revokes consent. There is no automatic expiry, so an authorization persists until one of those two transactions occurs. Section 12.7 discusses the resulting liveness concern.
+It is cleared by exactly three paths: `ConfidentialMPTRecoverBalance`, when the issuer completes recovery; `ConfidentialMPTHolderKeyUpdate` with `tfCancelRecovery`, when the holder revokes consent; and `ConfidentialMPTHolderKeyUpdate` with `tfHolderKeyRotation`, which proves the holder still holds sk_H and so withdraws the premise of the authorization (Section 12.6). There is no automatic expiry, so an authorization persists until one of those three transactions occurs. Section 12.7 discusses the resulting liveness concern.
 
 #### 5.2.2. Deletion
 
@@ -642,11 +640,11 @@ Allows a holder to rotate their ElGamal key (rotation mode), authorize key repla
 
 #### 5.5.2. Flags
 
-| Flag Name             | Hex Value    | Decimal Value | Description                                                                                      |
-| :-------------------- | :----------- | :------------ | :----------------------------------------------------------------------------------------------- |
-| `tfHolderKeyRotation` | `0x00000001` | 1             | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction. |
-| `tfHolderKeyRecovery` | `0x00000002` | 2             | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.            |
-| `tfCancelRecovery`    | `0x00000004` | 4             | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                          |
+| Flag Name             | Hex Value    | Decimal Value | Description                                                                                                                          |
+| :-------------------- | :----------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `tfHolderKeyRotation` | `0x00000001` | 1             | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction, revoking any pending `RecoveryKey`. |
+| `tfHolderKeyRecovery` | `0x00000002` | 2             | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.                                                |
+| `tfCancelRecovery`    | `0x00000004` | 4             | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                                                              |
 
 Exactly one of the three flags must be set.
 
@@ -693,6 +691,7 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 2. `ConfidentialBalanceSpending` on `MPToken` ← new ciphertext
 3. `ConfidentialBalanceInbox` on `MPToken` ← new ciphertext
 4. `ConfidentialBalanceVersion` on `MPToken` ← `ConfidentialBalanceVersion` + 1
+5. `RecoveryKey` on `MPToken` ← cleared (field removed) if one was pending
 
 **Recovery mode**:
 
@@ -971,7 +970,7 @@ This amendment introduces no new data-verification (`tem`) failures.
 
 This amendment introduces no new protocol-level (`tec`) failures.
 
-Clawback is not blocked by a stale or missing mirror. The clawback proof is verified against the key the holder's `IssuerEncryptedBalance` is encrypted under, resolved as in Section 5.4.6 rather than taken from the transaction, so a holder who is any number of epochs behind can still be clawed back. Producing the clawed-back amount requires decrypting that mirror, so the issuer needs the secret key for the resolved key, not for the currently registered one; Section 12.9 covers historical key retention and Section 9 the issuer key loss case. A stale or missing auditor mirror likewise does not block clawback, and either one is repaired by the state changes below.
+Clawback is not blocked by a stale issuer mirror, nor by an auditor mirror that is stale or absent. An `IssuerEncryptedBalance` must still be present, as XLS-0096 §12.4.2 requires, since the proof has no anchor without it. The clawback proof is verified against the key that mirror is encrypted under, resolved as in Section 5.4.6 rather than taken from the transaction, so a holder who is any number of epochs behind can still be clawed back. Producing the clawed-back amount requires decrypting that mirror, so the issuer needs the secret key for the resolved key, not for the currently registered one; Section 12.9 covers historical key retention and Section 9 the issuer key loss case. Whichever mirrors were stale or absent are repaired by the state changes below.
 
 #### 5.10.4. State Changes
 
@@ -1252,6 +1251,8 @@ The counter exists to stop proof replay. Without it, a holder could bring their 
 ### 12.6. Two-Step Recovery Authorization
 
 The holder's authorization (`tfHolderKeyRecovery`) is signed by the holder's XRPL signing key. `ConfidentialMPTRecoverBalance` is rejected unless `RecoveryKey` is present. The issuer cannot act unilaterally.
+
+A successful rotation clears `RecoveryKey`, because rotation proves what the recovery request denies: the prover decrypted the holder's own balances with sk_H, so the key was not lost. This also gives a holder whose XRPL signing key is compromised a remedy the attacker cannot match, since cancelling a recovery needs only that signing key while rotating needs sk_H as well.
 
 ### 12.7. `RecoveryKey` Liveness Concern
 
