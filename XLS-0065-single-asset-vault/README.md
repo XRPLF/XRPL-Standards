@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-15
+  updated: 2026-09-21
 </pre>
 
 # Single Asset Vault
