@@ -4,6 +4,7 @@
   description: Adds an optional, immutable early-exit fee that lets a closed-ended Vault permit withdrawals during Investment, with the fee retained in the Vault
   author: Jingchen Wu (@a1q123456)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/643
+  requires: XLS-65.1.4, XLS-65.2
   status: Draft
   category: Amendment
   created: 2026-09-15
@@ -28,7 +29,14 @@ Fixing the rate at creation and exposing it on the ledger means a depositor know
 
 ## 3. Specification
 
-This patch changes the parent [XLS-65](../README.md) sections named below, and the sections of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) it identifies. All other parent behavior is unchanged. `LendingProtocolV1_1` is a hard prerequisite: `EarlyExitFeeRate` may only be set on a closed-ended Vault, and the only behavior it changes is the Investment-phase gate that [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) introduces.
+This patch changes the parent [XLS-65](../README.md) sections named below, and the sections of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) it identifies. All other parent behavior is unchanged. Two amendments are hard prerequisites of `LendingProtocolV1_2`:
+
+| Prerequisite          | Specification                                      | Reason                                                                                                                                                                                                                                          |
+| --------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LendingProtocolV1_1` | [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) | `EarlyExitFeeRate` may only be set on a closed-ended Vault, and the only behavior it changes is the Investment-phase gate that XLS-65.1.4 introduces.                                                                                           |
+| `fixCleanup3_4_0`     | [XLS-65.2](../65.2/README.md)                      | The fee of 3.4.2 is computed at the posterior scale $s$ that XLS-65.2 3.1.2.3 defines. Without that rounding path the pre-fee delta is an unrounded quotient, $s$ is undefined, and $F$ cannot be computed consistently across implementations. |
+
+`LendingProtocolV1_2` MUST NOT be enabled on a ledger where either prerequisite is not enabled. Every section below assumes both are enabled, and the gate of 3.3.2 makes the fee unreachable where `fixCleanup3_4_0` is not.
 
 ### 3.1 Protocol Constants
 
@@ -102,7 +110,7 @@ Add `EarlyExitFeeRate` from 3.2.1 to parent 3.2.1 with the same type. It is opti
 
 Append these data-verification checks to parent 3.2.5.1, after the checks added by [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md):
 
-6. `LendingProtocolV1_2` is not enabled and `EarlyExitFeeRate` is present. (`temDISABLED`)
+6. `EarlyExitFeeRate` is present and either `LendingProtocolV1_2` or `fixCleanup3_4_0` is not enabled. (`temDISABLED`)
 7. `EarlyExitFeeRate` is present and `VaultKind` is absent or not `ClosedEnded`, including when the rate is `0`. (`temMALFORMED`)
 8. `EarlyExitFeeRate` is greater than `MAX_EARLY_EXIT_FEE_RATE`. (`temMALFORMED`)
 
@@ -143,7 +151,7 @@ Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-
 
    $$\Delta_{assets} = \frac{\Delta_{shares} \times \Gamma_{asset}}{\Gamma_{shares}}$$
 
-3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) 3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit. Where `fixCleanup3_4_0` is not enabled, $\Delta_{assets}$ is left as computed.
+3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) 3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit.
 
 **Early-exit fee, added by this patch**
 
@@ -210,6 +218,29 @@ Amend parent 3.6.4 under `LendingProtocolV1_2`:
 3. Either balance is unchanged only when $\Delta_{assets}^{paid}$ is zero. Invariants 3 and 6 hold as written, with both sides zero in that case.
 4. The Investment-phase rule of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) 3.5.1, that no `VaultWithdraw` succeeds during `Investment`, applies only when `Vault.EarlyExitFeeRate` is absent.
 
+### 3.5 Transaction: `VaultClawback`
+
+The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. 
+
+- `SingleAssetVault`: The Clawback transaction must respect any future fees or penalties.
+- `LendingProtocolV1_2`: `VaultClawback` does not apply `EarlyExitFeeRate`. A clawback from a Vault carrying a rate removes the same assets and burns the same shares as the parent computes. This holds in every phase and at every rate.
+
+#### 3.7.1 Fields
+
+No changes.
+
+#### 3.7.2 Failure Conditions
+
+No changes.
+
+#### 3.7.3 State Changes
+
+No changes.
+
+#### 3.7.4 Invariants
+
+No changes.
+
 ### 3.6 RPC: `vault_info`
 
 #### 3.6.1 Response Fields
@@ -270,6 +301,7 @@ Only the payout leaves the Vault. Checking the pre-fee amount would reject withd
 
 The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and transactions are unchanged for nodes that have not activated it. Because an enabled amendment is never disabled, a Vault carrying an `EarlyExitFeeRate` always has a phase to apply it in.
 
+- **`fixCleanup3_4_0` must be enabled first.** The fee is defined only at the posterior scale of [XLS-65.2](../65.2/README.md). If `LendingProtocolV1_2` were enabled without it, `VaultCreate` would reject every `EarlyExitFeeRate` with `temDISABLED` (3.3.2), so no Vault could carry a rate and no withdrawal could charge a fee. The `tecTOO_SOON` gate of 3.4.1 then behaves exactly as in [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md).
 - **Open-ended Vaults are unaffected.** They cannot carry `EarlyExitFeeRate` (3.3.2), have no phases, and their withdrawal behavior is untouched.
 - **Existing closed-ended Vaults are unaffected.** `EarlyExitFeeRate` is set at creation only, so every Vault created before the amendment has no rate and its Investment-phase withdrawals continue to be rejected with `tecTOO_SOON`. [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md)'s behavior is the default both before and after this amendment.
 - **Serialisation is compatible.** The new field is optional, so existing serialised Vaults deserialise unchanged. It is not elided at `0`, so a Vault that permits a free early exit carries the field explicitly and is distinguishable on the wire from one that permits none (3.2.1).
@@ -285,6 +317,7 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 - Creation with `EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` is accepted; one greater returns `temMALFORMED`.
 - Creation of an open-ended Vault, or one with an absent `VaultKind`, carrying `EarlyExitFeeRate` returns `temMALFORMED`, including when the rate is `0`.
 - Before `LendingProtocolV1_2`, any `VaultCreate` carrying `EarlyExitFeeRate` returns `temDISABLED`.
+- With `LendingProtocolV1_2` enabled and `fixCleanup3_4_0` disabled, any `VaultCreate` carrying `EarlyExitFeeRate` returns `temDISABLED`, including when the rate is `0`.
 
 ### 6.2 `VaultSet`
 
@@ -333,7 +366,8 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 
 ### 6.8 `VaultClawback`
 
-- A clawback during Investment from a Vault with a non-zero rate charges no fee; the assets removed and shares burned match the parent exactly.
+- A clawback during Investment from a Vault with a non-zero rate charges no fee; the assets removed and shares burned match the parent exactly (3.5).
+- A clawback during Investment from a Vault with a rate of `MAX_EARLY_EXIT_FEE_RATE` removes the full pre-fee amount, whereas the same amount taken by `VaultWithdraw` would transfer nothing.
 
 ### 6.9 RPC surface
 
@@ -382,7 +416,7 @@ A flat rate is one immutable number a depositor can read off the ledger before s
 
 ### A.3 Does the fee apply to `VaultClawback`?
 
-No. Under `LendingProtocolV1_2`, `VaultClawback` does not apply `EarlyExitFeeRate`; this supersedes the parent XLS-65 3.7 sentence that clawbacks must respect future fees or penalties. Clawback is compelled by the asset issuer, not chosen by the depositor, and charging it would let an issuer raise the Vault's share value at a chosen holder's expense.
+No. Section 3.5 replaces the parent 3.7 sentence that clawbacks must respect future fees or penalties. A clawback removes the full pre-fee amount and burns the same shares as the parent, in every phase and at every rate. The reason is given in 3.5.
 
 ### A.4 I exited early and now want back in. Can I re-deposit?
 
