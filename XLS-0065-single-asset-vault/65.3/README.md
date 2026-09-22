@@ -236,11 +236,11 @@ The 2,000 that was not paid out is spread over the 900,000 shares still in issue
 
 #### 3.4.3 Invariants
 
-Amend parent 3.6.4 under `LendingProtocolV1_2`:
+Amend parent 3.6.4 under `LendingProtocolV1_2`. Invariants 1 and 2 are relaxed rather than conditioned on the payout (4.5):
 
 1. Supersedes invariant 1, which requires the Vault pseudo-account's asset balance to decrease by a positive amount. A withdrawal must not increase the Vault pseudo-account's asset balance.
 2. Supersedes invariant 2, which requires the destination's asset balance to increase. A withdrawal must not decrease the destination's asset balance.
-3. Either balance is unchanged only when $\Delta_{assets}^{paid}$ is zero. Invariants 3 and 6 hold as written, with both sides zero in that case.
+3. A zero $\Delta_{assets}^{paid}$ leaves both balances unchanged. Invariants 3 and 6 hold as written, with both sides zero in that case.
 4. The Investment-phase rule of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) 3.5.1, that no `VaultWithdraw` succeeds during `Investment`, applies only when `Vault.EarlyExitFeeRate` is absent.
 5. On the full-redemption path of 3.4.2, `Vault.AssetsTotal` and `Vault.AssetsAvailable` both reach zero and the asset-balance decrease equals the prior `Vault.AssetsAvailable`, as in the parent. No fee is retained, so parent `Vault` invariant 7 holds.
 
@@ -303,7 +303,7 @@ When `ledger_entry` returns a `Vault`, add `EarlyExitFeeRate` with the meaning a
 
 ### 4.1 Why the fee stays in the Vault
 
-An early exit consumes uncommitted cash and shrinks the base over which the remaining depositors bear costs and unrealized losses. The fee compensates them. Paying it to the owner or the loan broker would reward the party that sets the rate for every exit. Retention also needs no new field and no transfer. Its only effect on the parent invariants is to admit a zero payout (3.4.3).
+An early exit consumes uncommitted cash and shrinks the base over which the remaining depositors bear costs and unrealized losses. The fee compensates them. Paying it to the owner or the loan broker would reward the party that sets the rate for every exit. Retention also needs no new field and no transfer. Its only effect on the parent invariants is to relax the positive-delta requirements of parent 3.6.4 invariants 1 and 2 so that a zero payout is admitted (3.4.3).
 
 ### 4.2 Why the last exiting shareholder pays no fee
 
@@ -322,6 +322,17 @@ The fee is taken from the pre-fee delta after the rounding of [XLS-65.2](../65.2
 ### 4.4 Why liquidity is checked against the post-fee payout
 
 Only the payout leaves the Vault. Checking the pre-fee amount would reject withdrawals the Vault can satisfy.
+
+### 4.5 Why the withdraw invariants are relaxed rather than conditioned on the payout
+
+Parent 3.6.4 invariants 1 and 2 require a positive decrease in the Vault's asset balance and a positive increase in the destination's. A zero payout satisfies neither, so 3.4.3 has to change them. There are two ways to do so:
+
+| Approach                                                                                                 | Effect                                                                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Condition the parent rule on the payout: a positive delta whenever $\Delta_{assets}^{paid} > 0$          | The check must reproduce the parent's issuer exception, under which the destination holds no balance, and its `IOU` precision tolerance, under which a payout of one unit may leave the destination balance unchanged. Wherever it does so imperfectly it rejects a valid withdrawal. |
+| Relax the parent rule: the Vault balance must not increase and the destination balance must not decrease | Admits the zero payout with no new exception. The parent's issuer exception and precision tolerance remain in force as written, and neither is narrowed.                                                                                                                              |
+
+This patch takes the second approach. An invariant that fails a valid transaction is a worse outcome than an invariant that is slightly weaker, because an invariant failure rejects the transaction and cannot be worked around by the submitter.
 
 ## 5. Backwards Compatibility
 
