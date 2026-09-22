@@ -373,7 +373,8 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 
 - A withdrawal whose post-fee payout exceeds `AssetsAvailable` returns `tecINSUFFICIENT_FUNDS`.
 - Boundary: a withdrawal whose post-fee payout equals `AssetsAvailable` succeeds, even though its pre-fee amount exceeds `AssetsAvailable`.
-- A Vault whose cash is fully deployed into loans rejects every early exit, and accepts them again as loan payments restore `AssetsAvailable`.
+- A Vault whose cash is fully deployed into loans rejects every early exit whose post-fee payout is positive, and accepts them again as loan payments restore `AssetsAvailable`.
+- A Vault with `AssetsAvailable == 0` accepts an early exit whose post-fee payout is zero, whether from a rate of `MAX_EARLY_EXIT_FEE_RATE` or from a fee that rounds up to the whole pre-fee amount. The withdrawal burns $\Delta_{shares}$, moves no assets, and leaves `AssetsTotal` and `AssetsAvailable` at their prior values. Check 14 of 3.4.1 does not apply to it because no cash leaves the Vault.
 - An early exit does not affect any outstanding `Loan` or the broker's `CoverAvailable`.
 
 ### 6.6 Rounding and precision
