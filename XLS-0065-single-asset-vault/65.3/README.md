@@ -347,7 +347,7 @@ A flat rate is one immutable number a depositor can read off the ledger before s
 
 ### A.3 Does the fee apply to `VaultClawback`?
 
-No. Clawback is compelled by the asset issuer, not chosen by the depositor, and charging it would let an issuer raise the Vault's share value at a chosen holder's expense.
+No. Under `LendingProtocolV1_2`, `VaultClawback` does not apply `EarlyExitFeeRate`; this supersedes the parent XLS-65 §3.7 sentence that clawbacks must respect future fees or penalties. Clawback is compelled by the asset issuer, not chosen by the depositor, and charging it would let an issuer raise the Vault's share value at a chosen holder's expense.
 
 ### A.4 I exited early and now want back in. Can I re-deposit?
 
