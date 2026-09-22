@@ -136,8 +136,6 @@ Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-
 
 #### 3.4.2 State Changes
 
-The payout is computed as in parent [3.1.7.2](../README.md#3172-exchange-rate-algorithms), with the deterministic-delta step of [XLS-65.2](../65.2/README.md) §3.1.2.3, and is then reduced by the fee. Steps 1 to 3 are the parent's; steps 4 and 5 are this patch's.
-
 **Parent computation, unchanged**
 
 1. Compute $\Delta_{shares}$ from `Amount` with the variables of parent 3.6.1: by the _Withdraw_ formula of parent 3.1.7.2.3 when `Amount` is in the Vault asset, and by the _Redeem_ formula of parent 3.1.7.2.2 when it is in shares. The fee does not enter this step.
@@ -145,7 +143,7 @@ The payout is computed as in parent [3.1.7.2](../README.md#3172-exchange-rate-al
 
    $$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
 
-3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) §3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit. Where `fixCleanup3_4_0` is not enabled, $\Delta_{assets}$ is left as computed.
+3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) 3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit. Where `fixCleanup3_4_0` is not enabled, $\Delta_{assets}$ is left as computed.
 
 **Early-exit fee, added by this patch**
 
@@ -210,7 +208,7 @@ Amend parent 3.6.4 under `LendingProtocolV1_2`:
 1. Supersedes invariant 1, which requires the Vault pseudo-account's asset balance to decrease by a positive amount. A withdrawal must not increase the Vault pseudo-account's asset balance.
 2. Supersedes invariant 2, which requires the destination's asset balance to increase. A withdrawal must not decrease the destination's asset balance.
 3. Either balance is unchanged only when $\Delta_{assets}^{paid}$ is zero. Invariants 3 and 6 hold as written, with both sides zero in that case.
-4. The Investment-phase rule of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) §3.5.1, that no `VaultWithdraw` succeeds during `Investment`, applies only when `Vault.EarlyExitFeeRate` is absent.
+4. The Investment-phase rule of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) 3.5.1, that no `VaultWithdraw` succeeds during `Investment`, applies only when `Vault.EarlyExitFeeRate` is absent.
 
 ### 3.6 RPC: `vault_info`
 
@@ -258,7 +256,7 @@ A retained fee needs remaining shares to accrue to. If a withdrawal burns the wh
 
 Rounding down would make the fee zero on withdrawals small enough to underflow the asset's precision, so a depositor could exit fee-free in slices. Rounding up makes every non-zero withdrawal cost at least one unit. A withdrawal whose fee rounds to the whole amount succeeds and pays out nothing. Rejecting it would make the outcome depend on rounding, and a 100% Vault would reject every partial exit.
 
-The fee is taken from the pre-fee delta after the rounding of [XLS-65.2](../65.2/README.md) §3.1.2.3, and the payout is not rounded again, for three reasons:
+The fee is taken from the pre-fee delta after the rounding of [XLS-65.2](../65.2/README.md) 3.1.2.3, and the payout is not rounded again, for three reasons:
 
 - **One grid.** The rounded delta lies on the grid at the posterior scale, so a fee rounded to that grid and the difference of the two lie on it as well. A second rounding of the payout would be a no-op at best and a second sub-unit residue at worst.
 - **The disclosed base.** The rate is a fraction of the withdrawal, and the withdrawal is what the depositor would have received without the fee. That is the rounded delta the parent pays out, not the exact quotient the ledger never records.
@@ -384,7 +382,7 @@ A flat rate is one immutable number a depositor can read off the ledger before s
 
 ### A.3 Does the fee apply to `VaultClawback`?
 
-No. Under `LendingProtocolV1_2`, `VaultClawback` does not apply `EarlyExitFeeRate`; this supersedes the parent XLS-65 §3.7 sentence that clawbacks must respect future fees or penalties. Clawback is compelled by the asset issuer, not chosen by the depositor, and charging it would let an issuer raise the Vault's share value at a chosen holder's expense.
+No. Under `LendingProtocolV1_2`, `VaultClawback` does not apply `EarlyExitFeeRate`; this supersedes the parent XLS-65 3.7 sentence that clawbacks must respect future fees or penalties. Clawback is compelled by the asset issuer, not chosen by the depositor, and charging it would let an issuer raise the Vault's share value at a chosen holder's expense.
 
 ### A.4 I exited early and now want back in. Can I re-deposit?
 
