@@ -950,7 +950,7 @@ No changes from XLS-0096.
 
 ### 5.10. Transaction: `ConfidentialMPTClawback`
 
-`ConfidentialMPTClawback` is defined in XLS-0096. This amendment adds no mirror-staleness precondition. It resolves the key the clawback proof is verified against from the holder's mirror rather than from the currently registered key, and rewrites both mirror epochs on success.
+`ConfidentialMPTClawback` is defined in XLS-0096. This amendment adds no mirror-staleness precondition. The key against which the clawback proof is verified is resolved from the holder's mirror rather than the currently registered key, and both mirror epochs are rewritten on success.
 
 #### 5.10.1. Fields
 
@@ -1068,7 +1068,7 @@ A holder who still holds sk_H needs none of this: holder self-migration anchors 
 
 ### 6.5. Mode Detection
 
-`ConfidentialMPTMirrorUpdate` needs no flag, because `Holder` is a natural discriminator. It identifies the account whose mirrors are migrated, which is meaningful only when someone other than that account submits the transaction, so its presence selects issuer mode and its absence selects holder self-migration without any field set being ambiguous.
+`ConfidentialMPTMirrorUpdate` needs no flag, because `Holder` is a natural discriminator. It identifies the account whose mirrors are migrated, which is meaningful only when someone other than that account submits the transaction, so if `Holder` is present, the issuer is migrating the holder's mirrors (issuer mode); if it's absent, the submitter is migrating their own mirrors (holder self-migration mode).
 
 `ConfidentialMPTHolderKeyUpdate` selects its mode with explicit flags (`tfHolderKeyRotation` / `tfHolderKeyRecovery` / `tfCancelRecovery`) because no field could serve as the discriminator: rotation and recovery both carry `HolderEncryptionKey`, and cancel mode carries no additional field at all.
 
