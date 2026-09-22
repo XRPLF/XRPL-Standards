@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-09-15
-  updated: 2026-09-21
+  updated: 2026-09-22
 </pre>
 
 # 65.3 Closed-Ended Vault Early-Exit Fee
@@ -125,26 +125,56 @@ No changes.
 
 #### 3.4.1 Failure Conditions
 
-Replace parent check 14 of 3.6.2.2 — the Investment-phase gate added by [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) — and append one further check:
+Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-65.2](../65.2/README.md) and the Investment-phase gate of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) — and append one further check:
 
-14. - `SingleAssetVault`: The check does not apply.
+12. - `fixCleanup3_4_0`: As in the parent.
+    - `LendingProtocolV1_2`: The pre-fee $\Delta_{assets}$ of step 2 of 3.4.2 is non-zero and either leaves the stored `Vault.AssetsTotal` unchanged at its precision or rounds down to zero at the posterior scale $s$ of step 3. The check is made against the pre-fee delta, not against the payout $\Delta_{assets}^{paid}$, so a withdrawal whose fee consumes the whole payout is not rejected by it. The parent's fixed-share exemption is unchanged. (`tecPRECISION_LOSS`)
+13. - `SingleAssetVault`: The check does not apply.
     - `LendingProtocolV1_1`: The Vault is closed-ended and `SubscriptionDate < now < RedemptionDate`, where `now` is the parent ledger close time. (`tecTOO_SOON`)
     - `LendingProtocolV1_2`: As above, and `Vault.EarlyExitFeeRate` is absent. (`tecTOO_SOON`)
-15. `LendingProtocolV1_2`: $F$ of 3.4.2 is greater than `0` and `Vault.AssetsAvailable` is less than the payout $\Delta_{assets}^{paid}$. This supersedes parent checks 10.2 and 10.4, which measure `AssetsAvailable` against the pre-fee amount. Only the payout leaves the Vault, so the pre-fee test would reject withdrawals the Vault can fund (4.4). Parent checks 10.1 and 10.3, on the submitter's share balance, are unchanged and are made against $\Delta_{shares}$. (`tecINSUFFICIENT_FUNDS`)
-
-No check rejects a zero payout. The parent's two precision-loss checks apply as follows:
-
-- Parent check 11, that the computed share amount is zero, is unchanged. It is evaluated against $\Delta_{shares}$, which comes from the pre-fee amount and is unaffected by the fee.
-- Parent check 12 is exempted in one case only: a withdrawal whose $\Delta_{assets}^{paid}$ is zero succeeds, burning $\Delta_{shares}$ and transferring nothing. A payout that is non-zero but too small to change the stored `Vault.AssetsTotal` is still rejected with `tecPRECISION_LOSS`, because the Vault would otherwise pay out assets it does not account for.
+14. `LendingProtocolV1_2`: $F$ of 3.4.2 is greater than `0` and `Vault.AssetsAvailable` is less than the payout $\Delta_{assets}^{paid}$. This supersedes parent checks 10.2 and 10.4, which measure `AssetsAvailable` against the pre-fee amount. Only the payout leaves the Vault, so the pre-fee test would reject withdrawals the Vault can fund (4.4). Parent checks 10.1 and 10.3, on the submitter's share balance, are unchanged and are made against $\Delta_{shares}$. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.4.2 State Changes
 
-Compute $\Delta_{shares}$ and $\Delta_{assets}$ exactly as in parent 3.6.3. Then:
+The payout is computed as in parent [3.1.7.2](../README.md#3172-exchange-rate-algorithms), with the deterministic-delta step of [XLS-65.2](../65.2/README.md) §3.1.2.3, and is then reduced by the fee. Steps 1 to 3 are the parent's; steps 4 and 5 are this patch's.
 
-1. Transfer $\Delta_{assets}^{paid} = \Delta_{assets} - F$ from the Vault to the destination, decreasing `Vault.AssetsTotal` and `Vault.AssetsAvailable` by the same amount, where:
-   - $F = 0$ if the Vault is not in its Investment phase, if `Vault.EarlyExitFeeRate` is `0`, or if the withdrawal burns the Vault's entire outstanding share supply (the **full-exit waiver**, 4.2);
-   - otherwise $F = \lceil \Delta_{assets} \times \phi \rceil$, rounded **up** to the smallest representable unit of `Vault.Asset` (4.3).
-2. Burn $\Delta_{shares}$ as in the parent.
+**Parent computation, unchanged**
+
+1. Compute $\Delta_{shares}$ from `Amount` with the variables of parent 3.6.1: by the _Withdraw_ formula of parent 3.1.7.2.3 when `Amount` is in the Vault asset, and by the _Redeem_ formula of parent 3.1.7.2.2 when it is in shares. The fee does not enter this step.
+2. Compute the pre-fee asset amount:
+
+   $$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+
+3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) §3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit. Where `fixCleanup3_4_0` is not enabled, $\Delta_{assets}$ is left as computed.
+
+**Early-exit fee, added by this patch**
+
+4. Compute the fee at the same scale $s$, rounded **up** (4.3):
+
+   $$F = \left\lceil \Delta_{assets} \times \phi \right\rceil_s$$
+
+   $F = 0$ when the Vault is not in its Investment phase, when `Vault.EarlyExitFeeRate` is `0`, or when the withdrawal burns the Vault's entire outstanding share supply (the **full-exit waiver**, 4.2).
+
+5. Compute the payout. No further rounding is applied.
+
+   $$\Delta_{assets}^{paid} = \Delta_{assets} - F$$
+
+**Steps 6 to 9, superseding items 4 to 7**, with $\Delta_{assets}^{paid}$ in place of $\Delta_{asset}$:
+
+6. Decrease `Vault.AssetsTotal` and `Vault.AssetsAvailable` by $\Delta_{assets}^{paid}$.
+7. If `Vault.Asset` is `XRP`:
+   1. Decrease the `Balance` field of the _pseudo-account_ `AccountRoot` by $\Delta_{assets}^{paid}$.
+   2. Increase the `Balance` field of the destination `AccountRoot` by $\Delta_{assets}^{paid}$.
+8. If `Vault.Asset` is an `IOU`:
+   1. If $\Delta_{assets}^{paid}$ is greater than zero and the destination does not have a `RippleState` object for the vault asset, create one.
+   2. Decrease the `RippleState` balance between the _pseudo-account_ `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{assets}^{paid}$.
+   3. Increase the `RippleState` balance between the destination `AccountRoot` and the `Issuer` `AccountRoot` by $\Delta_{assets}^{paid}$.
+9. If `Vault.Asset` is an `MPT`:
+   1. If $\Delta_{assets}^{paid}$ is greater than zero and the destination does not have an `MPToken` object for the vault asset, create one.
+   2. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{assets}^{paid}$.
+   3. Increase the `MPToken.MPTAmount` of the destination `MPToken` for `Vault.Asset` by $\Delta_{assets}^{paid}$.
+
+When $\Delta_{assets}^{paid}$ is zero, steps 6 to 9 change nothing, and no `RippleState` or `MPToken` is created for the destination. Only items 1 to 3 of parent 3.6.3 change the ledger.
 
 ##### 3.4.2.1 Worked Example
 
@@ -228,6 +258,12 @@ A retained fee needs remaining shares to accrue to. If a withdrawal burns the wh
 
 Rounding down would make the fee zero on withdrawals small enough to underflow the asset's precision, so a depositor could exit fee-free in slices. Rounding up makes every non-zero withdrawal cost at least one unit. A withdrawal whose fee rounds to the whole amount succeeds and pays out nothing. Rejecting it would make the outcome depend on rounding, and a 100% Vault would reject every partial exit.
 
+The fee is taken from the pre-fee delta after the rounding of [XLS-65.2](../65.2/README.md) §3.1.2.3, and the payout is not rounded again, for three reasons:
+
+- **One grid.** The rounded delta lies on the grid at the posterior scale, so a fee rounded to that grid and the difference of the two lie on it as well. A second rounding of the payout would be a no-op at best and a second sub-unit residue at worst.
+- **The disclosed base.** The rate is a fraction of the withdrawal, and the withdrawal is what the depositor would have received without the fee. That is the rounded delta the parent pays out, not the exact quotient the ledger never records.
+- **Reproducibility.** The fee depends only on amounts representable at the posterior scale, so a client can recompute it from ledger values with the same rule the ledger applies.
+
 ### 4.4 Why liquidity is checked against the post-fee payout
 
 Only the payout leaves the Vault. Checking the pre-fee amount would reject withdrawals the Vault can satisfy.
@@ -239,7 +275,7 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 - **Open-ended Vaults are unaffected.** They cannot carry `EarlyExitFeeRate` (3.3.2), have no phases, and their withdrawal behavior is untouched.
 - **Existing closed-ended Vaults are unaffected.** `EarlyExitFeeRate` is set at creation only, so every Vault created before the amendment has no rate and its Investment-phase withdrawals continue to be rejected with `tecTOO_SOON`. [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md)'s behavior is the default both before and after this amendment.
 - **Serialisation is compatible.** The new field is optional, so existing serialised Vaults deserialise unchanged. It is not elided at `0`, so a Vault that permits a free early exit carries the field explicitly and is distinguishable on the wire from one that permits none (3.2.1).
-- **The parent's zero-payout rejection is conditioned, not removed.** A fee-charging withdrawal whose post-fee payout is zero is exempt from parent check 12 of 3.6.2.2 (3.4.1). Only a Vault carrying an `EarlyExitFeeRate` can charge a fee, and no Vault created before this amendment carries one, so the exemption cannot change the outcome of any withdrawal on an existing Vault.
+- **The parent's zero-payout rejection is conditioned, not removed.** Parent check 12 of 3.6.2.2 is evaluated against the pre-fee delta, so a fee-charging withdrawal whose post-fee payout is zero succeeds (3.4.1). Only a Vault carrying an `EarlyExitFeeRate` can charge a fee, and no Vault created before this amendment carries one, so the exemption cannot change the outcome of any withdrawal on an existing Vault.
 - **Integrators must read the field before quoting a withdrawal.** A client that computes an expected payout from `Amount` and the exchange rate alone will over-quote by the fee for a withdrawal made during Investment. The field is exposed by both `vault_info` and `ledger_entry` (3.6, 3.7).
 
 ## 6. Test Plan
@@ -286,7 +322,8 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 
 - The fee is rounded up: a withdrawal whose exact fee falls between two representable amounts is charged the larger.
 - A withdrawal small enough that the rounded-up fee equals the pre-fee amount succeeds, burns $\Delta_{shares}$, transfers nothing, and leaves `AssetsTotal` and `AssetsAvailable` unchanged.
-- A withdrawal whose post-fee payout is non-zero but too small to change the stored `AssetsTotal` still returns `tecPRECISION_LOSS`; the zero-payout exemption of 3.4.1 does not extend to it.
+- A pre-fee delta that rounds to zero at the posterior scale returns `tecPRECISION_LOSS` whatever the rate; the zero-payout rule of 3.4.1 does not extend to it.
+- For an `IOU` withdrawal whose exact and rounded pre-fee deltas differ, the fee is $\lceil \Delta_{assets} \times \phi \rceil_s$ of the rounded delta, and the payout is their difference with no further rounding. Computing the fee from the exact delta, or rounding the payout after the subtraction, gives a different result and fails the test.
 - Splitting a withdrawal into `n` pieces costs at least as much in total fees as taking it in one, for each of `XRP`, `IOU` and `MPT` assets.
 - The tests are run for all three asset types and across the `Scale` range.
 
