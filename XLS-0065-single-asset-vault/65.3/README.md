@@ -70,11 +70,15 @@ $$\phi = \frac{\text{EarlyExitFeeRate}}{100000}$$
 
 #### 3.2.2 Invariants
 
-Starting from `LendingProtocolV1_2`:
+Amend parent 3.1.10 under `LendingProtocolV1_2`:
 
-1. `EarlyExitFeeRate` is immutable. If present, it keeps its value; if absent, it stays absent. Only the transaction that creates the `Vault` may set it.
-2. `EarlyExitFeeRate` never exceeds `MAX_EARLY_EXIT_FEE_RATE`.
-3. Only a `Vault` with `VaultKind == ClosedEnded` may have an `EarlyExitFeeRate`.
+**Invariant 14 is extended**
+
+14. `EarlyExitFeeRate` joins the set of fields that are immutable once set. If it is present, it keeps its value. If it is absent, it stays absent, except when the transaction creates the entry.
+
+**Invariant 17 is appended**
+
+17. If `EarlyExitFeeRate` is present, then `VaultKind == ClosedEnded` and `EarlyExitFeeRate <= MAX_EARLY_EXIT_FEE_RATE`. A present value of `0` is valid and is not elided.
 
 #### 3.2.3 Example JSON
 
@@ -125,7 +129,9 @@ Extend parent 3.2.6 step 1:
 
 #### 3.3.4 Invariants
 
-No changes.
+Append to parent 3.2.7 under `LendingProtocolV1_2`:
+
+4. A newly created `Vault` carries `EarlyExitFeeRate` if and only if the `VaultCreate` carried it, with the same value. When it does, `VaultKind == ClosedEnded` and `EarlyExitFeeRate <= MAX_EARLY_EXIT_FEE_RATE`.
 
 ### 3.4 Transaction: `VaultWithdraw`
 
@@ -138,13 +144,21 @@ The fee is subtracted from that rounded pre-fee amount. During Investment on a V
 
 #### 3.4.1 Failure Conditions
 
-Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-65.2](../65.2/README.md) and the Investment-phase gate of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) — and append one further check:
+This section supersedes two rules and appends one check. Parent 3.6.2.2 check 13, arithmetic overflow during share/asset calculation, keeps its number and its meaning. It covers the fee product of step 4 of 3.4.2. (`tecPATH_DRY`)
+
+**Parent 3.6.2.2 check 12**, the precision-loss check of [XLS-65.2](../65.2/README.md), is superseded by:
 
 12. - `fixCleanup3_4_0`: As in the parent.
     - `LendingProtocolV1_2`: The pre-fee $\Delta_{assets}$ of step 2 of 3.4.2 is non-zero and either leaves the stored `Vault.AssetsTotal` unchanged at its precision or rounds down to zero at the posterior scale $s$ of step 3. The check is made against the pre-fee delta, not against the payout $\Delta_{assets}^{paid}$, so a withdrawal whose fee consumes the whole payout is not rejected by it. The parent's fixed-share exemption is unchanged. (`tecPRECISION_LOSS`)
-13. - `SingleAssetVault`: The check does not apply.
-    - `LendingProtocolV1_1`: The Vault is closed-ended and `SubscriptionDate < now < RedemptionDate`, where `now` is the parent ledger close time. (`tecTOO_SOON`)
-    - `LendingProtocolV1_2`: As above, and `Vault.EarlyExitFeeRate` is absent. (`tecTOO_SOON`)
+
+**The Investment-phase gate** of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) is superseded by the rule below. That specification states the gate as a protocol-level failure of its own `VaultWithdraw` section rather than as a numbered check of parent 3.6.2.2, so it carries no parent check number to replace.
+
+- `SingleAssetVault`: The rule does not apply.
+- `LendingProtocolV1_1`: The Vault is closed-ended and `SubscriptionDate < now < RedemptionDate`, where `now` is the parent ledger close time. (`tecTOO_SOON`)
+- `LendingProtocolV1_2`: As above, and `Vault.EarlyExitFeeRate` is absent. (`tecTOO_SOON`)
+
+**Parent 3.6.2.2 check 14** is appended:
+
 14. `LendingProtocolV1_2`: $F$ of 3.4.2 is greater than `0` and `Vault.AssetsAvailable` is less than the payout $\Delta_{assets}^{paid}$. This supersedes parent checks 10.2 and 10.4, which measure `AssetsAvailable` against the pre-fee amount. Only the payout leaves the Vault, so the pre-fee test would reject withdrawals the Vault can fund (4.4). Parent checks 10.1 and 10.3, on the submitter's share balance, are unchanged and are made against $\Delta_{shares}$. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.4.2 State Changes
