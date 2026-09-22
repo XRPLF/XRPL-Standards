@@ -129,7 +129,12 @@ No changes.
 
 ### 3.4 Transaction: `VaultWithdraw`
 
-`Amount` keeps its meaning in both denominations and is the **pre-fee** amount: a depositor who submits an asset-denominated `Amount` during Investment receives less than `Amount` whenever the Vault's rate is greater than `0` (Appendix A.1). On a Vault with a rate of `0` they receive `Amount` exactly. Parent 3.6.1 is otherwise unchanged.
+`Amount` keeps its meaning in both denominations and is the **pre-fee** amount. The payout is $\Delta_{assets}^{paid}$ of 3.4.2 and nothing else. An asset-denominated `Amount` is a request, not a payout, for two reasons that are independent of this patch:
+
+- Parent 3.1.7.2.3 rounds $\Delta_{shares}$ and recomputes the asset amount from the rounded shares, so the pre-fee $\Delta_{assets}$ may already differ from `Amount`.
+- [XLS-65.2](../65.2/README.md) 3.1.2.3 then rounds $\Delta_{assets}$ down at the posterior scale.
+
+The fee is subtracted from that rounded pre-fee amount. During Investment on a Vault whose rate is greater than `0`, the payout is therefore less than `Amount` unless the full-exit waiver of 3.4.2 applies. On a Vault with a rate of `0`, or outside Investment, the payout equals the parent's payout for the same request. Parent 3.6.1 is otherwise unchanged.
 
 #### 3.4.1 Failure Conditions
 
@@ -182,6 +187,12 @@ Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-
 
 When $\Delta_{assets}^{paid}$ is zero, steps 6 to 9 change nothing, and no `RippleState` or `MPToken` is created for the destination. Only items 1 to 3 of parent 3.6.3 change the ledger.
 
+**Full-redemption path, unchanged**
+
+- The `fixCleanup3_2_0` full-redemption path that [XLS-65.2](../65.2/README.md) 3.1.2.2 describes is preserved. It applies when $\Delta_{shares}$ equals the entire outstanding share supply, which is the same condition as the full-exit waiver of step 4.
+
+- A full redemption with deployed capital or a non-zero `LossUnrealized` does not reach this path. The pre-fee $\Delta_{assets}$ then equals `Vault.AssetsTotal`, which exceeds `Vault.AssetsAvailable`, so the parent's liquidity check rejects the transaction with `tecINSUFFICIENT_FUNDS`. The waiver therefore never leaves assets in a Vault with no shares, and the two outcomes cannot conflict.
+
 ##### 3.4.2.1 Worked Example
 
 A closed-ended Vault in its Investment phase, with `EarlyExitFeeRate = 2000` (2%) and no unrealized loss:
@@ -217,6 +228,7 @@ Amend parent 3.6.4 under `LendingProtocolV1_2`:
 2. Supersedes invariant 2, which requires the destination's asset balance to increase. A withdrawal must not decrease the destination's asset balance.
 3. Either balance is unchanged only when $\Delta_{assets}^{paid}$ is zero. Invariants 3 and 6 hold as written, with both sides zero in that case.
 4. The Investment-phase rule of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) 3.5.1, that no `VaultWithdraw` succeeds during `Investment`, applies only when `Vault.EarlyExitFeeRate` is absent.
+5. On the full-redemption path of 3.4.2, `Vault.AssetsTotal` and `Vault.AssetsAvailable` both reach zero and the asset-balance decrease equals the prior `Vault.AssetsAvailable`, as in the parent. No fee is retained, so parent `Vault` invariant 7 holds.
 
 ### 3.5 Transaction: `VaultClawback`
 
@@ -329,6 +341,7 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 - With a non-zero rate, a share-denominated withdrawal (redeem) succeeds and is charged the same fee.
 - With an absent rate, a withdrawal returns `tecTOO_SOON`, in both denominations and with and without a `Destination`.
 - With a rate of `0`, a withdrawal succeeds and is charged nothing: the payout equals $\Delta_{assets}$, `AssetsTotal` and `AssetsAvailable` decrease by $\Delta_{assets}$, the exchange rate is unchanged, and the result matches the same withdrawal made on an open-ended Vault with the same state.
+- With a rate of `0` and an asset-denominated `Amount` that does not convert to a whole number of shares, the payout differs from `Amount` exactly as it does in the parent.
 - The exchange rate after a fee-charging withdrawal is strictly higher than before, and a second depositor redeeming an identical share amount immediately afterwards receives strictly more assets than the first.
 - With a rate of `MAX_EARLY_EXIT_FEE_RATE`, a partial withdrawal succeeds, burns $\Delta_{shares}$, transfers nothing, and leaves both `AssetsTotal` and `AssetsAvailable` unchanged; the exchange rate rises and the remaining holders absorb the whole forfeited position.
 - The worked example of 3.4.2.1 reproduces exactly, including both post-state totals.
@@ -360,7 +373,8 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 
 ### 6.7 Full-exit waiver
 
-- A withdrawal during Investment that burns the entire outstanding share supply is charged no fee, empties the Vault (`AssetsTotal == 0`, `AssetsAvailable == 0`), and the Vault can then be deleted.
+- A withdrawal during Investment that burns the entire outstanding share supply is charged no fee, empties the Vault (`AssetsTotal == 0`, `AssetsAvailable == 0`), pays out the prior `AssetsAvailable`, and the Vault can then be deleted.
+- A withdrawal during Investment that would burn the entire outstanding share supply while capital is deployed, or while `LossUnrealized` is non-zero, returns `tecINSUFFICIENT_FUNDS` and charges nothing.
 - A sole shareholder taking a partial withdrawal during Investment **is** charged the fee, and the parent sole-shareholder `LossUnrealized` waiver still applies to the pre-fee amount.
 - With two holders, a withdrawal that burns all of one holder's shares but not the whole supply is charged the fee.
 
@@ -404,11 +418,11 @@ _TBD_
 
 ### A.1 If I ask to withdraw 100,000, do I receive 100,000?
 
-Not during the Investment phase on a Vault with a non-zero rate. `Amount` is the pre-fee amount: shares are burned as if you withdrew 100,000, and you receive 100,000 less the fee. To receive a specific amount $X$ after the fee, request
+Not during the Investment phase on a Vault with a non-zero rate, unless you burn the entire share supply. `Amount` is the pre-fee amount: shares are burned as if you withdrew 100,000, and you receive that amount less the fee. The payout is always $\Delta_{assets}^{paid}$ of 3.4.2. To receive approximately $X$ after the fee, request
 
 $$\text{Amount} = \left\lceil \frac{X}{1 - \phi} \right\rceil$$
 
-where $\phi$ is the rate as a fraction (3.2.1). At a 2% rate, request 102,041 to receive 100,000. At a rate of 100% no `Amount` produces a positive payout (3.4.2).
+where $\phi$ is the rate as a fraction (3.2.1). At a 2% rate, request 102,041 to receive about 100,000. The result is approximate because the parent rounds the share count and [XLS-65.2](../65.2/README.md) rounds the asset amount, so a client MUST compute the exact payout with the steps of 3.4.2 before quoting it (3.4). At a rate of 100% no `Amount` produces a positive payout (3.4.2).
 
 ### A.2 Why is the rate flat rather than decaying as `RedemptionDate` approaches?
 
