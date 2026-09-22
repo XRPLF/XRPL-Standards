@@ -220,7 +220,7 @@ Amend parent 3.6.4 under `LendingProtocolV1_2`:
 
 ### 3.5 Transaction: `VaultClawback`
 
-The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`. 
+The `VaultClawback` transaction performs a Clawback from the Vault, exchanging the shares of an account. Conceptually, the transaction performs `VaultWithdraw` on behalf of the `Holder`, sending the funds to the `Issuer` account of the asset. In case there are insufficient funds for the entire `Amount` the transaction will perform a partial Clawback, up to the `Vault.AssetsAvailable`.
 
 - `SingleAssetVault`: The Clawback transaction must respect any future fees or penalties.
 - `LendingProtocolV1_2`: `VaultClawback` does not apply `EarlyExitFeeRate`. A clawback from a Vault carrying a rate removes the same assets and burns the same shares as the parent computes. This holds in every phase and at every rate.
