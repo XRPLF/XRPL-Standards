@@ -15,7 +15,7 @@
 
 ## 1. Abstract
 
-Under the `LendingProtocolV1_2` amendment, a closed-ended Vault may carry one additional immutable field, `EarlyExitFeeRate`, set at creation. When it is absent, the Vault behaves exactly as [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) describes: `VaultWithdraw` is rejected for the whole Investment phase. When it is present, a `VaultWithdraw` is permitted during Investment and is charged that percentage of the pre-fee withdrawal. A zero-percent rate permits the exit and charges nothing for it. At a rate of 100% the fee consumes the entire payout, so the withdrawal burns the shares and transfers nothing. Shares are burned against the pre-fee amount while only the post-fee amount leaves the Vault, so the difference stays in the Vault and raises the value of every remaining share. The fee is paid to no party. The exit still draws on `Vault.AssetsAvailable`, so it is best-efforts, not guaranteed. Open-ended Vaults, and closed-ended Vaults outside Investment, are unaffected.
+Under the `LendingProtocolV1_2` amendment, a closed-ended Vault may carry one additional immutable field, `EarlyExitFeeRate`, set at creation. When it is absent, the Vault behaves exactly as [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) describes: `VaultWithdraw` is rejected for the whole Investment phase. When it is present, a `VaultWithdraw` is permitted during Investment and is charged that percentage of the pre-fee withdrawal. A zero-percent rate permits the exit and charges nothing for it. At a rate of 100% the fee consumes the entire payout of a partial withdrawal, so the withdrawal burns the shares and transfers nothing. A withdrawal that burns the entire outstanding share supply pays no fee (3.4.2). Shares are burned against the pre-fee amount while only the post-fee amount leaves the Vault, so the difference stays in the Vault and raises the value of every remaining share. The fee is paid to no party. The exit still draws on `Vault.AssetsAvailable`, so it is best-efforts, not guaranteed. Open-ended Vaults, and closed-ended Vaults outside Investment, are unaffected.
 
 ## 2. Motivation
 
@@ -40,9 +40,9 @@ This patch changes the parent [XLS-65](../README.md) sections named below, and t
 
 ### 3.1 Protocol Constants
 
-| Constant                  | Value    | Meaning                                                                                                                                                                                                            |
-| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `MAX_EARLY_EXIT_FEE_RATE` | `100000` | Inclusive upper bound on `EarlyExitFeeRate`, in 1/10th basis points. Equivalent to 100%. A rate of exactly this value is accepted; an early exit at that rate pays out nothing and still burns the shares (3.4.2). |
+| Constant                  | Value    | Meaning                                                                                                                                                                                                                                                               |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAX_EARLY_EXIT_FEE_RATE` | `100000` | Inclusive upper bound on `EarlyExitFeeRate`, in 1/10th basis points. Equivalent to 100%. A rate of exactly this value is accepted. A partial early exit at that rate burns the shares and pays out nothing. A full exit is exempt under the full-exit waiver (3.4.2). |
 
 ### 3.2 Ledger Entry: `Vault`
 
@@ -140,7 +140,7 @@ Append to parent 3.2.7 under `LendingProtocolV1_2`:
 - Parent 3.1.7.2.3 rounds $\Delta_{shares}$ and recomputes the asset amount from the rounded shares, so the pre-fee $\Delta_{assets}$ may already differ from `Amount`.
 - [XLS-65.2](../65.2/README.md) 3.1.2.3 then rounds $\Delta_{assets}$ down at the posterior scale.
 
-The fee is subtracted from that rounded pre-fee amount. During Investment on a Vault whose rate is greater than `0`, the payout is therefore less than `Amount` unless the full-exit waiver of 3.4.2 applies. On a Vault with a rate of `0`, or outside Investment, the payout equals the parent's payout for the same request. Parent 3.6.1 is otherwise unchanged.
+The fee is subtracted from that rounded pre-fee amount. During Investment on a Vault whose rate is greater than `0`, the payout is therefore the parent's payout for the same request less $F$, unless the full-exit waiver of 3.4.2 applies. The payout is not ordered relative to `Amount`, because the parent's rounding of $\Delta_{shares}$ to the nearest whole number may move the pre-fee amount above `Amount` by more than $F$. On a Vault with a rate of `0`, or outside Investment, the payout equals the parent's payout for the same request. Parent 3.6.1 is otherwise unchanged.
 
 #### 3.4.1 Failure Conditions
 
@@ -421,7 +421,7 @@ _TBD_
 ## 8. Security Considerations
 
 - **Permitting early exit makes a run possible during Investment.** Without a rate, no capital can leave a closed-ended Vault mid-term. With one, every holder can draw on `Vault.AssetsAvailable`, and under the `first-come-first-serve` policy the cash goes to whoever asks first. The fee does not stop a run. It only makes each exit cost its holder the configured rate. Depositors who need certain liquidity must wait for `RedemptionDate`.
-- **A high rate destroys the position of whoever exits early.** An owner may configure a rate of 100%. A depositor who then withdraws during Investment burns their shares and receives nothing, and the transaction succeeds rather than failing (3.4.2). A client MUST compute and display the post-fee payout, which may be zero, before submitting a `VaultWithdraw` during Investment.
+- **A high rate destroys the position of whoever exits early.** An owner may configure a rate of 100%. A depositor who then makes a partial withdrawal during Investment burns their shares and receives nothing, and the transaction succeeds rather than failing (3.4.2). A client MUST compute and display the post-fee payout, which may be zero, before submitting a `VaultWithdraw` during Investment.
 - **The owner cannot extract the fee, but does share in it.** The fee is never transferred, so no owner or broker action can capture it. An owner who holds shares nonetheless benefits from every early exit pro rata with the other remaining holders, which is a mild incentive to set a high rate. Immutability (3.2.2) bounds this. The rate is fixed and readable before any depositor subscribes, so an owner cannot raise it once capital is committed or lower it to let a favoured holder exit cheaply.
 - **Permitting early exit introduces adverse selection during Investment.** A depositor who learns of an incoming loss can exit ahead of its realisation. The parent's `LossUnrealized` mechanism prices known impairment into the payout, and the fee adds a cost to leaving, but neither addresses a loss that has not yet been marked. A Vault without a rate has no such exposure during Investment.
 - **The full-exit waiver is reachable only by holding every share.** A holder who accumulates 100% of the shares in issue exits without a fee (3.4.2). Reaching that position requires every other holder to sell, and once it is reached there is no remaining holder for a fee to compensate, so the waiver forfeits nothing (4.2). Share MPTs are transferable unless the Vault was created with `tfVaultShareNonTransferable`, so the path exists on any transferable-share Vault.
@@ -436,7 +436,7 @@ Not during the Investment phase on a Vault with a non-zero rate, unless you burn
 
 $$\text{Amount} = \left\lceil \frac{X}{1 - \phi} \right\rceil$$
 
-where $\phi$ is the rate as a fraction (3.2.1). At a 2% rate, request 102,041 to receive about 100,000. The result is approximate because the parent rounds the share count and [XLS-65.2](../65.2/README.md) rounds the asset amount, so a client MUST compute the exact payout with the steps of 3.4.2 before quoting it (3.4). At a rate of 100% no `Amount` produces a positive payout (3.4.2).
+where $\phi$ is the rate as a fraction (3.2.1). At a 2% rate, request 102,041 to receive about 100,000. The result is approximate because the parent rounds the share count and [XLS-65.2](../65.2/README.md) rounds the asset amount, so a client MUST compute the exact payout with the steps of 3.4.2 before quoting it (3.4). At a rate of 100% no `Amount` short of the entire share supply produces a positive payout (3.4.2).
 
 ### A.2 Why is the rate flat rather than decaying as `RedemptionDate` approaches?
 
