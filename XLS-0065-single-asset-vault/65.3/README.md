@@ -141,7 +141,7 @@ Replace parent checks 12 and 14 of 3.6.2.2 — the precision-loss check of [XLS-
 1. Compute $\Delta_{shares}$ from `Amount` with the variables of parent 3.6.1: by the _Withdraw_ formula of parent 3.1.7.2.3 when `Amount` is in the Vault asset, and by the _Redeem_ formula of parent 3.1.7.2.2 when it is in shares. The fee does not enter this step.
 2. Compute the pre-fee asset amount:
 
-   $$\Delta_{assets} = \frac{\Delta_{shares} \times (\Gamma_{assets} - \iota)}{\Gamma_{shares}}$$
+   $$\Delta_{assets} = \frac{\Delta_{shares} \times \Gamma_{asset}}{\Gamma_{shares}}$$
 
 3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) 3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit. Where `fixCleanup3_4_0` is not enabled, $\Delta_{assets}$ is left as computed.
 
