@@ -144,7 +144,7 @@ The fee is subtracted from that rounded pre-fee amount. During Investment on a V
 
 #### 3.4.1 Failure Conditions
 
-This section supersedes two rules and appends one check. Parent 3.6.2.2 check 13, arithmetic overflow during share/asset calculation, keeps its number and its meaning. It covers the fee product of step 4 of 3.4.2. (`tecPATH_DRY`)
+This section supersedes three rules. Parent 3.6.2.2 check 13, arithmetic overflow during share/asset calculation, keeps its number and its meaning. It covers the fee product of step 4 of 3.4.2. (`tecPATH_DRY`)
 
 **Parent 3.6.2.2 check 12**, the precision-loss check of [XLS-65.2](../65.2/README.md), is superseded by:
 
@@ -157,9 +157,15 @@ This section supersedes two rules and appends one check. Parent 3.6.2.2 check 13
 - `LendingProtocolV1_1`: The Vault is closed-ended and `SubscriptionDate < now < RedemptionDate`, where `now` is the parent ledger close time. (`tecTOO_SOON`)
 - `LendingProtocolV1_2`: As above, and `Vault.EarlyExitFeeRate` is absent. (`tecTOO_SOON`)
 
-**Parent 3.6.2.2 check 14** is appended:
+**Parent 3.6.2.2 checks 10.2 and 10.4**, which measure `Vault.AssetsAvailable` against the pre-fee amount, are superseded by:
 
-14. `LendingProtocolV1_2`: $F$ of 3.4.2 is greater than `0` and `Vault.AssetsAvailable` is less than the payout $\Delta_{assets}^{paid}$. This supersedes parent checks 10.2 and 10.4, which measure `AssetsAvailable` against the pre-fee amount. Only the payout leaves the Vault, so the pre-fee test would reject withdrawals the Vault can fund (4.4). Parent checks 10.1 and 10.3, on the submitter's share balance, are unchanged and are made against $\Delta_{shares}$. (`tecINSUFFICIENT_FUNDS`)
+10. Items 2 and 4, on `Vault.AssetsAvailable`, in both denominations:
+    - `SingleAssetVault`: As in the parent.
+    - `LendingProtocolV1_2`: As in the parent when $F$ of 3.4.2 is `0`. When $F$ is greater than `0`, `Vault.AssetsAvailable` is less than the payout $\Delta_{assets}^{paid}$. Only the payout leaves the Vault, so the pre-fee test would reject withdrawals the Vault can fund (4.4). (`tecINSUFFICIENT_FUNDS`)
+
+    Items 1 and 3, on the submitter's share balance, are unchanged and are made against $\Delta_{shares}$.
+
+$F$ is `0` on an open-ended Vault, on a closed-ended Vault outside Investment or with a rate of `0`, and under the full-exit waiver. Every such withdrawal is therefore checked for liquidity exactly as in the parent, and only a fee-charging withdrawal is measured against the payout.
 
 #### 3.4.2 State Changes
 
@@ -365,7 +371,7 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 - With a non-zero rate, an asset-denominated withdrawal succeeds; the payout equals $\Delta_{assets} - F$, the shares burned equal $\Delta_{shares}$ computed from the pre-fee amount, and `AssetsTotal` and `AssetsAvailable` each decrease by the payout only.
 - With a non-zero rate, a share-denominated withdrawal (redeem) succeeds and is charged the same fee.
 - With an absent rate, a withdrawal returns `tecTOO_SOON`, in both denominations and with and without a `Destination`.
-- With a rate of `0`, a withdrawal succeeds and is charged nothing: the payout equals $\Delta_{assets}$, `AssetsTotal` and `AssetsAvailable` decrease by $\Delta_{assets}$, the exchange rate is unchanged, and the result matches the same withdrawal made on an open-ended Vault with the same state.
+- With a rate of `0`, a withdrawal succeeds and is charged nothing: the payout equals $\Delta_{assets}$, `AssetsTotal` and `AssetsAvailable` decrease by $\Delta_{assets}$, and the post-state, including the exchange rate, matches the same withdrawal made on an open-ended Vault with the same state. The exchange rate is not required to be unchanged, because the parent's rounding of $\Delta_{shares}$ and of $\Delta_{assets}$ can leave residual value in `AssetsTotal` with or without this patch.
 - With a rate of `0` and an asset-denominated `Amount` that does not convert to a whole number of shares, the payout differs from `Amount` exactly as it does in the parent.
 - The exchange rate after a fee-charging withdrawal is strictly higher than before, and a second depositor redeeming an identical share amount immediately afterwards receives strictly more assets than the first.
 - With a rate of `MAX_EARLY_EXIT_FEE_RATE`, a partial withdrawal succeeds, burns $\Delta_{shares}$, transfers nothing, and leaves both `AssetsTotal` and `AssetsAvailable` unchanged; the exchange rate rises and the remaining holders absorb the whole forfeited position.
@@ -383,9 +389,10 @@ The feature is inert unless `LendingProtocolV1_2` is enabled; ledger entries and
 ### 6.5 Liquidity
 
 - A withdrawal whose post-fee payout exceeds `AssetsAvailable` returns `tecINSUFFICIENT_FUNDS`.
+- A withdrawal with $F = 0$ whose pre-fee amount exceeds `AssetsAvailable` returns `tecINSUFFICIENT_FUNDS`, exactly as in the parent, on an open-ended Vault, on a closed-ended Vault with a rate of `0`, and on a closed-ended Vault outside Investment.
 - Boundary: a withdrawal whose post-fee payout equals `AssetsAvailable` succeeds, even though its pre-fee amount exceeds `AssetsAvailable`.
 - A Vault whose cash is fully deployed into loans rejects every early exit whose post-fee payout is positive, and accepts them again as loan payments restore `AssetsAvailable`.
-- A Vault with `AssetsAvailable == 0` accepts an early exit whose post-fee payout is zero, whether from a rate of `MAX_EARLY_EXIT_FEE_RATE` or from a fee that rounds up to the whole pre-fee amount. The withdrawal burns $\Delta_{shares}$, moves no assets, and leaves `AssetsTotal` and `AssetsAvailable` at their prior values. Check 14 of 3.4.1 does not apply to it because no cash leaves the Vault.
+- A Vault with `AssetsAvailable == 0` accepts an early exit whose post-fee payout is zero, whether from a rate of `MAX_EARLY_EXIT_FEE_RATE` or from a fee that rounds up to the whole pre-fee amount. The withdrawal burns $\Delta_{shares}$, moves no assets, and leaves `AssetsTotal` and `AssetsAvailable` at their prior values. Check 10 of 3.4.1 passes because no cash leaves the Vault.
 - An early exit does not affect any outstanding `Loan` or the broker's `CoverAvailable`.
 
 ### 6.6 Rounding and precision
