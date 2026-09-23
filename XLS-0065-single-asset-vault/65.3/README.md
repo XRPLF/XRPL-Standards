@@ -149,7 +149,7 @@ This section supersedes three rules. Parent 3.6.2.2 check 13, arithmetic overflo
 **Parent 3.6.2.2 check 12**, the precision-loss check of [XLS-65.2](../65.2/README.md), is superseded by:
 
 12. - `fixCleanup3_4_0`: As in the parent.
-    - `LendingProtocolV1_2`: The pre-fee $\Delta_{assets}$ of step 2 of 3.4.2 is non-zero and either leaves the stored `Vault.AssetsTotal` unchanged at its precision or rounds down to zero at the posterior scale $s$ of step 3. The check is made against the pre-fee delta, not against the payout $\Delta_{assets}^{paid}$, so a withdrawal whose fee consumes the whole payout is not rejected by it. The parent's fixed-share exemption is unchanged. (`tecPRECISION_LOSS`)
+    - `LendingProtocolV1_2`: Using the rounded pre-fee $\Delta_{assets}$ from step 3 as the candidate accounting delta, reject when it is non-zero but, if applied to the pre-transaction `Vault.AssetsTotal` before subtracting the fee, leaves that field unchanged at its precision, or when it rounds down to zero at posterior scale $s$. The check is made against the pre-fee delta, not against the payout $\Delta_{assets}^{paid}$ or the actual post-state, so a withdrawal whose fee consumes the whole payout is not rejected by it. The parent's fixed-share exemption is unchanged. (`tecPRECISION_LOSS`)
 
 **The Investment-phase gate** of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) is superseded by the rule below. That specification states the gate as a protocol-level failure of its own `VaultWithdraw` section rather than as a numbered check of parent 3.6.2.2, so it carries no parent check number to replace.
 
