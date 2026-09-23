@@ -178,6 +178,8 @@ $F$ is `0` on an open-ended Vault, on a closed-ended Vault outside Investment or
 
 3. Round $\Delta_{assets}$ down at the posterior scale $s$, as in steps 1 to 3 of [XLS-65.2](../65.2/README.md) 3.1.2.3. Check 12 of 3.4.1 is evaluated against the result. For `XRP` and `MPT` this is a no-op and one unit at $s$ is a drop or one MPT unit.
 
+   $s$ is the `STAmount` exponent of `Vault.AssetsTotal` $- \Delta_{assets}$, evaluated with round-to-nearest on the **pre-fee** delta of step 2. It is derived once at this step. Steps 4 and 5 reuse that value, and the fee never re-derives it (4.3).
+
 **Early-exit fee, added by this patch**
 
 4. Compute the fee at the same scale $s$, rounded **up** (4.3):
@@ -189,6 +191,8 @@ $F$ is `0` on an open-ended Vault, on a closed-ended Vault outside Investment or
 5. Compute the payout. No further rounding is applied.
 
    $$\Delta_{assets}^{paid} = \Delta_{assets} - F$$
+
+   The invariant of [XLS-65.2](../65.2/README.md) 3.1.2.2 admits one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`, which under this patch reflects $\Delta_{assets}^{paid}$. That exponent is a tolerance for the invariant check. It is not a rounding instruction, and neither it nor $s$ is derived from the other.
 
 **Steps 6 to 9, superseding items 4 to 7**, with $\Delta_{assets}^{paid}$ in place of $\Delta_{asset}$:
 
@@ -323,6 +327,7 @@ The fee is taken from the pre-fee delta after the rounding of [XLS-65.2](../65.2
 
 - **One grid.** The rounded delta lies on the grid at the posterior scale, so a fee rounded to that grid and the difference of the two lie on it as well. A second rounding of the payout would be a no-op at best and a second sub-unit residue at worst.
 - **The disclosed base.** The rate is a fraction of the withdrawal, and the withdrawal is what the depositor would have received without the fee. That is the rounded delta the parent pays out, not the exact quotient the ledger never records.
+- **One derivation of $s$.** The scale comes from the pre-fee delta of step 2 and is fixed there. Deriving it from $\Delta_{assets}^{paid}$ would be circular, because $F$ is rounded at $s$ and the payout is not known until $F$ is. Near an `IOU` exponent boundary the two derivations can differ by one exponent, which would change both the fee and the payout.
 - **Reproducibility.** The fee depends only on amounts representable at the posterior scale, so a client can recompute it from ledger values with the same rule the ledger applies.
 
 ### 4.4 Why liquidity is checked against the post-fee payout
