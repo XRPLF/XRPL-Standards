@@ -23,7 +23,11 @@ A closed-ended Vault locks capital for a fixed term. That lock is the point of t
 
 An early-exit fee makes that option a per-Vault setting. The owner fixes a rate at creation; a depositor may then leave during Investment and pay that percentage for the privilege. The fee is not revenue. It never leaves the Vault, so it accrues to the depositors who remain, compensating them for the liquidity consumed and the term cut short.
 
-Whether a mid-term exit is possible and what it costs are two separate decisions, and the field expresses both. An owner who sets no rate at all gets the closed-ended Vault unchanged, with no early exit at any price. An owner who sets a rate of `0` permits mid-term exits and charges nothing for them, which is the right configuration for a Vault whose term is a plan rather than a promise. Absence is the conservative default, so every Vault created before this amendment keeps its meaning (3.2.1).
+The field expresses both whether a mid-term exit is possible and what it costs are two separate decisions:
+
+- An owner who sets no rate at all preserves the closed-ended Vault unchanged, with no early exit at any price.
+- An owner who sets a rate of `0` permits mid-term exits and charges nothing for them. This configuration fits a Vault whose term is a plan rather than a promise.
+- Absence is the conservative default, so every Vault created before this amendment keeps its existing behavior (3.2.1).
 
 Fixing the rate at creation and exposing it on the ledger means a depositor knows the exit terms before committing capital, in the same way they know `SubscriptionDate` and `RedemptionDate`.
 
@@ -35,16 +39,16 @@ This specification and [XLS-65.3](../65.3/README.md) (Fixed Precision for Vault 
 
 Two amendments are hard prerequisites of `LendingProtocolV1_2`:
 
-| Prerequisite Amendment | Specification                                      | Reason                                                                                                                                                  |
-| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prerequisite Amendment | Specification                                      | Reason                                                                                                                                                |
+| ---------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `LendingProtocolV1_1`  | [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) | `EarlyExitFeeRate` may only be set on a closed-ended Vault, and the only behavior it changes is the Investment-phase gate that XLS-65.1.4 introduces. |
-| `fixCleanup3_4_0`      | [XLS-65.2](../65.2/README.md)                      | Defines the posterior scale rounding path on legacy Vaults, tightening precision loss and clawback semantics.                                           |
+| `fixCleanup3_4_0`      | [XLS-65.2](../65.2/README.md)                      | Defines the posterior scale rounding path on legacy Vaults, tightening precision loss and clawback semantics.                                         |
 
 Within the `LendingProtocolV1_2` amendment, this specification depends on:
 
-| Sibling Specification         | Name                                  | Reason                                                                                                                                                                                                                                                           |
-| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [XLS-65.3](../65.3/README.md) | Fixed Precision for Vault and Lending | Sets fixed precision grid $P$, live exponent $e(R)$, live scale $s = -e(R)$, and the operation rule of 3.2.4. Under XLS-65.3, `VaultWithdraw` rounds outflows toward zero at candidate posterior live exponent $e^*$. The early-exit fee calculation and payout operate on that grid. |
+| Sibling Specification         | Name                                  | Reason                                                                                                                                                                                                                                                                                   |
+| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [XLS-65.3](../65.3/README.md) | Fixed Precision for Vault and Lending | Sets fixed precision grid $P$, live exponent $e(R)$, live scale $s = -e(R)$, and the operation rule of 3.2.4. Under XLS-65.3, `VaultWithdraw` rounds outflows toward zero at candidate posterior live exponent $e^\ast$. The early-exit fee calculation and payout operate on that grid. |
 
 `LendingProtocolV1_2` MUST NOT be enabled on a ledger where either prerequisite amendment (`LendingProtocolV1_1` or `fixCleanup3_4_0`) is not enabled. Every section below assumes both are enabled, and the gate of 3.3.2 makes the fee unreachable where `fixCleanup3_4_0` is not. Closed-ended Vaults created under `LendingProtocolV1_1` have `Vault.LEVersion == 1` (`CashBasis`), while those created under `LendingProtocolV1_2` receive `Vault.LEVersion == 2` (`FixedPrecision`). Early exit fee functionality applies to closed-ended Vaults with `LEVersion >= 1` (for example, `CashBasis` or `FixedPrecision`).
 
@@ -138,7 +142,7 @@ Append to the existing checks:
 7. `EarlyExitFeeRate` is present and `VaultKind` is absent or not `ClosedEnded`. (`temMALFORMED`)
 8. `EarlyExitFeeRate` is greater than `MAX_EARLY_EXIT_FEE_RATE`. (`temMALFORMED`)
 
-##### 3.2.5.2 Protocol-Level Failures
+##### 3.3.2.2 Protocol-Level Failures
 
 No changes.
 
@@ -180,10 +184,10 @@ This section supersedes three rules. Parent 3.6.2.2 check 13, arithmetic overflo
     - `LendingProtocolV1_2`: The transaction fails with `tecPRECISION_LOSS` if either of the following conditions holds:
       1. Pre-fee precision loss:
          - For a Vault with `LEVersion == 1` (`CashBasis`), the pre-fee $\Delta_{assets}$ of step 2 of 3.4.3 is non-zero and either leaves the stored `Vault.AssetsTotal` unchanged at its precision or rounds down to zero at the posterior scale $s$ of step 3.
-         - For a Vault with `LEVersion >= 2` (`FixedPrecision`), the pre-fee delta $\Delta_{assets}$ rounded toward zero at candidate posterior live exponent $e^*$ (live scale $s = -e^*$) equals zero under XLS-65.3 3.2.4.
+         - For a Vault with `LEVersion >= 2` (`FixedPrecision`), the pre-fee delta $\Delta_{assets}$ rounded toward zero at candidate posterior live exponent $e^\ast$ (live scale $s = -e^\ast$) equals zero under XLS-65.3 3.2.4.
       2. Post-fee exhaustion when rate is below 100%:
          - The withdrawal incurs an early-exit fee ($F > 0$), `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, and the fee consumes the entire withdrawal ($F \ge \Delta_{assets}$, yielding $\Delta_{assets}^{paid} == 0$).
-      
+
       The parent fixed-share exemption remains unchanged. An early exit with a zero payout is permitted only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`.
 
 **The Investment-phase gate** of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) is superseded by the rule below. That specification states the gate as a protocol-level failure of its own `VaultWithdraw` section rather than as a numbered check of parent 3.6.2.2, so it carries no parent check number to replace.
@@ -212,9 +216,9 @@ $F$ is `0` on an open-ended Vault, on a closed-ended Vault outside Investment or
    $$\Delta_{assets} = \frac{\Delta_{shares} \times \Gamma_{asset}}{\Gamma_{shares}}$$
 
 3. Round $\Delta_{assets}$ down (toward zero) at the candidate posterior live scale $s$. Check 12 of 3.4.2 is evaluated against the result.
-   - On a Vault with `LEVersion >= 2` (`FixedPrecision`), $s$ is the live scale $-e^*$, where $e^* = e(\text{Vault.AssetsTotal} - \Delta_{assets})$ is the candidate posterior live exponent defined in XLS-65.3 3.2.3 and 3.2.4. One unit at $s$ is the live unit $10^{e^*}$.
+   - On a Vault with `LEVersion >= 2` (`FixedPrecision`), $s$ is the live scale $-e^\ast$, where $e^\ast = e(\text{Vault.AssetsTotal} - \Delta_{assets})$ is the candidate posterior live exponent defined in XLS-65.3 3.2.3 and 3.2.4. One unit at $s$ is the live unit $10^{e^\ast}$.
    - On a Vault with `LEVersion == 1` (`CashBasis`), $s$ is the posterior scale defined in XLS-65.2 3.1.2.3, derived as the `STAmount` exponent of `Vault.AssetsTotal` $- \Delta_{assets}$, evaluated with round-to-nearest on the **pre-fee** delta of step 2.
-   - For `XRP` and `MPT`, $s = 0$ ($e^* = 0$) at all times; rounding at $s$ is an identity operation, and one unit at $s$ is a drop or one MPT unit.
+   - For `XRP` and `MPT`, $s = 0$ ($e^\ast = 0$) at all times; rounding at $s$ is an identity operation, and one unit at $s$ is a drop or one MPT unit.
    - The scale $s$ is derived once at this step. Steps 4 and 5 reuse that value, and the fee never re-derives it (4.3).
 
 **Early-exit fee, added by this patch**
@@ -231,7 +235,7 @@ $F$ is `0` on an open-ended Vault, on a closed-ended Vault outside Investment or
 
    $$\Delta_{assets}^{paid} = \Delta_{assets} - F$$
 
-   On `LEVersion == 1` Vaults, the invariant of [XLS-65.2](../65.2/README.md) 3.1.2.2 admits one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`. On `LEVersion >= 2` Vaults, XLS-65.3 3.2.4 applies the operation rule on the live grid, with $F$ and $\Delta_{assets}^{paid}$ aligned to multiples of the live unit $10^{e^*}$. That live exponent is determined at step 3. It is not re-derived from $\Delta_{assets}^{paid}$ (4.3).
+   On `LEVersion == 1` Vaults, the invariant of [XLS-65.2](../65.2/README.md) 3.1.2.2 admits one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`. On `LEVersion >= 2` Vaults, XLS-65.3 3.2.4 applies the operation rule on the live grid, with $F$ and $\Delta_{assets}^{paid}$ aligned to multiples of the live unit $10^{e^\ast}$. That live exponent is determined at step 3. It is not re-derived from $\Delta_{assets}^{paid}$ (4.3).
 
    If $F \ge \Delta_{assets}$ and `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, check 12 of 3.4.2 rejects the transaction with `tecPRECISION_LOSS`. A zero payout reaches execution only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption.
 
@@ -302,19 +306,19 @@ The `VaultClawback` transaction performs a Clawback from the Vault, exchanging t
 - `SingleAssetVault`: The Clawback transaction must respect any future fees or penalties.
 - `LendingProtocolV1_2`: `VaultClawback` does not apply `EarlyExitFeeRate`. A clawback from a Vault carrying a rate removes the same assets and burns the same shares as the parent computes. This holds in every phase and at every rate.
 
-#### 3.7.1 Fields
+#### 3.5.1 Fields
 
 No changes.
 
-#### 3.7.2 Failure Conditions
+#### 3.5.2 Failure Conditions
 
 No changes.
 
-#### 3.7.3 State Changes
+#### 3.5.3 State Changes
 
 No changes.
 
-#### 3.7.4 Invariants
+#### 3.5.4 Invariants
 
 No changes.
 
