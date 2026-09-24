@@ -78,7 +78,7 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
   - [Closed-ended Vault](../XLS-draft-closed-ended-vault/README.md): adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates `VaultDeposit` and `VaultWithdraw` on such vaults
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
-- `LendingProtocolV1_2`, as described in [XLS-65.3](./65.3/README.md):
+- `LendingProtocolV1_2`, as described in [XLS-65.4](./65.4/README.md):
   - adds an optional, immutable `EarlyExitFeeRate` field to closed-ended vaults. When present, it permits `VaultWithdraw` during the Investment phase and charges that rate, with the fee retained in the vault for the remaining shareholders
 
 ## 3. Specification
@@ -1229,4 +1229,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 - [XLS-65.1](./65.1/README.md): `LendingProtocolV1_1` Vault changes: [65.1.1 Unmodifiable Vault Fields](./65.1/65.1.1-unmodifiable-vault-fields.md) and [65.1.2 Vault Deletion Memo](./65.1/65.1.2-vault-deletion-memo.md).
 - [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
-- [XLS-65.3](./65.3/README.md): `LendingProtocolV1_2` Vault changes: adds an optional, immutable `EarlyExitFeeRate` field to closed-ended vaults. When present, it permits `VaultWithdraw` during the Investment phase and charges that rate, with the fee retained in the vault for the remaining shareholders.
+- [XLS-65.4](./65.4/README.md): `LendingProtocolV1_2` Vault changes: adds an optional, immutable `EarlyExitFeeRate` field to closed-ended vaults. When present, it permits `VaultWithdraw` during the Investment phase and charges that rate, with the fee retained in the vault for the remaining shareholders.
