@@ -55,15 +55,15 @@ This specification and [XLS-65.3](../65.3/README.md) (Fixed Precision for Vault 
 
 Two amendments are hard prerequisites of `LendingProtocolV1_2`:
 
-| Prerequisite Amendment | Specification | Reason |
-| --- | --- | --- |
-| `LendingProtocolV1_1` | [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) | `EarlyExitFeeRate` may only be set on a closed-ended Vault, and the only behavior it changes is the Investment-phase gate that XLS-65.1.4 introduces. |
-| `fixCleanup3_4_0` | [XLS-65.2](../65.2/README.md) | Defines the posterior scale rounding path on legacy Vaults, tightening precision loss and clawback semantics. |
+| Prerequisite Amendment | Specification                                      | Reason                                                                                                                                                |
+| ---------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LendingProtocolV1_1`  | [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) | `EarlyExitFeeRate` may only be set on a closed-ended Vault, and the only behavior it changes is the Investment-phase gate that XLS-65.1.4 introduces. |
+| `fixCleanup3_4_0`      | [XLS-65.2](../65.2/README.md)                      | Defines the posterior scale rounding path on legacy Vaults, tightening precision loss and clawback semantics.                                         |
 
 Within the `LendingProtocolV1_2` amendment, this specification depends on:
 
-| Sibling Specification | Name | Reason |
-| --- | --- | --- |
+| Sibling Specification         | Name                                  | Reason                                                                                                                                                                                                                                                                                   |
+| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [XLS-65.3](../65.3/README.md) | Fixed Precision for Vault and Lending | Sets fixed precision grid $P$, live exponent $e(R)$, live scale $s = -e(R)$, and the operation rule of 3.2.4. Under XLS-65.3, `VaultWithdraw` rounds outflows toward zero at candidate posterior live exponent $e^\ast$. The early-exit fee calculation and payout operate on that grid. |
 
 Amendment compatibility and version rules:
@@ -75,8 +75,8 @@ Amendment compatibility and version rules:
 
 ### 3.1 Protocol Constants
 
-| Constant | Value | Meaning |
-| --- | --- | --- |
+| Constant                  | Value    | Meaning                                                                                                                                                                                                                                                                                         |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MAX_EARLY_EXIT_FEE_RATE` | `100000` | Inclusive upper bound on `EarlyExitFeeRate`, in tenths of a basis point. Equivalent to 100%. A rate of exactly this value is accepted. An early exit at this rate burns shares and transfers no assets, unless it burns the entire outstanding share supply under the full-exit waiver (3.4.3). |
 
 ### 3.2 Ledger Entry: `Vault`
@@ -85,16 +85,16 @@ Amendment compatibility and version rules:
 
 Add this field to parent 3.1.2:
 
-| Field Name | Constant | Required | JSON Type | Internal Type | Default Value | Description |
-| --- | :---: | :---: | :---: | :---: | :---: | --- |
-| `EarlyExitFeeRate` | Yes | No | `number` | `UINT32` | `N/A` | The early-exit fee, in tenths of a basis point, charged on withdrawals made during the Investment phase. Its presence permits withdrawals during Investment. Immutable after creation. |
+| Field Name         | Constant | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                            |
+| ------------------ | :------: | :------: | :-------: | :-----------: | :-----------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EarlyExitFeeRate` |   Yes    |    No    | `number`  |   `UINT32`    |     `N/A`     | The early-exit fee, in tenths of a basis point, charged on withdrawals made during the Investment phase. Its presence permits withdrawals during Investment. Immutable after creation. |
 
 An absent field and a value of `0` are distinct:
 
-| `Vault.EarlyExitFeeRate` | `VaultWithdraw` during Investment |
-| --- | --- |
-| Absent | Rejected with `tecTOO_SOON`, as in the parent |
-| `0` | Permitted, and charged no fee |
+| `Vault.EarlyExitFeeRate`              | `VaultWithdraw` during Investment               |
+| ------------------------------------- | ----------------------------------------------- |
+| Absent                                | Rejected with `tecTOO_SOON`, as in the parent   |
+| `0`                                   | Permitted, and charged no fee                   |
 | `0 < rate <= MAX_EARLY_EXIT_FEE_RATE` | Permitted, and charged the fee defined in 3.4.3 |
 
 The field is stored only on a Vault with `VaultKind == ClosedEnded` and `LEVersion >= 1` (for example, `CashBasis` or `FixedPrecision`). `VaultCreate` rejects the field on any other Vault configuration, including when the rate is `0` (3.3.2).
@@ -155,9 +155,9 @@ Amend parent 3.1.10 under `LendingProtocolV1_2`:
 
 Add this field to parent 3.2.1:
 
-| Field Name | Required | JSON Type | Internal Type | Default Value | Description |
-| --- | :---: | :---: | :---: | :---: | --- |
-| `EarlyExitFeeRate` | No | `number` | `UINT32` | `N/A` | The early-exit fee in tenths of a basis point (3.2.1). Permitted only when `VaultKind == ClosedEnded`. |
+| Field Name         | Required | JSON Type | Internal Type | Default Value | Description                                                                                            |
+| ------------------ | :------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------ |
+| `EarlyExitFeeRate` |    No    | `number`  |   `UINT32`    |     `N/A`     | The early-exit fee in tenths of a basis point (3.2.1). Permitted only when `VaultKind == ClosedEnded`. |
 
 #### 3.3.2 Failure Conditions
 
@@ -251,7 +251,7 @@ In each of these cases, liquidity is evaluated against $\Delta_{assets}$ as in t
 1. Compute $\Delta_{shares}$ from `Amount` using the variables from parent 3.6.1:
    - If `Amount` is in the Vault asset, apply the _Withdraw_ formula (parent 3.1.7.2.3).
    - If `Amount` is in shares, apply the _Redeem_ formula (parent 3.1.7.2.2).
-   Early-exit fees do not affect this step.
+     Early-exit fees do not affect this step.
 2. Compute the pre-fee asset amount:
 
    $$\Delta_{assets} = \frac{\Delta_{shares} \times \Gamma_{asset}}{\Gamma_{shares}}$$
@@ -301,6 +301,7 @@ In each of these cases, liquidity is evaluated against $\Delta_{assets}$ as in t
    3. Increase the `MPToken.MPTAmount` of the destination `MPToken` for `Vault.Asset` by $\Delta_{assets}^{paid}$.
 
 When $\Delta_{assets}^{paid}$ is zero (occurring only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption):
+
 - Steps 6 through 9 execute no balance transfers.
 - No `RippleState` or `MPToken` object is created for the destination.
 - Only share balance updates (items 1 through 3 of parent 3.6.3) are applied to the ledger.
@@ -314,12 +315,12 @@ When $\Delta_{assets}^{paid}$ is zero (occurring only when `Vault.EarlyExitFeeRa
 
 Consider a closed-ended Vault in its Investment phase, with `EarlyExitFeeRate = 2000` (2%) and no unrealized loss:
 
-| Quantity | Initial Value |
-| --- | --- |
-| `AssetsTotal` | 1,000,000 |
-| `AssetsAvailable` | 150,000 |
-| Shares outstanding | 1,000,000 |
-| Exchange rate | 1.000 |
+| Quantity           | Initial Value |
+| ------------------ | ------------- |
+| `AssetsTotal`      | 1,000,000     |
+| `AssetsAvailable`  | 150,000       |
+| Shares outstanding | 1,000,000     |
+| Exchange rate      | 1.000         |
 
 A depositor submits `VaultWithdraw` with `Amount = 100,000` of the Vault asset:
 
@@ -328,12 +329,12 @@ A depositor submits `VaultWithdraw` with `Amount = 100,000` of the Vault asset:
 3. $F = 100{,}000 \times 0.02 = 2{,}000$.
 4. $\Delta_{assets}^{paid} = 98{,}000$, representing the net payout to the depositor and the liquidity required from `AssetsAvailable`.
 
-| Quantity | Final Value |
-| --- | --- |
-| `AssetsTotal` | 902,000 |
-| `AssetsAvailable` | 52,000 |
-| Shares outstanding | 900,000 |
-| Exchange rate | 1.002222 |
+| Quantity           | Final Value |
+| ------------------ | ----------- |
+| `AssetsTotal`      | 902,000     |
+| `AssetsAvailable`  | 52,000      |
+| Shares outstanding | 900,000     |
+| Exchange rate      | 1.002222    |
 
 The retained fee of 2,000 remains in the Vault and is distributed across the 900,000 remaining shares, increasing the asset value per share by approximately 0.2222%. The exiting depositor receives 98,000 assets in exchange for burning shares originally valued at 100,000 assets.
 
@@ -381,9 +382,9 @@ Add `vault.EarlyExitFeeRate` to parent 3.9.2:
 - **Presence:** The field is included if the closed-ended Vault was created with `EarlyExitFeeRate` (including a value of `0`), and omitted otherwise.
 - **Interpretation:** Clients MUST NOT interpret field absence as a rate of `0`. Absence indicates that withdrawals during the Investment phase are disallowed. A value of `0` indicates that early withdrawals are permitted without a fee.
 
-| Field Name | Required? | JSON Type | Description |
-| --- | :---: | :---: | --- |
-| `vault.EarlyExitFeeRate` | No | `number` | `LendingProtocolV1_2`: The early-exit fee in tenths of a basis point. |
+| Field Name               | Required? | JSON Type | Description                                                           |
+| ------------------------ | :-------: | :-------: | --------------------------------------------------------------------- |
+| `vault.EarlyExitFeeRate` |    No     | `number`  | `LendingProtocolV1_2`: The early-exit fee in tenths of a basis point. |
 
 Example response fragment, showing only the fields added by this specification and [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md):
 
@@ -449,10 +450,10 @@ Liquidity checks evaluate whether the Vault holds sufficient uncommitted assets 
 
 Parent 3.6.4 invariants 1 and 2 require a strictly positive decrease in the Vault asset balance and a strictly positive increase in the destination balance. Because a 100% fee results in a zero-asset payout, these invariants must accommodate zero deltas. Two design alternatives exist:
 
-| Approach | Implementation | Trade-off |
-| --- | --- | --- |
-| Conditional invariant | Require positive deltas only when $\Delta_{assets}^{paid} > 0$. | Must replicate complex special cases, including issuer accounts (which hold no trust lines) and `IOU` rounding tolerances. Imperfect handling causes valid withdrawals to fail. |
-| Relaxed invariant (adopted) | Require that Vault balance does not increase and destination balance does not decrease. | Seamlessly accommodates zero payouts without adding conditional exceptions. Existing issuer and precision rules remain intact. |
+| Approach                    | Implementation                                                                          | Trade-off                                                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conditional invariant       | Require positive deltas only when $\Delta_{assets}^{paid} > 0$.                         | Must replicate complex special cases, including issuer accounts (which hold no trust lines) and `IOU` rounding tolerances. Imperfect handling causes valid withdrawals to fail. |
+| Relaxed invariant (adopted) | Require that Vault balance does not increase and destination balance does not decrease. | Seamlessly accommodates zero payouts without adding conditional exceptions. Existing issuer and precision rules remain intact.                                                  |
 
 Relaxing the bounds avoids catastrophic invariant check failures on otherwise valid transactions while still preventing any improper balance increases.
 
@@ -603,6 +604,7 @@ where $\phi$ is the fee rate as a fraction (3.2.1). For example, at a 2% fee rat
 This estimate is approximate because integer share rounding and candidate posterior live scale rounding ($s$) affect the calculation. Client applications MUST calculate the exact payout using the steps in 3.4.3 before presenting quotes to users (3.4).
 
 Special cases:
+
 - At a 100% fee rate, withdrawals that do not burn the entire share supply yield zero assets regardless of `Amount` (3.4.3).
 - If a withdrawal request is so small that the rounded fee consumes the entire amount while the fee rate is below 100%, the transaction fails with `tecPRECISION_LOSS` (3.4.2).
 
