@@ -20,11 +20,11 @@ This index groups the Vault changes introduced by the `LendingProtocolV1_1` amen
 
 These specifications are introduced by the `LendingProtocolV1_1` amendment:
 
-| Spec                                                                      | Description                                                                                                                                                                         |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [65.1.1 Unmodifiable Vault Fields](./65.1.1-unmodifiable-vault-fields.md) | Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale`, `LEVersion`, `VaultKind`, `SubscriptionDate` and `RedemptionDate` immutable on the Vault once set.             |
-| [65.1.2 Vault Deletion Memo](./65.1.2-vault-deletion-memo.md)             | Adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.                                                                                           |
-| Closed-ended Vault                                                        | Adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, phase-gates vault and lending transactions, and requires a closed-ended vault for new loan brokers. |
+| Spec                                                                      | Description                                                                                                               |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [65.1.1 Unmodifiable Vault Fields](./65.1.1-unmodifiable-vault-fields.md) | Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.      |
+| [65.1.2 Vault Deletion Memo](./65.1.2-vault-deletion-memo.md)             | Adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.                                 |
+| [65.1.4 Closed-Ended Vault](./65.1.4-closed-ended-vault.md)               | Adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates deposits and withdrawals. |
 
 ## 3. Rationale
 
