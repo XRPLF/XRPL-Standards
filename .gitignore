@@ -1,2 +1,20 @@
 .DS_Store
 /.idea
+_site/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Per-developer AI assistant state.
+# Shared config is committed (.agents/skills, .claude/skills, .ai-review);
+# local overrides and caches are not.
+.claude/settings.local.json
+.claude/*.local.json
+.cursor/*.local.json
+.codex/*.local.*
+.gemini/*.local.json
+.gemini/tmp/
+.augment/local/
+.aider*
