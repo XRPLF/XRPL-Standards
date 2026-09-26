@@ -1,4 +1,4 @@
-# XLS-99d: Post-Dated Checks (`DeliverAfter` Execution Window for XRPL Checks)
+# XLS-XXd: Post-Dated Checks (`DeliverAfter` Execution Window for XRPL Checks)
 
 ```
 Title:       Post-Dated Checks for Subscriptions, Deferred Settlement & Non-Custodial Estate Planning
