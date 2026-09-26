@@ -1,4 +1,4 @@
-# XLS-XXd: Post-Dated Checks (`DeliverAfter` Execution Window for XRPL Checks)
+# XLS-draft: Post-Dated Checks (`DeliverAfter` Execution Window for XRPL Checks)
 
 ```
 Title:       Post-Dated Checks for Subscriptions, Deferred Settlement & Non-Custodial Estate Planning
@@ -19,7 +19,7 @@ This proposal introduces an optional `DeliverAfter` timestamp field to the exist
 This amendment solves three major architectural challenges across the ecosystem:
 1. **Lightweight Subscriptions & Deferred Settlement**: Provides a user-sovereign alternative to heavy recurring subscription proposals (such as [XLS-78](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0078-subscriptions)) by reusing the battle-tested XRPL `Check` ledger engine (`ltCHECK`). Users can issue a series of post-dated checks in a single atomic batch transaction (up to the current XLS-56d protocol limit of **8 checks per batch**, or **12** if the batch limit is expanded by a future amendment) while retaining full unilateral cancellation rights via `CheckCancel`.
 2. **Non-Custodial Estate Planning & Trustless Dead-Man Switches**: Provides a minimal, zero-bloat alternative to complex inheritance proposals (such as [XLS-91d](https://github.com/XRPLF/XRPL-Standards/pull/217) `SetBeneficiary`). By combining `DeliverAfter` with `CheckCash`'s native partial-delivery mechanic (`sfDeliverMin`), an account owner can configure an estate succession check that enables the beneficiary to dynamically sweep liquid balances upon maturity without locking capital upfront in escrows or risking premature execution in multisig arrangements.
-3. **Milestone Trust Funds, Milestone Vesting & Deferred Settlements**: Solves the fundamental constraint of `EscrowCreate` (100% capital lockup) by enabling milestone gifts (e.g., reaching age of majority), enterprise employee retention bonuses, and tax-deferred legal installments to remain 100% liquid and yield-earning in the payer's wallet until maturity, while preserving unilateral cancellation authority (`CheckCancel`).
+3. **Milestone Trust Funds, Milestone Vesting & Deferred Settlements**: Solves the fundamental constraint of `EscrowCreate` (total capital lockup) by enabling milestone gifts (e.g., reaching age of majority), enterprise employee retention bonuses, and tax-deferred legal installments to remain liquid and yield-earning in the payer's wallet until maturity, while preserving unilateral cancellation authority (`CheckCancel`).
 
 ---
 
@@ -49,7 +49,7 @@ The XRP Ledger already possesses a robust, secure `Check` primitive (`ltCHECK`).
 By adding `DeliverAfter` to `CheckCreate`:
 1. **Zero New Ledger Object Types**: Reuses existing `ltCHECK` objects.
 2. **User Sovereignty & Security**: The user maintains total custody. If a user wishes to cancel a subscription, update an estate plan, or revoke a milestone gift, they simply submit a `CheckCancel` transaction for remaining un-cashed checks.
-3. **Active Capital Liquidity**: Payer funds remain 100% liquid and can generate yield across DeFi primitives (AMM, Vaults) right up until the check is cashed.
+3. **Active Capital Liquidity**: Payer funds remain liquid and can generate yield across DeFi primitives (AMM, Vaults) right up until the check is cashed, subject only to the standard owner-reserve increment per active check object.
 4. **Batching Efficiency**: Under current XRPL Batch rules (XLS-56d), a user can sign up to **8 post-dated checks in a single batch transaction** (e.g. 8 billing cycles). If the batch size limit is later amended to 12, full annual 12-month coverage is unlocked automatically.
 5. **Natural Renewal Bounds**: Forcing a re-authorization boundary every 8 billing periods prevents forgotten "zombie" subscriptions from draining user funds indefinitely.
 6. **Trustless Dead-Man & Milestone Execution**: A check post-dated for future delivery cannot be cashed by anyone (even the beneficiary) before maturity (`tecNO_PERMISSION`), while maintaining full unilateral cancellation rights for the issuer.
@@ -100,7 +100,7 @@ When a user decides to cancel a subscription or update an estate plan, the cance
 
 1. **Unilateral User Revocation**: The creator can submit `CheckCancel` for any or all un-cashed post-dated checks at any time. The payee/beneficiary cannot block or delay this action.
 2. **Atomic Batch Cancellation**: Using a single atomic batch transaction (XLS-56d), a user can cancel all remaining post-dated checks (e.g., Checks 4 through 8) in 1 single wallet signature.
-3. **Instant Reserve Refund**: Submitting `CheckCancel` immediately deletes the `ltCHECK` ledger objects and refunds 100% of the associated account owner reserves back to the creator.
+3. **Instant Reserve Refund**: Submitting `CheckCancel` immediately deletes the `ltCHECK` ledger objects and releases the associated owner reserve back to the creator (or to the sponsoring account if created under XLS-68 reserve sponsorship).
 
 ---
 
@@ -129,7 +129,7 @@ $$\text{xrpDeliver} = \min(\text{sendMax}, \text{srcLiquid})$$
 
 Where `srcLiquid` is the sender's account balance minus reserve requirements at the exact time of cashing.
 
-By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, **the check never bounces**. When cashed upon or after maturity, the transaction dynamically sweeps 100% of whatever liquid balance remains in the wallet at that moment.
+By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, partial delivery is bounded by `SendMax` and the payer's available liquid balance minus reserves and transaction fees. When cashed upon or after maturity, the transaction dynamically sweeps the available liquid balance (failing only if available liquid balance is strictly below `DeliverMin`).
 
 ```mermaid
 sequenceDiagram
@@ -147,11 +147,11 @@ sequenceDiagram
 
     Note over Alice,Ledger: Scenario B: Annual Renewal (Day 350, Alice Alive)
     Alice->>Ledger: Batch: CheckCancel(old) + CheckCreate(+365d)
-    Ledger-->>Alice: tesSUCCESS (Timer renewed, 24 drops fee)
+    Ledger-->>Alice: tesSUCCESS (Timer renewed, 20 drops fee at base rate)
 
     Note over Ledger,Jen: Scenario C: Maturity Claim (Day 366, Alice Deceased)
     Jen->>Ledger: CheckCash (DeliverMin: 1 drop)
-    Ledger->>Jen: tesSUCCESS (Sweeps 100% of Alice's liquid balance)
+    Ledger->>Jen: tesSUCCESS (Sweeps available liquid balance)
 ```
 
 ### The Trustless 2-of-2 Hybrid Legal Vault
@@ -174,13 +174,13 @@ Post-Dated Checks eliminate this hazard entirely through pull-based semantics:
 1. **No Automatic Push**: The ledger does not automatically execute or move funds upon reaching `DeliverAfter`. It merely unlocks cashing permission.
 2. **Exclusive Beneficiary Authority**: Only the designated beneficiary (`sfDestination`)—or an authorized account delegate operating under XLS-75 (delegated transactions)—possesses authorization to submit `CheckCash`. No unauthorized third-party bots, MEV searchers, or validators can claim or drain the funds.
 3. **Information Asymmetry**: If the owner is still alive and simply missed their renewal date, the beneficiary is typically not actively monitoring the mempool or expecting an execution.
-4. **Perpetual Unilateral Recall**: As long as the check has not been cashed, the living owner retains 100% unilateral authority to submit `CheckCancel` at Day 370, Day 400, or any later date. The owner can cancel the matured check or roll it forward into a new one at any time with a single 10-drop transaction.
+4. **Perpetual Unilateral Recall**: As long as the check has not been cashed, the living owner retains unilateral authority to submit `CheckCancel` at Day 370, Day 400, or any later date. The owner can cancel the matured check or roll it forward into a new one at any time with a single transaction.
 
 ---
 
 ## Application 3: Milestone Trust Funds, Milestone Vesting & Deferred Settlements
 
-While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, Escrow enforces an immutable constraint: **100% capital immobilization**. Once funds are locked in Escrow, the creator cannot deploy, trade, or access that capital under any circumstances until `CancelAfter` (if configured) or condition fulfillment. Furthermore, Escrow lacks unilateral creator cancellation authority prior to maturity.
+While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, Escrow enforces an immutable constraint: **mandatory capital immobilization**. Once funds are locked in Escrow, the creator cannot deploy, trade, or access that capital under any circumstances until `CancelAfter` (if configured) or condition fulfillment. Furthermore, Escrow lacks unilateral creator cancellation authority prior to maturity.
 
 `CheckCreate` with `DeliverAfter` introduces a complementary economic primitive: **deferred settlement with active capital liquidity and unilateral creator cancellation**.
 
@@ -189,7 +189,7 @@ While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, E
 - **The Capital Trap with Escrow**: If placed in Escrow with a multi-year lockup, the parent completely loses access to those funds. If a severe family medical emergency, legal expense, or sudden financial catastrophe strikes during that window, the parent cannot access their own capital.
 - **The Post-Dated Check Model**:
   - The parent issues a check with `DeliverAfter: <18th_Birthday_Timestamp>`.
-  - The capital remains 100% unencumbered in the parent's wallet, continuing to earn AMM liquidity yields, Single-Asset Vault interest, or serving as an active emergency cushion.
+  - The capital remains unencumbered in the parent's wallet, continuing to earn AMM liquidity yields, Single-Asset Vault interest, or serving as an active emergency cushion.
   - **Unilateral Cancellation / Voiding Authority**: If the family encounters financial distress, or if circumstances change prior to maturity, the parent submits `CheckCancel` at any time to immediately void the check and release the owner reserve.
   - Upon reaching maturity, the adult child simply submits `CheckCash` to claim the gift.
 
@@ -214,7 +214,7 @@ While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, E
 | Dimension | `EscrowCreate` | `CheckCreate` with `DeliverAfter` |
 | :--- | :--- | :--- |
 | **Capital State** | Fully locked and immobilized on-ledger | Fully sovereign, unencumbered, and liquid |
-| **Productive Yield** | 0% (Capital sits idle in escrow ledger object) | Retains 100% ability to earn AMM or Vault yields |
+| **Productive Yield** | Zero (Capital sits idle in escrow ledger object) | Retains ability to earn AMM or Vault yields |
 | **Creator Cancellation** | Impossible prior to `CancelAfter` timestamp | Unilateral cancellation (`CheckCancel`) at any time |
 | **Counterparty Assurance** | Guaranteed collateral (pre-funded) | Balance availability at cashing (settlement risk) |
 | **Primary Optimal Fit** | Trustless counterparty trades & atomic swaps | Milestone gifts, employee retention, structured settlements |
@@ -226,13 +226,13 @@ While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, E
 To maximize accessibility, this standard can be supported by an open-source, zero-backend xApp ("EstateX / XRPL Heirloom"):
 
 ### 1. Zero-Cost, Serverless Architecture
-- **Permanent Free Hosting**: Statically compiled HTML/TypeScript hosted indefinitely on **GitHub Pages** or **Cloudflare Pages** ($0 cost, 100% global uptime, zero server maintenance).
-- **100% Non-Custodial**: No private keys ever touch the application. All signing operations route securely via standard Xaman (Xumm) SDK or WalletConnect deep links.
+- **Permanent Free Hosting**: Statically compiled HTML/TypeScript hosted indefinitely on **GitHub Pages** or **Cloudflare Pages** ($0 cost, resilient uptime, zero server maintenance).
+- **Non-Custodial**: No private keys ever touch the application. All signing operations route securely via standard Xaman (Xumm) SDK or WalletConnect deep links.
 - **Local Storage**: Stores tracking metadata (`CheckID`, beneficiary address, maturity timestamp) in encrypted local browser storage.
 
 ### 2. The 3-Question Onboarding Wizard
 1. **"Who is your beneficiary?"**: Enter beneficiary `r-address` (or a 2-of-2 estate vault).
-2. **"What would you like to pass on?"**: Default: **"100% of Liquid Balance"** (App sets `SendMax: 100,000,000 XRP` paired with beneficiary cashing via `DeliverMin: 1 drop` for dynamic sweeping, or specific IOU/RLUSD tokens).
+2. **"What would you like to pass on?"**: Default: **"All Liquid Balance"** (App sets `SendMax: 100,000,000 XRP` paired with beneficiary cashing via `DeliverMin: 1 drop` for dynamic sweeping, or specific IOU/RLUSD tokens).
 3. **"Set renewal cadence"**: Default: **365 Days** (1 Year).
 
 **Action**: User taps **"Activate Protection"**. The xApp generates `CheckCreate` with `DeliverAfter: now + 365 days` and prompts the user for 1 biometric signature in Xaman.
@@ -257,7 +257,7 @@ When the reminder appears on Day 358:
 2. The app scans the ledger for checks where `Destination == Beneficiary` and verifies `parentCloseTime >= DeliverAfter`.
 3. If mature, the app displays: *"Estate Check Ready: [Amount] XRP Available"*.
 4. Beneficiary taps **"Claim Estate"**, submitting `CheckCash` with `DeliverMin: 1 drop`.
-5. The ledger dynamically sweeps 100% of the liquid balance into the beneficiary's wallet in ~3.5 seconds.
+5. The ledger dynamically sweeps available liquid balance into the beneficiary's wallet in ~3.5 seconds.
 
 ### 6. Synergy with XLS-75 (Delegated Cashing & Proof-of-Burn)
 1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`sfDelegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
@@ -286,7 +286,7 @@ When the reminder appears on Day 358:
 | **Engine Code Impact** | High (inactivity tracking, new claim handlers) | **~37 lines of C++** in `xrpld` |
 | **Fund Sweeping Mechanism** | Unspecified / complex multi-trustline loops | **Native** via `DeliverMin: 1 drop` in `CheckCash` |
 | **Premature Execution Risk** | High if sequence tracking is gamed | **Zero** (strictly enforced by `parent_close_time`) |
-| **Liquidity While Living** | Uncertain / frozen status states | **100% Liquid**; user spends freely every day |
+| **Liquidity While Living** | Uncertain / frozen status states | **Fully Liquid**; user spends freely every day |
 | **Third-Party Custodial Risk**| Dependent on external attestation/notary | **Zero**; full unilateral cancellation via `CheckCancel` |
 
 ---
@@ -410,7 +410,7 @@ In `CheckCash::preclaim`:
 ```
 
 ### 7. Existing Native Cancellation (`CheckCancel.cpp`)
-Zero modifications required. `CheckCancel.cpp` lines 41–46 already grant both the check creator (`Account`) and recipient (`Destination`) unilateral cancellation authority at any time prior to expiration. Submitting `CheckCancel` immediately deletes the `ltCHECK` object and refunds 100% of the owner reserve.
+Zero modifications required. `CheckCancel.cpp` lines 41–55 enforce canonical cancellation rules: prior to expiration, either the check creator (`Account`) or recipient (`Destination`) may cancel the check; once expired, any account may cancel it to remove the ledger object and return the reserve to the reserve owner or sponsor.
 
 ### 8. Unit Test Suite (`Check_test.cpp`)
 Implemented under `src/test/app/Check_test.cpp` via `testPostDatedChecks(features)` with helper `DeliverAfter` in `src/test/jtx/TestHelpers.h`. Passes all 15 cases (2,511 test assertions) with 0 failures:
