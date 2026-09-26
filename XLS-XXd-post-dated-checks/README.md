@@ -18,7 +18,7 @@ This proposal introduces an optional `DeliverAfter` timestamp field to the exist
 
 This amendment solves three major architectural challenges across the ecosystem:
 1. **Lightweight Subscriptions & Deferred Settlement**: Provides a user-sovereign alternative to heavy recurring subscription proposals (such as [XLS-78](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0078-subscriptions)) by reusing the battle-tested XRPL `Check` ledger engine (`ltCHECK`). Users can issue a series of post-dated checks in a single atomic batch transaction (up to the current XLS-56d protocol limit of **8 checks per batch**, or **12** if the batch limit is expanded by a future amendment) while retaining full unilateral cancellation rights via `CheckCancel`.
-2. **Non-Custodial Estate Planning & Trustless Dead-Man Switches**: Provides a minimal, zero-bloat alternative to complex inheritance proposals (such as [XLS-91d](https://github.com/XRPLF/XRPL-Standards/pull/217) `SetBeneficiary`). By combining `DeliverAfter` with `CheckCash`'s native partial-delivery mechanic (`sfDeliverMin`), an account owner can configure an estate succession check that automatically sweeps liquid balances upon maturity without locking capital upfront in escrows or risking premature execution in multisig arrangements.
+2. **Non-Custodial Estate Planning & Trustless Dead-Man Switches**: Provides a minimal, zero-bloat alternative to complex inheritance proposals (such as [XLS-91d](https://github.com/XRPLF/XRPL-Standards/pull/217) `SetBeneficiary`). By combining `DeliverAfter` with `CheckCash`'s native partial-delivery mechanic (`sfDeliverMin`), an account owner can configure an estate succession check that enables the beneficiary to dynamically sweep liquid balances upon maturity without locking capital upfront in escrows or risking premature execution in multisig arrangements.
 3. **Milestone Trust Funds, Milestone Vesting & Deferred Settlements**: Solves the fundamental constraint of `EscrowCreate` (100% capital lockup) by enabling milestone gifts (e.g., reaching age of majority), enterprise employee retention bonuses, and tax-deferred legal installments to remain 100% liquid and yield-earning in the payer's wallet until maturity, while preserving unilateral cancellation authority (`CheckCancel`).
 
 ---
@@ -67,7 +67,9 @@ Add an optional `DeliverAfter` field to the `CheckCreate` transaction format.
 | `DeliverAfter` | Number | `STUInt32` | Optional | Time in seconds since the Ripple Epoch after which this check becomes cashable. |
 
 #### Field Constraints:
-- If both `DeliverAfter` and `Expiration` are specified, validation MUST enforce `DeliverAfter < Expiration`. Otherwise, the transaction fails with `temBAD_EXPIRATION`.
+- **Amendment Gating**: If the `featurePostDatedChecks` amendment is not enabled, any `CheckCreate` transaction containing `DeliverAfter` MUST fail with `temDISABLED`.
+- **Value Validation**: If `DeliverAfter` is specified with a value of `0`, the transaction MUST fail with `temBAD_EXPIRATION`.
+- **Temporal Ordering**: If both `DeliverAfter` and `Expiration` are specified, validation MUST enforce `DeliverAfter < Expiration`. Otherwise, the transaction MUST fail with `temBAD_EXPIRATION`.
 
 ---
 
@@ -127,7 +129,7 @@ $$\text{xrpDeliver} = \min(\text{sendMax}, \text{srcLiquid})$$
 
 Where `srcLiquid` is the sender's account balance minus reserve requirements at the exact time of cashing.
 
-By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, **the check never bounces**. It automatically sweeps 100% of whatever liquid balance remains in the wallet at maturity.
+By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, **the check never bounces**. When cashed upon or after maturity, the transaction dynamically sweeps 100% of whatever liquid balance remains in the wallet at that moment.
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +172,7 @@ A common failure mode in smart contract dead-man switches is automatic liquidati
 
 Post-Dated Checks eliminate this hazard entirely through pull-based semantics:
 1. **No Automatic Push**: The ledger does not automatically execute or move funds upon reaching `DeliverAfter`. It merely unlocks cashing permission.
-2. **Exclusive Beneficiary Authority**: Only the designated beneficiary (`sfDestination`) possesses the cryptographic authorization to submit `CheckCash`. No third-party bots, MEV searchers, or validators can claim or drain the funds.
+2. **Exclusive Beneficiary Authority**: Only the designated beneficiary (`sfDestination`)—or an authorized account delegate operating under XLS-75 (delegated transactions)—possesses authorization to submit `CheckCash`. No unauthorized third-party bots, MEV searchers, or validators can claim or drain the funds.
 3. **Information Asymmetry**: If the owner is still alive and simply missed their renewal date, the beneficiary is typically not actively monitoring the mempool or expecting an execution.
 4. **Perpetual Unilateral Recall**: As long as the check has not been cashed, the living owner retains 100% unilateral authority to submit `CheckCancel` at Day 370, Day 400, or any later date. The owner can cancel the matured check or roll it forward into a new one at any time with a single 10-drop transaction.
 
@@ -230,7 +232,7 @@ To maximize accessibility, this standard can be supported by an open-source, zer
 
 ### 2. The 3-Question Onboarding Wizard
 1. **"Who is your beneficiary?"**: Enter beneficiary `r-address` (or a 2-of-2 estate vault).
-2. **"What would you like to pass on?"**: Default: **"100% of Liquid Balance"** (App sets `SendMax: 100,000,000 XRP` + `DeliverMin: 1 drop` for dynamic sweeping, or specific IOU/RLUSD tokens).
+2. **"What would you like to pass on?"**: Default: **"100% of Liquid Balance"** (App sets `SendMax: 100,000,000 XRP` paired with beneficiary cashing via `DeliverMin: 1 drop` for dynamic sweeping, or specific IOU/RLUSD tokens).
 3. **"Set renewal cadence"**: Default: **365 Days** (1 Year).
 
 **Action**: User taps **"Activate Protection"**. The xApp generates `CheckCreate` with `DeliverAfter: now + 365 days` and prompts the user for 1 biometric signature in Xaman.
@@ -258,8 +260,8 @@ When the reminder appears on Day 358:
 5. The ledger dynamically sweeps 100% of the liquid balance into the beneficiary's wallet in ~3.5 seconds.
 
 ### 6. Synergy with XLS-75 (Delegated Cashing & Proof-of-Burn)
-1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting `ttCHECK_CASH` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`sfDelegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
-2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting `ttCHECK_CASH` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, sweeping and permanently burning the liquid balance without needing private key access.
+1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`sfDelegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
+2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting permission for `CheckCash` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, sweeping and permanently burning the liquid balance without needing private key access.
 
 ---
 
