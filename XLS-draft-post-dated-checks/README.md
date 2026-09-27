@@ -18,7 +18,7 @@ This proposal introduces an optional `DeliverAfter` timestamp field to the exist
 
 This amendment solves three major architectural challenges across the ecosystem:
 1. **Lightweight Subscriptions & Deferred Settlement**: Provides a user-sovereign alternative to heavy recurring subscription proposals (such as [XLS-78](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0078-subscriptions)) by reusing the battle-tested XRPL `Check` ledger engine (`ltCHECK`). Users can issue a series of post-dated checks in a single atomic batch transaction (up to the current XLS-56d protocol limit of **8 checks per batch**, or **12** if the batch limit is expanded by a future amendment) while retaining full unilateral cancellation rights via `CheckCancel`.
-2. **Non-Custodial Estate Planning & Trustless Dead-Man Switches**: Provides a minimal, zero-bloat alternative to complex inheritance proposals (such as [XLS-91d](https://github.com/XRPLF/XRPL-Standards/pull/217) `SetBeneficiary`). By combining `DeliverAfter` with `CheckCash`'s native partial-delivery mechanic (`sfDeliverMin`), an account owner can configure an estate succession check that enables the beneficiary to dynamically sweep liquid balances upon maturity without locking capital upfront in escrows or risking premature execution in multisig arrangements.
+2. **Non-Custodial Estate Planning & Trustless Dead-Man Switches**: Provides a minimal, zero-bloat alternative to complex inheritance proposals (such as [XLS-91d](https://github.com/XRPLF/XRPL-Standards/pull/217) `SetBeneficiary`). By combining `DeliverAfter` with `CheckCash`'s native partial-delivery mechanic (`sfDeliverMin`), an account owner can configure an estate succession check that enables the beneficiary to execute bounded partial settlements of liquid balances upon maturity without locking capital upfront in escrows or risking premature execution in multisig arrangements.
 3. **Milestone Trust Funds, Milestone Vesting & Deferred Settlements**: Solves the fundamental constraint of `EscrowCreate` (total capital lockup) by enabling milestone gifts (e.g., reaching age of majority), enterprise employee retention bonuses, and tax-deferred legal installments to remain liquid and yield-earning in the payer's wallet until maturity, while preserving unilateral cancellation authority (`CheckCancel`).
 
 ---
@@ -158,14 +158,31 @@ The 8-period threshold is strictly an artifact of the conservative batch transac
 
 ## Application 2: Non-Custodial Dead-Man Switch & Estate Succession
 
-### The "Dynamic Balance Sweep" Mechanic (`DeliverMin`)
-In traditional banking, writing a check for more than the account balance results in a bounce. On the XRP Ledger, `CheckCash` features built-in partial delivery semantics via **`sfDeliverMin`**:
+### Bounded Partial Settlement Mechanics (`DeliverMin`)
+In traditional banking, writing a check for more than the account balance results in a bounce. On the XRP Ledger, `CheckCash` provides built-in partial delivery semantics when cashing via **`sfDeliverMin`**, with execution governed by the underlying asset type:
 
-$$\text{xrpDeliver} = \min(\text{sendMax}, \text{srcLiquid})$$
+#### 1. Native XRP Settlement Rules
+For native XRP checks, `CheckCash` calculates the payer's liquid balance `srcLiquid` (the account's unencumbered balance minus reserve requirements, with an adjustment for the released check reserve slot). When `DeliverMin` is specified, the delivery amount is evaluated in `CheckCash.cpp` as:
 
-Where `srcLiquid` is the sender's account balance minus reserve requirements at the exact time of cashing.
+$$\text{xrpDeliver} = \max(\text{DeliverMin}, \min(\text{SendMax}, \text{srcLiquid}))$$
 
-By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, partial delivery is bounded by `SendMax` and the payer's available liquid balance minus reserves and transaction fees. When cashed upon or after maturity, the transaction dynamically sweeps the available liquid balance (assuming the check has not expired or been canceled, and normal `CheckCash` settlement conditions are met; balance delivery fails with `tecPATH_PARTIAL` if available liquid balance is strictly below `DeliverMin`).
+The engine then enforces that the payer has sufficient liquid XRP to cover `xrpDeliver`:
+
+$$\text{srcLiquid} \ge \text{xrpDeliver}$$
+
+* **If $\text{srcLiquid} < \text{DeliverMin}$**: The requirement fails and the transaction terminates with **`tecUNFUNDED_PAYMENT`**.
+* **If $\text{DeliverMin} \le \text{srcLiquid} \le \text{SendMax}$**: The delivered amount equals $\text{srcLiquid}$, transferring the payer's available unencumbered balance to the destination.
+* **If $\text{srcLiquid} > \text{SendMax}$**: The delivered amount is capped at $\text{SendMax}$.
+
+#### 2. Issued Assets (IOUs) and MPT Settlement Rules
+For tokenized assets, settlement is executed by the payment engine (`flow()`) with `partialPayment = true` and `sendMax` set to the check's `SendMax`:
+* Delivered funds are bounded from above by `SendMax` and determined by available path liquidity, payer balance, trustline credit limits, and applicable transfer fees.
+* If the payment engine cannot produce at least `DeliverMin`, the transaction terminates with **`tecPATH_PARTIAL`**.
+
+#### 3. Application to Estate Planning & Dead-Man Flows
+Rather than requiring complex multi-asset inheritance protocols (e.g. XLS-91d), an account owner configures a post-dated check with `SendMax` serving as an upper bound (e.g., an anticipated estate ceiling such as $100,000,000\text{ XRP}$) and the beneficiary cashes upon maturity specifying an acceptable floor (e.g., `DeliverMin: 1 drop` for native XRP, or a designated token threshold). 
+
+Settlement executes as a **bounded partial settlement**: the beneficiary receives available liquid funds up to `SendMax`, provided deliverable funds satisfy $\ge \text{DeliverMin}$. If the payer's unencumbered balance is strictly below `DeliverMin`, the transaction fails with `tecUNFUNDED_PAYMENT` (for XRP) or `tecPATH_PARTIAL` (for IOUs/MPTs).
 
 ```mermaid
 sequenceDiagram
@@ -187,7 +204,7 @@ sequenceDiagram
 
     Note over Ledger,Jen: Scenario C: Maturity Claim (Day 366, Alice Deceased)
     Jen->>Ledger: CheckCash (DeliverMin: 1 drop)
-    Ledger->>Jen: tesSUCCESS (Sweeps available liquid balance)
+    Ledger->>Jen: tesSUCCESS (Delivers available liquid balance bounded by SendMax)
 ```
 
 ### The Trustless 2-of-2 Hybrid Legal Vault
@@ -293,11 +310,11 @@ When the reminder appears on Day 358:
 2. The app scans the ledger for checks where `Destination == Beneficiary` and verifies `parentCloseTime > DeliverAfter`.
 3. If mature, the app displays: *"Estate Check Ready: [Amount] XRP Available"*.
 4. Beneficiary taps **"Claim Estate"**, submitting `CheckCash` with `DeliverMin: 1 drop`.
-5. The ledger dynamically sweeps available liquid balance into the beneficiary's wallet in ~3.5 seconds.
+5. The ledger executes bounded partial settlement, delivering available liquid balance (up to `SendMax`) into the beneficiary's wallet in ~3.5 seconds.
 
 ### 6. Synergy with XLS-75 (Delegated Cashing & Proof-of-Burn)
 1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`Delegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
-2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting permission for `CheckCash` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, sweeping and permanently burning the liquid balance without needing private key access.
+2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting permission for `CheckCash` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, delivering and permanently burning the liquid balance without needing private key access.
 
 ---
 
@@ -320,7 +337,7 @@ When the reminder appears on Day 358:
 | **New Transaction Types** | $\ge 1$ (`SetBeneficiary`) | **Zero** (re-uses `CheckCreate`, `CheckCash`, `CheckCancel`) |
 | **Ledger Object Bloat** | Modifies `AccountRoot` or creates new entry | **Zero** (stores optional field in `ltCHECK`) |
 | **Engine Code Impact** | High (inactivity tracking, new claim handlers) | **~37 lines of C++** in `xrpld` |
-| **Fund Sweeping Mechanism** | Unspecified / complex multi-trustline loops | **Native** via `DeliverMin: 1 drop` in `CheckCash` |
+| **Partial Settlement Mechanism** | Unspecified / complex multi-trustline loops | **Native** via `DeliverMin` partial delivery in `CheckCash` |
 | **Premature Execution Risk** | High if sequence tracking is gamed | **Zero** (strictly enforced by `parent_close_time`) |
 | **Liquidity While Living** | Uncertain / frozen status states | **Fully Liquid**; user spends freely every day |
 | **Third-Party Custodial Risk**| Dependent on external attestation/notary | **Zero**; full unilateral cancellation via `CheckCancel` |
@@ -503,7 +520,7 @@ Implemented under `src/test/app/Check_test.cpp` via `testPostDatedChecks(feature
 - Inverted boundary validation `DeliverAfter >= Expiration` (`temBAD_EXPIRATION`)
 - Premature cashing prevention (`tecNO_PERMISSION`)
 - Post-maturity cashing success (`tesSUCCESS`)
-- Dynamic balance sweep (`DeliverMin: 1 drop`)
+- Bounded partial settlement (`DeliverMin: 1 drop`)
 - Issuer unilateral cancellation (`CheckCancel`) before maturity
 
 ---
