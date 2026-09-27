@@ -110,13 +110,45 @@ When a user decides to cancel a subscription or update an estate plan, the cance
 
 1. **Subscriber Initiates**: Subscriber wants an 8-period recurring subscription at 15 XRP / period.
 2. **Single Batch Issuance**: The subscriber signs a single batch transaction containing 8 `CheckCreate` items (respecting the current 8-item batch limit):
-   - Check 1: `DeliverAfter` = Day 0, `Expiration` = Day 30
+   - Check 1: `DeliverAfter` = the current Ripple-Epoch timestamp (or omit `DeliverAfter`), `Expiration` = Day 30
    - Check 2: `DeliverAfter` = Day 30, `Expiration` = Day 60
    - Check 3: `DeliverAfter` = Day 60, `Expiration` = Day 90
    - ...
    - Check 8: `DeliverAfter` = Day 210, `Expiration` = Day 240
 3. **Payee Cashing**: On Day 30, the merchant's automated worker submits `CheckCash` for Check 2. The ledger verifies `parent_close_time >= Day 30` and settles 15 XRP.
 4. **Subscription Cancellation**: If the subscriber cancels after Month 2, their wallet app submits a single batch transaction containing `CheckCancel` for Checks 3 through 8. Future payments are revoked on-chain instantly, and all remaining reserves are refunded.
+
+### The Batch Boundary as a Consumer Protection & Regulatory Asset
+
+A common question regarding post-dated checks for subscriptions centers on the current XLS-56d batch transaction limit of **8 transactions per batch** (meaning an 8-period issuance cadence before requiring a user renewal):
+
+#### 1. Global Regulatory Mandates for Subscription Continuance
+Across major legal jurisdictions, recurring automated billing is subject to increasingly strict consumer protection statutes designed to eliminate perpetual, non-consensual extraction:
+* **European Union (Consumer Rights Directive)**: Prohibits indefinite, inertia-based recurring contracts without proactive reminders and explicit opt-in confirmation.
+* **United States (FTC "Click-to-Cancel" Rule & ROSCA)**: Requires clear, conspicuous notice, explicit informed consent prior to renewal, and simple cancellation mechanisms that prevent negative-option billing traps.
+* **California Automatic Renewal Law (ARL)**: Mandates formal renewal notices 15 to 45 days prior to recurring billing events, requiring affirmative user re-consent for multi-month terms.
+* **United Kingdom (Digital Markets, Competition and Consumers Act)**: Enforces mandatory pre-renewal reminders and clear statutory off-ramps so consumers do not passively renew forgotten subscriptions.
+
+On a decentralized blockchain, a smart contract or automated engine cannot verify off-chain conditions—it cannot prove that a merchant actually sent a renewal email or that the subscriber read and accepted modified terms of service. 
+
+By contrast, the **batch renewal boundary provides irrefutable, on-chain cryptographic proof of affirmative consumer re-consent**. A user signing a fresh batch of post-dated checks (via a single biometric slide in their wallet) provides verifiable proof that they still find sufficient value in the service to authorize the next billing block.
+
+#### 2. Protection Against Predatory Extraction & Involuntary Account Drainage
+In traditional banking, forgotten or unwanted subscriptions ("zombie subscriptions") represent a multi-billion-dollar predatory business model built on user inertia and dark patterns. While traditional banking customers have access to credit card chargebacks, fraud claims, and overdraft stops, **blockchain settlements are irreversible**. An automated on-chain subscription engine with perpetual debit authority poses an immense systemic risk to user sovereignty.
+
+Enforcing a periodic re-authorization boundary prevents account drainage across common life disruptions:
+* **Temporarily Inaccessible Keys**: Users who temporarily lose their hardware device, travel abroad, or misplace credentials cannot have their balances slowly bled dry by unmonitored perpetual pull engines.
+* **Military Deployment**: Active-duty service members deployed overseas in low-connectivity environments are protected from months of background drain while unable to access wallets.
+* **Medical Incapacitation & Long-Term Hospitalization**: Individuals incapacitated by accidents, illness, or comas are shielded from having their life savings depleted by automated background contracts.
+* **Deceased Accounts & Estate Succession**: Heirs inheriting a lost or cold-storage wallet do not inherit an empty shell drained by dozens of forgotten background recurring debits.
+* **Unused / Abandoned Services**: Prevents merchants from silently extracting payments long after an application has been uninstalled or forgotten.
+
+To characterize requiring a subscriber to execute a single 2-second biometric slide once every 8 billing periods as an "inconvenience" is to advocate for predatory extraction architectures. A decentralized financial protocol must prioritize user asset sovereignty over merchant convenience.
+
+#### 3. Decoupling Batch Protocol Limits from Check Architecture
+The 8-period threshold is strictly an artifact of the conservative batch transaction limit established in XLS-56d (`max_batch_items = 8`). 
+* If the ecosystem or merchant community desires an annual 12-month billing cycle, that parameter is governed entirely by XLS-56d and can be expanded via a dedicated batch parameter amendment (e.g., increasing the batch ceiling to 12 or 16).
+* The post-dated check primitive itself is completely agnostic to batch size. The constraint lies in the batch transport layer, not in the architectural integrity of `DeliverAfter`.
 
 ---
 
@@ -129,7 +161,7 @@ $$\text{xrpDeliver} = \min(\text{sendMax}, \text{srcLiquid})$$
 
 Where `srcLiquid` is the sender's account balance minus reserve requirements at the exact time of cashing.
 
-By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, partial delivery is bounded by `SendMax` and the payer's available liquid balance minus reserves and transaction fees. When cashed upon or after maturity, the transaction dynamically sweeps the available liquid balance (failing only if available liquid balance is strictly below `DeliverMin`).
+By creating a check with a high `SendMax` (e.g. $100,000,000\text{ XRP}$) and having the beneficiary cash it with `DeliverMin: 1 drop`, partial delivery is bounded by `SendMax` and the payer's available liquid balance minus reserves and transaction fees. When cashed upon or after maturity, the transaction dynamically sweeps the available liquid balance (assuming the check has not expired or been canceled, and normal `CheckCash` settlement conditions are met; balance delivery fails with `tecPATH_PARTIAL` if available liquid balance is strictly below `DeliverMin`).
 
 ```mermaid
 sequenceDiagram
@@ -232,7 +264,7 @@ To maximize accessibility, this standard can be supported by an open-source, zer
 
 ### 2. The 3-Question Onboarding Wizard
 1. **"Who is your beneficiary?"**: Enter beneficiary `r-address` (or a 2-of-2 estate vault).
-2. **"What would you like to pass on?"**: Default: **"All Liquid Balance"** (App sets `SendMax: 100,000,000 XRP` paired with beneficiary cashing via `DeliverMin: 1 drop` for dynamic sweeping, or specific IOU/RLUSD tokens).
+2. **"What would you like to pass on?"**: Select one asset per check. For native XRP, the app sets `SendMax: 100,000,000 XRP` paired with beneficiary cashing via `DeliverMin: 1 drop`; for an IOU/RLUSD, `SendMax` and `DeliverMin` must both be amounts in that issued currency.
 3. **"Set renewal cadence"**: Default: **365 Days** (1 Year).
 
 **Action**: User taps **"Activate Protection"**. The xApp generates `CheckCreate` with `DeliverAfter: now + 365 days` and prompts the user for 1 biometric signature in Xaman.
@@ -260,7 +292,7 @@ When the reminder appears on Day 358:
 5. The ledger dynamically sweeps available liquid balance into the beneficiary's wallet in ~3.5 seconds.
 
 ### 6. Synergy with XLS-75 (Delegated Cashing & Proof-of-Burn)
-1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`sfDelegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
+1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`Delegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
 2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting permission for `CheckCash` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, sweeping and permanently burning the liquid balance without needing private key access.
 
 ---
@@ -288,6 +320,54 @@ When the reminder appears on Day 358:
 | **Premature Execution Risk** | High if sequence tracking is gamed | **Zero** (strictly enforced by `parent_close_time`) |
 | **Liquidity While Living** | Uncertain / frozen status states | **Fully Liquid**; user spends freely every day |
 | **Third-Party Custodial Risk**| Dependent on external attestation/notary | **Zero**; full unilateral cancellation via `CheckCancel` |
+
+---
+
+## Technical Impact Assessment & Validator Resource Profile
+
+To evaluate the operational impact on node operators and full-history validators, this section breaks down the computational, memory, state storage, and execution characteristics of `featurePostDatedChecks`:
+
+### 1. Engine & Protocol Footprint
+* **Engine Transactor Modification**: Exactly **37 lines of C++** across `CheckCreate.cpp` and `CheckCash.cpp`.
+* **New Ledger Objects**: **Zero**. Re-uses the existing `ltCHECK` entry type.
+* **New Transaction Types**: **Zero**. Modifies existing `ttCHECK_CREATE` (Type 16) and `ttCHECK_CASH` (Type 17).
+* **Protocol Invariants**: Completely preserved. Evaluates deterministic time comparisons via `parentCloseTime` using the native `after()` helper.
+
+### 2. Execution Path Analysis
+* **Unused Execution Paths (Standard Checks)**:
+  * For transactions that omit `DeliverAfter`, execution impact is **zero**.
+  * `CheckCreate` skips serializing the optional field.
+  * `CheckCash` checks field presence via `isFieldPresent()`; if absent, it continues standard settlement without delay.
+* **In-Window Execution (Valid Cashing)**:
+  * Evaluates a single unsigned 32-bit integer comparison in `preclaim` (`parentCloseTime > DeliverAfter`).
+  * Incurs negligible CPU cycles before transitioning to standard payment logic.
+* **Premature Cashing Rejection**:
+  * If cashed before maturity, the transaction fails immediately in `preclaim` with `tecNO_PERMISSION`.
+  * **Fee Burn**: Destroys only the baseline transaction fee (10–20 drops) to deter spam; executes zero state writes or balance adjustments.
+  * **Client Mitigation**: Wallets (e.g. Xaman) and client SDKs read `DeliverAfter` directly from the ledger object and disable submission until maturity, preventing unnecessary network traffic.
+
+### 3. Resource & Infrastructure Characteristics
+* **Timer Queues & Daemon Work**: **Zero**. Unlike automated subscription proposals (e.g., XLS-78) or escrow sweeps, post-dated checks introduce no background pollers, timer queues, or engine wakeups. State is completely passive until an external transaction calls `CheckCash`.
+* **Memory (RAM) & Compute**: Zero additional in-memory caches, lookup structures, or cryptographic routines.
+* **Storage & State Overhead**:
+  * Exactly one optional 4-byte `STUInt32` field (`sfDeliverAfter`) on `ltCHECK` only when explicitly specified.
+  * Network overhead is minimal: 100,000 active concurrent post-dated checks require ~400 KB of total ledger state.
+  * Checks are ephemeral: cashing (`CheckCash`) or cancellation (`CheckCancel`) completely prunes the object and field from the ledger, recovering the owner reserve.
+
+### 4. Operational Summary Matrix
+
+| Metric | Non-Dated Checks | Post-Dated Checks (In-Window) | Post-Dated Checks (Premature) |
+| :--- | :--- | :--- | :--- |
+| **CPU Delta** | 0 | 1 comparison (`uint32`) | 1 comparison (`uint32`) |
+| **RAM Delta** | 0 | 0 | 0 |
+| **Background Processes** | None | None | None |
+| **State Storage Delta** | 0 bytes | +4 bytes (`STUInt32`) | 0 (rejected before state modification) |
+| **Transaction Result** | `tesSUCCESS` | `tesSUCCESS` | `tecNO_PERMISSION` |
+| **Client Mitigation** | N/A | N/A | UI disabled until maturity |
+
+### 5. Technical Debt vs. Market Demand Analysis
+* **Zero Latent Debt**: If zero post-dated checks are created following activation, the network incurs zero bytes of residual storage bloat and zero background processing overhead. It is a micro-enhancement to an established primitive, not an unproven monolithic engine.
+* **Capturing Verified Ecosystem Demand**: The substantial community debate surrounding XLS-78 (Subscriptions) and XLS-91d (Inheritance) demonstrates that demand for deferred commercial payments and non-custodial succession exists. `featurePostDatedChecks` satisfies both needs without saddling validators with new transaction types, custom claim loops, or permanent state bloat.
 
 ---
 
@@ -428,7 +508,7 @@ Implemented under `src/test/app/Check_test.cpp` via `testPostDatedChecks(feature
 
 This amendment is fully backwards compatible:
 - Existing `CheckCreate` transactions without `DeliverAfter` continue to function identically.
-- Clients and wallets that do not support `DeliverAfter` simply ignore the field.
+- Clients and wallets that do not support `DeliverAfter` must not be assumed to preserve it; applications must use amendment-aware serialization and signing.
 - Amendments required: `featurePostDatedChecks`.
 
 ---
