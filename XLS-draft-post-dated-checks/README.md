@@ -179,7 +179,7 @@ sequenceDiagram
 
     Note over Ledger,Jen: Scenario A: Premature Cashing Attempt (Day 30)
     Jen->>Ledger: CheckCash (DeliverMin: 1 drop)
-    Ledger-->>Jen: tecNO_PERMISSION (parentCloseTime < DeliverAfter)
+    Ledger-->>Jen: tecNO_PERMISSION (parentCloseTime <= DeliverAfter)
 
     Note over Alice,Ledger: Scenario B: Annual Renewal (Day 350, Alice Alive)
     Alice->>Ledger: Batch: CheckCancel(old) + CheckCreate(+365d)
@@ -242,7 +242,7 @@ While `EscrowCreate` exists on the XRP Ledger for conditional value transfers, E
 - **Use Case**: Commercial contract disputes, divorce decrees, or buyout agreements requiring installment payments structured across separate fiscal tax years (e.g., January 2 of consecutive calendar years) to avoid lump-sum tax realization.
 - **The Post-Dated Check Model**:
   - Payer writes post-dated checks maturing on the first business day of future tax years.
-  - The recipient is cryptographically prevented from pulling funds prematurely into the current tax year (`parentCloseTime < DeliverAfter` enforces `tecNO_PERMISSION`).
+  - The recipient is cryptographically prevented from pulling funds prematurely into the current tax year (`parentCloseTime <= DeliverAfter` enforces `tecNO_PERMISSION`).
   - Ensures strict adherence to statutory payment timing without requiring an expensive legal escrow agent or escrow service fees.
 
 ### Comparative Architectural Analysis: Capital Immobilization vs. Liquid Deferral
