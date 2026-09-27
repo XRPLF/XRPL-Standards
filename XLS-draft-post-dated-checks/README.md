@@ -71,6 +71,10 @@ Add an optional `DeliverAfter` field to the `CheckCreate` transaction format.
 - **Value Validation**: If `DeliverAfter` is specified with a value of `0`, the transaction MUST fail with `temBAD_EXPIRATION`.
 - **Temporal Ordering**: If both `DeliverAfter` and `Expiration` are specified, validation MUST enforce `DeliverAfter < Expiration`. Otherwise, the transaction MUST fail with `temBAD_EXPIRATION`.
 
+> [!NOTE]
+> **Client Implementation Note (Consensus Close-Time Resolution)**:
+> In the XRP Ledger, ledger close times are rounded to the consensus close-time resolution (which dynamically adjusts between 2 and 20 seconds, typically ~3–5 seconds). Consistent with `EscrowCreate` (`FinishAfter` and `CancelAfter`), the consensus engine validates only strict mathematical ordering (`DeliverAfter < Expiration`). Client applications and wallets setting both fields should ensure an execution window sufficiently wide (e.g., several minutes or days) so that at least one ledger close event falls strictly within the cashable interval (`DeliverAfter < parent_close_time < Expiration`).
+
 ---
 
 ### 2. Ledger Object Modification: `Check` (`ltCHECK`)
@@ -89,8 +93,8 @@ Update the `Check` ledger entry structure to store the optional `DeliverAfter` f
 When a payee submits a `CheckCash` transaction referencing a `Check` object:
 1. If the `Check` contains a `DeliverAfter` field:
    - The engine checks the current parent ledger close time (`parent_close_time`).
-   - If `parent_close_time < Check.DeliverAfter`, the transaction MUST fail with error code `tecNO_PERMISSION`.
-2. If `parent_close_time >= Check.DeliverAfter`, the transaction proceeds to normal balance and trustline settlement.
+   - If `parent_close_time <= Check.DeliverAfter`, the transaction MUST fail with error code `tecNO_PERMISSION`.
+2. If `parent_close_time > Check.DeliverAfter`, the transaction proceeds to normal balance and trustline settlement.
 
 ---
 
@@ -115,7 +119,7 @@ When a user decides to cancel a subscription or update an estate plan, the cance
    - Check 3: `DeliverAfter` = Day 60, `Expiration` = Day 90
    - ...
    - Check 8: `DeliverAfter` = Day 210, `Expiration` = Day 240
-3. **Payee Cashing**: On Day 30, the merchant's automated worker submits `CheckCash` for Check 2. The ledger verifies `parent_close_time >= Day 30` and settles 15 XRP.
+3. **Payee Cashing**: On Day 30, the merchant's automated worker submits `CheckCash` for Check 2. The ledger verifies `parent_close_time > Day 30` and settles 15 XRP.
 4. **Subscription Cancellation**: If the subscriber cancels after Month 2, their wallet app submits a single batch transaction containing `CheckCancel` for Checks 3 through 8. Future payments are revoked on-chain instantly, and all remaining reserves are refunded.
 
 ### The Batch Boundary as a Consumer Protection & Regulatory Asset
