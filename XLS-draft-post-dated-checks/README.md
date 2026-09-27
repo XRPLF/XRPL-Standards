@@ -290,7 +290,7 @@ When the reminder appears on Day 358:
 
 ### 5. Beneficiary Claim Portal ("Heir Claim")
 1. Beneficiary opens the xApp and connects their Xaman wallet.
-2. The app scans the ledger for checks where `Destination == Beneficiary` and verifies `parentCloseTime >= DeliverAfter`.
+2. The app scans the ledger for checks where `Destination == Beneficiary` and verifies `parentCloseTime > DeliverAfter`.
 3. If mature, the app displays: *"Estate Check Ready: [Amount] XRP Available"*.
 4. Beneficiary taps **"Claim Estate"**, submitting `CheckCash` with `DeliverMin: 1 drop`.
 5. The ledger dynamically sweeps available liquid balance into the beneficiary's wallet in ~3.5 seconds.
