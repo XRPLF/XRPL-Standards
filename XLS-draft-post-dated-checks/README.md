@@ -174,15 +174,15 @@ $$\text{srcLiquid} \ge \text{xrpDeliver}$$
 * **If $\text{DeliverMin} \le \text{srcLiquid} \le \text{SendMax}$**: The delivered amount equals $\text{srcLiquid}$, transferring the payer's available unencumbered balance to the destination.
 * **If $\text{srcLiquid} > \text{SendMax}$**: The delivered amount is capped at $\text{SendMax}$.
 
-#### 2. Issued Assets (IOUs) and MPT Settlement Rules
-For tokenized assets, settlement is executed by the payment engine (`flow()`) with `partialPayment = true` and `sendMax` set to the check's `SendMax`:
+#### 2. Issued Currencies (IOUs) Settlement Rules
+For issued currencies (such as RLUSD or other stablecoins), settlement is executed by the payment engine (`flow()`) with `partialPayment = true` and `sendMax` set to the check's `SendMax`:
 * Delivered funds are bounded from above by `SendMax` and determined by available path liquidity, payer balance, trustline credit limits, and applicable transfer fees.
 * If the payment engine cannot produce at least `DeliverMin`, the transaction terminates with **`tecPATH_PARTIAL`**.
 
 #### 3. Application to Estate Planning & Dead-Man Flows
 Rather than requiring complex multi-asset inheritance protocols (e.g. XLS-91d), an account owner configures a post-dated check with `SendMax` serving as an upper bound (e.g., an anticipated estate ceiling such as $100,000,000\text{ XRP}$) and the beneficiary cashes upon maturity specifying an acceptable floor (e.g., `DeliverMin: 1 drop` for native XRP, or a designated token threshold). 
 
-Settlement executes as a **bounded partial settlement**: the beneficiary receives available liquid funds up to `SendMax`, provided deliverable funds satisfy $\ge \text{DeliverMin}$. If the payer's unencumbered balance is strictly below `DeliverMin`, the transaction fails with `tecUNFUNDED_PAYMENT` (for XRP) or `tecPATH_PARTIAL` (for IOUs/MPTs).
+Settlement executes as a **bounded partial settlement**: the beneficiary receives available liquid funds up to `SendMax`, provided deliverable funds satisfy $\ge \text{DeliverMin}$. If the payer's unencumbered balance is strictly below `DeliverMin`, the transaction fails with `tecUNFUNDED_PAYMENT` (for XRP) or `tecPATH_PARTIAL` (for IOUs).
 
 ```mermaid
 sequenceDiagram
@@ -312,9 +312,8 @@ When the reminder appears on Day 358:
 4. Beneficiary taps **"Claim Estate"**, submitting `CheckCash` with `DeliverMin: 1 drop`.
 5. The ledger executes bounded partial settlement, delivering available liquid balance (up to `SendMax`) into the beneficiary's wallet in ~3.5 seconds.
 
-### 6. Synergy with XLS-75 (Delegated Cashing & Proof-of-Burn)
-1. **Third-Party Executor Cashing**: Under XLS-75, a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to an executor. The executor submits `CheckCash` on behalf of the beneficiary (`Delegate: rExecutor`), and funds transfer directly into the beneficiary's wallet without the executor ever holding custody.
-2. **Delegated Blackhole Settlement (Proof-of-Burn)**: An account (`rBlackhole`) can execute `DelegateSet` granting permission for `CheckCash` to an external watcher, then permanently disable its master key (`asfDisableMasterKey`). If a post-dated check targeting `rBlackhole` reaches maturity, the watcher submits `CheckCash` on behalf of `rBlackhole`, delivering and permanently burning the liquid balance without needing private key access.
+### 6. Synergy with XLS-75 (Delegated Executor Cashing)
+Under XLS-75 (Permission Delegation), a beneficiary can execute `DelegateSet` granting permission for `CheckCash` to a designated fiduciary or estate executor (`Delegate: rExecutor`). Upon maturity, the executor submits `CheckCash` on behalf of the beneficiary, transferring the funds directly into the beneficiary's wallet without the executor ever holding custody of private keys or assets.
 
 ---
 
