@@ -214,8 +214,9 @@ Parent 3.6.2.2 check 13 (arithmetic overflow during share or asset calculation, 
 **Parent 3.6.2.2 check 12**, the precision-loss check of [XLS-65.2](../65.2/README.md) and XLS-65.3 3.2.4, is superseded by:
 
 12. - `fixCleanup3_4_0`: As in the parent.
-    - `LendingProtocolV1_2`: Pre-fee precision loss rules from [XLS-65.2](../65.2/README.md) (for `LEVersion == 1`) and [XLS-65.3](../65.3/README.md) 3.2.4 (for `LEVersion >= 2`) apply unchanged. In addition, the transaction fails with `tecPRECISION_LOSS` under post-fee exhaustion when the rate is below 100%:
-      - The withdrawal incurs an early-exit fee ($F > 0$), `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, and the fee consumes the entire withdrawal ($F \ge \Delta_{assets}$, yielding $\Delta_{assets}^{paid} == 0$).
+    - `LendingProtocolV1_2`: Pre-fee precision loss rules from [XLS-65.2](../65.2/README.md) (for `LEVersion == 1`) and [XLS-65.3](../65.3/README.md) 3.2.4 (for `LEVersion >= 2`) apply unchanged. In addition, a withdrawal that incurs an early-exit fee ($F > 0$) fails with `tecPRECISION_LOSS` under either post-fee condition:
+      - **Fee exhaustion:** `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE` and the fee consumes the entire withdrawal ($F \ge \Delta_{assets}$, yielding $\Delta_{assets}^{paid} == 0$).
+      - **Post-fee dust:** $\Delta_{assets}^{paid} > 0$ but is too small to move the vault's asset total. Decreasing `Vault.AssetsTotal` by $\Delta_{assets}^{paid}$ would leave the stored value unchanged at its precision while shares are still burned.
 
       The parent fixed-share exemption remains unchanged. An early exit with a zero payout is permitted only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`.
 
@@ -283,7 +284,11 @@ In each of these cases, liquidity is evaluated against $\Delta_{assets}$ as in t
    - For `LEVersion == 1` Vaults, the invariant in [XLS-65.2](../65.2/README.md) 3.1.2.2 admits one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`.
    - For `LEVersion >= 2` Vaults, XLS-65.3 3.2.4 applies the operation rule on the live grid, with $F$ and $\Delta_{assets}^{paid}$ aligned to multiples of the live unit $10^{e^\ast}$. That live exponent is determined at step 3 and is not re-derived from $\Delta_{assets}^{paid}$ (4.3).
 
-   If $F \ge \Delta_{assets}$ and `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, check 12 of 3.4.2 rejects the transaction with `tecPRECISION_LOSS`. A zero payout reaches execution only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption.
+   Check 12 of 3.4.2 rejects the transaction with `tecPRECISION_LOSS` in either of these cases:
+   - $F \ge \Delta_{assets}$ and `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`.
+   - $\Delta_{assets}^{paid} > 0$ and decreasing `Vault.AssetsTotal` by $\Delta_{assets}^{paid}$ leaves the stored value unchanged.
+
+   A zero payout reaches execution only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption.
 
 **Steps 6 to 9, superseding items 4 to 7**, with $\Delta_{assets}^{paid}$ in place of $\Delta_{asset}$:
 
