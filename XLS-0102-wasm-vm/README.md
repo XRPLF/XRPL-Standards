@@ -6,7 +6,7 @@
   status: Draft
   category: Amendment
   created: 2025-08-08
-  updated: 2026-09-14
+  updated: 2026-09-29
 </pre>
 
 # WASM VM Configuration
@@ -129,7 +129,7 @@ This section includes ledger header data, amendments, and fees.
 | `amendment_enabled(`<br/>&emsp;`amendment_ptr: i32,`<br/>&emsp;`amendment_len: i32`<br />`)` | Check if a given amendment is enabled.            | 100      |
 | `base_fee(`<br/>&emsp;`out_buff_ptr: i32,`<br/>&emsp;`out_buff_len: i32`<br />`)`            | Get the current transaction base fee.             | 60       |
 
-`ldgr_index`, `parent_ldgr_time` and `base_fee` each write a 4-byte little-endian `u32` to the output buffer. `parent_ldgr_hash` writes the 32-byte hash as-is.
+`ldgr_index`, `parent_ldgr_time` and `base_fee` each write a 4-byte little-endian `u32` to the output buffer. `parent_ldgr_hash` writes the 32-byte hash as-is. If the current base fee is greater than 2^32 − 1 drops, the WASM execution terminates and the transaction fails with `tecINTERNAL`.
 
 ### 5.2. Current Ledger Object data
 
@@ -247,7 +247,7 @@ The `rounding_modes` parameter accepts: `0` (round to nearest, ties to even), `1
 | `float_div(`<br/>&emsp;`in_buf1: i32,`<br/>&emsp;`in_len1: i32,`<br/>&emsp;`in_buf2: i32,`<br/>&emsp;`in_len2: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`          | Divide two floats in xrpld format.                                                         | 300      |
 | `float_pow(`<br/>&emsp;`in_buf: i32,`<br/>&emsp;`in_len: i32,`<br/>&emsp;`pow: i32,`<br/>&emsp;`out_buf: i32,`<br/>&emsp;`out_len: i32,`<br/>&emsp;`rounding_modes: i32`<br />`)`                                          | Compute the nth power of a float in xrpld format.                                          | 5500     |
 
-The little-endian encoding above applies only to the raw-integer buffers of `float_from_uint` and `float_to_mant_exp`. It does not apply to the `XFloat` buffer itself (the `in_buf`/`out_buf` arguments on every other function above), which is always big-endian per [§5.8.3](#583-xfloat-serialization-format), nor to `float_from_iou_value`'s `in_buf`, which carries the on-ledger `STAmount` IOU value encoding (also big-endian, unchanged from the existing ledger format). The `mantissa`/`exponent` arguments of `float_from_mant_exp` and the `pow` argument of `float_pow` are passed directly as WASM `i64`/`i32` values rather than through a memory buffer, so no byte order applies to them.
+Within this section, the little-endian rule from [§5](#5-extension-host-functions) applies to the raw-integer buffers of `float_from_uint` and `float_to_mant_exp`. It does not apply to the `XFloat` buffer itself (the `in_buf`/`out_buf` arguments on every other function above), which is always big-endian per [§5.8.3](#583-xfloat-serialization-format), nor to `float_from_iou_value`'s `in_buf`, which carries the on-ledger `STAmount` IOU value encoding (also big-endian, unchanged from the existing ledger format). The `mantissa`/`exponent` arguments of `float_from_mant_exp` and the `pow` argument of `float_pow` are passed directly as WASM `i64`/`i32` values rather than through a memory buffer, so no byte order applies to them.
 
 #### 5.8.1. The XFloat Type
 
