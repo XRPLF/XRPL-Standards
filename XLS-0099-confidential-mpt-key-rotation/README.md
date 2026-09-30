@@ -192,7 +192,9 @@ This section is an informative summary using the states defined in Section 3. Th
 
 Every proof introduced by this amendment is bound to the transaction carrying it by a context hash:
 
-`SHA-512Half(TransactionType ‖ Account ‖ MPTokenIssuanceID ‖ Sequence ‖ Counterparty ‖ Version)`
+`SHA-512Half(TransactionType ‖ Account ‖ MPTokenIssuanceID ‖ SequenceProxy ‖ Counterparty ‖ Version)`
+
+`SequenceProxy` is the transaction's `Sequence`, or its `TicketSequence` when `Sequence` is 0. An account's sequence numbers and ticket numbers never overlap, and each is consumed once, so the value is unique across all of that account's transactions whether or not they are submitted with a Ticket.
 
 The last two fields carry the transaction-specific part. `Counterparty` is the other account the transaction acts on, and repeats `Account` when the transaction acts only on the submitter's own `MPToken`. `Version` is the holder's `ConfidentialBalanceVersion` when the proof anchors on a ciphertext encrypted under the holder key, and 0 otherwise.
 
@@ -652,7 +654,7 @@ Exactly one of the three flags must be set.
 
 **Fee Structure:** Custom
 
-This transaction requires 10x the base fee because rotation and recovery modes carry a zero-knowledge proof requiring elliptic curve verification, 224 bytes and 64 bytes respectively, consistent with the XLS-0096 confidential transactions. Cancel mode carries no proof but pays the same fee, because the fee is set per transaction type rather than per mode.
+This transaction requires 10x the base fee, the same multiplier as the XLS-0096 confidential transactions, because rotation and recovery modes carry a zero-knowledge proof requiring elliptic curve verification: 224 bytes and 64 bytes respectively (Section 11). Cancel mode carries no proof but pays the same fee, because the fee is set per transaction type rather than per mode.
 
 #### 5.5.4. Failure Conditions
 
