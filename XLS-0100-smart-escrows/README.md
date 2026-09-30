@@ -2,7 +2,7 @@
   title: Smart Escrows
   description: Custom release conditions for escrows written in WebAssembly (WASM)
   created: 2025-02-25
-  updated: 2025-11-20
+  updated: 2026-06-22
   author: Mayukha Vadari (@mvadari), David Fuelling (@sappenin)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/270
   status: Draft
@@ -139,20 +139,20 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 We propose two additional fields:
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                              |
-| :--------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------- |
-| `FinishFunction` |           | `string`  | `Blob`        | Compiled WebAssembly (WASM) code that must execute correctly for the escrow to finish (size limits TBD). |
-| `Data`           |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `FinishFunction` (size limits TBD).     |
+| Field Name | Required? | JSON Type | Internal Type | Description                                                                                              |
+| :--------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------- |
+| `Bytecode` |           | `string`  | `Blob`        | Compiled WebAssembly (WASM) code that must execute correctly for the escrow to finish (size limits TBD). |
+| `Data`     |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `Bytecode` (size limits TBD).           |
 
-#### 5.1.1. `FinishFunction`
+#### 5.1.1. `Bytecode`
 
-The compiled WASM code included in this field must contain a function named `finish` that takes no parameters and returns a signed integer (`int32`). If the function returns a value greater than 0, the escrow can be finished. Otherwise, the escrow cannot be finished. The function is triggered by an `EscrowFinish` transaction.
+The compiled WASM code included in this field must export a function named `escrow_finish` that takes no parameters and returns a signed integer (`int32`). If the function returns a value greater than 0, the escrow can be finished. Otherwise, the escrow cannot be finished. The function is triggered by an `EscrowFinish` transaction.
 
 See Section 7 for more details.
 
 ### 5.2. Reserves
 
-An `Escrow` object with a `FinishFunction` will cost 1. additional object reserve per 500 bytes (beyond the first 500 bytes, which are included in the first object reserve).
+An `Escrow` object with a `Bytecode` will cost 1. additional object reserve per 500 bytes (beyond the first 500 bytes, which are included in the first object reserve).
 
 ## 6. Transaction: `EscrowCreate`
 
@@ -180,46 +180,52 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 We propose two additional fields:
 
-| Field Name       | Required? | JSON Type | Internal Type | Description                                                                                                        |
-| :--------------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------------------------------- |
-| `FinishFunction` |           | `string`  | `Blob`        | Compiled WASM code that serves as an additional condition that must pass for an escrow to be finished (completed). |
-| `Data`           |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `FinishFunction`.                                 |
+| Field Name | Required? | JSON Type | Internal Type | Description                                                                                                        |
+| :--------- | :-------- | :-------- | :------------ | :----------------------------------------------------------------------------------------------------------------- |
+| `Bytecode` |           | `string`  | `Blob`        | Compiled WASM code that serves as an additional condition that must pass for an escrow to be finished (completed). |
+| `Data`     |           | `string`  | `Blob`        | User-defined extra data that can be accessed and modified by the `Bytecode`.                                       |
 
 Some rules about what conditions must be satisfied for a valid `EscrowCreate` transaction:
 
-- Must have at least one of `CancelAfter`, `FinishAfter`, or `FinishFunction`. A `Condition` may still be specified, if desired.
+- Must have at least one of `CancelAfter`, `FinishAfter`, or `Bytecode`. A `Condition` may still be specified, if desired.
 - If multiple finish conditions are included, they must _all_ be true (in other words, AND not OR).
-- If the `FinishFunction` field is included, then `CancelAfter` must also be included. For at least initial release of this feature, the escrow must be cancellable, in case something goes wrong with the `FinishFunction` code. _Note: A function-based escrow without an expiration could be added in the future._
+- If the `Bytecode` field is included, then `CancelAfter` must also be included. For at least initial release of this feature, the escrow must be cancellable, in case something goes wrong with the `Bytecode`. _Note: A function-based escrow without an expiration could be added in the future._
 
 _This table format is taken from [here](https://xrpl.org/docs/references/protocol/transactions/types/escrowcreate#escrowcreate-fields)._
 
 **Bold** = new options
 
-| Summary                                             | `FinishAfter` | `Condition` | `CancelAfter` | `FinishFunction` |
-| :-------------------------------------------------- | :------------ | :---------- | :------------ | :--------------- |
-| Time-based                                          | ✔️            |             |               |                  |
-| Time-based with expiration                          | ✔️            |             | ✔️            |                  |
-| Timed conditional                                   | ✔️            | ✔️          |               |                  |
-| Timed conditional with expiration                   | ✔️            | ✔️          | ✔️            |                  |
-| Conditional with expiration                         |               | ✔️          | ✔️            |                  |
-| **Function-based with expiration**                  |               |             | ✔️            | ✔️               |
-| **Timed Function with expiration**                  | ✔️            |             | ✔️            | ✔️               |
-| **Conditional Function with expiration**            |               | ✔️          | ✔️            | ✔️               |
-| **Time-based Conditional Function with expiration** | ✔️            | ✔️          | ✔️            | ✔️               |
+| Summary                                             | `FinishAfter` | `Condition` | `CancelAfter` | `Bytecode` |
+| :-------------------------------------------------- | :------------ | :---------- | :------------ | :--------- |
+| Time-based                                          | ✔️            |             |               |            |
+| Time-based with expiration                          | ✔️            |             | ✔️            |            |
+| Timed conditional                                   | ✔️            | ✔️          |               |            |
+| Timed conditional with expiration                   | ✔️            | ✔️          | ✔️            |            |
+| Conditional with expiration                         |               | ✔️          | ✔️            |            |
+| **Function-based with expiration**                  |               |             | ✔️            | ✔️         |
+| **Timed Function with expiration**                  | ✔️            |             | ✔️            | ✔️         |
+| **Conditional Function with expiration**            |               | ✔️          | ✔️            | ✔️         |
+| **Time-based Conditional Function with expiration** | ✔️            | ✔️          | ✔️            | ✔️         |
 
 ### 6.2. Transaction Fee
 
-An `EscrowCreate` with a `FinishFunction` costs costs 100 drops ($base\_fee * 10$) + 5 drops per byte in the `FinishFunction`.
+An `EscrowCreate` with a `Bytecode` costs costs 100 drops ($base\_fee * 10$) + 5 drops per byte in the `Bytecode`.
 
 ### 6.3. Failure Conditions
 
-The existing failure conditions still apply.
+The existing failure conditions still apply. The following failure conditions are added when `Bytecode` is included.
 
-These failure conditions are added, if `FinishFunction` is included:
+#### 6.3.1. Data Verification
 
-- The combination of fields specified in `FinishAfter`, `Condition`, `CancelAfter`, and `FinishFunction` is not allowed based on the above table.
-- The hex code specified in `FinishFunction` is not valid WASM, or does not follow the specifications of the `FinishFunction` (specified in section 7).
-- The length of `FinishFunction` is greater than the size limit (specified in `FeeSettings` below)
+All Data Verification failures return a `tem`-level error.
+
+1. The combination of `FinishAfter`, `Condition`, `CancelAfter`, and `Bytecode` is not one of the allowed combinations in the table above — e.g., none of `FinishAfter`/`Condition`/`Bytecode` is present (`temMALFORMED`).
+2. `Bytecode` is included but `CancelAfter` is not (`temBAD_EXPIRATION`).
+3. `Data` is included but `Bytecode` is not (`temMALFORMED`).
+4. `Data` exceeds the maximum allowed size (`temMALFORMED`).
+5. `Bytecode` is empty, or exceeds `BytecodeSizeLimit` (`temMALFORMED`).
+6. `Bytecode` is not valid WASM, or does not export an `escrow_finish` function with the required signature (`temINVALID_BYTECODE`).
+7. Smart Escrows are temporarily disabled by fee voting — i.e., `GasLimit` or `BytecodeSizeLimit` has been voted to `0` (`temTEMP_DISABLED`).
 
 ### 6.4. State Changes
 
@@ -250,24 +256,23 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 We propose one additional field:
 
-| Field Name             | Required? | JSON Type | Internal Type | Description                                                                                                                                       |
-| :--------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ComputationAllowance` |           | `number`  | `UInt32`      | The amount of gas the user is willing to pay for the execution of the Smart Escrow. Required if the `Escrow` object has a `FinishFunction` field. |
+| Field Name | Required? | JSON Type | Internal Type | Description                                                                                                                                 |
+| :--------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Gas`      |           | `number`  | `UInt32`      | The amount of gas the user is willing to pay for the execution of the Smart Escrow. Required if the `Escrow` object has a `Bytecode` field. |
 
 ### 7.2. Transaction Fee
 
-There will be a higher transaction fee for executing an `EscrowFinish` transaction when there is a `FinishFunction` attached to the escrow. The exact amounts will be determined during the implementation process (and added to the spec here).
+There will be a higher transaction fee for executing an `EscrowFinish` transaction when there is a `Bytecode` attached to the escrow. The exact amounts will be determined during the implementation process (and added to the spec here).
 
 ### 7.3. Failure Conditions
 
-The existing failure conditions still apply.
+The existing failure conditions still apply. The following failure conditions are added.
 
-These failure conditions are added:
+#### 7.3.1. Protocol-Level Failures
 
-- `ComputationAllowance` is included, but the `Escrow` doesn't have a `FinishFunction`
-- The `Escrow` has a `FinishFunction`, but a `ComputationAllowance` isn't included
-- The `ComputationAllowance` provided is not enough gas to complete the processing of the `FinishFunction`.
-- The `FinishFunction` returns a `0` or negative number.
+1. `Gas` is included, but the referenced `Escrow` does not have a `Bytecode` (`tefNO_BYTECODE`).
+2. The referenced `Escrow` has a `Bytecode`, but `Gas` is not included on the transaction (`tefBYTECODE_NOT_INCLUDED`).
+3. Execution of the `Bytecode` did not authorize the finish — i.e., the `escrow_finish` function returned `0` or a negative value, the WASM runtime trapped, or `Gas` was insufficient to complete execution (`tecBYTECODE_REJECTED`).
 
 ### 7.4. State Changes
 
@@ -277,10 +282,10 @@ There are no additional state changes.
 
 There are two additional metadata fields:
 
-| Field Name       | Validated? | Always Present? | Type     | Description                                                                               |
-| :--------------- | :--------- | :-------------- | :------- | :---------------------------------------------------------------------------------------- |
-| `GasUsed`        | Yes        | Conditional     | `UInt32` | The amount of gas actually used by the computation of the `FinishFunction` in the escrow. |
-| `WasmReturnCode` | Yes        | Conditional     | `Int32`  | The integer code returned by the `FinishFunction`.                                        |
+| Field Name     | Validated? | Always Present? | Type     | Description                                                                         |
+| :------------- | :--------- | :-------------- | :------- | :---------------------------------------------------------------------------------- |
+| `GasUsed`      | Yes        | Conditional     | `UInt32` | The amount of gas actually used by the computation of the `Bytecode` in the escrow. |
+| `VMReturnCode` | Yes        | Conditional     | `Int32`  | The integer code returned by the `Bytecode`.                                        |
 
 ## 8. Ledger Object: `FeeSettings`
 
@@ -311,11 +316,11 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 We propose three additional fields:
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                     |
-| :---------------------- | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------- |
-| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                         |
-| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100,000 (100kb).                     |
-| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1,000 (1 thousandth of a drop). |
+| Field               | Required? | JSON Type | Internal Type | Description                                                                                                     |
+| :------------------ | :-------- | :-------- | :------------ | :-------------------------------------------------------------------------------------------------------------- |
+| `GasLimit`          | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                         |
+| `BytecodeSizeLimit` | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100,000 (100kb).                     |
+| `GasPrice`          | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1,000 (1 thousandth of a drop). |
 
 ## 9. Transaction: `SetFee`
 
@@ -343,19 +348,19 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ps
 
 We propose three additional fields:
 
-| Field                   | Required? | JSON Type | Internal Type | Description                                                                                                    |
-| :---------------------- | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------- |
-| `ExtensionComputeLimit` | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                        |
-| `ExtensionSizeLimit`    | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb).                     |
-| `GasPrice`              | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
+| Field               | Required? | JSON Type | Internal Type | Description                                                                                                    |
+| :------------------ | :-------- | :-------- | :------------ | :------------------------------------------------------------------------------------------------------------- |
+| `GasLimit`          | No        | `number`  | `UInt32`      | The maximum amount of gas that one extension can execute. The initial value is 100,000.                        |
+| `BytecodeSizeLimit` | No        | `number`  | `UInt32`      | The maximum size, in bytes, that an extension can be. The initial value is 100000 (100kb).                     |
+| `GasPrice`          | No        | `number`  | `UInt32`      | The cost of 1 gas, in micro-drops (1 millionth of a drop). The initial value is 1000 (1 thousandth of a drop). |
 
-## 10. How the `FinishFunction` Field Works
+## 10. How the `Bytecode` Field Works
 
-The `FinishFunction` field will contain compiled WebAssembly (WASM) code that is uploaded to the XRPL. The details of how the WASM engine will execute the code will be provided in a separate XLS.
+The `Bytecode` field will contain compiled WebAssembly (WASM) code that is uploaded to the XRPL. The details of how the WASM engine will execute the code will be provided in a separate XLS.
 
 Some guidelines on what you can/cannot do in the WASM code:
 
-- Gas limits on what you can execute (as specified in the `ExtensionComputeLimit` field in `FeeSettings`)
+- Gas limits on what you can execute (as specified in the `GasLimit` field in `FeeSettings`)
 - Minimal data storage (each escrow has one 4kb `Data` field)
 - Simple ABI - a function that takes the transaction and returns a true/false (whether the escrow can be finished/canceled)
 - Read-access of ledger objects allowed
@@ -364,7 +369,7 @@ Some guidelines on what you can/cannot do in the WASM code:
 
 ## 11. Invariants
 
-Any escrow with a `FinishFunction` field must have a `CancelAfter` field. This provides better security in case something goes wrong with the `FinishFunction`, either due to user error or due to a bug. This restriction may be relaxed in the future.
+Any escrow with a `Bytecode` field must have a `CancelAfter` field. This provides better security in case something goes wrong with the `Bytecode`, either due to user error or due to a bug. This restriction may be relaxed in the future.
 
 ## 12. Security
 
@@ -377,7 +382,7 @@ Smart Escrows are designed to address the limitations of XRPL’s current escrow
 ### 13.1. Design Choices
 
 - **WebAssembly (WASM) as the Execution Environment:** WASM was chosen for its portability, security, and deterministic execution. It is widely used in blockchain environments (e.g., Polkadot, Ethereum’s eWASM, Solana) and allows for safe, resource-limited execution of user code. Alternatives like Lua, JavaScript, or custom DSLs were considered but rejected due to WASM’s maturity and tooling. The full analysis is available [here](https://dev.to/ripplexdev/a-survey-of-vms-for-xrpl-programmability-eoa).
-- **Minimal ABI and Data Access:** The ABI is intentionally simple, requiring only a `finish()` function with limited access to ledger data and a small, escrow-local `Data` field. This reduces attack surface and complexity, while still enabling meaningful programmability.
+- **Minimal ABI and Data Access:** The ABI is intentionally simple, requiring only an `escrow_finish()` function with limited access to ledger data and a small, escrow-local `Data` field. This reduces attack surface and complexity, while still enabling meaningful programmability.
 - **Mandatory `CancelAfter` for Smart Escrows:** To mitigate risks of stuck funds due to buggy or malicious WASM code, every Smart Escrow must be cancellable. This was debated, but consensus was that safety outweighs flexibility for initial deployment.
 - **Fee and Resource Controls:** Gas limits, size caps, and fee voting via `FeeSettings` and `SetFee` allow the network to dynamically adjust resource usage and pricing, preventing abuse and adapting to future improvements.
 
@@ -412,7 +417,7 @@ Overall, Smart Escrows balance programmability, safety, and simplicity, providin
 Only one notary account may release the escrow.
 
 ```rust
-pub extern "C" fn finish() -> i32 {
+pub extern "C" fn escrow_finish() -> i32 {
     let escrow_finish = escrow_finish::get_current_escrow_finish();
     let tx_account = match escrow_finish.get_account() {
         Ok(v) => v,
@@ -430,7 +435,7 @@ pub extern "C" fn finish() -> i32 {
 The escrow can only be released if the destination holds a specific [credential](https://xrpl.org/docs/concepts/decentralized-storage/credentials).
 
 ```rust
-pub extern "C" fn finish() -> i32 {
+pub extern "C" fn escrow_finish() -> i32 {
     let current_escrow = current_escrow::get_current_escrow();
 
     let account_id = match current_escrow.get_destination() {
@@ -489,7 +494,7 @@ pub fn get_price_from_oracle(slot: i32) -> Result<u64> {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> i32 {
+pub extern "C" fn escrow_finish() -> i32 {
     let oracle_keylet = oracle_keylet_safe(&ORACLE_OWNER, ORACLE_DOCUMENT_ID);
 
     let slot: i32;
@@ -517,19 +522,19 @@ pub extern "C" fn finish() -> i32 {
 
 Support for Issued Currencies and MPTs is currently (as of August 2025) up for voting as a part of the [TokenEscrow amendment](https://xrpl.org/resources/known-amendments#tokenescrow).
 
-### A.2: Can an existing escrow be updated to have a `FinishFunction`?
+### A.2: Can an existing escrow be updated to have a `Bytecode`?
 
 No. An Escrow’s release condition(s) cannot be updated after it is created. The escrow's "contract" (in the legal sense, not in the smart contract sense) must remain the same after creation.
 
-### A.3: Can the `FinishFunction` field be updated after the escrow has been created?
+### A.3: Can the `Bytecode` field be updated after the escrow has been created?
 
 No. An Escrow’s release condition(s) cannot be updated after it is created.
 
 ### A.4: Can the `Data` field be updated with a transaction?
 
-No, at this time the `Data` field can only be updated by the `FinishFunction` code.
+No, at this time the `Data` field can only be updated by the `Bytecode`.
 
-### A.5: Do all nodes and validators need to run the `FinishFunction` code?
+### A.5: Do all nodes and validators need to run the `Bytecode`?
 
 Yes. They need to in order to ensure that the error code returned (and validated) in the transaction is correct.
 
