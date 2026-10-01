@@ -6,9 +6,9 @@
   author: Vytautas Vito Tumas <vtumas@ripple.com>, Aanchal Malhotra <amalhotra@ripple.com>
   status: Draft
   category: Amendment
-  requires: XLS-80, XLS-65, XLS-64
+  requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-08
+  updated: 2026-09-15
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -40,7 +40,7 @@ The specification introduces the following transactions:
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
 - **`LoanPay`**: A transaction to make a `Loan` payment.
 
-The flow of the lending protocol is as follows:
+The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unrestricted and accepts both open-ended and closed-ended Vaults. Under `LendingProtocolV1_1`, `LoanBrokerSet` in step 2 requires that the Vault be closed-ended, because new Loan Brokers cannot be created against open-ended Vaults. Deposits in step 3 occur during Subscription, and each `LoanSet` in step 5 can succeed only during Investment and only when its final scheduled payment plus the redemption buffer does not exceed the Vault's `RedemptionDate`. See [XLS-66.1.2](./66.1/66.1.2-closed-ended-loan-gates.md).
 
 1. The Loan Broker creates a `Vault` ledger entry.
 2. The Loan Broker creates a `LoanBroker` ledger entry with a `LoanBrokerSet` transaction.
@@ -116,6 +116,20 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 ![Architecture Graph](./architecture.svg)
 
+### 2.7 Amendments
+
+The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Amendment comparisons use distinct labels for distinct axes:
+
+- `LendingProtocol (parent)` and `LendingProtocolV1_1` compare behavior before and after the feature amendment.
+- Before `fixCleanup3_4_0` and `fixCleanup3_4_0` compare behavior before and after the fix amendment, independently of the `LendingProtocolV1_1` state.
+
+- `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
+  - [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
+- `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
+  - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
+- `LendingProtocolV1_2`, as described in [XLS-66.3](./66.3/README.md):
+  - [66.3.3 Private LoanBroker](./66.3/66.3.3-private-loan-broker.md): restricts `LoanSet` on a private `LoanBroker` to members of its Permissioned Domain.
+
 ## 3. Specification
 
 ### 3.1. Ledger Entry: `LoanBroker`
@@ -156,17 +170,8 @@ The `LoanBroker` object has the following fields:
 | `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
 | `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
 | `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
-| `DomainID`             |    No    |    No    | `string`  |   `HASH256`   |     None      | The `PermissionedDomain` object ID associated with the `LoanBroker`.                                                                                                                                         |
 
-#### 3.1.3 Flags
-
-The `LoanBroker` object supports the following flags:
-
-| Flag Name              |  Flag Value  | Modifiable? | Description                                         |
-| ---------------------- | :----------: | :---------: | --------------------------------------------------- |
-| `lsfLoanBrokerPrivate` | `0x00010000` |    `No`     | If set, indicates that the `LoanBroker` is private. |
-
-#### 3.1.4 Ownership
+#### 3.1.3 Ownership
 
 The lending protocol object is stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `LoanBrokerSet` transaction. Furthermore, the object is also tracked in the `OwnerDirectory` of the `Vault` _`pseudo-account`_. The `_pseudo_account_` `OwnerDirectory` page is captured by the `VaultNode` field.
 
@@ -175,11 +180,11 @@ The `RootIndex` of the `DirectoryNode` object is the result of [`SHA512-Half`](h
 - The `OwnerDirectory` space key `0x004F`
 - The `LoanBrokerID`
 
-#### 3.1.5 Reserves
+#### 3.1.4 Reserves
 
 The `LoanBroker` object costs two owner reserve for the account creating it.
 
-#### 3.1.6 Deletion
+#### 3.1.5 Deletion
 
 - All Loans associated with the LoanBroker must be deleted first.
 - The LoanBroker must have no outstanding debt owed to the Vault.
@@ -187,11 +192,11 @@ The `LoanBroker` object costs two owner reserve for the account creating it.
 
 **Account Deletion Blocker:** Yes. This object must be deleted before its owner account can be deleted.
 
-#### 3.1.7 Pseudo-Account
+#### 3.1.6 Pseudo-Account
 
 The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
-#### 3.1.8 Freeze/Lock
+#### 3.1.7 Freeze/Lock
 
 The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. The effects depend on the freeze level:
 
@@ -219,17 +224,16 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
 
 - Prevents all Loan creation, Loan payments, and First-Loss Capital deposits/withdrawals for the affected asset.
 
-#### 3.1.9 Invariants
+#### 3.1.8 Invariants
 
-1. If `<LoanBroker>.lsfLoanBrokerPrivate` is set, `<LoanBroker>'.lsfLoanBrokerPrivate` must be set.
-2. If `<LoanBroker>'.DomainID` is present, `<LoanBroker>'.lsfLoanBrokerPrivate` must be set.
+_TBD_
 
-#### 3.1.10 Example JSON
+#### 3.1.9 Example JSON
 
 ```json
 {
   "LedgerEntryType": "LoanBroker",
-  "Flags": 65536,
+  "Flags": 0,
   "PreviousTxnID": "6FCDB5135BBEA61BC2A2B07013CB9EB3015684D4536195A85D847370DECF8D0A",
   "PreviousTxnLgrSeq": 3964034,
   "Sequence": 3964022,
@@ -242,12 +246,11 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
   "OwnerCount": 1,
   "DebtTotal": "1000.003710049006",
   "CoverAvailable": "500",
-  "index": "18D3057DC8297940B1790354455A9108BA15760B3FBD85748137751FB781C311",
-  "DomainID": "B0F7A9C9E1F3B2C8D4E5F67890ABCDEF1234567890ABCDEFFEDCBA0987654321"
+  "index": "18D3057DC8297940B1790354455A9108BA15760B3FBD85748137751FB781C311"
 }
 ```
 
-#### 3.1.11 Accounting
+#### 3.1.10 Accounting
 
 The Lending Protocol tracks the funds owed to the associated Vault in the `DebtTotal` attribute. It captures the principal amount taken from the Vault and the interest due, excluding all fees. The `DebtMaximum` attribute controls the maximum debt a Lending Protocol may incur. Whenever the Lender issues a Loan, `DebtTotal` is incremented by the Loan principal and interest, excluding fees. When $DebtTotal \geq DebtMaximum$, the Lender cannot issue new loans until some of the debt is cleared. Furthermore, the Lender may not issue a loan that would cause the `DebtTotal` to exceed `DebtMaximum`.
 
@@ -333,7 +336,7 @@ Lending Protocol:
 - DebtTotal = DebtTotal − PaymentPrincipalPortion − (PaymentInterestPortion − (PaymentInterestPortion × ManagementFeeRate))
   = 1,090 − 500 − (50 − (50 × 0.1)) = **545 Tokens**
 
-#### 3.1.12 First-Loss Capital
+#### 3.1.11 First-Loss Capital
 
 The First-Loss Capital is an optional mechanism to protect the Vault depositors from incurring a loss in case of a Loan default by absorbing some of the loss. The following parameters control this mechanism:
 
@@ -398,16 +401,6 @@ Lending Protocol:
   = 1,090 − (1,000 + 90) = **0 Tokens**
 - CoverAvailable = CoverAvailable − DefaultCovered
   = 1,000 − 10.9 = **989.1 Tokens**
-
-#### 3.1.13 Access Control
-
-A Loan Issuer may want to ensure that all Borrowers meet certain legal obligations, such as KYC. This can be done by attaching a [Permissioned Domain](../XLS-0080-permissioned-domains/README.md), which restricts Loans to accounts with specific credentials. Only accounts with the required credentials can take out loans from a private LoanBroker. To configure a LoanBroker as private, set the `tfLoanBrokerPrivate` transaction flag when creating the `LoanBroker` object. This sets the `lsfLoanBrokerPrivate` flag on the resulting `LoanBroker` ledger entry. If the ledger flag is set, the LoanBroker is private. If the flag is not set, the LoanBroker is public, and any account may take out a loan.
-
-The presence or absence of a Permissioned Domain does not affect the signature requirements for the `LoanSet` transaction. Both the LoanBroker Owner and the Borrower must sign the `LoanSet` transaction, ensuring that even if an account is included in the Permissioned Domain, both parties must explicitly authorise the transaction.
-
-The LoanBroker Owner can clear or change the associated Permissioned Domain. If a private LoanBroker does not have a Permissioned Domain attached, loans cannot be issued until one is configured. Removing or changing the Permissioned Domain does not add a domain credential check to `LoanPay`; repayment remains subject to the other `LoanPay` failure conditions. **Note**, the LoanBroker Owner does not need credentials in the Permissioned Domain to issue a loan to a Borrower. However, if the Owner wishes to take out a loan from their own LoanBroker, they must hold the required credentials.
-
-Credential validation uses the current ledger state when a `LoanSet` transaction is applied. If the Borrower's credential is later revoked or expires, or the associated `PermissionedDomain` object is deleted, existing Loans are unaffected and `LoanPay` applies no domain credential check; repayment remains subject to the other `LoanPay` failure conditions. Subsequent `LoanSet` transactions are refused until the Borrower satisfies a valid Permissioned Domain configured on the LoanBroker.
 
 ### 3.2. Ledger Entry: `Loan`
 
@@ -564,7 +557,10 @@ For loans denominated in discrete asset types (XRP drops and MPTs), all monetary
 
 #### 3.2.10 Impairment
 
-When the Loan Broker discovers that the Borower cannot make an upcoming payment, impairment allows the Loan Broker to register a "paper loss" with the Vault. The impairment mechanism moves the Next Payment Due Date to the time the Loan was impaired, allowing to default the Loan more quickly. However, if the Borrower makes a payment, the impairment status is automatically cleared.
+Impairment allows the Loan Broker to register a "paper loss" with the Vault by increasing `Vault.LossUnrealized`. If the Borrower makes a payment, the impairment status is automatically cleared.
+
+- Before `fixCleanup3_4_0`: A Loan can be impaired before its payment is overdue. Impairing while `Loan.NextPaymentDueDate` is still greater than the current ledger close time moves `Loan.NextPaymentDueDate` to the current ledger close time. Unimpairing rewrites `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time, otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+- `fixCleanup3_4_0`: A Loan can be impaired only when the current ledger close time is greater than `Loan.NextPaymentDueDate`; equality is not late. Impair and unimpair do not modify `Loan.NextPaymentDueDate`.
 
 ### 3.3. Transaction: `LoanBrokerSet`
 
@@ -583,21 +579,14 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `DebtMaximum`          |    No    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt. Must not be negative.               |
 | `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
-| `DomainID`             |    No    | `string`  |   `HASH256`   |     Empty     | The `PermissionedDomain` object ID associated with the `LoanBroker`.                                                                               |
 
-#### 3.3.2 Flags
-
-| Flag Name             |  Flag Value  | Description                                                                                  |
-| --------------------- | :----------: | :------------------------------------------------------------------------------------------- |
-| `tfLoanBrokerPrivate` | `0x00010000` | Indicates that the `LoanBroker` is private. It can only be set during `LoanBroker` creation. |
-
-#### 3.3.3 Transaction Fee
+#### 3.3.2 Transaction Fee
 
 This transaction uses the standard transaction fee.
 
-#### 3.3.4 Failure Conditions
+#### 3.3.3 Failure Conditions
 
-##### 3.3.4.1 Data Verification
+##### 3.3.3.1 Data Verification
 
 1. `VaultID` is zero. (`temINVALID`)
 2. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
@@ -606,19 +595,10 @@ This transaction uses the standard transaction fee.
 5. `CoverRateLiquidation` is outside valid range (0 to 100000). (`temINVALID`)
 6. `DebtMaximum` is negative or exceeds maximum allowed value. (`temINVALID`)
 7. One of `CoverRateMinimum` and `CoverRateLiquidation` is zero, and the other one is not. (Either both are zero, or both are non-zero) (`temINVALID`)
+8. `LoanBrokerID` is specified and is zero. (`temINVALID`)
+9. `LoanBrokerID` is specified and the submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
 
-8. The `LendingPermissionedDomain` amendment is not enabled and either `DomainID` is provided or the `tfLoanBrokerPrivate` flag is set. (`temDISABLED`)
-
-9. If `LoanBrokerID` is **not** specified (creating new):
-   1. `DomainID` is provided and is zero. (`temMALFORMED`)
-   2. `DomainID` is provided, and the `tfLoanBrokerPrivate` flag is not set. (`temINVALID`)
-
-10. If `LoanBrokerID` is specified (modifying existing):
-    1. `LoanBrokerID` is empty. (`temINVALID`)
-    2. Submitter is attempting to modify fixed fields (`ManagementFeeRate`, `CoverRateMinimum`, `CoverRateLiquidation`). (`temINVALID`)
-    3. The `tfLoanBrokerPrivate` flag is set. (`temINVALID`)
-
-##### 3.3.4.2 Protocol-Level Failures
+##### 3.3.3.2 Protocol-Level Failures
 
 **If `LoanBrokerID` is not specified (creating new):**
 
@@ -627,22 +607,21 @@ This transaction uses the standard transaction fee.
 3. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
 4. The Vault _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 5. The submitter does not have sufficient reserve for the `LoanBroker` object and _pseudo-account_ (requires 2 owner reserves). (`tecINSUFFICIENT_RESERVE`)
-6. The `PermissionedDomain` object does not exist for the provided `DomainID`. (`tecOBJECT_NOT_FOUND`)
+6. - `LendingProtocol (parent)`: The check does not apply.
+   - `LendingProtocolV1_1`: `Vault.VaultKind` is not `ClosedEnded`. (`tecNO_PERMISSION`)
 
 **If `LoanBrokerID` is specified (modifying existing):**
 
-1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
-2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
-3. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
-4. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
-5. `DomainID` is provided in any form (including zero) and `LoanBroker.lsfLoanBrokerPrivate` flag is not set. (`tecNO_PERMISSION`)
-6. `DomainID` is provided, is non-zero, and the `PermissionedDomain` object does not exist. (`tecOBJECT_NOT_FOUND`)
+7. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
+8. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
+9. The transaction `VaultID` does not match `LoanBroker(LoanBrokerID).VaultID`. (`tecNO_PERMISSION`)
+10. `DebtMaximum` is being reduced to a non-zero value below the current `DebtTotal`. (`tecLIMIT_EXCEEDED`)
 
 **Precision Validation:**
 
-1. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+11. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
 
-#### 3.3.5 State Changes
+#### 3.3.4 State Changes
 
 **If `LoanBrokerID` is not specified (creating new):**
 
@@ -664,29 +643,16 @@ This transaction uses the standard transaction fee.
 5. Update submitting account:
    - Increment the submitting account's `OwnerCount` by 2 (one for the `LoanBroker` object, one for the _pseudo-account_).
 
-6. If `tfLoanBrokerPrivate` flag is set in the transaction:
-   1. `LoanBroker.Flags |= lsfLoanBrokerPrivate` (Set that LoanBroker is private).
-
-7. If `DomainID` is provided:
-   1. Set `LoanBroker.DomainID = DomainID` (Set the Permissioned Domain).
-
 **If `LoanBrokerID` is specified (modifying existing):**
 
-1. Update `LoanBroker.Data` if provided in the transaction.
-2. Update `LoanBroker.DebtMaximum` if provided in the transaction.
+6. Update `LoanBroker.Data` if provided in the transaction.
+7. Update `LoanBroker.DebtMaximum` if provided in the transaction.
 
-3. If `DomainID` is provided and is non-zero:
-   1. Set `LoanBroker.DomainID = DomainID` (Set the Permissioned Domain).
+#### 3.3.5 Invariants
 
-4. If `DomainID` is provided and is zero:
-   1. Clear `LoanBroker.DomainID` (Unset the Permissioned Domain).
+Under `LendingProtocolV1_1`, no new `LoanBroker` is created against a Vault whose `VaultKind` is not `ClosedEnded`. Updating an existing broker is unaffected.
 
-#### 3.3.6 Invariants
-
-1. If `LoanBroker.lsfLoanBrokerPrivate` flag is set, it cannot be unset.
-2. If `LoanBroker.DomainID` field is present, `LoanBroker.lsfLoanBrokerPrivate` flag must be set.
-
-#### 3.3.7 Example JSON
+#### 3.3.6 Example JSON
 
 ```json
 {
@@ -1141,12 +1107,12 @@ The account specified in the `Account` field pays the transaction fee.
 22. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 23. The `LoanBroker.Owner` is not authorized for the asset. (`tecNO_AUTH`)
 24. The `LoanBroker.LoanSequence` has reached its maximum value. (`tecMAX_SEQUENCE_REACHED`)
-
-25. `LoanBroker.lsfLoanBrokerPrivate` flag is set:
-    1. `LoanBroker.DomainID` is not set (LoanBroker is private, but domain is not configured). (`tecNO_AUTH`)
-    2. The `PermissionedDomain` object referenced by `LoanBroker.DomainID` does not exist. (`tecOBJECT_NOT_FOUND`)
-    3. The `Borrower` has no valid accepted credential in the LoanBroker's `PermissionedDomain`, and no matching credential is expired. (`tecNO_AUTH`)
-    4. The `Borrower` has one or more matching expired credentials and no valid accepted credential in the LoanBroker's `PermissionedDomain`. (`tecEXPIRED`)
+25. - `LendingProtocol (parent)`: The check does not apply.
+    - `LendingProtocolV1_1`: The Vault is closed-ended and the parent ledger close time is less than or equal to `Vault.SubscriptionDate`. (`tecTOO_SOON`)
+26. - `LendingProtocol (parent)`: The check does not apply.
+    - `LendingProtocolV1_1`: The Vault is closed-ended and the parent ledger close time is greater than or equal to `Vault.RedemptionDate`. (`tecEXPIRED`)
+27. - `LendingProtocol (parent)`: The check does not apply.
+    - `LendingProtocolV1_1`: The Vault is closed-ended and `StartDate + (PaymentInterval × PaymentTotal) + 60 > Vault.RedemptionDate`; the expression is computed without overflow. (`tecNO_PERMISSION`)
 
 #### 3.8.6 State Changes
 
@@ -1184,7 +1150,7 @@ The account specified in the `Account` field pays the transaction fee.
 
 #### 3.8.7 Invariants
 
-**TBD**
+Under `LendingProtocolV1_1`, no closed-ended `LoanSet` succeeds outside the Investment phase or with `StartDate + (PaymentInterval × PaymentTotal) + LOAN_REDEMPTION_BUFFER > Vault.RedemptionDate`. This maturity bound is checked at origination only.
 
 #### 3.8.8 Example JSON
 
@@ -1308,9 +1274,14 @@ This transaction uses the standard transaction fee.
 3. `Loan.Flags` has `lsfLoanImpaired` set and `tfLoanImpair` flag is specified (cannot impair an already impaired loan). (`tecNO_PERMISSION`)
 4. `Loan.Flags` has neither `lsfLoanImpaired` nor `lsfLoanDefault` set and `tfLoanUnimpair` flag is specified (cannot unimpair an unimpaired loan). (`tecNO_PERMISSION`)
 5. `Loan.PaymentRemaining == 0` (fully paid loan cannot be modified). (`tecNO_PERMISSION`)
-6. `tfLoanDefault` flag is specified and `Loan.NextPaymentDueDate + Loan.GracePeriod` has not yet passed. (`tecTOO_SOON`)
+6. Default too soon (`tecTOO_SOON`):
+   - `Before fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`.
+   - `fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`.
 7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
+9. Impair too soon (`tecTOO_SOON`):
+   - `Before fixCleanup3_4_0`: The check does not apply.
+   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue).
 
 #### 3.10.5 State Changes
 
@@ -1350,19 +1321,18 @@ This transaction uses the standard transaction fee.
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
      - Set `lsfLoanImpaired` flag.
-     - If `Loan.NextPaymentDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = currentTime`.
+     - `NextPaymentDueDate`:
+       - `Before fixCleanup3_4_0`: If the current ledger close time is less than `Loan.NextPaymentDueDate`, set `Loan.NextPaymentDueDate` to the current ledger close time.
+       - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 3. If the `tfLoanUnimpair` flag is specified:
    - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
    - Update `Vault` object:
      - Decrease `Vault.LossUnrealized` by `LossReversed`.
    - Update `Loan` object:
      - Clear `lsfLoanImpaired` flag.
-     - Compute `NormalDueDate = max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval`.
-     - If `NormalDueDate` has not yet passed:
-       - Set `Loan.NextPaymentDueDate = NormalDueDate`.
-     - Otherwise:
-       - Set `Loan.NextPaymentDueDate = currentTime + Loan.PaymentInterval`.
+     - `NextPaymentDueDate`:
+       - `Before fixCleanup3_4_0`: Rewrite `Loan.NextPaymentDueDate` to `max(Loan.PreviousPaymentDueDate, Loan.StartDate) + Loan.PaymentInterval` when that value is still greater than the current ledger close time; otherwise to the current ledger close time plus `Loan.PaymentInterval`.
+       - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 
 #### 3.10.6 Invariants
 
@@ -1428,7 +1398,9 @@ This transaction uses the standard transaction fee.
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
 10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-11. The payment is late (`currentTime > Loan.NextPaymentDueDate`) and the `tfLoanLatePayment` flag is not specified in the transaction. (`tecEXPIRED`)
+11. Late payment without `tfLoanLatePayment` (`tecEXPIRED`):
+    - `Before fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`.
+    - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`.
 12. The payment is late and the `Amount` is less than the calculated `totalDue` for a late payment (`periodicPayment + loanServiceFee + latePaymentFee + latePaymentInterest`). (`tecINSUFFICIENT_PAYMENT`)
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
@@ -1571,8 +1543,6 @@ The management fee is calculated as a percentage of interest earned rather than 
 ## 5. Security Considerations
 
 The protocol makes strong trust assumptions between Vault Depositors, LoanBrokers, and Borrowers. The protocol does not offer on-chain algorithmic protection against default, thus all protocol participants must perform their due diligence and necessary off-chain checks.
-
-Private LoanBrokers additionally rely on the accepted credential issuers and the owner of the referenced Permissioned Domain. The domain owner may change its `AcceptedCredentials` or delete the domain, even when the domain owner and LoanBroker Owner are different accounts. Credential checks provide point-in-time authorization for new Loans; revocation, expiration, or Domain deletion does not unwind an outstanding Loan or add a domain credential check to repayment. LoanBroker Owners must account for that control and non-retroactive behavior when using credentials for compliance controls.
 
 # Appendix
 
@@ -2586,15 +2556,22 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         newLoanProperties
     )
 
+function is_payment_late(currentTime):
+    # Matches isPaymentLate / hasExpired in LendingHelpers.cpp.
+    # fixCleanup3_4_0: Exclusive (currentTime > due). Otherwise Inclusive (currentTime >= due).
+    if is_enabled(fixCleanup3_4_0):
+        return currentTime > loan.nextPaymentDueDate
+    return currentTime >= loan.nextPaymentDueDate
+
 function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valueChange, feePaid):
     if loan.paymentsRemaining == 0 || loan.principalOutstanding == 0:
         return "loan complete" error
 
-    if loan.nextPaymentDueDate < currentTime and not is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and not is_set(tfLoanLatePayment):
         return "loan payment is late" error
 
     # ======== STEP 1: Process Late Payment ======== #
-    if loan.nextPaymentDueDate < currentTime and is_set(tfLoanLatePayment):
+    if is_payment_late(currentTime) and is_set(tfLoanLatePayment):
         let (principal, interest, managementFee) = compute_payment_due(amount)
         let (lateInterest, lateManagementFee) = compute_late_payment_interest(currentTime)
 
@@ -2728,3 +2705,9 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         totalFeePaid            # The total fee
     )
 ```
+
+## A-4 Changelog
+
+- [XLS-66.1](./66.1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md).
+- [XLS-66.2](./66.2/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.
+- [XLS-66.3](./66.3/README.md): `LendingProtocolV1_2` Lending changes: [66.3.3 Private LoanBroker](./66.3/66.3.3-private-loan-broker.md).
