@@ -26,7 +26,7 @@ The Owner needs a way to restore backing for the existing shareholders. A deposi
 
 ## 3. Specification
 
-This patch changes the parent [XLS-65](../README.md) sections named below. All other parent behavior is unchanged. Everything in this patch is gated by `LendingProtocolV1_2`, defined in [XLS-65.3](../65.3/README.md) §3.21.
+This patch changes the parent [XLS-65](../README.md) sections named below. All other parent behavior is unchanged. Everything in this patch is gated by the `LendingProtocolV1_2` amendment (`featureLendingProtocolV1_2`).
 
 A `VaultDeposit` with `tfVaultDonate` set is a **donation**. `tfVaultDonate` has no effect unless `LendingProtocolV1_2` is enabled.
 
