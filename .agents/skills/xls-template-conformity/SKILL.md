@@ -42,15 +42,18 @@ Read `references/beyond-the-template.md` and work through it. It also lists the 
 
 ## 5. Report
 
-One table, grouped by severity, most severe first:
+Finish every validator, template, and beyond-the-template pass before reporting. Build the complete finding set, verify it, and remove duplicates. Do not report findings incrementally or stop after the first defect.
+
+For an interactive conformity check, use one table grouped by severity, most severe first:
 
 | Severity | Location                      | Finding | Suggested fix |
 | -------- | ----------------------------- | ------- | ------------- |
 | blocking | `XLS-NNNN-slug/README.md:120` | ...     | ...           |
 
 - `blocking` — validator errors, missing required content, an unsafe or unimplementable statement.
-- `should-fix` — real defect that does not block merge.
-- `nit` — wording or consistency.
+- `should-fix` — a concrete defect that can cause divergent implementation or incorrect client behavior.
+
+Do not report nits. Suppress spelling, grammar, phrasing, verbosity, naming consistency, field qualification, and optional clarity suggestions unless they meet one of the two severity thresholds above.
 
 Never report anything CI already owns: whitespace, line endings, EOF newlines, markdown table alignment (prettier owns it), or the presence of fields and sections the validator checks.
 
