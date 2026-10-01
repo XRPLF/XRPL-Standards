@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-09-04
-  updated: 2026-09-14
+  updated: 2026-09-15
 </pre>
 
 # 65.1 LendingProtocolV1_1 Vault Changes
@@ -20,11 +20,12 @@ This index groups the Vault changes introduced by the `LendingProtocolV1_1` amen
 
 These specifications are introduced by the `LendingProtocolV1_1` amendment:
 
-| Spec                                                                            | Description                                                                                                          |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [65.1.1 Unmodifiable Vault Fields](./65.1.1-unmodifiable-vault-fields.md)       | Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set. |
-| [65.1.2 Vault Deletion Memo](./65.1.2-vault-deletion-memo.md)                   | Adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.                            |
-| [65.1.3 Single Asset Vault Cash-Basis Accounting](./65.1.3-vault-cash-basis.md) | Records the accounting model in `LEVersion` so `AssetsTotal` counts interest only when a Borrower pays it.           |
+| Spec                                                                            | Description                                                                                                               |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [65.1.1 Unmodifiable Vault Fields](./65.1.1-unmodifiable-vault-fields.md)       | Makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set.      |
+| [65.1.2 Vault Deletion Memo](./65.1.2-vault-deletion-memo.md)                   | Adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes.                                 |
+| [65.1.3 Single Asset Vault Cash-Basis Accounting](./65.1.3-vault-cash-basis.md) | Records the accounting model in `LEVersion` so `AssetsTotal` counts interest only when a Borrower pays it.                |
+| [65.1.4 Closed-Ended Vault](./65.1.4-closed-ended-vault.md)                     | Adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates deposits and withdrawals. |
 
 ## 3. Rationale
 
