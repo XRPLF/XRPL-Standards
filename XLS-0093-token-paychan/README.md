@@ -18,7 +18,7 @@
 
 ## 1. Abstract
 
-The proposed `TokenPaychan` amendment to the XRP Ledger (XRPL) protocol enhances the existing `PaymentChannel` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow payment channels to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity. It also adds one new transaction, `PaymentChannelClawback`, so that an issuer whose holders can already be clawed back retains that reach over value locked in a channel.
+The proposed `TokenPaychan` amendment to the XRP Ledger (XRPL) protocol enhances the existing `PayChannel` functionality by enabling support for both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs). This amendment introduces changes to ledger objects, transactions, and transaction processing logic to allow payment channels to use IOU tokens and MPTs, while respecting issuer controls and maintaining ledger integrity. It also adds one new transaction, `PaymentChannelClawback`, so that an issuer whose holders can already be clawed back retains that reach over value locked in a channel.
 
 ## 2. Motivation
 
@@ -43,7 +43,7 @@ This amendment extends the functionality of payment channels to support both IOU
 
 - **No Trustlines**: MPTs do not utilize trustlines.
 - **Issuer Controls**:
-  - **Transfer Flags (`lsfMPTCanTransfer`)**: Tokens must have this flag enabled to be transferable and to participate in transactions like payment channels.
+  - **Transfer Flags (`lsfMPTCanTransfer`)**: Tokens must have this flag enabled to be transferable and to participate in transactions like payment channels, unless the destination address of the Payment Channel is the issuer of the MPT.
   - **Require Authorization (`lsfMPTRequireAuth`)**: Issuers may require authorization for accounts to hold their tokens.
   - **Lock Conditions (`lsfMPTLocked`)**: Tokens can be locked by the issuer, affecting their transferability.
 - **Transfer Mechanics**: Transfers occur by moving token balances directly between accounts.
@@ -51,30 +51,30 @@ This amendment extends the functionality of payment channels to support both IOU
 
 ## 3.2. Ledger Entry: `PayChannel`
 
-The `PaymentChannel` ledger object is updated as follows: `Amount` and `Balance` may hold a token, and the optional `TransferRate` and `IssuerNode` fields are added. Unchanged fields are included below so that the example is self-contained.
+The `PayChannel` ledger object is updated as follows: `Amount` and `Balance` may hold a token, and the optional `TransferRate` and `IssuerNode` fields are added. Unchanged fields are included below so that the example is self-contained.
 
 ### 3.2.1. Fields
 
-| Field Name          | Constant | Required | Internal Type | Default Value | Description                                                                                                                                                                     |
-| ------------------- | -------- | -------- | ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LedgerEntryType`   | Yes      | Yes      | UINT16        | `0x0078`      | Identifies this as a `PayChannel` object.                                                                                                                                       |
-| `Account`           | Yes      | Yes      | ACCOUNT       | N/A           | The source address that owns this payment channel.                                                                                                                              |
-| `Destination`       | Yes      | Yes      | ACCOUNT       | N/A           | The destination address for this payment channel. While the channel is open, this address is the only one that can receive funds from the channel.                              |
-| `Sequence`          | Yes      | No       | UINT32        | N/A           | The sequence number or ticket of the transaction that created the channel.                                                                                                      |
-| `Amount`            | No       | Yes      | AMOUNT        | N/A           | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                                 |
-| `Balance`           | No       | Yes      | AMOUNT        | N/A           | The amount already paid out from the channel. Same asset type as `Amount`.                                                                                                      |
-| `PublicKey`         | Yes      | Yes      | BLOB          | N/A           | Public key of the key pair that can be used to sign claims against this channel.                                                                                                |
-| `SettleDelay`       | Yes      | Yes      | UINT32        | N/A           | Number of seconds the source address must wait to close the channel if it still has funds in it.                                                                                |
-| `Expiration`        | No       | No       | UINT32        | N/A           | The mutable expiration time for this payment channel, in seconds since the Ripple Epoch.                                                                                        |
-| `CancelAfter`       | Yes      | No       | UINT32        | N/A           | The immutable expiration time for this payment channel, in seconds since the Ripple Epoch.                                                                                      |
-| `SourceTag`         | Yes      | No       | UINT32        | N/A           | An arbitrary tag to further specify the source for this payment channel.                                                                                                        |
-| `DestinationTag`    | Yes      | No       | UINT32        | N/A           | An arbitrary tag to further specify the destination for this payment channel.                                                                                                   |
-| `TransferRate`      | Yes      | No       | UINT32        | N/A           | The transfer rate or fee at creation, used as an upper bound on the rate applied during claims. Only present when the rate at creation differs from parity.                     |
-| `OwnerNode`         | No       | Yes      | UINT64        | N/A           | A hint indicating which page of the source address's owner directory links to this entry.                                                                                       |
-| `DestinationNode`   | No       | No       | UINT64        | N/A           | A hint indicating which page of the destination's owner directory links to this entry.                                                                                          |
-| `IssuerNode`        | No       | No       | UINT64        | N/A           | The ledger index of the issuer's directory node associated with the `PaymentChannel`. Only present for IOU channels where the issuer is neither the source nor the destination. |
-| `PreviousTxnID`     | No       | Yes      | HASH256       | N/A           | The identifying hash of the transaction that most recently modified this entry.                                                                                                 |
-| `PreviousTxnLgrSeq` | No       | Yes      | UINT32        | N/A           | The index of the ledger that contains the transaction that most recently modified this entry.                                                                                   |
+| Field Name          | Constant | Required | Internal Type | Default Value | Description                                                                                                                                                                 |
+| ------------------- | -------- | -------- | ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`   | Yes      | Yes      | UINT16        | `0x0078`      | Identifies this as a `PayChannel` object.                                                                                                                                   |
+| `Account`           | Yes      | Yes      | ACCOUNT       | N/A           | The source address that owns this payment channel.                                                                                                                          |
+| `Destination`       | Yes      | Yes      | ACCOUNT       | N/A           | The destination address for this payment channel. While the channel is open, this address is the only one that can receive funds from the channel.                          |
+| `Sequence`          | Yes      | No       | UINT32        | N/A           | The sequence number or ticket of the transaction that created the channel.                                                                                                  |
+| `Amount`            | No       | Yes      | AMOUNT        | N/A           | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                             |
+| `Balance`           | No       | Yes      | AMOUNT        | N/A           | The amount already paid out from the channel. Same asset type as `Amount`.                                                                                                  |
+| `PublicKey`         | Yes      | Yes      | BLOB          | N/A           | Public key of the key pair that can be used to sign claims against this channel.                                                                                            |
+| `SettleDelay`       | Yes      | Yes      | UINT32        | N/A           | Number of seconds the source address must wait to close the channel if it still has funds in it.                                                                            |
+| `Expiration`        | No       | No       | UINT32        | N/A           | The mutable expiration time for this payment channel, in seconds since the Ripple Epoch.                                                                                    |
+| `CancelAfter`       | Yes      | No       | UINT32        | N/A           | The immutable expiration time for this payment channel, in seconds since the Ripple Epoch.                                                                                  |
+| `SourceTag`         | Yes      | No       | UINT32        | N/A           | An arbitrary tag to further specify the source for this payment channel.                                                                                                    |
+| `DestinationTag`    | Yes      | No       | UINT32        | N/A           | An arbitrary tag to further specify the destination for this payment channel.                                                                                               |
+| `TransferRate`      | Yes      | No       | UINT32        | N/A           | The transfer rate or fee at creation, used as an upper bound on the rate applied during claims. Only present when the rate at creation differs from parity.                 |
+| `OwnerNode`         | No       | Yes      | UINT64        | N/A           | A hint indicating which page of the source address's owner directory links to this entry.                                                                                   |
+| `DestinationNode`   | No       | No       | UINT64        | N/A           | A hint indicating which page of the destination's owner directory links to this entry.                                                                                      |
+| `IssuerNode`        | No       | No       | UINT64        | N/A           | The ledger index of the issuer's directory node associated with the `PayChannel`. Only present for IOU channels where the issuer is neither the source nor the destination. |
+| `PreviousTxnID`     | No       | Yes      | HASH256       | N/A           | The identifying hash of the transaction that most recently modified this entry.                                                                                             |
+| `PreviousTxnLgrSeq` | No       | Yes      | UINT32        | N/A           | The index of the ledger that contains the transaction that most recently modified this entry.                                                                               |
 
 ### 3.2.2. Invariants
 
@@ -120,9 +120,10 @@ The `PaymentChannel` ledger object is updated as follows: `Amount` and `Balance`
 
 Token-denominated payment channels reuse the `sfLockedAmount` field introduced by [XLS-85](../XLS-0085-token-escrow/README.md) on both the `MPToken` and `MPTokenIssuance` ledger objects:
 
-| Field Name       | JSON Type | Internal Type | Description                                                                               |
-| ---------------- | --------- | ------------- | ----------------------------------------------------------------------------------------- |
-| `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total of all outstanding escrows and payment channels for this issuance. |
+| Object            | Field Name       | JSON Type | Internal Type | Description                                                                                                                                          |
+| ----------------- | ---------------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MPToken`         | `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total this holder has locked for this issuance: its outstanding escrows plus the unclaimed remainder of its payment channels.       |
+| `MPTokenIssuance` | `sfLockedAmount` | String    | UInt64        | _(Optional)_ The total locked across all holders of this issuance: their outstanding escrows plus the unclaimed remainder of their payment channels. |
 
 ### 3.3.2. `AccountRoot` Ledger Object
 
@@ -183,7 +184,7 @@ The `PaymentChannelCreate` transaction is modified as follows:
   - **IOU Tokens**: The channel `Amount` is deducted from the source's trustline balance.
   - **MPTs**: The channel `Amount` is deducted from the source's MPT balance. The `sfOutstandingAmount` of the MPT issuance remains unchanged. The `sfLockedAmount` is increased on both the source's MPT and the MPT issuance.
 - **Payment Channel Object Creation:**
-  - The `PaymentChannel` ledger object includes:
+  - The `PayChannel` ledger object includes:
     - `Amount`: Tokens held in the channel.
     - `Balance`: Amount already paid out (starts at zero).
     - `TransferRate`: `TransferRate` (IOUs) or `TransferFee` (MPTs) at creation. Only stored when it differs from parity (no fee).
@@ -367,7 +368,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
       3. The `OutstandingAmount` on the `MPTokenIssuance` is decreased by the claimed amount (i.e., this claim is a "redemption").
     - If the destination is not the issuer of the asset held in the channel, then:
       1. The `LockedAmount` on the `MPTokenIssuance` and the source's `MPToken` is decreased by the claimed amount.
-      2. The `Amount` on the destination's `MPToken` is increased by the claimed amount, less any transfer fee.
+      2. The `MPTAmount` on the destination's `MPToken` is increased by the claimed amount, less any transfer fee.
       3. The `OutstandingAmount` on the `MPTokenIssuance` is decreased by the transfer fee, the claimed amount less the amount credited to the destination; the fee is credited to no holder, so it leaves the outstanding supply.
 - **Channel Balance Update:**
   - The channel's `Balance` field is updated to reflect the total amount claimed.
@@ -382,7 +383,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
   - **IOU Tokens**: Any remaining channel funds are added to the source's trustline balance.
   - **MPTs**: Any remaining channel funds are added to the source's MPT balance. The `sfOutstandingAmount` of the MPT issuance remains unchanged. The `sfLockedAmount` is decreased on both the source's MPT and the MPT issuance.
 - **Deletion of Payment Channel Object:**
-  - The `PaymentChannel` object is deleted after successful closure.
+  - The `PayChannel` object is deleted after successful closure.
 
 ### 3.6.4. Example JSON
 
@@ -419,7 +420,7 @@ Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be cl
 | Field             | Required? | JSON Type        | Internal Type | Default Value | Description                                                                                                                                                                   |
 | ----------------- | --------- | ---------------- | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TransactionType` | Yes       | String           | UInt16        | N/A           | The transaction type, `PaymentChannelClawback` (`ttPAYCHAN_CLAWBACK`, value `94`).                                                                                            |
-| `Channel`         | Yes       | String           | Hash256       | N/A           | The ID of the `PaymentChannel` to claw from.                                                                                                                                  |
+| `Channel`         | Yes       | String           | Hash256       | N/A           | The ID of the `PayChannel` to claw from.                                                                                                                                      |
 | `Amount`          | No        | Object or String | Amount        | N/A           | The amount to claw back. Must be a positive, non-XRP amount of the channel's asset. If omitted, or if it is at least the unclaimed remainder, the entire remainder is clawed. |
 
 The transaction is not delegable under [XLS-75](../XLS-0075-permission-delegation/README.md): it is registered as `Delegation::NotDelegable`, so a delegate cannot submit it on the issuer's behalf, in line with XLS-75 Section 8 for new transaction types.
@@ -441,7 +442,7 @@ This transaction uses the standard transaction fee (currently 10 drops, subject 
 #### 3.7.3.2. Protocol-Level Failures
 
 - **Channel Does Not Exist:**
-  - If no `PaymentChannel` object matches `Channel`, the transaction fails with `tecNO_TARGET`.
+  - If no `PayChannel` object matches `Channel`, the transaction fails with `tecNO_TARGET`.
 
 - **Channel Holds XRP:**
   - XRP cannot be clawed back, so a channel denominated in XRP fails with `tecNO_PERMISSION`.
@@ -606,7 +607,7 @@ The `channel_authorize` and `channel_verify` RPC methods take the authorized amo
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Trustlines**                | Required between accounts and issuer                                                                                                                                        | Not used                                                                                                                                                                     |
 | **Issuer Flag for Channels**  | `lsfAllowTrustLineLocking` (account flag)                                                                                                                                   | `lsfMPTCanEscrow` (issuance flag)                                                                                                                                            |
-| **Transfer Flags**            | N/A                                                                                                                                                                         | `lsfMPTCanTransfer` must be enabled for payment channels                                                                                                                     |
+| **Transfer Flags**            | N/A                                                                                                                                                                         | `lsfMPTCanTransfer` must be enabled for payment channels unless the destination is the issuer                                                                                |
 | **Require Auth**              | Applicable (`lsfRequireAuth`); accounts must be authorized prior to holding tokens                                                                                          | Applicable (`lsfMPTRequireAuth`); accounts must be authorized prior to holding tokens                                                                                        |
 | **Destination Authorization** | Required at creation and at claim unless the destination is the issuer; cannot be granted during claim if authorization required                                            | Required at creation and at claim unless the destination is the issuer; cannot be granted during claim if authorization required                                             |
 | **Freeze/Lock Conditions**    | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure                                      | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure                                                                      |
@@ -621,12 +622,12 @@ The `channel_authorize` and `channel_verify` RPC methods take the authorized amo
 
 ### 3.11.1. IOU Tokens (`TransferRate`)
 
-- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PaymentChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
+- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
 - **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
 
 ### 3.11.2. MPTs (`TransferFee`)
 
-- **Fee Capped at Creation**: The `TransferFee` is captured at the time of `PaymentChannelCreate` and stored in the `PaymentChannel` object, similar to IOUs, with the same lower-of-stored-and-current rule.
+- **Fee Capped at Creation**: The `TransferFee` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object, similar to IOUs, with the same lower-of-stored-and-current rule.
 - **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination.
 - **Consistent Fee Application**: Both IOUs and MPTs use the same capped-rate rule, ensuring the destination's settlement value cannot be worsened by the issuer after channel creation.
 
@@ -634,7 +635,7 @@ The `channel_authorize` and `channel_verify` RPC methods take the authorized amo
 
 1. Issuer as Source: XLS-93 currently does not allow the issuer to be the source of the Payment Channel. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then create the payment channel with that account as the source.
 
-2. Trustline Deletion While Locked: because the locked IOU value lives in the `PaymentChannel` object rather than on the trustline, an empty trustline can be deleted while channels remain open (see Section 8). Per-trustline lock accounting that would prevent this, for both escrows and payment channels, is deliberately left to a separate future amendment so that XLS-93 stays behaviorally aligned with the activated XLS-85.
+2. Trustline Deletion While Locked: because the locked IOU value lives in the `PayChannel` object rather than on the trustline, an empty trustline can be deleted while channels remain open (see Section 8). Per-trustline lock accounting that would prevent this, for both escrows and payment channels, is deliberately left to a separate future amendment so that XLS-93 stays behaviorally aligned with the activated XLS-85.
 
 ## 4. Rationale
 
