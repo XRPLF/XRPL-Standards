@@ -2,15 +2,17 @@
   xls: 93
   title: Token-Enabled Payment Channels
   description: Enhancement to existing Payment Channel functionality to support both Trustline-based tokens (IOUs) and Multi-Purpose Tokens (MPTs)
+  implementation: https://github.com/XRPLF/rippled/pull/7935; https://github.com/XRPLF/rippled/pull/7936
   author: Denis Angell (@dangell7)
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/287
   status: Draft
   category: Amendment
-  requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md), [XLS-39](../XLS-0039-clawback/README.md), [XLS-85](../XLS-0085-token-escrow/README.md)
+  requires: XLS-33, XLS-39, XLS-85
   created: 2025-05-24
+  updated: 2026-10-05
 </pre>
 
-> This proposal, XLS-93, extends payment channels to tokens in the same way [XLS-85](../XLS-0085-token-escrow/README.md) extends escrows, and reuses the issuer opt-in flags and locked-amount accounting introduced there.
+> This proposal, XLS-93, extends payment channels to tokens in the same way [XLS-85](../XLS-0085-token-escrow/README.md) extends escrows, and reuses the issuer opt-in flags and locked-amount accounting introduced there. It builds on [XLS-33](../XLS-0033-multi-purpose-tokens/README.md) for MPTs and on [XLS-39](../XLS-0039-clawback/README.md) for the clawback opt-in.
 
 ## Abstract
 
@@ -80,9 +82,6 @@ The `PaymentChannelCreate` transaction is modified as follows:
 - **Insufficient Spendable Balance:**
   - If the source account lacks sufficient spendable balance, the transaction fails with `tecINSUFFICIENT_FUNDS`.
 
-- **Precision Loss (IOU only):**
-  - If the channel `Amount` cannot be represented without loss of precision, the transaction fails with `tecPRECISION_LOSS`.
-
 **State Changes:**
 
 - **Adjustment from Source to Issuer:**
@@ -106,8 +105,8 @@ The `PaymentChannelFund` transaction is modified to support token amounts.
 
 - **Same conditions as `PaymentChannelCreate`** for validating the funding amount and token permissions (issuer opt-in, authorization, freeze/lock, transferability, spendable balance).
 
-- **Precision Loss (IOU only):**
-  - If the funding `Amount` would be rounded away when added to the channel's `Amount`, the transaction fails with `tecPRECISION_LOSS`.
+- **Inexact Sum:**
+  - The channel's new `Amount` must equal its old `Amount` plus the funding `Amount` exactly. An IOU sum is rounded to the mantissa width and is exact only if subtracting each operand from the sum gives back the other; an MPT sum is exact only if it does not overflow. Otherwise the transaction fails with `tecPRECISION_LOSS`.
 
 **State Changes:**
 
@@ -134,9 +133,9 @@ When the destination is the issuer of the channel's token, none of the authoriza
   - If authorization is required and the destination is not authorized, the transaction fails with `tecNO_AUTH`.
 
 - **Destination Lacks Trustline or MPT Holding:**
-  - **IOU Tokens**: If the destination lacks a trustline with the issuer, the transaction fails with `tecNO_LINE`.
-  - **MPTs**: If the destination does not hold the MPT, the transaction fails with `tecNO_PERMISSION`.
-  - A new trustline or MPT holding may be created during `PaymentChannelClaim` if the destination submits the transaction and authorization is not required.
+  - The destination's trustline or `MPToken` is created during the claim only when the destination itself submits the transaction (and authorization is not required). No other submitter can create a holding for the destination, since holding a token requires the holder's consent.
+  - **IOU Tokens**: If the destination lacks a trustline with the issuer and did not submit the transaction, the transaction fails with `tecNO_LINE`.
+  - **MPTs**: If the destination does not hold the MPT and did not submit the transaction, the transaction fails with `tecNO_PERMISSION`.
 
 - **Cannot Create Trustline or MPT Holding:**
   - If unable to create due to lack of reserves, the transaction fails with `tecNO_LINE_INSUF_RESERVE` (IOU) or `tecINSUFFICIENT_RESERVE` (MPT).
@@ -154,8 +153,8 @@ When the destination is the issuer of the channel's token, none of the authoriza
 **State Changes:**
 
 - **Auto create Trustline or MPToken:**
-  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the recipient, then a trustline will be created.
-  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the recipient, then the MPT will be created.
+  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the destination, a trustline is created for it.
+  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the destination, an `MPToken` is created for it.
 - **Adjustment from Issuer to Destination:**
   - **IOU Tokens**: The claimed amount, less any transfer fee (see Section 1.4), is added to the destination's trustline balance. If the destination is the issuer, the claimed amount is simply redeemed.
   - **MPTs**:
@@ -182,9 +181,9 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
   - If authorization is required and the source is not authorized, the transaction fails with `tecNO_AUTH`.
 
 - **Source Lacks Trustline or MPT Holding:**
-  - **IOU Tokens**: If the source lacks a trustline with the issuer, the transaction fails with `tecNO_LINE`.
-  - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecNO_PERMISSION`.
-  - A new trustline or MPT holding may be created during channel closure if the source submits the transaction and authorization is not required.
+  - The source's trustline or `MPToken` is created during closure only when the source itself submits the transaction (and authorization is not required), for the same reason as on a claim.
+  - **IOU Tokens**: If the source lacks a trustline with the issuer and did not submit the transaction, the transaction fails with `tecNO_LINE`.
+  - **MPTs**: If the source does not hold the MPT and did not submit the transaction, the transaction fails with `tecNO_PERMISSION`.
 
 - **Cannot Create Trustline or MPT Holding:**
   - If unable to create due to lack of reserves, the transaction fails with `tecNO_LINE_INSUF_RESERVE` (IOU) or `tecINSUFFICIENT_RESERVE` (MPT).
@@ -199,8 +198,8 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 **State Changes:**
 
 - **Auto create Trustline or MPToken:**
-  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the source, then a trustline will be created.
-  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the source, then the MPT will be created.
+  - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the source, a trustline is created for it.
+  - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the source, an `MPToken` is created for it.
 - **Adjustment from Issuer to Source:**
   - No transfer fee is applied when returning remaining funds to the source.
   - **IOU Tokens**: Any remaining channel funds are added to the source's trustline balance.
@@ -212,24 +211,13 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 
 The `Signature` on a `PaymentChannelClaim` is over the following message, signed with the key whose `PublicKey` is stored in the channel. Fields are concatenated in order with no field headers or length prefixes; integers are big-endian.
 
-- **XRP channel (44 bytes):**
-  1. The 4-byte prefix `0x434C4D00` (`HashPrefix::PaymentChannelClaim`).
-  2. The 32-byte channel ID.
-  3. The authorized amount in drops as an unsigned 64-bit integer.
-- **IOU channel (84 bytes):**
-  1. The 4-byte prefix `0x434C4D00`.
-  2. The 32-byte channel ID.
-  3. The authorized amount as the 64-bit value word the binary codec writes for a non-XRP `Amount`: a zero amount is `0x8000000000000000`; otherwise bit 63 is set, bit 62 is set for a positive amount, bits 54 to 61 hold the exponent plus 97, and bits 0 to 53 hold the mantissa.
-  4. The 20-byte currency code.
-  5. The 20-byte issuer `AccountID`.
-- **MPT channel (88 bytes):**
-  1. The 4-byte prefix `0x434C4D00`.
-  2. The 32-byte channel ID.
-  3. The authorized amount as an unsigned 64-bit integer.
-  4. The 24-byte `MPTokenIssuanceID`.
-  5. The 20-byte issuer `AccountID`.
+1. The 4-byte prefix `0x434C4D00` (`HashPrefix::PaymentChannelClaim`).
+2. The 32-byte channel ID.
+3. The authorized amount. For an XRP channel, the drops as an unsigned 64-bit integer, unchanged from today. For a token channel, the amount serialized as an `Amount` field value without its field header, the same bytes the binary codec writes for the transaction `Amount` field after its field ID:
+   - **IOU**: the 64-bit value word (a zero amount is `0x8000000000000000`; otherwise bit 63 is set, bit 62 is set for a positive amount, bits 54 to 61 hold the exponent plus 97, and bits 0 to 53 hold the mantissa), then the 20-byte currency code, then the 20-byte issuer `AccountID`.
+   - **MPT**: one type byte (`0x60` for a positive amount: the MPT bit `0x20` and the positive bit `0x40`), then the value as an unsigned 64-bit integer, then the 24-byte `MPTokenIssuanceID`.
 
-The IOU layout is the amount's `Amount` field serialization without its field header. The MPT layout is not: it has no leading type byte, and the issuer `AccountID` follows the `MPTokenIssuanceID`.
+The message is 44 bytes for an XRP channel, 84 bytes for an IOU channel and 69 bytes for an MPT channel. The `MPTokenIssuanceID` already contains the issuer's `AccountID`, so nothing follows it.
 
 The `channel_authorize` and `channel_verify` RPC methods take the authorized amount in `amount`. For an XRP channel it is a string of drops. For a token channel it is the same JSON object used for a transaction `Amount` (`currency`, `issuer` and `value` for an IOU; `mpt_issuance_id` and `value` for an MPT), and the server builds the message above from it.
 
@@ -245,7 +233,7 @@ Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be cl
 | `Channel`         | Yes       | String           | Hash256       | The ID of the `PaymentChannel` to claw from.                                                                                                                                  |
 | `Amount`          | No        | Object or String | Amount        | The amount to claw back. Must be a positive, non-XRP amount of the channel's asset. If omitted, or if it is at least the unclaimed remainder, the entire remainder is clawed. |
 
-The transaction may be delegated under [XLS-75](../XLS-0075-permission-delegation/README.md).
+The transaction is not delegable under [XLS-75](../XLS-0075-permission-delegation/README.md): it is registered as `Delegation::NotDelegable`, so a delegate cannot submit it on the issuer's behalf, in line with XLS-75 Section 8 for new transaction types.
 
 **Failure Conditions:**
 
@@ -265,17 +253,17 @@ The transaction may be delegated under [XLS-75](../XLS-0075-permission-delegatio
 - **Asset Mismatch:**
   - If `Amount` is present and is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
 
-- **Precision Loss (IOU only):**
-  - If subtracting `Amount` from the channel's `Amount` would leave the channel's `Amount` unchanged, because the clawed amount is rounded away, the transaction fails with `tecPRECISION_LOSS`.
+- **Inexact Difference (partial clawback only):**
+  - For a partial clawback the channel's new `Amount` must equal its old `Amount` minus the clawed `Amount` exactly. If the IOU subtraction rounds, so that the stored decrease differs from the amount clawed (including a decrease rounded away entirely), the transaction fails with `tecPRECISION_LOSS`. A full clawback is not subject to this check: it sets `Amount` equal to `Balance` directly and claws the exact remainder (see State Changes).
 
 - **Issuer Does Not Allow Clawback:**
   - **IOU Tokens**: If the issuer's account lacks the `lsfAllowTrustLineClawback` flag, or has the `lsfNoFreeze` flag set, the transaction fails with `tecNO_PERMISSION`. These are the same conditions that gate the [XLS-39](../XLS-0039-clawback/README.md) `Clawback` transaction.
   - **MPTs**: If the `MPTokenIssuance` lacks the `lsfMPTCanClawback` flag, the transaction fails with `tecNO_PERMISSION`. If the `MPTokenIssuance` does not exist, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
-- **No Unclaimed Remainder:**
-  - If the channel's `Balance` equals its `Amount` there is nothing to claw, and the transaction fails with `tecUNFUNDED_PAYMENT`. A claim that draws the channel down to its full `Amount` without `tfClose` leaves the channel open in exactly this state.
-
 **State Changes:**
+
+- **Nothing to Claw:**
+  - If the channel's `Balance` already equals its `Amount`, there is no remainder and the transaction succeeds without changing the channel. A claim that draws the channel down to its full `Amount` without `tfClose` leaves the channel open in exactly this state.
 
 - **Adjustment to the Issuer:**
   - No transfer fee is applied. A clawback is a redemption rather than a transfer between holders.
