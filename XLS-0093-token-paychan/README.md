@@ -418,7 +418,7 @@ Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be cl
 
 | Field             | Required? | JSON Type        | Internal Type | Default Value | Description                                                                                                                                                                   |
 | ----------------- | --------- | ---------------- | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | Yes       | String           | UInt16        | N/A           | The transaction type, `PaymentChannelClawback` (`ttPAYCHAN_CLAWBACK`, value `92`).                                                                                            |
+| `TransactionType` | Yes       | String           | UInt16        | N/A           | The transaction type, `PaymentChannelClawback` (`ttPAYCHAN_CLAWBACK`, value `94`).                                                                                            |
 | `Channel`         | Yes       | String           | Hash256       | N/A           | The ID of the `PaymentChannel` to claw from.                                                                                                                                  |
 | `Amount`          | No        | Object or String | Amount        | N/A           | The amount to claw back. Must be a positive, non-XRP amount of the channel's asset. If omitted, or if it is at least the unclaimed remainder, the entire remainder is clawed. |
 
