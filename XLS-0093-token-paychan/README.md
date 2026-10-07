@@ -350,7 +350,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
    - **IOU Tokens**: The funding `Amount` is deducted from the source's trustline balance.
    - **MPTs**: The funding `Amount` is deducted from the source's MPT balance. The `LockedAmount` is increased accordingly.
 2. **Payment Channel Object Update:**
-   - The channel's `Amount` field is increased by the funding amount. The stored `TransferRate` is not updated by funding.
+   - The channel's `Amount` field is increased by the funding amount. The stored `TransferRate` is not updated by funding, so the added tokens are claimed at no more than the rate captured at creation (see [Rationale](#4-rationale)).
 3. **Expired Channel:**
    - The channel is closed and deleted as in [Channel Closure](#3832-channel-closure), and no funds are added.
 
@@ -447,18 +447,23 @@ A channel closes when a `PaymentChannelClaim` carries the `tfClose` flag (immedi
 
 Closure returns the remaining channel funds (`Amount` minus `Balance`) to the source. **The failure conditions below apply only when this remainder is positive.** A fully drained channel has nothing to refund, so it closes without any source-side checks. A claim with `tfClose` that fails one of them fails as a whole, payout included. A claim without `tfClose` on a channel that has not expired never runs these checks, so the destination can collect its earned funds that way regardless of the source's authorization, trustline, or freeze state.
 
+For an IOU channel the refund depends on which account submits the closing transaction. When the source submits it, the refund can re-create the source's trustline and does not check its limit. When any other account submits it (the destination's claim with `tfClose`, or any account's claim or fund against an expired channel), the refund creates no trustline for the source and checks its limit, so the close fails with `tecNO_LINE` when the source has no trustline and with `tecLIMIT_EXCEEDED` when the refund would push the source's trustline balance above its limit, and the channel stays open. This matches the activated [XLS-85](../XLS-0085-token-escrow/README.md) (Token Escrow) implementation of `EscrowCancel`, which runs the same unlock logic: an account other than the escrow owner cancelling the escrow gets the same `tecNO_LINE` and `tecLIMIT_EXCEEDED` results.
+
 1. **Source Not Authorized to Hold Token:**
    - If authorization is required and the source is not authorized, the transaction fails with `tecNO_AUTH`. For an IOU, a source with no trustline to the issuer fails with `tecNO_LINE` when authorization is required, whichever account submits the transaction.
 
 2. **Source Lacks Trustline or MPT Holding:**
    - The source's trustline or `MPToken` is created during closure only when the source itself submits the transaction (and authorization is not required), for the same reason as on a claim.
    - **IOU Tokens**: If the source lacks a trustline with the issuer and did not submit the transaction, the transaction fails with `tecNO_LINE`.
-   - **MPTs**: If the source does not hold the MPT and did not submit the transaction, the transaction fails with `tecNO_PERMISSION`.
+   - **MPTs**: If the source does not hold the MPT and did not submit the transaction, the transaction fails with `tecNO_PERMISSION`. A positive remainder is part of the source's `LockedAmount`, and an `MPToken` with a non-zero `LockedAmount` cannot be deleted (`tecHAS_OBLIGATIONS`), so the source's `MPToken` exists whenever there is a remainder to refund.
 
 3. **Cannot Create Trustline or MPT Holding:**
    - If unable to create due to lack of reserves, the transaction fails with `tecNO_LINE_INSUF_RESERVE` (IOU) or `tecINSUFFICIENT_RESERVE` (MPT). The channel's own owner reserve is released before this check, so the source needs reserve for the new holding counted against its owner count without the channel.
 
-4. **Source Account is Frozen or Token is Locked:**
+4. **Trustline Limit Exceeded (IOU only):**
+   - If the transaction is not submitted by the source and the refund would push the source's trustline balance above its limit, the transaction fails with `tecLIMIT_EXCEEDED`. The source's own closing transaction does not check the limit.
+
+5. **Source Account is Frozen or Token is Locked:**
    - **IOU Tokens**:
      - **Deep Freeze**: The transaction succeeds, allowing the channel to be closed.
      - **Global/Individual Freeze**: The transaction succeeds, allowing the channel to be closed.
@@ -481,7 +486,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
        3. The `OutstandingAmount` on the `MPTokenIssuance` is decreased by the claimed amount (i.e., this claim is a "redemption").
      - If the destination is not the issuer of the asset held in the channel, then:
        1. The `LockedAmount` on the `MPTokenIssuance` and the source's `MPToken` is decreased by the claimed amount.
-       2. The `MPTAmount` on the destination's `MPToken` is increased by the claimed amount, less any transfer fee.
+       2. The `MPTAmount` on the destination's `MPToken` is increased by the claimed amount, less any transfer fee (see [Transfer Rates and Fees](#314-transfer-rates-and-fees) for its rounding).
        3. The `OutstandingAmount` on the `MPTokenIssuance` is decreased by the transfer fee, the claimed amount less the amount credited to the destination; the fee is credited to no holder, so it leaves the outstanding supply.
 3. **Channel Balance Update:**
    - The channel's `Balance` field is set to the claim's `Balance`, the cumulative amount claimed before transfer fees.
@@ -489,8 +494,8 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 #### 3.8.3.2. Channel Closure
 
 1. **Auto create Trustline or MPToken:**
-   - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the source, a trustline is created for it.
-   - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the source, an `MPToken` is created for it.
+   - **IOU Tokens**: If the IOU does not require authorization, the account submitting the transaction is the source, and the source has no trustline with the issuer, a trustline is created for it.
+   - **MPTs**: If the MPT does not require authorization, the account submitting the transaction is the source, and the source has no `MPToken`, an `MPToken` is created for it.
 2. **Adjustment from Issuer to Source:**
    - No transfer fee is applied when returning remaining funds to the source.
    - The refund, `Amount` minus `Balance`, is exact by construction: every transaction that changes `Amount` or `Balance` keeps that difference exact (see the `PayChannel` [Invariants](#322-invariants)), so closure needs no precision check.
@@ -775,13 +780,16 @@ For the channel opened by the `PaymentChannelCreate` [Example JSON](#364-example
 
 ### 3.14.1. IOU Tokens (`TransferRate`)
 
-- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
+- **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, including tokens later added to them by `PaymentChannelFund`, which does not update the stored rate, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
 - **Fee Calculation**: The destination is credited the claimed amount divided by the applied rate (the lower of the stored and current rate, as a ratio to 1,000,000,000), rounded up to IOU precision; the fee is the claimed amount minus that credit. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
 
 ### 3.14.2. MPTs (`TransferFee`)
 
 - **Fee Capped at Creation**: The `TransferFee` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object, similar to IOUs, with the same lower-of-stored-and-current rule.
-- **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination.
+- **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the amount credited to the destination. The applied rate is the lower of the stored and current rate, as a ratio to 1,000,000,000; an MPT's rate is 1,000,000,000 plus 10,000 times its `TransferFee`. MPT amounts are integers, so the credit is rounded, and the rounding depends on the `fixCleanup3_4_0` amendment:
+  - With `fixCleanup3_4_0` enabled, the destination is credited `floor(claimed × 1,000,000,000 / rate)`. The credit is rounded down, so any fractional fee is charged against the claimed amount.
+  - Without `fixCleanup3_4_0`, the destination is credited the claimed amount divided by the applied rate, rounded up, the same rule as for IOUs.
+  - In both cases the fee is the claimed amount minus the credit. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
 - **Consistent Fee Application**: Both IOUs and MPTs use the same capped-rate rule, ensuring the destination's settlement value cannot be worsened by the issuer after channel creation.
 
 ## 3.15. Future Considerations
@@ -795,6 +803,8 @@ For the channel opened by the `PaymentChannelCreate` [Example JSON](#364-example
 Payment channels are the last remaining XRP-only locking primitive; XLS-85 already extended escrows to IOUs and MPTs. Reusing the XLS-85 model wholesale, the same issuer opt-in flags (`lsfAllowTrustLineLocking`, `lsfMPTCanEscrow`), the same `LockedAmount` accounting, and the same shared lock/unlock logic in the implementation, means issuers make one opt-in decision that covers both primitives, and both primitives fail and succeed under identical token conditions. Every place where XLS-93 is stricter than base token semantics (any freeze blocks lock creation, no channel creation during global freeze even to the issuer) is inherited from the activated XLS-85 behavior rather than newly invented, keeping the two locking primitives coherent.
 
 `PaymentChannelClawback` is included in the same amendment for the same reason. An issuer's clawback opt-in is a property of the token, so it should hold wherever that token sits. Deferring the transaction would have meant shipping a lock that quietly suspends an issuer control the token already carries, and the alternative of closing the channel first is not open to the issuer, which is not a party to the channel and cannot close it.
+
+`PaymentChannelFund` does not re-capture the transfer rate. The channel stores one `TransferRate` for its whole `Amount`, captured at creation and never updated, so tokens funded into an existing channel are claimed at no more than that rate even if the issuer has raised its rate since. This is accepted. The alternative, re-capturing the rate on each fund, would apply the new rate to tokens already locked in the channel, which is the retroactive fee increase the creation cap exists to prevent.
 
 ## 5. Backwards Compatibility
 
@@ -816,9 +826,9 @@ It also adds `InvariantsPayChan` (`src/test/app/invariants/InvariantsPayChan_tes
 
 - **Payee protection.** Claims check only destination-side conditions, and the source-side conditions in [Channel Closure](#38222-channel-closure) apply only to refunding a positive remainder; a fully drained channel closes without them. A claim with `tfClose` that fails one of those conditions fails as a whole, payout included, but a claim without `tfClose` on a channel that has not expired never runs them, so the destination can always collect its earned funds that way.
 - **Issuer trust surface.** An issuer that uses `RequireAuth` can deauthorize the source and thereby block the refund leg of closure (`tecNO_AUTH`) until re-authorized. The channel and its locked funds remain on ledger; no funds are lost. This is the same issuer trust surface that exists for XLS-85 escrow refunds and for clawback generally.
-- **Transfer rate.** The claim rate is capped at the rate stored at creation (the lower of stored and current is applied), so an issuer cannot retroactively tax funds already locked by raising `TransferRate`/`TransferFee`.
+- **Transfer rate.** The claim rate is capped at the rate stored at creation (the lower of stored and current is applied), so an issuer cannot retroactively tax funds already locked by raising `TransferRate`/`TransferFee`. Funding does not re-capture the rate, so tokens added to an existing channel by `PaymentChannelFund` are also claimed at no more than the rate captured at creation, even if the issuer has raised its rate since. This is accepted: re-capturing on fund would raise the fee on tokens already locked (see [Rationale](#4-rationale)).
 - **Precision.** IOU amounts carry a 16-digit mantissa, so a sum or difference of values at very different scales can round. Create and fund reject with `tecPRECISION_LOSS` unless the source's spendable balance minus the locked amount is exact, so the trustline is debited by exactly what the channel records. Fund, claim and partial clawback reject with `tecPRECISION_LOSS` unless the quantity each changes (the new `Amount` on fund and partial clawback, the paid difference on claim) and `Amount - Balance` are exact, so closure refunds exactly what was not claimed and the channel's recorded `Amount` and `Balance` always equal the value locked and paid.
-- **Trustline deletion.** The source can delete an empty trustline while a channel is open. A close submitted by any account other than the source then fails with `tecNO_LINE`; the source's own closing transaction re-creates the line (when authorization is not required) and receives the refund. The destination's claims are unaffected. `MPToken` deletion is blocked while locked (`tecHAS_OBLIGATIONS`).
+- **Trustline deletion and limit.** The source can delete an empty trustline while a channel is open. A close submitted by any account other than the source then fails with `tecNO_LINE`, and also fails with `tecLIMIT_EXCEEDED` when the refund would push the source's trustline balance above its limit; a claim with `tfClose` that hits either fails as a whole, payout included. The source's own closing transaction re-creates the line (when authorization is not required), skips the limit check and receives the refund. This matches the activated XLS-85 implementation of `EscrowCancel` for a canceller other than the escrow owner: the refund never creates a trustline for, or credits past the trustline limit of, a source that did not submit the transaction. The destination's claims without `tfClose` are unaffected. `MPToken` deletion is blocked while locked (`tecHAS_OBLIGATIONS`).
 - **Signature domain.** Claim signatures bind the specific channel ID and amount, unchanged from XRP payment channels; the token layouts in [Signature](#3811-signature) also bind the currency and issuer or the `MPTokenIssuanceID`, so a signature for one asset cannot be presented against a channel holding another.
 - **Clawback scope.** `PaymentChannelClawback` reaches only the unclaimed remainder and only for an issuer who already holds the clawback opt-in for that token. It cannot reverse a claim the destination has settled, and it cannot touch XRP or a token whose issuer never enabled clawback.
 - **Clawback and pending authorizations.** An issuer clawback lowers the ceiling on the `Balance` a claim can request. A signed authorization for more than the reduced `Amount` still pays out any `Balance` up to that `Amount`; only the part above it can no longer be claimed. A destination that wants to settle ahead of this should claim rather than accumulate authorizations, the same tradeoff that applies to holding an unsettled balance with any clawback-enabled issuer.
@@ -833,11 +843,11 @@ Create runs the same lock-creation check as XLS-85 escrows, which rejects any fr
 
 ### A.2: Why does a claim apply the lower of the stored and the current transfer rate?
 
-The rate stored at creation is a cap, so an issuer cannot raise the fee on value already locked, and a later decrease passes through to the destination. The activated XLS-85 escrows apply the same rule through the same shared unlock logic.
+The rate stored at creation is a cap, so an issuer cannot raise the fee on value already locked, and a later decrease passes through to the destination. `PaymentChannelFund` does not re-capture the rate, so the cap also covers tokens added after creation; re-capturing it would raise the fee on tokens already locked. The activated XLS-85 escrows apply the same rule through the same shared unlock logic.
 
 ### A.3: Can the source delete its trust line while tokens are locked in a channel?
 
-Yes, for an IOU. The locked value lives in the `PayChannel` entry, not on the trust line, so an empty trust line can be deleted. A close submitted by any account other than the source then fails with `tecNO_LINE`; the source's own closing transaction re-creates the line (when authorization is not required) and receives the refund. The destination's claims are unaffected. An `MPToken` cannot be deleted while its `LockedAmount` is non-zero (`tecHAS_OBLIGATIONS`). Per-trust-line lock accounting is left to a future amendment that would cover escrows as well.
+Yes, for an IOU. The locked value lives in the `PayChannel` entry, not on the trust line, so an empty trust line can be deleted. A close submitted by any account other than the source then fails with `tecNO_LINE`; the source's own closing transaction re-creates the line (when authorization is not required) and receives the refund. A close by another account also fails with `tecLIMIT_EXCEEDED` when the refund would push the source's trustline balance above its limit, a check the source's own close skips. A claim with `tfClose` that hits either failure fails as a whole, payout included. This matches the activated XLS-85 implementation of `EscrowCancel` for a canceller other than the escrow owner. The destination's claims without `tfClose` are unaffected. An `MPToken` cannot be deleted while its `LockedAmount` is non-zero (`tecHAS_OBLIGATIONS`). Per-trust-line lock accounting is left to a future amendment that would cover escrows as well.
 
 ### A.4: Can vault shares be locked in a payment channel?
 
