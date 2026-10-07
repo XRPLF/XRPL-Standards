@@ -63,16 +63,16 @@ This spec changes `Amount` and `Balance` and adds `TransferRate` and `IssuerNode
 | -------------- | -------- | -------- | ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Amount`       | No       | Yes      | AMOUNT        | N/A           | The total amount allocated to the payment channel. Can represent XRP, an IOU token, or an MPT. Must always be a positive value.                                             |
 | `Balance`      | No       | Yes      | AMOUNT        | N/A           | The cumulative amount claimed from the channel, before transfer fees. Same asset as `Amount`.                                                                               |
-| `TransferRate` | Yes      | No       | UINT32        | N/A           | The transfer rate or fee at creation, used as an upper bound on the rate applied during claims. Only present when the rate at creation differs from parity.                 |
+| `TransferRate` | Yes      | No       | UINT32        | N/A           | The transfer rate or fee at creation, used as an upper bound on the rate applied during claims. Only present when the rate at creation differs from parity. Never updated.  |
 | `IssuerNode`   | No       | No       | UINT64        | N/A           | The ledger index of the issuer's directory node associated with the `PayChannel`. Only present for IOU channels where the issuer is neither the source nor the destination. |
 
 ### 3.2.2. Invariants
 
-- `<PayChannel>'.Balance` and `<PayChannel>'.Amount` are the same asset, and that asset is the asset of `<PayChannel>.Amount`: the asset of a channel never changes after creation.
+These invariants apply to every `PayChannel` whose `Amount` is not XRP, once `TokenPaychan` is enabled:
+
+- `<PayChannel>'.Balance` and `<PayChannel>'.Amount` are the same asset.
 - `0 <= <PayChannel>'.Balance <= <PayChannel>'.Amount`.
 - `<PayChannel>.Balance <= <PayChannel>'.Balance` (the paid-out balance only increases).
-- `TransferRate` is present only if `Amount` is not XRP, and `<PayChannel>'.TransferRate == <PayChannel>.TransferRate`: it is set at creation and never updated.
-- `IssuerNode` is present only if `Amount` is an IOU whose issuer is neither `Account` nor `Destination`.
 - If `Amount` is an IOU, the difference `<PayChannel>'.Amount - <PayChannel>'.Balance` is exact. An IOU difference `a - b` is exact only if adding `b` back to it gives `a` and subtracting it from `a` gives `b`. XRP and MPT differences are integers and always exact.
 
 ### 3.2.3. Example JSON
@@ -121,7 +121,7 @@ This spec adds no fields. It extends the meaning of the `LockedAmount` field int
 
 ### 3.3.2. Invariants
 
-Existing invariants remain; this spec adds none. Those that bound `LockedAmount` are:
+This spec adds no invariant and relaxes one: once `TokenPaychan` is enabled, a `PaymentChannelClaim` may create at most one `MPToken` (the holding auto-created for the account that submits it, see [Claim with `Balance`](#3831-claim-with-balance) and [Channel Closure](#3832-channel-closure)), provided it creates or deletes no `MPTokenIssuance` and deletes no `MPToken`. The existing invariants that bound `LockedAmount` are:
 
 - `0 <= <MPToken>'.MPTAmount` and `<MPToken>'.MPTAmount` does not exceed the maximum MPT amount.
 - `0 <= <MPToken>'.LockedAmount` and `<MPToken>'.LockedAmount` does not exceed the maximum MPT amount.
@@ -234,10 +234,10 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 #### 3.6.2.1. Data Verification
 
-1. `Amount` is a token and the `TokenPaychan` amendment is not enabled. (`temBAD_AMOUNT`)
-2. `Amount` is an IOU that is not positive. (`temBAD_AMOUNT`)
-3. `Amount` is an IOU whose currency code is XRP. (`temBAD_CURRENCY`)
-4. `Amount` is an MPT and the `MPTokensV1` amendment is not enabled. (`temDISABLED`)
+1. `Amount` is an MPT and the `MPTokensV1` amendment is not enabled. (`temDISABLED`)
+2. `Amount` is a token and the `TokenPaychan` amendment is not enabled. (`temBAD_AMOUNT`)
+3. `Amount` is an IOU that is not positive. (`temBAD_AMOUNT`)
+4. `Amount` is an IOU whose currency code is XRP. (`temBAD_CURRENCY`)
 5. `Amount` is an MPT that is not positive or exceeds the maximum MPT amount. (`temBAD_AMOUNT`)
 
 #### 3.6.2.2. Protocol-Level Failures
@@ -256,7 +256,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
    - If `Amount` is an MPT whose issuer is a pseudo-account, such as a vault share, the transaction fails with `tecWRONG_ASSET`. This matches the rule `AMMCreate` applies to vault shares (see [Appendix A.4](#a4-can-vault-shares-be-locked-in-a-payment-channel)).
 
 4. **Source or Destination Not Authorized to Hold Token:**
-   - If the issuer requires authorization and either the source or the destination is not authorized, the transaction fails with `tecNO_AUTH`.
+   - If the issuer requires authorization and either the source or the destination is not authorized, the transaction fails with `tecNO_AUTH`. For an IOU, a destination with no trustline to the issuer fails with `tecNO_LINE` when authorization is required.
    - The issuer is always authorized for its own token, so a destination that is the issuer never fails this check.
 
 5. **Source Account's Token Holding Issues:**
@@ -271,6 +271,9 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 7. **Insufficient Spendable Balance:**
    - If the source account lacks sufficient spendable balance, the transaction fails with `tecINSUFFICIENT_FUNDS`.
+
+8. **Inexact Source Debit (IOU only):**
+   - Locking `Amount` debits the source's trustline, which must decrease by exactly `Amount`. If the source's spendable balance minus `Amount` is not exact, as defined in the `PayChannel` [Invariants](#322-invariants), or `Amount` cannot be added to that balance within the precision tolerance shared with XLS-85 escrows, the transaction fails with `tecPRECISION_LOSS`. XRP and MPT amounts are integers and are not subject to this check.
 
 ### 3.6.3. State Changes
 
@@ -319,10 +322,10 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 
 #### 3.7.2.1. Data Verification
 
-1. `Amount` is a token and the `TokenPaychan` amendment is not enabled. (`temBAD_AMOUNT`)
-2. `Amount` is an IOU that is not positive. (`temBAD_AMOUNT`)
-3. `Amount` is an IOU whose currency code is XRP. (`temBAD_CURRENCY`)
-4. `Amount` is an MPT and the `MPTokensV1` amendment is not enabled. (`temDISABLED`)
+1. `Amount` is an MPT and the `MPTokensV1` amendment is not enabled. (`temDISABLED`)
+2. `Amount` is a token and the `TokenPaychan` amendment is not enabled. (`temBAD_AMOUNT`)
+3. `Amount` is an IOU that is not positive. (`temBAD_AMOUNT`)
+4. `Amount` is an IOU whose currency code is XRP. (`temBAD_CURRENCY`)
 5. `Amount` is an MPT that is not positive or exceeds the maximum MPT amount. (`temBAD_AMOUNT`)
 
 #### 3.7.2.2. Protocol-Level Failures
@@ -330,9 +333,13 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 1. **Asset Mismatch:**
    - If the funding `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
 
-2. **Same conditions as `PaymentChannelCreate`** for validating the funding amount and token permissions (issuer opt-in, authorization, freeze/lock, transferability, spendable balance).
+2. **Expired Channel:**
+   - If the channel's `Expiration` or `CancelAfter` has passed, the transaction closes the channel instead of funding it, whichever account submits it. The conditions in [Channel Closure](#38222-channel-closure) apply to the refund, and the conditions below do not apply.
 
-3. **Inexact Sum or Remainder:**
+3. **Same conditions as `PaymentChannelCreate`** for validating the funding amount and token permissions (issuer opt-in, authorization, freeze/lock, transferability, spendable balance).
+
+4. **Inexact Debit, Sum or Remainder:**
+   - For an IOU, the source's spendable balance minus the funding `Amount` must be exact, as on `PaymentChannelCreate`, so the source is debited exactly what the channel gains.
    - The channel's new `Amount` must equal its old `Amount` plus the funding `Amount` exactly. An IOU sum is rounded to the mantissa width and is exact only if subtracting each operand from the sum gives back the other; an MPT sum is exact only if it does not overflow.
    - The remainder the channel holds after funding, the new `Amount` minus the channel's `Balance`, must also be exact, as defined in the `PayChannel` [Invariants](#322-invariants).
    - Otherwise the transaction fails with `tecPRECISION_LOSS`.
@@ -344,6 +351,8 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
    - **MPTs**: The funding `Amount` is deducted from the source's MPT balance. The `LockedAmount` is increased accordingly.
 2. **Payment Channel Object Update:**
    - The channel's `Amount` field is increased by the funding amount. The stored `TransferRate` is not updated by funding.
+3. **Expired Channel:**
+   - The channel is closed and deleted as in [Channel Closure](#3832-channel-closure), and no funds are added.
 
 ### 3.7.4. Example JSON
 
@@ -401,7 +410,7 @@ The message is 44 bytes for an XRP channel, 84 bytes for an IOU channel and 69 b
 
 ##### 3.8.2.2.1. Claim with `Balance`
 
-These conditions apply to every claim that carries `Balance`, with or without `tfClose`. On a claim with `tfClose` they govern the payout to the destination; the conditions in [Channel Closure](#38222-channel-closure) govern only the refund of the remainder to the source.
+These conditions apply to every claim that carries `Balance`, with or without `tfClose`. On a claim with `tfClose` they govern the payout to the destination; the conditions in [Channel Closure](#38222-channel-closure) govern the refund of the remainder to the source, and a failure there fails the whole claim, payout included.
 
 When the destination is the issuer of the channel's token, none of the authorization, holding, trustline limit or freeze conditions below apply: the issuer has no trustline to itself and holds no `MPToken`, and the claim redeems the tokens to the issuer (see [State Changes](#3831-claim-with-balance)).
 
@@ -409,7 +418,7 @@ When the destination is the issuer of the channel's token, none of the authoriza
    - If the claim's `Balance` or `Amount` is not the same asset as the channel's `Amount`, the transaction fails with `tecWRONG_ASSET`.
 
 2. **Destination Not Authorized to Hold Token:**
-   - If authorization is required and the destination is not authorized, the transaction fails with `tecNO_AUTH`.
+   - If authorization is required and the destination is not authorized, the transaction fails with `tecNO_AUTH`. For an IOU, a destination with no trustline to the issuer fails with `tecNO_LINE` when authorization is required.
 
 3. **Destination Lacks Trustline or MPT Holding:**
    - The destination's trustline or `MPToken` is created during the claim only when the destination itself submits the transaction (and authorization is not required). No other submitter can create a holding for the destination, since holding a token requires the holder's consent.
@@ -434,12 +443,12 @@ When the destination is the issuer of the channel's token, none of the authoriza
 
 ##### 3.8.2.2.2. Channel Closure
 
-A channel closes when a claim carries the `tfClose` flag (immediately if the requester is the destination or the channel is fully drained; otherwise an expiration is scheduled per `SettleDelay`), or when any claim is processed against an already-expired channel.
+A channel closes when a `PaymentChannelClaim` carries the `tfClose` flag (immediately if the requester is the destination or the channel is fully drained; otherwise an expiration is scheduled per `SettleDelay`), when any `PaymentChannelClaim` or `PaymentChannelFund` is processed against an already-expired channel, whichever account submits it, or when a `PaymentChannelClawback` claws the full remainder.
 
-Closure returns the remaining channel funds (`Amount` minus `Balance`) to the source. **The failure conditions below apply only when this remainder is positive.** A fully drained channel has nothing to refund, so it closes without any source-side checks; the destination's ability to claim earned funds is never gated by the source's authorization, trustline, or freeze state.
+Closure returns the remaining channel funds (`Amount` minus `Balance`) to the source. **The failure conditions below apply only when this remainder is positive.** A fully drained channel has nothing to refund, so it closes without any source-side checks. A claim with `tfClose` that fails one of them fails as a whole, payout included. A claim without `tfClose` on a channel that has not expired never runs these checks, so the destination can collect its earned funds that way regardless of the source's authorization, trustline, or freeze state.
 
 1. **Source Not Authorized to Hold Token:**
-   - If authorization is required and the source is not authorized, the transaction fails with `tecNO_AUTH`.
+   - If authorization is required and the source is not authorized, the transaction fails with `tecNO_AUTH`. For an IOU, a source with no trustline to the issuer fails with `tecNO_LINE` when authorization is required, whichever account submits the transaction.
 
 2. **Source Lacks Trustline or MPT Holding:**
    - The source's trustline or `MPToken` is created during closure only when the source itself submits the transaction (and authorization is not required), for the same reason as on a claim.
@@ -447,7 +456,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
    - **MPTs**: If the source does not hold the MPT and did not submit the transaction, the transaction fails with `tecNO_PERMISSION`.
 
 3. **Cannot Create Trustline or MPT Holding:**
-   - If unable to create due to lack of reserves, the transaction fails with `tecNO_LINE_INSUF_RESERVE` (IOU) or `tecINSUFFICIENT_RESERVE` (MPT).
+   - If unable to create due to lack of reserves, the transaction fails with `tecNO_LINE_INSUF_RESERVE` (IOU) or `tecINSUFFICIENT_RESERVE` (MPT). The channel's own owner reserve is released before this check, so the source needs reserve for the new holding counted against its owner count without the channel.
 
 4. **Source Account is Frozen or Token is Locked:**
    - **IOU Tokens**:
@@ -464,7 +473,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
    - **IOU Tokens**: If the IOU does not require authorization and the account submitting the transaction is the destination, a trustline is created for it.
    - **MPTs**: If the MPT does not require authorization and the account submitting the transaction is the destination, an `MPToken` is created for it.
 2. **Adjustment from Issuer to Destination:**
-   - **IOU Tokens**: The claimed amount, less any transfer fee (see [Transfer Rates and Fees](#313-transfer-rates-and-fees)), is added to the destination's trustline balance. If the destination is the issuer, the claimed amount is simply redeemed.
+   - **IOU Tokens**: The claimed amount, less any transfer fee (see [Transfer Rates and Fees](#314-transfer-rates-and-fees)), is added to the destination's trustline balance. If the destination is the issuer, the claimed amount is simply redeemed.
    - **MPTs**:
      - If the destination is the issuer of the asset held in the channel, then:
        1. The `LockedAmount` on the `MPTokenIssuance` and the source's `MPToken` is decreased by the claimed amount.
@@ -516,7 +525,7 @@ Closure returns the remaining channel funds (`Amount` minus `Balance`) to the so
 
 ## 3.9. Transaction: `PaymentChannelClawback`
 
-Locking a token into a channel moves it out of reach of the ordinary `Clawback` transaction (for an MPT, `Clawback` with the `MPTokenHolder` field defined in [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)), which is bounded by the holder's spendable balance and so cannot see locked value. `PaymentChannelClawback` gives the issuer that reach back. It requires the same opt-in the issuer already needed to claw back an ordinary holding, so it grants no new authority over a token; it removes a place the token could be kept out of reach.
+Locking a token into a channel moves it out of reach of the ordinary `Clawback` transaction (for an MPT, `Clawback` with the `Holder` field, named `MPTokenHolder` in [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)), which is bounded by the holder's spendable balance and so cannot see locked value. `PaymentChannelClawback` gives the issuer that reach back. It requires the same opt-in the issuer already needed to claw back an ordinary holding, so it grants no new authority over a token; it removes a place the token could be kept out of reach.
 
 Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be clawed. The destination's earned `Balance` is never touched, so a clawback cannot reverse value the payee has already claimed.
 
@@ -524,11 +533,11 @@ Only the unclaimed remainder of the channel (`Amount` minus `Balance`) can be cl
 
 | Field             | Required? | JSON Type        | Internal Type | Default Value | Description                                                                                                                                                                   |
 | ----------------- | --------- | ---------------- | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TransactionType` | Yes       | String           | UInt16        | N/A           | The transaction type, `PaymentChannelClawback` (`ttPAYCHAN_CLAWBACK`, value `94`).                                                                                            |
+| `TransactionType` | Yes       | String           | UInt16        | N/A           | The transaction type, `PaymentChannelClawback` (`ttPAYCHAN_CLAWBACK`, value `96`).                                                                                            |
 | `Channel`         | Yes       | String           | Hash256       | N/A           | The ID of the `PayChannel` to claw from.                                                                                                                                      |
 | `Amount`          | No        | Object or String | Amount        | N/A           | The amount to claw back. Must be a positive, non-XRP amount of the channel's asset. If omitted, or if it is at least the unclaimed remainder, the entire remainder is clawed. |
 
-The transaction is not delegable under [XLS-75](../XLS-0075-permission-delegation/README.md): it is registered as `Delegation::NotDelegable`, so a delegate cannot submit it on the issuer's behalf, in line with XLS-75 Section 8 for new transaction types.
+The transaction is delegable under [XLS-75](../XLS-0075-permission-delegation/README.md), like `Clawback`. It is registered in `transactions.macro` with `Delegation::Delegable` and gated on `TokenPaychan`, so an issuer can use `DelegateSet` to grant a delegate the `PaymentChannelClawback` permission, and the delegate submits it with `Delegate` set to its own account. A delegate without that permission fails with `terNO_DELEGATE_PERMISSION`. A delegated clawback acts exactly as if the issuer had submitted it.
 
 ### 3.9.2. Transaction Fee
 
@@ -622,7 +631,7 @@ The response fields are [unchanged](https://xrpl.org/docs/references/http-websoc
 
 The existing failure conditions are unchanged. This spec extends one:
 
-1. `amount` is neither a string of drops nor an `Amount` object for a token amount that is not negative. (`channelAmtMalformed`)
+1. `amount` is not a string of drops, and is not a transaction `Amount` JSON object for an IOU or MPT whose value is not negative. (`channelAmtMalformed`)
 
 ### 3.10.4. Example Request
 
@@ -669,7 +678,7 @@ The response fields are [unchanged](https://xrpl.org/docs/references/http-websoc
 
 The existing failure conditions are unchanged. This spec extends one:
 
-1. `amount` is neither a string of drops nor an `Amount` object for a token amount that is not negative. (`channelAmtMalformed`)
+1. `amount` is not a string of drops, and is not a transaction `Amount` JSON object for an IOU or MPT whose value is not negative. (`channelAmtMalformed`)
 
 ### 3.11.4. Example Request
 
@@ -696,7 +705,54 @@ The existing failure conditions are unchanged. This spec extends one:
 }
 ```
 
-## 3.12. Key Differences Between XRP, IOU and MPT Payment Channels
+## 3.12. RPC: `gateway_balances`
+
+The [`gateway_balances` method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/gateway_balances) is modified to count IOU value locked in payment channels. The response's `locked` totals, per currency, now include the unclaimed remainder (`Amount` minus `Balance`) of every IOU `PayChannel` in the queried account's owner directory: channels the account opened, channels whose destination is that account, and channels whose `IssuerNode` points there. XRP and MPT channels are not counted.
+
+### 3.12.1. Request Fields
+
+The request fields are [unchanged](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/gateway_balances#request-format).
+
+### 3.12.2. Response Fields
+
+As a reference, [here](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/account-methods/gateway_balances#response-format) are the response fields that `gateway_balances` currently has. This spec changes `locked`:
+
+| Field Name | Always Present? | JSON Type | Description                                                                                                                                                                      |
+| ---------- | --------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locked`   | No              | Object    | Total amounts locked, keyed by currency code. This spec adds the unclaimed remainder of each IOU payment channel in the account's owner directory to the existing escrow totals. |
+
+### 3.12.3. Failure Conditions
+
+The failure conditions are unchanged.
+
+### 3.12.4. Example Request
+
+```json
+{
+  "command": "gateway_balances",
+  "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+  "ledger_index": "validated"
+}
+```
+
+### 3.12.5. Example Response
+
+For the channel opened by the `PaymentChannelCreate` [Example JSON](#364-example-json), before any claim, with the source having held 10000 USD before locking 1000:
+
+```json
+{
+  "status": "success",
+  "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+  "obligations": {
+    "USD": "9000"
+  },
+  "locked": {
+    "USD": "1000"
+  }
+}
+```
+
+## 3.13. Key Differences Between XRP, IOU and MPT Payment Channels
 
 | Aspect                        | XRP                                               | IOU Tokens                                                                                                                                                                                                                                                                                                      | Multi-Purpose Tokens (MPTs)                                                                                                                                                  |
 | ----------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -707,28 +763,28 @@ The existing failure conditions are unchanged. This spec extends one:
 | **Destination Authorization** | N/A                                               | Required at creation and at claim unless the destination is the issuer; cannot be granted during claim if authorization required                                                                                                                                                                                | Required at creation and at claim unless the destination is the issuer; cannot be granted during claim if authorization required                                             |
 | **Freeze/Lock Conditions**    | N/A                                               | Any freeze blocks create/fund; **Deep Freeze** prevents claims, but allows closure; Global/Individual Freeze allows claims and closure                                                                                                                                                                          | Lock blocks create/fund; **Lock Conditions (Deep Freeze Equivalent)** prevent claims, but allow closure                                                                      |
 | **Transfer Rates/Fees**       | N/A                                               | `TransferRate` stored at creation and applied during claims                                                                                                                                                                                                                                                     | `TransferFee` stored at creation and applied during claims                                                                                                                   |
-| **Precision**                 | Integer drops                                     | `tecPRECISION_LOSS` when fund, claim or partial clawback would leave an inexact `Amount` or `Amount - Balance`                                                                                                                                                                                                  | Integer amounts; a fund whose sum overflows fails with `tecPRECISION_LOSS`                                                                                                   |
+| **Precision**                 | Integer drops                                     | `tecPRECISION_LOSS` when create or fund would debit the source's trustline inexactly, or when fund, claim or partial clawback would leave an inexact `Amount` or `Amount - Balance`                                                                                                                             | Integer amounts; a fund whose sum overflows fails with `tecPRECISION_LOSS`                                                                                                   |
 | **Clawback Opt-In**           | Not clawable (`tecNO_PERMISSION`)                 | `lsfAllowTrustLineClawback` (account flag), and `lsfNoFreeze` must not be set                                                                                                                                                                                                                                   | `lsfMPTCanClawback` (issuance flag)                                                                                                                                          |
 | **Clawback Accounting**       | N/A                                               | Channel `Amount` is reduced; no trustline changes                                                                                                                                                                                                                                                               | `LockedAmount` and `OutstandingAmount` are reduced                                                                                                                           |
 | **Outstanding Amount**        | N/A                                               | N/A                                                                                                                                                                                                                                                                                                             | Unchanged by create, fund and closure refund; decreased by the transfer fee on a claim, by the claimed amount on a claim to the issuer, and by the clawed amount on clawback |
 | **Signature Message**         | 44 bytes, the drops as an unsigned 64-bit integer | 84 bytes, the IOU `Amount` serialization                                                                                                                                                                                                                                                                        | 69 bytes, the MPT `Amount` serialization                                                                                                                                     |
-| **Account Deletion**          | Payment channels prevent account deletion         | Payment channels prevent account deletion                                                                                                                                                                                                                                                                       | Payment channels prevent account deletion                                                                                                                                    |
+| **Account Deletion**          | Payment channels prevent account deletion         | Payment channels prevent deletion of the source and destination accounts, and of the issuer's account while a channel is in its owner directory (`IssuerNode`)                                                                                                                                                  | Payment channels prevent account deletion                                                                                                                                    |
 | **Holding Deletion**          | N/A                                               | Trustline deletion is NOT blocked by open channels (locked value lives in the channel object); a close submitted by any account other than the source then fails with `tecNO_LINE`, while the source's own closing transaction re-creates the line (when authorization is not required) and receives the refund | `MPToken` deletion is blocked while `LockedAmount` is non-zero (`tecHAS_OBLIGATIONS`)                                                                                        |
 
-## 3.13. Transfer Rates and Fees
+## 3.14. Transfer Rates and Fees
 
-### 3.13.1. IOU Tokens (`TransferRate`)
+### 3.14.1. IOU Tokens (`TransferRate`)
 
 - **Rate Capped at Creation**: The `TransferRate` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object. At claim time, the lower of the stored rate and the issuer's current rate is applied: an increase by the issuer does not affect existing channels, while a decrease passes through to claims. This is identical to the behavior of the activated XLS-85 (Token Escrow) implementation, which uses the same shared unlock logic.
-- **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
+- **Fee Calculation**: The destination is credited the claimed amount divided by the applied rate (the lower of the stored and current rate, as a ratio to 1,000,000,000), rounded up to IOU precision; the fee is the claimed amount minus that credit. No fee is applied when the issuer is the destination, or when remaining funds are returned to the source at closure.
 
-### 3.13.2. MPTs (`TransferFee`)
+### 3.14.2. MPTs (`TransferFee`)
 
 - **Fee Capped at Creation**: The `TransferFee` is captured at the time of `PaymentChannelCreate` and stored in the `PayChannel` object, similar to IOUs, with the same lower-of-stored-and-current rule.
 - **Fee Calculation**: The transfer fee is deducted from the claimed amount, reducing the final amount credited to the destination.
 - **Consistent Fee Application**: Both IOUs and MPTs use the same capped-rate rule, ensuring the destination's settlement value cannot be worsened by the issuer after channel creation.
 
-## 3.14. Future Considerations
+## 3.15. Future Considerations
 
 1. Issuer as Source: XLS-93 currently does not allow the issuer to be the source of the Payment Channel. If your use case requires this functionality, you should create a new account, send the MPT or IOU to that account, and then create the payment channel with that account as the source.
 
@@ -742,13 +798,15 @@ Payment channels are the last remaining XRP-only locking primitive; XLS-85 alrea
 
 ## 5. Backwards Compatibility
 
-The change is amendment-gated. Before `TokenPaychan` is enabled, a token `Amount` on `PaymentChannelCreate` or `PaymentChannelFund`, and a token `Balance` or `Amount` on `PaymentChannelClaim`, are rejected with `temBAD_AMOUNT`, and `PaymentChannelClawback` is rejected with `temDISABLED`.
+The change is amendment-gated. Before `TokenPaychan` is enabled, a token `Amount` on `PaymentChannelCreate` or `PaymentChannelFund`, and a token `Balance` or `Amount` on `PaymentChannelClaim`, are rejected with `temBAD_AMOUNT`, and `PaymentChannelClawback` is rejected with `temDISABLED`. Before `TokenPaychan` is enabled, a `DelegateSet` that grants the `PaymentChannelClawback` permission is rejected with `temMALFORMED`.
 
 XRP channels are unchanged: the [Signature](#3811-signature) message for an XRP channel keeps its 44-byte layout, existing `PayChannel` entries gain no fields (`TransferRate` and `IssuerNode` are only ever set on token channels), and `channel_authorize` and `channel_verify` continue to accept `amount` as a string of drops.
 
 ## 6. Test Plan
 
-The reference implementation adds the `PayChanToken` test suite (`src/test/app/PayChanToken_test.cpp`), which covers, for IOUs and MPTs separately: amendment enablement, the issuer opt-in flags, preflight, preclaim and apply of `PaymentChannelCreate`, `PaymentChannelFund` and `PaymentChannelClaim`, closure, auto-creation of the destination's holding, balances and metadata, the locked transfer rate, require-auth, freeze and lock, trustline limits, precision loss, the interaction with ordinary `Clawback`, `PaymentChannelClawback` for both asset types, the `channel_authorize` and `channel_verify` methods, and the byte layout of the [Signature](#3811-signature) message.
+The reference implementation adds the `PayChanToken` test suite (`src/test/app/PayChanToken_test.cpp`), which covers, for IOUs and MPTs separately: amendment enablement, the issuer opt-in flags, preflight, preclaim and apply of `PaymentChannelCreate`, `PaymentChannelFund` and `PaymentChannelClaim`, closure, auto-creation of the destination's holding, balances and metadata, the locked transfer rate, require-auth, freeze and lock, trustline limits, precision loss, the interaction with ordinary `Clawback`, `PaymentChannelClawback` for both asset types, the `channel_authorize` and `channel_verify` methods, and the byte layout of the [Signature](#3811-signature) message. Within `PayChanToken` it also covers the exact source debit on create and fund, and a delegate submitting `PaymentChannelClawback` with and without the permission.
+
+It also adds `InvariantsPayChan` (`src/test/app/invariants/InvariantsPayChan_test.cpp`) for the `PayChannel` invariants, `STAmount` cases for exact IOU sums and differences, `Delegate` cases for delegating `PaymentChannelClawback` and its amendment gate, and `RPCCall` cases for a token `amount` on the command line.
 
 ## 7. Reference Implementation
 
@@ -756,10 +814,10 @@ The reference implementation adds the `PayChanToken` test suite (`src/test/app/P
 
 ## 8. Security Considerations
 
-- **Payee protection.** The destination's earned funds are never gated by source-side state. Claims check only destination-side conditions, and the source-side conditions in [Channel Closure](#38222-channel-closure) apply only to refunding a positive remainder; a fully drained channel closes without them.
+- **Payee protection.** Claims check only destination-side conditions, and the source-side conditions in [Channel Closure](#38222-channel-closure) apply only to refunding a positive remainder; a fully drained channel closes without them. A claim with `tfClose` that fails one of those conditions fails as a whole, payout included, but a claim without `tfClose` on a channel that has not expired never runs them, so the destination can always collect its earned funds that way.
 - **Issuer trust surface.** An issuer that uses `RequireAuth` can deauthorize the source and thereby block the refund leg of closure (`tecNO_AUTH`) until re-authorized. The channel and its locked funds remain on ledger; no funds are lost. This is the same issuer trust surface that exists for XLS-85 escrow refunds and for clawback generally.
 - **Transfer rate.** The claim rate is capped at the rate stored at creation (the lower of stored and current is applied), so an issuer cannot retroactively tax funds already locked by raising `TransferRate`/`TransferFee`.
-- **Precision.** IOU amounts carry a 16-digit mantissa, so a sum or difference of values at very different scales can round. Fund, claim and partial clawback reject with `tecPRECISION_LOSS` unless the quantity each changes (the new `Amount` on fund and partial clawback, the paid difference on claim) and `Amount - Balance` are exact, so closure refunds exactly what was not claimed and no transaction creates or destroys value through rounding.
+- **Precision.** IOU amounts carry a 16-digit mantissa, so a sum or difference of values at very different scales can round. Create and fund reject with `tecPRECISION_LOSS` unless the source's spendable balance minus the locked amount is exact, so the trustline is debited by exactly what the channel records. Fund, claim and partial clawback reject with `tecPRECISION_LOSS` unless the quantity each changes (the new `Amount` on fund and partial clawback, the paid difference on claim) and `Amount - Balance` are exact, so closure refunds exactly what was not claimed and the channel's recorded `Amount` and `Balance` always equal the value locked and paid.
 - **Trustline deletion.** The source can delete an empty trustline while a channel is open. A close submitted by any account other than the source then fails with `tecNO_LINE`; the source's own closing transaction re-creates the line (when authorization is not required) and receives the refund. The destination's claims are unaffected. `MPToken` deletion is blocked while locked (`tecHAS_OBLIGATIONS`).
 - **Signature domain.** Claim signatures bind the specific channel ID and amount, unchanged from XRP payment channels; the token layouts in [Signature](#3811-signature) also bind the currency and issuer or the `MPTokenIssuanceID`, so a signature for one asset cannot be presented against a channel holding another.
 - **Clawback scope.** `PaymentChannelClawback` reaches only the unclaimed remainder and only for an issuer who already holds the clawback opt-in for that token. It cannot reverse a claim the destination has settled, and it cannot touch XRP or a token whose issuer never enabled clawback.
@@ -787,4 +845,4 @@ No. A vault share is an MPT issued by the vault's pseudo-account, which cannot c
 
 ### A.5: Can IOU precision create or destroy value when `Amount` or `Balance` change scale?
 
-No. An IOU amount is a normalized value with a 16-digit mantissa, so adding or subtracting values at very different scales can round: with `Amount` at 10^20 and `Balance` at 1, `Amount - Balance` rounds back to 10^20. Every transaction that changes `Amount` or `Balance` therefore rejects with `tecPRECISION_LOSS` unless the result is exact: fund requires the new `Amount` and the new `Amount - Balance` to be exact, claim requires the paid difference and the new `Amount - Balance` to be exact, and a partial clawback requires the new `Amount` and the new `Amount - Balance` to be exact. Closure refunds `Amount - Balance`, which these checks keep exact, so the refund equals what was not claimed.
+Not in the channel's accounting. An IOU amount is a normalized value with a 16-digit mantissa, so adding or subtracting values at very different scales can round: with `Amount` at 10^20 and `Balance` at 1, `Amount - Balance` rounds back to 10^20. Create and fund therefore reject with `tecPRECISION_LOSS` unless the source's spendable balance minus the locked amount is exact, so the source is debited exactly what the channel records. Every transaction that changes `Amount` or `Balance` also rejects with `tecPRECISION_LOSS` unless the result is exact: fund requires the new `Amount` and the new `Amount - Balance` to be exact, claim requires the paid difference and the new `Amount - Balance` to be exact, and a partial clawback requires the new `Amount` and the new `Amount - Balance` to be exact. Closure refunds `Amount - Balance`, which these checks keep exact, so the refund equals what was not claimed.
