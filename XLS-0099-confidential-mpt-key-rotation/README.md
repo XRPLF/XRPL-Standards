@@ -627,13 +627,13 @@ Exactly one of the three flags must be set.
 
 **Fee Structure:** Custom
 
-This transaction requires 10x the base fee because rotation and recovery modes carry a zero-knowledge proof requiring elliptic curve verification, 160 bytes and 64 bytes respectively, consistent with the XLS-0096 confidential transactions. Cancel mode carries no proof but pays the same fee, because the fee is set per transaction type rather than per mode.
+This transaction requires 10x the base fee because rotation and recovery modes carry a zero-knowledge proof requiring elliptic curve verification, 224 bytes and 64 bytes respectively, consistent with the XLS-0096 confidential transactions. Cancel mode carries no proof but pays the same fee, because the fee is set per transaction type rather than per mode.
 
 #### 5.5.4. Failure Conditions
 
 ##### 5.5.4.1. Data Verification
 
-1. The `ConfidentialTransfer` amendment is not enabled. Holder key rotation does not depend on the `ConfidentialMPTKeyRotation` amendment. (`temDISABLED`)
+1. Either the `ConfidentialMPTKeyRotation` or the `ConfidentialTransfer` amendment is not enabled. (`temDISABLED`)
 2. Neither `tfHolderKeyRotation`, `tfHolderKeyRecovery`, nor `tfCancelRecovery` is set, or more than one is set. (`temINVALID_FLAG`)
 3. Account is the issuer of `MPTokenIssuanceID` - the issuer cannot hold confidential balances. (`temMALFORMED`)
 4. Rotation or recovery mode: `HolderEncryptionKey` is absent, is not exactly 33 bytes, or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
@@ -641,7 +641,7 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 6. Recovery or cancel mode: `ConfidentialBalanceSpending` or `ConfidentialBalanceInbox` is present. (`temMALFORMED`)
 7. Cancel mode: `HolderEncryptionKey` or `ZKProof` is present - cancel mode requires no additional fields beyond `TransactionType`, Account, `MPTokenIssuanceID`, and Flags. (`temMALFORMED`)
 8. Any present `ConfidentialBalanceSpending` or `ConfidentialBalanceInbox` has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
-9. Rotation or recovery mode: `ZKProof` is absent or its length is not exactly the expected size for the selected mode. (160 bytes in rotation mode, 64 bytes in recovery mode - see Section 11) (`temMALFORMED`)
+9. Rotation or recovery mode: `ZKProof` is absent or its length is not exactly the expected size for the selected mode. (224 bytes in rotation mode, 64 bytes in recovery mode - see Section 11) (`temMALFORMED`)
 
 ##### 5.5.4.2. Protocol-Level Failures
 
@@ -693,7 +693,7 @@ Rotation mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 1,
+  "Flags": 65536,
   "HolderEncryptionKey": "02c7d8e9f0a1b2...",
   "ConfidentialBalanceSpending": "02d7e8f9a0b1c2...",
   "ConfidentialBalanceInbox": "02e7f8a9b0c1d2...",
@@ -710,7 +710,7 @@ Recovery mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 2,
+  "Flags": 131072,
   "HolderEncryptionKey": "03a9b8c7d6e5f4...",
   "ZKProof": "d1a6f4e2b3c9...",
   "Fee": "100",
@@ -725,7 +725,7 @@ Cancel mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 4,
+  "Flags": 262144,
   "Fee": "100",
   "Sequence": 48
 }
@@ -1162,7 +1162,7 @@ For each returned `mptoken_index`, the issuer retrieves the corresponding `MPTok
 | `ConfidentialMPTMirrorUpdate`    | Issuer, one mirror    | Compact Chaum-Pedersen equality                                | 128 bytes |
 | `ConfidentialMPTMirrorUpdate`    | Issuer, both mirrors  | Compact Chaum-Pedersen (AND-composed)                          | 128 bytes |
 | `ConfidentialMPTMirrorUpdate`    | Holder self-migration | Cross-key equality proof                                       | 128 bytes |
-| `ConfidentialMPTHolderKeyUpdate` | Rotation              | Compact equality (spending) + new-key possession, AND-composed | 160 bytes |
+| `ConfidentialMPTHolderKeyUpdate` | Rotation              | Compact equality (spending) + new-key possession, AND-composed | 224 bytes |
 | `ConfidentialMPTHolderKeyUpdate` | Recovery              | Schnorr PoK                                                    | 64 bytes  |
 | `ConfidentialMPTRecoverBalance`  |                       | Compact Chaum-Pedersen equality                                | 128 bytes |
 
