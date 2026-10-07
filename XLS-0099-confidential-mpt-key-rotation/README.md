@@ -617,9 +617,9 @@ Allows a holder to rotate their ElGamal key (rotation mode), authorize key repla
 
 | Flag Name             | Hex Value    | Decimal Value | Description                                                                                      |
 | :-------------------- | :----------- | :------------ | :----------------------------------------------------------------------------------------------- |
-| `tfHolderKeyRotation` | `0x00000001` | 1             | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction. |
-| `tfHolderKeyRecovery` | `0x00000002` | 2             | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.            |
-| `tfCancelRecovery`    | `0x00000004` | 4             | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                          |
+| `tfHolderKeyRotation` | `0x00010000` | 65536         | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction. |
+| `tfHolderKeyRecovery` | `0x00020000` | 131072        | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.            |
+| `tfCancelRecovery`    | `0x00040000` | 262144        | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                          |
 
 Exactly one of the three flags must be set.
 
@@ -633,7 +633,7 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 
 ##### 5.5.4.1. Data Verification
 
-1. Either the `ConfidentialMPTKeyRotation` or the `ConfidentialTransfer` amendment is not enabled. (`temDISABLED`)
+1. The `ConfidentialTransfer` amendment is not enabled. Holder key rotation does not depend on the `ConfidentialMPTKeyRotation` amendment. (`temDISABLED`)
 2. Neither `tfHolderKeyRotation`, `tfHolderKeyRecovery`, nor `tfCancelRecovery` is set, or more than one is set. (`temINVALID_FLAG`)
 3. Account is the issuer of `MPTokenIssuanceID` - the issuer cannot hold confidential balances. (`temMALFORMED`)
 4. Rotation or recovery mode: `HolderEncryptionKey` is absent, is not exactly 33 bytes, or is not a well-formed compressed secp256k1 point. (`temMALFORMED`)
@@ -648,13 +648,11 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 1. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 3. The holder's `MPToken` is missing confidential state (`HolderEncryptionKey`, `ConfidentialBalanceSpending`, or `ConfidentialBalanceInbox`). (`tecNO_PERMISSION`)
-4. Rotation or recovery mode: `HolderEncryptionKey` equals the current on-ledger `HolderEncryptionKey` (no-op). (`tecNO_PERMISSION`)
-5. Rotation mode: `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`; the issuer mirror must be migrated before rotating. (`tecNO_PERMISSION`)
-6. Rotation mode: an auditor key is configured and `AuditorEncryptedBalance` is absent or `AuditorKeyMirrorEpoch` does not equal `AuditorKeyEpoch`; the auditor mirror must be initialized or migrated before rotating. (`tecNO_PERMISSION`)
-7. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
-8. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
-9. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
-10. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing both that the submitted `ConfidentialBalanceSpending` encrypts under `HolderEncryptionKey` the same value the on-ledger `ConfidentialBalanceSpending` encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. (`tecBAD_PROOF`)
+4. Rotation or recovery mode: `HolderEncryptionKey` equals the current on-ledger `HolderEncryptionKey` (no-op). (`tecDUPLICATE`)
+5. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
+6. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
+7. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
+8. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing both that the submitted `ConfidentialBalanceSpending` encrypts under `HolderEncryptionKey` the same value the on-ledger `ConfidentialBalanceSpending` encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. (`tecBAD_PROOF`)
 
 **Cancel mode** (`tfCancelRecovery`): No additional fields are required beyond `TransactionType`, Account, `MPTokenIssuanceID`, and Flags. The transaction must be signed by the holder's XRPL signing key. No cryptographic proof is required - the holder's signing key signature is sufficient authorization to cancel their own pending recovery.
 
@@ -674,6 +672,7 @@ This transaction requires 10x the base fee because rotation and recovery modes c
 2. `ConfidentialBalanceSpending` on `MPToken` ← new ciphertext
 3. `ConfidentialBalanceInbox` on `MPToken` ← new ciphertext
 4. `ConfidentialBalanceVersion` on `MPToken` ← `ConfidentialBalanceVersion` + 1
+5. `RecoveryKey` on `MPToken` ← cleared, if present (rotation proves the holder still has the old key, so any pending recovery authorization is cancelled)
 
 **Recovery mode**:
 
