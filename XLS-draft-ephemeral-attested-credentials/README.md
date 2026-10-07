@@ -1,15 +1,14 @@
 <pre>
-  xls: 104
   title: Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
   description: Hardware-attested short-TTL credentials and zero-latency consensus-enforced venue ejection for autonomous agents on XRPL
   author: Walter Hawkins <contact@correntelabs.com>, Corrente Applied Cryptography Group
   status: Draft
-  category: Amendment / Standard
+  category: Amendment
   requires: [XLS-70](../XLS-0070-credentials/README.md), [XLS-80](../XLS-0080-permissioned-domains/README.md)
   created: 2026-10-06
 </pre>
 
-# XLS-104: Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
+# XLS-draft: Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
 
 ## Abstract
 This standard defines an architecture for **Ephemeral Attested Permissioned Domains (E-APD)** on the XRP Ledger. By combining hardware-isolated Trusted Execution Environments (TEEs) with short Time-To-Live (TTL) cryptographic credentials (300 to 900 seconds), E-APD enables real-time compliance enforcement, automated mandate auditing, and **zero-latency consensus-enforced venue ejection** for autonomous AI agents, algorithmic market makers, and institutional participants on XRPL.
