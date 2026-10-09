@@ -8,7 +8,7 @@
   status: Draft
   category: Amendment
   created: 2026-09-15
-  updated: 2026-09-24
+  updated: 2026-10-09
 </pre>
 
 # 65.4 Closed-Ended Vault Early-Exit Fee
@@ -21,7 +21,7 @@ Key properties of this feature include:
 
 - **Default behavior (field absent):** The Vault preserves the behavior defined in [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md). All `VaultWithdraw` transactions during the Investment phase are rejected with `tecTOO_SOON`.
 - **Zero-percent fee (`EarlyExitFeeRate == 0`):** Depositors may withdraw during the Investment phase without incurring a fee.
-- **Standard fee (`0 < EarlyExitFeeRate < 100%`):** Depositors may withdraw during the Investment phase. The specified percentage is deducted from the pre-fee withdrawal amount. If the fee consumes the entire withdrawal amount, the transaction fails with `tecPRECISION_LOSS`.
+- **Standard fee (`0 < EarlyExitFeeRate < 100%`):** Depositors may withdraw during the Investment phase. The specified percentage is deducted from the pre-fee withdrawal amount. If the rounded fee consumes the entire withdrawal amount, the withdrawal burns the requested shares and transfers no assets, as at a 100% rate.
 - **Maximum fee (`EarlyExitFeeRate == 100%`):** Unless the withdrawal burns the entire outstanding share supply under the full-exit waiver, a withdrawal at a 100% fee rate burns the requested shares and transfers no assets.
 - **Full-exit waiver:** A withdrawal that burns the entire outstanding share supply pays no fee (3.4.3).
 - **Fee retention:** Retained fees remain in the Vault. Because shares are burned against the pre-fee amount while only the post-fee amount leaves the Vault, the difference remains in the Vault and raises the value of every remaining share.
@@ -62,9 +62,9 @@ Two amendments are hard prerequisites of `LendingProtocolV1_2`:
 
 Within the `LendingProtocolV1_2` amendment, this specification depends on:
 
-| Sibling Specification         | Name                                  | Reason                                                                                                                                                                                                                                                                                   |
-| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [XLS-65.3](../65.3/README.md) | Fixed Precision for Vault and Lending | Sets fixed precision grid $P$, live exponent $e(R)$, live scale $s = -e(R)$, and the operation rule of 3.2.4. Under XLS-65.3, `VaultWithdraw` rounds outflows toward zero at candidate posterior live exponent $e^\ast$. The early-exit fee calculation and payout operate on that grid. |
+| Sibling Specification         | Name                                  | Reason                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [XLS-65.3](../65.3/README.md) | Fixed Precision for Vault and Lending | Sets fixed precision grid $P$, live exponent $e(R)$, live scale $s = -e(R)$, and the operation rule of 3.2.4. Under XLS-65.3, `VaultWithdraw` rounds outflows toward zero at the candidate posterior live exponent $e^\ast$ of `Vault.AssetsAvailable`. The post-fee payout is rounded on that grid, and the fee is the remainder. |
 
 Amendment compatibility and version rules:
 
@@ -209,16 +209,16 @@ Under `LendingProtocolV1_2`, this section supersedes three failure checks from p
 - The Investment-phase gate of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md).
 - Parent 3.6.2.2 checks 10.2 and 10.4 (available asset liquidity).
 
-Parent 3.6.2.2 check 13 (arithmetic overflow during share or asset calculation, returning `tecPATH_DRY`) keeps its number and meaning. It extends to the fee calculation in step 4 of 3.4.3.
+Parent 3.6.2.2 check 13 (arithmetic overflow during share or asset calculation, returning `tecPATH_DRY`) keeps its number and meaning. It extends to the payout and fee calculation in steps 4 and 5 of 3.4.3.
 
 **Parent 3.6.2.2 check 12**, the precision-loss check of [XLS-65.2](../65.2/README.md) and XLS-65.3 3.2.4, is superseded by:
 
 12. - `fixCleanup3_4_0`: As in the parent.
-    - `LendingProtocolV1_2`: Pre-fee precision loss rules from [XLS-65.2](../65.2/README.md) (for `LEVersion == 1`) and [XLS-65.3](../65.3/README.md) 3.2.4 (for `LEVersion >= 2`) apply unchanged. In addition, a withdrawal that incurs an early-exit fee ($F > 0$) fails with `tecPRECISION_LOSS` under either post-fee condition:
-      - **Fee exhaustion:** `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE` and the fee consumes the entire withdrawal ($F \ge \Delta_{assets}$, yielding $\Delta_{assets}^{paid} == 0$).
-      - **Post-fee dust:** $\Delta_{assets}^{paid} > 0$ but is too small to move the vault's asset total. Decreasing `Vault.AssetsTotal` by $\Delta_{assets}^{paid}$ would leave the stored value unchanged at its precision while shares are still burned.
+    - `LendingProtocolV1_2`: Pre-fee precision loss rules from [XLS-65.2](../65.2/README.md) (for `LEVersion == 1`) and [XLS-65.3](../65.3/README.md) 3.2.4 (for `LEVersion >= 2`) apply unchanged to the pre-fee amount $\Delta_{assets}$. The fee adds no further precision-loss condition:
+      - **Fee consuming the withdrawal:** If the rounded fee equals the pre-fee amount ($F == \Delta_{assets}$, yielding $\Delta_{assets}^{paid} == 0$), the transaction succeeds. It burns $\Delta_{shares}$ and transfers no assets, the same outcome as at `MAX_EARLY_EXIT_FEE_RATE` (3.4.3, 4.3).
+      - **No post-fee dust:** Step 5 of 3.4.3 rounds the payout down at the posterior scale of the balance it leaves. A positive payout therefore always moves the stored balance, and a payout that would not is rounded to zero and handled as above.
 
-      The parent fixed-share exemption remains unchanged. An early exit with a zero payout is permitted only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`.
+      The parent fixed-share exemption remains unchanged.
 
 **The Investment-phase gate** of [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) is superseded by the rule below. That specification defines the gate as a protocol-level failure in its `VaultWithdraw` section:
 
@@ -257,38 +257,47 @@ In each of these cases, liquidity is evaluated against $\Delta_{assets}$ as in t
 
    $$\Delta_{assets} = \frac{\Delta_{shares} \times \Gamma_{asset}}{\Gamma_{shares}}$$
 
-3. Round $\Delta_{assets}$ down (toward zero) at candidate posterior live scale $s$. Check 12 of 3.4.2 is evaluated against the result.
-   - On a Vault with `LEVersion >= 2` (`FixedPrecision`), $s$ is the live scale $-e^\ast$, where $e^\ast = e(\text{Vault.AssetsTotal} - \Delta_{assets})$ is the candidate posterior live exponent defined in XLS-65.3 3.2.3 and 3.2.4. One unit at $s$ is the live unit $10^{e^\ast}$.
-   - On a Vault with `LEVersion == 1` (`CashBasis`), $s$ is the posterior scale defined in XLS-65.2 3.1.2.3, derived as the `STAmount` exponent of `Vault.AssetsTotal` $- \Delta_{assets}$, evaluated with round-to-nearest on the **pre-fee** delta of step 2.
+3. Round $\Delta_{assets}$ down (toward zero) at the candidate posterior scale $s$ of the **reference balance** $R$. Check 12 of 3.4.2 is evaluated against the result.
+   - The reference balance is the stored balance the cash leaves:
+
+     | `LEVersion`             | Reference balance $R$   | Scale rule                                                                                                                                                                           |
+     | ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+     | `>= 2` (FixedPrecision) | `Vault.AssetsAvailable` | $s = -e^\ast$, where $e^\ast = e(R - \Delta_{assets})$ is the candidate posterior live exponent defined in XLS-65.3 3.2.3 and 3.2.4. One unit at $s$ is the live unit $10^{e^\ast}$. |
+     | `== 1` (CashBasis)      | `Vault.AssetsTotal`     | $s$ is the posterior scale defined in XLS-65.2 3.1.2.3, the `STAmount` exponent of $R - \Delta_{assets}$ evaluated with round-to-nearest.                                            |
+
+   - Both rules evaluate the posterior on the **pre-fee** delta of step 2.
    - For `XRP` and `MPT`, $s = 0$ ($e^\ast = 0$) at all times. Rounding at $s$ is an identity operation. One unit at $s$ corresponds to one drop of XRP or one MPT unit.
-   - Scale $s$ is derived once at this step. Steps 4 and 5 reuse this value, and the fee never re-derives it (4.3).
 
 **Early-exit fee, added by this patch**
 
-4. Compute the fee at the same live scale $s$, rounded **up** (4.3):
+4. Compute the exact post-fee payout. Every rounding in this step lowers the result, so the value never exceeds $\Delta_{assets} \times (1 - \phi)$:
 
-   $$F = \left\lceil \Delta_{assets} \times \phi \right\rceil_s$$
+   $$\Delta_{assets}^{exact} = \Delta_{assets} - \lceil \Delta_{assets} \times \phi \rceil$$
 
-   When `Vault.EarlyExitFeeRate > 0`, the minimum fee is the smallest chargeable unit at scale $s$ ($10^{-s}$, corresponding to one drop for `XRP` and one unit for `MPT`). Consequently, a non-zero fee rate never rounds to zero.
+   - The fee term is rounded up at the precision of the arithmetic, and the difference is rounded down to the asset's representable precision.
+   - When `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`, $\Delta_{assets}^{exact} = 0$ without further computation.
+   - The fee is waived, and $\Delta_{assets}^{paid} = \Delta_{assets}$ with $F = 0$, under any of the following conditions. Step 5 is skipped in these cases:
+     - The Vault is not in its Investment phase.
+     - `Vault.EarlyExitFeeRate` is `0`.
+     - The withdrawal burns the entire outstanding share supply of the Vault (the **full-exit waiver**, 4.2).
 
-   $F = 0$ under any of the following conditions:
-   - The Vault is not in its Investment phase.
-   - `Vault.EarlyExitFeeRate` is `0`.
-   - The withdrawal burns the entire outstanding share supply of the Vault (the **full-exit waiver**, 4.2).
+5. Round the payout down (toward zero) at the candidate posterior scale $s^{paid}$ of the same reference balance $R$ as step 3, evaluated on the exact payout, and take the fee as the remainder (4.3):
 
-5. Compute the payout. No further rounding is applied:
+   $$\Delta_{assets}^{paid} = \left\lfloor \Delta_{assets}^{exact} \right\rfloor_{s^{paid}}, \qquad F = \Delta_{assets} - \Delta_{assets}^{paid}$$
 
-   $$\Delta_{assets}^{paid} = \Delta_{assets} - F$$
+   | `LEVersion`             | Scale rule for $s^{paid}$                                                                                                  |
+   | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+   | `>= 2` (FixedPrecision) | $s^{paid} = -e^{paid}$, where $e^{paid} = e(R - \Delta_{assets}^{exact})$ is the candidate posterior live exponent.        |
+   | `== 1` (CashBasis)      | $s^{paid}$ is the `STAmount` exponent of $R - \Delta_{assets}^{exact}$ evaluated with round-to-nearest (XLS-65.2 3.1.2.3). |
 
-   Precision and alignment rules:
-   - For `LEVersion == 1` Vaults, the invariant in [XLS-65.2](../65.2/README.md) 3.1.2.2 admits one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`.
-   - For `LEVersion >= 2` Vaults, XLS-65.3 3.2.4 applies the operation rule on the live grid, with $F$ and $\Delta_{assets}^{paid}$ aligned to multiples of the live unit $10^{e^\ast}$. That live exponent is determined at step 3 and is not re-derived from $\Delta_{assets}^{paid}$ (4.3).
+   For `XRP` and `MPT`, $s^{paid} = 0$ and the rounding is an identity operation.
 
-   Check 12 of 3.4.2 rejects the transaction with `tecPRECISION_LOSS` in either of these cases:
-   - $F \ge \Delta_{assets}$ and `Vault.EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`.
-   - $\Delta_{assets}^{paid} > 0$ and decreasing `Vault.AssetsTotal` by $\Delta_{assets}^{paid}$ leaves the stored value unchanged.
-
-   A zero payout reaches execution only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption.
+   Properties of the result:
+   - **Fee rounds up:** Rounding the payout down is equivalent to rounding the fee up, so $F \ge \Delta_{assets} \times \phi$.
+   - **Minimum fee:** $\Delta_{assets}^{exact} < \Delta_{assets}$, so the posterior reference balance at step 5 is larger than at step 3 and $s^{paid} \le s$. The payout lies on the grid at $s$, and $F$ is a positive multiple of $10^{-s}$. When `Vault.EarlyExitFeeRate > 0`, the fee is at least one unit at scale $s$ (one drop for `XRP`, one unit for `MPT`).
+   - **Scale boundary:** $s^{paid}$ is one step coarser than $s$ only when the posterior reference balance crosses a power of ten between the two evaluations (3.4.3.2).
+   - **Zero payout:** If $\Delta_{assets}^{exact}$ is below one unit at $s^{paid}$, the payout rounds to zero and $F = \Delta_{assets}$. The pre-fee amount is retained in full, $\Delta_{shares}$ is burned, and nothing is transferred. This is the same outcome as at `MAX_EARLY_EXIT_FEE_RATE`, and the transaction succeeds (4.3).
+   - **Representable posterior:** $\Delta_{assets}^{paid}$ lies on the grid of $R - \Delta_{assets}^{exact}$, so decreasing $R$ by $\Delta_{assets}^{paid}$ always yields a representable stored balance. For `LEVersion == 1` Vaults, the invariant in [XLS-65.2](../65.2/README.md) 3.1.2.2 continues to admit one unit of `IOU` slack at the exponent of the persisted `Vault.AssetsTotal`.
 
 **Steps 6 to 9, superseding items 4 to 7**, with $\Delta_{assets}^{paid}$ in place of $\Delta_{asset}$:
 
@@ -305,7 +314,7 @@ In each of these cases, liquidity is evaluated against $\Delta_{assets}$ as in t
    2. Decrease the `MPToken.MPTAmount` of the _pseudo-account_ `MPToken` for `Vault.Asset` by $\Delta_{assets}^{paid}$.
    3. Increase the `MPToken.MPTAmount` of the destination `MPToken` for `Vault.Asset` by $\Delta_{assets}^{paid}$.
 
-When $\Delta_{assets}^{paid}$ is zero (occurring only when `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption):
+When $\Delta_{assets}^{paid}$ is zero, whether because `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`, because the rounded fee consumes the whole pre-fee amount, or under the parent fixed-share exemption:
 
 - Steps 6 through 9 execute no balance transfers.
 - No `RippleState` or `MPToken` object is created for the destination.
@@ -342,6 +351,30 @@ A depositor submits `VaultWithdraw` with `Amount = 100,000` of the Vault asset:
 | Exchange rate      | 1.002222    |
 
 The retained fee of 2,000 remains in the Vault and is distributed across the 900,000 remaining shares, increasing the asset value per share by approximately 0.2222%. The exiting depositor receives 98,000 assets in exchange for burning shares originally valued at 100,000 assets.
+
+##### 3.4.3.2 Worked Example: Scale Boundary
+
+Consider a `FixedPrecision` Vault holding an `IOU` with `Scale = 6` and `EarlyExitFeeRate = 10000` (10%). The reference balance is `Vault.AssetsAvailable`:
+
+| Quantity          | Initial Value      |
+| ----------------- | ------------------ |
+| `AssetsAvailable` | 10,500,000,000     |
+| Pre-fee delta     | 550,000,000.123457 |
+
+Steps 3 to 5 of 3.4.3 proceed as follows:
+
+| Step | Quantity                      | Value                  | Note                                     |
+| ---- | ----------------------------- | ---------------------- | ---------------------------------------- |
+| 3    | $R - \Delta_{assets}$         | 9,949,999,999.876543   | 16 significant digits, so $s = 6$        |
+| 3    | $\Delta_{assets}$             | 550,000,000.123457     | Already on the grid at $s = 6$           |
+| 4    | $\Delta_{assets} \times \phi$ | 55,000,000.0123457     | Exact                                    |
+| 4    | $\Delta_{assets}^{exact}$     | 495,000,000.1111113    | Exact                                    |
+| 5    | $R - \Delta_{assets}^{exact}$ | 10,004,999,999.8888887 | 17 significant digits, so $s^{paid} = 5$ |
+| 5    | $\Delta_{assets}^{paid}$      | 495,000,000.11111      | Rounded down at $s^{paid} = 5$           |
+| 5    | $F$                           | 55,000,000.012347      | Remainder, a multiple of $10^{-6}$       |
+| 6    | Posterior `AssetsAvailable`   | 10,004,999,999.88889   | Representable in 16 significant digits   |
+
+Rounding the fee up at $s = 6$ instead would give $F = 55{,}000{,}000.012346$ and a payout of $495{,}000{,}000.111111$. The posterior `AssetsAvailable` would then be $10{,}004{,}999{,}999.888889$, which has 17 significant digits and cannot be stored. Deriving the payout scale from the balance the payout leaves avoids this (4.3).
 
 #### 3.4.4 Invariants
 
@@ -432,20 +465,23 @@ Retained fees accrue to remaining shares. If a withdrawal burns the entire outst
 - Waiving the fee ensures the Vault can cleanly empty and delete upon full redemption.
 - The waiver triggers solely when the total share supply reaches zero. If a sole shareholder executes a withdrawal that leaves remaining shares in the Vault, the transaction still incurs the fee (8).
 
-### 4.3 Why the fee rounds up and fee exhaustion fails below 100%
+### 4.3 Why the fee rounds up and a fee that consumes the withdrawal is accepted
 
-Fee calculation enforces three rules on rounding and exhaustion:
+Fee calculation enforces three rules on rounding and zero payouts:
 
-1. **Rounding up and minimum fee:** Rounding down would make the fee zero on withdrawals small enough to underflow asset precision. Depositors could then exit fee-free in fractional slices. Rounding up ensures that every withdrawal with a non-zero fee rate pays at least the smallest chargeable unit at scale $s$ ($10^{-s}$).
-2. **Rejection on fee exhaustion when rate is below 100%:** A depositor requesting an early exit under a sub-100% fee rate expects a positive payout. When a withdrawal is so small that the rounded fee consumes the entire amount ($\Delta_{assets}^{paid} == 0$), burning shares without returning assets is an adverse precision artifact. The transaction fails with `tecPRECISION_LOSS`.
+1. **Rounding up and minimum fee:** Rounding down would make the fee zero on withdrawals small enough to underflow asset precision. Depositors could then exit fee-free in fractional slices. Rounding the payout down, and hence the fee up, ensures that every withdrawal with a non-zero fee rate pays at least the smallest chargeable unit at scale $s$ ($10^{-s}$).
+2. **Acceptance when the fee consumes the withdrawal below 100%:** The rounded fee equals the pre-fee amount only when the exact payout is below one unit at $s^{paid}$. The transaction succeeds, burns $\Delta_{shares}$, and transfers nothing, for three reasons:
+   - Rejecting it would make the outcome depend on rounding. A depositor would have to adjust `Amount` to work around a precision artifact rather than a rule of the Vault.
+   - The forfeited value is bounded by $10^{-s^{paid}} / (1 - \phi)$, the smallest representable payout grossed up by the fee rate. At low fee rates, this is about one unit.
+   - The outcome is identical to a withdrawal at `MAX_EARLY_EXIT_FEE_RATE`, which the protocol already accepts. One code path handles both.
 3. **Acceptance at 100% rate:** When `Vault.EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`, a 100% fee is the intended setting. Unless the withdrawal qualifies for the full-exit waiver, the transaction forfeits the entire payout to remaining depositors by design, so it succeeds.
 
-The fee is deducted from the pre-fee delta after the rounding in step 3 of 3.4.3, and the payout is not rounded again, for four reasons:
+The payout is rounded once, at the posterior scale of the balance it leaves, and the fee is the remainder, for four reasons:
 
-- **One grid:** The rounded delta lies on the grid at posterior live scale $s$ (or posterior scale for `LEVersion == 1`). A fee rounded to that grid and the difference between the two also lie on the grid. Rounding the payout a second time would be redundant and could introduce unintended sub-unit residues.
+- **One grid:** The stored balance must decrease by exactly the payout. Rounding the payout on the posterior grid of that balance guarantees the result is representable. Rounding the fee at the pre-fee scale $s$ instead, and taking the payout as the difference, leaves the posterior balance unrepresentable when it crosses a power of ten (3.4.3.2).
 - **Consistent base:** The fee rate applies to the pre-fee withdrawal amount that would otherwise be paid out, matching the rounded asset delta from parent calculations.
-- **Single derivation of scale $s$:** Scale $s$ is derived once from the candidate posterior reference balance using the pre-fee delta. Deriving scale from the post-fee payout $\Delta_{assets}^{paid}$ would introduce circular dependency, because computing $F$ requires knowing $s$ before $\Delta_{assets}^{paid}$ can be determined. Near exponent boundaries, differing scale derivations could inconsistently alter both the fee and the net payout.
-- **Reproducibility:** The fee depends exclusively on amounts representable at the live scale, enabling client applications to recompute the exact fee using ledger values.
+- **Scale from the exact payout:** Deriving $s^{paid}$ from the exact payout is not circular. The exact payout is fully determined by $\Delta_{assets}$ and $\phi$ before any rounding at a scale takes place. Because $s^{paid} \le s$, the fee still lies on the pre-fee grid and is never below one unit at $s$.
+- **Reproducibility:** The fee depends exclusively on $\Delta_{assets}$, $\phi$, and the reference balance, all of which are available on ledger, enabling client applications to recompute the exact fee and payout.
 
 ### 4.4 Why liquidity is checked against the post-fee payout
 
@@ -472,7 +508,7 @@ Key compatibility considerations:
 - **Open-ended Vaults:** Open-ended Vaults cannot include `EarlyExitFeeRate` and do not have phases. Their withdrawal behavior is unaffected.
 - **Existing closed-ended Vaults:** `EarlyExitFeeRate` can only be set during `VaultCreate`. Vaults created prior to `LendingProtocolV1_2` lack this field, so withdrawals during their Investment phase continue to fail with `tecTOO_SOON` as defined in [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md).
 - **Serialization compatibility:** `EarlyExitFeeRate` is an optional field. Existing serialized `Vault` entries deserialize without modification. When set to `0`, the field is explicitly stored on the ledger, distinguishing a free early exit from a disallowed exit on the wire (3.2.1).
-- **Zero-payout protection below 100%:** If rounding causes the fee to consume the entire withdrawal amount while `EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, the transaction fails with `tecPRECISION_LOSS`. Zero-payout exits succeed only when `EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or under the parent fixed-share exemption.
+- **Zero payout below 100%:** If rounding causes the fee to consume the entire withdrawal amount while `EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, the transaction succeeds, burns the shares, and transfers nothing, as at `MAX_EARLY_EXIT_FEE_RATE` (4.3). Client software MUST quote the payout before submission (8).
 - **Client quoting:** Client applications calculating expected withdrawal proceeds during Investment must account for `EarlyExitFeeRate`. Calculating payouts solely from `Amount` and the share exchange rate will overestimate the net payout by the fee amount. Clients can retrieve the rate via `vault_info` and `ledger_entry` (3.6, 3.7).
 
 ## 6. Test Plan
@@ -505,8 +541,8 @@ Key compatibility considerations:
 - With a rate of `0` and an asset-denominated `Amount` that does not convert to a whole number of shares, the payout differs from `Amount` exactly as in the parent specification.
 - The exchange rate after a fee-charging withdrawal is strictly higher than before. A subsequent depositor redeeming an identical share count immediately afterward receives strictly more assets than the first depositor.
 - With a rate of `MAX_EARLY_EXIT_FEE_RATE`, a withdrawal that leaves remaining shares in the Vault succeeds, burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` unchanged. The exchange rate increases as remaining holders absorb the forfeited position.
-- When `0 < EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, a withdrawal small enough that the rounded fee consumes the entire pre-fee delta fails with `tecPRECISION_LOSS`.
-- The worked example in 3.4.3.1 reproduces exactly, including both post-state totals.
+- When `0 < EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, a withdrawal small enough that the rounded fee consumes the entire pre-fee delta succeeds, burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` unchanged.
+- The worked examples in 3.4.3.1 and 3.4.3.2 reproduce exactly, including both post-state totals.
 - A withdrawal specifying a `Destination` behaves identically, delivering the post-fee amount to the destination account.
 - A fee-charging withdrawal on a Vault with non-zero `LossUnrealized` applies the fee to the net amount after deducting unrealized losses.
 
@@ -525,18 +561,19 @@ Key compatibility considerations:
 - When $F = 0$, a withdrawal whose pre-fee amount exceeds `AssetsAvailable` fails with `tecINSUFFICIENT_FUNDS`. This behavior applies identically across open-ended Vaults, closed-ended Vaults with a rate of `0`, and closed-ended Vaults outside Investment.
 - Boundary condition: a withdrawal whose post-fee payout exactly equals `AssetsAvailable` succeeds, even if its pre-fee amount exceeds `AssetsAvailable`.
 - A Vault whose capital is fully deployed into loans rejects every early exit requiring a positive payout. The Vault accepts withdrawals again as loan repayments restore `AssetsAvailable`.
-- A Vault with `AssetsAvailable == 0` accepts an early exit whose post-fee payout is zero when `EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`. The transaction burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` at their prior values. Check 10 of 3.4.2 passes because no cash leaves the Vault.
-- When `EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, a withdrawal whose fee consumes the entire withdrawal fails with `tecPRECISION_LOSS` before check 10 is evaluated.
+- A Vault with `AssetsAvailable == 0` accepts an early exit whose post-fee payout is zero, whether from `EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE` or from a rounded fee that consumes the whole pre-fee amount. The transaction burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` at their prior values. Check 10 of 3.4.2 passes because no cash leaves the Vault.
 - An early exit does not alter any outstanding `Loan` entry or the broker's `CoverAvailable`.
 
 ### 6.6 Rounding and Precision
 
 - The fee rounds up: a withdrawal whose exact fee falls between two representable amounts at the live scale is charged the larger amount.
 - When `EarlyExitFeeRate > 0`, the minimum fee is the smallest chargeable unit at scale $s$, ensuring that the fee never rounds to zero.
-- When `EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, a withdrawal small enough that the rounded fee equals the pre-fee amount fails with `tecPRECISION_LOSS`.
+- When `EarlyExitFeeRate < MAX_EARLY_EXIT_FEE_RATE`, a withdrawal small enough that the rounded fee equals the pre-fee amount succeeds, burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` unchanged. This is verified for `XRP` (one drop at a 0.001% rate) and for an `IOU` (one unit at `Scale`).
 - When `EarlyExitFeeRate == MAX_EARLY_EXIT_FEE_RATE`, a withdrawal that leaves remaining shares in the Vault succeeds, burns $\Delta_{shares}$, transfers no assets, and leaves `AssetsTotal` and `AssetsAvailable` unchanged.
 - A pre-fee delta that rounds down to zero at the live scale (or posterior scale for `LEVersion == 1`) fails with `tecPRECISION_LOSS` regardless of fee rate.
-- For an `IOU` withdrawal where exact and rounded pre-fee deltas differ, the fee is $\lceil \Delta_{assets} \times \phi \rceil_s$ calculated on the rounded delta, and the payout is their difference with no further rounding.
+- For an `IOU` withdrawal where exact and rounded pre-fee deltas differ, the fee is computed on the rounded delta. The payout is rounded down at the posterior scale of the reference balance, and the fee is the remainder.
+- When the exact payout moves the posterior reference balance across a power of ten, the payout is rounded at the coarser scale $s^{paid}$, the fee remains a multiple of $10^{-s}$, and the posterior `AssetsAvailable` is representable (3.4.3.2).
+- At a rate whose product with the pre-fee delta needs more than 16 significant digits (for example 12.345%), the fee is still rounded up and the payout is never above $\Delta_{assets} \times (1 - \phi)$.
 - Splitting a withdrawal into $n$ smaller transactions incurs at least as much in cumulative fees as taking the withdrawal in a single transaction, verified across `XRP`, `IOU`, and `MPT` assets.
 - Precision test suites execute across all three asset types and across the full `Scale` range.
 
@@ -584,7 +621,7 @@ _TBD_
 ## 8. Security Considerations
 
 - **Liquidity run risk during Investment:** Configuring an early-exit fee permits depositors to withdraw uncommitted capital during the Investment phase up to `Vault.AssetsAvailable`. Because withdrawals execute first-come, first-served, early withdrawals can deplete available liquid assets before later depositors submit requests. While the exit fee compensates remaining depositors, it cannot prevent liquidity depletion. Depositors requiring guaranteed redemptions must wait until loans repay and the Redemption phase begins.
-- **Forfeiture under maximum fee rates:** Vault creators can set `EarlyExitFeeRate` up to `MAX_EARLY_EXIT_FEE_RATE` (100%). At a 100% fee rate, any withdrawal that does not burn the entire outstanding share supply burns the submitted shares while delivering zero assets to the destination (3.4.3). Client software MUST compute and display the expected post-fee payout ($\Delta_{assets}^{paid}$) before submitting a `VaultWithdraw` transaction during Investment.
+- **Forfeiture under maximum fee rates:** Vault creators can set `EarlyExitFeeRate` up to `MAX_EARLY_EXIT_FEE_RATE` (100%). At a 100% fee rate, any withdrawal that does not burn the entire outstanding share supply burns the submitted shares while delivering zero assets to the destination (3.4.3). Below 100%, a withdrawal of at most a few units at the posterior scale has the same outcome (4.3). Client software MUST compute and display the expected post-fee payout ($\Delta_{assets}^{paid}$) before submitting a `VaultWithdraw` transaction during Investment.
 - **Owner participation in retained fees:** Because early-exit fees remain in the Vault, the owner cannot directly extract them. However, if the owner holds Vault shares, the owner benefits pro rata alongside other remaining share holders. The immutability of `EarlyExitFeeRate` mitigates this risk. Because the fee rate is established at creation and recorded on ledger, an owner cannot retroactively increase the rate after capital is deposited or decrease it to favor specific accounts.
 - **Adverse selection prior to loss recognition:** A depositor anticipating an impending borrower default might attempt an early exit before the broker marks `LossUnrealized`. Although the early-exit fee imposes a cost on leaving, it may not offset the depositor's avoided share of a severe pending loss. Vaults without an early-exit fee carry no such mid-term run exposure during Investment.
 - **Full-exit waiver dynamics:** An entity that consolidates 100% of outstanding Vault shares can redeem the entire supply without incurring an early-exit fee (3.4.3). Because no other depositors remain to be compensated, waiving the fee preserves accounting integrity without harming any third party (4.2). On Vaults without `tfVaultShareNonTransferable`, secondary market purchases of MPT shares permit consolidating share ownership.
@@ -611,7 +648,7 @@ This estimate is approximate because integer share rounding and candidate poster
 Special cases:
 
 - At a 100% fee rate, withdrawals that do not burn the entire share supply yield zero assets regardless of `Amount` (3.4.3).
-- If a withdrawal request is so small that the rounded fee consumes the entire amount while the fee rate is below 100%, the transaction fails with `tecPRECISION_LOSS` (3.4.2).
+- If a withdrawal request is so small that the rounded fee consumes the entire amount while the fee rate is below 100%, the transaction succeeds, burns the shares, and transfers nothing (3.4.3). Clients should quote the payout before submitting such a request.
 
 ### A.2 Why is the fee rate a fixed percentage throughout the term?
 
