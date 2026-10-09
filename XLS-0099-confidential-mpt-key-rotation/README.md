@@ -182,11 +182,11 @@ This section is an informative summary using the states defined in Section 3. Th
 
 | Before              | Trigger                                           | Preconditions                                                 | State Changes                                                                                                                                                     | After               | Reference                |
 | :------------------ | :------------------------------------------------ | :------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------ | :----------------------- |
-| No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | `HolderEncryptionKey`, holder balance ciphertexts, and `ConfidentialBalanceVersion` are updated                                                                   | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
+| No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in rotation mode | The rotation proof succeeds                                   | `HolderEncryptionKey`, holder balance ciphertexts, and `ConfidentialBalanceVersion` are updated                                                                   | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
 | No Recovery Pending | `ConfidentialMPTHolderKeyUpdate` in recovery mode | New-key Schnorr proof succeeds                                | `RecoveryKey` is created; the existing holder key and balances are unchanged                                                                                      | Recovery Pending    | Sections 5.5.4 and 5.5.5 |
 | Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in cancel mode   | Holder authorizes the transaction with their XRPL signing key | `RecoveryKey` is removed; the existing holder key and balances are unchanged                                                                                      | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
 | Recovery Pending    | `ConfidentialMPTRecoverBalance`                   | Issuer mirror is current and the recovery proof succeeds      | `HolderEncryptionKey` is replaced by `RecoveryKey`, the recovered balance is placed in spending, inbox is reset, version increments, and `RecoveryKey` is removed | No Recovery Pending | Section 5.6              |
-| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in rotation mode | Required mirrors are current and the rotation proof succeeds  | The holder key, holder balance ciphertexts, and version are updated; `RecoveryKey` is removed                                                                     | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
+| Recovery Pending    | `ConfidentialMPTHolderKeyUpdate` in rotation mode | The rotation proof succeeds                                   | The holder key, holder balance ciphertexts, and version are updated; `RecoveryKey` is removed                                                                     | No Recovery Pending | Sections 5.5.4 and 5.5.5 |
 
 ### 4.8. Proof Context Hash
 
@@ -644,9 +644,9 @@ Allows a holder to rotate their ElGamal key (rotation mode), authorize key repla
 
 | Flag Name             | Hex Value    | Decimal Value | Description                                                                                                                          |
 | :-------------------- | :----------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `tfHolderKeyRotation` | `0x00000001` | 1             | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction, revoking any pending `RecoveryKey`. |
-| `tfHolderKeyRecovery` | `0x00000002` | 2             | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.                                                |
-| `tfCancelRecovery`    | `0x00000004` | 4             | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                                                              |
+| `tfHolderKeyRotation` | `0x00010000` | 65536         | Rotation mode: re-encrypt the spending and inbox balances under the new key in this transaction, revoking any pending `RecoveryKey`. |
+| `tfHolderKeyRecovery` | `0x00020000` | 131072        | Recovery mode: register the new key as `sfRecoveryKey` for issuer-completed recovery.                                                |
+| `tfCancelRecovery`    | `0x00040000` | 262144        | Cancel mode: clear a pending `RecoveryKey` from the holder's `MPToken`.                                                              |
 
 Exactly one of the three flags must be set.
 
@@ -675,13 +675,11 @@ This transaction requires 10x the base fee, the same multiplier as the XLS-0096 
 1. The `MPTokenIssuance` or the holder's `MPToken` object does not exist. (`tecOBJECT_NOT_FOUND`)
 2. The issuance does not have the `lsfMPTCanHoldConfidentialBalance` flag set. (`tecNO_PERMISSION`)
 3. The holder's `MPToken` is missing confidential state (`HolderEncryptionKey`, `ConfidentialBalanceSpending`, or `ConfidentialBalanceInbox`). (`tecNO_PERMISSION`)
-4. Rotation or recovery mode: `HolderEncryptionKey` equals the current on-ledger `HolderEncryptionKey` (no-op). (`tecNO_PERMISSION`)
-5. Rotation mode: `IssuerKeyMirrorEpoch` does not equal `IssuerKeyEpoch`; the issuer mirror must be migrated before rotating. (`tecNO_PERMISSION`)
-6. Rotation mode: an auditor key is configured and `AuditorEncryptedBalance` is absent or `AuditorKeyMirrorEpoch` does not equal `AuditorKeyEpoch`; the auditor mirror must be initialized or migrated before rotating. (`tecNO_PERMISSION`)
-7. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
-8. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
-9. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
-10. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing that the submitted `ConfidentialBalanceSpending` and `ConfidentialBalanceInbox` each encrypt under `HolderEncryptionKey` the same value the corresponding on-ledger ciphertext encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. Both balances are covered because both are encrypted under the holder key, so a rotation carrying only the spending balance would leave the inbox decryptable exclusively under a key the holder is replacing. (`tecBAD_PROOF`)
+4. Rotation or recovery mode: `HolderEncryptionKey` equals the current on-ledger `HolderEncryptionKey` (no-op). (`tecDUPLICATE`)
+5. Recovery mode: `RecoveryKey` is already set on the `MPToken` - a pending recovery authorization exists. (`tecNO_PERMISSION`)
+6. Cancel mode: `RecoveryKey` is not set on the `MPToken` - nothing to cancel. (`tecNO_PERMISSION`)
+7. Recovery mode: `ZKProof` (Schnorr PoK) fails to verify against `HolderEncryptionKey`. (`tecBAD_PROOF`)
+8. Rotation mode: `ZKProof` fails to verify. It is a single AND-composed proof establishing that the submitted `ConfidentialBalanceSpending` and `ConfidentialBalanceInbox` each encrypt under `HolderEncryptionKey` the same value the corresponding on-ledger ciphertext encrypts under the old key, and that the submitter possesses the secret key for `HolderEncryptionKey`. Both balances are covered because both are encrypted under the holder key, so a rotation carrying only the spending balance would leave the inbox decryptable exclusively under a key the holder is replacing. (`tecBAD_PROOF`)
 
 #### 5.5.5. State Changes
 
@@ -693,7 +691,7 @@ This transaction requires 10x the base fee, the same multiplier as the XLS-0096 
 2. `ConfidentialBalanceSpending` on `MPToken` ← new ciphertext
 3. `ConfidentialBalanceInbox` on `MPToken` ← new ciphertext
 4. `ConfidentialBalanceVersion` on `MPToken` ← `ConfidentialBalanceVersion` + 1
-5. `RecoveryKey` on `MPToken` ← cleared (field removed) if one was pending
+5. `RecoveryKey` on `MPToken` ← cleared (field removed), if one was pending - rotation proves the holder still has the old key, so any pending recovery authorization is cancelled
 
 **Recovery mode**:
 
@@ -714,7 +712,7 @@ Rotation mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 1,
+  "Flags": 65536,
   "HolderEncryptionKey": "02c7d8e9f0a1b2...",
   "ConfidentialBalanceSpending": "02d7e8f9a0b1c2...",
   "ConfidentialBalanceInbox": "02e7f8a9b0c1d2...",
@@ -731,7 +729,7 @@ Recovery mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 2,
+  "Flags": 131072,
   "HolderEncryptionKey": "03a9b8c7d6e5f4...",
   "ZKProof": "d1a6f4e2b3c9...",
   "Fee": "100",
@@ -746,7 +744,7 @@ Cancel mode:
   "TransactionType": "ConfidentialMPTHolderKeyUpdate",
   "Account": "rHolderAccountAddress",
   "MPTokenIssuanceID": "000000012A9F1D3C...",
-  "Flags": 4,
+  "Flags": 262144,
   "Fee": "100",
   "Sequence": 48
 }
