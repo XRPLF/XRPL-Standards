@@ -178,25 +178,18 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Checkout script from base branch
+      - name: Checkout base branch
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.ref }}
-          sparse-checkout: |
-            .github/scripts/assign_xls_number.py
-          sparse-checkout-cone-mode: false
-          path: base-repo
 
       - name: Get added files
         id: added-files
         uses: tj-actions/changed-files@v47
         with:
+permissions:
+  contents: read
+  pull-requests: read
           files: |
             XLS-draft*/README.md
             xls-draft*/README.md
@@ -205,16 +198,15 @@ jobs:
 
       - name: Check for draft XLS files
         id: check-drafts
+        env:
+          ADDED_FILES: ${{ steps.added-files.outputs.added_files }}
         run: |
-          ADDED_FILES="${{ steps.added-files.outputs.added_files }}"
-          echo $ADDED_FILES
           if [ -z "$ADDED_FILES" ]; then
             echo "No XLS draft files added in this PR"
             echo "has_drafts=false" >> $GITHUB_OUTPUT
           else
-            echo "Found draft XLS files: $ADDED_FILES"
+            printf 'Found draft XLS files: %s\n' "$ADDED_FILES"
             echo "has_drafts=true" >> $GITHUB_OUTPUT
-            echo "draft_files=$ADDED_FILES" >> $GITHUB_OUTPUT
           fi
 
       - name: Setup Python
@@ -228,9 +220,8 @@ jobs:
         id: assign-number
         env:
           REPO_ROOT: ${{ github.workspace }}
-        run: |
-          echo ${{ steps.check-drafts.outputs.draft_files }}
-          python base-repo/.github/scripts/assign_xls_number.py ${{ steps.check-drafts.outputs.draft_files }}
+          CHANGED_FILES: ${{ steps.added-files.outputs.added_files }}
+        run: python .github/scripts/assign_xls_number.py
 
       - name: Check for existing assignment comment
         if: steps.check-drafts.outputs.has_drafts == 'true'
