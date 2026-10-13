@@ -472,7 +472,7 @@ The two transactions together give each (`Holder`, `MPTokenIssuanceID`) at most 
 
 #### 6.5.1. Revoking Authorization
 
-If an `MPToken` exists for (`MPTokenIssuanceID`, `Holder`), creating the block clears `lsfMPTAuthorized` on it, if set, in the same transaction. This only has an effect on an issuance with `lsfMPTRequireAuth`, where it revokes the issuer's approval of the holder. While the block exists, the holding stays unauthorized: `MPTokenAuthorize` from the issuer fails with `tecTOKEN_BLOCKED` for a blocked holder ([Section 7.1](#71-failure-conditions)).
+If an `MPToken` exists for (`MPTokenIssuanceID`, `Holder`), creating the block clears `lsfMPTAuthorized` on it, if set, in the same transaction. This only has an effect on an issuance with `lsfMPTRequireAuth`, where it revokes the issuer's approval of the holder. While the block exists, the holding stays unauthorized: `MPTokenAuthorize` from the issuer fails with `tecTOKEN_BLOCKED` for a blocked holder ([Section 7.2](#72-failure-conditions)).
 
 A block does not lock the holding, and does not change its balance. A block stops a holding from being created ([Section 8](#8-creating-a-holding-for-a-blocked-account)); freezing a holding that already exists is what Lock is for (see [Section 10.4](#104-why-a-block-does-not-lock-an-existing-holding)). An issuer that needs to stop a blocked holder from moving an existing balance also sends `MPTokenIssuanceSet` with `tfMPTLock`, which it can submit in the same `Batch` as the `TokenBlock` to apply both atomically. Lock and unlock work on a blocked holder exactly as on any other holder. Removing the balance is done with the existing `Clawback` transaction, if the issuance has `lsfMPTCanClawback`.
 
@@ -527,9 +527,13 @@ Removing the block:
 
 ## 7. Transaction: `MPTokenAuthorize` (Modified)
 
-No fields are added. In this section, the holder is the `Account` sending the transaction when there is no `Holder` field (the holder opting in), and the `Holder` field when the issuer sends it.
+In this section, the holder is the `Account` sending the transaction when there is no `Holder` field (the holder opting in), and the `Holder` field when the issuer sends it.
 
-### 7.1. Failure Conditions
+### 7.1. Fields
+
+No fields are added or changed. For the complete list of fields, see the [`MPTokenAuthorize` transaction documentation](https://xrpl.org/docs/references/protocol/transactions/types/mptokenauthorize).
+
+### 7.2. Failure Conditions
 
 All existing failure conditions still apply. When the amendment is enabled:
 
@@ -545,13 +549,13 @@ This check is evaluated before every other protocol-level check, including the c
 - A blocked holder can still delete its `MPToken` to recover the reserve, subject to the existing conditions (zero balance, no escrowed amount, no confidential balance). This is allowed even if the issuer has locked the `MPToken`, which existing rules otherwise reject. It does not let the holder escape the lock, because the block prevents it from creating the `MPToken` again.
 - An issuer can still send `tfMPTUnauthorize` for a blocked holder. It has no further effect, since the block already revoked the authorization ([Section 6.5.1](#651-revoking-authorization)).
 
-### 7.2. State Changes
+### 7.3. State Changes
 
 On success, if the holder is opting in (no `Holder` field, no `tfMPTUnauthorize`), the issuance has `lsfMPTRequireAuth`, and a `TokenPreauth` entry exists for the holder, the new `MPToken` is created with `lsfMPTAuthorized`. The holder does not wait for a second issuer transaction.
 
 On an issuance without `lsfMPTRequireAuth`, a pre-authorization has no effect.
 
-### 7.3. Example JSON
+### 7.4. Example JSON
 
 A blocked account attempting to opt in. This fails with `tecTOKEN_BLOCKED`, and no `MPToken` is created:
 
