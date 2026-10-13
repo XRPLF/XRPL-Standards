@@ -41,4 +41,6 @@ Read existing review threads before submitting the review. Do not repeat an issu
 
 ## Note on symlinks
 
-`.ai-review/instructions.md`, `.claude/skills/xls-template-conformity`, and `.claude/skills/spec-from-rippled` are committed symlinks (git mode `120000`). If your view of the tree does not resolve them, they will look absent or look like one-line files containing a path. Do not report them as missing or malformed.
+`.ai-review/instructions.md` is a committed symlink (git mode `120000`). If your view of the tree does not resolve it, it will look absent or look like a one-line file containing a path. Do not report it as missing or malformed.
+
+The `.claude/skills/<name>/SKILL.md` files are deliberate stubs: `name` and `description` frontmatter, which Claude Code needs to discover the skill, plus one line pointing at `.agents/skills/<name>/SKILL.md`, which holds the procedure. Do not report them as incomplete, and do not propose removing the frontmatter.
