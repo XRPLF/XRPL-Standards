@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-15
+  updated: 2026-10-13
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
