@@ -407,13 +407,13 @@ XLS-0065-single-asset-vault/
   65.1/README.md                              # LendingProtocolV1_1 index
   65.1/65.1.1-unmodifiable-vault-fields.md
   65.1/65.1.2-vault-deletion-memo.md
-  65.1/65.1.3-vault-cash-basis.md
+  65.1/65.1.4-closed-ended-vault.md
   65.2/README.md                              # fixCleanup3_4_0, all Vault deltas
 ```
 
-Each nested document uses the Draft Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). Preamble `title` remains at most 44 characters and must not include an `XLS` prefix or number. The H1 includes the patch number (`# 65.1.1 Unmodifiable Vault Fields`, `# 65.2 Vault Accounting and Cap Invariants`). Headings in the Specification are numbered (`###### 3.1.6.2.2 Flags`, not `###### Flags`). Long invariant lists are numbered lists.
+Each nested patch document (`N.k/README.md` of a fix amendment, or an `N.k.m` file) uses the Draft Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). A feature index uses the index sections above. Preamble `title` remains at most 44 characters and must not include an `XLS` prefix or number. The H1 of every nested document, index or patch, includes the patch number (`# 65.1.1 Unmodifiable Vault Fields`, `# 65.2 Vault Accounting and Cap Invariants`). Headings in the Specification are numbered (`###### 3.1.6.2.2 Flags`, not `###### Flags`). Long invariant lists are numbered lists.
 
-A feature patch that is defined in terms of another patch (for example cash-basis Loan accounting that reads `Vault.LEVersion`) sets `requires:` to a relative link to that document.
+A feature patch that is defined in terms of another patch (for example cash-basis Loan accounting that reads `Vault.LEVersion`) names that patch in `requires:` by number (`requires: XLS-65.1.3`). The preamble is a `<pre>` block, so a markdown link there does not render.
 
 The parent `README.md` remains the live specification:
 
