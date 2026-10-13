@@ -6,10 +6,10 @@
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/192
   status: Draft
   category: Amendment
-  requires: [XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md), [XLS-65.2](../65.2/README.md)
+  requires: XLS-65.1.4, XLS-65.2
   implementation: https://github.com/XRPLF/rippled/pull/6383
   created: 2026-10-01
-  updated: 2026-10-01
+  updated: 2026-10-13
 </pre>
 
 # Vault Donation
@@ -28,7 +28,7 @@ The Owner needs a way to restore backing for the existing shareholders. A deposi
 
 This patch changes the parent [XLS-65](../README.md) sections named below. All other parent behavior is unchanged. Everything in this patch is gated by the `LendingProtocolV1_2` amendment (`featureLendingProtocolV1_2`).
 
-A `VaultDeposit` with `tfVaultDonate` set is a **donation**. `tfVaultDonate` has no effect unless `LendingProtocolV1_2` is enabled.
+A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProtocolV1_2` is enabled, a `VaultDeposit` with `tfVaultDonate` set fails with `temINVALID_FLAG` (§3.1.2.1).
 
 ### 3.1 Transaction: `VaultDeposit`
 
@@ -63,7 +63,7 @@ Items 16 and 17 are numbered for reference only. They are evaluated in `preclaim
 Change these existing conditions for a donation:
 
 - The `LendingProtocolV1_1` phase check, which fails a deposit to a closed-ended Vault outside `Subscription` or `NoPhase` ([XLS-65.1.4](../65.1/65.1.4-closed-ended-vault.md) §3.4.1), is skipped. A donation succeeds in the `Subscription`, `Investment` and `Redemption` phases.
-- No shares are computed, so the "computed number of shares is zero" check (item 11) does not apply.
+- No shares are computed, so the "computed number of shares is zero" check (item 11) and the "arithmetic overflow during share calculation" check (item 13) do not apply.
 
 All other conditions apply to a donation unchanged, including the asset, freeze, lock, authorization, balance and `Vault.AssetsMaximum` checks. A donation that would take `Vault.AssetsTotal` above a non-zero `Vault.AssetsMaximum` fails with `tecLIMIT_EXCEEDED`. On a private Vault the Owner is always authorized, so the permissioned-domain check never fails a donation.
 
@@ -72,7 +72,7 @@ All other conditions apply to a donation unchanged, including the asset, freeze,
 Replace the share computation and transfer of parent [§3.5.3](../README.md#353-state-changes) for a donation:
 
 1. With `fixCleanup3_2_0` enabled, `Amount` is first rounded down to the Vault's `AssetsTotal` scale, as for an ordinary deposit. $\Delta_{asset}$ starts as that amount. It is not derived from a share count, so there is no share-to-asset round trip.
-2. With `fixCleanup3_4_0` enabled, $\Delta_{asset}$ is rounded down to the posterior `Vault.AssetsTotal` scale, and the transaction fails with `tecPRECISION_LOSS` if the depositor's balance would round to zero, exactly as for an ordinary deposit ([XLS-65.2](../65.2/README.md) §3.1.2.3).
+2. With `fixCleanup3_4_0` enabled, $\Delta_{asset}$ is rounded down to the posterior `Vault.AssetsTotal` scale, and the transaction fails with `tecPRECISION_LOSS` if that non-zero $\Delta_{asset}$ rounds down to zero, so the donation would credit the Vault nothing, exactly as for an ordinary deposit ([XLS-65.2](../65.2/README.md) §3.1.2.3).
 3. $\Delta_{asset}$ is debited from the Owner and credited to the Vault. `Vault.AssetsTotal` and `Vault.AssetsAvailable` increase by $\Delta_{asset}$ (parent §3.5.3 items 4 to 7).
 4. No shares are minted or transferred, so parent §3.5.3 items 1 to 3 do not apply. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is unchanged.
 
