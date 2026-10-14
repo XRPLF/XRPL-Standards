@@ -187,9 +187,7 @@ jobs:
         id: added-files
         uses: tj-actions/changed-files@v47
         with:
-permissions:
-  contents: read
-  pull-requests: read
+          use_rest_api: true
           files: |
             XLS-draft*/README.md
             xls-draft*/README.md
