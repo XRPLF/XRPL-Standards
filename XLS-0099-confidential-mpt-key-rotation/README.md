@@ -19,15 +19,7 @@ This amendment extends XLS-0096 (Confidential Transfers for Multi-Purpose Tokens
 
 ## 2. Motivation
 
-XLS-0096 encrypts MPT balances using ElGamal keys held by issuers, holders, and auditors. These keys are independent of XRPL signing keys and currently have no rotation mechanism. This gap creates three unresolved operational risks:
-
-First, a compromised ElGamal key - at any role - gives an attacker persistent read access to confidential balances with no remediation path.
-
-Second, operations teams change over time. XRPL signing key rotation is handled by existing primitives (`SetRegularKey`, `SignerListSet`). No equivalent exists for ElGamal keys held by any role.
-
-Third, auditor key loss or a change in supervisory authority breaks regulatory visibility into all holder balances with no recovery path. For regulated issuances operating under compliance obligations, the inability to rotate the auditor key is a go-live blocker.
-
-This amendment defines the rotation and recovery mechanisms required to address all three scenarios across all three roles. It directly addresses the limitation acknowledged in XLS-0096 FAQ A.6: "If a holder loses their ElGamal private key, they will be unable to decrypt or spend their confidential balances, which will remain valid on-ledger but are effectively locked and irrecoverable by that holder."
+XLS-0096 encrypts MPT balances using ElGamal keys held by issuers, holders, and auditors. This amendment adds rotation for these keys, allowing participants to rotate keys as part of routine key management, respond to organizational or auditor changes, and recover from key loss.
 
 ## 3. Definitions & Terminology
 
