@@ -534,6 +534,7 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 11. Holder mode: `sfConfidentialBalanceInbox` is absent or is not the canonical encrypted zero — the holder must run `ConfidentialMPTMergeInbox` first. (`tecNO_PERMISSION`)
 12. Issuer mode: `ZKProof` fails the compact Chaum-Pedersen equality proof verification. (`tecBAD_PROOF`)
 13. Holder mode: `ZKProof` fails the cross-key equality proof verification. (`tecBAD_PROOF`)
+14. Both-mirrors mode: the first component of (`AuditorEncryptedAmount`) does not equal the first component of (`IssuerEncryptedAmount`); the two new ciphertexts must share identical first components when produced under shared randomness. (`tecBAD_PROOF`)
 
 #### 5.4.4. State Changes
 
@@ -609,7 +610,7 @@ Every variant proves the same thing: that the new ciphertext or ciphertexts encr
 
 Two limits on what these proofs establish are worth stating. Holder-mode proofs never reference the mirror they overwrite, so they are equivalent to issuer mode only under the XLS-0096 invariant that a holder's issuer mirror encodes the same balance as spending plus inbox; that invariant is a hypothesis of these proofs, not a consequence. And no variant references a holder's prior auditor mirror: an auditor mirror migration is proved equal to the issuer's decryption of the issuer mirror or to the holder's spending balance, never to the auditor mirror it replaces.
 
-**Shared randomness**: the two AND-composed variants reuse a single randomness value for both new ciphertexts, which is what keeps them at 128 bytes rather than 160. It also forces the two ciphertexts to share an identical first component, and the sigma equations do not themselves constrain the auditor one, so the transaction MUST be rejected when the two do not match. The randomness MUST be sampled freshly for every transaction and every holder; reusing one value across a migration batch exposes every pairwise balance difference on-ledger.
+**Shared randomness**: the two AND-composed variants reuse a single randomness value for both new ciphertexts, which is what keeps them at 128 bytes rather than 160. It also forces the two ciphertexts to share an identical first component, and the sigma equations do not themselves constrain the auditor one, so the transaction MUST be rejected when the two do not match. The randomness MUST be sampled freshly for every transaction and every holder; reusing one value across a migration batch exposes every pairwise balance difference on-ledger. 
 
 ### 5.5. Transaction: `ConfidentialMPTHolderKeyUpdate`
 
@@ -746,13 +747,13 @@ Cancel mode:
 
 Rotation and recovery modes each carry a proof, bound to the transaction by the context hash of Section 4.8. Cancel mode carries none.
 
-**Rotation mode** establishes three statements under one Fiat-Shamir challenge: that the submitted `ConfidentialBalanceSpending` encrypts under the new `HolderEncryptionKey` the same value the on-ledger spending balance encrypts under the old one, that the submitted `ConfidentialBalanceInbox` does the same for the inbox, and that the submitter holds the secret key for the new `HolderEncryptionKey`. Both anchors are decrypted with the old holder secret key, so only a holder who can still read their own balances can rotate.
+**Rotation mode** establishes three statements under one Fiat-Shamir challenge: that the submitted `ConfidentialBalanceSpending` encrypts under the new `HolderEncryptionKey` the same value the on-ledger spending balance encrypts under the old one, that the submitted `ConfidentialBalanceInbox` does the same for the inbox, and that the submitter holds the secret key for the new `HolderEncryptionKey`. Both anchors are decrypted with the old holder secret key, so only a holder who can still read their own balances can rotate. The rotation proof is 224 bytes.
 
 Both balances are covered because both are encrypted under the holder key. Migrating the spending balance alone would leave the inbox readable only under the key being abandoned, stranding any amount received but not yet merged.
 
 The possession statement is what separates this proof from the mirror migrations of Section 5.4.6. There the new ciphertext is produced under a key already registered on the `MPTokenIssuance`, so possession is established by the registration itself. Here the target key is chosen by the submitter, and without the statement a holder could re-encrypt their balance under a key nobody holds, placing it permanently beyond reach.
 
-**Recovery mode** establishes possession of the secret key for the `HolderEncryptionKey` being registered as `RecoveryKey`. No balance is read, re-encrypted, or referenced, which is why recovery mode leaves every balance field unchanged (Section 5.5.5).
+**Recovery mode** establishes possession of the secret key for the `HolderEncryptionKey` being registered as `RecoveryKey`. No balance is read, re-encrypted, or referenced, which is why recovery mode leaves every balance field unchanged (Section 5.5.5). The recovery proof is 64 bytes.
 
 ### 5.6. Transaction: `ConfidentialMPTRecoverBalance`
 
@@ -830,7 +831,7 @@ The proof establishes that the submitted `ConfidentialBalanceSpending` encrypts 
 
 The anchor is the issuer mirror, decrypted with the issuer secret key. That is what lets the issuer reconstruct a balance for a holder who can no longer read their own, and it is also why recovery cannot proceed without the issuer: no other party can decrypt that ciphertext. Condition 5 of Section 5.6.3.2 requires the mirror to be at the current issuer key epoch, so the anchor is always under the registered `IssuerEncryptionKey` and no historical key resolution arises here. An issuer holding a stale mirror migrates it with `ConfidentialMPTMirrorUpdate` first.
 
-The proof covers the spending balance only. The inbox is not proved because it is not reconstructed: the issuer mirror already encodes the holder's total balance, so writing that total into spending and setting the inbox to the canonical encrypted zero (Section 5.6.4) preserves the holder's balance without double counting.
+The proof covers the spending balance only. The inbox is not proved because it is not reconstructed: the issuer mirror already encodes the holder's total balance, so writing that total into spending and setting the inbox to the canonical encrypted zero (Section 5.6.4) preserves the holder's balance without double counting. The proof is 128 bytes.
 
 ### 5.7. Transaction: `ConfidentialMPTConvert`
 
