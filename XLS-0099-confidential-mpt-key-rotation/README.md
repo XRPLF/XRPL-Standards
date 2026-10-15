@@ -534,7 +534,7 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 11. Holder mode: `sfConfidentialBalanceInbox` is absent or is not the canonical encrypted zero — the holder must run `ConfidentialMPTMergeInbox` first. (`tecNO_PERMISSION`)
 12. Issuer mode: `ZKProof` fails the compact Chaum-Pedersen equality proof verification. (`tecBAD_PROOF`)
 13. Holder mode: `ZKProof` fails the cross-key equality proof verification. (`tecBAD_PROOF`)
-14. Both-mirrors mode: the first component of (`AuditorEncryptedAmount`) does not equal the first component of (`IssuerEncryptedAmount`); the two new ciphertexts must share identical first components when produced under shared randomness. (`tecBAD_PROOF`)
+14. Both-mirrors mode: the first component of `AuditorEncryptedAmount` does not equal the first component of `IssuerEncryptedAmount`; the two new ciphertexts must share identical first components when produced under shared randomness. (`tecBAD_PROOF`)
 
 #### 5.4.4. State Changes
 
