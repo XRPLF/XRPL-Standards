@@ -529,31 +529,36 @@ enum class FirewallAction { Check, Allow, Block };
 
 The classification is a member of `TxSettings`, declared per transaction in
 `transactions.macro` alongside `delegable`, `amendment` and `privileges`. It
-defaults to `Allow`, so only the transactions that differ name it.
+defaults to `Block`, so only the transactions that differ name it.
 
-- **Allow** — the firewall does not inspect the transaction. This is the default
-  and covers 41 of the 85 transaction types, including `AccountSet`,
-  `SetRegularKey`, `SignerListSet`, `TicketCreate`, `TrustSet`, `OfferCancel`,
-  `DepositPreauth`, `CheckCash`, `CheckCancel`, `PaymentChannelClaim`, the
-  credential, DID, oracle, permissioned-domain and MPT issuance transactions, and
-  the firewall's own `FirewallSet`, `FirewallDelete` and `WithdrawPreauth`.
+- **Allow** — the firewall does not inspect the transaction. Forty of the 85
+  transaction types name it: `AccountSet`, `SetRegularKey`, `SignerListSet`,
+  `TicketCreate`, `TrustSet`, `OfferCancel`, `DepositPreauth`, `CheckCash`,
+  `CheckCancel`, `PaymentChannelClaim`, `AccountDelete`, `NFTokenBurn`,
+  `NFTokenCancelOffer`, `NFTokenModify`, `Clawback`, `AMMClawback`,
+  `ConfidentialMPTClawback`, `LedgerStateFix`, `DelegateSet`, `Batch`,
+  `SponsorshipSet`, the credential, DID, oracle, permissioned-domain and MPT
+  issuance transactions, the pseudo-transactions, and the firewall's own
+  `FirewallSet`, `FirewallDelete` and `WithdrawPreauth`.
 - **Check** — the destination must be preauthorized. Eleven types: `Payment`,
   `EscrowCreate`, `EscrowFinish`, `EscrowCancel`, `CheckCreate`, `NFTokenMint`,
   `NFTokenCreateOffer`, `PaymentChannelCreate`, `PaymentChannelFund`,
   `SponsorshipTransfer`, `ConfidentialMPTMergeInbox`.
 - **Block** — rejected outright while a firewall is set, because the transaction
-  moves value somewhere no destination field names. Thirty-three types: the
-  `AMM*` family, the `Vault*` family, the `Loan*` and `LoanBroker*` families,
-  `ConfidentialMPTSend`, `ConfidentialMPTConvert`, `ConfidentialMPTConvertBack`,
-  `OfferCreate`, and the `XChain*` family.
+  moves value somewhere no destination field names. This is the default and
+  covers 34 types: the `AMM*` family, the `Vault*` family, the `Loan*` and
+  `LoanBroker*` families, `ConfidentialMPTSend`, `ConfidentialMPTConvert`,
+  `ConfidentialMPTConvertBack`, `OfferCreate`, the `XChain*` family, and
+  `NFTokenAcceptOffer`, because accepting an offer pays or hands an NFT to the
+  offer's owner, whom no destination field names.
 
 A `Check` transaction is additionally rejected when it carries `Paths`, because a
 path can deliver to an account the destination field does not name, and when it
 names no destination at all.
 
-Because `Allow` is the default, a transaction type added to the protocol later is
-unguarded until it is classified. Any new type that can move value away from an
-account must be given `Check` or `Block` when it is introduced.
+Because `Block` is the default, a transaction type added to the protocol later is
+rejected for a firewalled account until it is classified; a type that moves no
+value away from the account is given `Allow` when it is introduced.
 
 ## 5. Rationale
 
