@@ -464,13 +464,15 @@ Transactor::checkFirewall(PreclaimContext const& ctx)
         return tefFIREWALL_BLOCK;  // Fee exceeds maximum allowed
 
     // Check transaction classification
-    auto const txType = ctx.tx.getFieldU16(sfTransactionType);
-
-    if (Firewall::getInstance().isAllowed(txType))
-        return tesSUCCESS;  // Transaction type is allowed
-
-    if (Firewall::getInstance().isBlocked(txType))
-        return tefFIREWALL_BLOCK;  // Transaction type is blocked
+    switch (firewallAction(ctx.tx.getTxnType()))
+    {
+        case FirewallAction::Allow:
+            return tesSUCCESS;  // Transaction type is allowed
+        case FirewallAction::Block:
+            return tefFIREWALL_BLOCK;  // Blocked, as is every unclassified type
+        case FirewallAction::Check:
+            break;  // Destination checked below
+    }
 
     // Transaction requires check
     // Special handling for Payment transactions
@@ -538,7 +540,7 @@ defaults to `Block`, so only the transactions that differ name it.
   `NFTokenCancelOffer`, `NFTokenModify`, `Clawback`, `AMMClawback`,
   `ConfidentialMPTClawback`, `LedgerStateFix`, `DelegateSet`, `Batch`,
   `SponsorshipSet`, the credential, DID, oracle, permissioned-domain and MPT
-  issuance transactions, the pseudo-transactions, and the firewall's own
+  issuance transactions, `MPTokenAuthorize`, the pseudo-transactions, and the firewall's own
   `FirewallSet`, `FirewallDelete` and `WithdrawPreauth`.
 - **Check** — the destination must be preauthorized. Eleven types: `Payment`,
   `EscrowCreate`, `EscrowFinish`, `EscrowCancel`, `CheckCreate`, `NFTokenMint`,
@@ -546,7 +548,7 @@ defaults to `Block`, so only the transactions that differ name it.
   `SponsorshipTransfer`, `ConfidentialMPTMergeInbox`.
 - **Block** — rejected outright while a firewall is set, because the transaction
   moves value somewhere no destination field names. This is the default and
-  covers 34 types: the `AMM*` family, the `Vault*` family, the `Loan*` and
+  covers 34 types: the `AMM*` family except `AMMClawback`, the `Vault*` family, the `Loan*` and
   `LoanBroker*` families, `ConfidentialMPTSend`, `ConfidentialMPTConvert`,
   `ConfidentialMPTConvertBack`, `OfferCreate`, the `XChain*` family, and
   `NFTokenAcceptOffer`, because accepting an offer pays or hands an NFT to the
