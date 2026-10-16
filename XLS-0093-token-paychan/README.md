@@ -75,6 +75,8 @@ These invariants apply to every `PayChannel` whose `Amount` is not XRP, once `To
 - `<PayChannel>.Balance <= <PayChannel>'.Balance` (the paid-out balance only increases).
 - If `Amount` is an IOU, the difference `<PayChannel>'.Amount - <PayChannel>'.Balance` is exact. An IOU difference `a - b` is exact only if adding `b` back to it gives `a` and subtracting it from `a` gives `b`. XRP and MPT differences are integers and always exact.
 
+Once `TokenPaychan` is enabled, for every `PayChannel`, XRP channels included: `<PayChannel>.Amount` and `<PayChannel>'.Amount` are the same asset (currency and issuer, or `MPTokenIssuanceID`); a channel's asset never changes.
+
 ### 3.2.3. Example JSON
 
 ```json
