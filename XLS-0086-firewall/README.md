@@ -448,10 +448,12 @@ The firewall check is implemented in the `Transactor::checkFirewall` method whic
 NotTEC
 Transactor::checkFirewall(PreclaimContext const& ctx)
 {
-    // Get the account (handle delegation)
-    auto const account = ctx.tx.isFieldPresent(sfDelegate)
-        ? ctx.tx.getAccountID(sfDelegate)
-        : ctx.tx.getAccountID(sfAccount);
+    if (!ctx.view.rules().enabled(featureFirewall))
+        return tesSUCCESS;
+
+    // The account whose value moves; a delegated transaction is checked
+    // against the delegating account, not the delegate
+    auto const account = ctx.tx.getAccountID(sfAccount);
 
     // Check if firewall exists
     auto const sleFirewall = ctx.view.read(keylet::firewall(account));
