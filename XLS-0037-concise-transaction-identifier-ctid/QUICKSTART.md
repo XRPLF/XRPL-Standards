@@ -15,7 +15,7 @@ The identifier is divided into three fields.
 | 0           | C       | 4           | Lead-in (ignore)                              |
 | 1-7         | XXXXXXX | 28          | Ledger Sequence                               |
 | 8-11        | YYYY    | 16          | Transaction index (offset) within that ledger |
-| 12-16       | ZZZZ    | 16          | Network ID.                                   |
+| 12-15       | ZZZZ    | 16          | Network ID.                                   |
 
 Reference implementations are available for several languages. Click below to dive in.
 
