@@ -518,6 +518,7 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 5. Neither `IssuerEncryptedAmount` nor `AuditorEncryptedAmount` is present. (`temMALFORMED`)
 6. Any present `IssuerEncryptedAmount` or `AuditorEncryptedAmount` has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 7. `ZKProof` length is not exactly the expected proof size for the detected mode. (128 bytes in every mode - see Section 11) (`temMALFORMED`)
+8. Both `IssuerEncryptedAmount` and `AuditorEncryptedAmount` are present, and their first components are not identical; under shared randomness the two ciphertexts must share the same first component. (`temMALFORMED`)
 
 ##### 5.4.3.2. Protocol-Level Failures
 
@@ -534,7 +535,6 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 11. Holder mode: `sfConfidentialBalanceInbox` is absent or is not the canonical encrypted zero — the holder must run `ConfidentialMPTMergeInbox` first. (`tecNO_PERMISSION`)
 12. Issuer mode: `ZKProof` fails the compact Chaum-Pedersen equality proof verification. (`tecBAD_PROOF`)
 13. Holder mode: `ZKProof` fails the cross-key equality proof verification. (`tecBAD_PROOF`)
-14. Both-mirrors mode: the first component of `AuditorEncryptedAmount` does not equal the first component of `IssuerEncryptedAmount`; the two new ciphertexts must share identical first components when produced under shared randomness. (`tecBAD_PROOF`)
 
 #### 5.4.4. State Changes
 
