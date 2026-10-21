@@ -8,7 +8,7 @@
     category: Amendment
     requires: XLS-33
     created: 2026-01-15
-    updated: 2026-09-10
+    updated: 2026-10-22
 </pre>
 
 # Confidential Transfers for Multi-Purpose Tokens
@@ -1081,6 +1081,15 @@ Today's design relies on EC-ElGamal over secp256k1, which is not considered quan
 ### A.14 Why require explicit Merge instead of eliminating it in future?
 
 The explicit MergeInbox transaction is currently required because it deterministically solves the issue of "staleness," ensuring that all received funds are consolidated before spending. While issuers and wallets might prefer less operational overhead, the current design offers clear, verifiable guarantees. Future designs may revisit whether we can eliminate this explicit merge requirement.
+
+### A.15 Can an issuance use both confidential balances and a transfer fee?
+
+No. As specified in §6.4, an issuance cannot have both a non-zero `TransferFee` and `lsfMPTCanHoldConfidentialBalance` enabled. Issuers should note that this choice is effectively permanent:
+
+- Once `lsfMPTCanHoldConfidentialBalance` is enabled it cannot be disabled, so the issuance can never charge a non-zero `TransferFee` afterwards.
+- An issuance that currently charges a `TransferFee` must reduce it to zero before confidential balances can be enabled. This is only possible if the transfer fee was not declared immutable; otherwise the issuer would need to create a new issuance.
+
+Issuers that expect to charge a percentage-based fee on transfers should decide before enabling confidential balances. (See §14.4 for the full rationale.)
 
 # Acknowledgements
 
