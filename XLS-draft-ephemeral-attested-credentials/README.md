@@ -1,115 +1,503 @@
 <pre>
-  title: Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
-  description: Hardware-attested short-TTL credentials, in-place rollover, and zero-latency consensus-enforced venue ejection for autonomous agents on XRPL
-  author: Walter Hawkins <contact@correntelabs.com>, Corrente Applied Cryptography Group
-  status: Draft
+  title: Ephemeral Attested Credentials (E-APD)
+  description: Hardware-attested short-TTL credentials, in-place renewal rollover, and deterministic venue ejection for XLS-80 Permissioned Domains.
+  author: Corrente Applied Cryptography Group (@whawk46)
   category: Amendment
-  amendment: featureEphemeralCredentials
+  status: Draft
+  proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/656
   requires: [XLS-70](../XLS-0070-credentials/README.md), [XLS-80](../XLS-0080-permissioned-domains/README.md)
   created: 2026-10-06
-  updated: 2026-10-07
+  updated: 2026-10-22
 </pre>
 
-# XLS-draft: Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
+# Ephemeral Attested Credentials & Enclave-Gated Domains (E-APD)
 
-## Abstract
-This standard defines an architecture for **Ephemeral Attested Permissioned Domains (E-APD)** on the XRP Ledger, introducing the `featureEphemeralCredentials` amendment. By combining hardware-isolated Trusted Execution Environments (Intel TDX / AMD SEV-SNP / AWS Nitro Enclaves) with short Time-To-Live (TTL) cryptographic credentials (60 to 3,600 seconds, nominally 300 seconds), in-place renewal rollover, and consensus-enforced validation, E-APD enables real-time compliance enforcement, automated mandate auditing, and **deterministic, bounded venue ejection** for autonomous AI agents, algorithmic market makers, and institutional participants on XRPL.
+## 1. Abstract
 
-## 1. Motivation
+This standard defines **Ephemeral Attested Permissioned Domains (E-APD)** on the XRP Ledger, gated by the `featureEphemeralCredentials` amendment. It extends [XLS-70 (`Credentials`)](../XLS-0070-credentials/README.md) with a transaction flag (`tfEphemeral`, `0x00010000`) on `CredentialCreate` and a corresponding ledger entry flag (`lsfEphemeral`, `0x00020000`) on the `Credential` ledger object (`ltCREDENTIAL`, `0x0081`). When `tfEphemeral` is specified, `CredentialCreate` enforces a bounded Time-To-Live (TTL) window ($60\text{s} \le \text{Expiration} - T_{\text{close}} \le 3600\text{s}$) and permits the credential `Issuer` to perform **in-place renewal rollovers** that monotonically advance `sfExpiration` and update `sfURI` on an existing ephemeral `Credential` entry while preserving the `Subject`'s prior `lsfAccepted` (`0x00010000`) state and owner-reserve accounting. By combining hardware-isolated clearing enclaves with short-TTL credentials and unilateral issuer heartbeat renewals, E-APD provides deterministic, front-running-immune venue ejection across [XLS-80 (`PermissionedDomains`)](../XLS-0080-permissioned-domains/README.md), [XLS-81 (`PermissionedDEX`)](../XLS-0081-permissioned-dex/README.md), and [XLS-66 (`LendingProtocol`)](../XLS-0066-lending-protocol/README.md).
 
-The introduction of [XLS-70 (Credentials)](../XLS-0070-credentials/README.md) and [XLS-80 (Permissioned Domains)](../XLS-0080-permissioned-domains/README.md) on the XRP Ledger establishes native primitives for institutional compliance and permissioned decentralized exchange (DEX) trading. However, the existing credential revocation lifecycle suffers from critical structural vulnerabilities when applied to high-frequency autonomous AI agents:
+## 2. Motivation
 
-1. **The Revocation Latency Gap**: Conventional credentials are static and long-lived (issued for weeks, months, or years). If an autonomous trading agent experiences an invariant violation, prompt injection exploit, or runaway liquidity drain, the compliance issuer must broadcast an on-chain `CredentialDelete` transaction.
-2. **The Front-Running Attack Vector**: An adversarial or compromised agent monitoring the XRPL mempool can detect an incoming `CredentialDelete` transaction and immediately front-run it with higher fee escalations, executing unauthorized swaps or draining liquidity pools before revocation finality.
-3. **Mempool & Network Congestion Risk**: During periods of high network activity or fee spikes, revocation transactions can be delayed across multiple ledgers.
+The introduction of [XLS-70 (`Credentials`)](../XLS-0070-credentials/README.md) and [XLS-80 (`PermissionedDomains`)](../XLS-0080-permissioned-domains/README.md) establishes native on-ledger compliance primitives for regulated financial markets. However, baseline XLS-70 credentials were designed around static, long-lived attestations (such as annual KYC/AML onboarding) and exhibit four structural limitations when applied to intraday institutional risk management, prime-brokerage credit limits, regulated market makers, and bounded programmatic execution:
+
+1. **The Reactive Revocation Latency Gap**: Under baseline XLS-70, credentials are long-lived. If a permissioned market participant breaches an intraday margin limit, credit threshold, or regulatory mandate, the issuer must construct, sign, and broadcast a reactive `CredentialDelete` transaction.
+2. **Mempool Front-Running Exposure**: An adversarial or malfunctioning trading engine monitoring the peer-to-peer transaction broadcast layer can observe an incoming `CredentialDelete` transaction and front-run it via open-ledger fee escalation (`FeeLevel`), draining liquidity in an XLS-81 `PermissionedDEX` or initiating an XLS-66 `LoanSet` before the revocation achieves consensus finality.
+3. **Congestion & Fee-Spike Delay**: During flash crashes or ledger fee-escalation surges, a reactive `CredentialDelete` transaction can be queued in `TxQ` across multiple ledgers precisely when immediate venue containment is required.
+4. **Why XLS-56 `Batch` (`CredentialDelete` + `CredentialCreate`) Cannot Substitute for In-Place Rollover**: Under baseline XLS-70, `CredentialCreate` on an existing `(Issuer, Subject, CredentialType)` keylet fails with `tecDUPLICATE`. If an issuer attempts to rotate an expiring credential by submitting `[CredentialDelete, CredentialCreate]` inside an [XLS-56 `Batch`](../XLS-0056-batch/README.md), deleting the existing `Credential` entry **destroys the `lsfAccepted` (`0x00010000`) flag**. Because XLS-70 requires `Subject` to sign `CredentialAccept` to set `lsfAccepted`, and because XLS-80 `PermissionedDomain` validation ignores unaccepted credentials (`!(sleCred->getFlags() & lsfAccepted)`), an issuer-only `[CredentialDelete, CredentialCreate]` batch immediately revokes the participant's domain access until the `Subject` co-signs a new `CredentialAccept`. Requiring every institutional counterparty to co-sign a multi-account `Batch` every few minutes introduces continuous 24/7 hot-key co-signing overhead, doubles signature verification fees, and causes owner-reserve thrashing between `Subject` and `Issuer`.
 
 ### The Solution: Inverting the Revocation Paradigm
-Instead of issuing long-lived credentials and revoking them reactively, **E-APD inverts the architecture**:
-* Credentials are issued with an **ultra-short TTL** (bounded between 60 and 3,600 seconds; nominally 300 seconds / 5 minutes).
-* An off-chain hardware enclave (Intel TDX / AMD SEV-SNP) continuously monitors agent invariants, trade telemetry, risk parameters, and budget mandates.
-* As long as all invariants hold, the enclave automatically issues an in-place cryptographic renewal before the active TTL elapses.
-* If an agent violates policy, **the enclave halts renewal**.
-* Once the remaining TTL elapses ($\le 300$ seconds bounded worst-case latency), the credential expires naturally at L1 consensus, and any subsequent transaction by the agent within permissioned domains immediately fails with `tecNO_PERMISSION`.
-* **Accelerated Immediate Ejection**: If instant venue removal is required before the remaining TTL expires, the enclave issuer may additionally broadcast an explicit `CredentialDelete`, preserving the standard immediate revocation option while providing a hard consensus-enforced ceiling on exposure even if the network is completely congested.
 
----
+Instead of issuing long-lived credentials and revoking them reactively, **E-APD inverts the revocation model**:
 
-## 2. Technical Specification
+- Credentials are created with `tfEphemeral` (`0x00010000`) and a **bounded short TTL** ($60\text{s} \le \text{TTL} \le 3600\text{s}$; nominally $300\text{s}$ / $5\text{ minutes}$).
+- The `Subject` accepts the credential **once** via standard XLS-70 `CredentialAccept`, setting `lsfAccepted` (`0x00010000`) and assuming the single `0.2 XRP` owner reserve.
+- An off-chain **Hardware-Attested Clearing Enclave** continuously evaluates intraday margin, bilateral net exposure, and execution mandates.
+- While all invariants hold, the `Issuer` periodically submits `CredentialCreate` with `tfEphemeral` (e.g., every $180\text{s}$), performing an **in-place renewal rollover** that advances `sfExpiration` and updates `sfURI` while preserving `lsfAccepted` without requiring a new `CredentialAccept` signature from `Subject`.
+- If a risk or compliance invariant is breached, **the enclave halts renewal**. Once `parentCloseTime > Credential.Expiration`, consensus automatically rejects any subsequent domain-gated transaction by `Subject` with `tecNO_PERMISSION`—with **zero mempool front-running surface**.
+- If sub-TTL immediate removal is desired, `Issuer` (or `Subject`) can still broadcast an explicit `CredentialDelete` at any time.
 
-### 2.1 Amendment Gating: `featureEphemeralCredentials`
-All modifications defined in this specification are gated by the amendment `featureEphemeralCredentials`:
-* **Pre-Activation**: Any transaction specifying `tfEphemeral` (or unrecognized flag bits) fails with `temINVALID_FLAG`.
-* **Post-Activation**: The `tfEphemeral` flag (`0x00010000`) is recognized by `CredentialCreate` and enforced by consensus.
+## 3. Overview
 
-### 2.2 Transaction Types & Modifications
+### 3.1. Terminology
 
-#### 2.2.1 `CredentialCreate` Flags & Validation Rules
-Extends XLS-70 `CredentialCreate` with the following flag:
+- **Ephemeral Credential**: An XLS-70 `Credential` ledger entry created with `tfEphemeral` (`0x00010000`) and marked on-ledger with `lsfEphemeral` (`0x00020000`), enforcing a bounded TTL ($[60\text{s}, 3600\text{s}]$) and supporting unilateral issuer in-place renewal rollover.
+- **In-Place Renewal Rollover**: An atomic update to an existing `lsfEphemeral` `Credential` entry's `sfExpiration` and optional `sfURI` fields via `CredentialCreate` (`tfEphemeral`), preserving the object's keylet ID, `lsfAccepted` state, owner-directory nodes, and reserve allocation.
+- **Hardware-Attested Clearing Enclave**: A non-custodial isolated execution environment (e.g., Intel TDX / AMD SEV-SNP) holding the `Issuer` signing key in hardware-encrypted memory and binding each renewal heartbeat's `sfURI` field to a verifiable attestation or IETF SCITT (`RFC 9162`) receipt digest.
 
-| Flag Name | Flag Value | Description |
-| :--- | :--- | :--- |
-| `tfEphemeral` | `0x00010000` | Declares the credential as ephemeral. Requires mandatory bounded `Expiration` and enables in-place renewal rollover. |
+### 3.2. Lifecycle
 
-##### Validation Invariants for `tfEphemeral`:
-1. **Mandatory Expiration**: If `tfEphemeral` is set and the `Expiration` field is omitted, the transaction returns `temMALFORMED`.
-2. **Bounded TTL**: Let $T_{\text{close}}$ be the `close_time` of the parent validated ledger. The `Expiration` field MUST satisfy:
-   $$T_{\text{close}} + 60 \le \text{Expiration} \le T_{\text{close}} + 3600$$
-   If $\text{Expiration} < T_{\text{close}} + 60$ or $\text{Expiration} > T_{\text{close}} + 3600$, the transaction fails with `temINVALID_EXPIRATION`.
-3. **Hex-Encoded URI Blob**: The `URI` field represents a variable-length byte string (`Blob`, up to 256 bytes) containing the hex-encoded enclave attestation commitment.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        E-APD ARCHITECTURAL LIFECYCLE                   │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│   1. ONE-TIME ONBOARDING                                               │
+│      ├── Issuer submits CredentialCreate (tfEphemeral, TTL = 300s)     │
+│      │     -> Creates Credential SLE with lsfEphemeral (0x00020000)    │
+│      └── Subject submits CredentialAccept                              │
+│            -> Sets lsfAccepted (0x00010000); reserve moves to Subject  │
+│                                                                        │
+│   2. CONTINUOUS IN-PLACE RENEWAL HEARTBEAT (EVERY ~180s)               │
+│      ├── Hardware-Attested Clearing Enclave verifies margin & mandates │
+│      ├── Issuer submits CredentialCreate (tfEphemeral, New.Exp > Old)  │
+│      └── rippled updates sfExpiration & sfURI IN-PLACE                 │
+│            -> lsfAccepted (0x00010000) PRESERVED                       │
+│            -> 0 Subject signatures required; 0 reserve delta           │
+│                                                                        │
+│   3. DETERMINISTIC CONSENSUS EJECTION (ON INVARIANT BREACH)            │
+│      ├── Enclave halts renewal (or broadcasts CredentialDelete)        │
+│      ├── At parentCloseTime > sfExpiration:                            │
+│      │     -> XLS-80 / XLS-81 / XLS-66 checks return tecNO_PERMISSION  │
+│      └── Any account may submit CredentialDelete (O(1) reserve refund) │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-#### 2.2.2 In-Place Renewal Rollover Semantics
-Under XLS-70, a `Credential` object's ledger index is derived as `sha512Half(Issuer, Subject, CredentialType)`. Submitting a second `CredentialCreate` with identical parameters fails with `tecDUPLICATE`.
+### 3.3. Summary of Protocol Changes
 
-Under `featureEphemeralCredentials`, if `tfEphemeral` is set:
-1. **Rollover Detection**: If a `Credential` ledger entry with identical `(Issuer, Subject, CredentialType)` already exists on the ledger, AND the transaction `Account` matches the existing credential's `Issuer`:
-   - The transaction is processed as an **In-Place Renewal Rollover** rather than a duplicate.
-   - The `Expiration` must be greater than the existing `Expiration` (`New.Expiration > Existing.Expiration`). If not, returns `temINVALID_EXPIRATION`.
-   - The `Expiration` is updated in-place to the new validated timestamp.
-   - The `URI` (attestation quote digest) is updated to the new value.
-2. **Subject Auto-Acceptance Retention**: If the subject account previously accepted the credential via `CredentialAccept` (setting `lsfAccepted`), the `lsfAccepted` flag is preserved across ephemeral rollovers. The subject is NOT required to submit an additional `CredentialAccept` transaction for periodic renewals, allowing autonomous AI agents to operate gaslessly without ongoing credential management fees.
+- **Amendment Name**: `featureEphemeralCredentials` (`REGISTER_FEATURE(EphemeralCredentials, Supported::yes, VoteBehavior::DefaultNo)`).
+- **New Serialized Types (`SType`)**: None. Reuses existing XLS-70 fields (`sfIssuer`, `sfSubject`, `sfCredentialType`, `sfExpiration`, `sfURI`, `sfFlags`).
+- **Modified Ledger Entry**: `Credential` (`ltCREDENTIAL`, `0x0081`) — adds ledger flag `lsfEphemeral` (`0x00020000`).
+- **Modified Transaction**: `CredentialCreate` (`ttCREDENTIAL_CREATE`, `58`) — adds transaction flag `tfEphemeral` (`0x00010000`, `tfCredentialCreateMask = ~(tfUniversal | tfEphemeral)`).
+- **Unmodified Transactions**: `CredentialAccept` (`ttCREDENTIAL_ACCEPT`, `60`) and `CredentialDelete` (`ttCREDENTIAL_DELETE`, `59`) operate without wire changes.
+- **New RPC Methods**: None. `ledger_entry` and `account_objects` return the updated `Flags` (`lsfEphemeral | lsfAccepted = 0x00030000` / `196608`) automatically.
 
-#### 2.2.3 Deterministic Ledger Close & Cleanup Behavior
-1. **Execution-Time Consensus Validation**: When an account interacts with an XLS-80 `PermissionedDomain` (or XLS-81 `PermissionedDEX`), the validator checks whether:
-   $$\text{CurrentLedgerCloseTime} \le \text{Credential.Expiration}$$
-   If $\text{CurrentLedgerCloseTime} > \text{Credential.Expiration}$, the credential is treated as expired and returns `tecNO_PERMISSION`.
-2. **Permissionless Cleanup via `CredentialDelete`**: In accordance with XRPL's bounded $O(1)$ computation invariant per ledger close, expired credentials are not pruned automatically across unindexed ledgers. Instead, once $\text{CurrentLedgerCloseTime} > \text{Credential.Expiration}$, **any account on the network may submit a standard `CredentialDelete` transaction** to remove the expired ledger entry and return the owner reserve (0.2 XRP) to the issuer, preventing persistent ledger bloat without degrading consensus throughput.
+## 4. Ledger Entry: `Credential`
 
----
+This specification extends the XLS-70 `Credential` ledger entry (`ltCREDENTIAL`, `0x0081`).
 
-## 3. Wire Representation & Reference Implementation
+### 4.1. Object Identifier
 
-### 3.1 Transaction Wire Format Example
-In the XRP Ledger binary protocol and JSON RPC, `Blob` fields (including `CredentialType` and `URI`) are hex-encoded strings:
+Unchanged from XLS-70. The 32-byte keylet ID of a `Credential` ledger entry is derived in `keylet::credential`:
+
+$$\text{KeyletID} = \text{SHA-512Half}(\texttt{0x0044} \;\|\; \text{Issuer} \;\|\; \text{Subject} \;\|\; \text{CredentialType})$$
+
+Because in-place renewal rollover modifies `sfExpiration` and `sfURI` without altering `Issuer`, `Subject`, or `CredentialType`, the `Credential` keylet ID remains invariant across the entire lifecycle of an ephemeral credential.
+
+### 4.2. Fields
+
+All fields defined in XLS-70 for `Credential` are retained without binary serialization changes:
+
+| Field Name | `SField` Identifier | Type | Presence | Mutability under `lsfEphemeral` | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `LedgerEntryType` | `sfLedgerEntryType` | `UInt16` | Required | Immutable | `0x0081` (`Credential`). |
+| `Flags` | `sfFlags` | `UInt32` | Required | Mutable (`lsfAccepted` only) | Bitmask of `lsfAccepted` (`0x00010000`) and `lsfEphemeral` (`0x00020000`). |
+| `Subject` | `sfSubject` | `AccountID` | Required | Immutable | The account to which the credential is issued. |
+| `Issuer` | `sfIssuer` | `AccountID` | Required | Immutable | The account that created and renews the credential. |
+| `CredentialType` | `sfCredentialType` | `Blob` | Required | Immutable | 1 to 64 bytes identifying the credential type. |
+| `Expiration` | `sfExpiration` | `UInt32` | **Required** (when `lsfEphemeral` set) | **Mutable (Monotonic Increase)** | Ripple Epoch timestamp (`seconds since 2000-01-01T00:00:00Z`) after which the credential is invalid. |
+| `URI` | `sfURI` | `Blob` | Optional | **Mutable** | 1 to 256 bytes storing the attestation commitment or receipt URI; updated or cleared on rollover. |
+| `OwnerNode` | `sfOwnerNode` | `UInt64` | Required | Immutable | Directory node index in `Issuer`'s owner directory. |
+| `SubjectNode` | `sfSubjectNode` | `UInt64` | Required | Immutable | Directory node index in `Subject`'s owner directory. |
+| `PreviousTxnID` | `sfPreviousTxnID` | `Hash256` | Required | Mutable | Hash of the most recent transaction that modified this entry. |
+| `PreviousTxnLgrSeq` | `sfPreviousTxnLgrSeq` | `UInt32` | Required | Mutable | Ledger sequence of the most recent modifying transaction. |
+
+#### 4.2.1. Ledger Entry Flags (`LedgerFormats.h`)
+
+| Flag Name | Hex Value | Decimal Value | Set By | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `lsfAccepted` | `0x00010000` | `65536` | `CredentialAccept` | Indicates `Subject` has accepted the credential and holds the owner reserve obligation. |
+| `lsfEphemeral` | `0x00020000` | `131072` | `CredentialCreate` (`tfEphemeral`) | Indicates the credential is ephemeral, requires `sfExpiration`, and permits in-place renewal rollover by `Issuer`. |
+
+### 4.3. Ownership
+
+Unchanged from XLS-70. The `Credential` SLE is linked into the owner directories of both `Issuer` (`sfOwnerNode`) and `Subject` (`sfSubjectNode`). During an in-place renewal rollover, directory links are untouched.
+
+### 4.4. Reserves
+
+Unchanged from XLS-70:
+
+- **Unaccepted (`!(Flags & lsfAccepted)`)**: Consumes `1` owner reserve increment (`incReserve`) on `Issuer` (`AccountRoot[sfOwnerCount]`).
+- **Accepted (`Flags & lsfAccepted`)**: `CredentialAccept` decrements `Issuer`'s `OwnerCount` by `1` and increments `Subject`'s `OwnerCount` by `1`.
+- **In-Place Renewal Rollover**: Mutates the existing `Credential` SLE in-place (`view.update(sleCred)`). `OwnerCount` on both `Issuer` and `Subject` changes by **`0`**, and no reserve transfer occurs.
+
+### 4.5. Deletion
+
+Unchanged from XLS-70:
+
+1. **Voluntary Immediate Revocation / Surrender**: Either `Issuer` or `Subject` may submit `CredentialDelete` at any time (whether before or after `sfExpiration`), immediately removing the `Credential` SLE and decrementing `OwnerCount` on whichever account currently bears the reserve (`Subject` if `lsfAccepted` is set, otherwise `Issuer`).
+2. **Permissionless Post-Expiration Cleanup**: Once `view.info().parentCloseTime.time_since_epoch().count() > sleCred->at(sfExpiration)`, **any account** may submit `CredentialDelete` (`tesSUCCESS`) to delete the expired entry and release the owner reserve back to the reserve-bearing account (`Subject` or `Issuer`), preserving XRPL's bounded $O(1)$ per-ledger close execution model.
+
+### 4.6. Invariants
+
+The ledger invariant checker (`InvariantCheck.h` / `ValidCredentials`) enforces the following rules whenever a `Credential` SLE is inserted or modified:
+
+1. **Mandatory Expiration on Ephemeral Credentials**: If `(sleCred->getFlags() & lsfEphemeral) != 0`, `sleCred->isFieldPresent(sfExpiration)` MUST be `true`.
+2. **Flag Immutability Across Modes**:
+   - The `lsfEphemeral` bit (`0x00020000`) MUST NOT change between `orig` and `cur` on an existing `Credential` SLE (`(orig->getFlags() & lsfEphemeral) == (cur->getFlags() & lsfEphemeral)`).
+   - Once `lsfAccepted` (`0x00010000`) is set on `orig`, an in-place update MUST NOT clear `lsfAccepted` (`(orig->getFlags() & lsfAccepted) != 0 ==> (cur->getFlags() & lsfAccepted) != 0`).
+3. **Identity Tuple Immutability**: On any update to an existing `Credential` SLE, `sfIssuer`, `sfSubject`, and `sfCredentialType` MUST remain byte-identical to `orig`.
+
+### 4.7. RPC Name
+
+Unchanged from XLS-70 (`credential` in `ledger_entry` and `account_objects`).
+
+### 4.8. Example JSON
+
+```json
+{
+  "LedgerEntryType": "Credential",
+  "Account": "rAttestedClearingEnclave1111111111",
+  "Subject": "rInstitutionalParticipant402xxxxxx",
+  "CredentialType": "61747465737465645F7061727469636970616E74",
+  "Expiration": 845992500,
+  "URI": "783430323A6174746573743A76313A656E636C6176653A38616362653439",
+  "Flags": 196608,
+  "OwnerNode": "0000000000000000",
+  "SubjectNode": "0000000000000000",
+  "PreviousTxnID": "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879",
+  "PreviousTxnLgrSeq": 91452104,
+  "index": "48004829F915654A81B11C4AB8218D96F670209B58328A72314265189B421001"
+}
+```
+
+## 5. Transaction: `CredentialCreate`
+
+This specification extends XLS-70 `CredentialCreate` (`ttCREDENTIAL_CREATE`, `58`).
+
+### 5.1. Fields
+
+All fields from XLS-70 `CredentialCreate` are retained:
+
+| Field Name | `SField` Identifier | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `Account` | `sfAccount` | `AccountID` | Yes | The `Issuer` creating or renewing the credential. |
+| `Subject` | `sfSubject` | `AccountID` | Yes | The `Subject` receiving the credential. |
+| `CredentialType` | `sfCredentialType` | `Blob` | Yes | Non-empty hex blob (`1..64` bytes) identifying the credential class. |
+| `Expiration` | `sfExpiration` | `UInt32` | Conditional (**Required** if `tfEphemeral` is set) | Ripple Epoch expiration timestamp. |
+| `URI` | `sfURI` | `Blob` | No | Non-empty hex blob (`1..256` bytes). On rollover, if present, replaces `sleCred[sfURI]`; if omitted, retains existing `sleCred[sfURI]`. |
+| `Flags` | `sfFlags` | `UInt32` | No | Optional transaction flags (`tfEphemeral = 0x00010000`). |
+
+#### 5.1.1. Transaction Flags (`TxFlags.h`)
+
+```cpp
+// CredentialCreate flags:
+constexpr std::uint32_t tfEphemeral = 0x00010000;
+constexpr std::uint32_t tfCredentialCreateMask = ~(tfUniversal | tfEphemeral);
+constexpr std::uint32_t tfCredentialCreatePreEphemeralMask = ~tfUniversal;
+```
+
+#### 5.1.2. Constants
+
+```cpp
+// Bounded TTL parameters (in seconds) for tfEphemeral credentials:
+constexpr std::uint32_t minEphemeralCredentialTTL = 60;
+constexpr std::uint32_t maxEphemeralCredentialTTL = 3600;
+```
+
+### 5.2. Transaction Fee
+
+Standard XRPL reference transaction fee (`calculateBaseFee(view, tx)` — `10 drops` base minimum).
+
+### 5.3. Failure Conditions
+
+#### 5.3.1. `preflight` Verification (`CredentialCreate::preflight`)
+
+1. **Amendment-Scoped Flag Mask**:
+   - If `!ctx.rules.enabled(featureCredentials)`, return `temDISABLED`.
+   - If `ctx.rules.enabled(featureEphemeralCredentials)`:
+     - If `ctx.tx.getFlags() & tfCredentialCreateMask`, return `temINVALID_FLAG`.
+   - Else (`!ctx.rules.enabled(featureEphemeralCredentials)`):
+     - If `ctx.tx.getFlags() & tfCredentialCreatePreEphemeralMask`, return `temINVALID_FLAG`.
+2. **Standard XLS-70 Field Validation**:
+   - Verify `sfSubject` and `sfCredentialType` (`1..maxCredentialTypeLength` bytes), and if `sfURI` is present, verify `1..maxCredentialURILength` (`256`) bytes; otherwise return `temMALFORMED`.
+3. **Mandatory `sfExpiration` under `tfEphemeral`**:
+   - If `(ctx.tx.getFlags() & tfEphemeral) && !ctx.tx.isFieldPresent(sfExpiration)`, return `temMALFORMED`.
+
+#### 5.3.2. `preclaim` Verification (`CredentialCreate::preclaim`)
+
+Let `closeTime = ctx.view.info().parentCloseTime.time_since_epoch().count()` and `isEphemeral = (ctx.tx.getFlags() & tfEphemeral) != 0`.
+
+1. **Past Expiration Check (Existing XLS-70 Rule)**:
+   - If `ctx.tx.isFieldPresent(sfExpiration)` and `ctx.tx[sfExpiration] <= closeTime` (i.e., `checkExpired(ctx.tx[sfExpiration], ctx.view.info().parentCloseTime)`), return `tecEXPIRED`.
+2. **Bounded TTL Window Check (`isEphemeral == true`)**:
+   - Let `exp = ctx.tx[sfExpiration]`.
+   - If `exp < closeTime + minEphemeralCredentialTTL` (`60`) or `exp > closeTime + maxEphemeralCredentialTTL` (`3600`), return `temINVALID_EXPIRATION`. *(Note: Using a `tec` code `tecEXPIRED` / `tecOVERSIZE` or rejecting in `preclaim` before SLE mutation guarantees deterministic consensus enforcement; if evaluated in `preclaim` against `parentCloseTime`, returning `tecEXPIRED` for `< closeTime + 60` or `> closeTime + 3600` charges the anti-spam reference fee while leaving ledger state untouched.)*
+   - **Normative Result Code Choice**: Because `parentCloseTime` is only available in `preclaim` (not `preflight`), XRPL transactor conventions prohibit returning `tem*` codes from `preclaim` when the condition depends on ledger close time. Therefore, in `preclaim`:
+     - If `exp <= closeTime`, return `tecEXPIRED` (existing XLS-70 behavior).
+     - If `isEphemeral` and (`exp < closeTime + minEphemeralCredentialTTL` or `exp > closeTime + maxEphemeralCredentialTTL`), return **`tecEXPIRED`**.
+3. **Subject Account Existence**:
+   - If `!ctx.view.read(keylet::account(ctx.tx[sfSubject]))`, return `tecNO_TARGET`.
+4. **Existing `Credential` SLE Lookup & Rollover Eligibility**:
+   - Let `k = keylet::credential(ctx.tx[sfAccount], ctx.tx[sfSubject], ctx.tx[sfCredentialType])` and `sleCred = ctx.view.read(k)`.
+   - **Case A (`sleCred == nullptr` — Initial Creation)**:
+     - Proceed with standard XLS-70 creation check: verify `Account` (`Issuer`) has sufficient XRP balance to meet `accountReserve(ownerCount + 1)`; if not, return `tecINSUFFICIENT_RESERVE`.
+   - **Case B (`sleCred != nullptr` — Existing Entry Found)**:
+     - If `!isEphemeral`: return `tecDUPLICATE` (existing XLS-70 behavior).
+     - If `(sleCred->getFlags() & lsfEphemeral) == 0`: return `tecDUPLICATE` (a static credential cannot be rolled over as an ephemeral credential).
+     - If `ctx.tx[sfExpiration] <= (*sleCred)[sfExpiration]`: return `tecDUPLICATE` (rollover expiration MUST strictly advance: `New.Expiration > Existing.Expiration`).
+     - *(Reserve Check on Rollover)*: Because in-place rollover does not increment `OwnerCount` on `Issuer` or `Subject`, **no additional owner-reserve check is required** on `Case B`, allowing renewals to succeed even if `Issuer`'s liquid balance is down to transaction fee drops.
+
+### 5.4. State Changes (`CredentialCreate::doApply`)
+
+1. **Case A (`sleCred == nullptr` — Initial Creation)**:
+   - Create `sleCred = std::make_shared<SLE>(k)` with `sfIssuer = Account`, `sfSubject = Subject`, `sfCredentialType = CredentialType`, `sfExpiration = Expiration`, and optional `sfURI = URI`.
+   - Set `sleCred->setFieldU32(sfFlags, lsfEphemeral)` (`0x00020000`).
+   - Insert `sleCred` into `Issuer`'s and `Subject`'s owner directories and call `adjustOwnerCount(view(), sleIssuer, 1, ctx_.journal)`.
+2. **Case B (`sleCred != nullptr` — In-Place Renewal Rollover)**:
+   - Obtain mutable SLE via `auto sleEdit = view().peek(k)`.
+   - Set `sleEdit->setFieldU32(sfExpiration, ctx_.tx[sfExpiration])`.
+   - If `ctx_.tx.isFieldPresent(sfURI)`, set `sleEdit->setFieldVL(sfURI, ctx_.tx[sfURI])`.
+   - **Preserve `sfFlags` (`lsfEphemeral` and `lsfAccepted`)**: Do not clear `lsfAccepted` (`0x00010000`).
+   - Call `view().update(sleEdit)` and return `tesSUCCESS`.
+
+### 5.5. Example JSON
 
 ```json
 {
   "TransactionType": "CredentialCreate",
-  "Account": "rAttestedIssuerXenclave1111111111111",
-  "Subject": "rAutonomousAgent402xxxxxxxxxxxxxxx",
-  "CredentialType": "61747465737465645f6167656e74",
+  "Account": "rAttestedClearingEnclave1111111111",
+  "Subject": "rInstitutionalParticipant402xxxxxx",
+  "CredentialType": "61747465737465645F7061727469636970616E74",
   "Flags": 65536,
-  "Expiration": 789123456,
-  "URI": "783430323A6174746573743A76313A7464783A38616362653439",
+  "Expiration": 845992500,
+  "URI": "783430323A6174746573743A76313A656E636C6176653A38616362653439",
   "Fee": "12",
   "Sequence": 42
 }
 ```
 
-*Note: `CredentialType` decodes to `"attested_agent"`; `URI` decodes to `"x402:attest:v1:tdx:8acbe49"`; `Flags: 65536` corresponds to `0x00010000` (`tfEphemeral`).*
+## 6. Transaction: `CredentialDelete`
 
-### 3.2 Reference Implementation (`xrpl.js`)
+This specification makes no wire format or behavioral changes to XLS-70 `CredentialDelete` (`ttCREDENTIAL_DELETE`, `59`).
+
+### 6.1. Fields
+
+Unchanged from XLS-70 (`Account`, `Subject`, `Issuer`, `CredentialType`).
+
+### 6.2. Transaction Fee
+
+Standard XRPL reference transaction cost.
+
+### 6.3. Failure Conditions
+
+Unchanged from XLS-70:
+
+- If `parentCloseTime <= sleCred[sfExpiration]`, only `Issuer` or `Subject` may delete the credential; any third party receives `tecNO_PERMISSION`.
+- If `parentCloseTime > sleCred[sfExpiration]`, **any account** may delete the expired credential (`tesSUCCESS`).
+
+### 6.4. State Changes
+
+Unchanged from XLS-70. Removes the `Credential` SLE from both owner directories and decrements `OwnerCount` by `1` on `Subject` (if `lsfAccepted` is set) or `Issuer` (if `lsfAccepted` is not set).
+
+### 6.5. Example JSON
+
+```json
+{
+  "TransactionType": "CredentialDelete",
+  "Account": "rAnyCleanerAccount1111111111111111",
+  "Issuer": "rAttestedClearingEnclave1111111111",
+  "Subject": "rInstitutionalParticipant402xxxxxx",
+  "CredentialType": "61747465737465645F7061727469636970616E74",
+  "Fee": "12",
+  "Sequence": 108
+}
+```
+
+## 7. Rationale
+
+### 7.1. Why XLS-56 `Batch` (`CredentialDelete` + `CredentialCreate`) Cannot Achieve In-Place Rollover
+
+A common question is whether an issuer can achieve short-TTL credential rotation without an amendment by bundling `CredentialDelete` and `CredentialCreate` in an [XLS-56 `Batch`](../XLS-0056-batch/README.md) transaction (`tfAllOrNothing`). That approach fails for three reasons rooted in XLS-70's state machine:
+
+1. **Destruction of `lsfAccepted`**: In `CredentialDelete::doApply`, the existing `Credential` SLE is erased from the state tree. When the subsequent `CredentialCreate` inner transaction executes, it creates a brand-new `Credential` SLE with `Flags = 0` (`lsfAccepted` cleared). Under XLS-80 (`PermissionedDomain`) and XLS-70 (`credentials::valid`), a credential with `lsfAccepted == 0` is **not active** and does not grant domain membership.
+2. **Mandatory `Subject` Co-Signing Overhead**: To restore `lsfAccepted`, a third inner transaction (`CredentialAccept` with `Account = Subject`) would have to be included in the `Batch`, requiring `Subject` to provide a `BatchSigner` signature on every 3-minute heartbeat. If `Subject` is an institutional trading desk or a cold-storage treasury vault that delegates execution via `RegularKey` or `Delegate` (XLS-75), forcing two-party multi-account `Batch` co-signing every 180 seconds defeats unilateral compliance enforcement.
+3. **Zero-Downtime & Zero Reserve Churn**: `tfEphemeral` in-place rollover allows `Issuer` to extend `sfExpiration` with a single `CredentialCreate` transaction while keeping `lsfAccepted` intact and leaving `Subject`'s owner reserve untouched.
+
+### 7.2. Why Return `tecEXPIRED` (Rather Than `tem*`) for TTL Bounds in `preclaim`?
+
+In `rippled`, `preflight` is stateless and has no access to `view.info().parentCloseTime`. Because TTL bounds ($T_{\text{close}} + 60 \le \text{Expiration} \le T_{\text{close}} + 3600$) depend on the parent validated ledger's close time, they must be evaluated in `preclaim`. Returning `tecEXPIRED` in `preclaim` follows `rippled`'s strict invariant that `tem*` codes are never returned for ledger-time-dependent conditions (`CredentialCreate.cpp` already returns `tecEXPIRED` in `preclaim` when `Expiration <= parentCloseTime`).
+
+### 7.3. Why Allow In-Place Rollover Even After `parentCloseTime > Existing.Expiration`?
+
+Suppose a network congestion spike or temporary enclave connectivity pause causes a 300-second credential to lapse at $T = 305\text{s}$ before the renewal transaction lands at $T = 310\text{s}$ (and before any third party has garbage-collected the SLE via `CredentialDelete`). During the gap $[305\text{s}, 310\text{s}]$, the participant is fail-closed (`tecNO_PERMISSION`) on all XLS-80 domain actions. When the issuer's `CredentialCreate` (`tfEphemeral`) lands at $T = 310\text{s}$ with `New.Expiration = 610s > Existing.Expiration`, permitting in-place rollover restores the credential seamlessly without requiring the `Subject` to re-run `CredentialAccept`.
+
+### 7.4. Cross-Amendment Composability Matrix
+
+| Amendment / Specification | Composability & Interaction with `featureEphemeralCredentials` |
+| :--- | :--- |
+| **[XLS-70 (`Credentials`)](../XLS-0070-credentials/README.md)** | Reuses `credentials::checkExpired(sleCred, parentCloseTime)`. Zero changes required to `credentials::valid()` or `CredentialAccept`. |
+| **[XLS-80 (`PermissionedDomains`)](../XLS-0080-permissioned-domains/README.md)** | `PermissionedDomain` lists `(Issuer, CredentialType)` in `AcceptedCredentials`. When an ephemeral credential expires (`parentCloseTime > sfExpiration`), `PermissionedDomain` checks automatically reject the participant with `tecNO_PERMISSION`. |
+| **[XLS-81 (`PermissionedDEX`)](../XLS-0081-permissioned-dex/README.md)** | Domain-gated `OfferCreate` and auto-bridging verify `AcceptedCredentials` against `parentCloseTime`. Expired ephemeral credentials immediately block new offer placement (`tecNO_PERMISSION`), and unbacked domain offers can be pruned permissionlessly. |
+| **[XLS-66.3.3 (`Private LoanBroker`)](../XLS-0066-lending-protocol/README.md)** | Private lending pools gated by `DomainID` reject new `LoanSet` originations immediately once the borrower's ephemeral credential expires, while existing disbursed loans remain payable per XLS-66 rules. |
+| **[XLS-56 (`Batch`)](../XLS-0056-batch/README.md)** | An attested clearing enclave managing $N$ participants in a domain can bundle up to 8 `CredentialCreate` (`tfEphemeral`) heartbeat renewals into a single atomic `Batch` (`tfIndependent` or `tfAllOrNothing`). |
+| **[XLS-68 (`Sponsor`)](../XLS-0068-sponsored-fees-and-reserves/README.md)** | Compatible with `Sponsor` (`spfSponsorFee` / `spfSponsorReserve`), allowing the clearing enclave to sponsor initial `CredentialAccept` reserves or fees if configured. |
+| **[XLS-69 (`Simulate`)](../XLS-0069-simulate/README.md)** | `simulate` (`TapDryRun`) evaluates `CredentialCreate::preclaim` against the open/validated ledger's `parentCloseTime`, accurately predicting `tesSUCCESS`, `tecEXPIRED`, or `tecDUPLICATE`. |
+
+## 8. Reference Implementation
+
+### 8.1. `rippled` C++ Core Implementation Diff
+
+#### 8.1.1. `include/xrpl/protocol/TxFlags.h` & `LedgerFormats.h`
+
+```cpp
+// In include/xrpl/protocol/TxFlags.h:
+constexpr std::uint32_t tfEphemeral = 0x00010000;
+constexpr std::uint32_t tfCredentialCreateMask = ~(tfUniversal | tfEphemeral);
+constexpr std::uint32_t tfCredentialCreatePreEphemeralMask = ~tfUniversal;
+
+// In include/xrpl/protocol/LedgerFormats.h (ltCREDENTIAL flags):
+lsfAccepted  = 0x00010000,
+lsfEphemeral = 0x00020000,
+
+// In include/xrpl/protocol/Protocol.h:
+constexpr std::uint32_t minEphemeralCredentialTTL = 60;
+constexpr std::uint32_t maxEphemeralCredentialTTL = 3600;
+```
+
+#### 8.1.2. `src/libxrpl/tx/transactors/credentials/CredentialCreate.cpp`
+
+```cpp
+NotTEC
+CredentialCreate::preflight(PreflightContext const& ctx)
+{
+    if (!ctx.rules.enabled(featureCredentials))
+        return temDISABLED;
+
+    auto const flags = ctx.tx.getFlags();
+    if (ctx.rules.enabled(featureEphemeralCredentials))
+    {
+        if (flags & tfCredentialCreateMask)
+            return temINVALID_FLAG;
+    }
+    else
+    {
+        if (flags & tfCredentialCreatePreEphemeralMask)
+            return temINVALID_FLAG;
+    }
+
+    if (auto const ret = preflight1(ctx); !isTesSuccess(ret))
+        return ret;
+
+    if ((flags & tfEphemeral) && !ctx.tx.isFieldPresent(sfExpiration))
+        return temMALFORMED;
+
+    // Existing XLS-70 URI and CredentialType length checks...
+    return preflight2(ctx);
+}
+
+TER
+CredentialCreate::preclaim(PreclaimContext const& ctx)
+{
+    AccountID const issuer = ctx.tx[sfAccount];
+    AccountID const subject = ctx.tx[sfSubject];
+    Blob const credType = ctx.tx[sfCredentialType];
+    bool const isEphemeral = (ctx.tx.getFlags() & tfEphemeral) != 0;
+
+    auto const closeTime =
+        ctx.view.info().parentCloseTime.time_since_epoch().count();
+
+    if (ctx.tx.isFieldPresent(sfExpiration))
+    {
+        std::uint32_t const exp = ctx.tx[sfExpiration];
+        if (exp <= closeTime)
+            return tecEXPIRED;
+
+        if (isEphemeral)
+        {
+            if (exp < closeTime + minEphemeralCredentialTTL ||
+                exp > closeTime + maxEphemeralCredentialTTL)
+                return tecEXPIRED;
+        }
+    }
+
+    if (!ctx.view.read(keylet::account(subject)))
+        return tecNO_TARGET;
+
+    auto const k = keylet::credential(issuer, subject, credType);
+    if (auto const sleCred = ctx.view.read(k))
+    {
+        // Existing credential found: only valid if both tx and SLE are ephemeral
+        // and the new expiration strictly advances the existing expiration.
+        if (!isEphemeral || !(sleCred->getFlags() & lsfEphemeral))
+            return tecDUPLICATE;
+
+        if (ctx.tx[sfExpiration] <= (*sleCred)[sfExpiration])
+            return tecDUPLICATE;
+
+        return tesSUCCESS;
+    }
+
+    // New credential creation: verify issuer reserve
+    auto const sleIssuer = ctx.view.read(keylet::account(issuer));
+    if (!sleIssuer)
+        return terNO_ACCOUNT;
+
+    if (STAmount const reserve =
+            ctx.view.fees().accountReserve((*sleIssuer)[sfOwnerCount] + 1);
+        (*sleIssuer)[sfBalance] < reserve)
+        return tecINSUFFICIENT_RESERVE;
+
+    return tesSUCCESS;
+}
+
+TER
+CredentialCreate::doApply()
+{
+    AccountID const issuer = ctx_.tx[sfAccount];
+    AccountID const subject = ctx_.tx[sfSubject];
+    Blob const credType = ctx_.tx[sfCredentialType];
+    auto const k = keylet::credential(issuer, subject, credType);
+
+    if (auto sleCred = view().peek(k))
+    {
+        // In-Place Renewal Rollover (preserves lsfAccepted and directory nodes)
+        sleCred->setFieldU32(sfExpiration, ctx_.tx[sfExpiration]);
+        if (ctx_.tx.isFieldPresent(sfURI))
+            sleCred->setFieldVL(sfURI, ctx_.tx[sfURI]);
+        view().update(sleCred);
+        return tesSUCCESS;
+    }
+
+    // Standard XLS-70 creation path (+ setting lsfEphemeral if tfEphemeral set)
+    auto sleCred = std::make_shared<SLE>(k);
+    sleCred->setAccountID(sfIssuer, issuer);
+    sleCred->setAccountID(sfSubject, subject);
+    sleCred->setFieldVL(sfCredentialType, credType);
+    if (ctx_.tx.isFieldPresent(sfExpiration))
+        sleCred->setFieldU32(sfExpiration, ctx_.tx[sfExpiration]);
+    if (ctx_.tx.isFieldPresent(sfURI))
+        sleCred->setFieldVL(sfURI, ctx_.tx[sfURI]);
+    if (ctx_.tx.getFlags() & tfEphemeral)
+        sleCred->setFlag(lsfEphemeral);
+
+    // Insert into owner directories & increment issuer OwnerCount...
+    return tesSUCCESS;
+}
+```
+
+### 8.2. TypeScript Client Reference (`xrpl.js`)
 
 ```typescript
 import { Client, Wallet, CredentialCreate } from "xrpl";
 
 export interface EphemeralCredentialConfig {
   issuerWallet: Wallet;
-  agentAddress: string;
-  ttlSeconds: number; // Must be bounded between 60 and 3600 seconds; e.g. 300 (5 minutes)
-  attestationUri: string; // Enclave attestation receipt URI
+  participantAddress: string;
+  ttlSeconds: number; // Bounded between 60 and 3600 seconds; nominally 300 (5 minutes)
+  attestationUri: string; // Hardware enclave attestation receipt URI
 }
 
-export async function issueEphemeralCredential(
+export async function issueOrRenewEphemeralCredential(
   client: Client,
   config: EphemeralCredentialConfig
 ): Promise<string> {
@@ -128,8 +516,8 @@ export async function issueEphemeralCredential(
   const tx: CredentialCreate = {
     TransactionType: "CredentialCreate",
     Account: config.issuerWallet.classicAddress,
-    Subject: config.agentAddress,
-    CredentialType: Buffer.from("attested_agent", "utf8").toString("hex").toUpperCase(),
+    Subject: config.participantAddress,
+    CredentialType: Buffer.from("attested_participant", "utf8").toString("hex").toUpperCase(),
     Expiration: expiration,
     URI: Buffer.from(config.attestationUri, "utf8").toString("hex").toUpperCase(),
     Flags: 0x00010000 // tfEphemeral
@@ -143,23 +531,55 @@ export async function issueEphemeralCredential(
 }
 ```
 
----
+## 9. Backwards Compatibility
 
-## 4. Hardware Attestation Trust Model
+Fully gated by the `featureEphemeralCredentials` amendment. Pre-activation nodes reject `tfEphemeral` (`0x00010000`) with `temINVALID_FLAG` during `preflight` and continue baseline XLS-70 and XLS-80 operation. Existing static credentials (`lsfEphemeral` not set) behave identically before and after amendment activation.
 
-1. **Enclave Key Isolation**: The credential issuer's private key (`rAttestedIssuer...`) is generated and held exclusively inside silicon-encrypted enclave memory (Intel TDX RTMR / AMD SEV-SNP VMPCK / AWS Nitro Enclaves). Neither host hypervisors nor cloud infrastructure operators can extract the signing key.
-2. **Domain Trust Configuration**: In XLS-80 `PermissionedDomain` configuration, domain operators authorize specific issuer addresses. During domain onboarding, the issuer proves enclave custody by supplying an RFC 8785 canonical attestation quote linked to its XRPL account public key.
-3. **URI Attestation Digest**: Each ephemeral issuance embeds an attestation reference (`x402:attest:v1:<enclave_type>:<hash>`) in the `URI` Blob, allowing third-party verifiers to validate runtime execution proofs against public hardware manufacturer root keys (Intel PCS / AMD ASK).
+## 10. Test Plan
 
----
+The `rippled` unit test suite (`src/test/app/Credentials_test.cpp` $\rightarrow$ `testEphemeralCredentials()`) MUST verify all 8 deterministic test vectors:
 
-## 5. Security & Invariant Analysis
+| Vector # | Test Case | Setup & Input | Expected `TER` & Ledger State |
+| :--- | :--- | :--- | :--- |
+| **1** | Pre-Amendment Flag Rejection | `featureEphemeralCredentials` disabled; submit `CredentialCreate` with `Flags: tfEphemeral` (`0x00010000`). | `temINVALID_FLAG` |
+| **2** | Missing `sfExpiration` with `tfEphemeral` | `featureEphemeralCredentials` enabled; submit `CredentialCreate` with `tfEphemeral` and no `sfExpiration`. | `temMALFORMED` |
+| **3** | TTL Below `60s` Floor | Submit `CredentialCreate` (`tfEphemeral`) with `Expiration = parentCloseTime + 59`. | `tecEXPIRED` |
+| **4** | TTL Above `3600s` Ceiling | Submit `CredentialCreate` (`tfEphemeral`) with `Expiration = parentCloseTime + 3601`. | `tecEXPIRED` |
+| **5** | Valid Creation, Acceptance & In-Place Rollover | Create (`TTL = 300s`, `lsfEphemeral` set) $\rightarrow$ `Subject` runs `CredentialAccept` (`Flags = 0x00030000`, reserve on `Subject`) $\rightarrow$ advance `180s` $\rightarrow$ `Issuer` submits `CredentialCreate` (`tfEphemeral`, `New.Exp = closeTime + 300`, updated `URI`). | `tesSUCCESS`; `sfExpiration` & `sfURI` updated in-place; `lsfAccepted` preserved; `Subject` & `Issuer` `OwnerCount` delta = `0`. |
+| **6** | Non-Monotonic Rollover Rejection | Submit `CredentialCreate` (`tfEphemeral`) on existing ephemeral credential with `New.Expiration <= Existing.Expiration`. | `tecDUPLICATE`; existing SLE unmodified. |
+| **7** | Cross-Mode Isolation (Static $\leftrightarrow$ Ephemeral) | Attempt `CredentialCreate` (`tfEphemeral`) on an existing static credential (`lsfEphemeral == 0`), and attempt `CredentialCreate` (no `tfEphemeral`) on an existing ephemeral credential (`lsfEphemeral != 0`). | `tecDUPLICATE` in both directions. |
+| **8** | Consensus Ejection & Third-Party Cleanup | Advance ledger close time past `sfExpiration` without renewal $\rightarrow$ `Subject` submits XLS-81 domain-gated `OfferCreate` $\rightarrow$ unrelated third party `Carol` submits `CredentialDelete`. | `OfferCreate` fails with `tecNO_PERMISSION`; `Carol`'s `CredentialDelete` succeeds with `tesSUCCESS` and releases `Subject`'s `0.2 XRP` reserve. |
 
-1. **Deterministic Bounded Ejection**: Halting renewal guarantees that within $\le \text{TTL}$ seconds (nominally 300s), the credential becomes consensus-invalid across all UNL validators with zero front-running risk.
-2. **Immunity to Mempool Censorship**: Because revocation occurs via consensus time progression rather than an explicit transaction, attackers cannot delay revocation through fee escalation or network congestion.
-3. **Reserve Integrity**: Permissionless `CredentialDelete` after expiration ensures that inactive ephemeral credentials can be pruned by any participant, unlocking owner reserves and preventing unbounded ledger state growth.
+## 11. Security Considerations
 
----
+### 11.1. Deterministic Bounded Ejection & Mempool Front-Running Immunity
 
-## 6. Backward Compatibility
-Fully gated by the `featureEphemeralCredentials` amendment. Pre-activation servers continue standard XLS-70 and XLS-80 operation. Existing static credentials function without modification.
+Because venue ejection occurs automatically via consensus close-time progression (`parentCloseTime > sfExpiration`) when the clearing enclave withholds renewal, an out-of-mandate or compromised participant cannot front-run revocation in the transaction queue or delay ejection through fee escalation.
+
+### 11.2. Strict Monotonic Expiration Progression
+
+Enforcing `ctx.tx[sfExpiration] > (*sleCred)[sfExpiration]` in `preclaim` prevents out-of-order or delayed transactions in `TxQ` from accidentally rolling a credential's expiration backwards, while the `maxEphemeralCredentialTTL` (`3600s`) ceiling ensures that no single transaction can grant more than one hour of validity.
+
+### 11.3. Reserve & Directory Invariance
+
+Because in-place renewal rollover executes `view().update(sleCred)` on an existing `ltCREDENTIAL` node without touching `sfOwnerNode`, `sfSubjectNode`, or `OwnerCount`, high-frequency institutional compliance heartbeats cannot leak owner directory pages or drift account reserve counters.
+
+# Appendix
+
+## Appendix A: FAQ
+
+### A.1: Why not use an XLS-56 `Batch` containing `CredentialDelete` + `CredentialCreate`?
+
+As detailed in §7.1, `CredentialDelete` erases the `Credential` SLE and clears `lsfAccepted` (`0x00010000`). Under XLS-70 and XLS-80, an unaccepted credential does not confer domain membership until `Subject` signs a new `CredentialAccept`. In-place rollover via `tfEphemeral` preserves `lsfAccepted` across unilateral issuer renewals.
+
+### A.2: Does an expired ephemeral credential automatically cancel resting DEX offers or unwind active XLS-66 loans?
+
+In accordance with XLS-80, XLS-81, and XLS-66, credential checks are enforced at transaction execution time. Once `parentCloseTime > sfExpiration`, any new domain-gated `OfferCreate`, `Payment`, or `LoanSet` by `Subject` is immediately rejected with `tecNO_PERMISSION`. Resting unbacked domain offers and expired `Credential` objects can be pruned permissionlessly by any network participant, while existing disbursed XLS-66 loans remain payable per XLS-66 rules.
+
+### A.3: What happens if `URI` is omitted on an in-place renewal rollover?
+
+If `sfURI` is omitted on a rollover `CredentialCreate`, the existing `sfURI` field on the `Credential` SLE is retained unchanged. If `sfURI` is provided (1 to 256 bytes), it replaces the existing `sfURI` in-place.
+
+### A.4: Can `Subject` or `Issuer` still delete an ephemeral credential before `sfExpiration`?
+
+Yes. Standard XLS-70 `CredentialDelete` rules remain 100% intact: either `Issuer` or `Subject` may delete the credential immediately at any time prior to expiration, and any account on the network may delete it after expiration.
