@@ -1016,6 +1016,17 @@ The final transaction must include exactly one of
 1. The `SigningPubKey` and `TxnSignature` fields, or
 2. The `Signers` field and, optionally, an empty `SigningPubKey`.
 
+The counterparty signature is computed over the same signing fields as the primary signature, but with a different hash prefix:
+
+| Signature                            | Prefix |    Value     |
+| ------------------------------------ | :----: | :----------: |
+| `CounterpartySignature.TxnSignature` | `CPT`  | `0x43505400` |
+| `CounterpartySignature.Signers`      | `CPM`  | `0x43504D00` |
+
+These differ from the prefixes used for an ordinary transaction signature, `STX` (`0x53545800`) and `SMT` (`0x534D5400`). A counterparty signature computed with an ordinary prefix does not verify.
+
+The values are defined in `HashPrefix.h` as `CounterpartyTxSign` and `CounterpartyTxMultiSign`, and are selected in `Sign.cpp` by `SignatureRole::Counterparty`.
+
 The total fee for the transaction will be increased due to the extra signatures that need to be processed, similar to the additional fees for multisigning. The minimum additional fee will be $(|signatures|) \times base\\_fee$ where $|signatures| == max(1, |tx.CounterPartySignature.Signers|)$
 
 If the `LoanSet` transaction is **not** part of a [`Batch` transaction](../XLS-0056-batch/README.md), the total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\\_fee$. Otherwise, the fee is based on the total number of signatures in the outer transaction. See [Batch Fees](../XLS-0056-batch/README.md#22-transaction-fee) for further details.
