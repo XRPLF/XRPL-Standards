@@ -60,6 +60,10 @@ _[An optional section that contains a reference/example implementation that peop
 
 _[All XLSes must contain a section that discusses the security implications/considerations relevant to the proposed change. Include information that might be important for security discussions, surfaces risks, and can be used throughout the life-cycle of the proposal. E.g. include security-relevant design decisions, concerns, important discussions, implementation-specific guidance and pitfalls, an outline of threats and risks and how they are being addressed. XLS submissions missing the `Security Considerations` section will be rejected. An XLS cannot proceed to status `Final` without a `Security Considerations` discussion deemed sufficient by the reviewers.]_
 
+## 9. Operational Considerations
+
+_[All XLSes should contain a section that discusses the integration implications of the proposed change, for end users and developers integrating this feature into their applications. This should include information on how the change will be integrated with existing systems, and any potential impact on other XLSes or the overall ecosystem. This section is optional for Meta XLSes.]_
+
 # Appendix _(Optional)_
 
 ## Appendix A: FAQ _(Optional)_
