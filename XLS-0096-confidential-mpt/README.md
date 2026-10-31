@@ -1086,7 +1086,7 @@ The explicit MergeInbox transaction is currently required because it determinist
 
 No. As specified in §6.4, an issuance cannot have both a non-zero `TransferFee` and `lsfMPTCanHoldConfidentialBalance` enabled. Issuers should note that this choice is effectively permanent:
 
-- Once `lsfMPTCanHoldConfidentialBalance` is enabled it cannot be disabled, so the issuance can never charge a non-zero `TransferFee` afterwards.
+- Once `lsfMPTCanHoldConfidentialBalance` is enabled it cannot be disabled (§6.3.3), so the issuance can never charge a non-zero `TransferFee` afterwards.
 - An issuance that currently charges a `TransferFee` must reduce it to zero before confidential balances can be enabled. This is only possible if the transfer fee was not declared immutable; otherwise the issuer would need to create a new issuance.
 
 Issuers that expect to charge a percentage-based fee on transfers should decide before enabling confidential balances. (See §14.4 for the full rationale.)
