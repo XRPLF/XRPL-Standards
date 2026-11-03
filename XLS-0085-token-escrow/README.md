@@ -93,7 +93,7 @@ The `EscrowCreate` transaction is modified as follows:
 
 - **Destination Lacks Trustline or MPT Holding:**
   - **IOU Tokens**: If the destination lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
-  - **MPTs**: If the destination does not hold the MPT, transaction fails with `tecNO_ENTRY`.
+  - **MPTs**: If the destination does not hold the MPT, transaction fails with `tecNO_PERMISSION`.
   - A new trustline or MPT holding may be created during `EscrowFinish` if authorization is not required.
 
 - **Cannot Create Trustline or MPT Holding:**
@@ -139,7 +139,7 @@ The `EscrowCreate` transaction is modified as follows:
 
 - **Source Lacks Trustline or MPT Holding:**
   - **IOU Tokens**: If the source lacks a trustline with the issuer, transaction fails with `tecNO_LINE`.
-  - **MPTs**: If the source does not hold the MPT, transaction fails with `tecNO_ENTRY`.
+  - **MPTs**: If the source does not hold the MPT, transaction fails with `tecNO_PERMISSION`.
   - A new trustline or MPT holding may be created during `EscrowCancel` if authorization is not required.
 
 - **Cannot Create Trustline or MPT Holding:**
