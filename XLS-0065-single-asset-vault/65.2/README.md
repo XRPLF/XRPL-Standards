@@ -10,7 +10,7 @@
   updated: 2026-09-14
 </pre>
 
-# Vault Accounting and Cap Invariants
+# 65.2 Vault Accounting and Cap Invariants
 
 ## 1. Abstract
 
