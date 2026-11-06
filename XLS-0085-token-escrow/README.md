@@ -68,7 +68,7 @@ The `EscrowCreate` transaction is modified as follows:
   - **MPTs**: If the source does not hold the MPT, the transaction fails with `tecOBJECT_NOT_FOUND`.
 
 - **Source Account is Frozen or Token is Locked:**
-  - If the token is frozen (global/individual/deepfreeze) (IOU) or locked (MPT) for the source, the transaction fails with `tecFROZEN`.
+  - If the token is frozen (global/individual/deepfreeze) (IOU) for the source, the transaction fails with `tecFROZEN`. If the token is locked (MPT) for the source, the transaction fails with `tecLOCKED`.
 
 - **Insufficient Spendable Balance:**
   - If the source account lacks sufficient spendable balance, the transaction fails with `tecUNFUNDED`.
@@ -104,7 +104,7 @@ The `EscrowCreate` transaction is modified as follows:
     - **Deep Freeze**: If the token is deep frozen, the transaction fails with `tecFROZEN`.
     - **Global/Individual Freeze**: The transaction succeeds despite the token being globally or individually frozen.
   - **MPTs**:
-    - **Lock Conditions (Equivalent to Deep Freeze)**: Transaction fails with `tecFROZEN`.
+    - **Lock Conditions (Equivalent to Deep Freeze)**: Transaction fails with `tecLOCKED`.
 
 **State Changes:**
 
