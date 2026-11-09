@@ -8,7 +8,7 @@
   status: Final
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/196
   created: 2024-05-02
-  updated: 2026-09-15
+  updated: 2026-10-15
 </pre>
 
 # Sponsored Fees and Reserves
@@ -50,6 +50,8 @@ We propose:
 In addition, there will be a modification to the `account_objects` RPC method, and a new Clio RPC method called `account_sponsoring`.
 
 This feature will require an amendment, tentatively titled `Sponsor`.
+
+The later `SponsorV1_1` amendment adds the `SponsoredAccountCreate` transaction type; see [section 3.1.7](#317-amendments).
 
 #### 3.1.1. Terminology
 
@@ -108,6 +110,12 @@ This subsection consolidates the rules that determine _which_ sponsorship source
    - **Reserve sponsorship** is unconditionally rejected with `temINVALID` when `spfSponsorReserve` and `Delegate` are both present. The combinatorial test surface across every transaction type is too large to cover confidently in V1; this is a candidate for a future amendment.
    - See [section 3.15.1](#3151-permissioned-delegation).
 5. **Not everything can be sponsored.** Reserve sponsorship is restricted to an explicit allow-list of transaction types and ledger entry types, and is disallowed for pseudo-accounts, the outer transaction of a `Batch`, and pseudo-transactions. See [sections 3.2.3.1](#3231-allowed-ledger-entry-types) and [3.6.3.4](#3634-transactions-that-cannot-be-sponsored).
+
+#### 3.1.7. Amendments
+
+- `Sponsor` (`featureSponsor`): the original sponsorship amendment specified in this document.
+- `SponsorV1_1`, as described in [XLS-68.1](./68.1/README.md):
+  - adds the `SponsoredAccountCreate` transaction, which creates a zero-balance account sponsored by `tx.Account` and can create a `Sponsorship` object for it in the same transaction
 
 ### 3.2. Ledger Entries: Common Fields
 
@@ -570,7 +578,7 @@ All transactions (other than pseudo-transactions) may use the `spfSponsorFee` fl
 
 Several of these (`CheckCancel`, `CheckCash`, `EscrowCancel`, `EscrowFinish`, `PaymentChannelClaim`, `PaymentChannelFund`) do not themselves create a sponsorable object in the common case, but are allow-listed because they can create or re-create one (e.g. an `EscrowFinish` or `CheckCash` that establishes a trust line for the destination). `SponsorshipTransfer` is allow-listed because `spfSponsorReserve` is how it names the incoming sponsor on the `tfSponsorshipCreate`/`tfSponsorshipReassign` paths (see [section 3.8.1.2](#3812-sponsor)).
 
-Transaction types not on this list (e.g. `OfferCreate`, `TicketCreate`, `NFTokenMint`, `NFTokenCreateOffer`, `DIDSet`, `AMMCreate`, `AMMClawback`, and all `XChain*` transactions) reject `spfSponsorReserve` outright with `temINVALID_FLAG`, matching the ledger-entry-type restrictions in [section 3.2.3.1](#3231-allowed-ledger-entry-types). Some of these may be added to the allow-list in a future amendment.
+Transaction types not on this list (e.g. `OfferCreate`, `TicketCreate`, `NFTokenMint`, `NFTokenCreateOffer`, `DIDSet`, `AMMCreate`, `AMMClawback`, and all `XChain*` transactions) reject `spfSponsorReserve` outright with `temINVALID_FLAG`, matching the ledger-entry-type restrictions in [section 3.2.3.1](#3231-allowed-ledger-entry-types). Some of these may be added to the allow-list in a future amendment. Under `SponsorV1_1`, `SponsoredAccountCreate` is also not on the allow-list (see [XLS-68.1](./68.1/README.md)).
 
 `spfSponsorReserve` is additionally disallowed, regardless of transaction type, in the following cases:
 
@@ -593,7 +601,7 @@ If a `Sponsorship` object does not exist, the `tx.Fee` value is decremented from
 
 ##### 3.6.4.2. Reserve Sponsorship State Changes
 
-1. Any non-account ledger entry created as part of the transaction whose owner is `tx.Account` will have a `Sponsor` field pointing at `tx.Sponsor`. **Account** creation is a separate mechanism: a new `AccountRoot` is only sponsored when the creating `Payment` sets `tfSponsorCreatedAccount` (see [section 3.9.2](#392-flags)), and its `Sponsor` is unconditionally `tx.Account`, not `tx.Sponsor`. There is no third-party `spfSponsorReserve` path for account creation; `spfSponsorReserve` on a `Payment` only affects objects created for `tx.Account` (see [section 3.6.3.4](#3634-transactions-that-cannot-be-sponsored)).
+1. Any non-account ledger entry created as part of the transaction whose owner is `tx.Account` will have a `Sponsor` field pointing at `tx.Sponsor`. **Account** creation is a separate mechanism: under `Sponsor`, a new `AccountRoot` is only sponsored when the creating `Payment` sets `tfSponsorCreatedAccount` (see [section 3.9.2](#392-flags)); under `SponsorV1_1`, it is also sponsored when created by `SponsoredAccountCreate` (see [XLS-68.1](./68.1/README.md)). In both cases its `Sponsor` is unconditionally `tx.Account`, not `tx.Sponsor`. There is no third-party `spfSponsorReserve` path for account creation; `spfSponsorReserve` on a `Payment` only affects objects created for `tx.Account` (see [section 3.6.3.4](#3634-transactions-that-cannot-be-sponsored)).
 2. A reserve sponsor only ever covers objects owned by `tx.Account`. If an allow-listed transaction creates or modifies a ledger object whose owner is some other account (e.g. `Clawback` adjusting the holder's trust line), that object's reserve is simply left **unsponsored** and its own owner continues to bear it — this is not an error, and the transaction still succeeds. The same is true for objects owned by a [pseudo-account](https://xrpl.org/docs/concepts/accounts/pseudo-accounts); see [section 3.15.3](#3153-pseudo-accounts).
 3. The sponsor's `SponsoringOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction, and the `SponsoringAccountCount` field will be incremented by the number of new accounts that are sponsored as a part of the transaction.
 4. The sponsee's `SponsoredOwnerCount` field will be incremented by the number of objects that are sponsored as a part of the transaction.
@@ -887,7 +895,7 @@ The state change applied to the `Sponsor` field is driven purely by the transact
 
 A Payment transaction represents a transfer of value from one account to another. (Depending on the path taken, this can involve additional exchanges of value, which occur atomically.) This transaction type can be used for several [types of payments](https://xrpl.org/docs/references/protocol/transactions/types/payment#types-of-payments).
 
-Payments are also the only way to [create accounts](https://xrpl.org/docs/references/protocol/transactions/types/payment#creating-accounts).
+Under `Sponsor`, Payments are also the only way to [create accounts](https://xrpl.org/docs/references/protocol/transactions/types/payment#creating-accounts). Under `SponsorV1_1`, `SponsoredAccountCreate` also creates accounts (see [XLS-68.1](./68.1/README.md)).
 
 As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/types/payment) are the fields that `Payment` currently has.
 
@@ -1406,7 +1414,7 @@ The transaction-level delta of `SponsoringAccountCount` (summed across all accou
 
 #### 3.17.2. Account Sponsorship
 
-The only way an account can be created is via a `Payment` transaction. Account reserve sponsorship is a special case: it is controlled entirely by the `tfSponsorCreatedAccount` flag ([section 3.9.2](#392-flags)), and the created account is always sponsored by `tx.Account` itself — there is no third-party `Sponsor`/`SponsorFlags.spfSponsorReserve` mechanism for it (see [section 3.6.3.4](#3634-transactions-that-cannot-be-sponsored)). A third party (Spencer) _can_ still sponsor the transaction **fee** of an account-creating `Payment`, via the standard `Sponsor`/`spfSponsorFee` mechanism, independent of who is sponsoring the new account's reserve. The example below shows both together: Spencer sponsors the fee, while the new account's reserve is sponsored by `tx.Account` via `tfSponsorCreatedAccount`.
+Under `Sponsor`, the only way an account can be created is via a `Payment` transaction; under `SponsorV1_1`, `SponsoredAccountCreate` can also create a sponsored account (see [XLS-68.1](./68.1/README.md)). For a `Payment`, account reserve sponsorship is a special case: it is controlled entirely by the `tfSponsorCreatedAccount` flag ([section 3.9.2](#392-flags)), and the created account is always sponsored by `tx.Account` itself — there is no third-party `Sponsor`/`SponsorFlags.spfSponsorReserve` mechanism for it (see [section 3.6.3.4](#3634-transactions-that-cannot-be-sponsored)). A third party (Spencer) _can_ still sponsor the transaction **fee** of an account-creating `Payment`, via the standard `Sponsor`/`spfSponsorFee` mechanism, independent of who is sponsoring the new account's reserve. The example below shows both together: Spencer sponsors the fee, while the new account's reserve is sponsored by `tx.Account` via `tfSponsorCreatedAccount`.
 
 ##### 3.17.2.1. The Unsigned Transaction
 
@@ -1606,6 +1614,8 @@ The `Sponsor` amendment must be enabled via the standard amendment process. Once
 - The `Payment` transaction accepts the new `tfSponsorCreatedAccount` flag.
 
 Before activation, transactions attempting to use these features will be rejected.
+
+The `SponsoredAccountCreate` transaction type additionally requires the `SponsorV1_1` amendment ([XLS-68.1](./68.1/README.md)). Until both `Sponsor` and `SponsorV1_1` are enabled, it is rejected with `temDISABLED`.
 
 Some behaviors within this feature are additionally gated on separate fix amendments, rather than on `Sponsor` alone. For example, the object-level reserve check on the `tfSponsorshipEnd` path of `SponsorshipTransfer` (see [section 3.8.5.2](#3852-protocol-level-failures), item 14) requires `fixCleanup3_4_0` to also be enabled; until then, ending an object's sponsorship does not check whether the sponsee can carry the reserve on its own.
 
@@ -1872,3 +1882,7 @@ See [section 4.3](#43-other-designs-considered) for the alternate designs that w
 ### A.17: How does this proposal work in conjunction with [XLS-49](../XLS-0049-multiple-signer-lists/README.md)? What signer list(s) have the power to sponsor fees or reserves?
 
 Currently, only the global signer list is supported. Another `SignerListID` value could be added to support sponsorship. Transaction values can only go up to $2^{16}$, since the `TransactionType` field is a `UInt16`, but the `SignerListID` field goes up to $2^{32}$, so there is room in the design for additional values that do not correlate to a specific transaction type.
+
+## Appendix B: Changelog
+
+- [XLS-68.1](./68.1/README.md): `SponsorV1_1` adds the `SponsoredAccountCreate` transaction, which creates a zero-balance account sponsored by `tx.Account` and can create a `Sponsorship` object for it in the same transaction.
