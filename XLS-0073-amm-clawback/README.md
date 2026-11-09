@@ -105,7 +105,7 @@ By designating the holder account, asset, asset2 and amount, this transaction wi
   - The issuer's `asset` will return to the issuer's account.
   - If `tfClawTwoAssets` flag is set, the paired `asset2` which is also issued by the issuer, will return to issuer as well.
   - If `tfClawTwoAssets` flag is not set, the paired `asset2` will go back to the holder.
-- `tfClawTwoAssets` flag can only be set if the issuer issues both assets in the AMM pool. Otherwise, `tecNO_PERMISSION` will be returned.
+- `tfClawTwoAssets` flag can only be set if the issuer issues both assets in the AMM pool. Otherwise, `temINVALID_FLAG` will be returned.
 - If the requested amount of tokens exceeds the holder's available balance in the AMM pool, all the tokens owned by the specified holder will be clawed back.
 - If amount is not given in the request, all the tokens owned by the specified holder will be clawed back from the pool.
 
