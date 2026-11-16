@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-15
+  updated: 2026-10-07
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -1357,7 +1357,7 @@ The Borrower submits a `LoanPay` transaction to make a Payment on the Loan. For 
 
 | Field Name        | Required |      JSON Type       | Internal Type | Default Value | Description                               |
 | ----------------- | :------: | :------------------: | :-----------: | :-----------: | :---------------------------------------- |
-| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `83`      | The transaction type.                     |
+| `TransactionType` |   Yes    |       `string`       |   `UINT16`    |     `84`      | The transaction type.                     |
 | `LoanID`          |   Yes    |       `string`       |   `HASH256`   |     `N/A`     | The ID of the Loan object to be paid to.  |
 | `Amount`          |   Yes    | `string` or `object` |   `AMOUNT`    |     `N/A`     | The amount of funds to pay.               |
 | `Flags`           |    No    |       `number`       |   `UINT32`    |       0       | Specifies the flags for the Loan Payment. |
