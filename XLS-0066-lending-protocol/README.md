@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-15
+  updated: 2026-10-01
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -124,6 +124,7 @@ The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Amendment c
 - Before `fixCleanup3_4_0` and `fixCleanup3_4_0` compare behavior before and after the fix amendment, independently of the `LendingProtocolV1_1` state.
 
 - `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
+  - [66.1.1 Loan Cash-Basis Accounting](./66.1/66.1.1-loan-cash-basis.md): for a Vault with `LEVersion = 1`, makes `LoanBroker.DebtTotal` track principal only and recognises Vault interest when it is paid.
   - [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
@@ -375,8 +376,8 @@ _First-Loss Capital liquidation_
 
 - DefaultAmount = PrincipleOutstanding + InterestOutstanding
   = 1,000 + 90 = 1,090 Tokens
-- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)
-  = min((1,090 × 0.1) × 0.1, 1,090) = min(10.9, 1,090) = **10.9 Tokens**
+- DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)
+  = min((1,090 × 0.1) × 0.1, 1,090, 1,000) = min(10.9, 1,090, 1,000) = **10.9 Tokens**
 - Loss = DefaultAmount − DefaultCovered
   = 1,090 − 10.9 = **1,079.1 Tokens**
 - FundsReturned = DefaultCovered = **10.9 Tokens**
@@ -1954,7 +1955,7 @@ DefaultAmount = PrincipalOutstanding + InterestOutstanding_{net} \quad \text{(34
 $$
 
 $$
-DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount) \quad \text{(35)}
+DefaultCovered = \min((DebtTotal \times CoverRateMinimum) \times CoverRateLiquidation, DefaultAmount, CoverAvailable) \quad \text{(35)}
 $$
 
 $$
@@ -1972,10 +1973,11 @@ $$
 - `DebtTotal` = Total debt owed to vault (`LoanBroker.DebtTotal`)
 - `CoverRateMinimum` = Required coverage percentage (`LoanBroker.CoverRateMinimum`)
 - `CoverRateLiquidation` = Portion of minimum cover to liquidate (`LoanBroker.CoverRateLiquidation`)
+- `CoverAvailable` = First-loss capital available (`LoanBroker.CoverAvailable`)
 
 **Process:**
 
-1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount)` using formula (35)
+1. Calculate coverage: `DefaultCovered = min((DebtTotal × CoverRateMinimum) × CoverRateLiquidation, DefaultAmount, CoverAvailable)` using formula (35)
 2. Determine loss: `Loss = DefaultAmount - DefaultCovered` using formula (36)
 3. Return covered amount to vault: `FundsReturned = DefaultCovered` using formula (37)
 4. Decrease first-loss capital: `CoverAvailable -= DefaultCovered`
@@ -2171,7 +2173,7 @@ $$
 valueChange = latePaymentInterest_{gross} - managementFee_{late}
 $$
 
-This `valueChange` represents the net increase in the loan's value, which must be reflected in `Vault.AssetsTotal`. However, this value change is not reflected in `Loan.TotalValueOutstanding` and `LoanBroker.DebtTotal` fields. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
+This `valueChange` represents the net increase in the loan's value, which must be reflected in `Vault.AssetsTotal` and in `LoanBroker.DebtTotal`, which §3.11.5 decreases by `totalToVault - valueChange`. Omitting that adjustment would subtract newly paid late interest that was never in the outstanding debt. However, this value change is not reflected in `Loan.TotalValueOutstanding`, because late interest was not part of the original loan value. It is an unanticipated increase in value. Note that `valueChange > 0` for late payments.
 
 #### A-3.2.3 Loan Overpayment
 
@@ -2706,5 +2708,5 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## A-4 Changelog
 
-- [XLS-66.1](./66.1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md).
+- [XLS-66.1](./66.1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.1 Loan Cash-Basis Accounting](./66.1/66.1.1-loan-cash-basis.md) and [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md).
 - [XLS-66.2](./66.2/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.

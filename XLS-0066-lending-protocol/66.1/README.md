@@ -18,11 +18,10 @@ This index groups Lending Protocol changes introduced by the `LendingProtocolV1_
 
 ## 2. Specifications
 
-| Spec                                                                  | Description                                                                          |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [66.1.2 Closed-Ended Loan Gates](./66.1.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle. |
-
-The `66.1.1` number is reserved for the cash-basis lending patch and is not defined in this tree.
+| Spec                                                                  | Description                                                                                                  |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [66.1.1 Loan Cash-Basis Accounting](./66.1.1-loan-cash-basis.md)      | For a cash-basis Vault, makes `LoanBroker.DebtTotal` track principal only and recognises interest when paid. |
+| [66.1.2 Closed-Ended Loan Gates](./66.1.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle.                         |
 
 ## 3. Rationale
 
