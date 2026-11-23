@@ -1075,9 +1075,9 @@ The account specified in the `Account` field pays the transaction fee.
 11. `LateInterestRate` exceeds maximum allowed value. (`temINVALID`)
 12. `CloseInterestRate` exceeds maximum allowed value. (`temINVALID`)
 13. `OverpaymentInterestRate` exceeds maximum allowed value. (`temINVALID`)
-    PaymentTotal <= 0`. (`temINVALID`)
-14. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
-15. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
+14. `PaymentTotal <= 0`. (`temINVALID`)
+15. `PaymentInterval` is less than `60` seconds. (`temINVALID`)
+16. `GracePeriod` is less than `60` seconds or greater than the `PaymentInterval`. (`temINVALID`)
 
 ##### 3.8.5.2 Protocol-Level Failures
 
