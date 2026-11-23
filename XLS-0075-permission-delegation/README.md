@@ -7,6 +7,7 @@
   status: Final
   category: Amendment
   created: 2024-08-21
+  updated: 2026-09-25
 </pre>
 
 # Permission Delegation
@@ -373,6 +374,8 @@ In addition, the system-generated transaction type are not delegable: `EnableAme
 `Batch` transaction itself is not delegable, but its inner transactions can be delegated.
 
 Any newly introduced transactions must remain `non-delegable` until they have been fully integrated and tested with the delegation amendment. Currently, the following transactions are not delegable: `VaultCreate`, `VaultSet`, `VaultDelete`, `VaultDeposit`, `VaultWithdraw`, `VaultClawback`, `LoanBrokerSet`, `LoanBrokerDelete`, `LoanBrokerCoverDeposit`, `LoanBrokerCoverWithdraw`, `LoanBrokerCoverClawback`, `LoanSet`, `LoanDelete`, `LoanManage`, `LoanPay`, and `SponsorshipTransfer`.
+
+Until the `fixCleanup3_4_0` amendment is active, we recommend not delegating the `PaymentBurn` granular permission. Before the fix, a delegate with the PaymentBurn granular permission can also mint new fungible tokens (Trust Line Tokens or Multi-Purpose Tokens) in certain circumstances. Other granular permissions are unaffected. Please check the amendment status [here](https://livenet.xrpl.org/amendments)
 
 # Appendix
 
