@@ -1769,7 +1769,7 @@ $$
 
 **Where:**
 
-- `amount` = Total amount paid by the borrower
+- `amount` = `LoanPay.Amount`, the maximum the borrower can be charged
 - `periodicPaymentsCovered` = Number of complete periodic payment cycles covered by `amount`
 - Formula applies only after all full periodic cycles are paid
 - If `periodicPaymentsCovered = 0`, the payment is rejected as insufficient
@@ -1801,7 +1801,7 @@ $$
 - `overpaymentAmount` = The excess funds after all periodic payments are settled (formula 19)
 - $overpaymentInterest_{net}$ = Net overpayment interest owed to the Vault (formula 21)
 - $managementFee_{overpayment}$ = Management fee on the overpayment interest (formula 14)
-- `overpaymentFee` = Percentage-based fee on the overpayment amount (formula 22)
+- `overpaymentFee` = Prepayment penalty paid to the `LoanBroker`, as a rate of the overpayment amount (formula 22)
 
 #### 5.3 Re-amortization Value Change
 
@@ -2052,7 +2052,7 @@ The system follows these steps to process a payment:
 
 3.  **Scenario Handling**: Based on the timing and transaction flags, the system proceeds with one of the following paths:
     - **A) Late Payment Processing**: If the payment is late, it must be for at least the amount calculated by the [late payment formula](#a-322-late-payment).
-      - **Constraint**: Overpayments are not permitted on late payments. Any amount paid beyond the exact total due will be ignored.
+      - **Constraint**: Overpayments are not permitted on late payments. Any amount beyond the exact total due is not charged.
 
     - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
       - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set and the amount is sufficient to cover the [full payment formula](#a-324-early-full-repayment), the loan is closed.
@@ -2195,7 +2195,7 @@ $$
 overpaymentInterest_{net} = overpaymentInterest_{gross} - managementFee_{overpayment}
 $$
 
-A percentage fee may also be charged:
+A prepayment penalty fee is also charged:
 
 $$
 overpaymentFee = overpaymentAmount \times overpaymentFee
@@ -2206,6 +2206,8 @@ The portion of the overpayment that will be applied directly to the principal is
 $$
 principalPortion = overpaymentAmount - overpaymentInterest_{net} - managementFee_{overpayment} - overpaymentFee
 $$
+
+If `principalPortion` is zero, the overpayment is skipped and the borrower is not charged for it (see [Overpayment Processing](#5-overpayment-processing)).
 
 **2. Re-Amortizing the Loan and Calculating `valueChange`**
 
