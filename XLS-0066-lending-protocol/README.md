@@ -2525,9 +2525,11 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
     }
     # Interest is derived: roundedNewState.interestOutstanding() = valueOutstanding - principalOutstanding - managementFeeOutstanding
 
-    # Check that the loan is still valid after applying the overpayment
-    let newInterestOutstanding = roundedNewState.valueOutstanding - roundedNewState.principalOutstanding - roundedNewState.managementFeeOutstanding
-
+    # The principal must decrease. If rounding leaves it unchanged, skip the
+    # overpayment so the borrower is not charged penalties for nothing.
+    # Matches the check in rippled's doOverpayment.
+    if roundedNewState.principalOutstanding >= loan.principalOutstanding:
+        return error
 
     # Calculate deltas between old and new state for each tracked component
     let deltas = {
