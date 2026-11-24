@@ -9,7 +9,7 @@
   requires: XLS-65.1.4, XLS-65.2
   implementation: https://github.com/XRPLF/rippled/pull/6383
   created: 2026-10-01
-  updated: 2026-10-13
+  updated: 2026-11-24
 </pre>
 
 # Vault Donation
@@ -28,7 +28,7 @@ The Owner needs a way to restore backing for the existing shareholders. A deposi
 
 This patch changes the parent [XLS-65](../README.md) sections named below. All other parent behavior is unchanged. Everything in this patch is gated by the `LendingProtocolV1_2` amendment (`featureLendingProtocolV1_2`).
 
-A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProtocolV1_2` is enabled, a `VaultDeposit` with `tfVaultDonate` set fails with `temINVALID_FLAG` (§3.1.2.1).
+A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProtocolV1_2` is enabled, a `VaultDeposit` with `tfVaultDonate` set fails with `temDISABLED` (§3.1.2.1).
 
 ### 3.1 Transaction: `VaultDeposit`
 
@@ -48,8 +48,10 @@ The flag value is per transaction type. It equals the value of `tfVaultPrivate` 
 
 Append to parent [§3.5.2.1](../README.md#3521-data-verification):
 
-3. - `LendingProtocolV1_2` disabled: `tfVaultDonate` is set. (`temINVALID_FLAG`)
+3. - `LendingProtocolV1_2` disabled: `tfVaultDonate` is set. (`temDISABLED`)
    - `LendingProtocolV1_2` enabled: The check does not apply.
+
+Check 3 runs before the flag mask is validated, so the result is `temDISABLED`, not `temINVALID_FLAG`.
 
 ##### 3.1.2.2 Protocol-Level Failures
 
@@ -71,10 +73,11 @@ All other conditions apply to a donation unchanged, including the asset, freeze,
 
 Replace the share computation and transfer of parent [§3.5.3](../README.md#353-state-changes) for a donation:
 
-1. With `fixCleanup3_2_0` enabled, `Amount` is first rounded down to the Vault's `AssetsTotal` scale, as for an ordinary deposit. $\Delta_{asset}$ starts as that amount. It is not derived from a share count, so there is no share-to-asset round trip.
-2. With `fixCleanup3_4_0` enabled, $\Delta_{asset}$ is rounded down to the posterior `Vault.AssetsTotal` scale, and the transaction fails with `tecPRECISION_LOSS` if that non-zero $\Delta_{asset}$ rounds down to zero, so the donation would credit the Vault nothing, exactly as for an ordinary deposit ([XLS-65.2](../65.2/README.md) §3.1.2.3).
-3. $\Delta_{asset}$ is debited from the Owner and credited to the Vault. `Vault.AssetsTotal` and `Vault.AssetsAvailable` increase by $\Delta_{asset}$ (parent §3.5.3 items 4 to 7).
-4. No shares are minted or transferred, so parent §3.5.3 items 1 to 3 do not apply. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is unchanged.
+1. $\Delta_{asset}$ is derived from `Amount` by the same rounding as an ordinary deposit, but without the share-to-asset round trip, because no share count is computed:
+   - With `fixCleanup3_2_0` enabled, `Amount` is rounded toward zero to the posterior Vault scale.
+   - With `fixCleanup3_4_0` enabled, the result is then credited by the deposit rule of [XLS-65.2](../65.2/README.md) §3.1.2.3: the posterior `Vault.AssetsTotal` is rounded down and the Vault is credited the difference. If that credit is zero, the transaction fails with `tecPRECISION_LOSS`.
+2. $\Delta_{asset}$ is debited from the Owner and credited to the Vault. `Vault.AssetsTotal` and `Vault.AssetsAvailable` increase by $\Delta_{asset}$ (parent §3.5.3 items 4 to 7).
+3. Parent §3.5.3 item 1 applies unchanged: if the Owner has no share `MPToken`, one is created, holding no shares. No shares are minted or transferred, so parent §3.5.3 items 2 and 3 do not apply. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is unchanged.
 
 Because the assets rise and the share count does not, the asset value of each share increases by $\Delta_{asset}$ divided by the outstanding shares.
 
@@ -91,7 +94,7 @@ Replacement checks. A failed check makes the invariant fail the transaction (`te
 1. `Vault.Owner` equals the transaction `Account`.
 2. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` is non-zero. The issuance is not modified by a donation, so an implementation must read it from the ledger view rather than from the modified entries.
 3. The shares held by the transaction `Account` do not change.
-4. The shares held by the Vault pseudo-account do not change.
+4. `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` does not change.
 
 Items 1, 2 and 5 of parent §3.5.4 apply to a donation unchanged. Item 6 also applies, so `Vault.AssetsMaximum` is enforced both by the transactor and by the invariant.
 
@@ -115,11 +118,11 @@ Items 1, 2 and 5 of parent §3.5.4 apply to a donation unchanged. Item 6 also ap
 
 ## 5. Backwards Compatibility
 
-The amendment adds a flag that was previously invalid. Before activation, a `VaultDeposit` with `tfVaultDonate` fails with `temINVALID_FLAG`. `VaultDeposit` transactions without the flag behave as before. `tfVaultPrivate` on `VaultCreate` shares the numeric value `0x00010000` and is unaffected.
+The amendment adds a flag that was previously invalid. Before activation, a `VaultDeposit` with `tfVaultDonate` fails with `temDISABLED`. `VaultDeposit` transactions without the flag behave as before. `tfVaultPrivate` on `VaultCreate` shares the numeric value `0x00010000` and is unaffected.
 
 ## 6. Test Plan
 
-The reference implementation tests a donation with the amendment disabled (`temINVALID_FLAG`); to an empty Vault and by a non-owner (`tecNO_PERMISSION`); above `AssetsMaximum` (`tecLIMIT_EXCEEDED`); and for XRP, IOU and MPT Vaults, including an IOU debit that rounds to zero (`tecPRECISION_LOSS`) and a locked MPT (`tecLOCKED`). It checks that a donation leaves the share supply unchanged and raises `AssetsTotal` and `AssetsAvailable`, including at a non-1:1 share ratio and over repeated donations. It runs a donation in the `Investment` and `Redemption` phases of a closed-ended Vault, where an ordinary deposit fails with `tecEXPIRED`. It checks that `VaultCreate` with `tfVaultPrivate` is unaffected under the amendment, and that the invariant rejects a donation that changes share balances, or comes from a non-owner. A manual rounding suite covers a donation to an IOU Vault whose `LossUnrealized` equals `AssetsTotal - AssetsAvailable`.
+The reference implementation tests a donation with the amendment disabled (`temDISABLED`); to an empty Vault and by a non-owner (`tecNO_PERMISSION`); above `AssetsMaximum` (`tecLIMIT_EXCEEDED`); and for XRP, IOU and MPT Vaults, including an IOU debit that rounds to zero (`tecPRECISION_LOSS`) and a locked MPT (`tecLOCKED`). It checks that a donation leaves the share supply unchanged and raises `AssetsTotal` and `AssetsAvailable`, including at a non-1:1 share ratio and over repeated donations. It runs a donation in the `Investment` and `Redemption` phases of a closed-ended Vault, where an ordinary deposit fails with `tecEXPIRED`. It checks that `VaultCreate` with `tfVaultPrivate` is unaffected under the amendment, and that the invariant rejects a donation that changes share balances, or comes from a non-owner. A manual rounding suite covers a donation to an IOU Vault whose `LossUnrealized` equals `AssetsTotal - AssetsAvailable`.
 
 ## 7. Reference Implementation
 

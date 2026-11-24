@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-15
+  updated: 2026-11-24
 </pre>
 
 # Single Asset Vault
@@ -606,7 +606,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares. Under
 | --------------- | ------------ | ---------------------------------------------------------------------------------- |
 | `tfVaultDonate` | `0x00010000` | Add `Amount` to the Vault without minting shares. Only the Vault Owner may set it. |
 
-A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProtocolV1_2` is enabled, a `VaultDeposit` with `tfVaultDonate` set fails with `temINVALID_FLAG` (§3.5.2.1 item 3). The flag value is per transaction type: it equals `tfVaultPrivate` on `VaultCreate` and does not collide with it.
+A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProtocolV1_2` is enabled, a `VaultDeposit` with `tfVaultDonate` set fails with `temDISABLED` (§3.5.2.1 item 3). The flag value is per transaction type: it equals `tfVaultPrivate` on `VaultCreate` and does not collide with it.
 
 #### 3.5.2 Failure Conditions
 
@@ -615,7 +615,7 @@ A `VaultDeposit` with `tfVaultDonate` set is a **donation**. Before `LendingProt
 1. The `VaultID` field is zero. (`temMALFORMED`)
 2. The `Amount` field is zero or negative. (`temBAD_AMOUNT`)
 3. - `SingleAssetVault`: The check does not apply.
-   - `LendingProtocolV1_2` disabled: `tfVaultDonate` is set. (`temINVALID_FLAG`)
+   - `LendingProtocolV1_2` disabled: `tfVaultDonate` is set. (`temDISABLED`) This runs before the flag mask is validated.
    - `LendingProtocolV1_2` enabled: The check does not apply.
 
 ##### 3.5.2.2 Protocol-Level Failures
@@ -656,7 +656,7 @@ Items 16 and 17 are numbered for reference only. They are evaluated in `preclaim
 #### 3.5.3 State Changes
 
 1. - `SingleAssetVault`: If no share `MPToken` object exists for the depositor, create one. For private vaults, the `MPToken` is created only after domain authorization is verified.
-   - `LendingProtocolV1_2`: Skipped for a donation.
+   - `LendingProtocolV1_2`: Applies to a donation unchanged, so the Owner's share `MPToken` is created if absent, holding no shares.
 2. - `SingleAssetVault`: Increase the `MPTAmount` field of the depositor's share `MPToken` by $\Delta_{share}$.
    - `LendingProtocolV1_2`: Skipped for a donation.
 3. - `SingleAssetVault`: Increase the `OutstandingAmount` field of the share `MPTokenIssuance` by $\Delta_{share}$.
@@ -679,7 +679,7 @@ Items 16 and 17 are numbered for reference only. They are evaluated in `preclaim
 >
 > - `SingleAssetVault`: The vault accounting increases and both asset-balance moves use that same $\Delta_{asset}$. Where the depositor is the issuer of a non-`XRP` `Vault.Asset` it holds no balance of the asset — the transfer creates the asset at the issuer instead — so only the vault accounting fields and the vault's asset balance move. This is the issuer exception of invariant 2 below.
 > - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `XRP` and `MPT` they remain equal.
-> - `LendingProtocolV1_2`, donation: $\Delta_{share}$ is zero and no shares are computed, so there is no share-to-asset round trip. With `fixCleanup3_2_0`, `Amount` is first rounded down to the Vault's `AssetsTotal` scale, as for an ordinary deposit. $\Delta_{asset}$ starts as that amount. With `fixCleanup3_4_0`, it is rounded down to the posterior `Vault.AssetsTotal` scale and the transaction fails with `tecPRECISION_LOSS` if that non-zero $\Delta_{asset}$ rounds down to zero, so the donation would credit the Vault nothing (§3.5.2.2 item 12). Each outstanding share is then worth $\Delta_{asset}$ divided by the outstanding shares more than before.
+> - `LendingProtocolV1_2`, donation: $\Delta_{share}$ is zero and no shares are computed, so there is no share-to-asset round trip. $\Delta_{asset}$ is derived from `Amount` by the same rounding as an ordinary deposit: with `fixCleanup3_2_0`, `Amount` is rounded toward zero to the posterior Vault scale; with `fixCleanup3_4_0`, the result is credited by the deposit rule of [XLS-65.2](./65.2/README.md) §3.1.2.3, and a zero credit fails with `tecPRECISION_LOSS` (§3.5.2.2 item 12). Each outstanding share is then worth $\Delta_{asset}$ divided by the outstanding shares more than before.
 
 #### 3.5.4 Invariants
 
@@ -689,7 +689,7 @@ Items 16 and 17 are numbered for reference only. They are evaluated in `preclaim
 3. - `SingleAssetVault`: The depositor's share `MPToken.MPTAmount` must increase by a positive amount.
    - `LendingProtocolV1_2`, donation: The shares held by the transaction `Account` must not change.
 4. - `SingleAssetVault`: The increase in `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must equal the increase in the depositor's share balance.
-   - `LendingProtocolV1_2`, donation: The shares held by the Vault pseudo-account must not change, and `Vault.Owner` must equal the transaction `Account`. A donation is the only `VaultDeposit` that may succeed without changing any share balance.
+   - `LendingProtocolV1_2`, donation: `MPTokenIssuance(Vault.ShareMPTID).OutstandingAmount` must not change, and `Vault.Owner` must equal the transaction `Account`. A donation is the only `VaultDeposit` that may succeed without changing any share balance.
 5. - `SingleAssetVault`: `Vault.AssetsTotal` and `Vault.AssetsAvailable` must each increase by the vault's asset balance increase.
    - `fixCleanup3_4_0`: For an `IOU`, each comparison admits one unit at the comparison scale. For `XRP` and `MPT` it remains exact.
 6. - `SingleAssetVault`: If `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal <= Vault.AssetsMaximum` after the deposit.
