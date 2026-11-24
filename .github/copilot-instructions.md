@@ -229,7 +229,7 @@ Rules of thumb:
 ## Known Gotchas
 
 - **Duplicate XLS numbers**: `xls_parser.py` fails if two folders resolve to the same number. Always use the `XLS-draft-*` naming convention and let CI assign the number.
-- **Self-assigned numbers > 95**: the `assign-xls-number.yml` workflow posts a warning comment and blocks the CI if a PR adds a numbered directory (> XLS-0095) without the `has-xls-number` label.
+- **Self-assigned numbers > 95**: the `assign-xls-number.yml` workflow posts a warning comment if a PR adds a numbered directory (> XLS-0095) without the `has XLS number` label.
 - **Withdrawn XLSes** must include a `withdrawal-reason` field in the preamble or validation fails.
 - **Amendment XLSes cannot reach `Final`** until the corresponding rippled PR is merged; `System` XLSes require a merged implementation too.
 - **`proposal-from` is required** for all XLSes in the preamble. Missing it causes `validate_xls_preamble` to fail.

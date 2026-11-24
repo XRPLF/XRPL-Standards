@@ -1,332 +1,279 @@
 #!/usr/bin/env python3
 """
-Assign XLS numbers to new draft XLS proposals.
+Check and assign XLS numbers for a pull request.
 
-This script scans the repository for existing XLS directories,
-determines the next available XLS number, and outputs it for use
-in GitHub Actions.
+Run by .github/workflows/assign-xls-number.yml in two modes:
+
+  inspect  Read the PR's added files. Set the outputs `has_drafts` and
+           `has_self_assigned`. If the PR adds a numbered XLS directory above
+           LAST_MANUAL_XLS_NUMBER without the reservation label, write a
+           warning comment body to $RUNNER_TEMP/self-assigned-comment.md.
+
+  assign   Pick the next free XLS number for each added draft directory, while
+           it skips numbers that other open PRs reserved. Write the comment body
+           to $RUNNER_TEMP/assignment-comment.md.
+
+The script uses only the standard library. It reads the PR from
+GITHUB_EVENT_PATH and calls the GitHub REST API with GITHUB_TOKEN. File names
+come from the API, never from the shell, so a crafted path cannot run code.
 """
 
+import json
 import os
 import re
 import sys
-import json
 from pathlib import Path
-from urllib import error, parse, request
+from urllib import parse, request
+
+# Numbers up to this value were assigned by hand before CI assigned numbers.
+LAST_MANUAL_XLS_NUMBER = 95
+MIN_XLS_NUMBER = LAST_MANUAL_XLS_NUMBER + 1
+
+# Label that marks a PR whose XLS number is reserved. Must match the label in
+# the repository and in assign-xls-number.yml.
+RESERVED_LABEL = "has XLS number"
+
+BOT_LOGIN = "github-actions[bot]"
+
+# Directory names are restricted to safe characters so that they can go into
+# Markdown and GITHUB_OUTPUT without escaping.
+_NAME = r"[A-Za-z0-9._-]+"
+DRAFT_README = re.compile(rf"^((?:XLS|xls)-draft-{_NAME})/README\.md$")
+NUMBERED_README = re.compile(rf"^((?:XLS|xls)-(\d{{4}})-{_NAME})/README\.md$")
+EXISTING_DIR = re.compile(r"^XLS-(\d{4})-")
+NUMBER_MARKER = re.compile(r"<!--\s*XLS_NUMBER:(\d+)\s*-->")
 
 
-def get_existing_xls_numbers(repo_root: Path) -> set[int]:
+class GitHubError(RuntimeError):
+    pass
+
+
+def github_get(path: str, token: str, params: dict | None = None):
+    """GET a GitHub REST API path and return the parsed JSON.
+
+    Raises GitHubError on any failure. A failed lookup must stop the run: if it
+    returned empty data, the script could hand out a number that is reserved.
     """
-    Scan the repository root for existing XLS directories and extract their numbers.
-
-    Returns a set of integers representing all claimed XLS numbers.
-    """
-    xls_pattern = re.compile(r"^XLS-(\d{4})-")
-    numbers = set()
-
-    for item in repo_root.iterdir():
-        if item.is_dir():
-            match = xls_pattern.match(item.name)
-            if match:
-                numbers.add(int(match.group(1)))
-
-    return numbers
-
-
-# Minimum XLS number to assign (to avoid filling old historical gaps)
-MIN_XLS_NUMBER = 96
-
-
-def get_next_xls_number(existing_numbers: set[int]) -> int:
-    """
-    Determine the next available XLS number.
-
-    Returns the first unused number >= MIN_XLS_NUMBER.
-    """
-    if not existing_numbers:
-        return MIN_XLS_NUMBER
-
-    # Find the first available number starting from MIN_XLS_NUMBER
-    max_num = max(existing_numbers)
-    for num in range(MIN_XLS_NUMBER, max_num + 2):
-        if num not in existing_numbers:
-            return num
-
-    return max_num + 1
-
-
-def find_draft_xls_files(changed_files: list[str]) -> list[str]:
-    """
-    Filter changed files to find new XLS draft README files.
-
-    Args:
-        changed_files: List of file paths that were added in the PR
-
-    Returns:
-        List of draft XLS directory names (e.g., ["XLS-draft-my-feature"])
-    """
-    draft_pattern = re.compile(r"^((XLS|xls)-draft[^/]+)/README\.md$")
-    drafts = []
-
-    for file_path in changed_files:
-        match = draft_pattern.match(file_path)
-        if match:
-            drafts.append(match.group(1))
-
-    return list(set(drafts))  # Remove duplicates
-
-
-def github_api_request(path: str, token: str, params: dict | None = None):
-    """Small helper to call the GitHub REST API.
-
-    Returns parsed JSON or an empty list/dict on failure.
-    """
-
-    base_url = "https://api.github.com"
-    url = f"{base_url}{path}"
+    url = f"https://api.github.com{path}"
     if params:
-        query = parse.urlencode(params)
-        url = f"{url}?{query}"
-
+        url = f"{url}?{parse.urlencode(params)}"
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "xrpl-standards-xls-number-bot",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
-
-    req = request.Request(url, headers=headers)
-
     try:
-        with request.urlopen(req) as resp:
-            data = resp.read()
-        return json.loads(data.decode("utf-8"))
-    except error.HTTPError as e:
-        print(f"Warning: GitHub API HTTP error {e.code} for {url}: {e.reason}")
-    except error.URLError as e:
-        print(f"Warning: GitHub API URL error for {url}: {e.reason}")
-
-    # On any failure, return an empty list so callers can treat it as "no data".
-    return []
+        with request.urlopen(request.Request(url, headers=headers), timeout=30) as r:
+            return json.load(r)
+    except Exception as exc:
+        raise GitHubError(f"GET {url} failed: {exc}") from exc
 
 
-def extract_xls_number_from_comments(
-    owner: str, repo: str, token: str, issue_number: int
-) -> int | None:
-    """Extract reserved XLS number for an issue/PR from bot comments.
-
-    Looks for a marker of the form: <!-- XLS_NUMBER:0123 --> in comments
-    authored by github-actions[bot].
-    """
-
+def github_get_all(path: str, token: str, params: dict | None = None) -> list:
+    """GET every page of a list endpoint."""
+    items: list = []
     page = 1
     while True:
-        comments = github_api_request(
-            f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
-            token,
-            {"per_page": 100, "page": page},
-        )
-
-        if not comments:
-            break
-
-        for comment in comments:
-            if comment.get("user", {}).get("login") != "github-actions[bot]":
-                continue
-            body = comment.get("body") or ""
-            match = re.search(r"<!--\s*XLS_NUMBER:(\\d+)\s*-->", body)
-            if match:
-                try:
-                    return int(match.group(1))
-                except ValueError:
-                    continue
-
-        if len(comments) < 100:
-            break
+        batch = github_get(path, token, {**(params or {}), "per_page": 100, "page": page})
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
         page += 1
 
-    return None
+
+def get_existing_xls_numbers(repo_root: Path) -> set[int]:
+    """Return the numbers of all XLS-NNNN-* directories in repo_root."""
+    numbers = set()
+    for item in repo_root.iterdir():
+        match = EXISTING_DIR.match(item.name)
+        if match and item.is_dir():
+            numbers.add(int(match.group(1)))
+    return numbers
 
 
-def get_reserved_xls_numbers_from_prs(
-    token: str, repo: str, current_pr_number: int | None
-) -> tuple[set[int], int | None]:
-    """Find XLS numbers reserved by open PRs with the 'has XLS number' label.
+def get_next_xls_number(used: set[int]) -> int:
+    """Return the lowest unused number that is at least MIN_XLS_NUMBER."""
+    num = MIN_XLS_NUMBER
+    while num in used:
+        num += 1
+    return num
 
-    Returns a tuple of (set of reserved numbers, number assigned to the current PR
-    if any).
+
+def find_draft_dirs(added_files: list[str]) -> list[str]:
+    """Return the sorted draft directories whose README.md was added."""
+    return sorted({m.group(1) for f in added_files if (m := DRAFT_README.match(f))})
+
+
+def find_self_assigned(added_files: list[str]) -> list[tuple[str, int]]:
+    """Return (directory, number) for added numbered XLSes above the manual range."""
+    found = set()
+    for f in added_files:
+        m = NUMBERED_README.match(f)
+        if m and int(m.group(2)) > LAST_MANUAL_XLS_NUMBER:
+            found.add((m.group(1), int(m.group(2))))
+    return sorted(found)
+
+
+def numbered_dir_name(draft_dir: str, number: int) -> str:
+    """XLS-draft-my-feature -> XLS-0123-my-feature."""
+    return re.sub(r"^(?:XLS|xls)-draft-", f"XLS-{number:04d}-", draft_dir)
+
+
+def numbers_in_comments(comments: list[dict]) -> set[int]:
+    """Return the XLS numbers in the bot's reservation markers."""
+    numbers = set()
+    for c in comments:
+        if (c.get("user") or {}).get("login") == BOT_LOGIN:
+            numbers.update(int(n) for n in NUMBER_MARKER.findall(c.get("body") or ""))
+    return numbers
+
+
+def get_reserved_numbers(repo: str, token: str, current_pr: int) -> tuple[set[int], set[int]]:
+    """Return (numbers reserved by other open PRs, numbers reserved by this PR)."""
+    others: set[int] = set()
+    mine: set[int] = set()
+    issues = github_get_all(
+        f"/repos/{repo}/issues", token, {"state": "open", "labels": RESERVED_LABEL}
+    )
+    for issue in issues:
+        if "pull_request" not in issue:
+            continue
+        comments = github_get_all(f"/repos/{repo}/issues/{issue['number']}/comments", token)
+        nums = numbers_in_comments(comments)
+        (mine if issue["number"] == current_pr else others).update(nums)
+    # This PR can also have a reservation comment before it has the label.
+    if not mine:
+        mine = numbers_in_comments(
+            github_get_all(f"/repos/{repo}/issues/{current_pr}/comments", token)
+        )
+    return others, mine
+
+
+def plan_assignments(
+    drafts: list[str], used: set[int], mine: set[int]
+) -> list[tuple[str, int, str]]:
+    """Return (draft, number, new name) per draft.
+
+    The PR keeps its own earlier reservations first, in order, then takes new
+    free numbers.
     """
-
-    if not token or not repo:
-        # Without a token or repo, we cannot query the API; treat as no reservations.
-        return set(), None
-
-    if "/" not in repo:
-        return set(), None
-
-    owner, repo_name = repo.split("/", 1)
-
-    reserved_numbers: set[int] = set()
-    current_pr_assigned: int | None = None
-
-    page = 1
-    while True:
-        issues = github_api_request(
-            f"/repos/{owner}/{repo_name}/issues",
-            token,
-            {
-                "state": "open",
-                "labels": "has XLS number",
-                "per_page": 100,
-                "page": page,
-            },
-        )
-
-        if not issues:
-            break
-
-        for issue in issues:
-            # Filter to PRs only
-            if "pull_request" not in issue:
-                continue
-
-            issue_number = issue.get("number")
-            num = extract_xls_number_from_comments(
-                owner, repo_name, token, issue_number
-            )
-            if num is None:
-                continue
-
-            reserved_numbers.add(num)
-
-            if current_pr_number is not None and issue_number == current_pr_number:
-                current_pr_assigned = num
-
-        if len(issues) < 100:
-            break
-
-        page += 1
-
-    return reserved_numbers, current_pr_assigned
+    used = set(used)
+    reuse = sorted(mine)
+    result = []
+    for draft in drafts:
+        number = reuse.pop(0) if reuse else get_next_xls_number(used)
+        used.add(number)
+        result.append((draft, number, numbered_dir_name(draft, number)))
+    return result
 
 
-def main():
-    """Main entry point for the script."""
-    # Get repository root from environment variable (set by GitHub Actions)
-    # or fall back to calculating from script location
-    repo_root_env = os.environ.get("REPO_ROOT")
-    if repo_root_env:
-        repo_root = Path(repo_root_env)
-    else:
-        # Fallback: parent of .github directory
-        script_dir = Path(__file__).resolve().parent
-        repo_root = script_dir.parent.parent
+def self_assigned_comment(entries: list[tuple[str, int]]) -> str:
+    rows = "\n".join(f"| `{d}` | {n} |" for d, n in entries)
+    return f"""## ⚠️ Self-Assigned XLS Number Warning
 
-    # Get changed files from command line arguments or environment variable
-    if len(sys.argv) > 1:
-        changed_files = sys.argv[1:]
-    else:
-        # Try to get from environment variable (set by GitHub Actions)
-        changed_files_env = os.environ.get("CHANGED_FILES", "")
-        changed_files = changed_files_env.split() if changed_files_env else []
+This PR adds a new XLS directory with a **self-assigned number**. XLS numbers should be assigned by CI using the `XLS-draft-*` naming convention.
 
-    # Helper to set GitHub output
-    def set_github_output(name: str, value: str):
-        github_output = os.environ.get("GITHUB_OUTPUT")
-        if github_output:
-            with open(github_output, "a") as f:
-                f.write(f"{name}={value}\n")
-        else:
-            print(f"  {name}={value}")
+| Directory | Self-Assigned Number |
+|-----------|----------------------|
+{rows}
 
-    if not changed_files:
-        print("No changed files provided.")
-        set_github_output("has_drafts", "false")
-        return
+### What to do
 
-    # Find draft XLS files
-    draft_dirs = find_draft_xls_files(changed_files)
+Rename your directory to use the draft convention instead (for example, `XLS-draft-my-feature`). CI assigns an XLS number after a maintainer approves the PR.
 
-    if not draft_dirs:
-        print("No XLS draft files found in changed files.")
-        set_github_output("has_drafts", "false")
-        return
+---
+*This warning was automatically generated.*
+"""
 
-    # Discover reserved XLS numbers from other open PRs and from this PR (if any)
-    github_token = os.environ.get("GITHUB_TOKEN", "")
-    github_repo = os.environ.get("GITHUB_REPOSITORY", "")
-    current_pr_number = None
-    event_path = os.environ.get("GITHUB_EVENT_PATH")
-    if event_path and os.path.isfile(event_path):
-        try:
-            with open(event_path, "r", encoding="utf-8") as f:
-                event = json.load(f)
-            current_pr_number = event.get("pull_request", {}).get("number")
-        except Exception as exc:  # pragma: no cover - defensive
-            print(f"Warning: Failed to parse GITHUB_EVENT_PATH: {exc}")
 
-    reserved_numbers, current_pr_assigned = get_reserved_xls_numbers_from_prs(
-        github_token,
-        github_repo,
-        current_pr_number,
-    )
+def assignment_comment(assignments: list[tuple[str, int, str]]) -> str:
+    rows = "\n".join(f"| `{d}` | **XLS-{n}** | `{new}` |" for d, n, new in assignments)
+    markers = "\n".join(f"<!-- XLS_NUMBER:{n} -->" for _, n, _ in assignments)
+    numbers = ", ".join(str(n) for _, n, _ in assignments)
+    return f"""## 🎫 XLS Number Assignment
 
-    if reserved_numbers:
-        print(f"Found {len(reserved_numbers)} XLS numbers reserved by open PRs.")
+This PR adds a new XLS draft. CI reserved the next available XLS number, based on the existing XLS directories and the numbers that other open PRs reserved:
 
-    # Get existing XLS numbers from the base branch
-    existing_numbers = get_existing_xls_numbers(repo_root)
-    print(f"Found {len(existing_numbers)} existing XLS numbers in the repository.")
-    print(
-        f"Highest existing number: {max(existing_numbers) if existing_numbers else 0}"
-    )
+| Draft Directory | Assigned Number | New Directory Name |
+|-----------------|-----------------|--------------------|
+{rows}
 
-    all_numbers = existing_numbers | reserved_numbers
+### Next Steps for XLS Editors
 
-    assignments = []
+Before merging this PR:
 
-    if current_pr_assigned is not None:
-        print(
-            f"Reusing previously reserved XLS number {current_pr_assigned:04d} for this PR."
-        )
-        next_number = current_pr_assigned
-    else:
-        next_number = get_next_xls_number(all_numbers)
+1. **Rename the directory** to the new name in the table.
+2. **Update the preamble** in the README.md:
+   - Set `xls:` to the assigned number ({numbers})
+   - Set `status:` to `Draft`
 
-    for draft_dir in sorted(draft_dirs):
-        assigned_number = next_number
-        all_numbers.add(assigned_number)
-        new_dir_name = re.sub(
-            r"^xls-draft-", f"xls-{assigned_number:04d}-", draft_dir.lower()
-        )
-        assignments.append(
-            {
-                "draft": draft_dir,
-                "number": assigned_number,
-                "new_name": new_dir_name,
-            }
-        )
-        # Calculate the next free number for any additional drafts
-        next_number = get_next_xls_number(all_numbers)
+---
+*This comment was automatically generated.*
 
-    # Output results
-    print("\n=== XLS Number Assignments ===")
-    for assignment in assignments:
-        draft = assignment["draft"]
-        new_name = assignment["new_name"]
-        num = assignment["number"]
-        print(f"  {draft} -> {new_name} (XLS-{num:04d})")
+{markers}
+"""
 
-    # Set GitHub Actions outputs
-    set_github_output("has_drafts", "true")
-    set_github_output("assignments", str(assignments))
 
-    # For single draft case, also output individual values for easy access
-    if len(assignments) == 1:
-        set_github_output("xls_number", f"{assignments[0]['number']}")
-        set_github_output("draft_dir", assignments[0]["draft"])
-        set_github_output("new_dir_name", assignments[0]["new_name"])
+def set_output(name: str, value: str) -> None:
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"{name}={value}\n")
+    print(f"output {name}={value}")
+
+
+def write_body(filename: str, body: str) -> None:
+    path = Path(os.environ.get("RUNNER_TEMP", ".")) / filename
+    path.write_text(body, encoding="utf-8")
+    print(f"Wrote {path}")
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 2 or argv[1] not in ("inspect", "assign"):
+        print("usage: assign_xls_number.py inspect|assign", file=sys.stderr)
+        return 2
+    mode = argv[1]
+
+    token = os.environ.get("GITHUB_TOKEN", "")
+    repo = os.environ["GITHUB_REPOSITORY"]
+    with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as f:
+        pr = json.load(f)["pull_request"]
+
+    files = github_get_all(f"/repos/{repo}/pulls/{pr['number']}/files", token)
+    added = [f["filename"] for f in files if f.get("status") == "added"]
+    drafts = find_draft_dirs(added)
+
+    if mode == "inspect":
+        set_output("has_drafts", "true" if drafts else "false")
+        labels = {label["name"] for label in pr.get("labels", [])}
+        self_assigned = [] if RESERVED_LABEL in labels else find_self_assigned(added)
+        set_output("has_self_assigned", "true" if self_assigned else "false")
+        if self_assigned:
+            write_body("self-assigned-comment.md", self_assigned_comment(self_assigned))
+        return 0
+
+    if not drafts:
+        print("No XLS draft directories added.")
+        return 0
+    if not token:
+        print("GITHUB_TOKEN is required to read reserved numbers.", file=sys.stderr)
+        return 1
+
+    repo_root = Path(os.environ.get("REPO_ROOT", Path(__file__).resolve().parents[2]))
+    existing = get_existing_xls_numbers(repo_root)
+    others, mine = get_reserved_numbers(repo, token, pr["number"])
+    print(f"Existing numbers: {len(existing)}, highest {max(existing, default=0)}")
+    print(f"Reserved by other open PRs: {sorted(others)}")
+    print(f"Reserved by this PR: {sorted(mine)}")
+
+    assignments = plan_assignments(drafts, existing | others, mine - existing - others)
+    for draft, number, new in assignments:
+        print(f"  {draft} -> {new} (XLS-{number:04d})")
+    write_body("assignment-comment.md", assignment_comment(assignments))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv))

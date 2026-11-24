@@ -2,12 +2,18 @@ name: Stale GitHub Discussions
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run mode (no actual changes)"
+        required: false
+        default: true
+        type: boolean
   schedule:
     - cron: "0 6 * * *" # Every day at 6:00 AM UTC
 
+# Discussion writes use the GitHub App token, not GITHUB_TOKEN.
 permissions:
-  discussions: write # Required to comment, close, and lock discussions
-  contents: read # Required to checkout the repository
+  contents: read
 
 env:
   STALE_DAYS: 365 # Number of days without updates to consider a discussion stale (1 year)
@@ -26,18 +32,22 @@ env:
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.repository == 'XRPLF/XRPL-Standards'
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Generate token from GitHub App
         id: generate_token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-discussions: write
 
       - name: Fetch and process stale discussions
         env:
@@ -49,9 +59,5 @@ jobs:
           CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "ERROR: GH_TOKEN is not set. Make sure the GitHub App is configured correctly."
-            exit 1
-          fi
-          .github/scripts/process-stale-discussions.sh
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: .github/scripts/process-stale-discussions.sh
