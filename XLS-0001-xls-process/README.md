@@ -451,7 +451,7 @@ Each nested patch document (`x.y/README.md` of a fix amendment, or an `x.y.z` fi
 
 A feature patch that is defined in terms of another patch (for example the closed-ended Loan gates, which read the closed-ended Vault phase) names that patch in `requires:` by number (`requires: XLS-65.1.4`). The preamble is a `<pre>` block, so a markdown link there does not render.
 
-Nested `x.y/` files are outside the repository CI glob `XLS-*/README.md`. They must still follow this section. Authors check their preambles by hand.
+CI validates nested `x.y/` files with the same preamble checks as a parent `README.md`. Run `python scripts/validate_xls_template.py --strict <file>` to also check that the template sections a patch uses are well formed.
 
 ##### 4.4.4.7. Parent Specification
 
