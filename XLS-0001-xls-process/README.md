@@ -380,9 +380,11 @@ If the new API logic introduces novel failure reasons not adequately covered by 
 
 #### 4.4.4. Subsequent amendments
 
-A later amendment that changes an existing Amendment XLS is a **patch** to that parent, not a new XLS number. The patch is a delta: it states only what the amendment changes. It names the parent sections or step numbers it replaces and leaves the rest of the parent intact. The amendment name is the identifier in rippled (`include/xrpl/protocol/detail/features.macro`); authors must not invent names.
+A later amendment that changes an existing Amendment XLS is a patch to that parent, not a new XLS number. The patch is a delta: it states only what the amendment changes. It names the parent sections or step numbers it replaces and leaves the rest of the parent intact. The amendment name is the identifier in rippled (`include/xrpl/protocol/detail/features.macro`); authors must not invent names.
 
-**Patch or new XLS.** A change gets its own XLS only when it introduces a new primitive:
+##### 4.4.4.1. Patch or New XLS
+
+A change gets its own XLS only when it introduces a new primitive:
 
 - a new ledger entry type with its own lifecycle, or
 - a new model that needs its own Definitions and Security Considerations, such as a cryptographic, trust, or accounting model.
@@ -391,9 +393,13 @@ In unclear cases, ask whether later amendments will patch this change or its par
 
 Everything else is a patch, including changes that add transaction types or fields. A change that fits entirely in updates to existing XLSs is always a patch.
 
-**Which parent.** When a change touches several XLSs, nest it under the primitive whose capability grows, usually the noun in the title.
-
 Either way, a feature amendment has one authoritative home: its own XLS, or an `x.y/README.md` index under the chosen parent. That home links to any patches it makes in other specs.
+
+##### 4.4.4.2. Parent Selection
+
+When a change touches several XLSs, nest it under the primitive whose capability grows, usually the noun in the title.
+
+##### 4.4.4.3. Layout and Numbering
 
 In the rules below, `x` is the parent XLS number, `y` numbers an amendment to that parent, and `z` numbers one patch within that amendment.
 
@@ -415,11 +421,17 @@ Patch numbers are allocated as follows:
 - A number held by an open pull request that has not merged yet is reserved. The `x.y/README.md` index lists it with a one-line note naming the pending patch, so that later authors skip it. A gap in the merged tree is therefore expected.
 - When a second independent patch is added to an amendment whose only patch is `x.y/README.md`, that patch moves to `x.y.1-…md`, the new patch becomes `x.y.2-…md`, and `x.y/README.md` becomes the index. The pull request that adds the second patch updates every link to the moved file.
 
-There are two layouts, according to the kind of amendment.
+A change that belongs to a different amendment or a different pull request is not numbered as `x.y.z` in this folder. Point at that work rather than inventing a placeholder.
 
-**Fix amendments** (`fix*` names such as `fixCleanup3_4_0`) correct existing protocol: invariants, rounding, gating, exclusive time boundaries, and similar. All of that amendment's deltas **on that parent** go in **one file**, `x.y/README.md`. Split them as numbered subsections inside that file, not as sibling files. The preamble `xls` field is `x.y` (no third component). If no fields are added or removed, say so and do not include Example JSON that restates unchanged state.
+There are two layouts, according to the kind of amendment, described in §4.4.4.4 and §4.4.4.5.
 
-**Feature amendments** add capability: fields, transactions, accounting models, optional data, new immutability rules, and similar. Each **independent** change is its **own file**, even when several changes share one amendment. The preamble `xls` field is `x.y.z`. The filename is `{x.y.z}-{kebab-case-title}.md`, taken from the preamble `title` (for example `65.1.1-unmodifiable-vault-fields.md`). When a parent has more than one such patch, `x.y/README.md` is an **index**: Abstract, a Specifications table linking each `x.y.z`, Rationale for grouping them under one amendment, and a Security Considerations section that states the index adds no protocol behavior. A parent that currently has only one feature patch may keep that patch as `x.y/README.md`; a second independent patch requires splitting it as described above.
+##### 4.4.4.4. Fix Amendments
+
+Fix amendments (`fix*` names such as `fixCleanup3_4_0`) correct existing protocol: invariants, rounding, gating, exclusive time boundaries, and similar. All of that amendment's deltas on that parent go in one file, `x.y/README.md`. Split them as numbered subsections inside that file, not as sibling files. The preamble `xls` field is `x.y` (no third component). If no fields are added or removed, say so and do not include Example JSON that restates unchanged state.
+
+##### 4.4.4.5. Feature Amendments
+
+Feature amendments add capability: fields, transactions, accounting models, optional data, new immutability rules, and similar. Each independent change is its own file, even when several changes share one amendment. The preamble `xls` field is `x.y.z`. The filename is `{x.y.z}-{kebab-case-title}.md`, taken from the preamble `title` (for example `65.1.1-unmodifiable-vault-fields.md`). When a parent has more than one such patch, `x.y/README.md` is an index: Abstract, a Specifications table linking each `x.y.z`, Rationale for grouping them under one amendment, and a Security Considerations section that states the index adds no protocol behavior. A parent that currently has only one feature patch may keep that patch as `x.y/README.md`; a second independent patch requires splitting it as described in §4.4.4.3.
 
 Example layout (XLS-65):
 
@@ -433,9 +445,15 @@ XLS-0065-single-asset-vault/
   65.2-fix-cleanup-3_4_0/README.md                                  # fixCleanup3_4_0, all Vault deltas
 ```
 
-Each nested patch document (`x.y/README.md` of a fix amendment, or an `x.y.z` file) uses the Draft Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). A feature index uses the index sections above. Preamble `title` remains at most 44 characters and must not include an `XLS` prefix or number. The H1 of every nested document, index or patch, includes the patch number (`# 65.1.1 Unmodifiable Vault Fields`, `# 65.2 Vault Accounting and Cap Invariants`). Headings in the Specification are numbered (`###### 3.1.6.2.2 Flags`, not `###### Flags`). Long invariant lists are numbered lists.
+##### 4.4.4.6. Patch Documents
+
+Each nested patch document (`x.y/README.md` of a fix amendment, or an `x.y.z` file) uses the standard Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). A feature index uses the index sections in §4.4.4.5.
 
 A feature patch that is defined in terms of another patch (for example the closed-ended Loan gates, which read the closed-ended Vault phase) names that patch in `requires:` by number (`requires: XLS-65.1.4`). The preamble is a `<pre>` block, so a markdown link there does not render.
+
+Nested `x.y/` files are outside the repository CI glob `XLS-*/README.md`. They must still follow this section. Authors check their preambles by hand.
+
+##### 4.4.4.7. Parent Specification
 
 The parent `README.md` remains the live specification:
 
@@ -446,10 +464,6 @@ The parent `README.md` remains the live specification:
 - The parent preamble `updated:` is bumped to the revision date.
 
 The parent `requires:` field continues to name live-protocol dependencies of the original XLS. Nested `requires:` is only for patch-to-patch dependence.
-
-Nested `x.y/` files are outside the repository CI glob `XLS-*/README.md`. They must still follow this section. Authors check their preambles by hand.
-
-A change that belongs to a different amendment or a different pull request is not numbered as `x.y.z` in this folder. Point at that work rather than inventing a placeholder.
 
 ### 4.5. Stale Proposals/Ideas
 
