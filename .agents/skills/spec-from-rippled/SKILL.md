@@ -1,6 +1,6 @@
 ---
 name: spec-from-rippled
-description: Update an XLS specification to match changes made in rippled. Use when asked to sync a spec with a rippled PR or commit, update an XLS from the implementation, reconcile a spec against rippled code, or check whether a spec still matches what was built.
+description: Update an XLS specification to match changes made in rippled. Use when asked to sync a spec with a rippled PR or commit, update an XLS from the implementation, reconcile a spec against rippled code, check whether a spec still matches what was built, or write a nested amendment patch (fix* or feature amendment, x.y / x.y.z files) for an existing XLS.
 ---
 
 # Update a spec from rippled changes
@@ -32,6 +32,8 @@ Ask which one to use if the request is ambiguous. For a large diff, work from `-
 ## 2. Identify the target spec
 
 In order of preference: the XLS number in the PR title or body; the amendment name added to `include/xrpl/protocol/detail/features.macro`, matched against this repo; or ask. Do not guess between two candidate specs.
+
+If the change is gated by an amendment that came after the target XLS (a `fix*` amendment, or a later feature amendment such as `LendingProtocolV1_1`), the edit is a nested patch under that XLS, not a rewrite of the parent. Read [XLS-1 §4.4.4 Subsequent amendments](../../../XLS-0001-xls-process/README.md#444-subsequent-amendments) and follow it: it is the source of truth for patch layout, numbering, parent updates, and the fix-versus-feature split. Nested `x.y/` files are outside the `XLS-*/README.md` CI glob, so check their preambles by hand.
 
 ## 3. Map changed files to spec sections
 
