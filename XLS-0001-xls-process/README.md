@@ -382,6 +382,19 @@ If the new API logic introduces novel failure reasons not adequately covered by 
 
 A later amendment that changes an existing Amendment XLS is a **patch** to that parent, not a new XLS number. The patch is a delta: it states only what the amendment changes. It names the parent sections or step numbers it replaces and leaves the rest of the parent intact. The amendment name is the identifier in rippled (`include/xrpl/protocol/detail/features.macro`); authors must not invent names.
 
+**Patch or new XLS.** A change gets its own XLS only when it introduces a new primitive:
+
+- a new ledger entry type with its own lifecycle, or
+- a new model that needs its own Definitions and Security Considerations, such as a cryptographic, trust, or accounting model.
+
+In unclear cases, ask whether later amendments will patch this change or its parent. If later work would nest under the change, it gets its own number. If nothing would ever nest under it, it is a patch.
+
+Everything else is a patch, including changes that add transaction types or fields. A change that fits entirely in updates to existing XLSs is always a patch.
+
+**Which parent.** When a change touches several XLSs, nest it under the primitive whose capability grows, usually the noun in the title.
+
+Either way, a feature amendment has one authoritative home: its own XLS, or an `x.y/README.md` index under the chosen parent. That home links to any patches it makes in other specs.
+
 In the rules below, `x` is the parent XLS number, `y` numbers an amendment to that parent, and `z` numbers one patch within that amendment.
 
 Patches live in a numbered folder under the parent:
