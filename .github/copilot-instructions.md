@@ -13,7 +13,8 @@ This repository is the canonical home for **XRP Ledger Standards (XLSes)** — s
 ```
 /
 ├── XLS-NNNN-slug/          # One folder per XLS spec (4-digit zero-padded number + hyphenated title)
-│   └── README.md           # The XLS document itself (required)
+│   ├── README.md           # The XLS document itself (required)
+│   └── x.y-amendment-slug/ # Nested patches for later amendments (XLS-1 §4.4.4)
 ├── templates/
 │   ├── XLS_TEMPLATE.md     # Preamble + section scaffold for all new XLSes
 │   └── AMENDMENT_TEMPLATE.md  # Extra scaffold for Amendment-category XLSes (Section 3 onward)
@@ -24,8 +25,9 @@ This repository is the canonical home for **XRP Ledger Standards (XLSes)** — s
 │   └── build_site.py       # Builds the GitHub Pages static site from XLS docs
 ├── CONTRIBUTING.md         # How to contribute (summarises XLS-1)
 ├── .agents/skills/         # Agent Skills, shared across Cursor/Codex/Gemini/Augment/Claude
-│   ├── xls-template-conformity/  # Check an XLS against the templates
-│   └── spec-from-rippled/        # Update a spec from rippled code changes
+│   ├── xls-template-conformity/  # Check an XLS against the templates, or migrate it
+│   ├── spec-from-rippled/        # Update or audit a spec against rippled at a ref
+│   └── spec-release-sync/        # Run both over many specs for a rippled release
 ├── .claude/skills/         # Stubs pointing into .agents/skills (Claude Code only scans .claude)
 ├── .ai-review/
 │   └── instructions.md     # Symlink to .github/copilot-instructions.md (Ripple review bot)
@@ -109,8 +111,11 @@ pip install -r scripts/requirements.txt
 # Validate all XLS preambles
 python scripts/xls_parser.py
 
-# Validate structure of changed files
-python scripts/validate_xls_template.py XLS-NNNN-slug/README.md
+# Validate structure of changed files, including nested patches
+python scripts/validate_xls_template.py XLS-NNNN-slug/README.md XLS-NNNN-slug/*/*.md
+
+# Strict: no legacy exemption (use for migrated specs)
+python scripts/validate_xls_template.py --strict XLS-NNNN-slug/README.md
 
 # Build the static site
 python scripts/build_site.py
@@ -158,7 +163,7 @@ Do not report unrelated pre-existing defects. A contradiction introduced by the 
 
 ### Run the conformity skill; do not review structure from memory
 
-Before commenting on any changed `XLS-*/README.md`, read [`.agents/skills/xls-template-conformity/SKILL.md`](../.agents/skills/xls-template-conformity/SKILL.md) and follow it, including its `references/beyond-the-template.md`. It is the same procedure human contributors run, and it derives its checks from `templates/` at review time — so this section never drifts from the templates.
+Before commenting on any changed `XLS-*/README.md` or nested patch file (`XLS-*/*/*.md`), read [`.agents/skills/xls-template-conformity/SKILL.md`](../.agents/skills/xls-template-conformity/SKILL.md) and follow it, including its `references/beyond-the-template.md`. It is the same procedure human contributors run, and it derives its checks from `templates/` at review time — so this section never drifts from the templates.
 
 ### Never flag — CI and tooling already own these
 

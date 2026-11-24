@@ -158,12 +158,13 @@ Both are advisory. A human XLS Editor still reviews and merges. If a bot is wron
 
 ### 8.2. Skills
 
-Two skills live under `.agents/skills/`:
+Three skills live under `.agents/skills/`:
 
-| Skill                     | What it does                                                                                               |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `xls-template-conformity` | Checks an XLS against `templates/` and the validation scripts, and reports what needs fixing.              |
-| `spec-from-rippled`       | Updates a spec to match a rippled PR, commit, or local branch, citing the implementation for every change. |
+| Skill                     | What it does                                                                                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `xls-template-conformity` | Checks an XLS against `templates/` and the validation scripts, and reports what needs fixing. In migrate mode, restructures a spec to the templates without changing its content. |
+| `spec-from-rippled`       | Updates a spec to match a rippled change, or audits a whole spec against a rippled ref, citing the implementation for every change. Asks for the ref.                             |
+| `spec-release-sync`       | Runs the other two skills over many specs for a rippled release and opens one PR per XLS for its owners to review.                                                                |
 
 Cursor, Codex CLI, Gemini CLI, and Augment discover `.agents/skills/` directly. Claude Code only scans `.claude/skills/`, so each skill has a stub `SKILL.md` there that carries the frontmatter and points at the real file.
 
