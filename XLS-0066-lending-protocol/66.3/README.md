@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-10-01
-  updated: 2026-10-01
+  updated: 2026-11-24
 </pre>
 
 # 66.3 LendingProtocolV1_2 Loan Changes
@@ -28,7 +28,9 @@ These specifications are introduced by the `LendingProtocolV1_2` amendment:
 
 ## 3. Rationale
 
-The amendment covers independent Lending Protocol changes. Keeping each change in a focused specification makes its behavior and motivation explicit while this index records their shared amendment.
+Every change in `LendingProtocolV1_2` concerns how a Loan is originated: how a `LoanBroker` is set up (66.3.2), who may borrow from it (66.3.3), and how the `LoanBroker.Owner` and the Borrower agree on terms (66.3.1). None of them changes Loan accounting, payments, impairment, or default. Grouping them under one amendment activates the origination changes together, and leaves Loans created under earlier amendments unaffected.
+
+The changes are otherwise independent of each other. Keeping each change in a focused specification makes its behavior and motivation explicit while this index records their shared amendment.
 
 ## 4. Security Considerations
 
