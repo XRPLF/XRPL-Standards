@@ -518,6 +518,7 @@ This transaction requires 10x the base fee because it carries a 128-byte zero-kn
 5. Neither `IssuerEncryptedAmount` nor `AuditorEncryptedAmount` is present. (`temMALFORMED`)
 6. Any present `IssuerEncryptedAmount` or `AuditorEncryptedAmount` has an invalid length or represents an invalid elliptic curve point. (`temBAD_CIPHERTEXT`)
 7. `ZKProof` length is not exactly the expected proof size for the detected mode. (128 bytes in every mode - see Section 11) (`temMALFORMED`)
+8. Both `IssuerEncryptedAmount` and `AuditorEncryptedAmount` are present, and their first components are not identical; under shared randomness the two ciphertexts must share the same first component. (`temMALFORMED`)
 
 ##### 5.4.3.2. Protocol-Level Failures
 
@@ -746,13 +747,13 @@ Cancel mode:
 
 Rotation and recovery modes each carry a proof, bound to the transaction by the context hash of Section 4.8. Cancel mode carries none.
 
-**Rotation mode** establishes three statements under one Fiat-Shamir challenge: that the submitted `ConfidentialBalanceSpending` encrypts under the new `HolderEncryptionKey` the same value the on-ledger spending balance encrypts under the old one, that the submitted `ConfidentialBalanceInbox` does the same for the inbox, and that the submitter holds the secret key for the new `HolderEncryptionKey`. Both anchors are decrypted with the old holder secret key, so only a holder who can still read their own balances can rotate.
+**Rotation mode** establishes three statements under one Fiat-Shamir challenge: that the submitted `ConfidentialBalanceSpending` encrypts under the new `HolderEncryptionKey` the same value the on-ledger spending balance encrypts under the old one, that the submitted `ConfidentialBalanceInbox` does the same for the inbox, and that the submitter holds the secret key for the new `HolderEncryptionKey`. Both anchors are decrypted with the old holder secret key, so only a holder who can still read their own balances can rotate. The rotation proof is 224 bytes.
 
 Both balances are covered because both are encrypted under the holder key. Migrating the spending balance alone would leave the inbox readable only under the key being abandoned, stranding any amount received but not yet merged.
 
 The possession statement is what separates this proof from the mirror migrations of Section 5.4.6. There the new ciphertext is produced under a key already registered on the `MPTokenIssuance`, so possession is established by the registration itself. Here the target key is chosen by the submitter, and without the statement a holder could re-encrypt their balance under a key nobody holds, placing it permanently beyond reach.
 
-**Recovery mode** establishes possession of the secret key for the `HolderEncryptionKey` being registered as `RecoveryKey`. No balance is read, re-encrypted, or referenced, which is why recovery mode leaves every balance field unchanged (Section 5.5.5).
+**Recovery mode** establishes possession of the secret key for the `HolderEncryptionKey` being registered as `RecoveryKey`. No balance is read, re-encrypted, or referenced, which is why recovery mode leaves every balance field unchanged (Section 5.5.5). The recovery proof is 64 bytes.
 
 ### 5.6. Transaction: `ConfidentialMPTRecoverBalance`
 
@@ -830,7 +831,7 @@ The proof establishes that the submitted `ConfidentialBalanceSpending` encrypts 
 
 The anchor is the issuer mirror, decrypted with the issuer secret key. That is what lets the issuer reconstruct a balance for a holder who can no longer read their own, and it is also why recovery cannot proceed without the issuer: no other party can decrypt that ciphertext. Condition 5 of Section 5.6.3.2 requires the mirror to be at the current issuer key epoch, so the anchor is always under the registered `IssuerEncryptionKey` and no historical key resolution arises here. An issuer holding a stale mirror migrates it with `ConfidentialMPTMirrorUpdate` first.
 
-The proof covers the spending balance only. The inbox is not proved because it is not reconstructed: the issuer mirror already encodes the holder's total balance, so writing that total into spending and setting the inbox to the canonical encrypted zero (Section 5.6.4) preserves the holder's balance without double counting.
+The proof covers the spending balance only. The inbox is not proved because it is not reconstructed: the issuer mirror already encodes the holder's total balance, so writing that total into spending and setting the inbox to the canonical encrypted zero (Section 5.6.4) preserves the holder's balance without double counting. The proof is 128 bytes.
 
 ### 5.7. Transaction: `ConfidentialMPTConvert`
 
