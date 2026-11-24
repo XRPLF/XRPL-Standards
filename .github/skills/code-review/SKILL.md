@@ -35,9 +35,27 @@ Every one of these fails CI on its own. A comment about them is pure noise.
 
 Also suppress spelling, grammar, phrasing, verbosity, naming consistency, field qualification, and optional clarity suggestions unless they create two plausible protocol interpretations or would cause incorrect implementation or client behavior.
 
+Also never flag:
+
+- Predictions that CI will fail. CI reports its own failures.
+- Nested amendment patches (`XLS-NNNN-name/NN.N/...`) being outside the top-level site glob or validator. That is intentional.
+- A link to a file that a named open PR adds.
+- Byte-level encoding for values serialized with the standard XRPL binary format, or inlined proof constructions when the spec names an external construction.
+- Ordering or composition rules between two existing specs that the PR does not change.
+
+## Check current behavior against rippled, not other specs
+
+Older XLS documents can be stale. When a spec disagrees with another XLS, check rippled `develop` before deciding which is wrong. A Draft may lead the implementation on purpose. Do not cite unimplemented proposals (such as XLS-49) as constraints. Amendment-gated operators often reverse between branches; read the gate before calling an operator wrong.
+
+## One defect, one comment
+
+If the same defect appears in several places, or on both the parent spec and its patch, post one comment and list the other lines in it.
+
 ## Avoid repeat rounds
 
 Read existing review threads before submitting the review. Do not repeat an issue that was already reported, resolved, answered, or made outdated. Reopen it only if the same defect still exists at the current HEAD, and explain specifically why the earlier response or change did not resolve it.
+
+An author reply of "intended", "out of scope", "separate PR", or a reasoned disagreement answers the thread. Do not reopen it, and do not post the same request on another line with new wording.
 
 ## Note on symlinks
 
