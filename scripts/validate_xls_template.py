@@ -39,7 +39,13 @@ import urllib.error
 
 from markdown_it import MarkdownIt
 from xls_parser import extract_xls_metadata, validate_xls_preamble
-from patch_map import map_patch, parse_headings, unmatched_sections
+from patch_map import (
+    PARENT_LINK_RE,
+    SECTION_REF_RE,
+    map_patch,
+    parse_headings,
+    unmatched_sections,
+)
 
 
 @dataclass
@@ -297,14 +303,14 @@ class XLSTemplateValidator:
                 fence = not fence
             if fence:
                 continue
-            for anchor in re.findall(r"\]\(\.\./README\.md#([^)\s]+)\)", line):
+            for anchor in PARENT_LINK_RE.findall(line):
                 if anchor not in ids:
                     self.errors.append(ValidationError(
                         str(self.file_path), line_number,
                         f"Link to parent anchor '#{anchor}' does not match a "
                         f"heading in {parent_path.parent.name}/README.md",
                     ))
-            refs = re.findall(r"[Pp]arent\s+\[?§\s*(\d+(?:\.\d+)*)", line)
+            refs = SECTION_REF_RE.findall(line)
             refs += re.findall(
                 r"\]\(\.\./README\.md\)\s*§\s*(\d+(?:\.\d+)*)", line
             )

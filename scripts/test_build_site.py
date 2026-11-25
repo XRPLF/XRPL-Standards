@@ -311,6 +311,10 @@ class ValidatorParentReferenceTest(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("#999-nope", errors[0])
 
+    def test_transparent_is_not_a_parent_reference(self):
+        errors, _ = self.check("A transparent §9.9 note.")
+        self.assertEqual(errors, [])
+
     def test_reference_in_code_block_ignored(self):
         errors, _ = self.check("```\nparent §9.9\n```")
         self.assertEqual(errors, [])
