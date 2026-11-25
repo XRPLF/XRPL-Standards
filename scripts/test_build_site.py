@@ -229,6 +229,17 @@ class PatchTest(unittest.TestCase):
             [h.name for h in unmatched_sections(PATCH, matches)], ["3.3 Protocol Constants"]
         )
 
+    def test_parent_reference_needs_word_boundary(self):
+        patch = preamble("65.1.2", "Memo") + """
+## 3. Specification
+
+### 3.9 Other
+
+A transparent §3.1.2 note.
+"""
+        matches = map_patch(patch, parse_headings(PARENT))
+        self.assertEqual([m for m in matches if m.how == "section"], [])
+
     def test_amendment_name(self):
         self.assertEqual(amendment_name(INDEX), "LendingProtocolV1_1")
         self.assertEqual(amendment_name(PATCH), "")
