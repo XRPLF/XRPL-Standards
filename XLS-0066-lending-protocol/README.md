@@ -8,7 +8,7 @@
   category: Amendment
   requires: XLS-65, XLS-64
   created: 2024-10-18
-  updated: 2026-09-15
+  updated: 2026-11-25
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/190
 </pre>
 
@@ -40,7 +40,7 @@ The specification introduces the following transactions:
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
 - **`LoanPay`**: A transaction to make a `Loan` payment.
 
-The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unrestricted and accepts both open-ended and closed-ended Vaults. Under `LendingProtocolV1_1`, `LoanBrokerSet` in step 2 requires that the Vault be closed-ended, because new Loan Brokers cannot be created against open-ended Vaults. Deposits in step 3 occur during Subscription, and each `LoanSet` in step 5 can succeed only during Investment and only when its final scheduled payment plus the redemption buffer does not exceed the Vault's `RedemptionDate`. See [XLS-66.1.2](./66.1/66.1.2-closed-ended-loan-gates.md).
+The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unrestricted and accepts both open-ended and closed-ended Vaults. Under `LendingProtocolV1_1`, `LoanBrokerSet` in step 2 requires that the Vault be closed-ended, because new Loan Brokers cannot be created against open-ended Vaults. Deposits in step 3 occur during Subscription, and each `LoanSet` in step 5 can succeed only during Investment and only when its final scheduled payment plus the redemption buffer does not exceed the Vault's `RedemptionDate`. See [XLS-66.4.2](./66.4-lending-protocol-v1_1/66.4.2-closed-ended-loan-gates.md).
 
 1. The Loan Broker creates a `Vault` ledger entry.
 2. The Loan Broker creates a `LoanBroker` ledger entry with a `LoanBrokerSet` transaction.
@@ -55,11 +55,13 @@ The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unres
 
 ### 2.1 Compliance Features
 
-### 2.1.1 Clawback
+The Lending Protocol supports the Clawback and Freeze controls of the Vault asset's Issuer.
+
+#### 2.1.1 Clawback
 
 Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws back the funds. The Issuer may clawback funds from the First-Loss Capital.
 
-### 2.1.2 Freeze
+#### 2.1.2 Freeze
 
 Freeze is a mechanism by which an asset Issuer (IOU or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents an `Account` from both sending and receiving an Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
 
@@ -120,13 +122,29 @@ The lending protocol charges a number of fees that the Loan Broker can configure
 
 The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Amendment comparisons use distinct labels for distinct axes:
 
-- `LendingProtocol (parent)` and `LendingProtocolV1_1` compare behavior before and after the feature amendment.
-- Before `fixCleanup3_4_0` and `fixCleanup3_4_0` compare behavior before and after the fix amendment, independently of the `LendingProtocolV1_1` state.
+- `LendingProtocol (parent)`, `LendingProtocolV1_1` and `LendingProtocolV1_2` compare behavior before and after a feature amendment.
+- Before `fixCleanupX` and `fixCleanupX` compare behavior before and after a fix amendment, independently of the state of the other amendments.
+- Cash-basis accounting (`LendingProtocolV1_1`) and fixed precision (`LendingProtocolV1_2`) are selected by the Vault's `LEVersion`, which `VaultCreate` records from the amendments enabled when the Vault is created. A Vault keeps the rules it was created under for its whole life. `LEVersion` absent or `0` is a Legacy Vault, `1` is a cash-basis Vault, and `2` is a fixed-precision Vault (see [XLS-65](../XLS-0065-single-asset-vault/README.md)). Rules labeled `LendingProtocol (parent)` for these accounting changes apply to Legacy Vaults.
 
-- `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
-  - [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
-- `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
+- `fixCleanup3_1_3`, as described in [XLS-66.1](./66.1-fix-cleanup-3_1_3/README.md):
+  - caps the `LoanPay` transaction fee, returns `tecNO_PERMISSION` for an overpayment on a Loan that does not allow it, truncates the payment amount to the Loan scale, and adds a `LoanBroker` cover-balance invariant.
+- `fixCleanup3_2_0`, as described in [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md):
+  - adds precision checks to first-loss capital deposits, withdrawals and clawbacks, rounds the minimum cover at the Vault scale, lets cover withdrawals bypass `lsfMPTCanTransfer`, checks the broker pseudo-account freeze on `LoanBrokerDelete`, and changes amortization rounding.
+- `fixCleanup3_3_0`, as described in [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md):
+  - replaces the freeze checks of `LoanBrokerCoverDeposit` and `LoanBrokerCoverWithdraw`.
+- `LendingProtocolV1_1`, as described in [XLS-66.4](./66.4-lending-protocol-v1_1/README.md):
+  - [66.4.1 Cash-Basis Loans](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md): for Vaults with `LEVersion` 1 or later, interest is recognized in `Vault.AssetsTotal` when it is paid, and `LoanBroker.DebtTotal` tracks principal only.
+  - [66.4.2 Closed-Ended Loan Gates](./66.4-lending-protocol-v1_1/66.4.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
+  - [66.4.3 Loan Invariants](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md): adds `Loan` and `LoanBroker` invariants on creation, deletion, flags and payments.
+- `fixCleanup3_4_0`, as described in [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
+  - removes redundant pseudo-account authorization checks from `LoanPay`, relaxes the holding check in `LoanSet`, adds a holding check to `LoanBrokerCoverWithdraw`, allows `CredentialIDs` on `LoanBrokerCoverWithdraw`, and exempts `LoanManage` default from the freeze invariants.
+- `fixCleanup3_5_0`, as described in [XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md):
+  - rejects value fields outside the asset's range, and makes `LoanBrokerDelete` check and create the owner's holding for the cover payout.
+- `LendingProtocolV1_2`, as described in [XLS-66.7](./66.7-lending-protocol-v1_2/README.md):
+  - [66.7.1 Fixed-Precision Loans](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md): for Vaults with `LEVersion` 2, `LoanBroker` and `Loan` amounts stay on the Vault's fixed precision grid, and new Loans and cover deposits are bounded by the Vault's capacity zones.
+  - [66.7.2 Private Loan Broker](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md): adds a private `LoanBroker` that only lends to members of a Permissioned Domain.
+  - [66.7.3 Lending Transactions in Batch](./66.7-lending-protocol-v1_2/66.7.3-lending-transactions-in-batch.md): allows the nine Lending Protocol transactions as `Batch` inner transactions.
 
 ## 3. Specification
 
@@ -146,28 +164,30 @@ The key of the `LoanBroker` object is the result of [`SHA512-Half`](https://xrpl
 
 The `LoanBroker` object has the following fields:
 
-| Field Name             | Constant | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                  |
-| ---------------------- | :------: | :------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `LedgerEntryType`      |   Yes    |   Yes    | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                          |
-| `LedgerIndex`          |   Yes    |   Yes    | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                    |
-| `Flags`                |    No    |   Yes    | `number`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                         |
-| `PreviousTxnID`        |    No    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                    |
-| `PreviousTxnLgrSeq`    |    No    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                        |
-| `Sequence`             |   Yes    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                               |
-| `LoanSequence`         |    No    |   Yes    | `number`  |   `UINT32`    |       1       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                           |
-| `OwnerNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                  |
-| `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                         |
-| `VaultID`              |   Yes    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                 |
-| `Account`              |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                            |
-| `Owner`                |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                      |
-| `Data`                 |    No    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                             |
-| `ManagementFeeRate`    |   Yes    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                 |
-| `OwnerCount`           |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                       |
-| `DebtTotal`            |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault, including interest.                                                                                                                                      |
-| `DebtMaximum`          |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                               |
-| `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                  |
-| `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                         |
-| `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%. |
+| Field Name             | Constant | Required | JSON Type | Internal Type | Default Value | Description                                                                                                                                                                                                                           |
+| ---------------------- | :------: | :------: | :-------: | :-----------: | :-----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LedgerEntryType`      |   Yes    |   Yes    | `string`  |   `UINT16`    |   `0x0088`    | Ledger object type.                                                                                                                                                                                                                   |
+| `LedgerIndex`          |   Yes    |   Yes    | `string`  |   `UINT16`    |     `N/A`     | Ledger object identifier.                                                                                                                                                                                                             |
+| `Flags`                |    No    |   Yes    | `number`  |   `UINT32`    |       0       | Ledger object flags.                                                                                                                                                                                                                  |
+| `PreviousTxnID`        |    No    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the transaction that last modified this object.                                                                                                                                                                             |
+| `PreviousTxnLgrSeq`    |    No    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The sequence of the ledger containing the transaction that last modified this object.                                                                                                                                                 |
+| `Sequence`             |   Yes    |   Yes    | `number`  |   `UINT32`    |     `N/A`     | The transaction sequence number that created the `LoanBroker`.                                                                                                                                                                        |
+| `LoanSequence`         |    No    |   Yes    | `number`  |   `UINT32`    |       1       | A sequential identifier for Loan objects, incremented each time a new Loan is created by this LoanBroker instance.                                                                                                                    |
+| `OwnerNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the owner's directory.                                                                                                                                                           |
+| `VaultNode`            |   Yes    |   Yes    | `number`  |   `UINT64`    |     `N/A`     | Identifies the page where this item is referenced in the Vault's _pseudo-account_ owner's directory.                                                                                                                                  |
+| `VaultID`              |   Yes    |   Yes    | `string`  |   `HASH256`   |     `N/A`     | The ID of the `Vault` object associated with this Lending Protocol Instance.                                                                                                                                                          |
+| `Account`              |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the `LoanBroker` _pseudo-account_.                                                                                                                                                                                     |
+| `Owner`                |   Yes    |   Yes    | `string`  |  `ACCOUNTID`  |     `N/A`     | The address of the Loan Broker account.                                                                                                                                                                                               |
+| `Data`                 |    No    |    No    | `string`  |    `BLOB`     |     None      | Arbitrary metadata about the `LoanBroker`. Limited to 256 bytes.                                                                                                                                                                      |
+| `ManagementFeeRate`    |   Yes    |    No    | `number`  |   `UINT16`    |       0       | The 1/10th basis point fee charged by the Lending Protocol. Valid values are between 0 and 10000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%                                                                          |
+| `OwnerCount`           |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The number of active Loans issued by the `LoanBroker`.                                                                                                                                                                                |
+| `DebtTotal`            |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total asset amount the protocol owes the Vault. For a Legacy Vault it includes interest. For a Vault with `LEVersion` 1 or later it is principal only; see [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md). |
+| `DebtMaximum`          |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The maximum amount the protocol can owe the Vault. The default value of 0 means there is no limit to the debt.                                                                                                                        |
+| `CoverAvailable`       |    No    |   Yes    | `string`  |   `NUMBER`    |       0       | The total amount of first-loss capital deposited into the Lending Protocol.                                                                                                                                                           |
+| `CoverRateMinimum`     |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of the `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                                                  |
+| `CoverRateLiquidation` |    No    |   Yes    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital that is liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. A value of 1 is equivalent to 1/10 bps or 0.001%.                          |
+
+`LendingProtocolV1_2` adds the `lsfLoanBrokerPrivate` flag and the optional `DomainID` field; see [XLS-66.7.2](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md).
 
 #### 3.1.3 Ownership
 
@@ -192,7 +212,10 @@ The `LoanBroker` object costs two owner reserve for the account creating it.
 
 #### 3.1.6 Pseudo-Account
 
-The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
+The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the [XLS-64](../XLS-0064-pseudo-account/README.md) specification for pseudo accounts. The `AccountRoot` object is created by the `LoanBrokerSet` transaction that creates the `LoanBroker`.
+
+- `LendingProtocol (parent)`: What the _pseudo-account_ owns is not checked.
+- `fixCleanup3_5_0`: The _pseudo-account_ may own only the `Loan` entries of this `LoanBroker` and its holding of `Vault.Asset` ([XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md)).
 
 #### 3.1.7 Freeze/Lock
 
@@ -224,7 +247,18 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
 
 #### 3.1.8 Invariants
 
-_TBD_
+After every transaction, each `LoanBroker` that the transaction modified, or whose _pseudo-account_ holding of the `Vault.Asset` it modified, satisfies:
+
+- If `LoanBroker.OwnerCount = 0`, the _pseudo-account_ `DirectoryNode` has at most one node (the root), which holds at most one entry, a `RippleState` or an `MPToken`.
+- `LoanBroker.LoanSequence` does not decrease.
+- `LoanBroker.DebtTotal >= 0`.
+- `LoanBroker.CoverAvailable >= 0`.
+- The `Vault` referenced by `LoanBroker.VaultID` exists.
+- `LoanBroker.CoverAvailable` is not less than the _pseudo-account_ balance of the `Vault.Asset`.
+- Before `fixCleanup3_1_3`: there is no upper bound on `LoanBroker.CoverAvailable`.
+- `fixCleanup3_1_3`: `LoanBroker.CoverAvailable` is not greater than the _pseudo-account_ balance of the `Vault.Asset`, except in `LoanBrokerDelete`. See [XLS-66.1](./66.1-fix-cleanup-3_1_3/README.md).
+
+`LendingProtocolV1_1` adds deletion invariants ([XLS-66.4.3](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md)). `LendingProtocolV1_2` adds flag and `DomainID` invariants ([XLS-66.7.2](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md)).
 
 #### 3.1.9 Example JSON
 
@@ -249,6 +283,8 @@ _TBD_
 ```
 
 #### 3.1.10 Accounting
+
+This section describes Legacy Vaults (no `LEVersion`). For Vaults with `LEVersion` 1 or later, `DebtTotal` holds principal only and interest is recognized when paid; see [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
 
 The Lending Protocol tracks the funds owed to the associated Vault in the `DebtTotal` attribute. It captures the principal amount taken from the Vault and the interest due, excluding all fees. The `DebtMaximum` attribute controls the maximum debt a Lending Protocol may incur. Whenever the Lender issues a Loan, `DebtTotal` is incremented by the Loan principal and interest, excluding fees. When $DebtTotal \geq DebtMaximum$, the Lender cannot issue new loans until some of the debt is cleared. Furthermore, the Lender may not issue a loan that would cause the `DebtTotal` to exceed `DebtMaximum`.
 
@@ -498,7 +534,15 @@ The `Loan` object costs one owner reserve for the `Borrower`.
 
 #### 3.2.7 Invariants
 
-_TBD_
+After every transaction, each `Loan` that the transaction created or modified satisfies:
+
+- If `Loan.PaymentRemaining = 0`, then `Loan.TotalValueOutstanding`, `Loan.PrincipalOutstanding` and `Loan.ManagementFeeOutstanding` are all `0`.
+- If `Loan.PaymentRemaining != 0`, then `Loan.TotalValueOutstanding`, `Loan.PrincipalOutstanding` and `Loan.ManagementFeeOutstanding` are not all `0`.
+- The `lsfLoanOverpayment` flag does not change.
+- `Loan.LoanServiceFee`, `Loan.LatePaymentFee`, `Loan.ClosePaymentFee`, `Loan.PrincipalOutstanding`, `Loan.TotalValueOutstanding` and `Loan.ManagementFeeOutstanding` are not negative.
+- `Loan.PeriodicPayment > 0`.
+
+Under `LendingProtocol (parent)` these checks also apply to a `Loan` that the transaction deleted. `LendingProtocolV1_1` changes and extends this list ([XLS-66.4.3](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md)), and adds the closed-ended maturity bound ([XLS-66.4.2](./66.4-lending-protocol-v1_1/66.4.2-closed-ended-loan-gates.md)).
 
 #### 3.2.8 Example JSON
 
@@ -578,6 +622,8 @@ The transaction creates a new `LoanBroker` object or updates an existing one.
 | `CoverRateMinimum`     |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point `DebtTotal` that the first-loss capital must cover. Valid values are between 0 and 100000 inclusive.                        |
 | `CoverRateLiquidation` |    No    | `number`  |   `UINT32`    |       0       | The 1/10th basis point of minimum required first-loss capital liquidated to cover a Loan default. Valid values are between 0 and 100000 inclusive. |
 
+`LendingProtocolV1_2` adds the `tfLoanBrokerPrivate` flag and the optional `DomainID` field; see [XLS-66.7.2](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md). Before `LendingProtocolV1_2`, any flag other than the universal flags fails with `temINVALID_FLAG`, and a transaction with `DomainID` fails with `temDISABLED`.
+
 #### 3.3.2 Transaction Fee
 
 This transaction uses the standard transaction fee.
@@ -618,6 +664,9 @@ This transaction uses the standard transaction fee.
 **Precision Validation:**
 
 11. Any value field (e.g., `DebtMaximum`) cannot be represented in the `Vault.Asset` type without precision loss (relevant for XRP and MPT). (`tecPRECISION_LOSS`)
+    - Before `fixCleanup3_5_0`: A value outside the range of the `Vault.Asset` type is not checked here.
+    - `fixCleanup3_5_0`: A value outside the range of the `Vault.Asset` type also fails this check. See [XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md).
+    - `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, a value that is not a multiple of the Vault's base unit also fails this check. See [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
 
 #### 3.3.4 State Changes
 
@@ -694,6 +743,10 @@ This transaction uses the standard transaction fee.
 3. `LoanBroker.OwnerCount != 0` (has outstanding loans). (`tecHAS_OBLIGATIONS`)
 4. `LoanBroker.DebtTotal` rounds to non-zero after scaling (defensive check—should have been cleared by last `LoanDelete`). (`tecHAS_OBLIGATIONS`)
 5. `LoanBroker.CoverAvailable > 0` and the broker owner is deep frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+6. - Before `fixCleanup3_2_0`: The check does not apply.
+   - `fixCleanup3_2_0`: `LoanBroker.CoverAvailable > 0` and the broker _pseudo-account_ is frozen for the `Vault.Asset`. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs) See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+7. - Before `fixCleanup3_5_0`: The check does not apply.
+   - `fixCleanup3_5_0`: `LoanBroker.CoverAvailable > 0` and the cover cannot be paid to the broker owner: the transfer check fails, the owner is not authorized for the asset, or the owner has no holding and one cannot be added. These checks run before check 5. See [XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md).
 
 #### 3.4.4 State Changes
 
@@ -718,7 +771,7 @@ This transaction uses the standard transaction fee.
 
 #### 3.4.5 Invariants
 
-- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
+- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will hold at most one entry, a `RippleState` or an `MPToken`.
 
 #### 3.4.6 Example JSON
 
@@ -761,11 +814,15 @@ This transaction uses the standard transaction fee.
 1. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
 3. `Amount` asset does not match the `Vault(LoanBroker(LoanBrokerID).VaultID).Asset`. (`tecWRONG_ASSET`)
-4. The asset is not transferable (e.g., MPT without `lsfMPTCanTransfer`). (`tecNO_PERMISSION`)
-5. The submitting account is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-6. The broker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+4. The asset is not transferable (e.g., MPT without `lsfMPTCanTransfer`). (`tecNO_AUTH` for MPTs, `terNO_RIPPLE` for IOUs)
+5. - Before `fixCleanup3_3_0`: The submitting account is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+   - `fixCleanup3_3_0`: Replaced; see [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md).
+6. - Before `fixCleanup3_3_0`: The broker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+   - `fixCleanup3_3_0`: Replaced; see [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md).
 7. The submitting account is not authorized for the asset. (`tecNO_AUTH`)
-8. The submitting account has insufficient funds to deposit the `Amount`. (`tecINSUFFICIENT_FUNDS`)
+8. - Before `fixCleanup3_2_0`: The check does not apply.
+   - `fixCleanup3_2_0`: `Amount`, rounded down to the precision of `LoanBroker.CoverAvailable`, is zero. (`tecPRECISION_LOSS`) See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+9. The submitting account has insufficient funds to deposit the `Amount`. (`tecINSUFFICIENT_FUNDS`)
 
 #### 3.5.4 State Changes
 
@@ -781,9 +838,11 @@ This transaction uses the standard transaction fee.
      - Increase the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `Amount`.
 2. Increase `LoanBroker.CoverAvailable` by `Amount`.
 
+Under `fixCleanup3_2_0`, the amount transferred and added to `LoanBroker.CoverAvailable` is `Amount` rounded down to the precision of `LoanBroker.CoverAvailable`; see [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+
 #### 3.5.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply, including, under `fixCleanup3_1_3`, that `LoanBroker.CoverAvailable` equals the broker _pseudo-account_ balance after the deposit.
 
 #### 3.5.6 Example JSON
 
@@ -834,15 +893,25 @@ This transaction uses the standard transaction fee.
 2. `LoanBroker` object with the specified `LoanBrokerID` does not exist on the ledger. (`tecNO_ENTRY`)
 3. The submitter `AccountRoot.Account != LoanBroker(LoanBrokerID).Owner`. (`tecNO_PERMISSION`)
 4. `Amount.asset` does not match `Vault.Asset`. (`tecWRONG_ASSET`)
-5. The asset is not transferable (e.g., MPT without `lsfMPTCanTransfer`) and `Destination` is not the `Issuer`. (`tecNO_PERMISSION`)
+5. The asset cannot be transferred from the broker _pseudo-account_ to the destination. (`tecNO_AUTH` for MPTs, `terNO_RIPPLE` for IOUs)
+   - Before `fixCleanup3_2_0`: An MPT without `lsfMPTCanTransfer` fails this check unless the destination is the `Issuer`.
+   - `fixCleanup3_2_0`: `lsfMPTCanTransfer` is not checked. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
 6. If `Destination` is a third party, the destination account does not exist on the ledger. (`tecNO_DST`)
 7. If `Destination` is a third party, the destination account requires a destination tag (`lsfRequireDestTag`) and no `DestinationTag` is provided. (`tecDST_TAG_NEEDED`)
 8. If `Destination` is a third party, the destination account has deposit authorization (`lsfDepositAuth`) enabled and no preauthorization exists for the submitter. (`tecNO_PERMISSION`)
 9. The destination account is not authorized for the asset (e.g., missing trust line or MPToken). (`tecNO_AUTH`)
-10. The broker _pseudo-account_ is frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
-11. The destination account is deep frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+10. - Before `fixCleanup3_3_0`: The broker _pseudo-account_ is frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+    - `fixCleanup3_3_0`: Replaced; see [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md).
+11. - Before `fixCleanup3_3_0`: The destination account is deep frozen for the asset (unless sending to the `Issuer`). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+    - `fixCleanup3_3_0`: Replaced; see [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md).
 12. `LoanBroker.CoverAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
-13. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`. (`tecINSUFFICIENT_FUNDS`)
+13. `LoanBroker.CoverAvailable - Amount` < `LoanBroker.DebtTotal * LoanBroker.CoverRateMinimum`, where the product is rounded up to the precision of `LoanBroker.DebtTotal`. (`tecINSUFFICIENT_FUNDS`)
+    - `fixCleanup3_2_0`: The product is rounded up to the precision of the Vault instead. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+14. The broker _pseudo-account_ holds less than `Amount` of the asset. (`tecINSUFFICIENT_FUNDS`)
+15. - Before `fixCleanup3_2_0`: The check does not apply.
+    - `fixCleanup3_2_0`: `Amount` is zero, or rounds to zero at the precision of `LoanBroker.CoverAvailable`. (`tecPRECISION_LOSS`) This check runs after check 4. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+
+`fixCleanup3_4_0` adds checks for `CredentialIDs` and for a withdrawal to the submitter without a holding; see [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md).
 
 #### 3.6.4 State Changes
 
@@ -869,7 +938,10 @@ This transaction uses the standard transaction fee.
 
 #### 3.6.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply.
+
+- Before `fixCleanup3_2_0`: The MPT transfer invariant applies its `lsfMPTCanTransfer` rule to this transaction without a waiver.
+- `fixCleanup3_2_0`: The MPT transfer invariant does not require `lsfMPTCanTransfer` for this transaction, matching the waiver in check 5. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
 
 #### 3.6.6 Example JSON
 
@@ -936,6 +1008,12 @@ This transaction uses the standard transaction fee.
    - The `MPTokenIssuance` object does not exist on the ledger. (`tecOBJECT_NOT_FOUND`)
    - The `MPTokenIssuance` does not have the `lsfMPTCanClawback` flag set (the asset does not support clawback). (`tecNO_PERMISSION`)
 8. `LoanBroker.CoverAvailable - (LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum) <= 0` (cover already at minimum). (`tecINSUFFICIENT_FUNDS`)
+   - Before `fixCleanup3_2_0`: The product is rounded up and not rounded to the asset precision.
+   - `fixCleanup3_2_0`: The product is rounded up to the precision of the Vault. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+9. - Before `fixCleanup3_2_0`: The check does not apply.
+   - `fixCleanup3_2_0`: `ClawAmount` is zero, or rounds to zero at the precision of `LoanBroker.CoverAvailable`. (`tecPRECISION_LOSS`) See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
+
+Checks 8 and 9 run after check 5 and before checks 6 and 7.
 
 #### 3.7.4 State Changes
 
@@ -954,7 +1032,7 @@ This transaction uses the standard transaction fee.
 
 #### 3.7.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply.
 
 #### 3.7.6 Example JSON
 
@@ -1020,6 +1098,9 @@ The total fee for the transaction will be increased due to the extra signatures 
 
 If the `LoanSet` transaction is **not** part of a [`Batch` transaction](../XLS-0056-batch/README.md), the total fee calculation for signatures will now be $(1 + |tx.Signers| + |signatures|) \times base\\_fee$. In other words, even without a `tx.Signers` list, the minimum fee will be $2 \times base\\_fee$. Otherwise, the fee is based on the total number of signatures in the outer transaction. See [Batch Fees](../XLS-0056-batch/README.md#22-transaction-fee) for further details.
 
+- `LendingProtocol (parent)`: A `LoanSet` cannot be a `Batch` inner transaction; the `Batch` fails with `temINVALID_INNER_BATCH`.
+- `LendingProtocolV1_2`: A `LoanSet` can be a `Batch` inner transaction, and the `Batch` fee rule above applies. See [XLS-66.7.3](./66.7-lending-protocol-v1_2/66.7.3-lending-transactions-in-batch.md).
+
 This field is not a signing field (it will not be included in transaction signatures, though the `TxnSignature` or `Signers` field will be included in the stored transaction).
 
 #### 3.8.2 `Flags`
@@ -1063,8 +1144,9 @@ The account specified in the `Account` field pays the transaction fee.
 ##### 3.8.5.1 Data Verification
 
 1. `LoanBrokerID` is specified and is zero. (`temINVALID`)
-2. `CounterpartySignature` is not present and the transaction is not part of a `Batch` inner transaction. (`temBAD_SIGNER`)
-3. The transaction is a `Batch` inner transaction and the `Counterparty` field is not specified. (`temBAD_SIGNER`)
+2. `CounterpartySignature` is not present and the transaction is not part of a `Batch` inner transaction. (`temBAD_SIGNER`) The `Batch` inner exception applies only under `LendingProtocolV1_2`, because before it a `LoanSet` cannot be a `Batch` inner transaction.
+3. - `LendingProtocol (parent)`: The check does not apply; a `LoanSet` cannot be a `Batch` inner transaction.
+   - `LendingProtocolV1_2`: The transaction is a `Batch` inner transaction and the `Counterparty` field is not specified. (`temBAD_SIGNER`; the outer `Batch` fails with `temINVALID_INNER_BATCH`) See [XLS-66.7.3](./66.7-lending-protocol-v1_2/66.7.3-lending-transactions-in-batch.md).
 4. `CounterpartySignature` contains an invalid signing key. (`temBAD_SIGNER`)
 5. `Data` field is present, non-empty, and exceeds 256 bytes. (`temINVALID`)
 6. `LoanServiceFee`, `LatePaymentFee`, or `ClosePaymentFee` is negative. (`temINVALID`)
@@ -1087,20 +1169,29 @@ The account specified in the `Account` field pays the transaction fee.
 4. Neither the `Account` nor the `Counterparty` field are the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
 5. The `Borrower` `AccountRoot` object does not exist. (`terNO_ACCOUNT`)
 6. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal >= Vault.AssetsMaximum` (vault at capacity). (`tecLIMIT_EXCEEDED`)
+   - `LendingProtocolV1_1`: The check does not apply to a Vault with `LEVersion` 1 or later. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
 7. Any value field (e.g., `PrincipalRequested`, `LoanOriginationFee`) cannot be represented in the `Vault.Asset` type without precision loss. (`tecPRECISION_LOSS`)
+   - `fixCleanup3_5_0`: A value outside the range of the `Vault.Asset` type also fails this check. See [XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md).
 8. Cannot add asset holding for the `Vault.Asset` (e.g., MPToken or TrustLine issues). (`tecNO_PERMISSION`)
+   - Before `fixCleanup3_4_0`: The check always runs.
+   - `fixCleanup3_4_0`: The check runs only if the Borrower has no holding, or if `LoanOriginationFee` is non-zero and the `LoanBroker.Owner` has no holding. See [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md).
 9. The Vault _pseudo-account_ is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 10. The LoanBroker _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 11. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 12. The `LoanBroker.Owner` is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 13. `Vault.AssetsAvailable < PrincipalRequested` (insufficient assets in the Vault). (`tecINSUFFICIENT_FUNDS`)
 14. `Vault.AssetsMaximum != 0` and `Vault.AssetsTotal + InterestDue > Vault.AssetsMaximum` (expected interest would exceed vault assets cap). (`tecLIMIT_EXCEEDED`)
+    - `LendingProtocolV1_1`: The check does not apply to a Vault with `LEVersion` 1 or later. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
 15. The combination of `PrincipalRequested`, `InterestRate`, `PaymentTotal`, and `PaymentInterval` results in a total interest amount that is zero or negative due to precision limitations. (`tecPRECISION_LOSS`)
 16. The loan terms result in a periodic payment that is too small to cover the interest accrued in the first period, leaving no amount to pay down the principal. (`tecPRECISION_LOSS`)
 17. The calculated periodic payment is so small that it rounds down to zero when adjusted for the asset's precision. (`tecPRECISION_LOSS`)
 18. The rounding of the periodic payment (due to asset precision) is significant enough that the total number of payments required to settle the loan differs from the specified `PaymentTotal`. (`tecPRECISION_LOSS`)
 19. `LoanBroker.DebtMaximum != 0` and `LoanBroker.DebtMaximum < LoanBroker.DebtTotal + PrincipalRequested + InterestDue` (exceeds maximum debt). (`tecLIMIT_EXCEEDED`)
+    - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `InterestDue` is not added. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
 20. `LoanBroker.CoverAvailable < (LoanBroker.DebtTotal + PrincipalRequested + InterestDue) × LoanBroker.CoverRateMinimum` (insufficient first-loss capital). (`tecINSUFFICIENT_FUNDS`)
+    - The new debt total is the one used by check 19.
+    - Before `fixCleanup3_2_0`: The product is rounded up and not rounded to the asset precision.
+    - `fixCleanup3_2_0`: The product is rounded up to the precision of the Vault. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
 21. The Borrower does not have sufficient reserve for the `Loan` object. (`tecINSUFFICIENT_RESERVE`)
 22. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 23. The `LoanBroker.Owner` is not authorized for the asset. (`tecNO_AUTH`)
@@ -1111,6 +1202,10 @@ The account specified in the `Account` field pays the transaction fee.
     - `LendingProtocolV1_1`: The Vault is closed-ended and the parent ledger close time is greater than or equal to `Vault.RedemptionDate`. (`tecEXPIRED`)
 27. - `LendingProtocol (parent)`: The check does not apply.
     - `LendingProtocolV1_1`: The Vault is closed-ended and `StartDate + (PaymentInterval × PaymentTotal) + 60 > Vault.RedemptionDate`; the expression is computed without overflow. (`tecNO_PERMISSION`)
+28. - `LendingProtocol (parent)`: The check does not apply.
+    - `LendingProtocolV1_2`: The `LoanBroker` is private and the Borrower is not a member of its domain. (`tecNO_AUTH`) See [XLS-66.7.2](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md).
+
+`LendingProtocolV1_2` adds capacity and precision checks for Vaults with `LEVersion` 2; see [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
 
 #### 3.8.6 State Changes
 
@@ -1137,9 +1232,11 @@ The account specified in the `Account` field pays the transaction fee.
      - Increase the `MPToken.MPTAmount` of the `LoanBroker.Owner` `MPToken` object by `LoanOriginationFee`.
 6. Update `Vault` object:
    - Decrease `Vault.AssetsAvailable` by `PrincipalRequested`.
-   - Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
+   - `LendingProtocol (parent)`: Increase `Vault.AssetsTotal` by `InterestDue` (interest owed to the Vault, excluding management fee).
+   - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `Vault.AssetsTotal` is unchanged. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
 7. Update `LoanBroker` object:
-   - Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
+   - `LendingProtocol (parent)`: Increase `LoanBroker.DebtTotal` by `PrincipalRequested + InterestDue`.
+   - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, increase `LoanBroker.DebtTotal` by `PrincipalRequested`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
    - Increment `LoanBroker.OwnerCount` by `1`.
    - Increment `LoanBroker.LoanSequence` by `1`.
 8. Directory linking:
@@ -1276,15 +1373,20 @@ This transaction uses the standard transaction fee.
    - `Before fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime < Loan.NextPaymentDueDate + Loan.GracePeriod`.
    - `fixCleanup3_4_0`: `tfLoanDefault` is specified and `currentTime <= Loan.NextPaymentDueDate + Loan.GracePeriod`.
 7. The submitter is not the `LoanBroker.Owner`. (`tecNO_PERMISSION`)
-8. `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets). (`tecLIMIT_EXCEEDED`)
+8. Impairment exceeds the Vault's lent assets (`tecLIMIT_EXCEEDED`):
+   - `LendingProtocol (parent)`: `tfLoanImpair` flag is specified and `Vault.LossUnrealized + (Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding) > Vault.AssetsTotal - Vault.AssetsAvailable` (impairment would exceed vault's unavailable assets).
+   - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1, the added loss is `Loan.PrincipalOutstanding` instead of `Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
+   - `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, the check is `Vault.LossUnrealized + Loan.PrincipalOutstanding > Vault.AssetsDeployed`. See [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
 9. Impair too soon (`tecTOO_SOON`):
    - `Before fixCleanup3_4_0`: The check does not apply.
-   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue).
+   - `fixCleanup3_4_0`: `tfLoanImpair` is specified and `currentTime <= Loan.NextPaymentDueDate` (can only impair a loan whose payment is already overdue). This check runs before check 8.
 
 #### 3.10.5 State Changes
 
 1. If the `tfLoanDefault` flag is specified:
-   - Compute `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
+   - Compute `DefaultAmount`:
+     - `LendingProtocol (parent)`: `DefaultAmount = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding` (principal + interest owed to Vault).
+     - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `DefaultAmount = Loan.PrincipalOutstanding`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
    - Compute `MinimumCover = LoanBroker.DebtTotal × LoanBroker.CoverRateMinimum`.
    - Compute `DefaultCovered = min(MinimumCover × LoanBroker.CoverRateLiquidation, DefaultAmount, LoanBroker.CoverAvailable)`.
    - Compute `VaultLoss = DefaultAmount - DefaultCovered`.
@@ -1314,7 +1416,9 @@ This transaction uses the standard transaction fee.
        - Decrease the `MPToken.MPTAmount` of the `LoanBroker` _pseudo-account_ `MPToken` object by `DefaultCovered`.
        - Increase the `MPToken.MPTAmount` of the `Vault` _pseudo-account_ `MPToken` object by `DefaultCovered`.
 2. If the `tfLoanImpair` flag is specified:
-   - Compute `LossUnrealized = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+   - Compute `LossUnrealized`:
+     - `LendingProtocol (parent)`: `LossUnrealized = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+     - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `LossUnrealized = Loan.PrincipalOutstanding`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
    - Update `Vault` object:
      - Increase `Vault.LossUnrealized` by `LossUnrealized`.
    - Update `Loan` object:
@@ -1323,7 +1427,9 @@ This transaction uses the standard transaction fee.
        - `Before fixCleanup3_4_0`: If the current ledger close time is less than `Loan.NextPaymentDueDate`, set `Loan.NextPaymentDueDate` to the current ledger close time.
        - `fixCleanup3_4_0`: `Loan.NextPaymentDueDate` is unchanged.
 3. If the `tfLoanUnimpair` flag is specified:
-   - Compute `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+   - Compute `LossReversed`:
+     - `LendingProtocol (parent)`: `LossReversed = Loan.TotalValueOutstanding - Loan.ManagementFeeOutstanding`.
+     - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `LossReversed = Loan.PrincipalOutstanding`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
    - Update `Vault` object:
      - Decrease `Vault.LossUnrealized` by `LossReversed`.
    - Update `Loan` object:
@@ -1334,7 +1440,12 @@ This transaction uses the standard transaction fee.
 
 #### 3.10.6 Invariants
 
-**TBD**
+The `Loan` invariants of [§3.2.7](#327-invariants) and the `LoanBroker` invariants of [§3.1.8](#318-invariants) apply. In addition:
+
+- `Vault.LossUnrealized` changes only in `LoanManage` and `LoanPay`.
+- `LendingProtocolV1_1`: `lsfLoanDefault` changes only in `LoanManage` and is never cleared, and `lsfLoanImpaired` changes only in `LoanManage` or `LoanPay`. See [XLS-66.4.3](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md).
+- `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, `Vault.AssetsDeployed` and `Vault.YieldUnrealized` change only in `LoanSet`, `LoanPay` and `LoanManage`. See [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
+- `fixCleanup3_4_0`: The freeze and lock invariants exempt the First-Loss Capital transfer of a default. See [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md).
 
 #### 3.10.7 Example JSON
 
@@ -1374,7 +1485,16 @@ For detailed processing logic for each flag, see: [Late Payment](#a-322-late-pay
 
 #### 3.11.3 Transaction Fee
 
-This transaction uses the standard transaction fee.
+The transaction fee depends on the number of periodic payments the `Amount` can cover. Let `baseFee` be the standard transaction fee.
+
+1. The fee is `baseFee` if any of the following holds:
+   - `tfLoanFullPayment` or `tfLoanLatePayment` is set.
+   - The `Loan`, its `LoanBroker` or its `Vault` does not exist, or `Amount` is not in the `Vault.Asset`.
+   - `Loan.PaymentRemaining <= 5`.
+   - The payment is late: the current ledger close time is at or past `Loan.NextPaymentDueDate` (the boundary is exclusive under `fixCleanup3_4_0`; see [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md)).
+2. Otherwise, let `regularPayment = Loan.PeriodicPayment` rounded up to `Loan.LoanScale`, plus `Loan.LoanServiceFee`. Let `N = Amount / regularPayment`, rounded up to an integer if `tfLoanOverpayment` is set and down otherwise. The fee is `max(1, ceil(N / 5)) × baseFee`.
+
+`fixCleanup3_1_3` caps the fee at `20 × baseFee`; see [XLS-66.1](./66.1-fix-cleanup-3_1_3/README.md).
 
 #### 3.11.4 Failure Conditions
 
@@ -1388,14 +1508,16 @@ This transaction uses the standard transaction fee.
 
 1. `Loan` object with the specified `LoanID` does not exist on the ledger. (`tecNO_ENTRY`)
 2. The submitter is not the `Loan.Borrower`. (`tecNO_PERMISSION`)
-3. `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object. (`temINVALID_FLAG`)
+3. `tfLoanOverpayment` flag is set on the transaction, but `lsfLoanOverpayment` flag is not set on the `Loan` object.
+   - Before `fixCleanup3_1_3`: (`temINVALID_FLAG`)
+   - `fixCleanup3_1_3`: (`tecNO_PERMISSION`) See [XLS-66.1](./66.1-fix-cleanup-3_1_3/README.md).
 4. `Loan.PaymentRemaining == 0` or `Loan.PrincipalOutstanding == 0` (loan is already fully paid). (`tecKILLED`)
 5. `Amount.asset` does not match `Vault.Asset`. (`tecWRONG_ASSET`)
 6. The Borrower is frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 7. The Vault _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
-10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+10. The fee is directed to the `LoanBroker` _pseudo-account_ (see [State Changes](#3115-state-changes) step 1: the cover is below the minimum, or the `LoanBroker.Owner` is deep frozen or not authorized for the asset) and the _pseudo-account_ is deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 11. Late payment without `tfLoanLatePayment` (`tecEXPIRED`):
     - `Before fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`.
     - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`.
@@ -1403,6 +1525,13 @@ This transaction uses the standard transaction fee.
 13. The payment is on-time and the `Amount` is less than the calculated `totalDue` for a periodic payment (`periodicPayment + loanServiceFee`). (`tecINSUFFICIENT_PAYMENT`)
 14. The `tfLoanFullPayment` flag is specified and `Loan.PaymentRemaining == 1` (use regular payment for the final payment). (`tecKILLED`)
 15. The `tfLoanFullPayment` flag is specified and the `Amount` is less than the calculated `totalDue` for a full early payment (`principalOutstanding + accruedInterest + prepaymentPenalty + ClosePaymentFee`). (`tecINSUFFICIENT_PAYMENT`)
+16. The `tfLoanLatePayment` flag is specified and the payment is not late. (`tecTOO_SOON`)
+    - Before `fixCleanup3_4_0`: The payment is not late if `currentTime < Loan.NextPaymentDueDate`.
+    - `fixCleanup3_4_0`: The payment is not late if `currentTime <= Loan.NextPaymentDueDate`. See [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md).
+17. The amount credited to the Vault, after rounding, does not change `Vault.AssetsAvailable`. (`tecPRECISION_LOSS`)
+    - `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, a payment that closes the Loan is exempt. See [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
+
+Before `fixCleanup3_4_0`, the payment also fails if the Vault _pseudo-account_ (when it receives a non-zero amount) or the account receiving a non-zero fee fails the asset authorization check. `fixCleanup3_4_0` removes these checks; see [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md).
 
 #### 3.11.5 State Changes
 
@@ -1447,13 +1576,16 @@ The `Loan` object is updated to reflect the payment.
 The `LoanBroker` and `Vault` objects are updated to reflect the new accounting state. The `valueChange`—representing the net change in the loan's total future interest—is applied to both the `LoanBroker` and the `Vault`, but with an important distinction for late payments.
 
 6. **`LoanBroker` Updates**:
-   - `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
+   - `LendingProtocol (parent)`: `LoanBroker.DebtTotal` is decreased by `totalToVault - valueChange` (the principal and interest paid back, adjusted for any value change).
      - For late payments, `valueChange > 0`, so the debt reduction is less than `totalToVault`.
      - For overpayments/early full repayments, `valueChange` is typically negative, so the debt reduction is greater than `totalToVault`.
+   - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1 or later, `LoanBroker.DebtTotal` is decreased by `principalPaid`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
    - If fees were directed to the cover pool, `LoanBroker.CoverAvailable` increases by `totalToBroker`.
 7. **`Vault` Updates**:
    - `Vault.AssetsAvailable` increases by `totalToVault`.
-   - `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+   - `LendingProtocol (parent)`: `Vault.AssetsTotal` is adjusted by `valueChange`, reflecting the net change in the vault's expected future earnings from the loan.
+   - `LendingProtocolV1_1`: For a Vault with `LEVersion` 1, `Vault.AssetsTotal` increases by `interestPaid`. See [XLS-66.4.1](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md).
+   - `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, the Vault fields change as specified in [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
 
 **4. Asset Transfers**
 
@@ -1480,7 +1612,12 @@ These transfers are performed according to the asset type:
 
 #### 3.11.6 Invariants
 
-**TBD**
+The `Loan` invariants of [§3.2.7](#327-invariants) and the `LoanBroker` invariants of [§3.1.8](#318-invariants) apply. In addition:
+
+- `Vault.LossUnrealized` changes only in `LoanManage` and `LoanPay`; `LoanPay` changes it when it unimpairs the Loan.
+- `LendingProtocolV1_1`: A successful `LoanPay` that leaves payments remaining must reduce `Loan.PrincipalOutstanding` or `Loan.TotalValueOutstanding`, must not increase either, must reduce `Loan.PaymentRemaining`, and must advance `Loan.NextPaymentDueDate` by a positive multiple of `Loan.PaymentInterval`. See [XLS-66.4.3](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md).
+- `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, `Vault.AssetsDeployed` and `Vault.YieldUnrealized` change only in `LoanSet`, `LoanPay` and `LoanManage`. See [XLS-66.7.1](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md).
+- `fixCleanup3_2_0`: The MPT transfer invariant does not require `lsfMPTCanTransfer` for this transaction. See [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md).
 
 #### 3.11.7 Example JSON
 
@@ -1761,6 +1898,15 @@ $$
 
 An overpayment is an early repayment of principal. `OverpaymentInterestRate` and `OverpaymentFee` are prepayment penalties that compensate the lender for foregone interest. They are deducted from the overpayment amount, and the remainder reduces principal and triggers re-amortization (formulas 19-23). If the principal portion is zero after rounding to the loan's precision, the overpayment is skipped: it is not applied and the borrower is not charged for it. This always happens when `OverpaymentInterestRate + OverpaymentFee` is 100% (`100000`) or more, and can also happen for small overpayments.
 
+After re-amortization, the new Loan state must pass the same validity guards as a new Loan (`LoanSet` [failure conditions](#3852-protocol-level-failures) 15-18), evaluated on the new rounded state with `Loan.PaymentRemaining` as the number of payments:
+
+1. If interest is still outstanding (`newTotalValueOutstanding != newPrincipalOutstanding`), the new total value must exceed the new principal. Unlike `LoanSet` check 15, which expects interest whenever `InterestRate` is non-zero, a Loan whose interest has already been paid off is not required to have interest.
+2. The principal part of the first re-amortized payment must be greater than zero (`LoanSet` check 16).
+3. The new periodic payment, rounded up to `Loan.LoanScale`, must not be zero (`LoanSet` check 17).
+4. The new total value divided by the rounded periodic payment, rounded up, must equal `Loan.PaymentRemaining` (`LoanSet` check 18).
+
+The new periodic payment and total value must also be positive, and the new management fee must not be negative. The overpayment is also ignored if it would increase the Loan's interest due (`valueChange_{re-amortization} > 0`), or if the new rounded principal is not lower than the old one. If any of these fail, the overpayment is ignored: it is not applied, the borrower is not charged for it, and the transaction still succeeds with the periodic payments it made. These checks are not gated by an amendment.
+
 #### 5.1 Overpayment Fees and Interest
 
 $$
@@ -1984,6 +2130,8 @@ $$
 
 This appendix provides the complete payment processing logic and implementation pseudo-code for the `LoanPay` transaction.
 
+The rippled implementation is authoritative for `LoanPay` behavior. The prose in this specification and the pseudo-code in this appendix describe that implementation. Where either disagrees with rippled, rippled's behavior applies and the specification is in error.
+
 ### A-3.1 Conceptual Loan Value
 
 The value of a loan is based on the present value of its future payments. Conceptually, this can be understood through the standard amortization formulas.
@@ -2024,7 +2172,7 @@ $$
 
 A `LoanPay` transaction is processed according to a defined workflow that evaluates the payment's timing, amount, and any specified flags. This determines how the funds are applied to the loan's principal, interest, and associated fees.
 
-**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-33-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
+**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-33-pseudo-code) describes the implementation logic, which includes critical adjustments for rounding. Where the pseudo-code disagrees with rippled, rippled applies (see [A-3](#a-3-loanpay-implementation-reference)).
 
 **Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
 
@@ -2055,13 +2203,12 @@ The system follows these steps to process a payment:
       - **Constraint**: Overpayments are not permitted on late payments. Any amount beyond the exact total due is not charged.
 
     - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
-      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set and the amount is sufficient to cover the [full payment formula](#a-324-early-full-repayment), the loan is closed.
-        - **Constraint**: This option is not available if only one payment remains on the loan.
+      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set, the loan is closed by the [full payment formula](#a-324-early-full-repayment). The transaction fails with `tecKILLED` if only one payment remains, and with `tecINSUFFICIENT_PAYMENT` if the amount does not cover the full payment. It does not fall back to periodic payments.
       - **ii. Sequential Periodic Payments**: If it is not a full repayment, the system applies the funds to as many complete periodic payment cycles as possible. A single cycle consists of the `periodicPayment` plus the `serviceFee`.
       - **iii. Overpayment Application**: After all possible full periodic cycles are paid, any remaining amount is treated as an overpayment and applied to the principal.
         - **Constraint**: This step only occurs for on-time payments and requires two flags to be set: `lsfLoanOverpayment` on the `Loan` object and `tfLoanOverpayment` on the `LoanPay` transaction. If these conditions are not met, the excess amount is ignored.
 
-**Note on `Amount` and Excess Funds**: `LoanPay.Amount` is the maximum the protocol can charge the borrower, for every `LoanPay`, not only overpayments. The borrower is charged only the amount applied to the loan. Funds that are not applied are not taken, and the transaction still returns `tesSUCCESS`. This covers excess sent without `tfLoanOverpayment`, an overpayment on a late payment, a loan without `lsfLoanOverpayment`, and an overpayment whose principal portion is zero. Use the transaction metadata, not `Amount`, to determine the amount actually paid.
+**Note on `Amount` and Excess Funds**: `LoanPay.Amount` is the maximum the protocol can charge the borrower, for every `LoanPay`, not only overpayments. The borrower is charged only the amount applied to the loan. Funds that are not applied are not taken, and the transaction still returns `tesSUCCESS`. This covers excess sent without `tfLoanOverpayment`, an overpayment on a late payment, a loan without `lsfLoanOverpayment`, an overpayment whose principal portion is zero, and an overpayment whose re-amortized Loan would fail the [validity check](#5-overpayment-processing). In the last case the overpayment is ignored, the transaction returns `tesSUCCESS`, and only the periodic payments are charged. A typical example is an overpayment that would retire all remaining principal while a payment is still scheduled: the re-amortized periodic payment is zero, so the guards fail. A larger `Amount` can therefore result in less being applied to the Loan than a smaller one. Use the transaction metadata, not `Amount`, to determine the amount actually paid.
 
 **The `valueChange` Concept**
 
@@ -2226,6 +2373,17 @@ $$
 valueChange = overpaymentInterest_{net} + valueChange_{re-amortization}
 $$
 
+**3. Validity Check**
+
+After re-amortization, the new Loan state must pass the same validity guards as a new Loan (`LoanSet` failure conditions 15-18; see [Overpayment Processing](#5-overpayment-processing)), evaluated on the new rounded state with `Loan.PaymentRemaining` as the number of payments:
+
+1. If interest is still outstanding (`newTotalValueOutstanding != newPrincipalOutstanding`), the new total value must exceed the new principal. Unlike `LoanSet` check 15, which expects interest whenever `InterestRate` is non-zero, a Loan whose interest has already been paid off is not required to have interest.
+2. The principal part of the first re-amortized payment must be greater than zero (`LoanSet` check 16).
+3. The new periodic payment, rounded up to `Loan.LoanScale`, must not be zero (`LoanSet` check 17).
+4. The new total value divided by the rounded periodic payment, rounded up, must equal `Loan.PaymentRemaining` (`LoanSet` check 18).
+
+The new periodic payment and total value must also be positive, and the new management fee must not be negative. The overpayment is also ignored if it would increase the Loan's interest due (`valueChange_{re-amortization} > 0`), or if the new rounded principal is not lower than the old one. If any of these fail, the overpayment is ignored: it is not applied, the borrower is not charged for it, and the transaction still succeeds with the periodic payments it made. These checks are not gated by an amendment.
+
 Note, that an overpayment typically decreases the overall value of the loan, as the reduction in future interest from re-amortization outweighs interest charged on the overpayment amount itself. However, it is possible for an overpayment to increase the value, if the overpayment interest portion is greater than the value change caused by re-amortization.
 
 #### A-3.2.4 Early Full Repayment
@@ -2346,93 +2504,92 @@ function calculate_payment_breakdown(principalOutstanding) -> (principal, intere
 
     return (principal, interest)
 
-function calculate_rounded_principal_payment(truePrincipalOutstanding) -> (principal):
-    let roundedPrincipalPayment = (loan.principalOutstanding - truePrincipalOutstanding).round(loan.loanScale, DOWN)
-
-    # Ensure we do not have a negative principal payment
-    roundedPrincipalPayment = max(0, roundedPrincipalPayment)
-
-    # Ensure we do not exceed the outstanding principal amount
-    return min(roundedPrincipalPayment, loan.principalOutstanding)
-
-
-function calculate_rounded_interest_breakdown(roundedPrincipalPayment, trueInterestOutstanding, trueManagementFeeOutstanding, roundedPeriodicPayment) -> (interest, fee):
-    if loan.interestRate == 0:
-        return (0, 0)
-
+function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, managementFee):
     let loanInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
 
-    # The interest due is the difference between our current value, and the future value after the next payment
-    let roundedInterestPayment = (loanInterestOutstanding - trueInterestOutstanding).round(loan.loanScale, HALF_EVEN)
+    # If this is the final payment, or the remaining value fits in one payment, settle any outstanding amounts
+    if loan.paymentsRemaining == 1 or loan.totalValueOutstanding <= roundedPeriodicPayment:
+        return (loan.principalOutstanding, loanInterestOutstanding, loan.managementFeeOutstanding)
 
-    # Since diffInterest can be negative, ensure the interest payment itself is not negative.
-    roundedInterestPayment = max(0, roundedInterestPayment)
-
-    # This caps the interest at the remaining portion of the periodic payment.
-    roundedInterestPayment = min(roundedPeriodicPayment - roundedPrincipalPayment, roundedInterestPayment)
-
-    # The Management Fee is the difference between our current value, and the future value after the next payment
-    let roundedManagementFee = (loan.managementFeeOutstanding - trueManagementFeeOutstanding).round(loan.loanScale, HALF_EVEN)
-
-    # Since diffManagementFee can be negative, ensure the final fee payment is not negative.
-    roundedManagementFee = max(0, roundedManagementFee)
-
-    # Ensure the fee payment does not exceed the total outstanding management fee.
-    roundedManagementFee = min(roundedManagementFee, loan.managementFeeOutstanding)
-
-    return (roundedInterestPayment, roundedManagementFee)
-
-function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, managementFee):
-    # If this is the final payment, simply settle any outstanding amounts
-    if loan.paymentsRemaining == 1:
-        let outstandingInterest = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
-        return (loan.principalOutstanding, outstandingInterest, loan.managementFeeOutstanding)
-
-    # Determine the true state of the loan, excluding rounding errors. This calculation gives where the loan state is meant to be
+    # Determine the true state of the loan after this payment, excluding rounding errors.
+    # This calculation gives where the loan state is meant to be.
     let (
       truePrincipalOutstanding,
       trueInterestOutstanding,
       trueManagementFeeOutstanding
     ) = calculate_true_loan_state(loan.paymentsRemaining - 1)
+    let trueValueOutstanding = loan.periodicPayment * (loan.paymentsRemaining - 1)
 
-    # Given the true state we can calculate the rounded principal that accounts for deviation from the true state
-    let roundedPrincipalPayment = calculate_rounded_principal_payment(truePrincipalOutstanding)
+    # Round the target state to the loan scale.
+    # LendingProtocol (parent): every component is rounded to nearest (HALF_EVEN).
+    # fixCleanup3_2_0 changes the rounding of the principal and interest; see XLS-66.2.
+    let targetValue = trueValueOutstanding.round(loan.loanScale, HALF_EVEN)
+    let targetPrincipal = truePrincipalOutstanding.round(loan.loanScale, HALF_EVEN)
+    let targetInterest = trueInterestOutstanding.round(loan.loanScale, HALF_EVEN)
+    let targetManagementFee = trueManagementFeeOutstanding.round(loan.loanScale, HALF_EVEN)
 
-    let (roundedInterestPayment, roundedManagementFee) = calculate_rounded_interest_breakdown(
-        roundedPrincipalPayment,
-        trueInterestOutstanding,
-        trueManagementFeeOutstanding,
-        roundedPeriodicPayment
-    )
+    # The payment components are the difference between the current state and the target state.
+    # Rounding can make a difference negative; such a difference is set to zero.
+    let principal = max(0, loan.principalOutstanding - targetPrincipal)
+    let interest = max(0, loanInterestOutstanding - targetInterest)
+    let managementFee = max(0, loan.managementFeeOutstanding - targetManagementFee)
+
+    # Cap each component at its outstanding amount and at the part of the periodic payment that is left.
+    principal = min(principal, loan.principalOutstanding)
+    interest = min(interest, max(0, roundedPeriodicPayment - principal), loanInterestOutstanding)
+    managementFee = min(managementFee, roundedPeriodicPayment - (principal + interest), loan.managementFeeOutstanding)
 
     # --- Final Safety Check ---
-    # Compute if the sum of components exceeds the periodic payment amount due to rounding adjustments.
+    # If the sum of the components exceeds the periodic payment, reduce the components,
+    # first the interest, then the management fee, then the principal.
+    let excess = (principal + interest + managementFee) - roundedPeriodicPayment
 
-    let excess = (roundedPeriodicPayment - roundedPrincipalPayment - roundedInterestPayment - roundedManagementFee)
+    if excess > 0:
+        let part = min(interest, excess)
+        interest = interest - part
+        excess = excess - part
 
-    # If the sum is too large (excess is negative), reduce the components to match the total.
-    # First, take as much excess as possible from the interest portion.
-    if excess < 0:
-        let part = min(roundedInterestPayment, abs(excess))
-        roundedInterestPayment = roundedInterestPayment - part
-        excess = excess + part
+    if excess > 0:
+        let part = min(managementFee, excess)
+        managementFee = managementFee - part
+        excess = excess - part
 
-    # If there is still an excess, take as much as possible from the fee portion.
-    if excess < 0:
-        let part = min(roundedManagementFee, abs(excess))
-        roundedManagementFee = roundedManagementFee - part
-        excess = excess + part
+    if excess > 0:
+        let part = min(principal, excess)
+        principal = principal - part
+        excess = excess - part
 
-    # Finally, take as much as possible from the principal portion.
-    if excess < 0:
-        let part = min(roundedPrincipalPayment, abs(excess))
-        roundedPrincipalPayment = roundedPrincipalPayment - part
-        excess = excess + part
+    return (principal, interest, managementFee)
 
-    # if excess is still negative, this implies that the principal was calculated wrong.
-    # it should not happen, but if it does this is a critical failure.
+function loan_guards_pass(properties, principal, expectInterest, paymentTotal) -> bool:
+    # properties = { periodicPayment, loanState, loanScale, firstPaymentPrincipal }
+    # firstPaymentPrincipal is the unrounded principal part of the first payment:
+    #   theoretical principal with paymentTotal payments left
+    #   minus theoretical principal with paymentTotal - 1 payments left,
+    #   both computed from properties.periodicPayment.
+    let totalInterest = properties.loanState.valueOutstanding - principal
 
-    return (roundedPrincipalPayment, roundedInterestPayment, roundedManagementFee)
+    # Guard 1: a loan that expects interest must have some interest
+    if expectInterest and totalInterest <= 0:
+        return false
+    # Guard 1a: a loan that expects no interest must have none
+    if not expectInterest and totalInterest > 0:
+        return false
+
+    # Guard 2: the first payment must pay some principal
+    if properties.firstPaymentPrincipal <= 0:
+        return false
+
+    # Guard 3: the periodic payment must not round to zero
+    let roundedPayment = properties.periodicPayment.round(properties.loanScale, UP)
+    if roundedPayment == 0:
+        return false
+
+    # Guard 4: the rounded payment must complete the loan in exactly paymentTotal payments
+    if ceil(properties.loanState.valueOutstanding / roundedPayment) != paymentTotal:
+        return false
+
+    return true
 
 function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanProperties) or error:
     # Loan state is composed of three tracked variables:
@@ -2496,6 +2653,7 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         interestOutstanding: newTheoreticalInterestBase + errors.interestOutstanding,
         managementFeeOutstanding: newTheoreticalStateBase.managementFeeOutstanding + errors.managementFeeOutstanding
     }
+    # fixCleanup3_2_0 replaces the principal and management fee of newTheoreticalState; see XLS-66.2.
 
     # Update the loan state variables with the new values that include the preserved
     # rounding errors. This ensures the loan's tracked state remains consistent with
@@ -2524,11 +2682,22 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         managementFeeOutstanding: managementFeeOutstanding
     }
     # Interest is derived: roundedNewState.interestOutstanding() = valueOutstanding - principalOutstanding - managementFeeOutstanding
+    newLoanProperties.loanState = roundedNewState
 
-    # The principal must decrease. If rounding leaves it unchanged, skip the
-    # overpayment so the borrower is not charged penalties for nothing.
-    # Matches the check in rippled's doOverpayment.
-    if roundedNewState.principalOutstanding >= loan.principalOutstanding:
+    # Validity check: the re-amortized loan must still be a valid loan. These are the
+    # LoanSet guards (LoanSet failure conditions 15-18), applied to the new state.
+    # If any guard fails, the overpayment is ignored (the transaction is not failed).
+    if not loan_guards_pass(
+        newLoanProperties,
+        roundedNewState.principalOutstanding,
+        # Guard 1 expects interest only if interest is still outstanding
+        expectInterest = (roundedNewState.valueOutstanding - roundedNewState.principalOutstanding) != 0,
+        paymentTotal = loan.paymentsRemaining
+    ):
+        return error
+
+    # Defensive check on the computed properties
+    if newLoanProperties.periodicPayment <= 0 or roundedNewState.valueOutstanding <= 0 or roundedNewState.managementFeeOutstanding < 0:
         return error
 
     # Calculate deltas between old and new state for each tracked component
@@ -2545,6 +2714,12 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
     let valueChange = -deltas.interest
     if valueChange > 0:
         # Principal overpayment would increase the value of the loan, ignore the overpayment
+        return error
+
+    # The principal must decrease. If rounding leaves it unchanged, skip the
+    # overpayment so the borrower is not charged penalties for nothing.
+    # rippled checks this after try_overpayment returns, in doOverpayment.
+    if roundedNewState.principalOutstanding >= loan.principalOutstanding:
         return error
 
     # Return the payment parts and new loan properties
@@ -2571,6 +2746,9 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
     if is_payment_late(currentTime) and not is_set(tfLoanLatePayment):
         return "loan payment is late" error
+
+    if not is_payment_late(currentTime) and is_set(tfLoanLatePayment):
+        return "loan payment is not late" error   # tecTOO_SOON
 
     # ======== STEP 1: Process Late Payment ======== #
     if is_payment_late(currentTime) and is_set(tfLoanLatePayment):
@@ -2600,11 +2778,18 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             totalManagementFee + loan.serviceFee + loan.latePaymentFee    # The total fee paid for a loan payment
         )
     # ======== STEP 2: Process Full Payment ======== #
-    let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
-    let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + loan.closePaymentFee
+    if is_set(tfLoanFullPayment):
+        # A full payment must be made before the final scheduled payment
+        if loan.paymentsRemaining <= 1:
+            return "last payment cannot be a full payment" error   # tecKILLED
 
-    # If the payment is equal or higher than full payment amount and there is more than one payment remaining, make a full payment
-    if is_set(tfLoanFullPayment) && amount >= fullPaymentAmount && loan.paymentsRemaining > 1:
+        let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
+        let closePaymentFee = loan.closePaymentFee.round(loan.loanScale, HALF_EVEN)
+        let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + closePaymentFee
+
+        if amount < fullPaymentAmount:
+            return "insufficient amount paid" error   # tecINSUFFICIENT_PAYMENT
+
         let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
         let loanValueChange = fullInterest - totalInterestOutstanding
 
@@ -2617,14 +2802,17 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             fullPrincipal,                      # Full payment repays the entire outstanding principal
             fullInterest,                       # Full payment repays any accrued interest since the last payment and additional full payment interest
             loanValueChange,                    # A full payment changes the total value of the loan
-            fullManagementFee + loan.closePaymentFee   # An early payment pays a specific closePaymentFee
+            fullManagementFee + closePaymentFee   # An early payment pays a specific closePaymentFee
         )
+
     # ======== STEP 3: Process Regular Payment(s) ======== #
     # Handle regular payments and overpayments
     let totalPaid = 0
     let (totalPrincipalPaid, totalInterestPaid, totalFeePaid) = (0, 0, 0)
 
-    while totalPaid < amount && loan.paymentsRemaining > 0:
+    let numPayments = 0
+    # At most 100 periodic payments are made in one transaction
+    while totalPaid < amount && loan.paymentsRemaining > 0 && numPayments < 100:
         # calculate the payment principal, interest and fee
         let (principal, interest, managementFee) = compute_payment_due(loan.periodicPayment.round(loan.loanScale, UP))
         let paymentAmount = principal + interest + managementFee + loan.serviceFee
@@ -2643,6 +2831,7 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
         loan.PreviousPaymentDueDate = loan.nextPaymentDueDate - loan.paymentInterval
 
         totalPaid = totalPaid + paymentAmount
+        numPayments = numPayments + 1
         totalPrincipalPaid = totalPrincipalPaid + principal
         totalInterestPaid = totalInterestPaid + interest
         totalFeePaid = totalFeePaid + managementFee + loan.serviceFee
@@ -2650,8 +2839,9 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
     # ======== STEP 4: Process Overpayment ======== #
     let loanValueChange = 0
     # Handle overpayment if there are remaining payments, the loan supports overpayments, and there are funds remaining
-    if loan.paymentsRemaining > 0 && is_set(loan.lsfLoanOverpayment) && is_set(tfLoanOverpayment) && totalPaid < amount:
-        let overpaymentAmount = min(loan.principalOutstanding, amount - totalPaid)
+    # fixCleanup3_1_3 and fixCleanup3_2_0 round the amounts in this step; see XLS-66.1 and XLS-66.2.
+    if loan.paymentsRemaining > 0 && is_set(loan.lsfLoanOverpayment) && is_set(tfLoanOverpayment) && totalPaid < amount && numPayments < 100:
+        let overpaymentAmount = min(loan.totalValueOutstanding, amount - totalPaid)
 
         # ======== STEP 4.1: Determine Interest and Fee on Overpayment ======== #
 
@@ -2708,5 +2898,10 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## A-4 Changelog
 
-- [XLS-66.1](./66.1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md).
-- [XLS-66.2](./66.2/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.
+- [XLS-66.1](./66.1-fix-cleanup-3_1_3/README.md): `fixCleanup3_1_3`: `LoanPay` fee cap, overpayment error code and amount truncation, and a `LoanBroker` cover invariant.
+- [XLS-66.2](./66.2-fix-cleanup-3_2_0/README.md): `fixCleanup3_2_0`: first-loss capital precision, minimum cover rounding, cover withdrawal transferability, `LoanBrokerDelete` freeze check, and amortization rounding.
+- [XLS-66.3](./66.3-fix-cleanup-3_3_0/README.md): `fixCleanup3_3_0`: freeze checks for first-loss capital deposits and withdrawals.
+- [XLS-66.4](./66.4-lending-protocol-v1_1/README.md): `LendingProtocolV1_1` Lending changes: [66.4.1 Cash-Basis Loans](./66.4-lending-protocol-v1_1/66.4.1-cash-basis-loans.md), [66.4.2 Closed-Ended Loan Gates](./66.4-lending-protocol-v1_1/66.4.2-closed-ended-loan-gates.md), [66.4.3 Loan Invariants](./66.4-lending-protocol-v1_1/66.4.3-loan-invariants.md).
+- [XLS-66.5](./66.5-fix-cleanup-3_4_0/README.md): `fixCleanup3_4_0`: stops early impairment and due-date rewrites on `LoanManage`, makes the payment due-date and default grace-period boundaries exclusive, and relaxes authorization, holding and freeze-invariant checks.
+- [XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md): `fixCleanup3_5_0`: range checks on value fields and the `LoanBrokerDelete` cover payout.
+- [XLS-66.7](./66.7-lending-protocol-v1_2/README.md): `LendingProtocolV1_2` Lending changes: [66.7.1 Fixed-Precision Loans](./66.7-lending-protocol-v1_2/66.7.1-fixed-precision-loans.md), [66.7.2 Private Loan Broker](./66.7-lending-protocol-v1_2/66.7.2-private-loan-broker.md), [66.7.3 Lending Transactions in Batch](./66.7-lending-protocol-v1_2/66.7.3-lending-transactions-in-batch.md).
