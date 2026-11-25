@@ -127,6 +127,7 @@ The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Amendment c
   - [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
 - `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
+- `LendingProtocolV1_2`, as described in [XLS-66.3](./66.3/README.md).
 
 ## 3. Specification
 
