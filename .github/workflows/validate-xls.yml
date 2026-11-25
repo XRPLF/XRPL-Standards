@@ -6,99 +6,72 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate-xls:
-    runs-on: ubuntu-latest
     name: Validate XLS Document Parsing
-
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Setup Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
 
-      - name: Cache Python dependencies
-        id: cache-deps
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/scripts/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - run: pip install -r scripts/requirements.txt
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r scripts/requirements.txt
+      - name: Parse all XLS documents
+        run: python scripts/xls_parser.py
 
-      - name: Validate XLS document parsing
-        run: |
-          echo "Running XLS document validation..."
-          python scripts/xls_parser.py
+      - name: Build site
+        run: python scripts/build_site.py
 
-      - name: Report validation results
-        if: always()
-        run: |
-          echo "XLS validation completed"
-          echo "This pipeline validates that all XLS documents can be parsed correctly"
-          echo "If this fails, it indicates issues with XLS document formatting or metadata"
+      - name: Test CI scripts
+        run: python -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
   validate-xls-template:
-    runs-on: ubuntu-latest
     name: "[Beta CI Check] Validate XLS Template Compliance"
-
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # Fetch full history for git diff
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Setup Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
 
-      - name: Cache Python dependencies
-        id: cache-deps
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/scripts/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - run: pip install -r scripts/requirements.txt
 
-      - name: Install dependencies
+      - name: Validate changed XLS files
+        env:
+          # On push, compare with the commit before the push. On a new branch
+          # or workflow_dispatch, fall back to the default branch.
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          python -m pip install --upgrade pip
-          pip install -r scripts/requirements.txt
-
-      - name: Get changed XLS files
-        id: changed-files
-        uses: tj-actions/changed-files@v47
-        with:
-          files: |
-            XLS-*/README.md
-            XLS-*/*/*.md
-
-      - name: Validate XLS template compliance
-        if: steps.changed-files.outputs.all_changed_files != ''
-        run: |
-          echo "Running XLS template validation..."
-          python scripts/validate_xls_template.py ${{ steps.changed-files.outputs.all_changed_files }}
-
-      - name: Report validation results
-        if: always()
-        run: |
-          if [ "${{ steps.changed-files.outputs.all_changed_files }}" = "" ]; then
-            echo "No XLS files were changed - skipping validation"
-          else
-            echo "XLS template validation completed"
-            echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
-            echo ""
-            echo "This validates that XLSes follow XLS_TEMPLATE.md"
-            echo "And that Amendment specs follow AMENDMENT_TEMPLATE.md"
-            echo "If this fails, check the error messages for missing sections or placeholders"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASE="origin/$DEFAULT_BRANCH"
           fi
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE"...HEAD -- 'XLS-*/README.md' 'XLS-*/*/*.md')
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No XLS files changed."
+            exit 0
+          fi
+          printf 'Validating %s\n' "${files[@]}"
+          python scripts/validate_xls_template.py "${files[@]}"
