@@ -18,7 +18,7 @@ Nested patches (XLS-1 §4.4.4) live at `XLS-NNNN-slug/x.y-amendment-slug/*.md`. 
 
 - A patch page mirrors its source path: `xls/XLS-0065-…/65.1-lending-protocol-v1_1/65.1.2-….html`; `README.md` in an amendment folder becomes `index.html`. `xls/xls-65.1.2.html` redirects to it.
 - Patches are not rows in the listing. The parent's row links to the "Amendment patches" panel on the parent page.
-- `patch_map.py` decides which parent section a patch section changes. It uses only what the patch states: a `../README.md#anchor` link, a `parent §N.N` reference, or the same heading-title path below Specification. Do not add body-text guessing. A wrong marker misleads readers more than a missing one.
+- `patch_map.py` decides which parent section a patch section changes. It uses only what the patch states: a `../README.md#anchor` link, a `parent §N.N` reference, or the same heading-title path below Specification. Do not add body-text guessing. A wrong marker misleads readers more than a missing one. `validate_xls_template.py` uses the same module: broken parent anchors and `§` references are errors, and Specification sections that match no parent section are warnings.
 - The amendment name comes from the patch's prose ("Under the `fixCleanup3_4_0` amendment"), or from its `x.y/README.md` index.
 - The amendment filter on parent pages is radio buttons and CSS `:has()`; keep it script-free.
 

@@ -39,6 +39,13 @@ import urllib.error
 
 from markdown_it import MarkdownIt
 from xls_parser import extract_xls_metadata, validate_xls_preamble
+from patch_map import (
+    PARENT_LINK_RE,
+    SECTION_REF_RE,
+    map_patch,
+    parse_headings,
+    unmatched_sections,
+)
 
 
 @dataclass
@@ -167,6 +174,7 @@ class XLSTemplateValidator:
         # parent XLS folder, for example XLS-0066-lending-protocol/66.2-fix-cleanup-3_4_0/.
         self.is_nested_patch = not file_path.parent.name.startswith("XLS-")
         self.errors: List[ValidationError] = []
+        self.warnings: List[ValidationError] = []
         self.sections: List[Section] = []
         self.content_lines: List[str] = []
 
@@ -210,6 +218,7 @@ class XLSTemplateValidator:
             self._validate_no_placeholders()
 
         if self.is_nested_patch:
+            self._validate_parent_references(content)
             self._validate_patch_folder(doc)
 
         return len(self.errors) == 0
@@ -271,6 +280,64 @@ class XLSTemplateValidator:
                 "amendment name in lowercase kebab case, for example "
                 "'65.1-lending-protocol-v1_1' (XLS-1 §4.4.4.3)",
             ))
+
+    def _validate_parent_references(self, content: str):
+        """Check that a nested patch's references to its parent resolve.
+
+        A link to `../README.md#anchor` must name a parent heading, and a
+        `parent §N.N` or `[XLS-N](../README.md) §N.N` reference must name a
+        numbered parent section.
+        Specification sections that match no parent section are reported as
+        warnings (see scripts/patch_map.py).
+        """
+        parent_path = self.file_path.parent.parent / "README.md"
+        if not parent_path.exists():
+            return
+        parent = parse_headings(parent_path.read_text(encoding="utf-8"))
+        ids = {h.id for h in parent}
+        numbers = {h.number for h in parent if h.number}
+
+        fence = False
+        for line_number, line in enumerate(self.content_lines, 1):
+            if re.match(r"\s*(```|~~~)", line):
+                fence = not fence
+            if fence:
+                continue
+            for anchor in PARENT_LINK_RE.findall(line):
+                if anchor not in ids:
+                    self.errors.append(ValidationError(
+                        str(self.file_path), line_number,
+                        f"Link to parent anchor '#{anchor}' does not match a "
+                        f"heading in {parent_path.parent.name}/README.md",
+                    ))
+            refs = SECTION_REF_RE.findall(line)
+            refs += re.findall(
+                r"\]\(\.\./README\.md\)\s*§\s*(\d+(?:\.\d+)*)", line
+            )
+            for ref in refs:
+                if ref not in numbers:
+                    self.errors.append(ValidationError(
+                        str(self.file_path), line_number,
+                        f"Parent section §{ref} does not exist in "
+                        f"{parent_path.parent.name}/README.md",
+                    ))
+
+        # A section that matches nothing may be new content (for example
+        # "Protocol Constants"), so this is a warning, not an error.
+        for heading in unmatched_sections(content, map_patch(content, parent)):
+            self.warnings.append(ValidationError(
+                str(self.file_path), self._line_of(heading.name),
+                f"Section '{heading.name}' is not linked to a parent section, "
+                "so the site cannot mark where it applies. If it changes one, "
+                "use the parent's heading titles or link to it "
+                "(../README.md#anchor).",
+            ))
+
+    def _line_of(self, heading_name: str) -> Optional[int]:
+        for line_number, line in enumerate(self.content_lines, 1):
+            if re.match(r"#{1,6}\s", line) and line.lstrip("#").strip().replace("`", "") == heading_name:
+                return line_number
+        return None
 
     def _validate_preamble(self, doc):
         """Validate preamble metadata fields using the parser's validation."""
@@ -669,6 +736,8 @@ def validate_file(
     """
     validator = XLSTemplateValidator(file_path, strict)
     success = validator.validate()
+    for warning in validator.warnings:
+        print(f"  Warning: {warning}")
     return success, validator.errors
 
 

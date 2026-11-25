@@ -281,5 +281,49 @@ class PatchFolderTest(unittest.TestCase):
         self.assertEqual(len(self.folder_errors("65.2-lending-protocol-v1_1")), 1)
 
 
+class ValidatorParentReferenceTest(unittest.TestCase):
+    def check(self, patch_body):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name) / "XLS-0065-vault"
+        (folder / "65.1").mkdir(parents=True)
+        (folder / "README.md").write_text(PARENT)
+        path = folder / "65.1/65.1.2-memo.md"
+        path.write_text(preamble("65.1.2", "Memo") + patch_body)
+        validator = XLSTemplateValidator(path)
+        validator.validate()
+        errors = [e.message for e in validator.errors if "parent" in e.message.lower()]
+        return errors, [w.message for w in validator.warnings]
+
+    def test_good_references(self):
+        errors, _ = self.check(
+            "See parent [§3.1.2](../README.md#312-fields) and [XLS-65](../README.md) §3.4.2.1."
+        )
+        self.assertEqual(errors, [])
+
+    def test_bad_section(self):
+        errors, _ = self.check("Append to parent §3.9.9.")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("§3.9.9", errors[0])
+
+    def test_bad_anchor(self):
+        errors, _ = self.check("See [fields](../README.md#999-nope).")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("#999-nope", errors[0])
+
+    def test_transparent_is_not_a_parent_reference(self):
+        errors, _ = self.check("A transparent §9.9 note.")
+        self.assertEqual(errors, [])
+
+    def test_reference_in_code_block_ignored(self):
+        errors, _ = self.check("```\nparent §9.9\n```")
+        self.assertEqual(errors, [])
+
+    def test_unmatched_section_warns(self):
+        _, warnings = self.check("## 3. Specification\n\n### 3.1 Protocol Constants\n")
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("3.1 Protocol Constants", warnings[0])
+
+
 if __name__ == "__main__":
     unittest.main()
