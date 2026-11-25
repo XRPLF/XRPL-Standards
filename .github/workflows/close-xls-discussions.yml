@@ -19,8 +19,8 @@ on:
         default: false
         type: boolean
 
+# Discussion writes use the GitHub App token, not GITHUB_TOKEN.
 permissions:
-  discussions: write
   contents: read
 
 env:
@@ -32,44 +32,55 @@ env:
 jobs:
   close-discussions:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.repository == 'XRPLF/XRPL-Standards'
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v7
-
-      - name: Get changed XLS files
-        id: changed-files
-        if: github.event_name == 'push'
-        uses: tj-actions/changed-files@v47
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          files: |
-            XLS-*/README.md
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Get added XLS files
+        if: github.event_name == 'push'
+        id: changed-files
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # BEFORE is all zeros or unreachable after a force push. Fall back to
+          # the parent commit.
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            BEFORE="HEAD^"
+          fi
+          {
+            echo "added_files<<EOF"
+            git diff --name-only --diff-filter=A "$BEFORE" HEAD -- 'XLS-*/README.md'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
 
-      - name: Install dependencies
-        run: |
-          pip install -r scripts/requirements.txt
+      - run: pip install -r scripts/requirements.txt
 
       - name: Generate token from GitHub App
         id: generate_token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-discussions: write
 
       - name: Close merged XLS discussions
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
-          CLOSE_MESSAGE: ${{ env.CLOSE_MESSAGE }}
           SCAN_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.scan_all || 'false' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
           ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
-        run: |
-          python .github/scripts/close-xls-discussions.py
+        run: python .github/scripts/close-xls-discussions.py
