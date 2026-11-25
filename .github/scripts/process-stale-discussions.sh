@@ -1,4 +1,6 @@
 #!/bin/bash
+# GraphQL queries use $variables that must stay literal in single quotes.
+# shellcheck disable=SC2016
 set -e
 
 # This script processes stale discussions in a GitHub repository
@@ -72,7 +74,7 @@ echo ""
 echo "Validating GitHub token permissions..."
 
 # Check if we can access the repository
-if ! REPO_INFO=$(gh api /repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME 2>&1); then
+if ! gh api "/repos/$GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME" >/dev/null 2>&1; then
   echo "Error: Failed to access repository $GITHUB_REPOSITORY_OWNER/$GITHUB_REPOSITORY_NAME" >&2
   echo "This could indicate:" >&2
   echo "  - Invalid or expired GH_TOKEN" >&2
@@ -102,46 +104,8 @@ if ! gh api graphql -f query='query($owner: String!, $name: String!) {
   exit 1
 fi
 
-echo "Testing discussion write access..."
-# Test if we can perform a write operation by checking the viewer's permissions
-# We use a query that would fail if we don't have write access
-if ! VIEWER_CHECK=$(gh api graphql -f query='query {
-  viewer {
-    login
-    repositories(first: 1, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) {
-      nodes {
-        viewerCanSubscribe
-      }
-    }
-  }
-}' 2>&1); then
-  echo "Warning: Could not verify write permissions via viewer query" >&2
-  echo "The script will attempt to proceed, but may fail during write operations." >&2
-  echo "API Response: $VIEWER_CHECK" >&2
-else
-  echo "✓ Token has basic write capabilities"
-fi
-
-echo "✓ Token permissions validated successfully"
-echo ""
-echo "Note: Full write permissions (comment, close, lock) will be verified during actual operations."
-
-# Display bot login for verification
-echo ""
+echo "✓ Token can read discussions"
 echo "Bot login: $BOT_LOGIN"
-
-# Verify bot login is accessible
-# Note: The REST API uses the [bot] suffix for GitHub App bots, while the GraphQL API
-# returns author.login without the suffix. We verify using the [bot] suffix.
-BOT_LOGIN_FOR_REST="${BOT_LOGIN}[bot]"
-if ! BOT_INFO=$(gh api "/users/$BOT_LOGIN_FOR_REST" 2>&1); then
-  echo "Warning: Could not verify bot user '$BOT_LOGIN_FOR_REST'" >&2
-  echo "The script will continue, but make sure BOT_LOGIN is correct." >&2
-  echo "API Response: $BOT_INFO" >&2
-else
-  BOT_TYPE=$(echo "$BOT_INFO" | jq -r '.type // "Unknown"')
-  echo "Bot type: $BOT_TYPE"
-fi
 
 # Fetch all discussions using GitHub GraphQL API with pagination
 echo ""
@@ -184,7 +148,7 @@ while [ "$HAS_NEXT_PAGE" = "true" ]; do
     -f query='
       query($owner: String!, $repo: String!, $cursor: String) {
         repository(owner: $owner, name: $repo) {
-          discussions(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: ASC}) {
+          discussions(first: 100, after: $cursor, states: OPEN, orderBy: {field: UPDATED_AT, direction: ASC}) {
             pageInfo {
               hasNextPage
               endCursor
@@ -248,6 +212,15 @@ while [ "$HAS_NEXT_PAGE" = "true" ]; do
   if [ "$CURSOR" = "null" ]; then
     HAS_NEXT_PAGE="false"
   fi
+
+  # Discussions come sorted by updatedAt, oldest first. A warned discussion has
+  # updatedAt at or after its warning, so once a whole page is newer than both
+  # cutoffs, later pages cannot match. Limit: a discussion that a user edited
+  # after the warning is left for the next stale cycle.
+  PAGE_OLDEST=$(jq -r '.data.repository.discussions.nodes[0].updatedAt // empty' discussions_page.json)
+  if [ -n "$PAGE_OLDEST" ] && [[ "$PAGE_OLDEST" > "$STALE_CUTOFF" ]] && [[ "$PAGE_OLDEST" > "$CLOSE_CUTOFF" ]]; then
+    HAS_NEXT_PAGE="false"
+  fi
 done
 
 # Clean up temporary file
@@ -309,7 +282,7 @@ printf '%s\n' "$jq_output" | while IFS= read -r discussion; do
 
       # Step 1: Add a closing comment explaining why the discussion was closed
       echo "  Adding close comment..."
-      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE"; then
+      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$CLOSE_MESSAGE" >/dev/null; then
         echo "  Error: Failed to add close comment for discussion #$DISCUSSION_NUMBER. Skipping close/lock for this discussion."
         echo ""
         continue
@@ -317,10 +290,16 @@ printf '%s\n' "$jq_output" | while IFS= read -r discussion; do
 
       # Step 2: Close the discussion
       echo "  Closing discussion..."
-      if ! gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID"; then
+      if ! gh api graphql -f query='mutation($discussionId: ID!) { closeDiscussion(input: {discussionId: $discussionId}) { discussion { id } } }' -f discussionId="$DISCUSSION_ID" >/dev/null; then
         echo "  Error: Failed to close discussion #$DISCUSSION_NUMBER after adding close comment. Skipping lock for this discussion."
         echo ""
         continue
+      fi
+
+      # Step 3: Lock the discussion
+      echo "  Locking discussion..."
+      if ! gh api graphql -f query='mutation($lockableId: ID!) { lockLockable(input: {lockableId: $lockableId}) { lockedRecord { locked } } }' -f lockableId="$DISCUSSION_ID" >/dev/null; then
+        echo "  Warning: Failed to lock discussion #$DISCUSSION_NUMBER after closing it."
       fi
     fi
 
@@ -341,7 +320,7 @@ echo "=== Discussions to warn - stale for ${STALE_DAYS}+ days, not yet warned ==
 
 # Disable exit-on-error for this section to allow graceful error handling per discussion
 set +e
-cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-warn.jq" | while IFS= read -r discussion; do
+jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MARKER" --arg botLogin "$BOT_LOGIN" -f "$SCRIPT_DIR/filter-discussions-to-warn.jq" discussions.json | while IFS= read -r discussion; do
   if [ -n "$discussion" ]; then
     DISCUSSION_ID=$(echo "$discussion" | jq -r '.id')
     DISCUSSION_NUMBER=$(echo "$discussion" | jq -r '.number')
@@ -359,7 +338,7 @@ cat discussions.json | jq -r --arg staleCutoff "$STALE_CUTOFF" --arg marker "$MA
 
       # Add a warning comment to the discussion
       echo "  Adding warning comment..."
-      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE"; then
+      if ! gh api graphql -f query='mutation($discussionId: ID!, $body: String!) { addDiscussionComment(input: {discussionId: $discussionId, body: $body}) { comment { id } } }' -f discussionId="$DISCUSSION_ID" -f body="$WARNING_MESSAGE" >/dev/null; then
         echo "  Error: Failed to add warning comment for discussion #$DISCUSSION_NUMBER. Skipping this discussion."
         echo ""
         continue

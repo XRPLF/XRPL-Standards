@@ -1,272 +1,152 @@
 name: Assign XLS Number
 
+# pull_request_target runs with a write token on fork PRs. Rules for this file:
+# - Never check out or run code from the PR head.
+# - Never put PR-controlled values (file names, titles) in `run:` or `script:`
+#   through ${{ }}. The Python script reads them from the API instead.
 on:
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] fork PRs need a write token to comment; see rules above
     types: [opened, synchronize, reopened, ready_for_review]
 
+permissions: {}
+
 concurrency:
-  group: assign-xls-number-${{ github.repository }}
-  cancel-in-progress: false
+  group: assign-xls-number-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  check-self-assigned-number:
+  inspect:
+    name: Inspect Added XLS Directories
     runs-on: ubuntu-latest
-    name: Warn About Self-Assigned XLS Numbers
+    timeout-minutes: 5
     permissions:
-      pull-requests: write
-      issues: write
       contents: read
-
+      pull-requests: write
+    outputs:
+      has_drafts: ${{ steps.inspect.outputs.has_drafts }}
     steps:
-      - name: Get added numbered XLS files
-        id: added-numbered
-        uses: tj-actions/changed-files@v47
+      - name: Check out base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          use_rest_api: true
-          files: |
-            XLS-[0-9][0-9][0-9][0-9]-*/README.md
-            xls-[0-9][0-9][0-9][0-9]-*/README.md
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
 
-      - name: Check for self-assigned numbers above 95
-        id: check-self-assigned
-        if: steps.added-numbered.outputs.added_files != ''
-        uses: actions/github-script@v9
-        with:
-          script: |
-            // If the PR already has the "has-xls-number" label, CI assigned the
-            // number so a numbered directory is expected — skip the warning.
-            const labels = context.payload.pull_request.labels || [];
-            if (labels.some(l => l.name === 'has-xls-number')) {
-              console.log('PR has "has-xls-number" label — skipping self-assigned check.');
-              core.setOutput('has_self_assigned', 'false');
-              return;
-            }
+      - name: Inspect added files
+        id: inspect
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/assign_xls_number.py inspect
 
-            const addedFiles = `${{ steps.added-numbered.outputs.added_files }}`.trim();
-            if (!addedFiles) {
-              core.setOutput('has_self_assigned', 'false');
-              return;
-            }
-
-            const pattern = /^[Xx][Ll][Ss]-(\d{4})-[^/]+\/README\.md$/;
-            const selfAssigned = [];
-
-            for (const file of addedFiles.split(' ')) {
-              const match = file.match(pattern);
-              if (match) {
-                const num = parseInt(match[1], 10);
-                if (num > 95) {
-                  selfAssigned.push({ file, number: num });
-                }
-              }
-            }
-
-            if (selfAssigned.length === 0) {
-              console.log('No self-assigned XLS numbers > 95 found.');
-              core.setOutput('has_self_assigned', 'false');
-              return;
-            }
-
-            console.log(`Found ${selfAssigned.length} self-assigned XLS number(s) > 95:`);
-            for (const entry of selfAssigned) {
-              console.log(`  ${entry.file} (XLS-${entry.number})`);
-            }
-
-            core.setOutput('has_self_assigned', 'true');
-
-            const rows = selfAssigned.map(e =>
-              `| \`${e.file.split('/')[0]}\` | ${e.number} |`
-            ).join('\n');
-
-            core.setOutput('warning_table', rows);
-
-      - name: Check for existing warning comment
-        if: steps.check-self-assigned.outputs.has_self_assigned == 'true'
+      - name: Find existing warning comment
+        if: steps.inspect.outputs.has_self_assigned == 'true'
         id: find-warning-comment
-        uses: peter-evans/find-comment@v4
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
           body-includes: "Self-Assigned XLS Number Warning"
 
       - name: Post warning comment
-        if: steps.check-self-assigned.outputs.has_self_assigned == 'true'
-        uses: peter-evans/create-or-update-comment@v5
+        if: steps.inspect.outputs.has_self_assigned == 'true'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-warning-comment.outputs.comment-id }}
           edit-mode: replace
-          body: |
-            ## ⚠️ Self-Assigned XLS Number Warning
+          body-path: ${{ runner.temp }}/self-assigned-comment.md
 
-            This PR adds a new XLS directory with a **self-assigned number**. XLS numbers should be assigned by the CI system using the `XLS-draft-*` naming convention.
-
-            | Directory | Self-Assigned Number |
-            |-----------|---------------------|
-            ${{ steps.check-self-assigned.outputs.warning_table }}
-
-            ### What to do
-
-            Please rename your directory to use the draft convention instead (e.g., `XLS-draft-my-feature`). An XLS number will be automatically assigned after a maintainer approves the PR.
-
-            ---
-            *This warning was automatically generated.*
-
-  check-approval:
+  assign:
+    name: Assign XLS Number to Draft
     runs-on: ubuntu-latest
-    name: Check for Write+ Approval
-    outputs:
-      has_write_approval: ${{ steps.check-approval.outputs.has_write_approval }}
+    timeout-minutes: 10
+    needs: inspect
+    if: needs.inspect.outputs.has_drafts == 'true'
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    # Serialize assignment across PRs so that two PRs cannot take the same
+    # number. Runs that do not add a draft skip this job and never wait here.
+    # Limit: GitHub keeps one pending run per group, so a third draft PR that
+    # arrives while two wait cancels the older pending one. That PR gets its
+    # number on its next push.
+    concurrency:
+      group: assign-xls-number-reserve
+      cancel-in-progress: false
     steps:
       - name: Check for write+ approval
-        id: check-approval
-        uses: actions/github-script@v9
+        id: approval
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            core.setOutput('has_write_approval', 'false');
-
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              ...context.repo,
+              pull_number: context.payload.pull_request.number,
             });
-
-            // Get only approved reviews
-            const approvals = reviews.filter(review => review.state === 'APPROVED');
-
-            // Check each approver's permission level
-            for (const approval of approvals) {
-              const user = approval.user;
-
-              // Skip approvals without a valid user (e.g., deleted accounts)
-              if (!user || !user.login) {
-                console.log('Skipping approval with missing user information');
-                continue;
+            // Use each reviewer's latest review, so a later "changes requested"
+            // replaces an earlier approval.
+            const latest = new Map();
+            for (const r of reviews) {
+              if (r.user && r.user.type !== 'Bot' && r.state !== 'COMMENTED') {
+                latest.set(r.user.login, r.state);
               }
-
-              // Skip bot approvals
-              if (user.type === 'Bot' || user.login.endsWith('[bot]')) {
-                console.log(`Skipping bot approval from ${user.login}`);
-                continue;
-              }
-
-              const { data: permissionLevel } = await github.rest.repos.getCollaboratorPermissionLevel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                username: user.login
+            }
+            for (const [login, state] of latest) {
+              if (state !== 'APPROVED') continue;
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,
+                username: login,
               });
-
-              const permission = permissionLevel.permission;
-              if (['write', 'admin', 'maintain'].includes(permission)) {
-                console.log(`Found write+ approval from ${user.login} (${permission})`);
-                core.setOutput('has_write_approval', 'true');
+              if (['admin', 'maintain', 'write'].includes(data.permission)) {
+                core.info(`Write+ approval from ${login} (${data.permission})`);
+                core.setOutput('approved', 'true');
                 return;
               }
             }
+            core.info('No write+ approval yet. Skipping assignment.');
+            core.setOutput('approved', 'false');
 
-            console.log('No write+ approval found');
-            core.setOutput('has_write_approval', 'false');
-
-  assign-xls-number:
-    runs-on: ubuntu-latest
-    name: Assign XLS Number to Draft
-    needs: check-approval
-    if: needs.check-approval.outputs.has_write_approval == 'true'
-    permissions:
-      pull-requests: write
-      issues: write
-      contents: read
-
-    steps:
-      - name: Checkout base branch
-        uses: actions/checkout@v7
+      # Only for the script. The script reads existing XLS numbers from the
+      # live base branch through the API, not from this checkout, so a PR that
+      # merged while this job waited is still counted.
+      - name: Check out base branch
+        if: steps.approval.outputs.approved == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
-
-      - name: Get added files
-        id: added-files
-        uses: tj-actions/changed-files@v47
-        with:
-          use_rest_api: true
-          files: |
-            XLS-draft*/README.md
-            xls-draft*/README.md
-          # Only look at added files, not modified ones
-          include_all_old_new_renamed_files: false
-
-      - name: Check for draft XLS files
-        id: check-drafts
-        env:
-          ADDED_FILES: ${{ steps.added-files.outputs.added_files }}
-        run: |
-          if [ -z "$ADDED_FILES" ]; then
-            echo "No XLS draft files added in this PR"
-            echo "has_drafts=false" >> $GITHUB_OUTPUT
-          else
-            printf 'Found draft XLS files: %s\n' "$ADDED_FILES"
-            echo "has_drafts=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Setup Python
-        if: steps.check-drafts.outputs.has_drafts == 'true'
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
 
       - name: Assign XLS number
-        if: steps.check-drafts.outputs.has_drafts == 'true'
-        id: assign-number
+        if: steps.approval.outputs.approved == 'true'
         env:
-          REPO_ROOT: ${{ github.workspace }}
-          CHANGED_FILES: ${{ steps.added-files.outputs.added_files }}
-        run: python .github/scripts/assign_xls_number.py
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/assign_xls_number.py assign
 
-      - name: Check for existing assignment comment
-        if: steps.check-drafts.outputs.has_drafts == 'true'
+      # Add the label before the comment. Other PRs find reservations through
+      # this label, so a run cancelled between the two steps must not leave a
+      # published number without it. A label without a comment reserves nothing.
+      # The label name must match RESERVED_LABEL in assign_xls_number.py.
+      - name: Add reservation label
+        if: steps.approval.outputs.approved == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "has XLS number"
+
+      - name: Find existing assignment comment
+        if: steps.approval.outputs.approved == 'true'
         id: find-comment
-        uses: peter-evans/find-comment@v4
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
           body-includes: "XLS Number Assignment"
 
-      - name: Post or update PR comment
-        if: steps.check-drafts.outputs.has_drafts == 'true'
-        uses: peter-evans/create-or-update-comment@v5
+      - name: Post or update assignment comment
+        if: steps.approval.outputs.approved == 'true'
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          body: |
-            ## 🎫 XLS Number Assignment
-
-            This PR adds a new XLS draft. The next available XLS number has been determined:
-
-            | Draft Directory | Assigned Number | New Directory Name |
-            |-----------------|-----------------|-------------------|
-            | `${{ steps.assign-number.outputs.draft_dir }}` | **XLS-${{ steps.assign-number.outputs.xls_number }}** | `${{ steps.assign-number.outputs.new_dir_name }}` |
-
-            ### Next Steps for XLS Editors
-
-            Before merging this PR, please:
-
-            1. **Rename the directory** from `${{ steps.assign-number.outputs.draft_dir }}` to `${{ steps.assign-number.outputs.new_dir_name }}`
-            2. **Update the preamble** in the README.md:
-               - Set `xls:` to `${{ steps.assign-number.outputs.xls_number }}`
-               - Set `status:` to `Draft`
-
-            ---
-            *This comment was automatically generated. The XLS number below is reserved for this PR based on existing XLS numbers in the repository and other open draft PRs.*
-
-            <!-- XLS_NUMBER:${{ steps.assign-number.outputs.xls_number }} -->
-
-      - name: Add has-xls-number label
-        if: steps.check-drafts.outputs.has_drafts == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -sS \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -X POST \
-            -d '{"labels":["has-xls-number"]}' \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels"
+          edit-mode: replace
+          body-path: ${{ runner.temp }}/assignment-comment.md

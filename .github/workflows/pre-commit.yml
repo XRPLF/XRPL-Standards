@@ -7,6 +7,9 @@ on:
       - "master"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   # Call the workflow in the XRPLF/actions repo that runs the pre-commit hooks.
   run-hooks:
