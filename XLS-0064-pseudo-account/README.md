@@ -7,7 +7,7 @@ status: Draft
 category: Amendment
 proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/191
 created: 2025-03-04
-updated: 2026-09-08
+updated: 2026-11-25
 </pre>
 
 ### Abstract
@@ -24,8 +24,10 @@ This specification formalizes and standardizes the requirements for an `AccountR
 
 ### Amendments
 
-- `fixCleanup3_3_0`, as described in [XLS-64.1](./64.1/README.md):
+- `fixCleanup3_3_0`, as described in [XLS-64.1](./64.1-fix-cleanup-3_3_0/README.md):
   - standardizes the freeze and lock checks for assets transferred into or out of pseudo-accounts.
+- `fixCleanup3_5_0`, as described in [XLS-64.2](./64.2-fix-cleanup-3_5_0/README.md):
+  - limits the entries a pseudo-account may own to those of its own AMM, Vault or LoanBroker.
 
 ### Specification
 
@@ -151,6 +153,7 @@ The following invariants must hold true for any `AccountRoot` entry functioning 
 - The `Sequence` number must always be `0`, and must never change.
   - AMM pseudo-accounts created under old rules will have a sequence number set to the index of the ledger they were created in. They still must never change.
 - A `RegularKey` must not be set.
+- `fixCleanup3_5_0`: Every entry a transaction adds to the pseudo-account's owner directory belongs to the AMM, Vault or LoanBroker the pseudo-account was created for. See [XLS-64.2](./64.2-fix-cleanup-3_5_0/README.md).
 
 ### Rationale
 
@@ -167,4 +170,5 @@ The design of pseudo-accounts includes several critical security features:
 
 ## Appendix C: Changelog
 
-- [XLS-64.1](./64.1/README.md): Introduces common freeze and lock checks for assets transferred into or out of pseudo-accounts.
+- [XLS-64.1](./64.1-fix-cleanup-3_3_0/README.md): Introduces common freeze and lock checks for assets transferred into or out of pseudo-accounts.
+- [XLS-64.2](./64.2-fix-cleanup-3_5_0/README.md): Restricts the entries a pseudo-account may own.
