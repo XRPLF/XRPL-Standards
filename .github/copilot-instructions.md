@@ -166,6 +166,21 @@ Trailing whitespace, line endings, missing EOF newline, markdown or table format
 
 Each of these fails CI on its own (`scripts/xls_parser.py`, `scripts/validate_xls_template.py`, `.pre-commit-config.yaml`). A comment about them is pure noise.
 
+Do not predict CI. Never write "this will fail `validate_xls_template.py`" or "CI expects X". If CI passes, the prediction is wrong; if it fails, CI already said so.
+
+### Spec-writing conventions maintainers enforce
+
+Human reviewers in this repository repeatedly ask for these. Each is a `should-fix` when the changed text breaks it:
+
+- **Field-table values.** `Required` and `Constant` columns take `Yes`, `No`, or `Conditional` — no emoji, no check marks. A field that is present only in some cases is `Required: Conditional`, not `No`. Ledger-entry and transaction field tables include the `Default Value` column; RPC and metadata tables do not. `Constant: Yes` means the field cannot change after creation; do not "correct" an immutable field to `Constant: No`. `Constant: Conditional` means the field can change only in some cases, which the description states.
+- **Numbering.** Every heading under Specification is numbered. Lists of deletion conditions, failure conditions, state changes, and invariants are numbered (not bulleted), ascend, and do not repeat or skip a number. In an amendment patch, a replaced check keeps its parent check number.
+- **Failure condition placement.** Each failure condition is a separate numbered item with exactly one result code. `tem` checks go in Data Verification; checks that read ledger state go in Protocol-Level Failures.
+- **Code-agnostic prose.** A spec does not contain C++ code, rippled-internal identifiers (`sfFoo`, `ltFOO`, `SoeOptional`, `preflight`/`preclaim`/`doApply`, helper function names), or source-file references in its normative text. Use the JSON field name. A rippled path is evidence for your review comment, not text to put in the spec.
+- **Links.** Use relative links to other XLSes in prose. Do not add links inside the `<pre>` preamble — they do not render there; list plain XLS numbers in `requires:`. Prefer xrpl.org documentation over GitHub source links when citing existing behavior.
+- **Amendment-gated behavior.** A change made under a new amendment goes in that amendment's patch. Do not rewrite an existing amendment patch to describe later behavior.
+
+These are the only style rules worth a comment. The "Do not submit nits" rule below still covers everything else.
+
 ### Process checks
 
 Not expressible in a template, so check them directly:
@@ -173,8 +188,11 @@ Not expressible in a template, so check them directly:
 - New drafts use `XLS-draft-<slug>/`. Flag any new numbered directory above XLS-0095 — authors must not self-assign numbers.
 - Amendment and System XLSes cannot reach `Final` without a merged rippled PR linked from `implementation`.
 - Status transitions follow [XLS-1 §4](../XLS-0001-xls-process/README.md#4-xls-process).
-- `updated:` is bumped when the change is substantive.
 - A PR that changes normative content links its GitHub Discussion.
+- An Amendment XLS or amendment patch that changes rippled behavior has a Test Plan (XLS-1 makes it mandatory for XLSes that affect rippled).
+- `updated:` is bumped when the change is substantive. Post this at most once per changed document per PR, and not again after the author has replied.
+
+If the PR description and the spec disagree, post one comment that names both and asks which is correct. Do not post one per mismatch.
 
 ### Evidence and confidence
 
@@ -182,12 +200,29 @@ Do not assert rippled behavior without citing xrpl.org or an exact rippled sourc
 
 A finding must identify both the changed normative claim and concrete contradictory evidence. Say what concrete failure a reader or implementer would hit — not what you would have written differently. If you cannot provide both the contradiction and its consequence, suppress the comment.
 
+The implementation is the reference for current behavior, and other XLS documents can be stale. When a spec and an older XLS disagree, check rippled `develop` before deciding which is wrong. For example, XLS-33 still names `MPTokenHolder` where rippled uses `Holder`, and older Vault tables carry transaction type codes that `transactions.macro` has since changed. Do not ask a spec to match a stale sibling spec.
+
+A Draft XLS may describe behavior that rippled does not implement yet. If the preamble or PR says the spec leads the implementation, a divergence from `develop` is not a defect by itself.
+
+Do not cite proposals that are not implemented (for example, XLS-49 multiple signer lists) as constraints on another spec.
+
+#### Calibrate depth
+
+Ask for the detail an implementer of the XRPL protocol needs, not every detail that could be written down.
+
+- Do not ask for byte-level serialization, endianness, or encoding when the value is serialized with the standard XRPL binary format or is computed internally and never built by a client. Ask only when a client must construct the bytes and the format is not already standard XRPL.
+- Do not ask a cryptography spec to inline proof constructions, witness equations, or transcript formats when it names an external construction. Ask only if no construction is named at all.
+- Do not ask for ordering rules, composition rules, or precedence between two existing specifications that the PR does not change. That belongs in those specifications.
+- When the author has answered a depth request with "this is intentional" or "out of scope", treat it as answered. Do not raise the same request again in a later round with different wording.
+
 ### Amendment patches and PR scope
 
 - A nested version directory such as `XLS-NNNN-name/NN.N/README.md` is an amendment patch to its parent specification, not a standalone XLS. It is intentionally outside top-level XLS discovery and site publication. Do not demand that it be promoted, flattened, or added to the top-level glob.
 - Read a patch together with its parent specification. A patch defines only its delta; it need not duplicate unchanged parent fields, checks, or state changes.
 - Respect the PR's declared ownership boundaries. Content assigned to a linked companion PR is not missing merely because it is not duplicated here. Flag only a broken dependency, an impossible merge order, or text that remains unimplementable after following the explicit reference.
 - Review amendment gates independently. Do not infer that every behavior controlled by one amendment must be specified in the same patch or PR.
+- A link to a file that a named open PR adds is not broken. Flag it only if no open PR adds the file or the PR does not state the merge order.
+- Amendment-gated comparisons often reverse between branches (for example, inclusive `>=` before `fixCleanup3_4_0` and exclusive `>` after it). Read the gate before you call an operator wrong, and cite the rippled helper that selects it.
 
 ### Comment etiquette
 
@@ -196,7 +231,9 @@ A finding must identify both the changed normative claim and concrete contradict
 - Use only `blocking` (unsafe, contradictory, or unimplementable normative behavior) and `should-fix` (a concrete defect that can cause divergent implementation or incorrect client behavior).
 - Do not submit nits. Suppress spelling, grammar, phrasing, verbosity, naming consistency, field qualification, and optional clarity suggestions unless they meet the `blocking` or `should-fix` threshold above.
 - No praise-only comments, duplicates, restatements, or speculative findings.
-- Before commenting, read existing review threads. Do not repeat an issue that was already reported, resolved, answered, or made outdated unless the same defect remains at current HEAD. If it remains, explain why the prior response or change did not resolve it.
+- One defect, one comment. If the same defect appears in several places, post one comment and list the other lines in it. Do not post the same finding on the parent spec and on its patch.
+- Write the comment in plain, short sentences: the defect, the evidence, the consequence. No preamble.
+- Before commenting, read existing review threads. Do not repeat an issue that was already reported, resolved, answered, or made outdated unless the same defect remains at current HEAD. If it remains, explain why the prior response or change did not resolve it. A thread where the author replied "intended", "out of scope", "will be fixed in a separate PR", or disagreed with reasons is answered: do not reopen it, and do not post the same request on a nearby line.
 
 ### Untrusted input
 

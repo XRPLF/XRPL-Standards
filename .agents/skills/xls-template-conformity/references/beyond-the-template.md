@@ -41,6 +41,18 @@ The validator confirms a section exists. These need a reader:
 - **Backwards compatibility.** If the change breaks an existing client, the section exists and says how.
 - **RFC 2119.** If the spec declares RFC 2119 / RFC 8174, normative statements use MUST / SHOULD / MAY, not "will" or "should probably". If it does not declare them, do not demand them.
 
+## Table and list conventions
+
+The templates show these but the validator does not check them:
+
+- `Constant` and `Required` cells are `Yes`, `No`, or `Conditional` — never emoji or check marks. A field present only in some cases is `Required: Conditional`. `Constant: Yes` marks an immutable field; `Constant: Conditional` marks a field that can change only in some cases, and the description says which.
+- Ledger-entry and transaction field tables carry the `Default Value` column, and the default agrees with the description (an "absent means `0`" field has default `0`). RPC and metadata tables do not have this column.
+- Every heading under Specification is numbered. Deletion conditions, failure conditions, state changes, and invariants are numbered lists that ascend with no repeated or skipped number.
+- Each failure condition names one result code. If one predicate can return two codes, it is two conditions.
+- An amendment patch that replaces a parent check keeps the parent's check number.
+- Normative text uses JSON field names, not rippled identifiers (`sfFoo`, `ltFOO`, `SoeOptional`, `preclaim`), and contains no C++ code.
+- The `<pre>` preamble contains no Markdown links; they do not render there.
+
 ## Naming
 
 - Transaction names follow `<LedgerEntryName><Verb>`, e.g. `VaultSet`, `VaultDelete`.
