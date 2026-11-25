@@ -1533,19 +1533,33 @@ The matching strategy depends on the asset type:
 
 ## 4. Rationale
 
-**A _pseudo-account_ holds the assets.** Assets on the XRP Ledger must be held by an account, and a ledger object cannot hold them directly. The Vault therefore holds its assets in a _pseudo-account_ that follows [XLS-64](../XLS-0064-pseudo-account/README.md). No one can sign for that account, so assets leave it only through the Vault transactions.
+### 4.1 A _pseudo-account_ holds the assets
 
-**Shares are Multi-Purpose Tokens.** Issuing shares as an MPT from the _pseudo-account_ makes them first-class assets that other ledger protocols can hold and transfer, while the Vault Owner can still make them non-transferable or restrict them to a Permissioned Domain. Share holders remain subject to the compliance controls of the underlying asset ([A.3](#a3-how-can-a-depositor-transfer-shares-to-another-account)).
+Assets on the XRP Ledger must be held by an account, and a ledger object cannot hold them directly. The Vault therefore holds its assets in a _pseudo-account_ that follows [XLS-64](../XLS-0064-pseudo-account/README.md). No one can sign for that account, so assets leave it only through the Vault transactions.
 
-**`Scale` converts fractional assets to whole shares.** MPT amounts are integers. Scaling asset amounts by $10^{Scale}$ before converting them to shares keeps fractional asset values without losing value to truncation.
+### 4.2 Shares are Multi-Purpose Tokens
 
-**Unrealized loss lowers the share price before the loss is realized.** If a loss were reflected only when it is realized, an informed depositor could redeem early and leave the remaining depositors to bear it. `LossUnrealized` lowers the value of a share for withdrawals as soon as a loss is expected. Deposits use a separate exchange rate, so that a depositor cannot buy shares at the lowered price and profit when the loss is cleared ([§3.1.7.1](#3171-unrealized-loss)).
+Issuing shares as an MPT from the _pseudo-account_ makes them first-class assets that other ledger protocols can hold and transfer, while the Vault Owner can still make them non-transferable or restrict them to a Permissioned Domain. Share holders remain subject to the compliance controls of the underlying asset ([A.3](#a3-how-can-a-depositor-transfer-shares-to-another-account)).
 
-**The protocol chooses the rounding direction.** Share and asset conversions round in the direction the protocol specifies for each operation, not a direction the submitter chooses ([§3.1.6.1](#3161-scale)).
+### 4.3 `Scale` converts fractional assets to whole shares
 
-**Both `Withdraw` and `Redeem` forms exist.** `VaultWithdraw` accepts either an asset amount or a share amount, so that users do not have to compute the exchange rate off-chain ([A.1](#a1-why-does-the-specification-allow-both-withdraw-and-redeem-and-not-just-one-of-them)).
+MPT amounts are integers. Scaling asset amounts by $10^{Scale}$ before converting them to shares keeps fractional asset values without losing value to truncation.
 
-**Withdrawal is not gated by Permissioned Domain membership.** A depositor whose credentials expire or are revoked can still redeem the shares they hold, so a private Vault cannot lock a depositor's funds by removing their access ([A.2](#a2-why-can-any-account-that-holds-vaults-shares-submit-a-vaultwithdraw-transaction)).
+### 4.4 Unrealized loss lowers the share price before the loss is realized
+
+If a loss were reflected only when it is realized, an informed depositor could redeem early and leave the remaining depositors to bear it. `LossUnrealized` lowers the value of a share for withdrawals as soon as a loss is expected. Deposits use a separate exchange rate, so that a depositor cannot buy shares at the lowered price and profit when the loss is cleared ([§3.1.7.1](#3171-unrealized-loss)).
+
+### 4.5 The protocol chooses the rounding direction
+
+Share and asset conversions round in the direction the protocol specifies for each operation, not a direction the submitter chooses ([§3.1.6.1](#3161-scale)).
+
+### 4.6 Both `Withdraw` and `Redeem` forms exist
+
+`VaultWithdraw` accepts either an asset amount or a share amount, so that users do not have to compute the exchange rate off-chain ([A.1](#a1-why-does-the-specification-allow-both-withdraw-and-redeem-and-not-just-one-of-them)).
+
+### 4.7 Withdrawal is not gated by Permissioned Domain membership
+
+A depositor whose credentials expire or are revoked can still redeem the shares they hold, so a private Vault cannot lock a depositor's funds by removing their access ([A.2](#a2-why-can-any-account-that-holds-vaults-shares-submit-a-vaultwithdraw-transaction)).
 
 ## 5. Security Considerations
 
