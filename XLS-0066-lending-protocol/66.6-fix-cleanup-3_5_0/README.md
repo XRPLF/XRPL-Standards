@@ -22,40 +22,38 @@ A value field above the largest amount of the asset (for example, an XRP amount 
 
 ## 3. Specification
 
-No fields are added or removed.
-
 ### 3.1 Transaction: `LoanBrokerSet`
 
 #### 3.1.1 Failure Conditions
 
-When the amendment is enabled, parent §3.3.3.2 check 11 also fails if a value field is outside the range of the `Vault.Asset` type. (`tecPRECISION_LOSS`)
+When `fixCleanup3_5_0` is enabled, parent §3.3.3.2 check 11 also fails if a value field is outside the range of the `Vault.Asset` type. (`tecPRECISION_LOSS`)
 
 ### 3.2 Transaction: `LoanSet`
 
 #### 3.2.1 Failure Conditions
 
-When the amendment is enabled, parent §3.8.5.2 check 7 also fails if a value field is outside the range of the `Vault.Asset` type. (`tecPRECISION_LOSS`)
+When `fixCleanup3_5_0` is enabled, parent §3.8.5.2 check 7 also fails if a value field is outside the range of the `Vault.Asset` type. (`tecPRECISION_LOSS`)
 
 ### 3.3 Transaction: `LoanBrokerDelete`
 
 #### 3.3.1 Failure Conditions
 
-Parent §3.4.3.2 check 7: when the amendment is enabled and `LoanBroker.CoverAvailable > 0`, the following run before parent check 5:
+Parent §3.4.3.2 check 7: when `fixCleanup3_5_0` is enabled and `LoanBroker.CoverAvailable > 0`, the following run before parent check 5:
 
 - The asset cannot be transferred from the broker _pseudo-account_ to the owner. `lsfMPTCanTransfer` is not checked. (`tecNO_AUTH` for MPTs, `terNO_RIPPLE` for IOUs)
 - The owner is not authorized to hold the asset.
 - The owner has no holding of the asset, and a holding cannot be added.
 
-When the amendment is not enabled, check 7 does not apply.
+When `fixCleanup3_5_0` is not enabled, check 7 does not apply.
 
 #### 3.3.2 State Changes
 
-When the amendment is enabled, parent §3.4.4 changes as follows:
+When `fixCleanup3_5_0` is enabled, parent §3.4.4 changes as follows:
 
 - Step 7 (decrement the owner's `OwnerCount` by 2) runs before step 3.
 - Before step 3, if `LoanBroker.CoverAvailable > 0` and the owner has no holding of the asset, a holding is created for the owner. The owner's reserve is checked against its balance before the transaction fee.
 
-When the amendment is not enabled, step 7 runs after the broker _pseudo-account_ is deleted, and no holding is created; a payout of an MPT to an owner without an `MPToken` fails.
+When `fixCleanup3_5_0` is not enabled, step 7 runs after the broker _pseudo-account_ is deleted, and no holding is created; a payout of an MPT to an owner without an `MPToken` fails.
 
 ### 3.4 Ledger Entry: `LoanBroker`
 

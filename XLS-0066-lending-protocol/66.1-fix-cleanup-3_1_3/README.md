@@ -28,7 +28,7 @@ No fields are added or removed.
 
 #### 3.1.1 Transaction Fee
 
-In parent §3.11.3 step 2, when the amendment is enabled: if `Amount >= regularPayment × 100`, the fee is `20 × baseFee`. When the amendment is not enabled, the fee is not capped.
+In parent §3.11.3 step 2, when `fixCleanup3_1_3` is enabled: if `Amount >= regularPayment × 100`, the fee is `20 × baseFee`. When `fixCleanup3_1_3` is not enabled, the fee is not capped.
 
 #### 3.1.2 Failure Conditions
 
@@ -39,19 +39,19 @@ Parent §3.11.4.2 check 3 (`tfLoanOverpayment` is set and `lsfLoanOverpayment` i
 
 #### 3.1.3 State Changes
 
-When the amendment is enabled, after the periodic payments of a regular payment are made, `Amount` is rounded toward zero to `Loan.LoanScale` before the remaining overpayment amount is computed (Appendix A-3.3, STEP 4). When the amendment is not enabled, the unrounded `Amount` is used.
+When `fixCleanup3_1_3` is enabled, after the periodic payments of a regular payment are made, `Amount` is rounded toward zero to `Loan.LoanScale` before the remaining overpayment amount is computed (Appendix A-3.3, STEP 4). When `fixCleanup3_1_3` is not enabled, the unrounded `Amount` is used.
 
 ### 3.2 Transaction: `LoanManage`
 
 #### 3.2.1 State Changes
 
-When the amendment is enabled, every successful `LoanManage` normalizes the stored amounts of the `Loan`, `LoanBroker` and `Vault` to the `Vault.Asset` precision. When the amendment is not enabled, `LoanManage` does not normalize them.
+When `fixCleanup3_1_3` is enabled, every successful `LoanManage` normalizes the stored amounts of the `Loan`, `LoanBroker` and `Vault` to the `Vault.Asset` precision. When `fixCleanup3_1_3` is not enabled, `LoanManage` does not normalize them.
 
 ### 3.3 Ledger Entry: `LoanBroker`
 
 #### 3.3.1 Invariants
 
-Added to parent §3.1.8: when the amendment is enabled, `LoanBroker.CoverAvailable` is not greater than the broker _pseudo-account_ balance of the `Vault.Asset`, except in a `LoanBrokerDelete` transaction.
+Added to parent §3.1.8: when `fixCleanup3_1_3` is enabled, `LoanBroker.CoverAvailable` is not greater than the broker _pseudo-account_ balance of the `Vault.Asset`, except in a `LoanBrokerDelete` transaction.
 
 ## 4. Rationale
 
