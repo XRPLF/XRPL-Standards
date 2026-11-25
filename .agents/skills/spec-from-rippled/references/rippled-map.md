@@ -2,6 +2,8 @@
 
 Section numbers refer to `templates/AMENDMENT_TEMPLATE.md`.
 
+In diff mode, read this table from left to right: a changed file points at the spec sections to check. In audit mode, read it from right to left: a spec section points at the code to read at the ref.
+
 Paths are **hints, not constants** — rippled reorganizes its tree periodically. Confirm each with `git -C <rippled> ls-files` or `git grep` before relying on it. The paths below were current as of the post-rearchitecture `develop` layout (transactors and invariants under `src/libxrpl/tx/`, RPC handlers under `src/xrpld/rpc/handlers/`).
 
 ## Protocol definitions

@@ -81,6 +81,7 @@ jobs:
         with:
           files: |
             XLS-*/README.md
+            XLS-*/*/*.md
 
       - name: Validate XLS template compliance
         if: steps.changed-files.outputs.all_changed_files != ''
