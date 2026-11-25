@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.6
+  xls: 66.3
   title: Lending Protocol Cleanup 3.3.0
   description: Lending Protocol changes of the fixCleanup3_3_0 amendment to the freeze checks of first-loss capital deposits and withdrawals
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.6 Lending Protocol Cleanup 3.3.0
+# 66.3 Lending Protocol Cleanup 3.3.0
 
 ## 1. Abstract
 

@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.2
+  xls: 66.5
   title: Lending Protocol Cleanup 3.4.0
   description: Lending Protocol changes of the fixCleanup3_4_0 amendment, including late-only impairment, exclusive due-date boundaries, and relaxed authorization and holding checks
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.2 Lending Protocol Cleanup 3.4.0
+# 66.5 Lending Protocol Cleanup 3.4.0
 
 ## 1. Abstract
 

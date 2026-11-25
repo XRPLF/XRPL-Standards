@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.7
+  xls: 66.6
   title: Lending Protocol Cleanup 3.5.0
   description: Lending Protocol changes of the fixCleanup3_5_0 amendment to value range checks and the LoanBrokerDelete cover payout
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.7 Lending Protocol Cleanup 3.5.0
+# 66.6 Lending Protocol Cleanup 3.5.0
 
 ## 1. Abstract
 

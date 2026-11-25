@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.4
+  xls: 66.1
   title: Lending Protocol Cleanup 3.1.3
   description: Lending Protocol changes of the fixCleanup3_1_3 amendment to LoanPay fees, overpayments and LoanBroker cover invariants
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.4 Lending Protocol Cleanup 3.1.3
+# 66.1 Lending Protocol Cleanup 3.1.3
 
 ## 1. Abstract
 

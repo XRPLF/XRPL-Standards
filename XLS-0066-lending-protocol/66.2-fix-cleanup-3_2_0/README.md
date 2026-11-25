@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.5
+  xls: 66.2
   title: Lending Protocol Cleanup 3.2.0
   description: Lending Protocol changes of the fixCleanup3_2_0 amendment to first-loss capital precision, minimum cover rounding, cover transfers and amortization rounding
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.5 Lending Protocol Cleanup 3.2.0
+# 66.2 Lending Protocol Cleanup 3.2.0
 
 ## 1. Abstract
 

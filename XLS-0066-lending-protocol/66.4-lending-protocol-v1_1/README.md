@@ -1,5 +1,5 @@
 <pre>
-  xls: 66.1
+  xls: 66.4
   title: LendingProtocolV1_1 Loan Changes
   description: Index of Lending Protocol changes introduced by the LendingProtocolV1_1 amendment
   author: Jingchen Wu (@a1q123456), Vito Tumas (@Tapanito), Gregory Tsipenyuk (@gtsipenyuk)
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 66.1 LendingProtocolV1_1 Loan Changes
+# 66.4 LendingProtocolV1_1 Loan Changes
 
 ## 1. Abstract
 
@@ -20,9 +20,9 @@ This index groups Lending Protocol changes introduced by the `LendingProtocolV1_
 
 | Spec                                                                  | Description                                                                                                 |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [66.1.1 Cash-Basis Loans](./66.1.1-cash-basis-loans.md)               | Recognizes Loan interest in the Vault when it is paid, and tracks principal only in `LoanBroker.DebtTotal`. |
-| [66.1.2 Closed-Ended Loan Gates](./66.1.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle.                        |
-| [66.1.3 Loan Invariants](./66.1.3-loan-invariants.md)                 | Adds `Loan` and `LoanBroker` invariants on creation, deletion, flags and payments.                          |
+| [66.4.1 Cash-Basis Loans](./66.4.1-cash-basis-loans.md)               | Recognizes Loan interest in the Vault when it is paid, and tracks principal only in `LoanBroker.DebtTotal`. |
+| [66.4.2 Closed-Ended Loan Gates](./66.4.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle.                        |
+| [66.4.3 Loan Invariants](./66.4.3-loan-invariants.md)                 | Adds `Loan` and `LoanBroker` invariants on creation, deletion, flags and payments.                          |
 
 ## 3. Rationale
 
