@@ -7,7 +7,7 @@
   status: Draft
   category: Amendment
   created: 2026-07-21
-  updated: 2026-09-15
+  updated: 2026-11-25
 </pre>
 
 # 66.1 LendingProtocolV1_1 Loan Changes
@@ -18,11 +18,11 @@ This index groups Lending Protocol changes introduced by the `LendingProtocolV1_
 
 ## 2. Specifications
 
-| Spec                                                                  | Description                                                                          |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [66.1.2 Closed-Ended Loan Gates](./66.1.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle. |
-
-The `66.1.1` number is reserved for the cash-basis lending patch and is not defined in this tree.
+| Spec                                                                  | Description                                                                                                 |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [66.1.1 Cash-Basis Loans](./66.1.1-cash-basis-loans.md)               | Recognizes Loan interest in the Vault when it is paid, and tracks principal only in `LoanBroker.DebtTotal`. |
+| [66.1.2 Closed-Ended Loan Gates](./66.1.2-closed-ended-loan-gates.md) | Restricts loan origination and broker creation for the closed-ended Vault lifecycle.                        |
+| [66.1.3 Loan Invariants](./66.1.3-loan-invariants.md)                 | Adds `Loan` and `LoanBroker` invariants on creation, deletion, flags and payments.                          |
 
 ## 3. Rationale
 
