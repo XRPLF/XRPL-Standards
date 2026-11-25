@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.5
+  xls: 65.2
   title: Vault Precision and Redemption Fixes
   description: Rounds deposits to the Vault precision, completes full redemptions, waives unrealized loss for a sole shareholder, and records the share issuance's backing holding
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 65.5 Vault Precision and Redemption Fixes
+# 65.2 Vault Precision and Redemption Fixes
 
 ## 1. Abstract
 
@@ -57,7 +57,7 @@ This changes parent [§3.6.4](../README.md#364-invariants) items 2 and 3 for a d
 - `SingleAssetVault`: the destination's asset balance must increase. The rounded vault outflow and destination inflow must be equal.
 - `fixCleanup3_2_0`: for an `IOU`, the rounded destination increase may be zero. The comparison also passes when the vault outflow minus the destination inflow, rounded down at the destination's scale, is zero; that difference is an unrepresentable sub-ULP remainder at the destination. `XRP` and `MPT` keep the `SingleAssetVault` rule.
 
-[XLS-65.2](../65.2-fix-cleanup-3_4_0/README.md) later adds a one-unit tolerance as an alternative to this remainder. [XLS-65.7](../65.7-fix-cleanup-3_5_0/README.md) removes the remainder exception when a transfer fee is charged.
+[XLS-65.5](../65.5-fix-cleanup-3_4_0/README.md) later adds a one-unit tolerance as an alternative to this remainder. [XLS-65.6](../65.6-fix-cleanup-3_5_0/README.md) removes the remainder exception when a transfer fee is charged.
 
 ### 3.2 Ledger Entry: `MPTokenIssuance`
 
@@ -125,7 +125,7 @@ The transferability check of parent [§3.6.2.2](../README.md#3622-protocol-level
 A **sole shareholder** is an account whose share `MPToken.MPTAmount` equals the non-zero `OutstandingAmount` of the share issuance.
 
 - `SingleAssetVault`: $\Gamma_{asset}$ in parent [§3.6.1](../README.md#361-fields) is always `Vault.AssetsTotal - Vault.LossUnrealized`.
-- `fixCleanup3_2_0`: when the submitter is a sole shareholder, $\Gamma_{asset}$ is `Vault.AssetsTotal`. The waiver applies both to the conversion and to the preclaim checks of [XLS-65.4](../65.4-fix-cleanup-3_1_3/README.md).
+- `fixCleanup3_2_0`: when the submitter is a sole shareholder, $\Gamma_{asset}$ is `Vault.AssetsTotal`. The waiver applies both to the conversion and to the preclaim checks of [XLS-65.1](../65.1-fix-cleanup-3_1_3/README.md).
 
 #### 3.5.3 State Changes
 
@@ -134,7 +134,7 @@ A **final withdrawal** redeems every outstanding share.
 - `SingleAssetVault`: a final withdrawal pays out the computed $\Delta_{asset}$ and decreases `Vault.AssetsTotal` and `Vault.AssetsAvailable` by it.
 - `fixCleanup3_2_0`: a final withdrawal pays out `Vault.AssetsAvailable` and sets `Vault.AssetsTotal` and `Vault.AssetsAvailable` to zero.
   - `Vault.LossUnrealized` is necessarily zero here. A non-zero `LossUnrealized` makes `Vault.AssetsTotal` exceed `Vault.AssetsAvailable`, and the withdrawal has already failed with `tecINSUFFICIENT_FUNDS`.
-  - A Vault created under [XLS-65.3.1](../65.3-lending-protocol-v1_2/65.3.1-fixed-precision.md) is not zeroed. Its balances change through that patch's balance writer.
+  - A Vault created under [XLS-65.7.1](../65.7-lending-protocol-v1_2/65.7.1-fixed-precision.md) is not zeroed. Its balances change through that patch's balance writer.
 
 ## 4. Rationale
 

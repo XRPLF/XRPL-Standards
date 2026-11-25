@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.3
+  xls: 65.7
   title: LendingProtocolV1_2 Vault Changes
   description: Index of Vault changes introduced by the LendingProtocolV1_2 amendment
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,11 +10,11 @@
   updated: 2026-11-25
 </pre>
 
-# 65.3 LendingProtocolV1_2 Vault Changes
+# 65.7 LendingProtocolV1_2 Vault Changes
 
 ## 1. Abstract
 
-This index groups the Vault changes introduced by the `LendingProtocolV1_2` amendment. The amendment's changes to the Lending Protocol are specified under [XLS-66.3](../../XLS-0066-lending-protocol/66.3-lending-protocol-v1_2/README.md).
+This index groups the Vault changes introduced by the `LendingProtocolV1_2` amendment. The amendment's changes to the Lending Protocol are specified under [XLS-66.7](../../XLS-0066-lending-protocol/66.7-lending-protocol-v1_2/README.md).
 
 ## 2. Specifications
 
@@ -22,8 +22,8 @@ These specifications are introduced by the `LendingProtocolV1_2` amendment:
 
 | Spec                                                                          | Description                                                                                                                                          |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [65.3.1 Fixed Precision Vault](./65.3.1-fixed-precision.md)                   | Fixes one precision grid per new Vault, adds `AssetsDeployed` and `YieldUnrealized`, derives `AssetsTotal`, and bounds optional inflows by capacity. |
-| [65.3.2 Vault Transactions in Batch](./65.3.2-vault-transactions-in-batch.md) | Allows the Vault transactions as `Batch` inner transactions.                                                                                         |
+| [65.7.1 Fixed Precision Vault](./65.7.1-fixed-precision.md)                   | Fixes one precision grid per new Vault, adds `AssetsDeployed` and `YieldUnrealized`, derives `AssetsTotal`, and bounds optional inflows by capacity. |
+| [65.7.2 Vault Transactions in Batch](./65.7.2-vault-transactions-in-batch.md) | Allows the Vault transactions as `Batch` inner transactions.                                                                                         |
 
 ## 3. Rationale
 

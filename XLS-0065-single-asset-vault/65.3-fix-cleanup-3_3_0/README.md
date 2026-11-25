@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.6
+  xls: 65.3
   title: Vault Freeze Checks
   description: Replaces the VaultDeposit and VaultWithdraw freeze checks with checks on every account the asset moves through
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 65.6 Vault Freeze Checks
+# 65.3 Vault Freeze Checks
 
 ## 1. Abstract
 

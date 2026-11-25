@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.7
+  xls: 65.6
   title: Vault Withdrawal Transfer Fee and Input Range Checks
   description: Applies the asset transfer fee to third-party vault withdrawals, rejects out-of-range AssetsMaximum values, and refuses clawback from a missing holder
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 65.7 Vault Withdrawal Transfer Fee and Input Range Checks
+# 65.6 Vault Withdrawal Transfer Fee and Input Range Checks
 
 ## 1. Abstract
 
@@ -73,14 +73,14 @@ Add to parent [§3.6.2.2](../README.md#3622-protocol-level-failures):
 
 - `fixCleanup3_5_0`: $\Delta_{asset}$ is greater than zero, and the amount the destination receives after the transfer fee is zero. (`tecPRECISION_LOSS`)
 
-The destination checks of [XLS-65.4](../65.4-fix-cleanup-3_1_3/README.md) use the amount after the fee.
+The destination checks of [XLS-65.1](../65.1-fix-cleanup-3_1_3/README.md) use the amount after the fee.
 
 #### 3.3.3 Invariants
 
 This changes parent [§3.6.4](../README.md#364-invariants) item 3 when the fee is charged. The submitter is not the issuer, the destination differs from the submitter, and the transfer rate is not parity. In that case:
 
 - the expected destination increase is the vault outflow less the transfer fee on it;
-- the sub-ULP remainder exception of [XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md) does not apply. The one-unit tolerance of [XLS-65.2](../65.2-fix-cleanup-3_4_0/README.md) still does.
+- the sub-ULP remainder exception of [XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md) does not apply. The one-unit tolerance of [XLS-65.5](../65.5-fix-cleanup-3_4_0/README.md) still does.
 
 ### 3.4 Transaction: `VaultClawback`
 

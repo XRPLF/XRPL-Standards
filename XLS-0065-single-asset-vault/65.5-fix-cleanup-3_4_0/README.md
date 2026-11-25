@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.2
+  xls: 65.5
   title: Vault Accounting and Cap Invariants
   description: Admits one unit of rounding slack for IOU accounting invariants, requires LossUnrealized to be non-negative, narrows VaultSet cap enforcement, and tightens VaultDeposit, VaultWithdraw and VaultClawback checks
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 65.2 Vault Accounting and Cap Invariants
+# 65.5 Vault Accounting and Cap Invariants
 
 ## 1. Abstract
 
@@ -67,7 +67,7 @@ The accounting-delta invariants become:
   - Versus a depositor or destination asset delta: `scale` is the coarser of that posterior `AssetsTotal` exponent and the coarser of the party's before and after STAmount exponents (`std::max(computeVaultMinScale, computeCoarsestScale(partyDelta))`).
 - For `XRP` and `MPT`, those comparisons remain exact (`Asset::integral()`).
 
-For `VaultWithdraw`, the existing `fixCleanup3_2_0` exception ([XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md)) that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow is an alternative to this one-unit bound, not an addition to it: the comparison is satisfied by either, and this amendment leaves that exception unchanged.
+For `VaultWithdraw`, the existing `fixCleanup3_2_0` exception ([XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)) that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow is an alternative to this one-unit bound, not an addition to it: the comparison is satisfied by either, and this amendment leaves that exception unchanged.
 
 These are checks on persisted state; they do not give an implementation a choice of delta. The parent state transitions in [XLS-65](../README.md) §3.5.3, §3.6.3 and §3.7.3 still apply, and they are not the same for every operation:
 
@@ -84,7 +84,7 @@ The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both
 2. Round the magnitude of $\Delta_{asset}$ down at $s$. For a debit (`VaultWithdraw`, `VaultClawback`) that is $\lfloor |\Delta_{asset}| \rfloor_s$, so the vault debit never exceeds the value of the redeemed shares. For a credit (`VaultDeposit`) it is $\lfloor \text{AssetsTotal} + \Delta_{asset} \rfloor_s - \text{AssetsTotal}$, so the vault is never credited more than the depositor paid.
 3. If the rounded delta is zero while shares would still move, fail with `tecPRECISION_LOSS`. Steps 1 to 3 apply only where $\Delta_{asset}$ is non-zero to begin with, so they do not disturb the two paths on which shares legitimately move for zero assets: the `VaultWithdraw` fixed-share exception below, and a `VaultClawback` against an already-empty vault, which decreases the holder's shares while the vault asset balance stays unchanged ([XLS-65](../README.md) §3.7.4 items 1 and 3). Both remain as they are.
 
-   A `VaultWithdraw` that redeems every outstanding share is exempt from steps 1 to 3. It is also exempt from the zero-asset check and the dust check of §3.3.2.2. Its payout is set to `Vault.AssetsAvailable` by the `fixCleanup3_2_0` full-redemption path ([XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md)).
+   A `VaultWithdraw` that redeems every outstanding share is exempt from steps 1 to 3. It is also exempt from the zero-asset check and the dust check of §3.3.2.2. Its payout is set to `Vault.AssetsAvailable` by the `fixCleanup3_2_0` full-redemption path ([XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)).
 
 4. Do not re-derive $\Delta_{share}$ from the rounded delta; the shares are burned or minted at their pre-rounding value. Where the trimmed sub-unit ends up depends on the direction:
    - On a debit (`VaultWithdraw`, `VaultClawback`) it stays in the vault for the remaining shareholders: the shares are burned for their pre-rounding value while the vault pays out the smaller rounded amount.
@@ -92,7 +92,7 @@ The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both
 
 For `XRP` and `MPT` the step is a no-op: $\Delta_{asset}$ is already integral.
 
-The rounded $\Delta_{asset}$ is then applied as in the parent transitions above. The persisted results may still disagree, because each written field is quantised independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and each `STAmount` balance sits on its own grid, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before the amendment, the $\Delta_{asset}$ derived from the shares is not rounded at the posterior scale. `fixCleanup3_2_0` ([XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md)) already rounds the requested deposit `Amount` toward zero at that scale, but not the amount recomputed from the minted shares. Without this amendment the comparisons are exact for every asset type. The one exception is the `fixCleanup3_2_0` `VaultWithdraw` rule that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
+The rounded $\Delta_{asset}$ is then applied as in the parent transitions above. The persisted results may still disagree, because each written field is quantised independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and each `STAmount` balance sits on its own grid, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before the amendment, the $\Delta_{asset}$ derived from the shares is not rounded at the posterior scale. `fixCleanup3_2_0` ([XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)) already rounds the requested deposit `Amount` toward zero at that scale, but not the amount recomputed from the minted shares. Without this amendment the comparisons are exact for every asset type. The one exception is the `fixCleanup3_2_0` `VaultWithdraw` rule that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
 For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal == LossUnrealized` may redeem shares while moving zero assets. Before the amendment, the missing vault and destination balance deltas cause the invariant to fail.
 
@@ -183,7 +183,7 @@ When the asset issuer claws back assets:
 
 - `SingleAssetVault`: $\Gamma_{asset}$ is `Vault.AssetsTotal - Vault.LossUnrealized`. For a non-zero `Amount`, $\Delta_{share}$ is rounded to the nearest whole share.
 - `fixCleanup3_4_0`:
-  - When `Holder` is a sole shareholder (as defined in [XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md)), $\Gamma_{asset}$ is `Vault.AssetsTotal`. With a zero `Amount`, $\Delta_{share}$ is the whole `OutstandingAmount`.
+  - When `Holder` is a sole shareholder (as defined in [XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)), $\Gamma_{asset}$ is `Vault.AssetsTotal`. With a zero `Amount`, $\Delta_{share}$ is the whole `OutstandingAmount`.
   - For a non-zero `Amount`, $\Delta_{share}$ is truncated to whole shares.
   - A recovered $\Delta_{asset}$ that is non-zero but would leave the stored balance unchanged fails with `tecPRECISION_LOSS`. This is the same check as for `VaultWithdraw`.
 

@@ -1,5 +1,5 @@
 <pre>
-  xls: 65.4
+  xls: 65.1
   title: Vault Withdrawal Limits and Clawback Clamp
   description: Checks share-denominated withdrawals against the destination at their asset value, and clamps full clawbacks to the assets available
   author: Vytautas Vito Tumas <vtumas@ripple.com>
@@ -10,7 +10,7 @@
   updated: 2026-11-25
 </pre>
 
-# 65.4 Vault Withdrawal Limits and Clawback Clamp
+# 65.1 Vault Withdrawal Limits and Clawback Clamp
 
 ## 1. Abstract
 
@@ -38,11 +38,11 @@ No fields are added or removed.
 This changes the trust-line limit check among the destination checks of parent [§3.6.2.2](../README.md#3622-protocol-level-failures). That check applies when `Vault.Asset` is an `IOU` and the destination is neither the submitter nor the issuer. It fails with `tecNO_LINE` when the amount exceeds the room left under the destination's trust-line limit to the issuer. A destination with no trust line has no room. For `XRP` and `MPT` the check always passes.
 
 - `SingleAssetVault`: The checks are evaluated on the transaction as submitted. When `Amount` is in shares, the check sees an `MPT` amount and always passes, so a share-denominated withdrawal is never checked against the destination's trust-line limit.
-- `fixCleanup3_1_3`: When `Amount` is in shares, the shares are first converted to assets with the redeem formula of parent [§3.1.7.2.2](../README.md#31722-redeem). The trust-line limit check is then evaluated against that asset amount. If [XLS-65.7](../65.7-fix-cleanup-3_5_0/README.md) applies a transfer fee, it uses the amount after the fee. An arithmetic overflow during the conversion fails the transaction with `tecPATH_DRY`.
+- `fixCleanup3_1_3`: When `Amount` is in shares, the shares are first converted to assets with the redeem formula of parent [§3.1.7.2.2](../README.md#31722-redeem). The trust-line limit check is then evaluated against that asset amount. If [XLS-65.6](../65.6-fix-cleanup-3_5_0/README.md) applies a transfer fee, it uses the amount after the fee. An arithmetic overflow during the conversion fails the transaction with `tecPATH_DRY`.
 
 The other destination checks are the same before and after the amendment, for both forms of `Amount`. They reject a `Destination` that does not exist (`tecNO_DST`), requires a destination tag that is missing (`tecDST_TAG_NEEDED`), or requires deposit authorization the submitter lacks (`tecNO_PERMISSION`).
 
-The conversion uses the same `LossUnrealized` treatment as the withdrawal itself, including the sole-shareholder exception of [XLS-65.5](../65.5-fix-cleanup-3_2_0/README.md).
+The conversion uses the same `LossUnrealized` treatment as the withdrawal itself, including the sole-shareholder exception of [XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md).
 
 #### 3.1.3 State Changes
 
