@@ -24,7 +24,7 @@ This specification formalizes and standardizes the requirements for an `AccountR
 
 ### Amendments
 
-- `fixCleanup3_3_0`, as described in [XLS-64.1](./64.1/README.md):
+- `fixCleanup3_3_0`, as described in [XLS-64.1](./64.1-fix-cleanup-3_3_0/README.md):
   - standardizes the freeze and lock checks for assets transferred into or out of pseudo-accounts.
 
 ### Specification
@@ -167,4 +167,4 @@ The design of pseudo-accounts includes several critical security features:
 
 ## Appendix C: Changelog
 
-- [XLS-64.1](./64.1/README.md): Introduces common freeze and lock checks for assets transferred into or out of pseudo-accounts.
+- [XLS-64.1](./64.1-fix-cleanup-3_3_0/README.md): Introduces common freeze and lock checks for assets transferred into or out of pseudo-accounts.

@@ -164,7 +164,7 @@ class XLSTemplateValidator:
         self.file_path = file_path
         self.strict = strict
         # A nested amendment patch (XLS-1 §4.4.4) lives in a folder under the
-        # parent XLS folder, for example XLS-0066-lending-protocol/66.2/.
+        # parent XLS folder, for example XLS-0066-lending-protocol/66.2-fix-cleanup-3_4_0/.
         self.is_nested_patch = not file_path.parent.name.startswith("XLS-")
         self.errors: List[ValidationError] = []
         self.sections: List[Section] = []
@@ -209,6 +209,9 @@ class XLSTemplateValidator:
             self._validate_amendment_structure()
             self._validate_no_placeholders()
 
+        if self.is_nested_patch:
+            self._validate_patch_folder(doc)
+
         return len(self.errors) == 0
 
     def _parse_sections(self):
@@ -252,6 +255,22 @@ class XLSTemplateValidator:
                         level=level,
                         line_number=line_number,
                     ))
+
+    def _validate_patch_folder(self, doc):
+        """Check a nested patch's folder name (XLS-1 §4.4.4.3).
+
+        The folder is `x.y-` followed by the amendment name in lowercase kebab
+        case, for example `65.1-lending-protocol-v1_1`.
+        """
+        folder = self.file_path.parent.name
+        xy = ".".join(doc.xls.split(".")[:2])
+        if not re.fullmatch(rf"{re.escape(xy)}-[a-z0-9_]+(?:-[a-z0-9_]+)*", folder):
+            self.errors.append(ValidationError(
+                str(self.file_path), None,
+                f"Patch folder '{folder}' must be '{xy}-' followed by the "
+                "amendment name in lowercase kebab case, for example "
+                "'65.1-lending-protocol-v1_1' (XLS-1 §4.4.4.3)",
+            ))
 
     def _validate_preamble(self, doc):
         """Validate preamble metadata fields using the parser's validation."""

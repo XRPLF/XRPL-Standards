@@ -13,6 +13,7 @@ from build_site import (
     strip_title_heading,
 )
 from patch_map import amendment_name, map_patch, parse_headings, unmatched_sections
+from validate_xls_template import XLSTemplateValidator
 from xls_parser import extract_xls_metadata, find_xls_documents, parse_author
 
 PREAMBLE = """<pre>
@@ -192,26 +193,26 @@ class PatchTest(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
         folder = self.root / "XLS-0065-vault"
-        (folder / "65.1").mkdir(parents=True)
-        (folder / "65.2").mkdir()
+        (folder / "65.1-lending-protocol-v1_1").mkdir(parents=True)
+        (folder / "65.2-fix-cleanup-3_4_0").mkdir()
         (folder / "README.md").write_text(PARENT)
-        (folder / "65.1/README.md").write_text(INDEX)
-        (folder / "65.1/65.1.2-memo.md").write_text(PATCH)
-        (folder / "65.1/65.1.10-later.md").write_text(preamble("65.1.10", "Later"))
-        (folder / "65.2/README.md").write_text(
+        (folder / "65.1-lending-protocol-v1_1/README.md").write_text(INDEX)
+        (folder / "65.1-lending-protocol-v1_1/65.1.2-memo.md").write_text(PATCH)
+        (folder / "65.1-lending-protocol-v1_1/65.1.10-later.md").write_text(preamble("65.1.10", "Later"))
+        (folder / "65.2-fix-cleanup-3_4_0/README.md").write_text(
             preamble("65.2", "Fix") + "Under the `fixCleanup3_4_0` amendment, x."
         )
 
     def test_discovery_and_order(self):
         (doc,) = find_xls_documents(self.root)
         self.assertEqual([p.xls for p in doc.patches], ["65.1", "65.1.2", "65.1.10", "65.2"])
-        self.assertEqual(doc.patches[1].source, "XLS-0065-vault/65.1/65.1.2-memo.md")
+        self.assertEqual(doc.patches[1].source, "XLS-0065-vault/65.1-lending-protocol-v1_1/65.1.2-memo.md")
 
     def test_page_paths(self):
         (doc,) = find_xls_documents(self.root)
         self.assertEqual(page_path(doc), "xls/XLS-0065-vault.html")
-        self.assertEqual(page_path(doc.patches[0]), "xls/XLS-0065-vault/65.1/index.html")
-        self.assertEqual(page_path(doc.patches[1]), "xls/XLS-0065-vault/65.1/65.1.2-memo.html")
+        self.assertEqual(page_path(doc.patches[0]), "xls/XLS-0065-vault/65.1-lending-protocol-v1_1/index.html")
+        self.assertEqual(page_path(doc.patches[1]), "xls/XLS-0065-vault/65.1-lending-protocol-v1_1/65.1.2-memo.html")
 
     def test_mapping(self):
         matches = map_patch(PATCH, parse_headings(PARENT))
@@ -237,12 +238,35 @@ class PatchTest(unittest.TestCase):
         (self.root / "CONTRIBUTING.md").write_text("# Contributing")
         SiteBuilder(self.root, site).build()
         parent = (site / "xls/XLS-0065-vault.html").read_text()
-        patch = (site / "xls/XLS-0065-vault/65.1/65.1.2-memo.html").read_text()
-        self.assertIn('href="XLS-0065-vault/65.1/65.1.2-memo.html#3121-data-verification"', parent)
+        patch = (site / "xls/XLS-0065-vault/65.1-lending-protocol-v1_1/65.1.2-memo.html").read_text()
+        self.assertIn('href="XLS-0065-vault/65.1-lending-protocol-v1_1/65.1.2-memo.html#3121-data-verification"', parent)
         self.assertIn('data-amendment="LendingProtocolV1_1"', parent)
         self.assertIn('href="../../XLS-0065-vault.html#3421-data-verification"', patch)
         self.assertIn('href="../../XLS-0065-vault.html">parent</a>', patch)
-        self.assertIn("XLS-0065-vault/65.1/65.1.2-memo.html", (site / "xls/xls-65.1.2.html").read_text())
+        self.assertIn("XLS-0065-vault/65.1-lending-protocol-v1_1/65.1.2-memo.html", (site / "xls/xls-65.1.2.html").read_text())
+
+
+class PatchFolderTest(unittest.TestCase):
+    def folder_errors(self, folder_name):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name) / "XLS-0065-vault" / folder_name
+        folder.mkdir(parents=True)
+        (folder.parent / "README.md").write_text(PARENT)
+        path = folder / "65.1.2-memo.md"
+        path.write_text(preamble("65.1.2", "Memo"))
+        validator = XLSTemplateValidator(path)
+        validator.validate()
+        return [e.message for e in validator.errors if "Patch folder" in e.message]
+
+    def test_named_folder_passes(self):
+        self.assertEqual(self.folder_errors("65.1-lending-protocol-v1_1"), [])
+
+    def test_bare_number_fails(self):
+        self.assertEqual(len(self.folder_errors("65.1")), 1)
+
+    def test_wrong_number_fails(self):
+        self.assertEqual(len(self.folder_errors("65.2-lending-protocol-v1_1")), 1)
 
 
 if __name__ == "__main__":
