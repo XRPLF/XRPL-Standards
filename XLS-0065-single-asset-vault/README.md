@@ -8,7 +8,7 @@
   category: Amendment
   requires: [XLS-33](../XLS-0033-multi-purpose-tokens/README.md)
   created: 2024-04-12
-  updated: 2026-09-15
+  updated: 2026-11-18
 </pre>
 
 # Single Asset Vault
@@ -96,6 +96,8 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
   - [65.1.4 Closed-Ended Vault](./65.1/65.1.4-closed-ended-vault.md): adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates `VaultDeposit` and `VaultWithdraw` on such vaults
 - `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
+- `fixVaultV1_1`:
+  - `VaultCreate` no longer sets `lsfMPTCanEscrow` on the share `MPTokenIssuance` ([3.1.6.2.2](#31622-flags)), and `EscrowCreate` rejects vault shares, so they stay within reach of `VaultClawback`
 
 ## 3. Specification
 
@@ -227,6 +229,8 @@ The following flags are set based on whether the shares are transferable and if 
 | ----------------- | -------------------------------------------------------------------------------------- | -------------------- |
 | **Public Vault**  | `lsfMPTCanEscrow` <br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer`                        | No Flags             |
 | **Private Vault** | `lsfMPTCanEscrow`<br> `lsfMPTCanTrade`<br> `lsfMPTCanTransfer`<br> `lsfMPTRequireAuth` | `lsfMPTRequireAuth`  |
+
+> - `fixVaultV1_1`: `lsfMPTCanEscrow` is not set on transferable shares, and `EscrowCreate` rejects vault shares whatever their flags.
 
 ##### 3.1.6.3 `MPToken`
 
@@ -1262,6 +1266,8 @@ _TBD_
 
 Closed-ended Vaults intentionally lock depositor capital during Investment: `VaultWithdraw` is rejected after Subscription and before Redemption. Depositors must inspect the immutable `SubscriptionDate` and `RedemptionDate` before depositing. `VaultClawback` remains available throughout Investment so an issuer's compliance controls are not blocked by the depositor withdrawal gate. See [XLS-65.1.4](./65.1/65.1.4-closed-ended-vault.md) for the full lifecycle and threat analysis.
 
+Vault shares are not escrowable under `fixVaultV1_1`. `EscrowCreate` moves the escrowed amount from the holder's `MPToken.MPTAmount` to `MPToken.LockedAmount`, and `VaultClawback` burns only from `MPTAmount`, so escrowed shares would sit out of reach of the asset issuer's clawback. `EscrowCreate` requires only one of `CancelAfter` or `FinishAfter`, so a conditional escrow with no `CancelAfter` could hold them indefinitely. `EscrowCreate` rejects the shares of every vault, including vaults created before the amendment, whose share issuances still carry `lsfMPTCanEscrow`.
+
 # Appendix
 
 ## Appendix A: FAQ
@@ -1294,3 +1300,4 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 - [XLS-65.1](./65.1/README.md): `LendingProtocolV1_1` Vault changes: [65.1.1 Unmodifiable Vault Fields](./65.1/65.1.1-unmodifiable-vault-fields.md), [65.1.2 Vault Deletion Memo](./65.1/65.1.2-vault-deletion-memo.md), and [65.1.4 Closed-Ended Vault](./65.1/65.1.4-closed-ended-vault.md).
 - [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
+- `fixVaultV1_1`: `VaultCreate` no longer sets `lsfMPTCanEscrow` on the share `MPTokenIssuance`, and `EscrowCreate` rejects vault shares.
