@@ -232,6 +232,7 @@ class PatchTest(unittest.TestCase):
     def test_amendment_name(self):
         self.assertEqual(amendment_name(INDEX), "LendingProtocolV1_1")
         self.assertEqual(amendment_name(PATCH), "")
+        self.assertEqual(amendment_name("The `fixCleanup3_1_3` amendment makes two"), "fixCleanup3_1_3")
 
     def test_build(self):
         site = self.root / "_site"
