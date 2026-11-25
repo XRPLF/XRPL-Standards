@@ -40,7 +40,7 @@ The specification introduces the following transactions:
 - **`LoanManage`**: A transaction to manage an existing `Loan`.
 - **`LoanPay`**: A transaction to make a `Loan` payment.
 
-The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unrestricted and accepts both open-ended and closed-ended Vaults. Under `LendingProtocolV1_1`, `LoanBrokerSet` in step 2 requires that the Vault be closed-ended, because new Loan Brokers cannot be created against open-ended Vaults. Deposits in step 3 occur during Subscription, and each `LoanSet` in step 5 can succeed only during Investment and only when its final scheduled payment plus the redemption buffer does not exceed the Vault's `RedemptionDate`. See [XLS-66.1.2](./66.1/66.1.2-closed-ended-loan-gates.md).
+The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unrestricted and accepts both open-ended and closed-ended Vaults. Under `LendingProtocolV1_1`, `LoanBrokerSet` in step 2 requires that the Vault be closed-ended, because new Loan Brokers cannot be created against open-ended Vaults. Deposits in step 3 occur during Subscription, and each `LoanSet` in step 5 can succeed only during Investment and only when its final scheduled payment plus the redemption buffer does not exceed the Vault's `RedemptionDate`. See [XLS-66.1.2](./66.1-lending-protocol-v1_1/66.1.2-closed-ended-loan-gates.md).
 
 1. The Loan Broker creates a `Vault` ledger entry.
 2. The Loan Broker creates a `LoanBroker` ledger entry with a `LoanBrokerSet` transaction.
@@ -123,9 +123,9 @@ The parent protocol is `LendingProtocol` (`featureLendingProtocol`). Amendment c
 - `LendingProtocol (parent)` and `LendingProtocolV1_1` compare behavior before and after the feature amendment.
 - Before `fixCleanup3_4_0` and `fixCleanup3_4_0` compare behavior before and after the fix amendment, independently of the `LendingProtocolV1_1` state.
 
-- `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1/README.md):
-  - [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
-- `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2/README.md):
+- `LendingProtocolV1_1`, as described in [XLS-66.1](./66.1-lending-protocol-v1_1/README.md):
+  - [66.1.2 Closed-Ended Loan Gates](./66.1-lending-protocol-v1_1/66.1.2-closed-ended-loan-gates.md): restricts `LoanSet` to the Investment phase with a pre-Redemption maturity buffer and requires closed-ended Vaults for new Loan Brokers.
+- `fixCleanup3_4_0`, as described in [XLS-66.2](./66.2-fix-cleanup-3_4_0/README.md):
   - prevents impairing a loan before it is late, stops impairment and unimpairment from rewriting `Loan.NextPaymentDueDate`, and makes the due-date and grace-period boundaries exclusive.
 
 ## 3. Specification
@@ -2708,5 +2708,5 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
 
 ## A-4 Changelog
 
-- [XLS-66.1](./66.1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.2 Closed-Ended Loan Gates](./66.1/66.1.2-closed-ended-loan-gates.md).
-- [XLS-66.2](./66.2/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.
+- [XLS-66.1](./66.1-lending-protocol-v1_1/README.md): `LendingProtocolV1_1` Lending changes: [66.1.2 Closed-Ended Loan Gates](./66.1-lending-protocol-v1_1/66.1.2-closed-ended-loan-gates.md).
+- [XLS-66.2](./66.2-fix-cleanup-3_4_0/README.md): Stops early impairment and due-date rewrites on `LoanManage`, and makes the payment due-date and default grace-period boundaries exclusive.

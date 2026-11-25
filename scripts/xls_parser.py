@@ -177,7 +177,7 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
 def find_patches(root_dir: Path, folder: str) -> List[XLSDocument]:
     """Return the nested amendment patches under an XLS folder, in number order.
 
-    Patches live one folder down (`XLS-0065-.../65.1/65.1.2-...md`), the same
+    Patches live one folder down (`XLS-0065-.../65.1-lending-protocol-v1_1/65.1.2-...md`), the same
     files `validate_xls_template.py --all` checks.
     """
     patches = []

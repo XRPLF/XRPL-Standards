@@ -65,7 +65,7 @@ A **closed-ended** Vault is a fixed-term fund. It raises capital for a limited p
 - **`SubscriptionDate`** — last moment of fundraising. After it, the Vault enters investment and the pool size is fixed.
 - **`RedemptionDate`** — first moment of wind-down. From then on, depositors may withdraw again; new deposits remain closed.
 
-Between those dates the Vault is in **Investment**: capital stays in place so a connected protocol (for example the Lending Protocol) can deploy a known amount for a known term. The current phase is derived from the parent ledger close time; it is not a stored field. Open-ended Vaults have no phase. The closed-ended lifecycle, field rules, and deposit/withdraw gates are specified in [XLS-65.1.4](./65.1/65.1.4-closed-ended-vault.md).
+Between those dates the Vault is in **Investment**: capital stays in place so a connected protocol (for example the Lending Protocol) can deploy a known amount for a known term. The current phase is derived from the parent ledger close time; it is not a stored field. Open-ended Vaults have no phase. The closed-ended lifecycle, field rules, and deposit/withdraw gates are specified in [XLS-65.1.4](./65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md).
 
 ### 2.6. Terminology
 
@@ -90,11 +90,11 @@ A protocol connecting to a Vault must track its debt. Furthermore, the updates t
 ### 2.9. Amendments
 
 - `SingleAssetVault` (`featureSingleAssetVault`): the original vault amendment. It introduced the `Vault` ledger entry and the vault transactions; that behaviour is the parent of the patches below.
-- `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1/README.md):
-  - [65.1.1 Unmodifiable Vault Fields](./65.1/65.1.1-unmodifiable-vault-fields.md): makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
-  - [65.1.2 Vault Deletion Memo](./65.1/65.1.2-vault-deletion-memo.md): adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
-  - [65.1.4 Closed-Ended Vault](./65.1/65.1.4-closed-ended-vault.md): adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates `VaultDeposit` and `VaultWithdraw` on such vaults
-- `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2/README.md):
+- `LendingProtocolV1_1`, as described in [XLS-65.1](./65.1-lending-protocol-v1_1/README.md):
+  - [65.1.1 Unmodifiable Vault Fields](./65.1-lending-protocol-v1_1/65.1.1-unmodifiable-vault-fields.md): makes `Sequence`, `OwnerNode`, `Owner`, `WithdrawalPolicy`, `Scale` and `LEVersion` immutable on the Vault once set
+  - [65.1.2 Vault Deletion Memo](./65.1-lending-protocol-v1_1/65.1.2-vault-deletion-memo.md): adds an optional `MemoData` field to `VaultDelete` that, if present, must be 1–256 bytes
+  - [65.1.4 Closed-Ended Vault](./65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md): adds the `ClosedEnded` vault kind with `SubscriptionDate` and `RedemptionDate`, and phase-gates `VaultDeposit` and `VaultWithdraw` on such vaults
+- `fixCleanup3_4_0`, as described in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md):
   - admits one unit of rounding slack in the `LossUnrealized` invariant and in IOU accounting and state-change deltas for `VaultDeposit`, `VaultWithdraw` and `VaultClawback`, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap
 
 ## 3. Specification
@@ -164,7 +164,7 @@ The phase is not stored. For a closed-ended Vault it is derived from the parent 
 | `SubscriptionDate < now < RedemptionDate` |  `Investment`  |
 | `now >= RedemptionDate`                   |  `Redemption`  |
 
-`SubscriptionDate` is the last second of Subscription. `RedemptionDate` is the first second of Redemption. Investment is the open interval between them. See [XLS-65.1.4](./65.1/65.1.4-closed-ended-vault.md) for the full closed-ended rules.
+`SubscriptionDate` is the last second of Subscription. `RedemptionDate` is the first second of Redemption. Investment is the open interval between them. See [XLS-65.1.4](./65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md) for the full closed-ended rules.
 
 #### 3.1.3 Pseudo-Account
 
@@ -630,7 +630,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 9. The depositor has insufficient balance to cover the deposit. (`tecINSUFFICIENT_FUNDS`)
 10. The `Amount` rounds to zero at the depositor's trust line scale (IOU only). (`tecPRECISION_LOSS`)
 11. The computed number of shares for the deposit is zero. (`tecPRECISION_LOSS`)
-12. `fixCleanup3_4_0`: The deposit rounds down to zero at the posterior `Vault.AssetsTotal` scale, i.e. a non-zero $\Delta_{asset}$ that would credit the vault nothing at that scale, as described in [XLS-65.2](./65.2/README.md). (`tecPRECISION_LOSS`)
+12. `fixCleanup3_4_0`: The deposit rounds down to zero at the posterior `Vault.AssetsTotal` scale, i.e. a non-zero $\Delta_{asset}$ that would credit the vault nothing at that scale, as described in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). (`tecPRECISION_LOSS`)
 13. Arithmetic overflow during share calculation. (`tecPATH_DRY`)
 14. `Vault.AssetsMaximum` is non-zero and adding the deposited amount to `Vault.AssetsTotal` would exceed it. (`tecLIMIT_EXCEEDED`)
 15. - `SingleAssetVault`: The check does not apply.
@@ -658,7 +658,7 @@ The `VaultDeposit` transaction adds Liqudity in exchange for vault shares.
 > **Note:** $\Delta_{asset}$ is the actual asset amount transferred, which may be slightly less than the requested `Amount` due to scale rounding for IOU assets.
 >
 > - `SingleAssetVault`: The vault accounting increases and both asset-balance moves use that same $\Delta_{asset}$. Where the depositor is the issuer of a non-`XRP` `Vault.Asset` it holds no balance of the asset — the transfer creates the asset at the issuer instead — so only the vault accounting fields and the vault's asset balance move. This is the issuer exception of invariant 2 below.
-> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `XRP` and `MPT` they remain equal.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). For `XRP` and `MPT` they remain equal.
 
 #### 3.5.4 Invariants
 
@@ -729,7 +729,7 @@ In sections below assume the following variables:
     4. If `Amount` is the vault asset: `Vault.AssetsAvailable` < `Amount`. (`tecINSUFFICIENT_FUNDS`)
 
 11. The computed share amount for the withdrawal is zero. (`tecPRECISION_LOSS`)
-12. `fixCleanup3_4_0`: The withdrawal would move shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2/README.md). A fixed-share withdrawal whose pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized` is exempt and may redeem shares for zero assets. (`tecPRECISION_LOSS`)
+12. `fixCleanup3_4_0`: The withdrawal would move shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). A fixed-share withdrawal whose pre-transaction `Vault.AssetsTotal == Vault.LossUnrealized` is exempt and may redeem shares for zero assets. (`tecPRECISION_LOSS`)
 13. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
 14. - `SingleAssetVault`: The check does not apply.
     - `LendingProtocolV1_1`: The Vault is closed-ended and `SubscriptionDate < parent ledger close time < RedemptionDate`. (`tecTOO_SOON`)
@@ -758,7 +758,7 @@ In sections below assume the following variables:
 > **Note:** "destination" is the `Destination` field if provided, otherwise the submitting `Account`.
 >
 > - `SingleAssetVault`: The vault accounting decreases and both asset-balance moves use that same $\Delta_{asset}$, except that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow. Where the destination is the issuer of a non-`XRP` `Vault.Asset` it holds no balance of the asset — the transfer destroys the asset at the issuer instead — so only the vault accounting fields and the vault's asset balance move. This is the issuer exception of invariant 2 below.
-> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `XRP` and `MPT` they remain equal. That one unit and the sub-ULP remainder above are alternative tolerances, not cumulative: the vault-to-destination comparison is satisfied by either.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted asset-balance deltas may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). For `XRP` and `MPT` they remain equal. That one unit and the sub-ULP remainder above are alternative tolerances, not cumulative: the vault-to-destination comparison is satisfied by either.
 
 #### 3.6.4 Invariants
 
@@ -810,7 +810,7 @@ _None._
 
 5. The `MPToken` object for the `Vault.ShareMPTID` of the `Holder` `AccountRoot` does not exist OR `MPToken.MPTAmount == 0`.
 
-6. `fixCleanup3_4_0`: The clawback would burn shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2/README.md). A clawback against an already-empty vault is unaffected, because its $\Delta_{asset}$ is zero to begin with. (`tecPRECISION_LOSS`)
+6. `fixCleanup3_4_0`: The clawback would burn shares while moving no assets: a non-zero $\Delta_{asset}$ that leaves the stored `Vault.AssetsTotal` unchanged at its precision, or that rounds down to zero at the posterior `Vault.AssetsTotal` scale, as described in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). A clawback against an already-empty vault is unaffected, because its $\Delta_{asset}$ is zero to begin with. (`tecPRECISION_LOSS`)
 
 #### 3.7.3 State Changes
 
@@ -830,7 +830,7 @@ _None._
 5. Decrease the `AssetsTotal` and `AssetsAvailable` by `min(Vault.AssetsAvailable`, $\Delta_{asset}$`)`
 
 > - `SingleAssetVault`: The vault accounting decreases and the vault asset-balance decrease use that same amount.
-> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted vault asset-balance delta may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2/README.md). For `MPT` they remain equal.
+> - `fixCleanup3_4_0`: For an `IOU`, the persisted vault accounting deltas and the persisted vault asset-balance delta may differ from each other by at most one unit at the comparison scale in [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md). For `MPT` they remain equal.
 
 #### 3.7.4 Invariants
 
@@ -1260,7 +1260,7 @@ _TBD_
 
 ## 5. Security Considerations
 
-Closed-ended Vaults intentionally lock depositor capital during Investment: `VaultWithdraw` is rejected after Subscription and before Redemption. Depositors must inspect the immutable `SubscriptionDate` and `RedemptionDate` before depositing. `VaultClawback` remains available throughout Investment so an issuer's compliance controls are not blocked by the depositor withdrawal gate. See [XLS-65.1.4](./65.1/65.1.4-closed-ended-vault.md) for the full lifecycle and threat analysis.
+Closed-ended Vaults intentionally lock depositor capital during Investment: `VaultWithdraw` is rejected after Subscription and before Redemption. Depositors must inspect the immutable `SubscriptionDate` and `RedemptionDate` before depositing. `VaultClawback` remains available throughout Investment so an issuer's compliance controls are not blocked by the depositor withdrawal gate. See [XLS-65.1.4](./65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md) for the full lifecycle and threat analysis.
 
 # Appendix
 
@@ -1292,5 +1292,5 @@ No, neither of the transactions charge transfer fees when depositing or withdraw
 
 ## Appendix B: Changelog
 
-- [XLS-65.1](./65.1/README.md): `LendingProtocolV1_1` Vault changes: [65.1.1 Unmodifiable Vault Fields](./65.1/65.1.1-unmodifiable-vault-fields.md), [65.1.2 Vault Deletion Memo](./65.1/65.1.2-vault-deletion-memo.md), and [65.1.4 Closed-Ended Vault](./65.1/65.1.4-closed-ended-vault.md).
-- [XLS-65.2](./65.2/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.
+- [XLS-65.1](./65.1-lending-protocol-v1_1/README.md): `LendingProtocolV1_1` Vault changes: [65.1.1 Unmodifiable Vault Fields](./65.1-lending-protocol-v1_1/65.1.1-unmodifiable-vault-fields.md), [65.1.2 Vault Deletion Memo](./65.1-lending-protocol-v1_1/65.1.2-vault-deletion-memo.md), and [65.1.4 Closed-Ended Vault](./65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md).
+- [XLS-65.2](./65.2-fix-cleanup-3_4_0/README.md): Admits one unit of rounding slack for IOU accounting invariants and for the matching `VaultDeposit`, `VaultWithdraw` and `VaultClawback` state-change deltas, requires `LossUnrealized` to be non-negative, and narrows `VaultSet` cap enforcement to transactions that supply `AssetsMaximum` or otherwise change the cap.

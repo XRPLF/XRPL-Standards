@@ -356,9 +356,9 @@ def page_path(doc: XLSDocument) -> str:
     """Return the site-relative page for a spec or patch.
 
     `XLS-0065-x/README.md` becomes `xls/XLS-0065-x.html`; a patch keeps its
-    folder, so `XLS-0065-x/65.1/65.1.2-y.md` becomes
-    `xls/XLS-0065-x/65.1/65.1.2-y.html` and `65.2/README.md` becomes
-    `xls/XLS-0065-x/65.2/index.html`.
+    folder, so `XLS-0065-x/65.1-amendment/65.1.2-y.md` becomes
+    `xls/XLS-0065-x/65.1-amendment/65.1.2-y.html` and `65.2-fix/README.md`
+    becomes `xls/XLS-0065-x/65.2-fix/index.html`.
     """
     if not doc.is_patch:
         return f"xls/{doc.folder}.html"
