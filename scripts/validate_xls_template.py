@@ -13,8 +13,12 @@ Usage:
     # Validate multiple files
     python scripts/validate_xls_template.py XLS-0070-credentials/README.md XLS-0035-uritoken/README.md
 
-    # Validate all XLS specs
+    # Validate all XLS specs, including nested amendment patches
     python scripts/validate_xls_template.py --all
+
+    # Strict mode: no legacy exemption, and template sections may be nested
+    # under "Specification"
+    python scripts/validate_xls_template.py --strict XLS-0066-lending-protocol/README.md
 
 Validation Rules:
     - All XLS: Checks preamble fields and basic structure
@@ -147,9 +151,21 @@ class XLSTemplateValidator:
     # Timeout in seconds for HTTP requests to xrpl.org
     HTTP_TIMEOUT = 5
 
-    def __init__(self, file_path: Path):
-        """Initialize validator with the file to validate."""
+    def __init__(self, file_path: Path, strict: bool = False):
+        """Initialize validator with the file to validate.
+
+        Args:
+            file_path: Path to the XLS document.
+            strict: If True, an Amendment spec with no template sections is an
+                error instead of a skipped legacy spec, and template sections
+                are recognized at any heading level (for example
+                ``### 3.1. Ledger Entry: `Loan` `` under ``## 3. Specification``).
+        """
         self.file_path = file_path
+        self.strict = strict
+        # A nested amendment patch (XLS-1 §4.4.4) lives in a folder under the
+        # parent XLS folder, for example XLS-0066-lending-protocol/66.2/.
+        self.is_nested_patch = not file_path.parent.name.startswith("XLS-")
         self.errors: List[ValidationError] = []
         self.sections: List[Section] = []
         self.content_lines: List[str] = []
@@ -267,8 +283,12 @@ class XLSTemplateValidator:
 
     def _validate_amendment_structure(self):
         """Validate Amendment-specific template structure."""
-        # Get main sections (level 2)
-        main_sections = [s for s in self.sections if s.level == 2]
+        # XLS_TEMPLATE.md puts the Amendment template inside "Specification",
+        # so in strict mode template sections can sit at any level.
+        if self.strict:
+            main_sections = self.sections
+        else:
+            main_sections = [s for s in self.sections if s.level == 2]
 
         # Check if at least one template section exists
         has_template_section = False
@@ -279,6 +299,23 @@ class XLSTemplateValidator:
                     break
             if has_template_section:
                 break
+
+        # A feature-amendment index lists its patches in a "Specifications"
+        # table and has no template sections of its own (XLS-1 §4.4.4.5).
+        is_patch_index = self.is_nested_patch and any(
+            s.title == "Specifications" for s in main_sections
+        )
+
+        if not has_template_section and self.strict and not is_patch_index:
+            self.errors.append(ValidationError(
+                str(self.file_path), None,
+                "Amendment spec has no Amendment template sections "
+                "(for example '### 3.1. Ledger Entry: `EntryName`' or "
+                "'### 3.2. Transaction: `TxName`'). Strict mode does not "
+                "exempt legacy specs; restructure it to use "
+                "AMENDMENT_TEMPLATE.md."
+            ))
+            return
 
         if not has_template_section:
             # No explicit template sections found. Before we assume this is an
@@ -519,6 +556,11 @@ class XLSTemplateValidator:
         is_existing_transaction: bool = False
     ):
         """Validate that a section has required subsections."""
+        # A nested patch is a delta to its parent (XLS-1 §4.4.4) and states
+        # only the subsections it changes.
+        if self.strict and self.is_nested_patch:
+            return
+
         # Get all subsections under this parent
         parent_idx = self.sections.index(parent_section)
         subsections = []
@@ -593,17 +635,20 @@ class XLSTemplateValidator:
                     break  # Only report one error per line
 
 
-def validate_file(file_path: Path) -> Tuple[bool, List[ValidationError]]:
+def validate_file(
+    file_path: Path, strict: bool = False
+) -> Tuple[bool, List[ValidationError]]:
     """
     Validate a single file.
 
     Args:
         file_path: Path to the file to validate
+        strict: Run in strict mode (see XLSTemplateValidator)
 
     Returns:
         Tuple of (success, errors)
     """
-    validator = XLSTemplateValidator(file_path)
+    validator = XLSTemplateValidator(file_path, strict)
     success = validator.validate()
     return success, validator.errors
 
@@ -624,7 +669,13 @@ def main():
     parser.add_argument(
         '--all',
         action='store_true',
-        help='Validate all XLS specs'
+        help='Validate all XLS specs, including nested amendment patches'
+    )
+    parser.add_argument(
+        '--strict',
+        action='store_true',
+        help='Do not exempt legacy Amendment specs, and recognize template '
+             'sections nested under Specification'
     )
 
     args = parser.parse_args()
@@ -636,7 +687,9 @@ def main():
     # Determine which files to validate
     if args.all:
         # Validate all XLS files
-        files_to_validate = list(repo_root.glob('XLS-*/README.md'))
+        files_to_validate = sorted(repo_root.glob('XLS-*/README.md'))
+        # Nested amendment patches (XLS-1 §4.4.4) live one folder down.
+        files_to_validate += sorted(repo_root.glob('XLS-*/*/*.md'))
     elif args.files:
         # Validate specific files provided as arguments
         files_to_validate = [Path(f).resolve() for f in args.files]
@@ -658,8 +711,12 @@ def main():
     amendment_count = 0
 
     for file_path in files_to_validate:
-        print(f"Checking {file_path.parent.name}/README.md...")
-        success, errors = validate_file(file_path)
+        try:
+            display = file_path.relative_to(repo_root)
+        except ValueError:
+            display = file_path
+        print(f"Checking {display}...")
+        success, errors = validate_file(file_path, args.strict)
         validated_count += 1
 
         # Check if this is an Amendment for stats

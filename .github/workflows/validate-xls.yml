@@ -68,7 +68,7 @@ jobs:
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             BASE="origin/$DEFAULT_BRANCH"
           fi
-          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE"...HEAD -- 'XLS-*/README.md')
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE"...HEAD -- 'XLS-*/README.md' 'XLS-*/*/*.md')
           if [ "${#files[@]}" -eq 0 ]; then
             echo "No XLS files changed."
             exit 0
