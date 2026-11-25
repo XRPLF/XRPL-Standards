@@ -9,7 +9,7 @@
   category: Meta
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/340
   created: 2025-09-22
-  updated: 2025-12-02
+  updated: 2026-09-15
 </pre>
 
 ## 1. Abstract
@@ -18,6 +18,7 @@ This document formalizes the XRP Ledger Standards (XLS) process, clarifying cate
 
 - Introduces four categories of XLSes - `Amendment`, `System`, `Ecosystem`, and `Meta` - to resolve ambiguity between protocol-level changes and community-driven conventions.
 - Standardizes the progression of XLSes from idea to finalization.
+- Specifies how later amendments to an existing Amendment XLS are documented as nested patches.
 - Introduces clear formatting and content requirements.
 - Specifies how discussions, ownership, and editorial oversight are managed.
 
@@ -35,7 +36,7 @@ This document proposes splitting XLSes into four categories: **Amendment**, **Sy
 
 ### 3.1. Amendment XLSes
 
-This category contains standards that would require an amendment. Every feature amendment must have an XLS associated with it.
+This category contains standards that would require an amendment. Every feature amendment must have an XLS associated with it. Later amendments that change an existing protocol — whether a new capability or a `fix*` correction — are documented as nested patches under that XLS, as specified in [§4.4.4](#444-subsequent-amendments).
 
 Some examples:
 
@@ -115,7 +116,7 @@ All sections must be filled out with reasonable completeness and effort.
 
 Each XLS must begin with an [RFC 822](https://www.ietf.org/rfc/rfc822.txt) style header preamble, contained in a `<pre>` HTML block. The headers must appear in the following order.
 
-- `xls`: XLS number (assigned by the Editors - this field must not be included in `Idea`s or `Proposal`s). This field should _only_ contain the number and nothing else.
+- `xls`: XLS number (assigned by the Editors - this field must not be included in `Idea`s or `Proposal`s). This field should _only_ contain the number and nothing else, except for nested subsequent-amendment documents, which use a dotted patch number as specified in [§4.4.4](#444-subsequent-amendments) (e.g. `65.1`, `65.1.1`, `65.2`).
 - `title`: The XLS title is a few words, not a complete sentence. This field should _only_ contain the title, not an `XLS` prefix or the XLS number.
 - `description`: Description is one full (short) sentence
 - `implementation`: A link to the `rippled` (or other repo) PR associated with the spec, if applicable. This must be included for `Amendment` and `System` proposals for them to be considered `Final`.
@@ -377,6 +378,93 @@ In case of an API failure, an XRP Ledger server returns an error code and error 
 
 If the new API logic introduces novel failure reasons not adequately covered by existing generic codes, a new error code should be proposed. This new code must be clearly defined and justified and would eventually be added to [rippled](https://github.com/XRPLF/rippled/blob/develop/include/xrpl/protocol/ErrorCodes.h) if the XLS is adopted. XLS authors will primarily define error codes for their specific API logic failures.
 
+#### 4.4.4. Subsequent amendments
+
+A later amendment that changes an existing Amendment XLS is a patch to that parent, not a new XLS number. The patch is a delta: it states only what the amendment changes. It names the parent sections or step numbers it replaces and leaves the rest of the parent intact. The amendment name is the identifier in rippled (`include/xrpl/protocol/detail/features.macro`); authors must not invent names.
+
+##### 4.4.4.1. Patch or New XLS
+
+A change gets its own XLS only when it introduces a new primitive:
+
+- a new ledger entry type with its own lifecycle, or
+- a new model that needs its own Definitions and Security Considerations, such as a cryptographic, trust, or accounting model.
+
+In unclear cases, ask whether later amendments will patch this change or its parent. If later work would nest under the change, it gets its own number. If nothing would ever nest under it, it is a patch.
+
+Everything else is a patch, including changes that add transaction types or fields. A change that fits entirely in updates to existing XLSs is always a patch.
+
+Either way, a feature amendment has one authoritative home: its own XLS, or an `x.y/README.md` index under the chosen parent. That home links to any patches it makes in other specs.
+
+##### 4.4.4.2. Parent Selection
+
+When a change touches several XLSs, nest it under the primitive whose capability grows, usually the noun in the title.
+
+##### 4.4.4.3. Layout and Numbering
+
+In the rules below, `x` is the parent XLS number, `y` numbers an amendment to that parent, and `z` numbers one patch within that amendment.
+
+Patches live in a numbered folder under the parent:
+
+```
+XLS-NNNN-slug/
+  README.md                       # parent
+  x.y-amendment-slug/README.md    # feature index, or the sole document of a fix amendment
+  x.y-amendment-slug/x.y.z-kebab-title.md  # one independent feature patch
+```
+
+The folder is `x.y-` followed by the amendment name in lowercase kebab case (`65.1-lending-protocol-v1_1`, `65.2-fix-cleanup-3_4_0`). If the same amendment touches two parents (for example Vault and Lending), each parent gets its own folder (`65.y` and `66.y`). Do not mix one parent's deltas into the other's files. Below, `x.y/` is short for the amendment folder `x.y-amendment-slug/`.
+
+Patch numbers are allocated as follows:
+
+- `y` is the next unused integer under that parent (`65.1`, then `65.2`, …), assigned when the amendment's first patch pull request is opened.
+- `z` is the next unused integer within `x.y`, starting at `1`, assigned when that patch's pull request is opened. A number is never reused, even if its pull request is closed.
+- A number held by an open pull request that has not merged yet is reserved. The `x.y/README.md` index lists it with a one-line note naming the pending patch, so that later authors skip it. A gap in the merged tree is therefore expected.
+- When a second independent patch is added to an amendment whose only patch is `x.y/README.md`, that patch moves to `x.y.1-…md`, the new patch becomes `x.y.2-…md`, and `x.y/README.md` becomes the index. The pull request that adds the second patch updates every link to the moved file.
+
+A change that belongs to a different amendment or a different pull request is not numbered as `x.y.z` in this folder. Point at that work rather than inventing a placeholder.
+
+There are two layouts, according to the kind of amendment, described in §4.4.4.4 and §4.4.4.5.
+
+##### 4.4.4.4. Fix Amendments
+
+Fix amendments (`fix*` names such as `fixCleanup3_4_0`) correct existing protocol: invariants, rounding, gating, exclusive time boundaries, and similar. All of that amendment's deltas on that parent go in one file, `x.y/README.md`. Split them as numbered subsections inside that file, not as sibling files. The preamble `xls` field is `x.y` (no third component). If no fields are added or removed, say so and do not include Example JSON that restates unchanged state.
+
+##### 4.4.4.5. Feature Amendments
+
+Feature amendments add capability: fields, transactions, accounting models, optional data, new immutability rules, and similar. Each independent change is its own file, even when several changes share one amendment. The preamble `xls` field is `x.y.z`. The filename is `{x.y.z}-{kebab-case-title}.md`, taken from the preamble `title` (for example `65.1.1-unmodifiable-vault-fields.md`). When a parent has more than one such patch, `x.y/README.md` is an index: Abstract, a Specifications table linking each `x.y.z`, Rationale for grouping them under one amendment, and a Security Considerations section that states the index adds no protocol behavior. A parent that currently has only one feature patch may keep that patch as `x.y/README.md`; a second independent patch requires splitting it as described in §4.4.4.3.
+
+Example layout (XLS-65):
+
+```
+XLS-0065-single-asset-vault/
+  README.md
+  65.1-lending-protocol-v1_1/README.md                              # LendingProtocolV1_1 index
+  65.1-lending-protocol-v1_1/65.1.1-unmodifiable-vault-fields.md
+  65.1-lending-protocol-v1_1/65.1.2-vault-deletion-memo.md
+  65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md           # 65.1.3 reserved by an open pull request
+  65.2-fix-cleanup-3_4_0/README.md                                  # fixCleanup3_4_0, all Vault deltas
+```
+
+##### 4.4.4.6. Patch Documents
+
+Each nested patch document (`x.y/README.md` of a fix amendment, or an `x.y.z` file) uses the standard Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). A feature index uses the index sections in §4.4.4.5.
+
+A feature patch that is defined in terms of another patch (for example the closed-ended Loan gates, which read the closed-ended Vault phase) names that patch in `requires:` by number (`requires: XLS-65.1.4`). The preamble is a `<pre>` block, so a markdown link there does not render.
+
+Nested `x.y/` files are outside the repository CI glob `XLS-*/README.md`. They must still follow this section. Authors check their preambles by hand.
+
+##### 4.4.4.7. Parent Specification
+
+The parent `README.md` remains the live specification:
+
+- An Amendments subsection of the Introduction lists each subsequent amendment, linking `x.y/README.md`. A feature amendment lists each `x.y.z` with a one-line summary. A fix amendment summarizes the whole file in one or two bullets.
+- Checks, state changes, and invariants that the amendment changes are split in the parent by amendment name, keeping the pre-amendment rule under the original amendment.
+- If a later amendment changes a field's meaning, the parent's field table says so.
+- The changelog appendix repeats the same links.
+- The parent preamble `updated:` is bumped to the revision date.
+
+The parent `requires:` field continues to name live-protocol dependencies of the original XLS. Nested `requires:` is only for patch-to-patch dependence.
+
 ### 4.5. Stale Proposals/Ideas
 
 All discussions will be checked for staleness after 90 days, and if no one responds for another 30 days, the discussion will be closed and locked. The author can reach out to the repo maintainers to reopen the issue at a later date, if desired.
@@ -464,6 +552,8 @@ The categories ensure that it’s easy to distinguish between the very different
 
 The more formalized statuses and process make it easier for XLS writers to understand what their specs need to look like and how to move them along the process, and make it easier for XLS readers to understand what the current status of the spec is.
 
+Subsequent amendments to an existing Amendment XLS are nested patches rather than new XLS numbers, so the live protocol for a primitive stays in one place. Fix amendments share a file because they correct one amendment's existing rules; feature amendments use one file per independent patch so each capability can be motivated and reviewed on its own.
+
 Automatic closure of inactive discussions ensures the process remains active and reduces noise in the repository, while allowing authors to revive proposals at any time.
 
 Editors are now explicitly not decision-makers but facilitators, ensuring decentralization and preventing gatekeeping.
@@ -493,6 +583,7 @@ Some previous conversations on this topic in this repo, in no particular order:
 - XLS numbers are assigned at PR creation instead of at discussion creation.
   - _Note: this does not mean numbers will be gatekept. Any proposed XLS can obtain a number if they follow the process to become a Draft._
 - XLS discussions and drafts can become stale/stagnant if a certain amount of time passes without any progress.
+- Later amendments to an existing Amendment XLS are nested patches under that XLS (`x.y` / `x.y.z`), not new XLS numbers. Fix amendments use one file; feature amendments use one file per independent patch.
 
 ### Appendix B: FAQ
 
@@ -510,6 +601,10 @@ They are simply skipped. This way, XLS numbers are roughly incrementing in order
 
 Those will remain with those discussions, to avoid confusion. The process proposed in this document will, if consensus agrees, be applied to future `Proposal`s and `Idea`s.
 
-#### B.4: What will happen to XLSes that have already been written and merged into the repo?
+#### B.4: A later amendment changes an existing spec. Do I open a new XLS?
+
+No. Document it as a nested patch under the parent Amendment XLS, as specified in [§4.4.4](#444-subsequent-amendments). A new XLS number is for a new protocol primitive (or a new Amendment XLS that is not a follow-on to an existing one).
+
+#### B.5: What will happen to XLSes that have already been written and merged into the repo?
 
 They will be grandfathered in for now. Ideally someone (perhaps with the help of an AI) will go back and update them to match the desired format.
