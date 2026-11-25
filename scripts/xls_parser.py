@@ -7,7 +7,7 @@ and extract their metadata for use in documentation systems and validation.
 """
 
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import sys
 from typing import List, Optional, Tuple
@@ -41,9 +41,27 @@ class XLSDocument:
     requires: Optional[str] = None  # XLS number(s) this depends on
     updated: Optional[str] = None  # YYYY-MM-DD format
     withdrawal_reason: Optional[str] = None  # Reason for withdrawal
+    # Nested amendment patches (XLS-1 §4.4.4). For a patch, `xls` is its
+    # dotted number (for example "65.1.2") and `source` its repo-relative path.
+    xls: str = ""
+    source: str = ""
+    patches: List["XLSDocument"] = field(default_factory=list)
+    amendment: str = ""  # Amendment name for a patch, e.g. "fixCleanup3_4_0"
+
+    @property
+    def is_patch(self) -> bool:
+        return "." in self.xls
+
+    @property
+    def label(self) -> str:
+        return f"XLS-{self.xls}" if self.is_patch else f"XLS-{self.number}"
 
     def to_dict(self):
         return asdict(self)
+
+
+def patch_sort_key(doc: XLSDocument) -> Tuple[int, ...]:
+    return tuple(int(part) for part in doc.xls.split(".") if part.isdigit())
 
 
 _PREAMBLE_RE = re.compile(r"<pre>(.*?)</pre>", re.DOTALL)
@@ -115,6 +133,7 @@ def extract_xls_metadata(content: str, folder_name: str) -> XLSDocument:
         requires=fields.get("requires") or None,
         updated=fields.get("updated") or None,
         withdrawal_reason=fields.get("withdrawal-reason") or None,
+        xls=fields.get("xls", ""),
     )
 
 
@@ -143,6 +162,8 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
                     content = f.read()
 
                 doc = extract_xls_metadata(content, folder.name)
+                doc.source = f"{folder.name}/README.md"
+                doc.patches = find_patches(root_dir, folder.name)
                 xls_docs.append(doc)
                 print(f"Parsed: {folder.name} - {doc.title}")
 
@@ -151,6 +172,20 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
                 raise
 
     return xls_docs
+
+
+def find_patches(root_dir: Path, folder: str) -> List[XLSDocument]:
+    """Return the nested amendment patches under an XLS folder, in number order.
+
+    Patches live one folder down (`XLS-0065-.../65.1-lending-protocol-v1_1/65.1.2-...md`), the same
+    files `validate_xls_template.py --all` checks.
+    """
+    patches = []
+    for path in sorted((root_dir / folder).glob("*/*.md")):
+        doc = extract_xls_metadata(path.read_text(encoding="utf-8"), folder)
+        doc.source = path.relative_to(root_dir).as_posix()
+        patches.append(doc)
+    return sorted(patches, key=patch_sort_key)
 
 
 def validate_xls_preamble(doc: XLSDocument) -> List[str]:

@@ -87,6 +87,14 @@
         <td class="title-col" data-column="title">
           <a href="{{ root }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
           <span class="description">{{ doc.description }}</span>
+          {% if doc.patches %}
+          <a
+            class="patch-count"
+            href="{{ root }}/xls/{{ doc.folder }}.html#amendment-patches"
+            >{{ doc.patches|length }} amendment patch{{ "es" if
+            doc.patches|length > 1 }}</a
+          >
+          {% endif %}
         </td>
         {% if show_category %}
         <td class="category-col" data-column="category">

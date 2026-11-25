@@ -1,0 +1,13 @@
+<aside class="patch-marker" aria-label="Changed by amendment patches">
+  {% for patch, match in changes %}
+  <a
+    class="patch-change"
+    data-amendment="{{ patch.amendment }}"
+    href="{{ page_of(patch) }}#{{ match.patch_id }}"
+  >
+    <span class="patch-label">Changed by {{ patch.label }}</span>
+    <span class="patch-title">{{ patch.title }}</span>
+    {% if patch.amendment %}<code>{{ patch.amendment }}</code>{% endif %}
+  </a>
+  {% endfor %}
+</aside>

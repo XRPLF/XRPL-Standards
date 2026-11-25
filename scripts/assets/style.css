@@ -304,6 +304,14 @@ th[aria-sort="descending"] .sort-button::after {
   color: var(--link-color);
 }
 
+.title-col .patch-count {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--color-purple-4);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .title-col .description {
   display: block;
   margin-top: 2px;
@@ -571,6 +579,162 @@ th[aria-sort="descending"] .sort-button::after {
 
 .xls-preamble dd {
   overflow-wrap: anywhere;
+}
+
+/* Nested amendment patches (XLS-1 §4.4.4) */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: var(--text-color-secondary);
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+}
+
+.patches {
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--color-purple-4);
+  border-radius: 6px;
+  margin-bottom: 24px;
+  background: var(--color-gray-10);
+}
+
+.patches h2 {
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.patches > p {
+  margin-bottom: 12px;
+  color: var(--text-color-secondary);
+  font-size: 14px;
+}
+
+.patch-list {
+  list-style: none;
+  font-size: 14px;
+}
+
+.patch-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 4px 0;
+}
+
+.patch-list li.depth-2 {
+  padding-left: 24px;
+}
+
+.patch-list a {
+  min-width: 90px;
+  font-family: var(--font-family-mono);
+  font-weight: 600;
+}
+
+.patch-list .status-badge {
+  padding: 1px 6px;
+  margin-left: auto;
+  font-size: 10px;
+}
+
+.patch-list code,
+.patch-change code,
+.xls-preamble code,
+.amendment-filter code {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+}
+
+.amendment-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 0;
+  border: none;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.amendment-filter legend {
+  margin-bottom: 6px;
+  color: var(--text-color-secondary);
+}
+
+.amendment-filter label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.document-content .patched {
+  padding-left: 12px;
+  margin-left: -16px;
+  border-left: 4px solid var(--color-purple-4);
+}
+
+.patch-marker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: -8px 0 16px;
+}
+
+.patch-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 6px 12px;
+  border: 1px solid #4a2d7a;
+  border-radius: 4px;
+  background: #1d1230;
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.patch-change:hover {
+  border-color: var(--color-purple-4);
+  color: var(--text-color);
+}
+
+.patch-label {
+  color: var(--color-purple-4);
+  font-family: var(--font-family-mono);
+  font-weight: 600;
+}
+
+.patch-change code {
+  margin-left: auto;
+  color: var(--text-color-secondary);
+}
+
+.document-content .patch-change code {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.patch-target .patch-change {
+  border-color: var(--border-color);
+  background: var(--color-gray-7);
+}
+
+/* Amendment filter. xls.html adds the per-amendment rules, since the names
+   come from the specs. :has() means no script is needed; browsers without it
+   show every marker. */
+.xls-document:has(.amendment-filter [value="none"]:checked) .patch-marker {
+  display: none;
+}
+
+.xls-document:has(.amendment-filter [value="none"]:checked) .patched {
+  padding-left: 0;
+  margin-left: 0;
+  border-left: none;
 }
 
 /* Rendered Markdown */
