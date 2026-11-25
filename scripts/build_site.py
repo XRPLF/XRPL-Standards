@@ -271,7 +271,7 @@ def strip_title_heading(content: str, title: str) -> str:
     else (for example `# Abstract`) keep it.
     """
     match = re.search(r"^# (.+)\n", content, flags=re.MULTILINE)
-    if match and _squash(title) in _squash(match.group(1)):
+    if match and _squash(title) == _squash(match.group(1)):
         return content[: match.start()] + content[match.end() :]
     return content
 
