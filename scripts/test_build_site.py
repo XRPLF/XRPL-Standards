@@ -13,6 +13,7 @@ from build_site import (
     strip_title_heading,
 )
 from patch_map import amendment_name, map_patch, parse_headings, unmatched_sections
+from validate_xls_template import XLSTemplateValidator
 from xls_parser import extract_xls_metadata, find_xls_documents, parse_author
 
 PREAMBLE = """<pre>
@@ -243,6 +244,46 @@ class PatchTest(unittest.TestCase):
         self.assertIn('href="../../XLS-0065-vault.html#3421-data-verification"', patch)
         self.assertIn('href="../../XLS-0065-vault.html">parent</a>', patch)
         self.assertIn("XLS-0065-vault/65.1/65.1.2-memo.html", (site / "xls/xls-65.1.2.html").read_text())
+
+
+class ValidatorParentReferenceTest(unittest.TestCase):
+    def check(self, patch_body):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name) / "XLS-0065-vault"
+        (folder / "65.1").mkdir(parents=True)
+        (folder / "README.md").write_text(PARENT)
+        path = folder / "65.1/65.1.2-memo.md"
+        path.write_text(preamble("65.1.2", "Memo") + patch_body)
+        validator = XLSTemplateValidator(path)
+        validator.validate()
+        errors = [e.message for e in validator.errors if "parent" in e.message.lower()]
+        return errors, [w.message for w in validator.warnings]
+
+    def test_good_references(self):
+        errors, _ = self.check(
+            "See parent [§3.1.2](../README.md#312-fields) and [XLS-65](../README.md) §3.4.2.1."
+        )
+        self.assertEqual(errors, [])
+
+    def test_bad_section(self):
+        errors, _ = self.check("Append to parent §3.9.9.")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("§3.9.9", errors[0])
+
+    def test_bad_anchor(self):
+        errors, _ = self.check("See [fields](../README.md#999-nope).")
+        self.assertEqual(len(errors), 1)
+        self.assertIn("#999-nope", errors[0])
+
+    def test_reference_in_code_block_ignored(self):
+        errors, _ = self.check("```\nparent §9.9\n```")
+        self.assertEqual(errors, [])
+
+    def test_unmatched_section_warns(self):
+        _, warnings = self.check("## 3. Specification\n\n### 3.1 Protocol Constants\n")
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("3.1 Protocol Constants", warnings[0])
 
 
 if __name__ == "__main__":
