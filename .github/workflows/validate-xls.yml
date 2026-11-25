@@ -40,6 +40,9 @@ jobs:
       - name: Test CI scripts
         run: python -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
+      - name: Test site scripts
+        run: python -m unittest discover -s scripts -p 'test_*.py' -v
+
   validate-xls-template:
     name: "[Beta CI Check] Validate XLS Template Compliance"
     runs-on: ubuntu-latest

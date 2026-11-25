@@ -1,37 +1,85 @@
-<!--
-    Individual XLS document template
-
-    Displays a single XLS standard document with:
-    - Document metadata (number and status badge)
-    - Full rendered markdown content
-    - Navigation links back to index and GitHub source
-    - XRPL.org themed styling for document presentation
--->
-{% extends "base.html" %} {% block content %}
-<div class="xls-document">
-  <!-- Document metadata header -->
-  <div class="xls-meta">
-    <!-- Large XLS number display -->
-    <div class="xls-number-large">XLS-{{ doc.number }}</div>
-    <!-- Status badge with conditional styling -->
-    <div class="xls-status-badge {{ doc.status }}">
-      {{ doc.status.title() }}
+{% extends "base.html" %} {% block head %} {% if has_math %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
+  integrity="sha384-UA8juhPf75SzzAMA/4fo3yOU7sBJ0om7SCD2GHq0fZqZco6tr1UCV7nUbk9J90JM"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
+  integrity="sha384-Tt7wBxLKwSzFVRET4O4U9H6v8MNaQ/CjN2FMP4xFm0ErrFu6aNqoonRVW5W40iGI"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"
+  integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz"
+  crossorigin="anonymous"
+></script>
+{% endif %} {% endblock %} {% block content %}
+<article class="xls-document {{ 'has-toc' if toc }}">
+  <header class="xls-header">
+    <div class="xls-header-top">
+      <span class="xls-number-large">XLS-{{ doc.number }}</span>
+      <span class="status-badge {{ doc.status|lower }}">{{ doc.status }}</span>
+      <span class="category-badge {{ doc.category|lower }}"
+        >{{ doc.category }}</span
+      >
     </div>
-  </div>
+    <h1 class="xls-title">{{ doc.title }}</h1>
+    <p class="xls-description">{{ doc.description }}</p>
+    <dl class="xls-preamble">
+      <dt>Author{{ "s" if doc.authors|length > 1 }}</dt>
+      <dd>{{ doc|author_links }}</dd>
+      <dt>Created</dt>
+      <dd>{{ doc.created }}</dd>
+      {% if doc.updated %}
+      <dt>Updated</dt>
+      <dd>{{ doc.updated }}</dd>
+      {% endif %} {% if requires %}
+      <dt>Requires</dt>
+      <dd>
+        {% for label, href in requires %}
+        <a href="{{ href }}">{{ label }}</a>{{ ", " if not loop.last }} {%
+        endfor %}
+      </dd>
+      {% endif %} {% if doc.proposal_from %}
+      <dt>Discussion</dt>
+      <dd>
+        <a href="{{ doc.proposal_from }}"
+          >{{ doc.proposal_from|replace("https://github.com/", "") }}</a
+        >
+      </dd>
+      {% endif %} {% if implementations %}
+      <dt>Implementation</dt>
+      <dd>
+        {% for url in implementations %}
+        <a href="{{ url }}">{{ url|replace("https://github.com/", "") }}</a
+        ><br />
+        {% endfor %}
+      </dd>
+      {% endif %} {% if doc.withdrawal_reason %}
+      <dt>Withdrawal reason</dt>
+      <dd>{{ doc.withdrawal_reason }}</dd>
+      {% endif %}
+    </dl>
+  </header>
 
-  <!-- Main document content area -->
-  <!-- The content variable contains the rendered HTML from markdown -->
+  {% if toc %}
+  <aside class="xls-toc" aria-label="Table of contents">
+    <details>
+      <summary>Contents</summary>
+      {{ toc|safe }}
+    </details>
+  </aside>
+  {% endif %}
+
   <div class="document-content">{{ content|safe }}</div>
 
-  <!-- Document navigation footer -->
-  <div class="document-nav">
-    <!-- Back to standards index -->
-    <a href="{{ base_url }}/">&larr; Back to All Standards</a>
-    <!-- Direct link to GitHub source -->
-    <a
-      href="https://github.com/XRPLF/XRPL-Standards/tree/master/{{ doc.folder }}"
-      >View on GitHub</a
-    >
-  </div>
-</div>
+  <nav class="document-nav" aria-label="Document">
+    <a href="{{ root }}/index.html">&larr; All standards</a>
+    <a href="{{ repo_url }}/blob/master/{{ source }}">View source on GitHub</a>
+  </nav>
+</article>
 {% endblock %}
