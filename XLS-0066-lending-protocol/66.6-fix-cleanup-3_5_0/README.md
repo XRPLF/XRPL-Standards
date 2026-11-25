@@ -61,7 +61,12 @@ When the amendment is not enabled, step 7 runs after the broker _pseudo-account_
 
 #### 3.4.1 Pseudo-Account
 
-`fixCleanup3_5_0` also restricts what a `LoanBroker` _pseudo-account_ may own, as specified in [XLS-64.2](../../XLS-0064-pseudo-account/64.2-fix-cleanup-3_5_0/README.md).
+[XLS-64.2](../../XLS-0064-pseudo-account/64.2-fix-cleanup-3_5_0/README.md) requires every entry a transaction adds to a _pseudo-account_'s owner directory to be one that the owning object's specification allows. The `LoanBroker` _pseudo-account_ (the `AccountRoot` with `LoanBrokerID`) may own only:
+
+- a `Loan` whose `LoanBrokerID` is this `LoanBroker`;
+- its holding of the `Vault.Asset` of the Vault the `LoanBroker` belongs to: the `RippleState` for an `IOU` or the `MPToken` for an `MPT`. `XRP` has no holding entry.
+
+This changes parent [§3.1.6](../README.md#316-pseudo-account).
 
 ## 4. Rationale
 

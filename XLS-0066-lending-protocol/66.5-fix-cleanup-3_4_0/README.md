@@ -103,6 +103,7 @@ When the amendment is enabled, the following checks are added:
 - Protocol-level: a credential in `CredentialIDs` does not exist, does not have the submitter as its subject, or has not been accepted. (`tecBAD_CREDENTIALS`) This check runs before parent check 6.
 - Protocol-level: parent check 8 (deposit authorization) passes if the `Destination` has preauthorized the credentials in `CredentialIDs`.
 - Protocol-level: the destination is the submitter, the submitter has no holding of the `Vault.Asset`, and a holding cannot be added for it. This check runs after parent check 9.
+- When the cover is transferred: the destination is not the submitter, `CredentialIDs` is present, and a listed credential has expired. The expired credentials are deleted, and the deletions are kept even though the transaction fails. (`tecEXPIRED`)
 
 ## 4. Rationale
 

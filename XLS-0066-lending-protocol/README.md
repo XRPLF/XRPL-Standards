@@ -212,7 +212,10 @@ The `LoanBroker` object costs two owner reserve for the account creating it.
 
 #### 3.1.6 Pseudo-Account
 
-The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the XLS-64d specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
+The `LoanBroker` object _pseudo-account_ holds the First-Loss Capital deposited by the LoanBroker. The _pseudo-account_ follows the [XLS-64](../XLS-0064-pseudo-account/README.md) specification for pseudo accounts. The `AccountRoot` object is created by the `LoanBrokerSet` transaction that creates the `LoanBroker`.
+
+- `LendingProtocol (parent)`: What the _pseudo-account_ owns is not checked.
+- `fixCleanup3_5_0`: The _pseudo-account_ may own only the `Loan` entries of this `LoanBroker` and its holding of `Vault.Asset` ([XLS-66.6](./66.6-fix-cleanup-3_5_0/README.md)).
 
 #### 3.1.7 Freeze/Lock
 
@@ -246,7 +249,7 @@ The `LoanBroker` _pseudo-account_ can be frozen or locked by the asset Issuer. T
 
 After every transaction, each `LoanBroker` that the transaction modified, or whose _pseudo-account_ holding of the `Vault.Asset` it modified, satisfies:
 
-- If `LoanBroker.OwnerCount = 0`, the _pseudo-account_ `DirectoryNode` has at most one node (the root), which only holds `RippleState` or `MPToken` entries.
+- If `LoanBroker.OwnerCount = 0`, the _pseudo-account_ `DirectoryNode` has at most one node (the root), which holds at most one entry, a `RippleState` or an `MPToken`.
 - `LoanBroker.LoanSequence` does not decrease.
 - `LoanBroker.DebtTotal >= 0`.
 - `LoanBroker.CoverAvailable >= 0`.
@@ -768,7 +771,7 @@ This transaction uses the standard transaction fee.
 
 #### 3.4.5 Invariants
 
-- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will only hold entries for `RippleState` or `MPToken` objects.
+- If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one node (the root), which will hold at most one entry, a `RippleState` or an `MPToken`.
 
 #### 3.4.6 Example JSON
 
