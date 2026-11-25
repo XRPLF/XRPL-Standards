@@ -62,7 +62,7 @@ _[All XLSes must contain a section that discusses the security implications/cons
 
 ## 9. Operational Considerations
 
-_[All XLSes should contain a section that discusses the integration implications of the proposed change, for end users and developers integrating this feature into their applications. This should include information on how the change will be integrated with existing systems, and any potential impact on other XLSes or the overall ecosystem. This section is optional for Meta XLSes.]_
+_[All XLSes should contain a section that discusses the operational and integration implications of the proposed change for node operators, end users, and developers. Include deployment or configuration changes, effects on existing systems and tooling, and any potential impact on other XLSes or the overall ecosystem. This section is optional for Meta XLSes.]_
 
 # Appendix _(Optional)_
 

@@ -345,4 +345,4 @@ A sample list:
 - **Sponsorship** (Should any ledger entry be excluded from reserve sponsorship? Should any transaction be excluded from fee sponsorship?)
 - **Credentials and Permissioned Domains** (Should this protocol integrate with Permissioned Domains as a permissioning layer?)
 - **Interaction when the submitting account is the Issuer of the particular asset**
-- **Number over or underflows caused by mathematical operations**
+- **Number overflows or underflows caused by mathematical operations**
