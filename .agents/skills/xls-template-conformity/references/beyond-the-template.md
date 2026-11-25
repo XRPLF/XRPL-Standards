@@ -45,9 +45,9 @@ The validator confirms a section exists. These need a reader:
 
 The templates show these but the validator does not check them:
 
-- `Constant` and `Required?` cells are `Yes`, `No`, or `Conditional` — never emoji or check marks. A field present only in some cases is `Conditional`. `Constant: Yes` marks an immutable field.
-- Field tables carry the `Default Value` column, and the default agrees with the description (an "absent means `0`" field has default `0`).
-- Every heading under Specification is numbered. Failure conditions, state changes, and invariants are numbered lists that ascend with no repeated or skipped number.
+- `Constant` and `Required` cells are `Yes`, `No`, or `Conditional` — never emoji or check marks. A field present only in some cases is `Required: Conditional`. `Constant: Yes` marks an immutable field; `Constant: Conditional` marks a field that can change only in some cases, and the description says which.
+- Ledger-entry and transaction field tables carry the `Default Value` column, and the default agrees with the description (an "absent means `0`" field has default `0`). RPC and metadata tables do not have this column.
+- Every heading under Specification is numbered. Deletion conditions, failure conditions, state changes, and invariants are numbered lists that ascend with no repeated or skipped number.
 - Each failure condition names one result code. If one predicate can return two codes, it is two conditions.
 - An amendment patch that replaces a parent check keeps the parent's check number.
 - Normative text uses JSON field names, not rippled identifiers (`sfFoo`, `ltFOO`, `SoeOptional`, `preclaim`), and contains no C++ code.

@@ -39,7 +39,7 @@ Also never flag:
 
 - Predictions that CI will fail. CI reports its own failures.
 - Nested amendment patches (`XLS-NNNN-name/NN.N/...`) being outside the top-level site glob or validator. That is intentional.
-- A link to a file that a named open PR adds.
+- A link to a file that a named open PR adds, when the PR states the merge order.
 - Byte-level encoding for values serialized with the standard XRPL binary format, or inlined proof constructions when the spec names an external construction.
 - Ordering or composition rules between two existing specs that the PR does not change.
 

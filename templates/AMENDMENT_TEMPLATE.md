@@ -53,15 +53,15 @@ _[Describe the algorithm for calculating the unique object identifier. Include t
 
 ### 2.2. Fields
 
-| Field Name        | Constant   | Required               | Internal Type | Default Value      | Description                                                           |
-| ----------------- | ---------- | ---------------------- | ------------- | ------------------ | --------------------------------------------------------------------- |
-| LedgerEntryType   | Yes        | Yes                    | UINT16        | `[EntryTypeValue]` | Identifies this as a `[LedgerEntryName]` object.                      |
-| Account           | No         | Yes                    | ACCOUNT       | N/A                | The account that owns this object.                                    |
-| `[CustomField1]`  | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
-| `[CustomField2]`  | `[Yes/No]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
-| OwnerNode         | No         | Yes                    | UINT64        | N/A                | Hint for which page this object appears on in the owner directory.    |
-| PreviousTxnID     | No         | Yes                    | HASH256       | N/A                | Hash of the previous transaction that modified this object            |
-| PreviousTxnLgrSeq | No         | Yes                    | UINT32        | N/A                | Ledger sequence of the previous transaction that modified this object |
+| Field Name        | Constant               | Required               | Internal Type | Default Value      | Description                                                           |
+| ----------------- | ---------------------- | ---------------------- | ------------- | ------------------ | --------------------------------------------------------------------- |
+| LedgerEntryType   | Yes                    | Yes                    | UINT16        | `[EntryTypeValue]` | Identifies this as a `[LedgerEntryName]` object.                      |
+| Account           | No                     | Yes                    | ACCOUNT       | N/A                | The account that owns this object.                                    |
+| `[CustomField1]`  | `[Yes/No/Conditional]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
+| `[CustomField2]`  | `[Yes/No/Conditional]` | `[Yes/No/Conditional]` | `[TYPE]`      | `[Value/N/A]`      | `[Description of field]`                                              |
+| OwnerNode         | No                     | Yes                    | UINT64        | N/A                | Hint for which page this object appears on in the owner directory.    |
+| PreviousTxnID     | No                     | Yes                    | HASH256       | N/A                | Hash of the previous transaction that modified this object            |
+| PreviousTxnLgrSeq | No                     | Yes                    | UINT32        | N/A                | Ledger sequence of the previous transaction that modified this object |
 
 _[Add more rows as needed for your specific fields. Remove example custom fields and replace with your actual fields.]_
 
@@ -107,9 +107,9 @@ _[Note: This subsection is optional if you are documenting changes to an existin
 
 **Deletion Conditions:**
 
-- `[Condition 1, e.g., "Object balance must be zero"]`
-- `[Condition 2, e.g., "No linked objects must exist"]`
-- `[Additional conditions as needed]`
+1. `[Condition 1, e.g., "Object balance must be zero"]`
+2. `[Condition 2, e.g., "No linked objects must exist"]`
+3. `[Additional conditions as needed]`
 
 **Account Deletion Blocker:** `[Yes/No]`
 _[If Yes]: This object must be deleted before its owner account can be deleted._
@@ -142,9 +142,9 @@ _[If applicable, describe how freeze/lock functionality is implemented for asset
 
 _[List logical statements that must always be true for this ledger entry. Use `<object>` for before-state and `<object>'` for after-state.]_
 
-- `[Invariant 1, e.g., "<object>.Balance >= 0 AND <object>'.Balance >= 0"]`
-- `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
-- `[Additional invariants as needed]`
+1. `[Invariant 1, e.g., "<object>.Balance >= 0 AND <object>'.Balance >= 0"]`
+2. `[Invariant 2, e.g., "IF <object>.Status == 'Active' THEN <object>.Account != NULL"]`
+3. `[Additional invariants as needed]`
 
 ### 2.10. RPC Name _(Optional if ledger entry already exists on XRPL)_
 
@@ -188,7 +188,7 @@ _[If your specification introduces new transaction common fields, you can have a
 
 ### 3.1. Fields
 
-| Field Name       | Required?              | JSON Type                      | Internal Type | Default Value       | Description                                          |
+| Field Name       | Required               | JSON Type                      | Internal Type | Default Value       | Description                                          |
 | ---------------- | ---------------------- | ------------------------------ | ------------- | ------------------- | ---------------------------------------------------- |
 | TransactionType  | Yes                    | string                         | UINT16        | `[TransactionName]` | Identifies this as a `[TransactionName]` transaction |
 | `[CustomField1]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[TYPE]`      | `[Value/N/A]`       | `[Description of field]`                             |
@@ -248,9 +248,9 @@ _[Describe the ledger state changes when the transaction executes successfully. 
 
 **On Success (`tesSUCCESS`):**
 
-- `[State change 1, e.g., "Create new [ObjectName] ledger entry"]`
-- `[State change 2, e.g., "Update Account's OwnerCount"]`
-- `[Additional changes as needed]`
+1. `[State change 1, e.g., "Create new [ObjectName] ledger entry"]`
+2. `[State change 2, e.g., "Update Account's OwnerCount"]`
+3. `[Additional changes as needed]`
 
 ### 3.6. Metadata Fields _(Optional)_
 
@@ -295,7 +295,7 @@ _[If your specification introduces new APIs or modifies existing ones, document 
 
 ### 5.1. Request Fields
 
-| Field Name     | Required?              | JSON Type                      | Description                   |
+| Field Name     | Required               | JSON Type                      | Description                   |
 | -------------- | ---------------------- | ------------------------------ | ----------------------------- |
 | command        | Yes                    | string                         | Must be `"[api_method_name]"` |
 | `[field_name]` | `[Yes/No/Conditional]` | `[string/number/object/array]` | `[Description of field]`      |
