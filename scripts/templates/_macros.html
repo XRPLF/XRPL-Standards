@@ -1,0 +1,110 @@
+{% macro category_nav(categories, total_count, active="") %}
+<nav class="category-nav" aria-label="Categories">
+  <a
+    href="{{ root }}/index.html"
+    class="category-link"
+    aria-current="{{ 'page' if not active else 'false' }}"
+  >
+    <span class="category-badge all">All</span>
+    <span class="count">{{ total_count }}</span>
+  </a>
+  {% for name, count in categories %}
+  <a
+    href="{{ root }}/category/{{ name|lower }}.html"
+    class="category-link"
+    aria-current="{{ 'page' if name == active else 'false' }}"
+  >
+    <span class="category-badge {{ name|lower }}">{{ name }}</span>
+    <span class="count">{{ count }}</span>
+  </a>
+  {% endfor %}
+</nav>
+{% endmacro %} {% macro standards_table(docs, show_category=True) %}
+<div class="table-tools">
+  <label class="filter">
+    <span class="visually-hidden">Filter standards</span>
+    <input
+      type="search"
+      id="standards-filter"
+      placeholder="Filter by number, title, or author"
+      hidden
+    />
+  </label>
+  <span class="filter-count" id="standards-count" aria-live="polite"></span>
+  <details class="definitions">
+    <summary>Categories and statuses</summary>
+    <dl>
+      {% if show_category %} {% for name, text in category_descriptions.items()
+      %}
+      <dt><span class="category-badge {{ name|lower }}">{{ name }}</span></dt>
+      <dd>{{ text }}</dd>
+      {% endfor %} {% endif %} {% for name, text in status_descriptions.items()
+      %}
+      <dt><span class="status-badge {{ name|lower }}">{{ name }}</span></dt>
+      <dd>{{ text }}</dd>
+      {% endfor %}
+    </dl>
+  </details>
+</div>
+<div class="standards-table-container">
+  <table class="standards-table" id="standards-table">
+    <thead>
+      <tr>
+        <th data-column="number" aria-sort="descending">
+          <button type="button" class="sort-button">Number</button>
+        </th>
+        <th data-column="title">
+          <button type="button" class="sort-button">Title</button>
+        </th>
+        {% if show_category %}
+        <th data-column="category">
+          <button type="button" class="sort-button">Category</button>
+        </th>
+        {% endif %}
+        <th data-column="author">
+          <button type="button" class="sort-button">Author(s)</button>
+        </th>
+        <th data-column="status">
+          <button type="button" class="sort-button">Status</button>
+        </th>
+        <th data-column="created">
+          <button type="button" class="sort-button">Created</button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in docs %}
+      <tr>
+        <td
+          class="number-col"
+          data-column="number"
+          data-sort="{{ doc.raw_number }}"
+        >
+          <a href="{{ root }}/xls/{{ doc.folder }}.html" class="xls-link"
+            >XLS-{{ doc.number }}</a
+          >
+        </td>
+        <td class="title-col" data-column="title">
+          <a href="{{ root }}/xls/{{ doc.folder }}.html">{{ doc.title }}</a>
+          <span class="description">{{ doc.description }}</span>
+        </td>
+        {% if show_category %}
+        <td class="category-col" data-column="category">
+          <span class="category-badge {{ doc.category|lower }}"
+            >{{ doc.category }}</span
+          >
+        </td>
+        {% endif %}
+        <td class="author-col" data-column="author">{{ doc|author_links }}</td>
+        <td class="status-col" data-column="status">
+          <span class="status-badge {{ doc.status|lower }}"
+            >{{ doc.status }}</span
+          >
+        </td>
+        <td class="created-col" data-column="created">{{ doc.created }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}

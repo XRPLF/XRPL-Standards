@@ -1,19 +1,52 @@
 #!/usr/bin/env python3
-"""
-Build script for XLS Standards static site generator.
-Converts markdown XLS files to HTML and creates an index page.
-"""
+"""Build the XLS Standards static site into scripts/_site."""
 
+import datetime
 import os
+import posixpath
 import re
 import shutil
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import markdown
 from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup
+from markdown.extensions import Extension
+from markdown.treeprocessors import Treeprocessor
 
-from xls_parser import find_xls_documents
+from xls_parser import XLSDocument, find_xls_documents
+
+SCRIPTS_DIR = Path(__file__).parent.resolve()
+ROOT_DIR = SCRIPTS_DIR.parent
+SITE_DIR = SCRIPTS_DIR / "_site"
+REPO_URL = "https://github.com/XRPLF/XRPL-Standards"
+
+CATEGORY_DESCRIPTIONS = {
+    "Amendment": (
+        "Changes to the core XRP Ledger protocol that require network "
+        "consensus and activation through the amendment process."
+    ),
+    "System": (
+        "XRP Ledger APIs, formats, and behaviors that do not require consensus "
+        "changes but define how applications interact with the network."
+    ),
+    "Ecosystem": (
+        "Best practices, conventions, and guidelines for the XRP Ledger "
+        "ecosystem that do not require protocol changes."
+    ),
+    "Meta": "Standards about the XLS process itself.",
+}
+
+STATUS_DESCRIPTIONS = {
+    "Draft": "Work in progress, subject to change.",
+    "Final": "Completed standard. Only errata and clarifications change it.",
+    "Living": "Updated continually; never reaches finality.",
+    "Deprecated": "No longer supported.",
+    "Stagnant": "A Draft with no activity for 6 months or more.",
+    "Withdrawn": "Withdrawn by the author and will not be implemented.",
+}
 
 
 def _convert_math_delimiters(html: str) -> str:
@@ -23,8 +56,6 @@ def _convert_math_delimiters(html: str) -> str:
     which avoids false positives on currency like "$1.0m ... $1.0m".
     Skips content inside <code> and <pre> tags.
     """
-    # Split the HTML into segments: code/pre blocks vs. everything else.
-    # Process only non-code segments.
     parts = re.split(
         r"(<code[^>]*>.*?</code>|<pre[^>]*>.*?</pre>)", html, flags=re.DOTALL
     )
@@ -131,24 +162,144 @@ def normalize_list_indentation(content: str) -> str:
     return "\n".join(out)
 
 
-def convert_markdown_to_html(content: str) -> str:
-    """Convert markdown content to HTML."""
-    # Insert a TOC marker after the first metadata block, unless one already exists.
-    if "[TOC]" not in content:
-        content = re.sub(r"</pre>", "</pre>\n\n[TOC]\n\n", content, count=1)
-    content = re.sub(r"\.\./(XLS-[0-9A-Za-z-]+)/README\.md", r"./\1.html", content)
+class LinkResolver:
+    """Map relative links in repository Markdown to their place in the site.
+
+    `pages` maps a repo-relative source path (for example
+    `XLS-0065-single-asset-vault/README.md`) to the site-relative path of the
+    page rendered from it. A link to a rendered source becomes a link to its
+    page. A link to any other file in the repository, except Markdown, becomes
+    a link to a copy of that file in the site, at the same path under `xls/`
+    that it has under the repository root. Other Markdown files and missing
+    files point at GitHub.
+    """
+
+    def __init__(self, pages: dict[str, str], root_dir: Path, site_dir: Path):
+        self.pages = pages
+        self.root_dir = root_dir
+        self.site_dir = site_dir
+        self.copied: set[str] = set()
+
+    def resolve(self, url: str, source: str, page: str) -> str:
+        """Return `url` as seen from `page`, where `url` is written in `source`.
+
+        `source` and `page` are POSIX paths relative to the repository root and
+        the site root.
+        """
+        parts = urlsplit(url)
+        if parts.scheme or parts.netloc or not parts.path or url.startswith("/"):
+            return url
+        target = posixpath.normpath(
+            posixpath.join(posixpath.dirname(source), parts.path)
+        )
+        fragment = f"#{parts.fragment}" if parts.fragment else ""
+        if target.startswith("../"):
+            return url
+        if target in self.pages:
+            site_target = self.pages[target]
+        elif (self.root_dir / target).is_file() and not target.endswith(".md"):
+            site_target = self._copy(target)
+        else:
+            return f"{REPO_URL}/blob/master/{target}{fragment}"
+        rel = posixpath.relpath(site_target, posixpath.dirname(page) or ".")
+        return rel + fragment
+
+    def _copy(self, target: str) -> str:
+        site_target = f"xls/{target}"
+        if target not in self.copied:
+            dest = self.site_dir / site_target
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(self.root_dir / target, dest)
+            self.copied.add(target)
+        return site_target
+
+
+class _LinkTreeprocessor(Treeprocessor):
+    def __init__(self, md, resolver: LinkResolver, source: str, page: str):
+        super().__init__(md)
+        self.resolver = resolver
+        self.source = source
+        self.page = page
+
+    def run(self, root):
+        for el in root.iter():
+            attr = {"a": "href", "img": "src"}.get(el.tag)
+            if attr and el.get(attr):
+                el.set(attr, self.resolver.resolve(el.get(attr), self.source, self.page))
+
+
+_ALERT_RE = re.compile(r"^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*")
+
+
+class _AlertTreeprocessor(Treeprocessor):
+    """Render GitHub alerts (`> [!NOTE]`) as `<div class="alert note">`."""
+
+    def run(self, root):
+        for quote in root.iter("blockquote"):
+            first = quote[0] if len(quote) else None
+            match = first is not None and first.tag == "p" and _ALERT_RE.match(first.text or "")
+            if not match:
+                continue
+            kind = match.group(1).lower()
+            first.text = first.text[match.end() :]
+            quote.tag = "div"
+            quote.set("class", f"alert {kind}")
+            title = quote.makeelement("p", {"class": "alert-title"})
+            title.text = kind.capitalize()
+            quote.insert(0, title)
+
+
+class _LinkExtension(Extension):
+    def __init__(self, resolver: LinkResolver, source: str, page: str):
+        super().__init__()
+        self.args = (resolver, source, page)
+
+    def extendMarkdown(self, md):
+        # Run after inline links are parsed (priority 20) and before the TOC.
+        md.treeprocessors.register(_LinkTreeprocessor(md, *self.args), "xls_links", 15)
+        md.treeprocessors.register(_AlertTreeprocessor(md), "xls_alerts", 14)
+
+
+def _squash(text: str) -> str:
+    return re.sub(r"\W", "", text.lower())
+
+
+def strip_title_heading(content: str, title: str) -> str:
+    """Remove the first `# ` heading if it repeats the preamble title.
+
+    The page header already shows the title. Specs whose first H1 is something
+    else (for example `# Abstract`) keep it.
+    """
+    match = re.search(r"^# (.+)\n", content, flags=re.MULTILINE)
+    if match and _squash(title) in _squash(match.group(1)):
+        return content[: match.start()] + content[match.end() :]
+    return content
+
+
+def convert_markdown_to_html(
+    content: str,
+    resolver: LinkResolver | None = None,
+    source: str = "",
+    page: str = "",
+) -> tuple[str, str]:
+    """Convert Markdown to HTML.
+
+    Returns the body HTML (with the preamble <pre> block removed) and the
+    table-of-contents HTML. Relative links are rewritten by `resolver` when
+    one is given; `source` and `page` are the repo-relative path of the
+    Markdown file and the site-relative path of the page it becomes.
+    """
+    content = re.sub(r"<pre>.*?</pre>", "", content, count=1, flags=re.DOTALL)
     content = normalize_list_indentation(content)
 
+    extensions = ["extra", "codehilite", "toc"]
+    if resolver:
+        extensions.append(_LinkExtension(resolver, source, page))
     md = markdown.Markdown(
-        extensions=["extra", "codehilite", "toc", "tables"],
+        extensions=extensions,
         extension_configs={
             "codehilite": {"css_class": "highlight"},
-            "toc": {
-                "permalink": True,
-                "baselevel": 2,
-                "toc_depth": 3,
-                "title": "Table of Contents",
-            },
+            "toc": {"permalink": True, "toc_depth": "1-3"},
         },
     )
     html = md.convert(content)
@@ -156,213 +307,165 @@ def convert_markdown_to_html(content: str) -> str:
     # Convert LaTeX math delimiters after markdown processing so that
     # the markdown processor doesn't strip backslashes from \(...\).
     html = _convert_math_delimiters(html)
+    return html, md.toc
 
-    return html
 
-
-def build_site():
-    """Main function to build the static site."""
-
-    # Setup directories
-    source_dir = Path(__file__).parent.resolve()
-    root_dir = source_dir.parent
-    site_dir = source_dir / "_site"
-    template_dir = source_dir / "templates"
-    assets_dir = source_dir / "assets"
-
-    # Set base URL for GitHub Pages (can be overridden with env var)
-    base_url = (
-        os.environ.get("GITHUB_PAGES_BASE_URL", "/XRPL-Standards")
-        if "GITHUB_REPOSITORY" in os.environ
-        else os.environ.get("GITHUB_PAGES_BASE_URL", ".")
+def author_links(doc: XLSDocument) -> Markup:
+    """Render a document's authors as comma-separated links."""
+    return Markup(", ").join(
+        Markup('<a href="{}">{}</a>').format(link, name) if link else name
+        for name, link in doc.authors
     )
 
-    # Clean and create site directory
-    if site_dir.exists():
-        shutil.rmtree(site_dir)
-    site_dir.mkdir()
 
-    # Create subdirectories
-    (site_dir / "xls").mkdir()
-    (site_dir / "category").mkdir()  # New directory for category pages
-    (site_dir / "assets").mkdir()
+class SiteBuilder:
+    def __init__(self, root_dir: Path = ROOT_DIR, site_dir: Path = SITE_DIR):
+        self.root_dir = root_dir
+        self.site_dir = site_dir
+        # GitHub Pages serves the site under /<repo>/, so redirect pages need an
+        # absolute target. Everything else uses relative links.
+        self.base_url = os.environ.get(
+            "GITHUB_PAGES_BASE_URL",
+            "/XRPL-Standards" if "GITHUB_REPOSITORY" in os.environ else "",
+        )
+        self.env = Environment(
+            loader=FileSystemLoader(SCRIPTS_DIR / "templates"),
+            autoescape=True,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
+        self.env.filters["author_links"] = author_links
+        self.env.globals.update(
+            year=datetime.date.today().year,
+            repo_url=REPO_URL,
+            category_descriptions=CATEGORY_DESCRIPTIONS,
+            status_descriptions=STATUS_DESCRIPTIONS,
+        )
 
-    # Setup Jinja2 environment
-    if not template_dir.exists():
-        raise FileNotFoundError(f"Templates directory not found: {template_dir}")
+    def render(self, template: str, page: str, **context) -> None:
+        """Render `template` to the site-relative path `page`."""
+        out = self.site_dir / page
+        out.parent.mkdir(parents=True, exist_ok=True)
+        root = posixpath.relpath(".", posixpath.dirname(page) or ".")
+        html = self.env.get_template(template).render(root=root, **context)
+        out.write_text(html, encoding="utf-8")
 
-    env = Environment(loader=FileSystemLoader(template_dir))
+    def build(self) -> list[XLSDocument]:
+        if self.site_dir.exists():
+            shutil.rmtree(self.site_dir)
+        self.site_dir.mkdir()
 
-    # Find and parse all XLS documents using the parser module
-    xls_docs = find_xls_documents(root_dir)
+        docs = find_xls_documents(self.root_dir)
+        docs.sort(key=lambda d: d.raw_number, reverse=True)
 
-    # Generate HTML for each document
-    for doc in xls_docs:
-        folder = root_dir / doc.folder
-        readme_path = folder / "README.md"
+        pages = {f"{d.folder}/README.md": f"xls/{d.folder}.html" for d in docs}
+        pages["CONTRIBUTING.md"] = "contribute.html"
+        resolver = LinkResolver(pages, self.root_dir, self.site_dir)
 
-        try:
-            with open(readme_path, "r", encoding="utf-8") as f:
-                content = f.read()
+        for doc in docs:
+            self.write_doc(doc, resolver)
+        self.write_redirects(docs)
+        self.write_listings(docs)
+        self.write_contribute(resolver)
+        self.copy_assets()
+        return docs
 
-            # Convert to HTML
-            html_content = convert_markdown_to_html(content)
-
-            # Render XLS page
-            xls_template = env.get_template("xls.html")
-            rendered_html = xls_template.render(
-                doc=doc,
-                content=html_content,
-                title=f"XLS-{doc.number}: {doc.title}",
-                base_url=".." if base_url == "." else base_url,
-            )
-
-            # Write XLS HTML file
-            output_path = site_dir / "xls" / f"{doc.folder}.html"
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(rendered_html)
-
-            print(f"Generated: {output_path}")
-
-        except Exception as e:
-            print(f"Error processing {doc.folder}: {e}")
-            raise
-
-    # Sort documents by number in reverse order (later ones more relevant)
-    xls_docs.sort(key=lambda x: int(x.number), reverse=True)
-
-    # Generate simple redirect pages so /xls-<number>.html redirects to
-    # the canonical document URL under /xls/<folder>.html.
-    redirect_template = env.get_template("redirect.html")
-    for doc in xls_docs:
-        # Redirect pages live under /xls/, next to the canonical XLS HTML files.
-        # For local builds (base_url == "."), use a relative URL that does *not*
-        # add another /xls/ segment; otherwise we create /xls/xls/<file>.html.
-        if base_url == ".":
-            # From scripts/_site/xls/xls-<number>.html → ./<folder>.html
-            target_url = f"./{doc.folder}.html"
-        else:
-            # On GitHub Pages, use an absolute URL with the base path.
-            target_url = f"{base_url}/xls/{doc.folder}.html"
-
-        redirect_html = redirect_template.render(
+    def write_doc(self, doc: XLSDocument, resolver: LinkResolver) -> None:
+        source = f"{doc.folder}/README.md"
+        page = f"xls/{doc.folder}.html"
+        content = (self.root_dir / source).read_text(encoding="utf-8")
+        content = strip_title_heading(content, doc.title)
+        html, toc = convert_markdown_to_html(content, resolver, source, page)
+        self.render(
+            "xls.html",
+            page,
             title=f"XLS-{doc.number}: {doc.title}",
-            target_url=target_url,
+            description=doc.description,
+            doc=doc,
+            requires=self.requires_links(doc),
+            content=html,
+            toc=toc,
+            has_math=bool(re.search(r"\\\(|\\\[", html)),
+            implementations=re.findall(r"https?://[^\s,;]+", doc.implementation or ""),
+            source=source,
         )
 
-        # /xls/ alias: /xls/xls-<number>.html
-        def add_redirect(redirect_url, target_url):
-            redirect_xls_path = site_dir / "xls" / redirect_url
-            with open(redirect_xls_path, "w", encoding="utf-8") as f:
-                f.write(redirect_html)
+    @staticmethod
+    def requires_links(doc: XLSDocument) -> list[tuple[str, str]]:
+        """Return (label, href) for each XLS named in the `requires` field.
 
-            print(f"Generated redirect: {redirect_xls_path} -> {target_url}")
-
-        add_redirect(f"xls-{doc.number}.html", target_url)
-        add_redirect(f"xls-{doc.raw_number}.html", target_url)
-
-    # Group documents by category for category pages and navigation
-    categories = {}
-    for doc in xls_docs:
-        category = doc.category
-        if category not in categories:
-            categories[category] = []
-        categories[category].append(doc)
-
-    # Generate category pages
-    category_template = env.get_template("category.html")
-    all_categories = [(cat, len(docs)) for cat, docs in sorted(categories.items())]
-
-    for category, category_docs in categories.items():
-        # Sort category documents by number in reverse order
-        category_docs.sort(key=lambda x: int(x.number), reverse=True)
-
-        category_html = category_template.render(
-            title=f"{category} XLS Standards",
-            category=category,
-            category_docs=category_docs,
-            all_categories=all_categories,
-            total_count=len(xls_docs),
-            base_url=".." if base_url == "." else base_url,
+        The href is relative to a page in xls/, next to the redirect pages.
+        """
+        numbers = dict.fromkeys(
+            int(n) for n in re.findall(r"(?:XLS-)?(\d+)", doc.requires or "")
         )
+        return [(f"XLS-{n}", f"xls-{n}.html") for n in numbers]
 
-        # Write category HTML file
-        category_file = site_dir / "category" / f"{category.lower()}.html"
-        with open(category_file, "w", encoding="utf-8") as f:
-            f.write(category_html)
+    def write_redirects(self, docs: list[XLSDocument]) -> None:
+        """Write xls/xls-<number>.html pages that redirect to each document."""
+        for doc in docs:
+            target = (
+                f"{self.base_url}/xls/{doc.folder}.html"
+                if self.base_url
+                else f"{doc.folder}.html"
+            )
+            for alias in {doc.number, str(doc.raw_number)}:
+                self.render(
+                    "redirect.html",
+                    f"xls/xls-{alias}.html",
+                    title=f"XLS-{doc.number}: {doc.title}",
+                    target_url=target,
+                )
 
-        print(f"Generated category page: {category_file}")
+    def write_listings(self, docs: list[XLSDocument]) -> None:
+        by_category = defaultdict(list)
+        for doc in docs:
+            by_category[doc.category].append(doc)
+        categories = sorted((c, len(d)) for c, d in by_category.items())
 
-    # Generate index page with category navigation
-    index_template = env.get_template("index.html")
-    index_html = index_template.render(
-        title="XRP Ledger Standards (XLS)",
-        total_count=len(xls_docs),
-        xls_docs=xls_docs,
-        all_categories=all_categories,
-        base_url=base_url,
-    )
-
-    # Write index file
-    with open(site_dir / "index.html", "w", encoding="utf-8") as f:
-        f.write(index_html)
-
-    # Generate contribute page from CONTRIBUTING.md
-    contributing_path = root_dir / "CONTRIBUTING.md"
-    if contributing_path.exists():
-        try:
-            with open(contributing_path, "r", encoding="utf-8") as f:
-                contributing_content = f.read()
-
-            # Convert markdown to HTML
-            contributing_html_content = convert_markdown_to_html(contributing_content)
-
-            # Render contribute page
-            contribute_template = env.get_template("contribute.html")
-            contribute_html = contribute_template.render(
-                title="Contributing to XLS Standards",
-                content=contributing_html_content,
-                base_url=base_url,
+        self.render(
+            "index.html",
+            "index.html",
+            title="XRP Ledger Standards (XLS)",
+            description="Index of XRP Ledger Standards (XLSes).",
+            docs=docs,
+            categories=categories,
+            total_count=len(docs),
+        )
+        for category, category_docs in by_category.items():
+            self.render(
+                "category.html",
+                f"category/{category.lower()}.html",
+                title=f"{category} XLS Standards",
+                description=CATEGORY_DESCRIPTIONS.get(category, ""),
+                category=category,
+                docs=category_docs,
+                categories=categories,
+                total_count=len(docs),
             )
 
-            # Write contribute file
-            with open(site_dir / "contribute.html", "w", encoding="utf-8") as f:
-                f.write(contribute_html)
+    def write_contribute(self, resolver: LinkResolver) -> None:
+        source = "CONTRIBUTING.md"
+        content = (self.root_dir / source).read_text(encoding="utf-8")
+        html, _ = convert_markdown_to_html(content, resolver, source, "contribute.html")
+        self.render(
+            "contribute.html",
+            "contribute.html",
+            title="Contributing to XLS Standards",
+            description="How to propose and update an XRP Ledger Standard.",
+            content=html,
+        )
 
-            print(f"Generated contribute page from CONTRIBUTING.md")
+    def copy_assets(self) -> None:
+        shutil.copytree(SCRIPTS_DIR / "assets", self.site_dir / "assets")
 
-        except Exception as e:
-            print(f"Error generating contribute page: {e}")
-    else:
-        print("Warning: CONTRIBUTING.md not found")
 
-    # Copy CSS file
-    css_source = assets_dir / "style.css"
-    css_dest = site_dir / "assets" / "style.css"
-    if css_source.exists():
-        shutil.copy2(css_source, css_dest)
-    else:
-        raise FileNotFoundError(f"CSS file not found: {css_source}")
-
-    # Copy favicon
-    favicon_source = assets_dir / "favicon.ico"
-    favicon_dest = site_dir / "assets" / "favicon.ico"
-    if favicon_source.exists():
-        shutil.copy2(favicon_source, favicon_dest)
-    else:
-        print(f"Warning: Favicon not found: {favicon_source}")
-
-    print(f"Site built successfully! Generated {len(xls_docs)} XLS documents.")
-
-    # Count by status for reporting
-    # Count documents by status (case-insensitive, no hardcoding)
-    status_counts = Counter(
-        getattr(doc, "status", "").strip().lower() or "unknown" for doc in xls_docs
-    )
-
-    for status, count in status_counts.items():
+def main() -> None:
+    docs = SiteBuilder().build()
+    print(f"Site built successfully! Generated {len(docs)} XLS documents.")
+    for status, count in Counter(d.status.lower() for d in docs).items():
         print(f"- {status.capitalize()}: {count}")
 
 
 if __name__ == "__main__":
-    build_site()
+    main()

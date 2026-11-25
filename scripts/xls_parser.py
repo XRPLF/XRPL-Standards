@@ -9,10 +9,8 @@ and extract their metadata for use in documentation systems and validation.
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
 import sys
-
-from bs4 import BeautifulSoup
+from typing import List, Optional, Tuple
 
 
 # Valid status values for XLS documents
@@ -48,103 +46,75 @@ class XLSDocument:
         return asdict(self)
 
 
-def extract_xls_metadata(content: str, folder_name: str) -> Optional[XLSDocument]:
+_PREAMBLE_RE = re.compile(r"<pre>(.*?)</pre>", re.DOTALL)
+_AUTHOR_EMAIL_RE = re.compile(r"^(.*?)\s*<\s*([^>]+?)\s*>$")
+_AUTHOR_GITHUB_RE = re.compile(r"^(.*?)\s*\(@([^)]+)\)$")
+
+
+def parse_preamble(content: str) -> dict:
+    """Return the `key: value` pairs of the first <pre> block, keys lowercased.
+
+    Raises:
+        ValueError: If the content has no <pre> block.
+    """
+    match = _PREAMBLE_RE.search(content)
+    if not match:
+        raise ValueError("No <pre> preamble block found")
+    fields = {}
+    for line in match.group(1).splitlines():
+        key, sep, value = line.partition(":")
+        key = key.strip().lower()
+        if sep and key and " " not in key and key not in fields:
+            fields[key] = value.strip()
+    return fields
+
+
+def parse_author(author: str) -> Tuple[str, str]:
+    """Split `Name <email>` or `Name (@handle)` into (name, link)."""
+    author = author.strip()
+    if match := _AUTHOR_EMAIL_RE.match(author):
+        return match.group(1).strip(), f"mailto:{match.group(2)}"
+    if match := _AUTHOR_GITHUB_RE.match(author):
+        return match.group(1).strip(), f"https://github.com/{match.group(2).strip()}"
+    return author, ""
+
+
+def extract_xls_metadata(content: str, folder_name: str) -> XLSDocument:
     """Extract metadata from XLS markdown content.
 
     Args:
         content: The raw markdown content of the XLS document
         folder_name: Name of the folder containing the XLS document
 
-    Returns:
-        XLSDocument instance with extracted metadata, or None if parsing fails
+    Raises:
+        ValueError: If the content has no <pre> preamble block.
     """
+    fields = parse_preamble(content)
+    authors = fields.get("author") or fields.get("authors")
 
-    # Initialize metadata with defaults
-    metadata = {}
-
-    # Parse HTML pre block for metadata
-    pre_regex = r"<pre>(.*?)</pre>"
-    match = re.search(pre_regex, content, re.DOTALL)
-    if match:
-        pre_text = match.group(1)
-    else:
-        print("ERROR: No <pre> block found in content")
-        sys.exit(1)
-
-    # Extract metadata using standardized patterns (headers are now enforced by CI)
-    patterns = {
-        "title": r"[tT]itle:\s*(.*?)(?:\n|$)",
-        "description": r"[dD]escription:\s*(.*?)(?:\n|$)",
-        "authors": r"[aA]uthors?:\s*(.*?)(?:\n|$)",
-        "status": r"[sS]tatus:\s*(.*?)(?:\n|$)",
-        "category": r"[cC]ategory:\s*(.*?)(?:\n|$)",
-        "created": r"[cC]reated:\s*(.*?)(?:\n|$)",
-        "proposal_from": r"[pP]roposal-from:\s*(.*?)(?:\n|$)",
-        "implementation": r"[iI]mplementation:\s*(.*?)(?:\n|$)",
-        "requires": r"[rR]equires:\s*(.*?)(?:\n|$)",
-        "updated": r"[uU]pdated:\s*(.*?)(?:\n|$)",
-        "withdrawal_reason": r"[wW]ithdrawal-reason:\s*(.*?)(?:\n|$)",
-    }
-
-    def format_author(author):
-        """Format author information into name and link tuple."""
-        author = author.strip()
-        # Email address
-        email_match = re.match(r"^(.*?)\s*<\s*([^>]+)\s*>$", author)
-        if email_match:
-            name = email_match.group(1).strip()
-            email = email_match.group(2).strip()
-            return name, f'mailto:{email}'
-        # GitHub username in parentheses
-        gh_match = re.match(r"^(.*?)\s*\(@([^)]+)\)$", author)
-        if gh_match:
-            name = gh_match.group(1).strip()
-            gh_user = gh_match.group(2).strip()
-            return name, f'https://github.com/{gh_user}'
-        # Just a name
-        return author, ""
-
-    for key, pattern in patterns.items():
-        match = re.search(pattern, pre_text, re.IGNORECASE | re.DOTALL)
-        if match:
-            value = match.group(1).strip()
-            # Clean HTML tags from value and process based on field type
-            if key == "authors":
-                # Process comma-separated authors
-                value = [
-                    format_author(author)
-                    for author in value.split(",")
-                ]
-            else:
-                # Clean HTML tags for other fields
-                value = BeautifulSoup(value, "html.parser").get_text().strip()
-            metadata[key] = value
-
-    # Extract XLS number from folder name
-    xls_match = re.match(r"XLS-(\d+)([d]?)", folder_name)
-    if xls_match:
-        number = xls_match.group(1)
-        raw_number = int(number)
-    else:
-        number = "000"
-        raw_number = 0
+    xls_match = re.match(r"XLS-(\d+)", folder_name)
+    number = xls_match.group(1) if xls_match else "000"
 
     return XLSDocument(
         number=number,
-        raw_number=raw_number,
-        title=metadata.get("title", "Unknown Title"),
-        description=metadata.get("description", "No description available"),
-        authors=metadata.get("authors", [("Unknown Author", "")]),
+        raw_number=int(number),
+        title=fields.get("title") or "Unknown Title",
+        description=fields.get("description") or "No description available",
+        authors=(
+            [parse_author(a) for a in authors.split(",")]
+            if authors
+            else [("Unknown Author", "")]
+        ),
         folder=folder_name,
         filename="README.md",
-        status=metadata.get("status", "Unknown"),
-        category=metadata.get("category", "Unknown"),
-        created=metadata.get("created", "Unknown"),
-        proposal_from=metadata.get("proposal_from"),
-        implementation=metadata.get("implementation"),
-        requires=metadata.get("requires"),
-        updated=metadata.get("updated"),
-        withdrawal_reason=metadata.get("withdrawal_reason"),
+        status=fields.get("status") or "Unknown",
+        category=fields.get("category") or "Unknown",
+        created=fields.get("created") or "Unknown",
+        proposal_from=fields.get("proposal-from") or None,
+        implementation=fields.get("implementation") or None,
+        requires=fields.get("requires") or None,
+        updated=fields.get("updated") or None,
+        withdrawal_reason=fields.get("withdrawal-reason") or None,
     )
 
 
@@ -173,11 +143,8 @@ def find_xls_documents(root_dir: Path) -> List[XLSDocument]:
                     content = f.read()
 
                 doc = extract_xls_metadata(content, folder.name)
-                if doc:
-                    xls_docs.append(doc)
-                    print(f"Parsed: {folder.name} - {doc.title}")
-                else:
-                    raise Exception(f"Failed to parse metadata from {folder.name}")
+                xls_docs.append(doc)
+                print(f"Parsed: {folder.name} - {doc.title}")
 
             except Exception as e:
                 print(f"Error processing {folder.name}: {e}")
