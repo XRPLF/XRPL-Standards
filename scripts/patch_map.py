@@ -230,8 +230,12 @@ def unmatched_sections(patch_content: str, matches: list[Match]) -> list[Heading
 def amendment_name(content: str) -> str:
     """Return the amendment a patch says it belongs to, or "" if it names none.
 
-    Patches state it in prose: "Under the `fixCleanup3_4_0` amendment, ..." or
-    "introduced by the `LendingProtocolV1_1` amendment".
+    Patches state it in prose: "Under the `fixCleanup3_4_0` amendment, ...",
+    "introduced by the `LendingProtocolV1_1` amendment", or "The
+    `fixCleanup3_1_3` amendment makes ...".
     """
-    match = re.search(r"(?:[Uu]nder|introduced by)\s+(?:the\s+)?`(\w+)`", content)
-    return match.group(1) if match else ""
+    match = re.search(
+        r"(?:[Uu]nder|introduced by)\s+(?:the\s+)?`(\w+)`|\b[Tt]he\s+`(\w+)`\s+amendment\b",
+        content,
+    )
+    return (match.group(1) or match.group(2)) if match else ""
