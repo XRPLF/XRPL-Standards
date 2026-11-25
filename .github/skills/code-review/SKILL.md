@@ -23,7 +23,7 @@ Do not publish findings incrementally as they are discovered. Do not stop after 
 
 Read [`.github/copilot-instructions.md`](../../copilot-instructions.md) — the "Review Guidelines (for AI reviewers)" section is normative for this review. It covers what CI already owns, the process checks, evidence standards, and comment etiquette.
 
-## For any changed `XLS-*/README.md`
+## For any changed `XLS-*/README.md` or nested patch file (`XLS-*/*/*.md`)
 
 Follow [`.agents/skills/xls-template-conformity/SKILL.md`](../../../.agents/skills/xls-template-conformity/SKILL.md), including its `references/beyond-the-template.md`. It is the same procedure human contributors run, and it reads `templates/` at review time, so it cannot drift from them.
 

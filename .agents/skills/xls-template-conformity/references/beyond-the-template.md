@@ -67,7 +67,8 @@ The validator already applies these, and so should you:
 
 - For a **ledger entry type already live on XRPL mainnet**, these subsections are optional: Object Identifier (2.1), Ownership (2.4), Reserves (2.5), Deletion (2.6), RPC Name (2.10). Only require them if the spec changes that aspect.
 - For a **transaction type already live on mainnet**, Transaction Fee (3.3) is optional.
-- A spec that predates the Amendment template and uses no `Ledger Entry:` / `Transaction:` / `RPC:` sections at all is treated as legacy — the validator skips Amendment structure checks. Do not demand a wholesale restructure of a legacy spec in a PR that only touches a few lines; say it is out of scope for the diff.
+- A spec that predates the Amendment template and uses no `Ledger Entry:` / `Transaction:` / `RPC:` sections at all is treated as legacy — the validator skips Amendment structure checks. Do not demand a wholesale restructure of a legacy spec in a PR that only touches a few lines; say it is out of scope for the diff. This exemption does not apply in migrate mode, whose purpose is that restructure.
+- In a **nested amendment patch** (XLS-1 §4.4.4), a template section lists only the subsections the amendment changes. Do not flag missing subsections in a patch. A feature-amendment index has a Specifications table and no template sections.
 
 ## Owned by CI — never report
 
