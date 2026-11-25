@@ -55,11 +55,13 @@ The flow of the lending protocol is as follows. `VaultCreate` in step 1 is unres
 
 ### 2.1 Compliance Features
 
-### 2.1.1 Clawback
+The Lending Protocol supports the Clawback and Freeze controls of the Vault asset's Issuer.
+
+#### 2.1.1 Clawback
 
 Clawback is a mechanism by which an asset Issuer (IOU or MPT, not XRP) claws back the funds. The Issuer may clawback funds from the First-Loss Capital.
 
-### 2.1.2 Freeze
+#### 2.1.2 Freeze
 
 Freeze is a mechanism by which an asset Issuer (IOU or MPT, not XRP) freezes an `Account`, preventing that account from sending the Asset. Deep Freeze is a mechanism by which an asset Issuer prevents an `Account` from both sending and receiving an Asset. Finally, an Issuer may enact a global freeze, which prevents everyone from sending or receiving the Asset. Note that in both single-account and global freezes, the Asset can be sent to the Issuer.
 
