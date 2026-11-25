@@ -4,8 +4,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from build_site import LinkResolver, author_links, convert_markdown_to_html, strip_title_heading
-from xls_parser import extract_xls_metadata, parse_author
+from build_site import (
+    LinkResolver,
+    SiteBuilder,
+    author_links,
+    convert_markdown_to_html,
+    page_path,
+    strip_title_heading,
+)
+from patch_map import amendment_name, map_patch, parse_headings, unmatched_sections
+from xls_parser import extract_xls_metadata, find_xls_documents, parse_author
 
 PREAMBLE = """<pre>
   xls: 65
@@ -125,6 +133,116 @@ class TitleHeadingTest(unittest.TestCase):
     def test_keeps_other_heading(self):
         text = "# Abstract\n\nText"
         self.assertEqual(strip_title_heading(text, "Tagged Addresses"), text)
+
+
+def preamble(xls, title):
+    return PREAMBLE.replace("xls: 65", f"xls: {xls}").replace(
+        "title: Single Asset Vault", f"title: {title}"
+    )
+
+
+PARENT = preamble(65, "Vault") + """
+# Vault
+
+## 3. Specification
+
+### 3.1 Ledger Entry: `Vault`
+
+#### 3.1.2 Fields
+
+#### 3.1.10 Invariants
+
+### 3.4 Transaction: `VaultDelete`
+
+#### 3.4.2 Failure Conditions
+
+##### 3.4.2.1 Data Verification
+"""
+
+INDEX = preamble("65.1", "V1_1 Changes") + """
+This index groups the changes introduced by the `LendingProtocolV1_1` amendment.
+"""
+
+PATCH = preamble("65.1.2", "Memo") + """
+## 3. Specification
+
+### 3.1 Transaction: `VaultDelete`
+
+#### 3.1.2 Failure Conditions
+
+##### 3.1.2.1 Data Verification
+
+Parent check 1 is unchanged.
+
+### 3.2 Ledger Entry: `Vault`
+
+Add a field to parent [§3.1.2](../README.md#312-fields). See parent §3.1.10.
+
+### 3.3 Protocol Constants
+
+New.
+
+[parent](../README.md)
+"""
+
+
+class PatchTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        folder = self.root / "XLS-0065-vault"
+        (folder / "65.1").mkdir(parents=True)
+        (folder / "65.2").mkdir()
+        (folder / "README.md").write_text(PARENT)
+        (folder / "65.1/README.md").write_text(INDEX)
+        (folder / "65.1/65.1.2-memo.md").write_text(PATCH)
+        (folder / "65.1/65.1.10-later.md").write_text(preamble("65.1.10", "Later"))
+        (folder / "65.2/README.md").write_text(
+            preamble("65.2", "Fix") + "Under the `fixCleanup3_4_0` amendment, x."
+        )
+
+    def test_discovery_and_order(self):
+        (doc,) = find_xls_documents(self.root)
+        self.assertEqual([p.xls for p in doc.patches], ["65.1", "65.1.2", "65.1.10", "65.2"])
+        self.assertEqual(doc.patches[1].source, "XLS-0065-vault/65.1/65.1.2-memo.md")
+
+    def test_page_paths(self):
+        (doc,) = find_xls_documents(self.root)
+        self.assertEqual(page_path(doc), "xls/XLS-0065-vault.html")
+        self.assertEqual(page_path(doc.patches[0]), "xls/XLS-0065-vault/65.1/index.html")
+        self.assertEqual(page_path(doc.patches[1]), "xls/XLS-0065-vault/65.1/65.1.2-memo.html")
+
+    def test_mapping(self):
+        matches = map_patch(PATCH, parse_headings(PARENT))
+        found = {(m.patch_id, m.parent_id, m.how) for m in matches if m.leaf}
+        self.assertEqual(
+            found,
+            {
+                ("3121-data-verification", "3421-data-verification", "title"),
+                ("32-ledger-entry-vault", "312-fields", "link"),
+                ("32-ledger-entry-vault", "3110-invariants", "section"),
+            },
+        )
+        self.assertEqual(
+            [h.name for h in unmatched_sections(PATCH, matches)], ["3.3 Protocol Constants"]
+        )
+
+    def test_amendment_name(self):
+        self.assertEqual(amendment_name(INDEX), "LendingProtocolV1_1")
+        self.assertEqual(amendment_name(PATCH), "")
+
+    def test_build(self):
+        site = self.root / "_site"
+        (self.root / "CONTRIBUTING.md").write_text("# Contributing")
+        SiteBuilder(self.root, site).build()
+        parent = (site / "xls/XLS-0065-vault.html").read_text()
+        patch = (site / "xls/XLS-0065-vault/65.1/65.1.2-memo.html").read_text()
+        self.assertIn('href="XLS-0065-vault/65.1/65.1.2-memo.html#3121-data-verification"', parent)
+        self.assertIn('data-amendment="LendingProtocolV1_1"', parent)
+        self.assertIn('href="../../XLS-0065-vault.html#3421-data-verification"', patch)
+        self.assertIn('href="../../XLS-0065-vault.html">parent</a>', patch)
+        self.assertIn("XLS-0065-vault/65.1/65.1.2-memo.html", (site / "xls/xls-65.1.2.html").read_text())
 
 
 if __name__ == "__main__":

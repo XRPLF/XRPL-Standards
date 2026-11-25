@@ -16,6 +16,7 @@ from markupsafe import Markup
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 
+from patch_map import amendment_name, map_patch, parse_headings
 from xls_parser import XLSDocument, find_xls_documents
 
 SCRIPTS_DIR = Path(__file__).parent.resolve()
@@ -249,6 +250,42 @@ class _AlertTreeprocessor(Treeprocessor):
             quote.insert(0, title)
 
 
+class _MarkerTreeprocessor(Treeprocessor):
+    """Insert HTML after headings, keyed by heading id.
+
+    Runs after the toc processor has given headings their ids.
+    """
+
+    def __init__(self, md, markers: dict[str, tuple[str, str]]):
+        super().__init__(md)
+        self.markers = markers
+
+    def run(self, root):
+        for parent in list(root.iter()):
+            for i, el in reversed(list(enumerate(parent))):
+                marker = self.markers.get(el.get("id", "")) if el.tag in _HEADINGS else None
+                if marker:
+                    html, amendments = marker
+                    el.set("class", (el.get("class", "") + " patched").strip())
+                    el.set("data-amendments", amendments)
+                    holder = parent.makeelement("div", {})
+                    holder.text = self.md.htmlStash.store(html)
+                    parent.insert(i + 1, holder)
+
+
+_HEADINGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
+
+
+class _MarkerExtension(Extension):
+    def __init__(self, markers: dict[str, tuple[str, str]]):
+        super().__init__()
+        self.markers = markers
+
+    def extendMarkdown(self, md):
+        # The toc treeprocessor (priority 5) assigns ids; run after it.
+        md.treeprocessors.register(_MarkerTreeprocessor(md, self.markers), "xls_markers", 4)
+
+
 class _LinkExtension(Extension):
     def __init__(self, resolver: LinkResolver, source: str, page: str):
         super().__init__()
@@ -281,6 +318,7 @@ def convert_markdown_to_html(
     resolver: LinkResolver | None = None,
     source: str = "",
     page: str = "",
+    markers: dict[str, tuple[str, str]] | None = None,
 ) -> tuple[str, str]:
     """Convert Markdown to HTML.
 
@@ -288,6 +326,8 @@ def convert_markdown_to_html(
     table-of-contents HTML. Relative links are rewritten by `resolver` when
     one is given; `source` and `page` are the repo-relative path of the
     Markdown file and the site-relative path of the page it becomes.
+    `markers` maps heading ids to (HTML inserted after the heading, a
+    space-separated list set as the heading's data-amendments attribute).
     """
     content = re.sub(r"<pre>.*?</pre>", "", content, count=1, flags=re.DOTALL)
     content = normalize_list_indentation(content)
@@ -295,6 +335,8 @@ def convert_markdown_to_html(
     extensions = ["extra", "codehilite", "toc"]
     if resolver:
         extensions.append(_LinkExtension(resolver, source, page))
+    if markers:
+        extensions.append(_MarkerExtension(markers))
     md = markdown.Markdown(
         extensions=extensions,
         extension_configs={
@@ -308,6 +350,49 @@ def convert_markdown_to_html(
     # the markdown processor doesn't strip backslashes from \(...\).
     html = _convert_math_delimiters(html)
     return html, md.toc
+
+
+def page_path(doc: XLSDocument) -> str:
+    """Return the site-relative page for a spec or patch.
+
+    `XLS-0065-x/README.md` becomes `xls/XLS-0065-x.html`; a patch keeps its
+    folder, so `XLS-0065-x/65.1/65.1.2-y.md` becomes
+    `xls/XLS-0065-x/65.1/65.1.2-y.html` and `65.2/README.md` becomes
+    `xls/XLS-0065-x/65.2/index.html`.
+    """
+    if not doc.is_patch:
+        return f"xls/{doc.folder}.html"
+    path = posixpath.splitext(doc.source)[0]
+    if path.endswith("/README"):
+        path = path[: -len("README")] + "index"
+    return f"xls/{path}.html"
+
+
+def relroot(page: str) -> str:
+    return posixpath.relpath(".", posixpath.dirname(page) or ".")
+
+
+def toc_ancestors(ids, headings, toc_level: int = 3) -> set[str]:
+    """Return the ids to mark in the table of contents for changed headings.
+
+    The contents list stops at level 3, so a changed level-5 heading marks its
+    level-3 ancestor instead.
+    """
+    marked, stack = set(), []
+    for heading in headings:
+        while stack and stack[-1].level >= heading.level:
+            stack.pop()
+        stack.append(heading)
+        if heading.id in ids:
+            visible = [h for h in stack if h.level <= toc_level]
+            if visible:
+                marked.add(visible[-1].id)
+    return marked
+
+
+def amendments(patches: list[XLSDocument]) -> list[str]:
+    """Return the distinct amendment names of the patches, in patch order."""
+    return list(dict.fromkeys(p.amendment for p in patches if p.amendment))
 
 
 def author_links(doc: XLSDocument) -> Markup:
@@ -346,8 +431,7 @@ class SiteBuilder:
         """Render `template` to the site-relative path `page`."""
         out = self.site_dir / page
         out.parent.mkdir(parents=True, exist_ok=True)
-        root = posixpath.relpath(".", posixpath.dirname(page) or ".")
-        html = self.env.get_template(template).render(root=root, **context)
+        html = self.env.get_template(template).render(root=relroot(page), **context)
         out.write_text(html, encoding="utf-8")
 
     def build(self) -> list[XLSDocument]:
@@ -358,7 +442,8 @@ class SiteBuilder:
         docs = find_xls_documents(self.root_dir)
         docs.sort(key=lambda d: d.raw_number, reverse=True)
 
-        pages = {f"{d.folder}/README.md": f"xls/{d.folder}.html" for d in docs}
+        pages = {d.source: page_path(d) for d in docs}
+        pages.update({p.source: page_path(p) for d in docs for p in d.patches})
         pages["CONTRIBUTING.md"] = "contribute.html"
         resolver = LinkResolver(pages, self.root_dir, self.site_dir)
 
@@ -371,49 +456,131 @@ class SiteBuilder:
         return docs
 
     def write_doc(self, doc: XLSDocument, resolver: LinkResolver) -> None:
-        source = f"{doc.folder}/README.md"
-        page = f"xls/{doc.folder}.html"
-        content = (self.root_dir / source).read_text(encoding="utf-8")
+        """Write a spec page, then a page for each of its patches."""
+        content = self.read(doc)
+        parent_headings = parse_headings(content) if doc.patches else []
+        names = {h.id: h.name for h in parent_headings}
+        by_parent = defaultdict(list)  # parent heading id -> [(patch, match)]
+        by_patch = {}  # patch source -> [match]
+        for patch in doc.patches:
+            patch.amendment = amendment_name(self.read(patch)) or self.index_amendment(doc, patch)
+            matches = map_patch(self.read(patch), parent_headings)
+            by_patch[patch.source] = matches
+            for match in matches:
+                if match.leaf:
+                    by_parent[match.parent_id].append((patch, match))
+
+        page = page_path(doc)
+        markers = {
+            heading_id: (
+                self.env.get_template("_parent_marker.html").render(
+                    changes=changes, page_of=self.relative_page(page)
+                ),
+                " ".join(sorted({p.amendment for p, _ in changes})),
+            )
+            for heading_id, changes in by_parent.items()
+        }
+        self.write_page(
+            doc,
+            content,
+            resolver,
+            markers,
+            amendments=amendments(doc.patches),
+            patched_ids=sorted(toc_ancestors(markers, parent_headings)),
+        )
+
+        for patch in doc.patches:
+            patch_page = page_path(patch)
+            markers = {}
+            for match in by_patch[patch.source]:
+                markers.setdefault(match.patch_id, []).append(match)
+            markers = {
+                patch_id: (
+                    self.env.get_template("_patch_marker.html").render(
+                        parent=doc,
+                        matches=matches,
+                        parent_href=self.relative_page(patch_page)(doc),
+                        names=names,
+                    ),
+                    patch.amendment,
+                )
+                for patch_id, matches in markers.items()
+            }
+            self.write_page(patch, self.read(patch), resolver, markers, parent=doc)
+
+    def read(self, doc: XLSDocument) -> str:
+        return (self.root_dir / doc.source).read_text(encoding="utf-8")
+
+    def index_amendment(self, parent: XLSDocument, patch: XLSDocument) -> str:
+        """Return the amendment named by the x.y index a patch belongs to."""
+        index_xls = ".".join(patch.xls.split(".")[:2])
+        for other in parent.patches:
+            if other.xls == index_xls and other is not patch:
+                return amendment_name(self.read(other))
+        return ""
+
+    def relative_page(self, from_page: str):
+        """Return a function giving the href of a document's page from `from_page`."""
+        return lambda doc: posixpath.relpath(page_path(doc), posixpath.dirname(from_page))
+
+    def write_page(
+        self,
+        doc: XLSDocument,
+        content: str,
+        resolver: LinkResolver,
+        markers: dict[str, str],
+        **context,
+    ) -> None:
+        page = page_path(doc)
         content = strip_title_heading(content, doc.title)
-        html, toc = convert_markdown_to_html(content, resolver, source, page)
+        html, toc = convert_markdown_to_html(content, resolver, doc.source, page, markers)
         self.render(
             "xls.html",
             page,
-            title=f"XLS-{doc.number}: {doc.title}",
+            title=f"{doc.label}: {doc.title}",
             description=doc.description,
             doc=doc,
-            requires=self.requires_links(doc),
+            requires=self.requires_links(doc, page),
             content=html,
             toc=toc,
             has_math=bool(re.search(r"\\\(|\\\[", html)),
             implementations=re.findall(r"https?://[^\s,;]+", doc.implementation or ""),
-            source=source,
+            page_of=self.relative_page(page),
+            **context,
         )
 
     @staticmethod
-    def requires_links(doc: XLSDocument) -> list[tuple[str, str]]:
+    def requires_links(doc: XLSDocument, page: str) -> list[tuple[str, str]]:
         """Return (label, href) for each XLS named in the `requires` field.
 
-        The href is relative to a page in xls/, next to the redirect pages.
+        Each href points at the xls/xls-<number>.html redirect page, which
+        also covers patch numbers such as 65.1.4.
         """
+        text = re.sub(r"\]\([^)]*\)", "]", doc.requires or "")  # drop link targets
         numbers = dict.fromkeys(
-            int(n) for n in re.findall(r"(?:XLS-)?(\d+)", doc.requires or "")
+            re.sub(r"^0+(?=\d)", "", n) for n in re.findall(r"\d+(?:\.\d+)*", text)
         )
-        return [(f"XLS-{n}", f"xls-{n}.html") for n in numbers]
+        rel = posixpath.relpath("xls", posixpath.dirname(page))
+        return [(f"XLS-{n}", posixpath.join(rel, f"xls-{n}.html")) for n in numbers]
 
     def write_redirects(self, docs: list[XLSDocument]) -> None:
-        """Write xls/xls-<number>.html pages that redirect to each document."""
-        for doc in docs:
+        """Write xls/xls-<number>.html pages that redirect to each document.
+
+        Patches get one too, for example xls/xls-65.1.2.html.
+        """
+        for doc in docs + [p for d in docs for p in d.patches]:
+            target = page_path(doc)
             target = (
-                f"{self.base_url}/xls/{doc.folder}.html"
+                f"{self.base_url}/{target}"
                 if self.base_url
-                else f"{doc.folder}.html"
+                else posixpath.relpath(target, "xls")
             )
-            for alias in {doc.number, str(doc.raw_number)}:
+            aliases = {doc.xls} if doc.is_patch else {doc.number, str(doc.raw_number)}
+            for alias in aliases:
                 self.render(
                     "redirect.html",
                     f"xls/xls-{alias}.html",
-                    title=f"XLS-{doc.number}: {doc.title}",
+                    title=f"{doc.label}: {doc.title}",
                     target_url=target,
                 )
 

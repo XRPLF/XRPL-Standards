@@ -17,11 +17,44 @@
   integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz"
   crossorigin="anonymous"
 ></script>
+{% endif %} {% if amendments %}
+<style>
+  {% for id in patched_ids %}
+  .xls-toc a[href="#{{ id }}"]::after {
+    content: " ●";
+    color: var(--color-purple-4);
+    font-size: 10px;
+  }
+  {% endfor %}
+  {% for name in amendments %}
+  .xls-document:has(.amendment-filter [value="{{ name }}"]:checked)
+    .patch-change:not([data-amendment="{{ name }}"]) {
+    display: none;
+  }
+  .xls-document:has(.amendment-filter [value="{{ name }}"]:checked)
+    .patched:not([data-amendments~="{{ name }}"]) {
+    padding-left: 0;
+    margin-left: 0;
+    border-left: none;
+  }
+  {% endfor %}
+</style>
 {% endif %} {% endblock %} {% block content %}
 <article class="xls-document {{ 'has-toc' if toc }}">
   <header class="xls-header">
+    {% if parent %}
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ page_of(parent) }}">{{ parent.label }}</a>
+      {% for p in parent.patches if doc.xls.startswith(p.xls ~ ".") %}
+      <span aria-hidden="true">›</span>
+      <a href="{{ page_of(p) }}">{{ p.label }}</a>
+      {% endfor %}
+      <span aria-hidden="true">›</span>
+      <span aria-current="page">{{ doc.label }}</span>
+    </nav>
+    {% endif %}
     <div class="xls-header-top">
-      <span class="xls-number-large">XLS-{{ doc.number }}</span>
+      <span class="xls-number-large">{{ doc.label }}</span>
       <span class="status-badge {{ doc.status|lower }}">{{ doc.status }}</span>
       <span class="category-badge {{ doc.category|lower }}"
         >{{ doc.category }}</span
@@ -59,6 +92,16 @@
         ><br />
         {% endfor %}
       </dd>
+      {% endif %} {% if doc.amendment %}
+      <dt>Amendment</dt>
+      <dd><code>{{ doc.amendment }}</code></dd>
+      {% endif %} {% if parent %}
+      <dt>Patch of</dt>
+      <dd>
+        <a href="{{ page_of(parent) }}"
+          >{{ parent.label }}: {{ parent.title }}</a
+        >
+      </dd>
       {% endif %} {% if doc.withdrawal_reason %}
       <dt>Withdrawal reason</dt>
       <dd>{{ doc.withdrawal_reason }}</dd>
@@ -73,13 +116,60 @@
       {{ toc|safe }}
     </details>
   </aside>
+  {% endif %} {% if doc.patches %}
+  <section
+    class="patches"
+    id="amendment-patches"
+    aria-labelledby="patches-title"
+  >
+    <h2 id="patches-title">Amendment patches</h2>
+    <p>
+      Later amendments change this spec through the patches below. Sections they
+      change are marked in the text.
+    </p>
+    <ul class="patch-list">
+      {% for p in doc.patches %}
+      <li class="depth-{{ p.xls.count('.') }}">
+        <a href="{{ page_of(p) }}">{{ p.label }}</a>
+        <span>{{ p.title }}</span>
+        {% if p.amendment and p.xls.count('.') == 1 %}<code
+          >{{ p.amendment }}</code
+        >{% endif %}
+        <span class="status-badge {{ p.status|lower }}">{{ p.status }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if amendments %}
+    <fieldset class="amendment-filter">
+      <legend>Show changes from</legend>
+      <label
+        ><input type="radio" name="amendment" value="" checked /> All</label
+      >
+      {% for name in amendments %}
+      <label>
+        <input type="radio" name="amendment" value="{{ name }}" />
+        <code>{{ name }}</code>
+      </label>
+      {% endfor %}
+      <label><input type="radio" name="amendment" value="none" /> None</label>
+    </fieldset>
+    {% endif %}
+  </section>
   {% endif %}
 
   <div class="document-content">{{ content|safe }}</div>
 
   <nav class="document-nav" aria-label="Document">
+    {% if parent %}
+    <a href="{{ page_of(parent) }}"
+      >&larr; {{ parent.label }}: {{ parent.title }}</a
+    >
+    {% else %}
     <a href="{{ root }}/index.html">&larr; All standards</a>
-    <a href="{{ repo_url }}/blob/master/{{ source }}">View source on GitHub</a>
+    {% endif %}
+    <a href="{{ repo_url }}/blob/master/{{ doc.source }}"
+      >View source on GitHub</a
+    >
   </nav>
 </article>
 {% endblock %}

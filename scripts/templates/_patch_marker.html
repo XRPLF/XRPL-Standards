@@ -1,0 +1,8 @@
+<aside class="patch-marker patch-target" aria-label="Parent sections changed">
+  {% for match in matches %}
+  <a class="patch-change" href="{{ parent_href }}#{{ match.parent_id }}">
+    <span class="patch-label">Modifies XLS-{{ parent.raw_number }}</span>
+    <span class="patch-title">§{{ names[match.parent_id] }}</span>
+  </a>
+  {% endfor %}
+</aside>
