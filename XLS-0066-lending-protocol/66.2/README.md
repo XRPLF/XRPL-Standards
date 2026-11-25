@@ -10,7 +10,7 @@
   updated: 2026-09-09
 </pre>
 
-# Lending Protocol Impairment Timing
+# 66.2 Lending Protocol Impairment Timing
 
 ## 1. Abstract
 
