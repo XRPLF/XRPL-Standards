@@ -92,6 +92,12 @@ When the amendment is enabled, the following change Appendix A-2 and A-3.3 of th
 3. **Overpayment amount.** In `make_payment` STEP 4, the overpayment amount is rounded down to `Loan.LoanScale`. If the result is zero, no overpayment is made.
 4. **Overpayment principal.** In `try_overpayment`, after the preserved rounding errors are added, the principal of `newTheoreticalState` is set to `loan.principalOutstanding - overpaymentComponents.trackedPrincipalDelta`, and its management fee is set to `(valueOutstanding - principalOutstanding) × managementFeeRate`, where `valueOutstanding` is the value of `newTheoreticalState`. The interest is derived from these values.
 
+### 3.7 Transactions: `LoanBrokerCoverWithdraw` and `LoanPay`
+
+#### 3.7.1 Invariants
+
+When the amendment is enabled, the MPT transfer invariant does not require `lsfMPTCanTransfer` for an MPT moved between holders by `LoanBrokerCoverWithdraw` or `LoanPay`. When the amendment is not enabled, these transactions get no such waiver.
+
 ## 4. Rationale
 
 Rounding a deposit down to the cover precision before it is transferred keeps `LoanBroker.CoverAvailable` equal to what the broker holds. Rejecting amounts that round to zero stops transactions that change nothing but charge a fee. One rounding rule for the minimum cover makes the same broker pass or fail the same test in every transaction.

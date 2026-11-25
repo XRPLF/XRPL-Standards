@@ -837,7 +837,7 @@ Under `fixCleanup3_2_0`, the amount transferred and added to `LoanBroker.CoverAv
 
 #### 3.5.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply, including, under `fixCleanup3_1_3`, that `LoanBroker.CoverAvailable` equals the broker _pseudo-account_ balance after the deposit.
 
 #### 3.5.6 Example JSON
 
@@ -933,7 +933,10 @@ This transaction uses the standard transaction fee.
 
 #### 3.6.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply.
+
+- Before `fixCleanup3_2_0`: The MPT transfer invariant applies its `lsfMPTCanTransfer` rule to this transaction without a waiver.
+- `fixCleanup3_2_0`: The MPT transfer invariant does not require `lsfMPTCanTransfer` for this transaction, matching the waiver in check 5. See [XLS-66.5](./66.5-fix-cleanup-3_2_0/README.md).
 
 #### 3.6.6 Example JSON
 
@@ -1024,7 +1027,7 @@ Checks 8 and 9 run after check 5 and before checks 6 and 7.
 
 #### 3.7.5 Invariants
 
-**TBD**
+No transaction-specific invariant. The `LoanBroker` invariants of [§3.1.8](#318-invariants) apply.
 
 #### 3.7.6 Example JSON
 
@@ -1432,7 +1435,12 @@ This transaction uses the standard transaction fee.
 
 #### 3.10.6 Invariants
 
-**TBD**
+The `Loan` invariants of [§3.2.7](#327-invariants) and the `LoanBroker` invariants of [§3.1.8](#318-invariants) apply. In addition:
+
+- `Vault.LossUnrealized` changes only in `LoanManage` and `LoanPay`.
+- `LendingProtocolV1_1`: `lsfLoanDefault` changes only in `LoanManage` and is never cleared, and `lsfLoanImpaired` changes only in `LoanManage` or `LoanPay`. See [XLS-66.1.3](./66.1-lending-protocol-v1_1/66.1.3-loan-invariants.md).
+- `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, `Vault.AssetsDeployed` and `Vault.YieldUnrealized` change only in `LoanSet`, `LoanPay` and `LoanManage`. See [XLS-66.3.1](./66.3-lending-protocol-v1_2/66.3.1-fixed-precision-loans.md).
+- `fixCleanup3_4_0`: The freeze and lock invariants exempt the First-Loss Capital transfer of a default. See [XLS-66.2](./66.2-fix-cleanup-3_4_0/README.md).
 
 #### 3.10.7 Example JSON
 
@@ -1504,7 +1512,7 @@ The transaction fee depends on the number of periodic payments the `Amount` can 
 7. The Vault _pseudo-account_ is deep frozen for the asset. (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 8. The Borrower is not authorized for the asset. (`tecNO_AUTH`)
 9. The Borrower has insufficient funds to pay `Amount`. (`tecINSUFFICIENT_FUNDS`)
-10. Both the `LoanBroker.Owner` and the `LoanBroker` _pseudo-account_ are deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
+10. The fee is directed to the `LoanBroker` _pseudo-account_ (see [State Changes](#3115-state-changes) step 1: the cover is below the minimum, or the `LoanBroker.Owner` is deep frozen or not authorized for the asset) and the _pseudo-account_ is deep frozen for the asset (no valid fee destination). (`tecFROZEN` for IOUs, `tecLOCKED` for MPTs)
 11. Late payment without `tfLoanLatePayment` (`tecEXPIRED`):
     - `Before fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime >= Loan.NextPaymentDueDate`.
     - `fixCleanup3_4_0`: The `tfLoanLatePayment` flag is not specified and `currentTime > Loan.NextPaymentDueDate`.
@@ -1599,7 +1607,12 @@ These transfers are performed according to the asset type:
 
 #### 3.11.6 Invariants
 
-**TBD**
+The `Loan` invariants of [§3.2.7](#327-invariants) and the `LoanBroker` invariants of [§3.1.8](#318-invariants) apply. In addition:
+
+- `Vault.LossUnrealized` changes only in `LoanManage` and `LoanPay`; `LoanPay` changes it when it unimpairs the Loan.
+- `LendingProtocolV1_1`: A successful `LoanPay` that leaves payments remaining must reduce `Loan.PrincipalOutstanding` or `Loan.TotalValueOutstanding`, must not increase either, must reduce `Loan.PaymentRemaining`, and must advance `Loan.NextPaymentDueDate` by a positive multiple of `Loan.PaymentInterval`. See [XLS-66.1.3](./66.1-lending-protocol-v1_1/66.1.3-loan-invariants.md).
+- `LendingProtocolV1_2`: For a Vault with `LEVersion` 2, `Vault.AssetsDeployed` and `Vault.YieldUnrealized` change only in `LoanSet`, `LoanPay` and `LoanManage`. See [XLS-66.3.1](./66.3-lending-protocol-v1_2/66.3.1-fixed-precision-loans.md).
+- `fixCleanup3_2_0`: The MPT transfer invariant does not require `lsfMPTCanTransfer` for this transaction. See [XLS-66.5](./66.5-fix-cleanup-3_2_0/README.md).
 
 #### 3.11.7 Example JSON
 
@@ -1880,6 +1893,15 @@ $$
 
 An overpayment is an early repayment of principal. `OverpaymentInterestRate` and `OverpaymentFee` are prepayment penalties that compensate the lender for foregone interest. They are deducted from the overpayment amount, and the remainder reduces principal and triggers re-amortization (formulas 19-23). If the principal portion is zero after rounding to the loan's precision, the overpayment is skipped: it is not applied and the borrower is not charged for it. This always happens when `OverpaymentInterestRate + OverpaymentFee` is 100% (`100000`) or more, and can also happen for small overpayments.
 
+After re-amortization, the new Loan state must pass the same validity guards as a new Loan (`LoanSet` [failure conditions](#3852-protocol-level-failures) 15-18), evaluated on the new rounded state with `Loan.PaymentRemaining` as the number of payments:
+
+1. If interest is still outstanding (`newTotalValueOutstanding != newPrincipalOutstanding`), the new total value must exceed the new principal. Unlike `LoanSet` check 15, which expects interest whenever `InterestRate` is non-zero, a Loan whose interest has already been paid off is not required to have interest.
+2. The principal part of the first re-amortized payment must be greater than zero (`LoanSet` check 16).
+3. The new periodic payment, rounded up to `Loan.LoanScale`, must not be zero (`LoanSet` check 17).
+4. The new total value divided by the rounded periodic payment, rounded up, must equal `Loan.PaymentRemaining` (`LoanSet` check 18).
+
+The new periodic payment and total value must also be positive, and the new management fee must not be negative. The overpayment is also ignored if it would increase the Loan's interest due (`valueChange_{re-amortization} > 0`), or if the new rounded principal is not lower than the old one. If any of these fail, the overpayment is ignored: it is not applied, the borrower is not charged for it, and the transaction still succeeds with the periodic payments it made. These checks are not gated by an amendment.
+
 #### 5.1 Overpayment Fees and Interest
 
 $$
@@ -2103,6 +2125,8 @@ $$
 
 This appendix provides the complete payment processing logic and implementation pseudo-code for the `LoanPay` transaction.
 
+The rippled implementation is authoritative for `LoanPay` behavior. The prose in this specification and the pseudo-code in this appendix describe that implementation. Where either disagrees with rippled, rippled's behavior applies and the specification is in error.
+
 ### A-3.1 Conceptual Loan Value
 
 The value of a loan is based on the present value of its future payments. Conceptually, this can be understood through the standard amortization formulas.
@@ -2143,7 +2167,7 @@ $$
 
 A `LoanPay` transaction is processed according to a defined workflow that evaluates the payment's timing, amount, and any specified flags. This determines how the funds are applied to the loan's principal, interest, and associated fees.
 
-**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-33-pseudo-code) describes the required implementation logic, which includes critical adjustments for rounding. **Implementations must follow the pseudo-code.**
+**Source of Truth**: The formulas in this section describe the financial theory for a conceptual understanding. The [pseudo-code](#a-33-pseudo-code) describes the implementation logic, which includes critical adjustments for rounding. Where the pseudo-code disagrees with rippled, rippled applies (see [A-3](#a-3-loanpay-implementation-reference)).
 
 **Payment Rounding**: The `Loan.PeriodicPayment` field stores a high-precision value. However, payments must be made in the discrete, indivisible units of the loan's asset (e.g., XRP drops, whole MPTs, or the smallest unit of an IOU). Therefore, the borrower is expected to make a periodic payment that is rounded **up** to the asset's scale.
 
@@ -2174,13 +2198,12 @@ The system follows these steps to process a payment:
       - **Constraint**: Overpayments are not permitted on late payments. Any amount beyond the exact total due is not charged.
 
     - **B) On-Time Payment Processing**: If the payment is on-time, the system checks for special repayment scenarios before handling standard periodic payments.
-      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set and the amount is sufficient to cover the [full payment formula](#a-324-early-full-repayment), the loan is closed.
-        - **Constraint**: This option is not available if only one payment remains on the loan.
+      - **i. Full Early Repayment**: If the `tfLoanFullPayment` flag is set, the loan is closed by the [full payment formula](#a-324-early-full-repayment). The transaction fails with `tecKILLED` if only one payment remains, and with `tecINSUFFICIENT_PAYMENT` if the amount does not cover the full payment. It does not fall back to periodic payments.
       - **ii. Sequential Periodic Payments**: If it is not a full repayment, the system applies the funds to as many complete periodic payment cycles as possible. A single cycle consists of the `periodicPayment` plus the `serviceFee`.
       - **iii. Overpayment Application**: After all possible full periodic cycles are paid, any remaining amount is treated as an overpayment and applied to the principal.
         - **Constraint**: This step only occurs for on-time payments and requires two flags to be set: `lsfLoanOverpayment` on the `Loan` object and `tfLoanOverpayment` on the `LoanPay` transaction. If these conditions are not met, the excess amount is ignored.
 
-**Note on `Amount` and Excess Funds**: `LoanPay.Amount` is the maximum the protocol can charge the borrower, for every `LoanPay`, not only overpayments. The borrower is charged only the amount applied to the loan. Funds that are not applied are not taken, and the transaction still returns `tesSUCCESS`. This covers excess sent without `tfLoanOverpayment`, an overpayment on a late payment, a loan without `lsfLoanOverpayment`, and an overpayment whose principal portion is zero. Use the transaction metadata, not `Amount`, to determine the amount actually paid.
+**Note on `Amount` and Excess Funds**: `LoanPay.Amount` is the maximum the protocol can charge the borrower, for every `LoanPay`, not only overpayments. The borrower is charged only the amount applied to the loan. Funds that are not applied are not taken, and the transaction still returns `tesSUCCESS`. This covers excess sent without `tfLoanOverpayment`, an overpayment on a late payment, a loan without `lsfLoanOverpayment`, an overpayment whose principal portion is zero, and an overpayment whose re-amortized Loan would fail the [validity check](#5-overpayment-processing). In the last case the overpayment is ignored, the transaction returns `tesSUCCESS`, and only the periodic payments are charged. A typical example is an overpayment that would retire all remaining principal while a payment is still scheduled: the re-amortized periodic payment is zero, so the guards fail. A larger `Amount` can therefore result in less being applied to the Loan than a smaller one. Use the transaction metadata, not `Amount`, to determine the amount actually paid.
 
 **The `valueChange` Concept**
 
@@ -2344,6 +2367,17 @@ The total change in the loan's value from an overpayment is the sum of the net i
 $$
 valueChange = overpaymentInterest_{net} + valueChange_{re-amortization}
 $$
+
+**3. Validity Check**
+
+After re-amortization, the new Loan state must pass the same validity guards as a new Loan (`LoanSet` failure conditions 15-18; see [Overpayment Processing](#5-overpayment-processing)), evaluated on the new rounded state with `Loan.PaymentRemaining` as the number of payments:
+
+1. If interest is still outstanding (`newTotalValueOutstanding != newPrincipalOutstanding`), the new total value must exceed the new principal. Unlike `LoanSet` check 15, which expects interest whenever `InterestRate` is non-zero, a Loan whose interest has already been paid off is not required to have interest.
+2. The principal part of the first re-amortized payment must be greater than zero (`LoanSet` check 16).
+3. The new periodic payment, rounded up to `Loan.LoanScale`, must not be zero (`LoanSet` check 17).
+4. The new total value divided by the rounded periodic payment, rounded up, must equal `Loan.PaymentRemaining` (`LoanSet` check 18).
+
+The new periodic payment and total value must also be positive, and the new management fee must not be negative. The overpayment is also ignored if it would increase the Loan's interest due (`valueChange_{re-amortization} > 0`), or if the new rounded principal is not lower than the old one. If any of these fail, the overpayment is ignored: it is not applied, the borrower is not charged for it, and the transaction still succeeds with the periodic payments it made. These checks are not gated by an amendment.
 
 Note, that an overpayment typically decreases the overall value of the loan, as the reduction in future interest from re-amortization outweighs interest charged on the overpayment amount itself. However, it is possible for an overpayment to increase the value, if the overpayment interest portion is greater than the value change caused by re-amortization.
 
@@ -2522,6 +2556,36 @@ function compute_payment_due(roundedPeriodicPayment) -> (principal, interest, ma
 
     return (principal, interest, managementFee)
 
+function loan_guards_pass(properties, principal, expectInterest, paymentTotal) -> bool:
+    # properties = { periodicPayment, loanState, loanScale, firstPaymentPrincipal }
+    # firstPaymentPrincipal is the unrounded principal part of the first payment:
+    #   theoretical principal with paymentTotal payments left
+    #   minus theoretical principal with paymentTotal - 1 payments left,
+    #   both computed from properties.periodicPayment.
+    let totalInterest = properties.loanState.valueOutstanding - principal
+
+    # Guard 1: a loan that expects interest must have some interest
+    if expectInterest and totalInterest <= 0:
+        return false
+    # Guard 1a: a loan that expects no interest must have none
+    if not expectInterest and totalInterest > 0:
+        return false
+
+    # Guard 2: the first payment must pay some principal
+    if properties.firstPaymentPrincipal <= 0:
+        return false
+
+    # Guard 3: the periodic payment must not round to zero
+    let roundedPayment = properties.periodicPayment.round(properties.loanScale, UP)
+    if roundedPayment == 0:
+        return false
+
+    # Guard 4: the rounded payment must complete the loan in exactly paymentTotal payments
+    if ceil(properties.loanState.valueOutstanding / roundedPayment) != paymentTotal:
+        return false
+
+    return true
+
 function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanProperties) or error:
     # Loan state is composed of three tracked variables:
     #   - valueOutstanding (total amount owed)
@@ -2613,11 +2677,22 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
         managementFeeOutstanding: managementFeeOutstanding
     }
     # Interest is derived: roundedNewState.interestOutstanding() = valueOutstanding - principalOutstanding - managementFeeOutstanding
+    newLoanProperties.loanState = roundedNewState
 
-    # The principal must decrease. If rounding leaves it unchanged, skip the
-    # overpayment so the borrower is not charged penalties for nothing.
-    # Matches the check in rippled's doOverpayment.
-    if roundedNewState.principalOutstanding >= loan.principalOutstanding:
+    # Validity check: the re-amortized loan must still be a valid loan. These are the
+    # LoanSet guards (LoanSet failure conditions 15-18), applied to the new state.
+    # If any guard fails, the overpayment is ignored (the transaction is not failed).
+    if not loan_guards_pass(
+        newLoanProperties,
+        roundedNewState.principalOutstanding,
+        # Guard 1 expects interest only if interest is still outstanding
+        expectInterest = (roundedNewState.valueOutstanding - roundedNewState.principalOutstanding) != 0,
+        paymentTotal = loan.paymentsRemaining
+    ):
+        return error
+
+    # Defensive check on the computed properties
+    if newLoanProperties.periodicPayment <= 0 or roundedNewState.valueOutstanding <= 0 or roundedNewState.managementFeeOutstanding < 0:
         return error
 
     # Calculate deltas between old and new state for each tracked component
@@ -2634,6 +2709,12 @@ function try_overpayment(overpaymentComponents) -> (paymentParts, newLoanPropert
     let valueChange = -deltas.interest
     if valueChange > 0:
         # Principal overpayment would increase the value of the loan, ignore the overpayment
+        return error
+
+    # The principal must decrease. If rounding leaves it unchanged, skip the
+    # overpayment so the borrower is not charged penalties for nothing.
+    # rippled checks this after try_overpayment returns, in doOverpayment.
+    if roundedNewState.principalOutstanding >= loan.principalOutstanding:
         return error
 
     # Return the payment parts and new loan properties
@@ -2692,11 +2773,18 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             totalManagementFee + loan.serviceFee + loan.latePaymentFee    # The total fee paid for a loan payment
         )
     # ======== STEP 2: Process Full Payment ======== #
-    let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
-    let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + loan.closePaymentFee
+    if is_set(tfLoanFullPayment):
+        # A full payment must be made before the final scheduled payment
+        if loan.paymentsRemaining <= 1:
+            return "last payment cannot be a full payment" error   # tecKILLED
 
-    # If the payment is equal or higher than full payment amount and there is more than one payment remaining, make a full payment
-    if is_set(tfLoanFullPayment) && amount >= fullPaymentAmount && loan.paymentsRemaining > 1:
+        let (fullPrincipal, fullInterest, fullManagementFee) = compute_full_payment(currentTime)
+        let closePaymentFee = loan.closePaymentFee.round(loan.loanScale, HALF_EVEN)
+        let fullPaymentAmount = fullPrincipal + fullInterest + fullManagementFee + closePaymentFee
+
+        if amount < fullPaymentAmount:
+            return "insufficient amount paid" error   # tecINSUFFICIENT_PAYMENT
+
         let totalInterestOutstanding = loan.totalValueOutstanding - loan.principalOutstanding - loan.managementFeeOutstanding
         let loanValueChange = fullInterest - totalInterestOutstanding
 
@@ -2709,8 +2797,9 @@ function make_payment(amount, currentTime) -> (principalPaid, interestPaid, valu
             fullPrincipal,                      # Full payment repays the entire outstanding principal
             fullInterest,                       # Full payment repays any accrued interest since the last payment and additional full payment interest
             loanValueChange,                    # A full payment changes the total value of the loan
-            fullManagementFee + loan.closePaymentFee   # An early payment pays a specific closePaymentFee
+            fullManagementFee + closePaymentFee   # An early payment pays a specific closePaymentFee
         )
+
     # ======== STEP 3: Process Regular Payment(s) ======== #
     # Handle regular payments and overpayments
     let totalPaid = 0
