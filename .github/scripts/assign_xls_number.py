@@ -13,6 +13,10 @@ Run by .github/workflows/assign-xls-number.yml in two modes:
            it skips numbers that other open PRs reserved. Write the comment body
            to $RUNNER_TEMP/assignment-comment.md.
 
+The assign mode reads reservations first and the base branch's directories
+second, both from the API. A PR that merges between the two reads is then in
+one of them, so its number is never handed out again.
+
 The script uses only the standard library. It reads the PR from
 GITHUB_EVENT_PATH and calls the GitHub REST API with GITHUB_TOKEN. File names
 come from the API, never from the shell, so a crafted path cannot run code.
@@ -22,6 +26,7 @@ import json
 import os
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from urllib import parse, request
 
@@ -83,14 +88,19 @@ def github_get_all(path: str, token: str, params: dict | None = None) -> list:
         page += 1
 
 
-def get_existing_xls_numbers(repo_root: Path) -> set[int]:
-    """Return the numbers of all XLS-NNNN-* directories in repo_root."""
+def existing_xls_numbers(entries: Iterable[dict]) -> set[int]:
+    """Return the numbers of the XLS-NNNN-* directories in a contents listing."""
     numbers = set()
-    for item in repo_root.iterdir():
-        match = EXISTING_DIR.match(item.name)
-        if match and item.is_dir():
+    for entry in entries:
+        match = EXISTING_DIR.match(entry.get("name") or "")
+        if match and entry.get("type") == "dir":
             numbers.add(int(match.group(1)))
     return numbers
+
+
+def get_existing_xls_numbers(repo: str, token: str, ref: str) -> set[int]:
+    """Return the XLS numbers in the root of `ref`, read now from the API."""
+    return existing_xls_numbers(github_get(f"/repos/{repo}/contents/", token, {"ref": ref}))
 
 
 def get_next_xls_number(used: set[int]) -> int:
@@ -106,8 +116,11 @@ def find_draft_dirs(added_files: list[str]) -> list[str]:
     return sorted({m.group(1) for f in added_files if (m := DRAFT_README.match(f))})
 
 
-def find_self_assigned(added_files: list[str]) -> list[tuple[str, int]]:
-    """Return (directory, number) for added numbered XLSes above the manual range."""
+def find_numbered_dirs(added_files: list[str]) -> list[tuple[str, int]]:
+    """Return (directory, number) for added numbered XLSes above the manual range.
+
+    These are either self-assigned or drafts that were already renamed.
+    """
     found = set()
     for f in added_files:
         m = NUMBERED_README.match(f)
@@ -188,9 +201,20 @@ Rename your directory to use the draft convention instead (for example, `XLS-dra
 """
 
 
-def assignment_comment(assignments: list[tuple[str, int, str]]) -> str:
-    rows = "\n".join(f"| `{d}` | **XLS-{n}** | `{new}` |" for d, n, new in assignments)
-    markers = "\n".join(f"<!-- XLS_NUMBER:{n} -->" for _, n, _ in assignments)
+def assignment_comment(
+    assignments: list[tuple[str, int, str]], renamed: list[tuple[str, int]] = ()
+) -> str:
+    """Comment body for new assignments.
+
+    `renamed` holds directories that this PR already renamed to a number it
+    reserved. They keep their markers so the reservation stays until merge.
+    """
+    rows = "\n".join(
+        [f"| `{d}` | **XLS-{n}** | `{new}` |" for d, n, new in assignments]
+        + [f"| (renamed) | **XLS-{n}** | `{d}` |" for d, n in renamed]
+    )
+    reserved = sorted({n for _, n, _ in assignments} | {n for _, n in renamed})
+    markers = "\n".join(f"<!-- XLS_NUMBER:{n} -->" for n in reserved)
     numbers = ", ".join(str(n) for _, n, _ in assignments)
     return f"""## 🎫 XLS Number Assignment
 
@@ -248,7 +272,7 @@ def main(argv: list[str]) -> int:
     if mode == "inspect":
         set_output("has_drafts", "true" if drafts else "false")
         labels = {label["name"] for label in pr.get("labels", [])}
-        self_assigned = [] if RESERVED_LABEL in labels else find_self_assigned(added)
+        self_assigned = [] if RESERVED_LABEL in labels else find_numbered_dirs(added)
         set_output("has_self_assigned", "true" if self_assigned else "false")
         if self_assigned:
             write_body("self-assigned-comment.md", self_assigned_comment(self_assigned))
@@ -261,17 +285,25 @@ def main(argv: list[str]) -> int:
         print("GITHUB_TOKEN is required to read reserved numbers.", file=sys.stderr)
         return 1
 
-    repo_root = Path(os.environ.get("REPO_ROOT", Path(__file__).resolve().parents[2]))
-    existing = get_existing_xls_numbers(repo_root)
+    # Order matters: reservations first, then the base branch. See the
+    # module docstring.
     others, mine = get_reserved_numbers(repo, token, pr["number"])
+    existing = get_existing_xls_numbers(repo, token, pr["base"]["ref"])
+    # Numbered directories that this PR adds, for example a draft that an
+    # editor already renamed. Their numbers are taken.
+    numbered = find_numbered_dirs(added)
+    taken_here = {n for _, n in numbered}
+    renamed = [(d, n) for d, n in numbered if n in mine]
     print(f"Existing numbers: {len(existing)}, highest {max(existing, default=0)}")
     print(f"Reserved by other open PRs: {sorted(others)}")
     print(f"Reserved by this PR: {sorted(mine)}")
+    print(f"Numbered directories added by this PR: {numbered}")
 
-    assignments = plan_assignments(drafts, existing | others, mine - existing - others)
+    used = existing | others | taken_here
+    assignments = plan_assignments(drafts, used, mine - used)
     for draft, number, new in assignments:
         print(f"  {draft} -> {new} (XLS-{number:04d})")
-    write_body("assignment-comment.md", assignment_comment(assignments))
+    write_body("assignment-comment.md", assignment_comment(assignments, renamed))
     return 0
 
 

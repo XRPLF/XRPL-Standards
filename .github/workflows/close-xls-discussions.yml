@@ -47,6 +47,11 @@ jobs:
         env:
           BEFORE: ${{ github.event.before }}
         run: |
+          # BEFORE is all zeros or unreachable after a force push. Fall back to
+          # the parent commit.
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            BEFORE="HEAD^"
+          fi
           {
             echo "added_files<<EOF"
             git diff --name-only --diff-filter=A "$BEFORE" HEAD -- 'XLS-*/README.md'

@@ -106,6 +106,9 @@ jobs:
             core.info('No write+ approval yet. Skipping assignment.');
             core.setOutput('approved', 'false');
 
+      # Only for the script. The script reads existing XLS numbers from the
+      # live base branch through the API, not from this checkout, so a PR that
+      # merged while this job waited is still counted.
       - name: Check out base branch
         if: steps.approval.outputs.approved == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -118,6 +121,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/assign_xls_number.py assign
+
+      # Add the label before the comment. Other PRs find reservations through
+      # this label, so a run cancelled between the two steps must not leave a
+      # published number without it. A label without a comment reserves nothing.
+      # The label name must match RESERVED_LABEL in assign_xls_number.py.
+      - name: Add reservation label
+        if: steps.approval.outputs.approved == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "has XLS number"
 
       - name: Find existing assignment comment
         if: steps.approval.outputs.approved == 'true'
@@ -136,11 +150,3 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body-path: ${{ runner.temp }}/assignment-comment.md
-
-      # The label name must match RESERVED_LABEL in assign_xls_number.py.
-      - name: Add reservation label
-        if: steps.approval.outputs.approved == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "has XLS number"

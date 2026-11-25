@@ -3,9 +3,7 @@
 Run: python -m unittest discover -s .github/scripts -p 'test_*.py'
 """
 
-import tempfile
 import unittest
-from pathlib import Path
 
 import assign_xls_number as m
 
@@ -29,11 +27,11 @@ class TestAssignXlsNumber(unittest.TestCase):
         self.assertEqual(m.get_next_xls_number({96, 97, 99}), 98)
 
     def test_existing_numbers_reads_directories_only(self):
-        with tempfile.TemporaryDirectory() as d:
-            for name in ["XLS-0001-a", "XLS-0102-b", "XLS-draft-c", "scripts"]:
-                (Path(d) / name).mkdir()
-            (Path(d) / "XLS-0200-file").touch()
-            self.assertEqual(m.get_existing_xls_numbers(Path(d)), {1, 102})
+        entries = [
+            {"name": n, "type": "dir"}
+            for n in ["XLS-0001-a", "XLS-0102-b", "XLS-draft-c", "scripts"]
+        ] + [{"name": "XLS-0200-file", "type": "file"}]
+        self.assertEqual(m.existing_xls_numbers(entries), {1, 102})
 
     def test_find_draft_dirs_rejects_unsafe_names(self):
         files = [
@@ -53,7 +51,7 @@ class TestAssignXlsNumber(unittest.TestCase):
             "xls-0151-y/README.md",
         ]
         self.assertEqual(
-            m.find_self_assigned(files), [("XLS-0150-new", 150), ("xls-0151-y", 151)]
+            m.find_numbered_dirs(files), [("XLS-0150-new", 150), ("xls-0151-y", 151)]
         )
 
     def test_rename(self):
@@ -69,6 +67,19 @@ class TestAssignXlsNumber(unittest.TestCase):
     def test_plan_multiple_drafts_get_distinct_numbers(self):
         result = m.plan_assignments(["XLS-draft-a", "XLS-draft-b"], {96, 98}, set())
         self.assertEqual([n for _, n, _ in result], [97, 99])
+
+    def test_partial_rename_keeps_both_reservations(self):
+        # Drafts a and b got 96 and 97. Only a was renamed. b must keep 97,
+        # and the comment must keep the marker for 96.
+        added = ["XLS-0096-a/README.md", "XLS-draft-b/README.md"]
+        numbered = m.find_numbered_dirs(added)
+        mine = {96, 97}
+        used = {1, 95} | {n for _, n in numbered}
+        result = m.plan_assignments(m.find_draft_dirs(added), used, mine - used)
+        self.assertEqual(result, [("XLS-draft-b", 97, "XLS-0097-b")])
+        renamed = [(d, n) for d, n in numbered if n in mine]
+        body = m.assignment_comment(result, renamed)
+        self.assertEqual(m.numbers_in_comments([bot(body)]), {96, 97})
 
     def test_assignment_comment_round_trips_markers(self):
         body = m.assignment_comment(
