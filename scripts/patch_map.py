@@ -20,8 +20,9 @@ import markdown
 
 # A leading section number: "3.1.2 ", "3.1.2. ", "A.1 ".
 _NUMBER_RE = re.compile(r"^(?:[A-Z]|\d+)(?:\.\d+)*\.?\s+")
-_SECTION_REF_RE = re.compile(r"[Pp]arent\s+\[?§\s*(\d+(?:\.\d+)*)")
-_PARENT_LINK_RE = re.compile(r"\]\(\.\./README\.md#([^)\s]+)\)")
+# "parent §3.8.5.2" or "parent [§3.2.1](...)". \b keeps "transparent §" out.
+SECTION_REF_RE = re.compile(r"\b[Pp]arent\s+\[?§\s*(\d+(?:\.\d+)*)")
+PARENT_LINK_RE = re.compile(r"\]\(\.\./README\.md#([^)\s]+)\)")
 _FENCE_RE = re.compile(r"^(```|~~~)")
 
 
@@ -162,9 +163,9 @@ def map_patch(patch_content: str, parent_headings: list[Heading]) -> list[Match]
     # 1. Explicit links and § references. A reference only counts when the
     # text says it is to the parent: a link to ../README.md, or "parent §".
     for heading in patch:
-        for anchor in _PARENT_LINK_RE.findall(heading.body):
+        for anchor in PARENT_LINK_RE.findall(heading.body):
             add(heading.id, by_id.get(anchor), "link")
-        for ref in _SECTION_REF_RE.findall(heading.body):
+        for ref in SECTION_REF_RE.findall(heading.body):
             add(heading.id, by_number.get(ref), "section")
 
     # 2. Title paths below Specification.
