@@ -92,9 +92,9 @@ The `fixCleanup3_2_0` full-redemption path in `VaultWithdraw`, which zeroes both
 
 For `XRP` and `MPT` the step is a no-op: $\Delta_{asset}$ is already integral.
 
-The rounded $\Delta_{asset}$ is then applied as in the parent transitions above. The persisted results may still disagree, because each written field is quantised independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and each `STAmount` balance sits on its own grid, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before the amendment, the $\Delta_{asset}$ derived from the shares is not rounded at the posterior scale. `fixCleanup3_2_0` ([XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)) already rounds the requested deposit `Amount` toward zero at that scale, but not the amount recomputed from the minted shares. Without this amendment the comparisons are exact for every asset type. The one exception is the `fixCleanup3_2_0` `VaultWithdraw` rule that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
+The rounded $\Delta_{asset}$ is then applied as in the parent transitions above. The persisted results may still disagree, because each written field is quantised independently: `Vault.AssetsTotal` and `Vault.AssetsAvailable` are `STNumber` fields quantised to the asset on write, and each `STAmount` balance sits on its own grid, so one delta can land differently on each. For an `IOU` the persisted deltas may therefore differ from each other by at most one unit at the comparison scale above; for `XRP` and `MPT` they remain equal. That bound is the invariant check on the residue, not a licence to choose per-field deltas: an implementation that persists anything other than the single rounded $\Delta_{asset}$ does not conform, even where the result passes the check. Before `fixCleanup3_4_0`, the $\Delta_{asset}$ derived from the shares is not rounded at the posterior scale. `fixCleanup3_2_0` ([XLS-65.2](../65.2-fix-cleanup-3_2_0/README.md)) already rounds the requested deposit `Amount` toward zero at that scale, but not the amount recomputed from the minted shares. Before `fixCleanup3_4_0` the comparisons are exact for every asset type. The one exception is the `fixCleanup3_2_0` `VaultWithdraw` rule that an unrepresentable sub-ULP IOU remainder may remain between vault outflow and destination inflow.
 
-For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal == LossUnrealized` may redeem shares while moving zero assets. Before the amendment, the missing vault and destination balance deltas cause the invariant to fail.
+For `VaultWithdraw`, a fixed-share withdrawal whose pre-transaction `AssetsTotal == LossUnrealized` may redeem shares while moving zero assets. Before `fixCleanup3_4_0`, the missing vault and destination balance deltas cause the invariant to fail.
 
 ##### 3.1.2.4 Cap enforcement
 
@@ -103,14 +103,14 @@ Cap enforcement becomes:
 - `Vault.AssetsTotal` is not required to be less than or equal to `Vault.AssetsMaximum` on every modification of the entry, and no invariant imposes that, because the excess may be interest that the Vault has recognised.
 - `VaultSet` fails when `Vault.AssetsMaximum` is non-zero, `Vault.AssetsTotal` exceeds it, and the transaction either supplies `AssetsMaximum` or otherwise changes the cap. A `VaultSet` that omits `AssetsMaximum` and does not otherwise change the cap is no longer failed by this check.
 
-Before the amendment, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
+Before `fixCleanup3_4_0`, the loss inequality is strict for every asset type and admits no slack, `LossUnrealized` is not checked for sign, and the cap is required to hold on every `VaultSet` regardless of whether the transaction touches the cap.
 
 ##### 3.1.2.5 `XRP` fee correction
 
 When `Vault.Asset` is `XRP`, the invariants add the transaction fee back to an account's balance change before comparing it with the Vault's.
 
-- Before the amendment, the fee is added back only to the submitting `Account`, and only when that account paid the fee. A zero result is treated as no change only when the fee was added back.
-- Under the amendment, the fee is added back to whichever account paid it: the submitter, a delegate, or a co-signing fee sponsor. It is never added back for a pre-funded sponsorship, whose fee is not drawn from an account balance. A resulting zero is treated as no change in every case. An account touched only for sequence or ticket processing is therefore never mistaken for a payout recipient.
+- Before `fixCleanup3_4_0`: the fee is added back only to the submitting `Account`, and only when that account paid the fee. A zero result is treated as no change only when the fee was added back.
+- `fixCleanup3_4_0`: the fee is added back to whichever account paid it: the submitter, a delegate, or a co-signing fee sponsor. It is never added back for a pre-funded sponsorship, whose fee is not drawn from an account balance. A resulting zero is treated as no change in every case. An account touched only for sequence or ticket processing is therefore never mistaken for a payout recipient.
 
 ### 3.2 Transaction: `VaultDeposit`
 
@@ -157,6 +157,10 @@ In `doApply`, when the withdrawal does not redeem every outstanding share:
 5. `Amount` is in shares, the computed $\Delta_{asset}$ is zero, and $\Gamma_{asset}$ is non-zero. (`tecPRECISION_LOSS`)
 6. $\Delta_{asset}$ is non-zero but subtracting it would leave the stored balance unchanged at its precision. On a Vault with `LEVersion` below `2` that balance is `Vault.AssetsTotal`. (`tecPRECISION_LOSS`)
 7. `Vault.AssetsAvailable` is less than $\Delta_{asset}$ before the rounding of §3.1.2.3. (`tecINSUFFICIENT_FUNDS`) This check runs before the rounding, so a withdrawal that is both too large and too small to represent reports `tecINSUFFICIENT_FUNDS`.
+
+When the assets are transferred, for any withdrawal:
+
+8. The destination is not the submitter, `CredentialIDs` is present, and a listed credential has expired. The expired credentials are deleted, and the deletions are kept even though the transaction fails. (`tecEXPIRED`)
 
 #### 3.3.3 Exchange
 

@@ -186,6 +186,9 @@ The phase is not stored. For a closed-ended Vault it is derived from the parent 
 
 An AccountRoot entry holds the XRP, IOU or MPT deposited into the vault. It also acts as the issuer of the vault's shares. The _pseudo-account_ follows the XLS-64 specification for pseudo accounts. The `AccountRoot` object is created when creating the `Vault` object.
 
+- `SingleAssetVault`: What the _pseudo-account_ owns is not checked.
+- `fixCleanup3_5_0`: The _pseudo-account_ may own only its share `MPTokenIssuance`, its holding of `Vault.Asset`, and the `LoanBroker` entries of this Vault ([XLS-65.6](./65.6-fix-cleanup-3_5_0/README.md)).
+
 #### 3.1.4 Ownership
 
 The `Vault` objects are stored in the ledger and tracked in an [Owner Directory](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/directorynode) owned by the account submitting the `VaultCreate` transaction. To find the `Vault` from the vault shares, the _pseudo-account_ that issues the shares has a `VaultID` field pointing back to the `Vault`.
@@ -897,8 +900,10 @@ In sections below assume the following variables:
 18. There is insufficient liquidity to fill the request:
     1. The submitter holds fewer shares than $\Delta_{share}$. (`tecINSUFFICIENT_FUNDS`)
     2. `Vault.AssetsAvailable` is less than the computed $\Delta_{asset}$. (`tecINSUFFICIENT_FUNDS`)
+       - `fixCleanup3_4_0`: Unless the withdrawal redeems every outstanding share, this is also checked against $\Delta_{asset}$ before it is rounded at the posterior scale, so a withdrawal that is both too large and too small to represent fails with `tecINSUFFICIENT_FUNDS` rather than the rounding failure of item 17 ([XLS-65.5](./65.5-fix-cleanup-3_4_0/README.md)).
 19. `fixCleanup3_5_0`: A transfer fee applies and reduces a non-zero $\Delta_{asset}$ to zero for the destination ([XLS-65.6](./65.6-fix-cleanup-3_5_0/README.md)). (`tecPRECISION_LOSS`)
 20. Arithmetic overflow during share/asset calculation. (`tecPATH_DRY`)
+21. `fixCleanup3_4_0`: The destination is not the submitter, `CredentialIDs` is present, and a listed credential has expired. The expired credentials are deleted, and the deletions are kept even though the transaction fails. (`tecEXPIRED`) This is checked when the assets are transferred, after the other checks ([XLS-65.5](./65.5-fix-cleanup-3_4_0/README.md)).
 
 #### 3.6.3 State Changes
 
