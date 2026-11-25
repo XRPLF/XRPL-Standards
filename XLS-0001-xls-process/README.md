@@ -9,7 +9,7 @@
   category: Meta
   proposal-from: https://github.com/XRPLF/XRPL-Standards/discussions/340
   created: 2025-09-22
-  updated: 2026-09-15
+  updated: 2026-11-25
 </pre>
 
 ## 1. Abstract
@@ -412,7 +412,7 @@ XLS-NNNN-slug/
   x.y-amendment-slug/x.y.z-kebab-title.md  # one independent feature patch
 ```
 
-The folder is `x.y-` followed by the amendment name in lowercase kebab case (`65.1-lending-protocol-v1_1`, `65.2-fix-cleanup-3_4_0`). If the same amendment touches two parents (for example Vault and Lending), each parent gets its own folder (`65.y` and `66.y`). Do not mix one parent's deltas into the other's files. Below, `x.y/` is short for the amendment folder `x.y-amendment-slug/`.
+The folder is `x.y-` followed by the amendment name in lowercase kebab case (`65.4-lending-protocol-v1_1`, `65.5-fix-cleanup-3_4_0`). If the same amendment touches two parents (for example Vault and Lending), each parent gets its own folder (`65.y` and `66.y`). Do not mix one parent's deltas into the other's files. Below, `x.y/` is short for the amendment folder `x.y-amendment-slug/`.
 
 Patch numbers are allocated as follows:
 
@@ -431,25 +431,27 @@ Fix amendments (`fix*` names such as `fixCleanup3_4_0`) correct existing protoco
 
 ##### 4.4.4.5. Feature Amendments
 
-Feature amendments add capability: fields, transactions, accounting models, optional data, new immutability rules, and similar. Each independent change is its own file, even when several changes share one amendment. The preamble `xls` field is `x.y.z`. The filename is `{x.y.z}-{kebab-case-title}.md`, taken from the preamble `title` (for example `65.1.1-unmodifiable-vault-fields.md`). When a parent has more than one such patch, `x.y/README.md` is an index: Abstract, a Specifications table linking each `x.y.z`, Rationale for grouping them under one amendment, and a Security Considerations section that states the index adds no protocol behavior. A parent that currently has only one feature patch may keep that patch as `x.y/README.md`; a second independent patch requires splitting it as described in §4.4.4.3.
+Feature amendments add capability: fields, transactions, accounting models, optional data, new immutability rules, and similar. Each independent change is its own file, even when several changes share one amendment. The preamble `xls` field is `x.y.z`. The filename is `{x.y.z}-{kebab-case-title}.md`, taken from the preamble `title` (for example `65.4.1-unmodifiable-vault-fields.md`). When a parent has more than one such patch, `x.y/README.md` is an index: Abstract, a Specifications table linking each `x.y.z`, Rationale for grouping them under one amendment, and a Security Considerations section that states the index adds no protocol behavior. A parent that currently has only one feature patch may keep that patch as `x.y/README.md`; a second independent patch requires splitting it as described in §4.4.4.3.
 
 Example layout (XLS-65):
 
 ```
 XLS-0065-single-asset-vault/
   README.md
-  65.1-lending-protocol-v1_1/README.md                              # LendingProtocolV1_1 index
-  65.1-lending-protocol-v1_1/65.1.1-unmodifiable-vault-fields.md
-  65.1-lending-protocol-v1_1/65.1.2-vault-deletion-memo.md
-  65.1-lending-protocol-v1_1/65.1.4-closed-ended-vault.md           # 65.1.3 reserved by an open pull request
-  65.2-fix-cleanup-3_4_0/README.md                                  # fixCleanup3_4_0, all Vault deltas
+  65.1-fix-cleanup-3_1_3/README.md                                  # fixCleanup3_1_3, all Vault deltas
+  65.4-lending-protocol-v1_1/README.md                              # LendingProtocolV1_1 index
+  65.4-lending-protocol-v1_1/65.4.1-unmodifiable-vault-fields.md
+  65.4-lending-protocol-v1_1/65.4.2-vault-deletion-memo.md
+  65.4-lending-protocol-v1_1/65.4.3-cash-basis-vault.md
+  65.4-lending-protocol-v1_1/65.4.4-closed-ended-vault.md
+  65.5-fix-cleanup-3_4_0/README.md                                  # fixCleanup3_4_0, all Vault deltas
 ```
 
 ##### 4.4.4.6. Patch Documents
 
 Each nested patch document (`x.y/README.md` of a fix amendment, or an `x.y.z` file) uses the standard Amendment sections (Abstract, Motivation, Specification, Rationale, Security Considerations). A feature index uses the index sections in §4.4.4.5.
 
-A feature patch that is defined in terms of another patch (for example the closed-ended Loan gates, which read the closed-ended Vault phase) names that patch in `requires:` by number (`requires: XLS-65.1.4`). The preamble is a `<pre>` block, so a markdown link there does not render.
+A feature patch that is defined in terms of another patch (for example the closed-ended Loan gates, which read the closed-ended Vault phase) names that patch in `requires:` by number (`requires: XLS-65.4.4`). The preamble is a `<pre>` block, so a markdown link there does not render.
 
 CI validates nested `x.y/` files with the same preamble checks as a parent `README.md`. Run `python scripts/validate_xls_template.py --strict <file>` to also check that the template sections a patch uses are well formed.
 
